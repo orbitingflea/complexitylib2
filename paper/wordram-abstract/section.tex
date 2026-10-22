@@ -1,0 +1,219 @@
+\documentclass[11pt]{article}
+\usepackage[T1]{fontenc}
+\usepackage{libertine}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage[libertine]{newtxmath}
+\usepackage[scaled=0.96]{zi4}
+\usepackage{microtype,enumitem,etoolbox,xcolor,tikz,listings,tcolorbox,aliascnt}
+\usepackage[hidelinks]{hyperref}
+\usepackage[capitalise,nameinlink,noabbrev]{cleveref}
+
+% Lean boxes, as in edemaine/translation-tiling-paper (paper.texlish, lines 50--68), with a
+% text label in place of the Lean logo.
+\definecolor{figblue}{RGB}{41,110,166}
+\definecolor{figgreen}{RGB}{38,128,89}
+\lstdefinelanguage{lean}{
+  morekeywords={import,public,abbrev,def,theorem,inductive,structure,where,variable,
+    match,with,fun,let,if,then,else},
+  morekeywords=[2]{Prop,Type,Set,List,Fin},
+  sensitive=true, morecomment=[l]{--}, morestring=[b]"}
+% The literate list must cover LITERATE in extract_lean_snippets.py. Each symbol takes one
+% column, so that comments aligned in the Lean source stay aligned; arrows take two (no
+% aligned line has one).
+\newcommand{\leansym}[1]{\makebox[0.5em]{$#1$}}
+\newcommand{\leanwide}[1]{\makebox[1em]{$#1$}}
+\lstdefinestyle{lean}{language=lean, basicstyle=\ttfamily\fontsize{9.5}{11.5}\selectfont, columns=fixed, basewidth=0.5em,
+  keepspaces=true, showstringspaces=false, extendedchars=false,
+  keywordstyle=\bfseries\color{figblue}, keywordstyle=[2]\color{figgreen},
+  commentstyle=\upshape\color{black!60},
+  literate={ℕ}{{\leansym{\mathbb{N}}}}1 {→}{{\leanwide{\to}}}2 {∀}{{\leansym{\forall}}}1 {∃}{{\leansym{\exists}}}1
+    {∈}{{\leansym{\in}}}1 {∉}{{\leansym{\notin}}}1 {∧}{{\leansym{\wedge}}}1 {≤}{{\leansym{\le}}}1
+    {↔}{{\leanwide{\leftrightarrow}}}2 {⟨}{{\leansym{\langle}}}1 {⟩}{{\leansym{\rangle}}}1 {α}{{\leansym{\alpha}}}1
+    {`}{{\char0}}1}  % the T1 grave accent: zi4 has no \textasciigrave
+\tcbuselibrary{skins}
+\newcommand{\leanlabel}{\textsf{\bfseries\color{figblue}Lean}}
+\newtcolorbox{leanbox}{colback=black!3,colframe=black!45,boxrule=0.5pt,arc=2pt,
+  left=6pt,right=6pt,top=3pt,bottom=3pt,enhanced,
+  overlay={\node[anchor=north east,inner sep=2pt,draw=black!45,fill=white,line width=0.5pt,
+    rounded corners=2pt,font=\scriptsize] at (frame.north east) {\leanlabel};}}
+\newcommand{\leanitem}[1]{\leansep\lstinputlisting[style=lean]{lean-snippets/#1.lean}\def\leansep{\vspace{2pt}}}
+\newcommand{\leansnippet}[1]{\begin{leanbox}\def\leansep{}\let\do\leanitem\docsvlist{#1}\end{leanbox}}
+
+\newcommand{\N}{\mathbb N}
+\newcommand{\lean}[1]{\texttt{#1}}
+\newcommand{\file}[1]{\texttt{#1}}
+\setlength{\emergencystretch}{2em}
+\setlist{itemsep=3pt,topsep=5pt}
+
+\title{The Word RAM in Lean}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section{The Word RAM in Lean}\label{sec:lean}
+
+This document explains the word RAM defined in the Lean file \file{Abstract.lean}, so that a
+reader can check its definitions.
+The boxes quote it and \file{AbstractBridge.lean} at commit \texttt{939256e6}; both files are
+in \file{Complexity/Computability/WordRAM/}.
+
+\subsection{Imports}
+
+\file{Abstract.lean} imports only Mathlib and CSLib's base module \lean{Cslib.Init}, and
+defines the machine from scratch.
+(The source file remains the authoritative version.)
+
+\leansnippet{Imports}
+
+\subsection{Words and Operations}
+
+At word size $w$, a \emph{word} is a natural number below $2^w$.
+The machine stores arbitrary natural numbers, but an instruction faults when it would
+create a value that is not a word (\cref{sec:lean-step}).
+
+There are ten binary operations.
+Subtraction is truncated ($3-5=0$).
+Division and remainder round down, with Lean's conventions $x/0=0$ and $x \bmod 0 = x$.
+The operations \lean{and}, \lean{or} and \lean{xor} act bitwise,
+and \lean{shl} and \lean{shr} shift $x$ left and right by $y$ bits,
+that is, give $x\cdot 2^y$ and $\lfloor x/2^y\rfloor$.
+\lean{AluOp.eval} gives the value of an operation on natural numbers, before any check that
+it is a word.
+
+\leansnippet{AluOp,AluOp.eval}
+
+\subsection{Instructions and Programs}
+
+A machine has $r$ registers $R[0],\dots,R[r-1]$ and a memory cell $M[a]$ at every address
+$a\in\N$.
+The number $r$ of registers is a parameter of the types below (the implicit variable
+\lean{r}).
+There are ten instructions; the comment on each gives its effect.
+Register arguments $d,i,j,a$ range over \lean{Fin r}${}=\{0,\dots,r-1\}$ (in \lean{load}
+and \lean{store}, register $a$ holds the address); a constant $x$ and a jump target $t$ are
+arbitrary natural numbers.
+The instruction \lean{width} reads the word size $w$, so a program can depend on it.
+A \emph{program} is a finite list of instructions, numbered from $0$.
+
+\leansnippet{variable,Instr,Program}
+
+\subsection{States and One Step}\label{sec:lean-step}
+
+A \emph{state} consists of the number \lean{pc} of the next instruction, the registers and
+the memory.
+The memory is a function on all of $\N$: there is no allocation and no bound on addresses.
+
+One step of a program continues in a new state, halts with an output, or faults.
+It executes instruction number \lean{pc}:
+\begin{itemize}
+  \item \lean{const} and \lean{alu} write their value to $R[d]$ if it is a word, and fault
+    otherwise. There is no wrap-around modulo $2^w$.
+  \item \lean{width} writes $w$, which is always a word, since $w<2^w$.
+  \item \lean{copy}, \lean{load} and \lean{store} move a value without a check.
+  \item \lean{jump} and the two branches set \lean{pc}; every other instruction except
+    \lean{halt} moves on to instruction $\lean{pc}+1$.
+  \item \lean{halt}~$i$ stops with output $R[i]$.
+  \item If \lean{pc} is not the number of an instruction, that is, $\lean{pc}$ is at least
+    the length of the program, the step faults.
+\end{itemize}
+Copies, loads and stores need no check: when the input fits (\cref{sec:lean-input}), an
+induction along the run shows that every register and memory cell always holds a word, and
+so every address used is below $2^w$.
+(This induction is not stated in the abstract files; it only explains why the check is not
+needed. The library states it for its own word RAM as \lean{Cslib.WordRAM.Runs.bounded\_init}.)
+
+\leansnippet{State,Outcome,step}
+
+\subsection{Running Time}
+
+\lean{Halts w p s v n} says that from state $s$, at word size $w$, program $p$ halts with
+output $v$ after exactly $n$ instructions, the final \lean{halt} included.
+It follows \lean{step} one instruction at a time: a fault ends the run without halting, and
+a run that never halts satisfies \lean{Halts} for no $v$ and $n$.
+Every instruction takes one unit of time, whatever its operands and the word size, so $n$ is
+the running time.
+
+\leansnippet{Halts}
+
+\subsection{Input}\label{sec:lean-input}
+
+An input is a list $x_1,\dots,x_k$ of natural numbers.
+The start state is at instruction $0$, has all registers $0$, and has $k,x_1,\dots,x_k$ in
+memory at addresses $0,1,\dots,k$ and $0$ at every other address;
+so a program reads the length of its input at $M[0]$.
+The input \emph{fits} word size $w$ if its length $k$ and all its entries are words.
+The output of a run is the single number $R[i]$ at its \lean{halt}~$i$.
+
+\leansnippet{init,InputFits}
+
+\subsection{Decision in Time \texorpdfstring{$T$}{T}}
+
+A decision problem is a set $A\subseteq\alpha$ of instances, given to the machine by an
+encoding $\mathit{encode}\colon\alpha\to\text{\lean{List}}~\N$.
+Two functions on instances set the terms: $T(a)$ bounds the running time on instance $a$,
+and $\mathit{bits}(a)$ is the word-size threshold: the program must work at every word size
+from $\mathit{bits}(a)$ on that the input fits.
+A program $p$ \emph{decides $A$ in time $T$} if, for every instance $a$ and every word size
+$w\ge \mathit{bits}(a)$ that $\mathit{encode}(a)$ fits, $p$ halts within $T(a)$ instructions,
+with output $1$ if $a\in A$ and $0$ if not.
+One program serves every such word size, and can read it with \lean{width}.
+Word sizes that the input does not fit impose nothing, so the input need not fit at
+$w=\mathit{bits}(a)$ itself.
+$A$ is \emph{decidable in time $T$} if some program, with some number of registers, decides it.
+(The length condition gives $k<2^w$, so all input addresses $0,\dots,k$ fit in a word; for
+$k>0$ this is the same as $w>\log_2 k$. \lean{bits} can ask for more.)
+
+\leansnippet{Decides,DecidableInTime}
+
+\subsection{Main Theorems}\label{sec:lean-main}
+
+Two theorems say that the machine of this section is the library's word RAM
+\lean{Cslib.WordRAM} over its standard basis.
+They are stated in \file{AbstractBridge.lean}, which imports both \file{Abstract.lean} and the
+library's word RAM, in the namespace \lean{Cslib.WordRAM.AbstractBridge}.
+There, names with the prefix \lean{Abstract.} are those of this section,
+and names without it are from the library's word RAM \lean{Cslib.WordRAM}:
+\lean{Program .standard r} is a program over the standard basis with $r$ registers,
+a state \lean{$\langle$pc, $\langle$reg, mem$\rangle\rangle$} has the same three parts as here,
+\lean{step} is one step,
+and \lean{Executes w q s v n} says that $q$ halts from $s$ with output $v$ after exactly $n$
+instructions.
+A reader does not need to know how these library definitions are made:
+\lean{decidableInTime\_iff} makes the library's decidability in time $T$ equal to that of
+this section, and \lean{runsAgree} does the same for single steps and halting runs.
+
+Two outcomes, one of each machine, \emph{agree} if both continue in the same state, both halt
+with the same output, or both fault.
+An abstract program $p$ and a library program $q$ \emph{run alike} if, from every state and at
+every word size, one step of each gives agreeing outcomes, and $p$ halts with output $v$
+after $n$ instructions exactly when $q$ does.
+
+\leansnippet{OutcomeAgrees,Same}
+
+For every number $r$ of registers, every abstract program runs alike with some library
+program, and every library program runs alike with some abstract program.
+(In the proof, the program of the other machine is a translation instruction by
+instruction.)
+
+\leansnippet{runsAgree}
+
+The two machines have the same time classes: for every type $\alpha$ of instances, problem
+$A$, encoding, time bound $T$ and word-size threshold $\mathit{bits}$, $A$ is decidable in time
+$T$ on the machine of this section exactly when it is on the library's word RAM over the
+standard basis.
+
+\leansnippet{decidableInTime_iff}
+
+So a library theorem that concludes
+\lean{DecidableInTime .standard A encode T bits} is, by \lean{decidableInTime\_iff},
+a time bound on the machine described in this section.
+
+To trust these results, a reader needs to read only the definitions of \file{Abstract.lean}
+and the statements of these two theorems, with \lean{OutcomeAgrees} and \lean{Same}.
+Lean checks the proofs, which use only Lean's three standard axioms (\lean{propext},
+\lean{Classical.choice}, \lean{Quot.sound}).
+
+\end{document}
