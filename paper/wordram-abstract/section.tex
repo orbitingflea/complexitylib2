@@ -37,11 +37,9 @@
   left=6pt,right=6pt,top=3pt,bottom=3pt,enhanced,
   overlay={\node[anchor=north east,inner sep=2pt,draw=black!45,fill=white,line width=0.5pt,
     rounded corners=2pt,font=\scriptsize] at (frame.north east) {\leanlabel};}}
-\newcommand{\leanlogo}{{\scriptsize\leanlabel}}
 \newcommand{\leanitem}[1]{\leansep\lstinputlisting[style=lean]{lean-snippets/#1.lean}\def\leansep{\vspace{2pt}}}
 \newcommand{\leansnippet}[1]{\begin{leanbox}\def\leansep{}\let\do\leanitem\docsvlist{#1}\end{leanbox}}
 
-\newtheorem{theorem}{Theorem}[section]
 \newcommand{\N}{\mathbb N}
 \newcommand{\lean}[1]{\texttt{#1}}
 \newcommand{\file}[1]{\texttt{#1}}
@@ -55,48 +53,18 @@
 \begin{document}
 \maketitle
 
-\begin{tcolorbox}[colback=figblue!6!white,colframe=figblue!65!black,boxrule=0.6pt,arc=2pt,
-  left=10pt,right=10pt,top=8pt,bottom=8pt]
-  \raggedright
-  This is a draft of one paper section. It presents the formal abstract of the word RAM in
-  Complexitylib the way Demaine and Langerman present the formal abstract of their tiling
-  result~\cite[Section~4]{DL26}. The Lean code in the boxes is cut by a script from
-  \file{Complexity/Computability/WordRAM/Abstract.lean} and \file{AbstractBridge.lean} at
-  commit \texttt{939256e6}.
-\end{tcolorbox}
-
 \section{The Word RAM in Lean}\label{sec:lean}
 
-The word RAM is the usual model for the running time of algorithms on integers.
-Complexitylib defines it as \lean{Cslib.WordRAM}: its instructions come from a basis that
-can be changed, and many layers are built on it for writing programs and proving time
-bounds. These definitions are long.
-The key point is that a reader does not need to read them to trust a time bound stated with
-them: it suffices to check that the handful of definitions in a single file,
-\file{Abstract.lean}, describe the intended machine, and that two theorem statements in
-\file{AbstractBridge.lean} say that it is the library's machine.
-The Lean proof assistant then verifies the proofs of these statements, and that they rely on
-only Lean's three standard axioms (\lean{propext}, \lean{Classical.choice},
-\lean{Quot.sound}).
+This document explains the word RAM defined in the Lean file \file{Abstract.lean}, so that a
+reader can check its definitions.
+The boxes quote \file{Complexity/Computability/WordRAM/Abstract.lean} at commit
+\texttt{939256e6}.
 
-\begin{theorem}\label{thm:same}
-  The machine described in this section is the library's word RAM over its standard basis.
-  Every program of either machine has a program of the other, with the same number of
-  registers, such that from every state and at every word size the two take the same step,
-  and halt with the same output after the same number of
-  instructions.\footnote{\leanlogo{} theorem \lean{runsAgree}. See \cref{sec:lean-main}.}
-  A problem is decidable in time $T$ on one machine exactly when it is on the other, for the
-  same input encoding, time bound and word-size
-  threshold.\footnote{\leanlogo{} theorem \lean{decidableInTime\_iff}. See \cref{sec:lean-main}.}
-\end{theorem}
+\subsection{Imports}
 
-In the rest of this section, we explain the definitions from \file{Abstract.lean}.
-(The source file \file{Complexity/Computability/WordRAM/Abstract.lean} remains the
-authoritative version.)
-It imports only Mathlib and CSLib's base module \lean{Cslib.Init}, and defines the machine
-from scratch.
-The two theorems are in a second file, \file{AbstractBridge.lean}, which imports both
-\file{Abstract.lean} and the library's word RAM; its proofs need not be checked by a human.
+\file{Abstract.lean} imports only Mathlib and CSLib's base module \lean{Cslib.Init}, and
+defines the machine from scratch.
+(The source file remains the authoritative version.)
 
 \leansnippet{Imports}
 
@@ -202,8 +170,10 @@ $k>0$ this is the same as $w>\log_2 k$. \lean{bits} can ask for more.)
 
 \subsection{Main Theorems}\label{sec:lean-main}
 
-The two theorems are stated in \file{AbstractBridge.lean}, in the namespace
-\lean{Cslib.WordRAM.AbstractBridge}.
+Two theorems say that the machine of this section is the library's word RAM
+\lean{Cslib.WordRAM} over its standard basis.
+They are stated in \file{AbstractBridge.lean}, which imports both \file{Abstract.lean} and the
+library's word RAM, in the namespace \lean{Cslib.WordRAM.AbstractBridge}.
 There, names with the prefix \lean{Abstract.} are those of this section,
 and names without it are from the library's word RAM \lean{Cslib.WordRAM}:
 \lean{Program .standard r} is a program over the standard basis with $r$ registers,
@@ -237,18 +207,13 @@ standard basis.
 
 \leansnippet{decidableInTime_iff}
 
-Together, these two Lean theorems establish \cref{thm:same}.
-In particular, a library theorem that concludes
+So a library theorem that concludes
 \lean{DecidableInTime .standard A encode T bits} is, by \lean{decidableInTime\_iff},
 a time bound on the machine described in this section.
 
-\begin{thebibliography}{DL26}
-\bibitem[DL26]{DL26}
-Erik D. Demaine and Stefan Langerman.
-\newblock Tiling 3D by translates of a single polycube is undecidable.
-\newblock arXiv:2610.12392, 2026.
-\newblock Source: \url{https://github.com/edemaine/translation-tiling-paper}, commit
-\texttt{5309313e}.
-\end{thebibliography}
+To trust these results, a reader needs to read only the definitions of \file{Abstract.lean}
+and the statements of these two theorems, with \lean{OutcomeAgrees} and \lean{Same}.
+Lean checks the proofs, which use only Lean's three standard axioms (\lean{propext},
+\lean{Classical.choice}, \lean{Quot.sound}).
 
 \end{document}

@@ -38,13 +38,18 @@ commit.
 
 ## What this draft keeps and changes
 
-Kept: the opening trust paragraph, the "rest of this section" paragraph with the import box,
-one subsection per concept in file order with prose then box, theorem statements with
-`:= ...`, the closing "Together, these ... establish" sentence, the box style, and the
-snippet script and Makefile rule (the script is a port of his).
+Kept: the import box with the scope and authority facts, one subsection per concept in file
+order with prose then box, theorem statements with `:= ...`, the box style, and the snippet
+script and Makefile rule (the script is a port of his).
 
 Changed, and why:
 
+- **The opening, by the user's choice.** There is no trust story and no informal theorem up
+  front: one or two sentences say what the document is for, then the "Imports" subsection
+  starts. No theorem comes before the definitions; the two theorems are stated once, in the
+  last subsection. The trust note (read only the definitions and the two statements; Lean
+  checks the proofs, with the three standard axioms) is at the end, where Erik's section
+  instead closes with "Together, these four Lean theorems establish" the informal theorem.
 - **Theorems live in the bridge.** In Erik's repo `Abstract.lean` imports the bridge and
   states the theorems (`lean/TranslationTiling/Abstract.lean:4`); ours does not import the
   library at all, so the two theorems are cut by name from `AbstractBridge.lean`, together with the two definitions
@@ -59,14 +64,8 @@ Changed, and why:
   check (the word invariant), and the decision subsection explains the quantifiers over word
   sizes. The machine has more cases than his tiling definitions, and these points are easy
   to misread from the code.
-- **A draft wrapper box** at the top says what the document is and which commit it quotes;
-  Erik's blue box instead points to the repository and the LLM-written article.
-- **An extra closing sentence:** after "Together, these two Lean theorems establish
-  Theorem 1.1", the section adds that a library theorem concluding
-  `DecidableInTime .standard A encode T bits` is a time bound on the machine of the section.
-  This is the use of the bridge, which Erik's section does not need.
-- **The informal theorem sits in the section,** right after the trust paragraph, since this
-  draft has no introduction.
+- **An extra sentence before the trust note** says that a library theorem concluding
+  `DecidableInTime .standard A encode T bits` is a time bound on the machine of the section. This is the use of the bridge, which Erik's section does not need.
 - **No Lean logo.** His repository has no license file, and the logo is the Lean FRO's mark;
   a text label "Lean" replaces it.
 - **No Texlish.** His source is Texlish (`Makefile:16-17`); this draft is plain LaTeX with the
