@@ -46,11 +46,25 @@ snippet script and Makefile rule (the script is a port of his).
 Changed, and why:
 
 - **Theorems live in the bridge.** In Erik's repo `Abstract.lean` imports the bridge and
-  states the theorems (`lean/TranslationTiling/Abstract.lean:4`); ours does not import the library at all, so the
-  two theorems are cut by name from `AbstractBridge.lean`, together with the two definitions
+  states the theorems (`lean/TranslationTiling/Abstract.lean:4`); ours does not import the
+  library at all, so the two theorems are cut by name from `AbstractBridge.lean`, together with the two definitions
   (`OutcomeAgrees`, `Same`) that their statements use. Their statements mention the
   library's own definitions, so the "Main Theorems" subsection first says what the unprefixed
   names are and why the reader need not read them.
+- **`variable {r : ℕ}` is shown beside `Instr`,** in the "Instructions and Programs" box,
+  not first: in the file it comes before `AluOp`, but it is about registers, which that
+  subsection introduces. All other boxes keep file order.
+- **Longer prose.** Erik gives each concept one or two sentences. The `step` subsection here
+  has a bullet per instruction kind and a paragraph on why copies, loads and stores need no
+  check (the word invariant), and the decision subsection explains the quantifiers over word
+  sizes. The machine has more cases than his tiling definitions, and these points are easy
+  to misread from the code.
+- **A draft wrapper box** at the top says what the document is and which commit it quotes;
+  Erik's blue box instead points to the repository and the LLM-written article.
+- **An extra closing sentence:** after "Together, these two Lean theorems establish
+  Theorem 1.1", the section adds that a library theorem concluding
+  `DecidableInTime .standard A encode T bits` is a time bound on the machine of the section.
+  This is the use of the bridge, which Erik's section does not need.
 - **The informal theorem sits in the section,** right after the trust paragraph, since this
   draft has no introduction.
 - **No Lean logo.** His repository has no license file, and the logo is the Lean FRO's mark;

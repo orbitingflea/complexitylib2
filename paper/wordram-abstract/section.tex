@@ -86,8 +86,8 @@ only Lean's three standard axioms (\lean{propext}, \lean{Classical.choice},
   and halt with the same output after the same number of
   instructions.\footnote{\leanlogo{} theorem \lean{runsAgree}. See \cref{sec:lean-main}.}
   A problem is decidable in time $T$ on one machine exactly when it is on the other, for the
-  same input encoding, time bound and least word
-  size.\footnote{\leanlogo{} theorem \lean{decidableInTime\_iff}. See \cref{sec:lean-main}.}
+  same input encoding, time bound and word-size
+  threshold.\footnote{\leanlogo{} theorem \lean{decidableInTime\_iff}. See \cref{sec:lean-main}.}
 \end{theorem}
 
 In the rest of this section, we explain the definitions from \file{Abstract.lean}.
@@ -154,7 +154,8 @@ It executes instruction number \lean{pc}:
 Copies, loads and stores need no check: when the input fits (\cref{sec:lean-input}), an
 induction along the run shows that every register and memory cell always holds a word, and
 so every address used is below $2^w$.
-(This induction is not stated in Lean; it only explains why the check is not needed.)
+(This induction is not stated in the abstract files; it only explains why the check is not
+needed. The library states it for its own word RAM as \lean{Cslib.WordRAM.Runs.bounded\_init}.)
 
 \leansnippet{State,Outcome,step}
 
@@ -185,7 +186,8 @@ The output of a run is the single number $R[i]$ at its \lean{halt}~$i$.
 A decision problem is a set $A\subseteq\alpha$ of instances, given to the machine by an
 encoding $\mathit{encode}\colon\alpha\to\text{\lean{List}}~\N$.
 Two functions on instances set the terms: $T(a)$ bounds the running time on instance $a$,
-and $\mathit{bits}(a)$ is the least word size at which the program must work.
+and $\mathit{bits}(a)$ is the word-size threshold: the program must work at every word size
+from $\mathit{bits}(a)$ on that the input fits.
 A program $p$ \emph{decides $A$ in time $T$} if, for every instance $a$ and every word size
 $w\ge \mathit{bits}(a)$ that $\mathit{encode}(a)$ fits, $p$ halts within $T(a)$ instructions,
 with output $1$ if $a\in A$ and $0$ if not.
@@ -193,8 +195,8 @@ One program serves every such word size, and can read it with \lean{width}.
 Word sizes that the input does not fit impose nothing, so the input need not fit at
 $w=\mathit{bits}(a)$ itself.
 $A$ is \emph{decidable in time $T$} if some program, with some number of registers, decides it.
-(Because the length $k$ must fit, every word size considered has $w>\log_2 k$, the usual
-assumption that a word can index the input; \lean{bits} can ask for more.)
+(The length condition gives $k<2^w$, so all input addresses $0,\dots,k$ fit in a word; for
+$k>0$ this is the same as $w>\log_2 k$. \lean{bits} can ask for more.)
 
 \leansnippet{Decides,DecidableInTime}
 
@@ -229,7 +231,7 @@ instruction.)
 \leansnippet{runsAgree}
 
 The two machines have the same time classes: for every type $\alpha$ of instances, problem
-$A$, encoding, time bound $T$ and least word size $\mathit{bits}$, $A$ is decidable in time
+$A$, encoding, time bound $T$ and word-size threshold $\mathit{bits}$, $A$ is decidable in time
 $T$ on the machine of this section exactly when it is on the library's word RAM over the
 standard basis.
 
