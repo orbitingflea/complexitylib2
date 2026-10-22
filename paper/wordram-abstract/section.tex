@@ -57,7 +57,7 @@
 
 This document explains the word RAM defined in the Lean file \file{Abstract.lean}, so that a
 reader can check its definitions.
-The boxes quote it and \file{AbstractBridge.lean} at commit \texttt{4e85a95c}; both files are
+The boxes quote it and \file{AbstractBridge.lean} at commit \texttt{b211d028}; both files are
 in \file{Complexity/Computability/WordRAM/}.
 
 \subsection{Imports}
@@ -82,6 +82,7 @@ and \lean{shl} and \lean{shr} shift $x$ left and right by $y$ bits,
 that is, give $x\cdot 2^y$ and $\lfloor x/2^y\rfloor$.
 \lean{AluOp.eval} gives the value of an operation on natural numbers, before any check that
 it is a word, or \lean{none} where it is undefined.
+A case value $n$ stands for \lean{some}~$n$.
 
 \leansnippet{AluOp,AluOp.eval}
 
