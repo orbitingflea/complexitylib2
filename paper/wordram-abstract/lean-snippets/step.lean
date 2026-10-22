@@ -6,7 +6,10 @@ def step (w : ℕ) (p : Program r) (s : State r) : Outcome r :=
   | none => .fault
   | some (.const d x) => setWord d x
   | some (.copy d i) => set d (s.reg i)
-  | some (.alu f d i j) => setWord d (f.eval (s.reg i) (s.reg j))
+  | some (.alu f d i j) =>
+    match f.eval (s.reg i) (s.reg j) with
+    | some x => setWord d x
+    | none => .fault
   | some (.width d) => set d w  -- `w < 2 ^ w`, so this never faults
   | some (.load d a) => set d (s.mem (s.reg a))
   | some (.store a i) =>

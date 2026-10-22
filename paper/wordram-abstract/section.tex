@@ -57,7 +57,7 @@
 
 This document explains the word RAM defined in the Lean file \file{Abstract.lean}, so that a
 reader can check its definitions.
-The boxes quote it and \file{AbstractBridge.lean} at commit \texttt{939256e6}; both files are
+The boxes quote it and \file{AbstractBridge.lean} at commit \texttt{4e85a95c}; both files are
 in \file{Complexity/Computability/WordRAM/}.
 
 \subsection{Imports}
@@ -72,16 +72,16 @@ defines the machine from scratch.
 
 At word size $w$, a \emph{word} is a natural number below $2^w$.
 The machine stores arbitrary natural numbers, but an instruction faults when it would
-create a value that is not a word (\cref{sec:lean-step}).
+create a value that is undefined or not a word (\cref{sec:lean-step}).
 
-There are ten binary operations.
-Subtraction is truncated ($3-5=0$).
-Division and remainder round down, with Lean's conventions $x/0=0$ and $x \bmod 0 = x$.
+There are ten binary operations, and each computes its exact value.
+Subtraction $x-y$ is undefined for $y>x$, and division $x/y$ and remainder $x \bmod y$ are
+undefined for $y=0$; otherwise division and remainder round down.
 The operations \lean{and}, \lean{or} and \lean{xor} act bitwise,
 and \lean{shl} and \lean{shr} shift $x$ left and right by $y$ bits,
 that is, give $x\cdot 2^y$ and $\lfloor x/2^y\rfloor$.
 \lean{AluOp.eval} gives the value of an operation on natural numbers, before any check that
-it is a word.
+it is a word, or \lean{none} where it is undefined.
 
 \leansnippet{AluOp,AluOp.eval}
 
@@ -110,7 +110,8 @@ One step of a program continues in a new state, halts with an output, or faults.
 It executes instruction number \lean{pc}:
 \begin{itemize}
   \item \lean{const} and \lean{alu} write their value to $R[d]$ if it is a word, and fault
-    otherwise. There is no wrap-around modulo $2^w$.
+    otherwise. There is no wrap-around modulo $2^w$. An \lean{alu} whose value is undefined
+    (\lean{none}) also faults.
   \item \lean{width} writes $w$, which is always a word, since $w<2^w$.
   \item \lean{copy}, \lean{load} and \lean{store} move a value without a check.
   \item \lean{jump} and the two branches set \lean{pc}; every other instruction except
@@ -171,12 +172,12 @@ $k>0$ this is the same as $w>\log_2 k$. \lean{bits} can ask for more.)
 \subsection{Main Theorems}\label{sec:lean-main}
 
 Two theorems say that the machine of this section is the library's word RAM
-\lean{Cslib.WordRAM} over its standard basis.
+\lean{Cslib.WordRAM} over its exact basis \lean{.exact}.
 They are stated in \file{AbstractBridge.lean}, which imports both \file{Abstract.lean} and the
 library's word RAM, in the namespace \lean{Cslib.WordRAM.AbstractBridge}.
 There, names with the prefix \lean{Abstract.} are those of this section,
 and names without it are from the library's word RAM \lean{Cslib.WordRAM}:
-\lean{Program .standard r} is a program over the standard basis with $r$ registers,
+\lean{Program .exact r} is a program over the exact basis with $r$ registers,
 a state \lean{$\langle$pc, $\langle$reg, mem$\rangle\rangle$} has the same three parts as here,
 \lean{step} is one step,
 and \lean{Executes w q s v n} says that $q$ halts from $s$ with output $v$ after exactly $n$
@@ -203,13 +204,13 @@ instruction.)
 The two machines have the same time classes: for every type $\alpha$ of instances, problem
 $A$, encoding, time bound $T$ and word-size threshold $\mathit{bits}$, $A$ is decidable in time
 $T$ on the machine of this section exactly when it is on the library's word RAM over the
-standard basis.
+exact basis.
 
 \leansnippet{decidableInTime_iff}
 
-So a library theorem that concludes
-\lean{DecidableInTime .standard A encode T bits} is, by \lean{decidableInTime\_iff},
-a time bound on the machine described in this section.
+So, by \lean{decidableInTime\_iff}, a library theorem that concludes
+\lean{DecidableInTime .exact A encode T bits} is a time bound on the machine described in
+this section.
 
 To trust these results, a reader needs to read only the definitions of \file{Abstract.lean}
 and the statements of these two theorems, with \lean{OutcomeAgrees} and \lean{Same}.
