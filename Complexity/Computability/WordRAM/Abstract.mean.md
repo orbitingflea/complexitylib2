@@ -1,14 +1,15 @@
 # The word RAM: a formal abstract (Mean rendering)
 
-This file follows [`WordRAMAbstract.lean`](WordRAMAbstract.lean) from top to bottom. Its prose
-is the Lean file's comments, kept as they are. Each Lean declaration is replaced by its
+This file follows [`Abstract.lean`](Abstract.lean) from top to bottom. Its prose is the Lean
+file's comments, kept as they are. Each Lean declaration is replaced by its
 [Mean](https://github.com/edemaine/mean) rendering, whose round trip Mean checked. Text marked
 *hand-written, not machine-checked* stands where Mean renders nothing useful. The last section
 says how this was made and what Mean did and did not check.
 
 A short, self-contained account of the word RAM with the standard operations, and of what it
-means for a problem to be decidable on it in time `T`. It imports only Mathlib.
-`ComplexityTests/WordRAMAbstractBridge.lean` proves that it is the library's word RAM.
+means for a problem to be decidable on it in time `T`. It imports only Mathlib and `Cslib.Init`,
+and defines the machine from scratch. `Complexity/Computability/WordRAM/AbstractBridge.lean`
+proves that it is the library's word RAM.
 
 At word size `w`, a *word* is a number below `2 ^ w`. A machine has `r` registers `R[0]`, …,
 `R[r - 1]` and a memory cell `M[a]` at every address `a : ℕ`; all hold natural numbers.
@@ -77,8 +78,11 @@ Abbreviation:
 
 A state: the number `pc` of the next instruction, the registers and the memory.
 
-*Hand-written, not machine-checked:* a state `State r` has three fields: `pc : ℕ`, `reg : Fin r → ℕ` (so `R[i]` is
-`reg i`) and `mem : ℕ → ℕ` (so `M[a]` is `mem a`).
+*Hand-written, not machine-checked:* a state `State r` has three fields:
+
+- `pc : ℕ`: the number of the next instruction;
+- `reg : Fin r → ℕ`: `reg i` is `R[i]`;
+- `mem : ℕ → ℕ`: `mem a` is `M[a]`.
 
 ## `Outcome`
 
@@ -215,9 +219,10 @@ Definition:
 
 # The bridge: main statements
 
-These come from [`WordRAMAbstractBridge.lean`](WordRAMAbstractBridge.lean). There, the abstract
-machine is `WordRAMAbstract`, and the library's word RAM is `WordRAM` (that is,
-`Cslib.WordRAM`). Lean checks the proofs; only the statements are shown.
+These come from [`AbstractBridge.lean`](AbstractBridge.lean), in namespace
+`Cslib.WordRAM.AbstractBridge`. There, names with the prefix `Abstract.` belong to the abstract
+machine (`Cslib.WordRAM.Abstract`), and names without it belong to the library's word RAM
+(`Cslib.WordRAM`). Lean checks the proofs; only the statements are shown.
 
 ## `OutcomeAgrees`
 
@@ -228,11 +233,11 @@ fault.
 ```lean
 Definition:
   OutcomeAgrees is
-    the function : {r : ℕ} → WordRAMAbstract.Outcome r → WordRAM.Outcome r → Prop mapping an implicit natural number r and an element x of WordRAMAbstract.Outcome r and an element x_1 of WordRAM.Outcome r to
+    the function : {r : ℕ} → Abstract.Outcome r → Outcome r → Prop mapping an implicit natural number r and an element x of Abstract.Outcome r and an element x_1 of Outcome r to
       match x, x_1 with
-      | WordRAMAbstract.Outcome.next s, WordRAM.Outcome.next t => t = { pc := s.pc, data := { regs := s.reg, mem := s.mem } }
-      | WordRAMAbstract.Outcome.halt v, WordRAM.Outcome.halt v' => v = v'
-      | WordRAMAbstract.Outcome.fault, WordRAM.Outcome.fault => True
+      | Abstract.Outcome.next s, Outcome.next t => t = { pc := s.pc, data := { regs := s.reg, mem := s.mem } }
+      | Abstract.Outcome.halt v, Outcome.halt v' => v = v'
+      | Abstract.Outcome.fault, Outcome.fault => True
       | x, x_2 => False.
 ```
 
@@ -245,14 +250,14 @@ with the same output after the same number of instructions.
 ```lean
 Definition:
   Same is
-    the function mapping an implicit natural number r and an element p of WordRAMAbstract.Program r and an element q of WordRAM.Program WordRAM.Basis.standard r to
+    the function mapping an implicit natural number r and an element p of Abstract.Program r and an element q of Program Basis.standard r to
       for all natural numbers w and pc:
         ∀ (reg : Fin r → ℕ) (mem : ℕ → ℕ),
-          OutcomeAgrees (WordRAMAbstract.step w p { pc := pc, reg := reg, mem := mem })
-              (WordRAM.step w q { pc := pc, data := { regs := reg, mem := mem } }) ∧
+          OutcomeAgrees (Abstract.step w p { pc := pc, reg := reg, mem := mem })
+              (step w q { pc := pc, data := { regs := reg, mem := mem } }) ∧
             ∀ (v n : ℕ),
-              WordRAMAbstract.Halts w p { pc := pc, reg := reg, mem := mem } v n ↔
-                WordRAM.Executes w q { pc := pc, data := { regs := reg, mem := mem } } v n.
+              Abstract.Halts w p { pc := pc, reg := reg, mem := mem } v n ↔
+                Executes w q { pc := pc, data := { regs := reg, mem := mem } } v n.
 ```
 
 ## `runsAgree`
@@ -263,7 +268,7 @@ over `Basis.standard` with the same registers, and conversely.
 ```lean
 Theorem runsAgree:
   for every natural number r:
-    (∀ (p : WordRAMAbstract.Program r), ∃ (q : WordRAM.Program WordRAM.Basis.standard r), Same p q) and (∀ (q : WordRAM.Program WordRAM.Basis.standard r), ∃ (p : WordRAMAbstract.Program r), Same p q)
+    (∀ (p : Abstract.Program r), ∃ (q : Program Basis.standard r), Same p q) and (∀ (q : Program Basis.standard r), ∃ (p : Abstract.Program r), Same p q)
 ```
 
 ## `decidableInTime_iff`
@@ -276,7 +281,7 @@ word-size threshold.
 -- Universe parameters: u
 Theorem decidableInTime_iff:
   ∀ {α : Type u} (A : Set α) (encode : α → List ℕ) (T bits : α → ℕ),
-    WordRAMAbstract.DecidableInTime A encode T bits ↔ WordRAM.DecidableInTime WordRAM.Basis.standard A encode T bits
+    Abstract.DecidableInTime A encode T bits ↔ DecidableInTime Basis.standard A encode T bits
 ```
 
 # How this was made, and what Mean checked
@@ -292,16 +297,16 @@ for f in Syntax RoundTrip Render; do
   LEAN_PATH="$(lake env printenv LEAN_PATH):$OUT" lake env lean -R "$MEAN" \
     -o "$OUT/Mean/$f.olean" "$MEAN/Mean/$f.lean"
 done
-lake build ComplexityTests.WordRAMAbstractBridge
+lake build Complexity.Computability.WordRAM.AbstractBridge
 LEAN_PATH="$(lake env printenv LEAN_PATH):$OUT" lake env lean RunA.lean
 LEAN_PATH="$(lake env printenv LEAN_PATH):$OUT" lake env lean RunB.lean
 ```
 
-`RunA.lean` imports `Mean.Render` and `ComplexityTests.WordRAMAbstract`, opens
-`namespace ComplexityTests.WordRAMAbstract`, and runs `#mean` on `AluOp.eval`, `Program`,
+`RunA.lean` imports `Mean.Render` and `Complexity.Computability.WordRAM.Abstract`, opens
+`namespace Cslib.WordRAM.Abstract`, and runs `#mean` on `AluOp.eval`, `Program`,
 `step`, `Halts`, `init`, `InputFits`, `Decides` and `DecidableInTime`. `RunB.lean` imports
-`ComplexityTests.WordRAMAbstractBridge`, opens `namespace ComplexityTests.WordRAMAbstractBridge`
-and `open Cslib`, and runs `#mean` on `OutcomeAgrees`, `Same`, `runsAgree` and
+`Complexity.Computability.WordRAM.AbstractBridge`, opens
+`namespace Cslib.WordRAM.AbstractBridge`, and runs `#mean` on `OutcomeAgrees`, `Same`, `runsAgree` and
 `decidableInTime_iff`. Working inside the namespace makes Mean print short names in the
 bodies.
 
@@ -309,8 +314,8 @@ bodies.
   it, and checked that it gives the same Lean term. All 12 passed. This shows the text means
   the Lean term; it does not show the term says what the prose claims.
 - **One edit after Mean:** Mean has no option to shorten the declaration name in its header
-  line, so the namespace prefix (`ComplexityTests.WordRAMAbstract.` or
-  `ComplexityTests.WordRAMAbstractBridge.`) was removed there. Nothing else in the Mean output
+  line, so the namespace prefix (`Cslib.WordRAM.Abstract.` or
+  `Cslib.WordRAM.AbstractBridge.`) was removed there. Nothing else in the Mean output
   was changed.
 - **Not checked by Mean:** all prose (the Lean comments); the types `AluOp`, `Instr`, `State`
   and `Outcome`, which Mean renders only as `Type`; and the hand-written readings at

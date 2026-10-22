@@ -1095,6 +1095,8 @@ public import Complexity.Computability.USTCON.Reader.Defs
 public import Complexity.Computability.USTCON.Reader.Encode
 public import Complexity.Computability.USTCON.Reader.Invariant
 public import Complexity.Computability.USTCON.Space
+public import Complexity.Computability.WordRAM.Abstract
+public import Complexity.Computability.WordRAM.AbstractBridge
 public import Complexity.Computability.WordRAM.Allocation
 public import Complexity.Computability.WordRAM.Basis
 public import Complexity.Computability.WordRAM.Compile

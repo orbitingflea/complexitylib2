@@ -4,25 +4,30 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Renfei Zhou
 -/
 
--- upstream: local-only (reading abstract of the standard word RAM; imports Mathlib only)
+module
+-- upstream: local-only (reading abstract of the standard word RAM; Mathlib and CSLib only)
 
-import Mathlib.Data.Nat.Notation
-import Mathlib.Data.Set.Defs
-import Mathlib.Logic.Function.Basic
+public import Cslib.Init
+public import Mathlib.Data.Nat.Notation
+public import Mathlib.Data.Set.Defs
+public import Mathlib.Logic.Function.Basic
 
 /-!
 # The word RAM: a formal abstract
 
 A short, self-contained account of the word RAM with the standard operations, and of what it
-means for a problem to be decidable on it in time `T`. It imports only Mathlib.
-`ComplexityTests/WordRAMAbstractBridge.lean` proves that it is the library's word RAM.
+means for a problem to be decidable on it in time `T`. It imports only Mathlib and `Cslib.Init`,
+and defines the machine from scratch. `Complexity/Computability/WordRAM/AbstractBridge.lean`
+proves that it is the library's word RAM.
 
 At word size `w`, a *word* is a number below `2 ^ w`. A machine has `r` registers `R[0]`, …,
 `R[r - 1]` and a memory cell `M[a]` at every address `a : ℕ`; all hold natural numbers.
 Every instruction takes one unit of time.
 -/
 
-namespace ComplexityTests.WordRAMAbstract
+@[expose] public section
+
+namespace Cslib.WordRAM.Abstract
 
 variable {r : ℕ}
 
@@ -62,8 +67,11 @@ abbrev Program (r : ℕ) := List (Instr r)
 
 /-- A state: the number `pc` of the next instruction, the registers and the memory. -/
 structure State (r : ℕ) where
+  /-- The number of the next instruction. -/
   pc : ℕ
+  /-- `reg i` is `R[i]`. -/
   reg : Fin r → ℕ
+  /-- `mem a` is `M[a]`. -/
   mem : ℕ → ℕ
 
 /-- One step continues in a new state, halts with an output, or faults. -/
@@ -126,4 +134,6 @@ of registers, decides it. -/
 def DecidableInTime {α : Type*} (A : Set α) (encode : α → List ℕ) (T bits : α → ℕ) : Prop :=
   ∃ r, ∃ p : Program r, Decides p A encode T bits
 
-end ComplexityTests.WordRAMAbstract
+end Cslib.WordRAM.Abstract
+
+end

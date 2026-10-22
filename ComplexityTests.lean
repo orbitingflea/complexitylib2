@@ -355,8 +355,6 @@ import ComplexityTests.WaringCompilation
 import ComplexityTests.WeightedThreshold
 import ComplexityTests.WeightedThresholdBounds
 import ComplexityTests.WordRAM
-import ComplexityTests.WordRAMAbstract
-import ComplexityTests.WordRAMAbstractBridge
 import ComplexityTests.WordRAMBasis
 import ComplexityTests.WordRAMController
 import ComplexityTests.WordRAMDynamic
