@@ -5,7 +5,7 @@ Authors: Renfei Zhou
 -/
 
 module
--- upstream: local-only (reading abstract of the standard word RAM; Mathlib and CSLib only)
+-- upstream: local-only (reading abstract of the exact word RAM; Mathlib and CSLib only)
 
 public import Cslib.Init
 public import Mathlib.Data.Nat.Notation
@@ -15,10 +15,10 @@ public import Mathlib.Logic.Function.Basic
 /-!
 # The word RAM: a formal abstract
 
-A short, self-contained account of the word RAM with the standard operations, and of what it
-means for a problem to be decidable on it in time `T`. It imports only Mathlib and `Cslib.Init`,
-and defines the machine from scratch. `Complexity/Computability/WordRAM/AbstractBridge.lean`
-proves that it is the library's word RAM.
+A short, self-contained account of the word RAM with the standard operations, each computing its
+exact value, and of what it means for a problem to be decidable on it in time `T`. It imports
+only Mathlib and `Cslib.Init`, and defines the machine from scratch.
+`Complexity/Computability/WordRAM/AbstractBridge.lean` proves that it is the library's word RAM.
 
 At word size `w`, a *word* is a number below `2 ^ w`. A machine has `r` registers `R[0]`, …,
 `R[r - 1]` and a memory cell `M[a]` at every address `a : ℕ`; all hold natural numbers.
@@ -31,23 +31,24 @@ namespace Cslib.WordRAM.Abstract
 
 variable {r : ℕ}
 
-/-- The binary operations. Subtraction is truncated (`3 - 5 = 0`), `x / 0 = 0`, `x % 0 = x`,
-`and`, `or`, `xor` are bitwise, and `shl`, `shr` shift left and right by `y` bits. -/
+/-- The binary operations. Division rounds down, `and`, `or`, `xor` are bitwise, and `shl`,
+`shr` shift left and right by `y` bits. -/
 inductive AluOp
   | add | sub | mul | div | mod | and | or | xor | shl | shr
 
-/-- The value of a binary operation, before any check that it is a word. -/
-def AluOp.eval : AluOp → ℕ → ℕ → ℕ
-  | .add, x, y => x + y
-  | .sub, x, y => x - y
-  | .mul, x, y => x * y
-  | .div, x, y => x / y
-  | .mod, x, y => x % y
-  | .and, x, y => x &&& y
-  | .or, x, y => x ||| y
-  | .xor, x, y => x ^^^ y
-  | .shl, x, y => x * 2 ^ y
-  | .shr, x, y => x / 2 ^ y
+/-- The exact value of a binary operation, before any check that it is a word, or `none` where it
+is undefined: `x - y` for `y > x`, and `x / 0` and `x % 0`. -/
+def AluOp.eval : AluOp → ℕ → ℕ → Option ℕ
+  | .add, x, y => some (x + y)
+  | .sub, x, y => if y ≤ x then some (x - y) else none
+  | .mul, x, y => some (x * y)
+  | .div, x, y => if y = 0 then none else some (x / y)
+  | .mod, x, y => if y = 0 then none else some (x % y)
+  | .and, x, y => some (x &&& y)
+  | .or, x, y => some (x ||| y)
+  | .xor, x, y => some (x ^^^ y)
+  | .shl, x, y => some (x * 2 ^ y)
+  | .shr, x, y => some (x / 2 ^ y)
 
 /-- The instructions over `r` registers. Jump targets are instruction numbers. -/
 inductive Instr (r : ℕ)
@@ -81,9 +82,9 @@ inductive Outcome (r : ℕ)
   | fault
 
 /-- One step of program `p` at word size `w`. A constant or operation whose value is not a word
-faults (no wrap-around), and so does running off the end of the program. Copies, loads and
-stores are not checked: from an input whose length and words fit (`InputFits`), they only ever
-move words. -/
+faults (no wrap-around), and so do an operation whose value is undefined and running off the end
+of the program. Copies, loads and stores are not checked: from an input whose length and words
+fit (`InputFits`), they only ever move words. -/
 def step (w : ℕ) (p : Program r) (s : State r) : Outcome r :=
   let set (d : Fin r) (x : ℕ) : Outcome r :=  -- `R[d] := x`, then the next instruction
     .next { s with pc := s.pc + 1, reg := Function.update s.reg d x }
@@ -92,7 +93,10 @@ def step (w : ℕ) (p : Program r) (s : State r) : Outcome r :=
   | none => .fault
   | some (.const d x) => setWord d x
   | some (.copy d i) => set d (s.reg i)
-  | some (.alu f d i j) => setWord d (f.eval (s.reg i) (s.reg j))
+  | some (.alu f d i j) =>
+    match f.eval (s.reg i) (s.reg j) with
+    | some x => setWord d x
+    | none => .fault
   | some (.width d) => set d w  -- `w < 2 ^ w`, so this never faults
   | some (.load d a) => set d (s.mem (s.reg a))
   | some (.store a i) =>

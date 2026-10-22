@@ -15,7 +15,7 @@ public import Complexity.Computability.WordRAM.Time
 
 `Cslib.WordRAM.Abstract` defines a word RAM and "decidable in time `T`" from scratch,
 importing only Mathlib and `Cslib.Init`. This file proves that it is `Cslib.WordRAM` over
-`Cslib.WordRAM.Basis.standard`. It translates instructions, programs, states and outcomes to
+`Cslib.WordRAM.Basis.exact`. It translates instructions, programs, states and outcomes to
 `Cslib.WordRAM` and back, shows that one step commutes with the translation (`step_toCslib`),
 and derives the two main results.
 
@@ -25,7 +25,7 @@ and derives the two main results.
   and conversely, such that from every state, at every word size, one step of each has
   agreeing outcomes (`OutcomeAgrees`: same next state, same output, or both fault), and the
   halting runs are the same, with the same output and instruction count.
-* `decidableInTime_iff`: abstract `DecidableInTime` is `Cslib.WordRAM.DecidableInTime .standard`,
+* `decidableInTime_iff`: abstract `DecidableInTime` is `Cslib.WordRAM.DecidableInTime .exact`,
   for the same encoding, time bound and word-size threshold.
 -/
 
@@ -53,19 +53,19 @@ def aluOpOfCslib : BinOp → Abstract.AluOp
 theorem aluOpToCslib_ofCslib (f : BinOp) : aluOpToCslib (aluOpOfCslib f) = f := by
   cases f <;> rfl
 
-/-- An abstract binary operation has the value of its translation; shifts are multiplication
-and division by powers of two. -/
+/-- An abstract binary operation has the exact value of its translation; shifts are
+multiplication and division by powers of two. -/
 theorem eval_aluOpToCslib (f : Abstract.AluOp) (x y : ℕ) :
-    (aluOpToCslib f).eval x y = f.eval x y := by
+    (aluOpToCslib f).evalExact x y = f.eval x y := by
   cases f <;>
     simp [aluOpToCslib, Abstract.AluOp.eval, Nat.shiftLeft_eq, Nat.shiftRight_eq_div_pow]
 
-/-- An abstract instruction as an instruction of `Cslib.WordRAM` over the standard basis. -/
-def instrToCslib : Abstract.Instr r → Instr .standard r
+/-- An abstract instruction as an instruction of `Cslib.WordRAM` over the exact basis. -/
+def instrToCslib : Abstract.Instr r → Instr .exact r
   | .const d x => .op (.const d x)
   | .copy d i => .op (.copy d i)
-  | .alu f d i j => .op (.bin (aluOpToCslib f) d i j)
-  | .width d => .op (.width d)
+  | .alu f d i j => .op (.exactBin (aluOpToCslib f) d i j)
+  | .width d => .op (.exactWidth d)
   | .load d a => .op (.load d a)
   | .store a i => .op (.store a i)
   | .jump t => .jump t
@@ -73,8 +73,8 @@ def instrToCslib : Abstract.Instr r → Instr .standard r
   | .branchLt i j t => .branch (.lt i j) t
   | .halt i => .halt i
 
-/-- An instruction of `Cslib.WordRAM` over the standard basis as an abstract instruction. -/
-def instrOfCslib : Instr .standard r → Abstract.Instr r
+/-- An instruction of `Cslib.WordRAM` over the exact basis as an abstract instruction. -/
+def instrOfCslib : Instr .exact r → Abstract.Instr r
   | .op (.const d x) => .const d x
   | .op (.copy d i) => .copy d i
   | .op (.alu (.bin f) d args) => .alu (aluOpOfCslib f) d (args (0 : Fin 2)) (args (1 : Fin 2))
@@ -86,25 +86,25 @@ def instrOfCslib : Instr .standard r → Abstract.Instr r
   | .branch (.lt i j) t => .branchLt i j t
   | .halt i => .halt i
 
-theorem instrToCslib_ofCslib (i : Instr .standard r) : instrToCslib (instrOfCslib i) = i := by
+theorem instrToCslib_ofCslib (i : Instr .exact r) : instrToCslib (instrOfCslib i) = i := by
   rcases i with (⟨⟩ | ⟨⟩ | ⟨f | _⟩ | ⟨⟩ | ⟨⟩) | _ | ⟨⟨⟩ | ⟨⟩⟩ | _ <;> try rfl
   · cases f <;>
-    · simp only [instrOfCslib, instrToCslib, Op.bin]
+    · simp only [instrOfCslib, instrToCslib, Op.exactBin]
       congr 2
       funext k
       fin_cases k <;> rfl
-  · simp only [instrOfCslib, instrToCslib, Op.width]
+  · simp only [instrOfCslib, instrToCslib, Op.exactWidth]
     congr 2
     funext k
     exact k.elim0
 
 /-- An abstract program as a program of `Cslib.WordRAM`. -/
-abbrev programToCslib (p : Abstract.Program r) : Program .standard r := p.map instrToCslib
+abbrev programToCslib (p : Abstract.Program r) : Program .exact r := p.map instrToCslib
 
 /-- A program of `Cslib.WordRAM` as an abstract program. -/
-abbrev programOfCslib (q : Program .standard r) : Abstract.Program r := q.map instrOfCslib
+abbrev programOfCslib (q : Program .exact r) : Abstract.Program r := q.map instrOfCslib
 
-theorem programToCslib_ofCslib (q : Program .standard r) :
+theorem programToCslib_ofCslib (q : Program .exact r) :
     programToCslib (programOfCslib q) = q := by
   simp [List.map_map, Function.comp_def, instrToCslib_ofCslib]
 
@@ -127,13 +127,17 @@ theorem step_toCslib (w : ℕ) (p : Abstract.Program r) (s : Abstract.State r) :
   cases p[s.pc]? with
   | none => rfl
   | some i =>
-    -- constants and operations fault on the same values; the word size is a word
+    -- constants and operations fault on the same values, operations also where they are
+    -- undefined; the word size is a word
     cases i with
     | const d x => by_cases h : x < 2 ^ w <;> simp [instrToCslib, Data.put, Fits, h,
         outcomeToCslib, stateToCslib, Data.set]
-    | alu f d i j => by_cases h : f.eval (s.reg i) (s.reg j) < 2 ^ w <;>
-        simp [-BinOp.eval, instrToCslib, Data.put, Fits, eval_aluOpToCslib, h, outcomeToCslib,
-          stateToCslib, Data.set]
+    | alu f d i j =>
+      cases hf : f.eval (s.reg i) (s.reg j) with
+      | none => simp [-BinOp.evalExact, instrToCslib, eval_aluOpToCslib, hf, outcomeToCslib]
+      | some x => by_cases h : x < 2 ^ w <;>
+          simp [-BinOp.evalExact, instrToCslib, Data.put, Fits, eval_aluOpToCslib, hf, h,
+            outcomeToCslib, stateToCslib, Data.set]
     | width d => simp [instrToCslib, outcomeToCslib, stateToCslib, Data.set]
     | branchEq i j t => by_cases h : s.reg i = s.reg j <;> simp [instrToCslib, h,
         outcomeToCslib, stateToCslib]
@@ -144,7 +148,7 @@ theorem step_toCslib (w : ℕ) (p : Abstract.Program r) (s : Abstract.State r) :
 /-! ## Runs -/
 
 /-- `Cslib.WordRAM.Executes` unfolds by one step, as `Abstract.Halts` is defined. -/
-theorem executes_succ_iff {w : ℕ} {q : Program .standard r} {s : State r} {v n : ℕ} :
+theorem executes_succ_iff {w : ℕ} {q : Program .exact r} {s : State r} {v n : ℕ} :
     Executes w q s v (n + 1) ↔
       match step w q s with
       | .next t => Executes w q t v n
@@ -194,7 +198,7 @@ def OutcomeAgrees : Abstract.Outcome r → Outcome r → Prop
 /-- An abstract program `p` and a program `q` of `Cslib.WordRAM` run alike: from every state
 `⟨pc, reg, mem⟩` and at every word size, one step of each has agreeing outcomes, and both halt
 with the same output after the same number of instructions. -/
-def Same (p : Abstract.Program r) (q : Program .standard r) : Prop :=
+def Same (p : Abstract.Program r) (q : Program .exact r) : Prop :=
   ∀ w pc reg mem,
     OutcomeAgrees (Abstract.step w p ⟨pc, reg, mem⟩) (step w q ⟨pc, ⟨reg, mem⟩⟩) ∧
     ∀ v n, Abstract.Halts w p ⟨pc, reg, mem⟩ v n ↔ Executes w q ⟨pc, ⟨reg, mem⟩⟩ v n
@@ -210,10 +214,10 @@ theorem same_programToCslib (p : Abstract.Program r) : Same p (programToCslib p)
     ⟨step_toCslib w p ⟨pc, reg, mem⟩ ▸ outcomeAgrees_toCslib _, fun _ _ => halts_iff_executes⟩
 
 /-- **Same machine.** Each abstract program runs alike with some program of `Cslib.WordRAM`
-over `Basis.standard` with the same registers, and conversely. -/
+over `Basis.exact` with the same registers, and conversely. -/
 theorem runsAgree (r : ℕ) :
-    (∀ p : Abstract.Program r, ∃ q : Program .standard r, Same p q) ∧
-      ∀ q : Program .standard r, ∃ p : Abstract.Program r, Same p q :=
+    (∀ p : Abstract.Program r, ∃ q : Program .exact r, Same p q) ∧
+      ∀ q : Program .exact r, ∃ p : Abstract.Program r, Same p q :=
   ⟨fun p => ⟨_, same_programToCslib p⟩, fun q => ⟨programOfCslib q, by
     simpa only [programToCslib_ofCslib] using same_programToCslib (programOfCslib q)⟩⟩
 
@@ -243,11 +247,11 @@ theorem decides_iff {α : Type*} {p : Abstract.Program r} {A : Set α} {encode :
     Abstract.InputFits, InputFits, Fits, halts_iff_executes, init_toCslib, hans]
 
 /-- **Same time classes.** A problem is decidable in time `T` on the abstract machine exactly
-when it is on `Cslib.WordRAM` over `Basis.standard`, for the same encoding, time bound and
+when it is on `Cslib.WordRAM` over `Basis.exact`, for the same encoding, time bound and
 word-size threshold. -/
 theorem decidableInTime_iff {α : Type u} (A : Set α) (encode : α → List ℕ) (T bits : α → ℕ) :
     Abstract.DecidableInTime A encode T bits ↔
-      DecidableInTime .standard A encode T bits := by
+      DecidableInTime .exact A encode T bits := by
   constructor
   · rintro ⟨r, p, hp⟩
     exact ⟨r, programToCslib p, decides_iff.1 hp⟩
