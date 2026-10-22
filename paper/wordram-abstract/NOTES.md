@@ -65,7 +65,7 @@ Changed, and why:
   sizes. The machine has more cases than his tiling definitions, and these points are easy
   to misread from the code.
 - **An extra sentence before the trust note** says that a library theorem concluding
-  `DecidableInTime .standard A encode T bits` is a time bound on the machine of the section. This is the use of the bridge, which Erik's section does not need.
+  `DecidableInTime .exact A encode T bits` is a time bound on the machine of the section. This is the use of the bridge, which Erik's section does not need.
 - **No Lean logo.** His repository has no license file, and the logo is the Lean FRO's mark;
   a text label "Lean" replaces it.
 - **No Texlish.** His source is Texlish (`Makefile:16-17`); this draft is plain LaTeX with the
