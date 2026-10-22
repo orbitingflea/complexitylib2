@@ -1,0 +1,3 @@
+theorem runsAgree (r : ℕ) :
+    (∀ p : Abstract.Program r, ∃ q : Program .standard r, Same p q) ∧
+      ∀ q : Program .standard r, ∃ p : Abstract.Program r, Same p q := ...
