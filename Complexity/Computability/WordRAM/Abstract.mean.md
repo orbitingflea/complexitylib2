@@ -6,10 +6,10 @@ file's comments, kept as they are. Each Lean declaration is replaced by its
 *hand-written, not machine-checked* stands where Mean renders nothing useful. The last section
 says how this was made and what Mean did and did not check.
 
-A short, self-contained account of the word RAM with the standard operations, and of what it
-means for a problem to be decidable on it in time `T`. It imports only Mathlib and `Cslib.Init`,
-and defines the machine from scratch. `Complexity/Computability/WordRAM/AbstractBridge.lean`
-proves that it is the library's word RAM.
+A short, self-contained account of the word RAM with the standard operations, each computing its
+exact value, and of what it means for a problem to be decidable on it in time `T`. It imports
+only Mathlib and `Cslib.Init`, and defines the machine from scratch.
+`Complexity/Computability/WordRAM/AbstractBridge.lean` proves that it is the library's word RAM.
 
 At word size `w`, a *word* is a number below `2 ^ w`. A machine has `r` registers `R[0]`, …,
 `R[r - 1]` and a memory cell `M[a]` at every address `a : ℕ`; all hold natural numbers.
@@ -17,31 +17,32 @@ Every instruction takes one unit of time.
 
 ## `AluOp`
 
-The binary operations. Subtraction is truncated (`3 - 5 = 0`), `x / 0 = 0`, `x % 0 = x`,
-`and`, `or`, `xor` are bitwise, and `shl`, `shr` shift left and right by `y` bits.
+The binary operations. Division rounds down, `and`, `or`, `xor` are bitwise, and `shl`,
+`shr` shift left and right by `y` bits.
 
 *Hand-written, not machine-checked:* `AluOp` has the ten values `add`, `sub`, `mul`, `div`, `mod`, `and`, `or`, `xor`,
 `shl`, `shr`.
 
 ## `AluOp.eval`
 
-The value of a binary operation, before any check that it is a word.
+The exact value of a binary operation, before any check that it is a word, or `none` where it
+is undefined: `x - y` for `y > x`, and `x / 0` and `x % 0`.
 
 ```lean
 Definition:
   AluOp.eval is
     the function mapping an element x of AluOp and a natural number x_1 and a natural number x_2 to
       match x, x_1, x_2 with
-      | AluOp.add, x, y => x + y
-      | AluOp.sub, x, y => x - y
-      | AluOp.mul, x, y => x * y
-      | AluOp.div, x, y => x / y
-      | AluOp.mod, x, y => x % y
-      | AluOp.and, x, y => x &&& y
-      | AluOp.or, x, y => x ||| y
-      | AluOp.xor, x, y => x ^^^ y
-      | AluOp.shl, x, y => x * 2 ^ y
-      | AluOp.shr, x, y => x / 2 ^ y.
+      | AluOp.add, x, y => some (x + y)
+      | AluOp.sub, x, y => if y ≤ x then some (x - y) else none
+      | AluOp.mul, x, y => some (x * y)
+      | AluOp.div, x, y => if y = 0 then none else some (x / y)
+      | AluOp.mod, x, y => if y = 0 then none else some (x % y)
+      | AluOp.and, x, y => some (x &&& y)
+      | AluOp.or, x, y => some (x ||| y)
+      | AluOp.xor, x, y => some (x ^^^ y)
+      | AluOp.shl, x, y => some (x * 2 ^ y)
+      | AluOp.shr, x, y => some (x / 2 ^ y).
 ```
 
 ## `Instr`
@@ -93,9 +94,9 @@ One step continues in a new state, halts with an output, or faults.
 ## `step`
 
 One step of program `p` at word size `w`. A constant or operation whose value is not a word
-faults (no wrap-around), and so does running off the end of the program. Copies, loads and
-stores are not checked: from an input whose length and words fit (`InputFits`), they only ever
-move words.
+faults (no wrap-around), and so do an operation whose value is undefined and running off the end
+of the program. Copies, loads and stores are not checked: from an input whose length and words
+fit (`InputFits`), they only ever move words.
 
 ```lean
 Definition:
@@ -113,11 +114,15 @@ Definition:
         (fun (d : Fin r) (x : ℕ) => Outcome.next { pc := s.pc + 1, reg := Function.update s.reg d x, mem := s.mem }) d
           (s.reg i)
       | some (Instr.alu f d i j) =>
-        (fun (d : Fin r) (x : ℕ) =>
-            if x < 2 ^ w then
-              (fun (d : Fin r) (x : ℕ) => Outcome.next { pc := s.pc + 1, reg := Function.update s.reg d x, mem := s.mem }) d x
-            else Outcome.fault)
-          d (f.eval (s.reg i) (s.reg j))
+        match f.eval (s.reg i) (s.reg j) with
+        | some x =>
+          (fun (d : Fin r) (x : ℕ) =>
+              if x < 2 ^ w then
+                (fun (d : Fin r) (x : ℕ) => Outcome.next { pc := s.pc + 1, reg := Function.update s.reg d x, mem := s.mem }) d
+                  x
+              else Outcome.fault)
+            d x
+        | none => Outcome.fault
       | some (Instr.width d) =>
         (fun (d : Fin r) (x : ℕ) => Outcome.next { pc := s.pc + 1, reg := Function.update s.reg d x, mem := s.mem }) d w
       | some (Instr.load d «a») =>
@@ -138,7 +143,8 @@ Definition:
 - `fun d x => Outcome.next { pc := s.pc + 1, reg := Function.update s.reg d x, mem := s.mem }`
   is "set `R[d] := x`, then go to the next instruction";
 - `fun d x => if x < 2 ^ w then … else Outcome.fault` is the same, but it faults if `x` is not
-  a word. `const` and `alu` use this one.
+  a word. `const` uses this one, and so does `alu` when `f.eval (s.reg i) (s.reg j)` is
+  `some x`; when it is `none`, `alu` faults.
 
 `width` uses the first helper, with no check: `w < 2 ^ w`, so it never faults.
 
@@ -250,7 +256,7 @@ with the same output after the same number of instructions.
 ```lean
 Definition:
   Same is
-    the function mapping an implicit natural number r and an element p of Abstract.Program r and an element q of Program Basis.standard r to
+    the function mapping an implicit natural number r and an element p of Abstract.Program r and an element q of Program Basis.exact r to
       for all natural numbers w and pc:
         ∀ (reg : Fin r → ℕ) (mem : ℕ → ℕ),
           OutcomeAgrees (Abstract.step w p { pc := pc, reg := reg, mem := mem })
@@ -263,25 +269,25 @@ Definition:
 ## `runsAgree`
 
 **Same machine.** Each abstract program runs alike with some program of `Cslib.WordRAM`
-over `Basis.standard` with the same registers, and conversely.
+over `Basis.exact` with the same registers, and conversely.
 
 ```lean
 Theorem runsAgree:
   for every natural number r:
-    (∀ (p : Abstract.Program r), ∃ (q : Program Basis.standard r), Same p q) and (∀ (q : Program Basis.standard r), ∃ (p : Abstract.Program r), Same p q)
+    (∀ (p : Abstract.Program r), ∃ (q : Program Basis.exact r), Same p q) and (∀ (q : Program Basis.exact r), ∃ (p : Abstract.Program r), Same p q)
 ```
 
 ## `decidableInTime_iff`
 
 **Same time classes.** A problem is decidable in time `T` on the abstract machine exactly
-when it is on `Cslib.WordRAM` over `Basis.standard`, for the same encoding, time bound and
+when it is on `Cslib.WordRAM` over `Basis.exact`, for the same encoding, time bound and
 word-size threshold.
 
 ```lean
 -- Universe parameters: u
 Theorem decidableInTime_iff:
   ∀ {α : Type u} (A : Set α) (encode : α → List ℕ) (T bits : α → ℕ),
-    Abstract.DecidableInTime A encode T bits ↔ DecidableInTime Basis.standard A encode T bits
+    Abstract.DecidableInTime A encode T bits ↔ DecidableInTime Basis.exact A encode T bits
 ```
 
 # How this was made, and what Mean checked
