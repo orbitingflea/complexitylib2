@@ -76,7 +76,7 @@ create a value that is undefined or not a word (\cref{sec:lean-step}).
 
 There are ten binary operations, and each computes its exact value.
 Subtraction $x-y$ is undefined for $y>x$, and division $x/y$ and remainder $x \bmod y$ are
-undefined for $y=0$; otherwise division and remainder round down.
+undefined for $y=0$; otherwise division rounds down.
 The operations \lean{and}, \lean{or} and \lean{xor} act bitwise,
 and \lean{shl} and \lean{shr} shift $x$ left and right by $y$ bits,
 that is, give $x\cdot 2^y$ and $\lfloor x/2^y\rfloor$.
