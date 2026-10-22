@@ -11,9 +11,9 @@ This file shows the definitions and main statements of
   Mean's three modules (`Mean/Syntax.lean`, `Mean/RoundTrip.lean`, `Mean/Render.lean`)
   compiled without change against this repository's toolchain and Mathlib, outside the
   repository. Mean is not a dependency of this repository.
-- `#mean` ran on the ten declarations below. For each one, Mean parsed its own output
+- `#mean` ran on the eleven declarations below. For each one, Mean parsed its own output
   back, elaborated it, and checked that it gives the same Lean expression (its
-  round-trip check). All ten passed. The output below is verbatim.
+  round-trip check). All eleven passed. The output below is verbatim.
 - Mean's vocabulary is small. Much of the output is still Lean notation (`match`,
   `∀`, `∃`, `→`); only the outer binders and some quantifiers became English.
 - `Halts` is defined by recursion. Mean renders its compiled form (`Nat.brecOn`), which
@@ -126,6 +126,15 @@ Definition:
         there is an element p of (Cslib.WordRAM.Abstract.Program r) such that
           Cslib.WordRAM.Abstract.Decides p A encode T bits.
 Definition:
+  Cslib.WordRAM.Abstract.OutcomeAgrees is
+    the function : {r : ℕ} → Cslib.WordRAM.Abstract.Outcome r → Cslib.WordRAM.Outcome r → Prop mapping an implicit natural number r and an element x of Cslib.WordRAM.Abstract.Outcome r and an element x_1 of Cslib.WordRAM.Outcome r to
+      match x, x_1 with
+      | Cslib.WordRAM.Abstract.Outcome.next s, Cslib.WordRAM.Outcome.next t =>
+        t = { pc := s.pc, data := { regs := s.reg, mem := s.mem } }
+      | Cslib.WordRAM.Abstract.Outcome.halt v, Cslib.WordRAM.Outcome.halt v' => v = v'
+      | Cslib.WordRAM.Abstract.Outcome.fault, Cslib.WordRAM.Outcome.fault => True
+      | x, x_2 => False.
+Definition:
   Cslib.WordRAM.Abstract.RunsAgree is
     for every natural number r:
       (∀ (p : Cslib.WordRAM.Abstract.Program r),
@@ -136,8 +145,8 @@ Definition:
     the function mapping an implicit natural number r and an element p of Cslib.WordRAM.Abstract.Program r and an element q of Cslib.WordRAM.Program Cslib.WordRAM.Basis.standard r to
       for all natural numbers w and pc:
         ∀ (reg : Fin r → ℕ) (mem : ℕ → ℕ),
-          (Cslib.WordRAM.Abstract.step w p { pc := pc, reg := reg, mem := mem } = Cslib.WordRAM.Abstract.Outcome.fault ↔
-              Cslib.WordRAM.step w q { pc := pc, data := { regs := reg, mem := mem } } = Cslib.WordRAM.Outcome.fault) ∧
+          Cslib.WordRAM.Abstract.OutcomeAgrees (Cslib.WordRAM.Abstract.step w p { pc := pc, reg := reg, mem := mem })
+              (Cslib.WordRAM.step w q { pc := pc, data := { regs := reg, mem := mem } }) ∧
             ∀ (v n : ℕ),
               Cslib.WordRAM.Abstract.Halts w p { pc := pc, reg := reg, mem := mem } v n ↔
                 Cslib.WordRAM.Executes w q { pc := pc, data := { regs := reg, mem := mem } } v n.

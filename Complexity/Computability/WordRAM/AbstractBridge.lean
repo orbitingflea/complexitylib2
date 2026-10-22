@@ -16,7 +16,7 @@ The abstract `Cslib.WordRAM.Abstract` presents the word RAM `Cslib.WordRAM` over
 `Cslib.WordRAM.Basis.standard` with its own instruction type and flat states. This module
 translates abstract instructions, programs, states and outcomes to `Cslib.WordRAM` and back,
 shows that one step commutes with the translation (`step_toCslib`), and derives the
-abstract's main results: the same halting runs and faults (`runsAgree`) and the same
+abstract's main results: agreeing steps and the same halting runs (`runsAgree`) and the same
 "decidable in time `T`" (`decidableInTimeAgrees`).
 
 The abstract defines inductive types, so this module imports it rather than the reverse.
@@ -180,16 +180,15 @@ theorem halts_iff_executes {w : ℕ} {p : Abstract.Program r} {s : Abstract.Stat
     rcases Abstract.step w p s with t | x | _ <;> simp only [outcomeToCslib]
     exact ih
 
-/-- A step faults exactly when the step of the translation does. -/
-theorem step_eq_fault_iff {w : ℕ} {p : Abstract.Program r} {s : Abstract.State r} :
-    Abstract.step w p s = .fault ↔ step w (programToCslib p) (stateToCslib s) = .fault := by
-  rw [step_toCslib]
-  rcases Abstract.step w p s <;> simp [outcomeToCslib]
+/-- Every outcome agrees with its translation. -/
+theorem outcomeAgrees_toCslib (o : Abstract.Outcome r) :
+    Abstract.OutcomeAgrees o (outcomeToCslib o) := by
+  rcases o <;> simp [Abstract.OutcomeAgrees, outcomeToCslib, stateToCslib]
 
 /-- The two programs of the translation run alike, in the sense of `Abstract.RunsAgree`. -/
 theorem same_programToCslib (p : Abstract.Program r) :
-    Abstract.RunsAgree.Same p (programToCslib p) :=
-  fun _ _ _ _ => ⟨step_eq_fault_iff, fun _ _ => halts_iff_executes⟩
+    Abstract.RunsAgree.Same p (programToCslib p) := fun w pc reg mem =>
+  ⟨step_toCslib w p ⟨pc, reg, mem⟩ ▸ outcomeAgrees_toCslib _, fun _ _ => halts_iff_executes⟩
 
 /-- **Main theorem (same machine)** of the abstract. -/
 theorem runsAgree : Abstract.RunsAgree := fun _ =>

@@ -102,7 +102,8 @@ inductive Outcome (r : ℕ)
 
 /-- One step of program `p` at word size `w` from state `s`. A constant or an operation whose
 value is not a word *faults* (no wrap-around), and so does running off the end of the program.
-Copies, loads and stores are not checked: from an input of words they only ever move words. -/
+Copies, loads and stores are not checked: from an input whose length and words fit
+(`InputFits`), they only ever move words. -/
 def step (w : ℕ) (p : Program r) (s : State r) : Outcome r :=
   -- go to the next instruction with `R[d] := x`; `setWord` faults instead if `x ≥ 2 ^ w`
   let set (d : Fin r) (x : ℕ) : Outcome r :=
@@ -161,18 +162,29 @@ def DecidableInTime {α : Type u} (A : Set α) (encode : α → List ℕ) (T bit
 
 Each result is a proposition here; `Cslib.WordRAM.AbstractBridge` proves it. -/
 
+/-- An outcome of this file and an outcome of `Cslib.WordRAM` *agree* if both continue in the
+same state (same next instruction, registers and memory), both halt with the same output, or
+both fault. -/
+def OutcomeAgrees {r : ℕ} : Outcome r → Cslib.WordRAM.Outcome r → Prop
+  | .next s, .next t => t = ⟨s.pc, ⟨s.reg, s.mem⟩⟩
+  | .halt v, .halt v' => v = v'
+  | .fault, .fault => True
+  | _, _ => False
+
 /-- **Main theorem (same machine).** Each program of this file has a program of
 `Cslib.WordRAM` over `Basis.standard` with the same registers, and conversely, such that from
-every state, at every word size, one step faults in one exactly when it does in the other, and
-the halting runs are the same: same output, same instruction count. -/
+every state, at every word size, one step of each has agreeing outcomes, and the halting runs
+are the same: same output, same instruction count. -/
 def RunsAgree : Prop :=
   ∀ r, (∀ p : Program r, ∃ q : Cslib.WordRAM.Program .standard r, Same p q) ∧
     ∀ q : Cslib.WordRAM.Program .standard r, ∃ p : Program r, Same p q
 where
-  /-- `p` and `q` run alike from every state `⟨pc, reg, mem⟩`. -/
+  /-- From every state `⟨pc, reg, mem⟩` and at every word size, one step of `p` and one step of
+  `q` agree (`OutcomeAgrees`), so by induction the two runs agree step by step; in particular
+  `p` and `q` halt with the same output after the same number of instructions. -/
   Same {r : ℕ} (p : Program r) (q : Cslib.WordRAM.Program .standard r) : Prop :=
     ∀ w pc reg mem,
-      (step w p ⟨pc, reg, mem⟩ = .fault ↔ Cslib.WordRAM.step w q ⟨pc, ⟨reg, mem⟩⟩ = .fault) ∧
+      OutcomeAgrees (step w p ⟨pc, reg, mem⟩) (Cslib.WordRAM.step w q ⟨pc, ⟨reg, mem⟩⟩) ∧
       ∀ v n, Halts w p ⟨pc, reg, mem⟩ v n ↔ Cslib.WordRAM.Executes w q ⟨pc, ⟨reg, mem⟩⟩ v n
 
 /-- **Main theorem (same time classes).** A problem is decidable in time `T` in the sense of
