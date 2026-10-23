@@ -61,8 +61,8 @@ A sanity lemma `Instance.dist_self : I.dist u u = 0` is proved, so `dist` is not
 | Input | words `n, s`, then the `n × n` matrix row by row; entry `0` = no edge, `c + 1` = weight `c`; entry `(u, v)` at address `u n + v + 3` | O(n²) reading fits the O(n²) bound; one row scan per extracted vertex; same layout as `USTCONInstance` (`Complexity/Computability/Complexity/Problems/USTCON.lean:64-78`) |
 | Output | memory cells `n² + 3 + v` (just past the input) at the halting state; `0` = unreachable, `d + 1` = distance `d` | no library notion returns a vector (see survey §2); a width-independent encoding of `⊤` keeps the statement free of `w` |
 | Assumption | weights in ℕ (so nonnegative); `Fits w ((n + 2)² (W + 2))`, `W` = largest weight | bounds every address (`≤ n² + 2n + 3`), the matrix entries (`≤ W + 1`), and every tentative distance (`≤ n W + 1`) and sum (`≤ (n + 1) W + 2`), with slack for two scratch arrays (inferred, from the planned layout below) |
-| Basis | `Basis.standard` | the library's default and that of every algorithm in `A/`; the `ram[...]` notation's binary operations are standard (`C/Notation.lean:21, 30-31`); the program needs only `+`, `-`, `*` and comparisons, so an additive version could follow by `MapOp` as in `A/ElementDistinctness.lean:122-147` (inferred). `Basis.exact` makes truncated subtraction fault (`C/Basis.lean:193`) and gains nothing here |
-| Time | `m + 1 ≤ K n²`, halt included, one program for every `w`; `K` existential in the statement, explicit in the final theorem | uniform (one fixed program, does not read `w`); `n ≥ 1` always since `source : Fin n`, so `K n²` needs no `+1` |
+| Basis | `Basis.standard` | the library's default and that of every algorithm in `A/`; the `ram[...]` notation's binary operations are standard (`C/Notation.lean:21, 30-31`); the program uses `*` (for `u n` row offsets), which the additive basis lacks (`C/Basis.lean:307-308`: only add and sub); `MapOp` in `A/ElementDistinctness.lean:145-146` maps additive → standard, not back, so an additive version would need its own program and cost proof. `Basis.exact` makes truncated subtraction fault (`C/Basis.lean:193`) and gains nothing here |
+| Time | `m + 1 ≤ K n²`, halt included, one program for every `w`; `K` existential in the statement, explicit in the final theorem | uniform: one fixed program for every `w`; the statements do not forbid reading `w` (`width d`, `C/Defs.lean:207-208`; uniform programs may use it, `C/Function.lean:18-20`), but the planned implementation will not read `w`; `n ≥ 1` always since `source : Fin n`, so `K n²` needs no `+1` |
 | Correctness | final memory of a halting run, stated with the core `Runs`/`step` (`C/Defs.lean:431, 357`); corollary via `UniformComputableInO` | `Executes` (`C/Defs.lean:436`) and `Program.ComputesInTime` (`C/Function.lean:59`) expose only the halt register, not memory |
 | Shortest-path spec | Mathlib `Quiver.Path` + `Quiver.Path.addWeight` (`Mathlib/Combinatorics/Quiver/Path/Weight.lean:47`), infimum in `ℕ∞` (`⊤` = no path) | reuses Mathlib's paths and path weights; `SimpleGraph.dist`/`edist` are unweighted and undirected; Mathlib's `Digraph` has no walks; CSLib has no graph library |
 
@@ -74,7 +74,8 @@ A sanity lemma `Instance.dist_self : I.dist u u = 0` is proved, so `dist` is not
   (`:156`); ops `const | copy | alu | load | store` (`:160`), `jump | branch | halt` (`:190`).
   `halt i` returns one register (`:366`). One instruction = one time unit.
 - Input: `Data.init input` puts `input.length` at address 0 and the words at `1..len`; all other
-  memory is `0` (`C/Defs.lean:545-547`). `InputFits` (`:564`) asks every word to fit.
+  memory is `0` (`C/Defs.lean:545-547`). `InputFits` (`:563-565`) asks the input length and
+  every input word to fit.
 - Structured layer: `Code` (`C/Structured.lean:80`) with big-step `Exec` counting exactly the
   instructions of the compiled flat program (`:126`, header `:17-22`); `ExecWithin` (`:148`)
   composes like Hoare logic; `ExecWithin.loop_invariant` (`:324`) is the loop rule with an
@@ -143,8 +144,12 @@ width-indexed family with bounded code (`Function:73-77`), and `ComputableInO`, 
 ## Proof plan for phase 1
 
 Planned layout (inferred; the proof may move scratch arrays): `D` = the output block
-`n² + 3 + v`; visited flags at `n² + 3 + n + v`; both already `0` by `Data.init`, so `D[v] = 0`
-means `∞`. Program over about 16 registers:
+`n² + 3 + v`; visited flags at `n² + 3 + n + v`. For `QuadraticSpec` both are already `0` by
+`Data.init`, so `D[v] = 0` means `∞`. For `QueryStatement` they are not all `0`: the target word
+is appended, so it sits at `n² + 3` = `outAddr 0`, and the length header at address 0 is
+`n² + 3`, not `n² + 2`. The query wrapper must read `n` from address 1 (not from the header),
+save the target, clear that cell, and only then run the core loops. Program over about 16
+registers:
 
 1. setup: read `n`, `s`; compute bases with one multiplication; `D[s] ← 1`.
 2. outer loop (at most `n` rounds): scan `v < n` for the unvisited `v` with the least nonzero
@@ -168,8 +173,9 @@ Proof pieces:
   three loops (outer, min-scan, relax-scan), following `A/ElementDistinctness.lean`; memory
   reasoning via `Function.update` and the frame lemmas of `C/Heap.lean`.
 - Wrapper (~50 lines): `Exec.runs` + the final `halt` give `QuadraticSpec`, then
-  `QuadraticStatement`; `QueryStatement` needs a variant program that loads `D[t]` and halts, with
-  the target as an extra input word (its own small setup proof; the core loops are reused).
+  `QuadraticStatement`; `QueryStatement` needs a variant program that saves the target word
+  (at `outAddr 0`), clears that cell, runs the core loops, then loads `D[t]` and halts (its own
+  small setup proof, which also handles the changed length header; the core loops are reused).
 
 Total: about 1300-1800 lines (inferred, by comparison with element distinctness, ~360 lines for
 one loop and no graph theory).
