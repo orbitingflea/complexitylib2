@@ -51,6 +51,7 @@ import ComplexityTests.BasicClasses
 import ComplexityTests.BatchLookup
 import ComplexityTests.BatchOr
 import ComplexityTests.BipartiteMatching
+import ComplexityTests.BitStringProjection
 import ComplexityTests.BitonicSort
 import ComplexityTests.BitonicTrace
 import ComplexityTests.BooleanAnalysisDecisionTree
@@ -106,6 +107,7 @@ import ComplexityTests.CountingProducts
 import ComplexityTests.CountingSpace
 import ComplexityTests.CountingVerifier
 import ComplexityTests.Crypto.GMWPointwise
+import ComplexityTests.Crypto.HomomorphicRefresh
 import ComplexityTests.Crypto.Signature
 import ComplexityTests.Crypto.ZeroKnowledge
 import ComplexityTests.CyclicFeedback
@@ -165,6 +167,10 @@ import ComplexityTests.FusionRandom
 import ComplexityTests.FusionSampling
 import ComplexityTests.FusionSemifilter
 import ComplexityTests.FusionTransport
+import ComplexityTests.FusionTree
+import ComplexityTests.FusionTreeLayout
+import ComplexityTests.FusionTreeQuery
+import ComplexityTests.FusionTreeRAM
 import ComplexityTests.GGM
 import ComplexityTests.GapGraphsGeography
 import ComplexityTests.GeneratorPadding
@@ -424,6 +430,8 @@ import ComplexityTests.WordRAMController
 import ComplexityTests.WordRAMDynamic
 import ComplexityTests.WordRAMFamilies
 import ComplexityTests.WordRAMGeneric
+import ComplexityTests.WordRAMMSB
+import ComplexityTests.WordRAMMultiword
 import ComplexityTests.WordRAMPrefixSums
 import ComplexityTests.WordRAMQueue
 import ComplexityTests.WordRAMRAM

@@ -78,6 +78,18 @@ existing developments, source credit and saved branches remain available for a f
    depth. Here bootstrappability requires homomorphic evaluation of suitably augmented decryption
    circuits. With an appropriate additional circular-security assumption, the construction yields a
    fixed-key fully homomorphic scheme without a predetermined depth bound.
+   *Recovery milestone:* [refresh](Complexity/Crypto/Computational/Homomorphic/Refresh.lean)
+   constructs identity and NAND refresh from actual decryption circuits and proves correctness
+   for arbitrary well-sized old ciphertexts, including prior evaluation outputs, with fixed
+   output width. [Efficiency](Complexity/Crypto/Computational/Homomorphic/Efficiency.lean)
+   derives strict PPT refresh from base encryption/evaluation certificates and a uniform
+   decryption-circuit generator; construction of the NAND augmentation is also certified.
+   [Tests](ComplexityTests/Crypto/HomomorphicRefresh.lean) instantiate all these hypotheses in an
+   explicitly insecure scheme, exercising key switching and repeated refresh even though its
+   base evaluator rejects evaluated inputs. The layered DAG evaluator, its resource bounds,
+   the acyclic key-chain IND-CPA reduction, and the additional circular-security result remain
+   open in [#322](https://github.com/cslib-community/complexitylib/issues/322). No concrete LWE
+   scheme or encryption-security theorem is established by this milestone.
 4. **Completeness of oblivious transfer.** In the ideal oblivious-transfer hybrid model, every
    polynomial-time multiparty functionality admits a protocol secure against static malicious
    corruptions, with security defined by real/ideal simulation and allowing abort, under the
@@ -945,6 +957,27 @@ with finite-set semantics, invariant preservation, unchanged trees for absent ke
 and node visits and resulting height bounded by the initial height
 ([examples](ComplexityTests/SearchTreeErase.lean)). Adding deletion to the shared stateful
 ordered-set interface, balancing, and concrete heap/RAM representations remain open.
+
+[Static fusion trees #443](https://github.com/cslib-community/complexitylib/issues/443)
+have a [finite-set endpoint](Complexity/Algorithms/WordRAM/FusionTree/Static.lean) proving
+worst-case inclusive predecessor in `O(1 + log_w n)` actual standard-basis RAM instructions
+and `O(n)` words for nonempty sets (`O(n + 1)` including empty sets).
+The [query program](Complexity/Algorithms/WordRAM/FusionTree/Query.lean) charges initialization,
+node search, checked multiword arithmetic, pointer traversal, and halt. Explicit bounds are
+`3100000 * (Nat.log w n + 1)` instructions and `126n + 1042` data/register words, uniformly
+for `w ≥ 2`. Presence and value occupy separate registers, so key zero remains distinct from
+absence. The entire allocation frontier must fit an address word separately from the keys.
+The bounded-size code family contains width-dependent constants; static preprocessing uses
+classical witnesses and has no RAM running-time certificate. Uniform preprocessing and dynamic
+updates remain open. The checked-overflow
+[multiword multiplication dependency #444](https://github.com/cslib-community/complexitylib/issues/444)
+provides reusable arithmetic. A focused API follow-up is to extract the duplicated
+`Schoolbook.value`/`Bounded` and `Difference.value`/`Bounded` into a shared
+`WordRAM/Multiword/Digits` module, letting Transfer, Bitwise and Shift import digit infrastructure
+without depending on multiplication.
+Likewise, move the generic child-height lemma duplicated in `Model` and
+`QueryProgram.child_height_lt` into `Algorithms/Lean/FusionTree/Tree`, for reuse by
+`Model.decode_rep` and `QueryProgram.exec_loop_height`.
 
 [Client resource contracts](Complexity/Foundations/Semantics/Stateful/CostHoare.lean) combine
 admissibility, postconditions and initial-state-dependent operation budgets. Their sequencing
