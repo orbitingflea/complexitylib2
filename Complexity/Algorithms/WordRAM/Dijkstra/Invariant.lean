@@ -33,6 +33,10 @@ the invariant with that vertex visited.
 
 ## Main results
 
+* `Cslib.Algorithms.WordRAM.Dijkstra.decodeDist_le`: decoding preserves order between nonzero
+  words.
+* `Cslib.Algorithms.WordRAM.Dijkstra.Instance.dist_le_edge`: the distance to the head of an edge
+  is at most the distance to its tail plus its weight.
 * `Cslib.Algorithms.WordRAM.Dijkstra.Instance.Inv.init`: the invariant holds initially.
 * `Cslib.Algorithms.WordRAM.Dijkstra.Instance.Inv.step`: visiting an unvisited vertex of least
   finite tentative distance and relaxing its edges keeps the invariant.
@@ -64,6 +68,16 @@ theorem decodeDist_encodeDist (d : ℕ∞) : decodeDist (encodeDist d) = d := by
   induction d using ENat.recTopCoe with
   | top => simp [decodeDist, encodeDist]
   | coe d => simp [decodeDist, encodeDist]
+
+/-- A nonzero distance word decodes to a finite distance. -/
+theorem decodeDist_ne_top {b : ℕ} (hb : b ≠ 0) : decodeDist b ≠ ⊤ := by
+  simp [decodeDist, hb]
+
+/-- Decoding preserves order between nonzero distance words. -/
+theorem decodeDist_le {a b : ℕ} (ha : a ≠ 0) (hb : b ≠ 0) (h : a ≤ b) :
+    decodeDist a ≤ decodeDist b := by
+  simp only [decodeDist, ha, hb, ite_false]
+  exact_mod_cast Nat.sub_le_sub_right h 1
 
 namespace Instance
 
@@ -110,7 +124,7 @@ private theorem dist_le_addWeight {a b : I.Vertex} (p : Quiver.Path a b) :
 -- Path rewriting must unfold `Vertex` to identify its endpoints with `Fin I.n`.
 set_option backward.isDefEq.respectTransparency false in
 /-- Extending a path by an edge bounds the distance to the new endpoint. -/
-private theorem dist_le_edge {a b : Fin I.n} {c : ℕ} (he : I.weight a b = some c) :
+theorem dist_le_edge {a b : Fin I.n} {c : ℕ} (he : I.weight a b = some c) :
     I.dist I.source b ≤ I.dist I.source a + c := by
   change I.dist I.source b ≤
     (⨅ p : Quiver.Path (V := I.Vertex) I.source a, p.addWeight I.arrowWeight) + c
