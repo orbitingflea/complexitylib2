@@ -21,8 +21,13 @@ the specified fallback without running for time proportional to the numerical in
 ## Main results
 
 * `Cslib.Circuits.Boolean.Layered.computableTidilyInPolyTime_nodeCode`: read a node's code.
+* `Cslib.Circuits.Boolean.Layered.computableTidilyInPolyTime_nodeConst`,
+  `computableTidilyInPolyTime_nodeCopy`, `computableTidilyInPolyTime_nodeNand`: construct nodes.
 * `Cslib.Circuits.Boolean.Layered.computableTidilyInPolyTime_nodeEval`: evaluate one node.
 * `Cslib.Circuits.Boolean.Layered.computableTidilyInPolyTime_evalLayer`: evaluate one layer.
+* `Cslib.Circuits.Boolean.Layered.computableTidilyInPolyTime_select`: select ordered outputs.
+* `Cslib.Circuits.Boolean.Layered.computableTidilyInPolyTime_outputWidth`: compute the final
+  row width in unary, retaining the input width for an empty schedule.
 -/
 
 @[expose] public section
@@ -37,6 +42,30 @@ theorem computableTidilyInPolyTime_nodeCode :
     ComputableTidilyInPolyTime Node.code encNode
       (encPair (encPair encBool encBool) (encPair encNat encNat)) :=
   .of_eq fun _ => rfl
+
+/-- Construct a constant node. -/
+@[fun_prop]
+theorem computableTidilyInPolyTime_nodeConst :
+    ComputableTidilyInPolyTime Node.const encBool encNode :=
+  .of_finite _
+
+/-- Construct a copy node, preserving the binary wire index. -/
+@[fun_prop]
+theorem computableTidilyInPolyTime_nodeCopy :
+    ComputableTidilyInPolyTime Node.copy encNat encNode := by
+  have h : ComputableTidilyInPolyTime (fun i : ℕ => ((true, false), i, 0)) encNat
+      (encPair (encPair encBool encBool) (encPair encNat encNat)) := by fun_prop
+  exact h.of_enc_eq fun _ => rfl
+
+/-- Construct a NAND node, preserving both binary wire indices. -/
+@[fun_prop]
+theorem computableTidilyInPolyTime_nodeNand :
+    ComputableTidilyInPolyTime (fun p : ℕ × ℕ => Node.nand p.1 p.2)
+      (encPair encNat encNat) encNode := by
+  have h : ComputableTidilyInPolyTime (fun p : ℕ × ℕ => ((true, true), p))
+      (encPair encNat encNat) (encPair (encPair encBool encBool) (encPair encNat encNat)) := by
+    fun_prop
+  exact h.of_enc_eq fun _ => rfl
 
 /-- Node evaluation is polynomial in the encoded input, including invalid binary wire indices. -/
 @[fun_prop]
@@ -78,5 +107,33 @@ theorem computableTidilyInPolyTime_evalLayer {α : Type} {input : α ↪ List Bo
   apply ComputableTidilyInPolyTime.listToBits.comp
   apply ComputableTidilyInPolyTime.mapWithInput hlayer
   apply computableTidilyInPolyTime_nodeEval <;> fun_prop
+
+/-- Free output selection is polynomial even for malformed binary indices. -/
+@[fun_prop]
+theorem computableTidilyInPolyTime_select {α : Type} {input : α ↪ List Bool}
+    {inputs : α → List Bool} {outputs : α → List ℕ}
+    (hinputs : ComputableTidilyInPolyTime inputs input encBits)
+    (houtputs : ComputableTidilyInPolyTime outputs input (encList encNat)) :
+    ComputableTidilyInPolyTime (fun a => select (inputs a) (outputs a)) input encBits := by
+  apply ComputableTidilyInPolyTime.listToBits.comp
+  apply ComputableTidilyInPolyTime.mapWithInput houtputs
+  exact ComputableTidilyInPolyTime.listGetD_binary false (by fun_prop) (by fun_prop)
+
+/-- Read the last layer's length, or retain the computed input width for an empty schedule. -/
+@[fun_prop]
+theorem computableTidilyInPolyTime_outputWidth {α : Type} {input : α ↪ List Bool}
+    {inputCount : α → ℕ} {layers : α → List (List Node)}
+    (hn : ComputableTidilyInPolyTime inputCount input encUnary)
+    (hlayers : ComputableTidilyInPolyTime layers input (encList (encList encNode))) :
+    ComputableTidilyInPolyTime (fun a => outputWidth (inputCount a) (layers a)) input encUnary := by
+  have heq (n : ℕ) (ls : List (List Node)) :
+      outputWidth n ls = ((n :: ls.map List.length).reverse).headD 0 := by
+    induction ls using List.reverseRecOn with
+    | nil => simp
+    | append_singleton ls layer _ => simp [outputWidth_append]
+  have hlengths := (ComputableTidilyInPolyTime.length_list encNode).map.comp hlayers
+  have h := ComputableTidilyInPolyTime.listHeadDWithInput 0
+    ((hn.cons' hlengths).listReverseWithInput)
+  simpa only [heq, Function.comp_def] using h
 
 end Cslib.Circuits.Boolean.Layered
