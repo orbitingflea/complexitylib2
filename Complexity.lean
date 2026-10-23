@@ -28,6 +28,7 @@ public import Complexity.Algorithms.Reachability.Reingold
 public import Complexity.Algorithms.Reachability.Savitch
 public import Complexity.Algorithms.WordRAM.Dijkstra.Invariant
 public import Complexity.Algorithms.WordRAM.Dijkstra.Program
+public import Complexity.Algorithms.WordRAM.Dijkstra.Relax
 public import Complexity.Algorithms.WordRAM.Dijkstra.Statement
 public import Complexity.Algorithms.WordRAM.DynamicArray
 public import Complexity.Algorithms.WordRAM.ElementDistinctness
