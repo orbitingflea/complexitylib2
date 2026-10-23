@@ -19,8 +19,9 @@ This file proves the graph theory behind Dijkstra's algorithm [Dijkstra][Dijkstr
 distance from above, is exact on `S`, and is already relaxed along every edge out of `S`.
 
 The key step (`Cslib.Algorithms.WordRAM.Dijkstra.Instance.Inv.step`) is the classical cut
-argument: every path from the source to an unvisited vertex crosses from `S` to an unvisited
-vertex, so its weight is at least the least tentative distance outside `S`. Hence an unvisited
+argument: on every path from the source to an unvisited vertex, either the source is unvisited,
+with tentative distance `0`, or the path has an edge from `S` to an unvisited vertex. Either way
+its weight is at least the least tentative distance outside `S`. Hence an unvisited
 vertex of least finite tentative distance has the exact distance, and relaxing its edges keeps
 the invariant with that vertex visited.
 
