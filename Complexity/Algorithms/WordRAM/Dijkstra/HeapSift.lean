@@ -15,7 +15,7 @@ public import Complexity.Algorithms.WordRAM.Dijkstra.BinaryHeap
 This file proves what the heap operations of `Cslib.Algorithms.WordRAM.Dijkstra.heapDijkstra`
 do on a heap with the invariant `Cslib.Algorithms.WordRAM.Dijkstra.HeapInv`, and how long they
 take. A sift-up or a sift-down halves or doubles the repaired position at every step, so each
-takes `O(log sz)` instructions.
+takes `O(⌊log₂ sz⌋ + 1)` instructions.
 
 ## Main definitions
 

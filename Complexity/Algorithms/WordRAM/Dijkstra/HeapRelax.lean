@@ -14,9 +14,9 @@ public import Complexity.Algorithms.WordRAM.Dijkstra.ListEncode
 # Dijkstra's algorithm with a binary heap: the scan of the edges
 
 This file proves what one run of `Cslib.Algorithms.WordRAM.Dijkstra.relaxEdges` does on the
-edges out of a vertex `U` of an adjacency-list instance: within `O(deg U · log n)` instructions
-it applies `Cslib.Algorithms.WordRAM.Dijkstra.edgesWord` to every distance word, and keeps the
-heap invariant, with the heap holding the discovered vertices that are not visited.
+edges out of a vertex `U` of an adjacency-list instance: within `O(deg U · (⌊log₂ n⌋ + 1) + 1)`
+instructions it applies `Cslib.Algorithms.WordRAM.Dijkstra.edgesWord` to every distance word, and
+keeps the heap invariant, with the heap holding the discovered vertices that are not visited.
 
 ## Main results
 

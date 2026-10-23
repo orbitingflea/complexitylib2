@@ -10,19 +10,19 @@ module
 public import Complexity.Algorithms.WordRAM.Dijkstra.HeapRelax
 
 /-!
-# Dijkstra's algorithm with a binary heap in `O((m + 1) log n)` time
+# Dijkstra's algorithm with a binary heap in `O((m + 1) (⌊log₂ n⌋ + 1))` time
 
 This file proves that `Cslib.Algorithms.WordRAM.Dijkstra.heapDijkstra` computes the distances
-from the source of an adjacency-list instance within `O((m + 1) log n)` instructions, and so
-proves `Cslib.Algorithms.WordRAM.Dijkstra.LogLinearStatement`.
+from the source of an adjacency-list instance within `O((m + 1) (⌊log₂ n⌋ + 1))` instructions,
+and so proves `Cslib.Algorithms.WordRAM.Dijkstra.LogLinearStatement`.
 
 The rounds keep the invariant of Dijkstra's algorithm
 (`Cslib.Algorithms.WordRAM.Dijkstra.Instance.Inv`) of the weight-matrix instance, for the visited
 vertices (discovered and out of the heap) and the tentative distances in the output cells, along
-with the heap invariant. A round costs `O((deg u + 1) log n)` for its vertex `u`, which is paid by
-a potential that counts twice the edges out of the unvisited vertices plus the heap size: the
-round visits `u`, so it removes `deg u` edges from the count and one entry from the heap, and it
-inserts at most `deg u` entries.
+with the heap invariant. A round costs `O((deg u + 1) (⌊log₂ n⌋ + 1))` for its vertex `u`, which
+is paid by a potential that counts twice the edges out of the unvisited vertices plus the heap
+size: the round visits `u`, so it removes `deg u` edges from the count and one entry from the
+heap, and it inserts at most `deg u` entries.
 
 ## Main definitions
 
@@ -402,8 +402,9 @@ theorem heapDijkstra_spec (hw : Fits w (8 * (G.n + G.m + 2) * (G.maxWeight + 2))
   refine ⟨y, (hx.seq he).mono ?_, fun v => heapExit_spec hi hc v⟩
   nlinarith
 
-/-- **Dijkstra's algorithm with a binary heap in `O((m + 1) log n)` time.** The compiled program
-meets the specification `Cslib.Algorithms.WordRAM.Dijkstra.LogLinearSpec` with `K = 230`. -/
+/-- **Dijkstra's algorithm with a binary heap in `O((m + 1) (⌊log₂ n⌋ + 1))` time.** The
+compiled program meets the specification `Cslib.Algorithms.WordRAM.Dijkstra.LogLinearSpec` with
+`K = 230`. -/
 theorem logLinearSpec : LogLinearSpec (heapDijkstra.program zero) 230 := by
   intro G w hw
   obtain ⟨y, ⟨m, hm, he⟩, hd⟩ := heapDijkstra_spec hw
@@ -416,7 +417,7 @@ theorem logLinearSpec : LogLinearSpec (heapDijkstra.program zero) 230 := by
 
 /-- **Phase 2 main theorem.** Some word-RAM program over the standard basis computes all
 shortest-path distances from the source of a weighted directed graph with `n` vertices and `m`
-edges, given by adjacency lists, within `O((m + 1) log n)` instructions. -/
+edges, given by adjacency lists, within `O((m + 1) (⌊log₂ n⌋ + 1))` instructions. -/
 theorem logLinearStatement : LogLinearStatement :=
   ⟨27, _, 230, logLinearSpec⟩
 
