@@ -7,7 +7,7 @@ Authors: Renfei Zhou
 module
 -- upstream: candidate
 
-public import Complexity.Algorithms.WordRAM.Dijkstra.BinaryHeap
+public import Complexity.Algorithms.WordRAM.Dijkstra.HeapSift
 public import Complexity.Algorithms.WordRAM.Dijkstra.ListEncode
 
 /-!
