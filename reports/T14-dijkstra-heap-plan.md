@@ -78,7 +78,7 @@ takes the minimum of the parallel weights.
 | Parallel edges, self-loops | allowed; `toInstance` keeps the lightest edge of each pair (`lightest`, via `List.min?`); self-loops stay as arrows `u → u` of the phase-1 quiver | no side condition on the input; the phase-1 quiver has at most one arrow per pair (`D/Statement.lean:80-81`), and the lightest parallel edge gives the same distances (a heavier parallel edge can be swapped for the lighter one in any path; inferred, standard). `lightest_eq_some_iff` / `lightest_eq_none_iff` (proved) pin the map down; self-loops never shorten a path since weights are in ℕ |
 | Distance | `G.dist := G.toInstance.dist`, the phase-1 `Instance.dist` | the same notion of distance as phase 1, so phase 1's `Inv` lemmas apply to `G.toInstance` |
 | Output | as phase 1: memory cells `outAddr v = n + 2m + 4 + v` just past the input, `0` = unreachable, `d + 1` = distance `d` | the form the user approved for phase 1 ("1 可以 2 存在即可 3 可以") |
-| Assumption | weights in ℕ; `Fits w (8 (n + m + 2) (W + 2))`, `W` = largest weight over all list entries (parallel ones included) | i.e. `w ≥ log₂(n + m + 2) + log₂(W + 2) + 3`. Bounds every address: input `≤ n + 2m + 3`, plus four `n`-cell arrays (distances, heap, positions, visited flags) `≤ 5n + 2m + 7`; every distance word `≤ (n − 1) W + 1` and candidate `≤ n W + 1`; heap child index `≤ 2n + 1` (inferred, from the planned layout). `W` must cover every list weight, since the program adds each one, not only the lightest |
+| Assumption | weights in ℕ; `Fits w (8 (n + m + 2) (W + 2))`, `W` = largest weight over all list entries (parallel ones included) | `Fits w v` is `v < 2 ^ w` (`C/Defs.lean:156`), so with `B = 8 (n + m + 2) (W + 2)` this is exactly `w ≥ Nat.log 2 B + 1`, i.e. `w > log₂(n + m + 2) + log₂(W + 2) + 3` with real logarithms. Bounds every address: input `≤ n + 2m + 3`, plus four `n`-cell arrays (distances, heap, positions, visited flags) `≤ 5n + 2m + 7`; every distance word `≤ (n − 1) W + 1` and candidate `≤ n W + 1`; heap child index `≤ 2n + 1` (inferred, from the planned layout). `W` must cover every list weight, since the program adds each one, not only the lightest. The bound multiplies the address range by the weight range, so it asks for more than needed: a `max` of the two ranges would admit smaller `w`; the product keeps the term short |
 | Basis | `Basis.standard` | as phase 1; the heap index arithmetic `2 i`, `2 i + 1`, `i / 2` uses `mul`/`div` (or shifts), all in `BinOp` of the standard basis (`C/Basis.lean:99-140, 164`) |
 | Time | `steps + 1 ≤ K (m + 1) (⌊log₂ n⌋ + 1)`, halt included, one program for every `w`, `K` existential in the statement and explicit in the final theorem | see "Time bound form" below |
 | Correctness | final memory of a halting run, with the core `Runs`/`step`, as phase 1 | the library's computation notions return one register only (T13 report §2) |
@@ -214,11 +214,19 @@ Main risks:
    it in both sift loops.
 2. **Varying cost per round.** `ExecWithin.loop_invariant` (`C/Structured.lean:324`) charges one
    bound `T` per iteration; a round of Dijkstra costs `O((deg u + 1) log n)`, so a uniform `T` gives
-   `n · max deg · log n`. A potential-style loop rule is needed (each iteration within
-   `Φ x − Φ y` instructions, total `≤ Φ x₀ + 2`). It does not exist in `C/Structured.lean`
-   (searched `potential|amortiz|theorem loop`); it is about 40 lines by strong induction from
-   `loop_iter` (`C/Structured.lean:293`). Potential (inferred): `c (log n + 1)` times
-   (edges out of unvisited vertices + `1` + number of unvisited vertices in the heap).
+   `n · max deg · log n`. A potential-style loop rule is needed: if each body run from `x` to
+   `y` takes at most `Φ x − Φ y − 2` instructions, the loop from `x₀` takes at most `Φ x₀ + 2`.
+   The `− 2` pays for the two control instructions that `loop_iter` charges per iteration
+   (`C/Structured.lean:293-298`), and the `+ 2` for the exit (`loop_exit`, `:290-291`). The rule
+   does not exist in `C/Structured.lean` (searched `potential|amortiz|theorem loop`); it is about
+   40 lines by strong induction from `loop_iter`. Potential (inferred):
+   `Φ = c (log n + 1) (2E + H + 1)`, with `E` the number of edges out of unvisited vertices and
+   `H` the heap size. A round that extracts a vertex of out-degree `d` and adds `a ≤ d` new heap
+   entries lowers `2E + H + 1` by `2d + 1 − a ≥ d + 1`, which pays for its `O((d + 1) log n)`
+   instructions and the two control instructions once `c` is large enough. Weighting `E` by `2`
+   matters: with weight `1`, a source with `k` leaf edges lowers `E + H + 1` only by `1`
+   (`k` edges scanned, `k` entries added, one extracted) while its round scans `k` edges. After
+   setup `2E + H + 1 ≤ 2m + 2`, so the loop costs `O((m + 1) log n)`.
 3. **`Nat.log` arithmetic** in the sift-loop measures (`Nat.log 2 (i / 2) = Nat.log 2 i − 1`
    for `i ≥ 2`, `Nat.log 2 (2 i + 1) = Nat.log 2 i + 1`); Mathlib has the base lemmas
    (`Nat.log_div_base`, `Nat.log_mul_base`, `Mathlib/Data/Nat/Log.lean:279, 229`).
