@@ -214,6 +214,15 @@ existing developments, source credit and saved branches remain available for a f
    [Sampling tests](ComplexityTests/Crypto/GSWSampling.lean) include nonzero signed errors,
    actual generated keys, both messages, NAND, empty dimensions and growing native inputs.
    These results do not identify the finite noise with a Gaussian or assert its hardness.
+   The [complete serialized algorithms](Complexity/Crypto/Computational/Homomorphic/GSW/Serialized.lean)
+   compute actual public keys and ciphertexts using binary modular arithmetic and explicit unary
+   dimensions. Their [native certificates](Complexity/Crypto/Computational/Homomorphic/GSW/Serialized/PolyTime.lean)
+   establish strict PPT for key generation and encryption on arbitrary encoded inputs.
+   [Exact bridges](Complexity/Crypto/Computational/Homomorphic/GSW/Serialized/Correctness.lean)
+   preserve the typed joint key law and encryption law, with public/secret word lengths
+   `m*(n+1)*w` and `n*w`, and all `N^2` ciphertext bits.
+   [Runtime tests](ComplexityTests/Crypto/GSWNative.lean) cover signed wraparound, ragged and
+   truncated inputs, zero dimensions, bit order and growing-parameter clients.
    The [statistical hiding theorem](Complexity/Crypto/Computational/Homomorphic/GSW/Hiding.lean)
    proves the uniform-public-matrix step of their security argument. For `d = n + 1` and
    `N = d * w`, the actual ciphertext gives any randomized two-stage adversary acceptance
@@ -224,8 +233,8 @@ existing developments, source credit and saved branches remain available for a f
    it neither assumes whole-matrix two-universality nor gives a bound for every fixed matrix.
    [Regressions](ComplexityTests/Crypto/GSWHiding.lean) include a composite-modulus counterexample
    to whole-matrix universality and an adaptive game with exact nonzero advantage.
-   Computational security, native certificates for complete matrix algorithms, admissible parameter
-   families and bootstrappability remain open in #486.
+   Computational security, native decryption and NAND certificates, admissible parameter families
+   and bootstrappability remain open in #486.
 4. **Completeness of oblivious transfer.** In the ideal oblivious-transfer hybrid model, every
    polynomial-time multiparty functionality admits a protocol secure against static malicious
    corruptions, with security defined by real/ideal simulation and allowing abort, under the
@@ -1189,8 +1198,7 @@ The bounded-size code family contains width-dependent constants; static preproce
 classical witnesses and has no RAM running-time certificate. Uniform preprocessing and dynamic
 updates remain open. The checked-overflow
 [multiword multiplication dependency #444](https://github.com/cslib-community/complexitylib/issues/444)
-provides reusable arithmetic. A focused API follow-up is to extract the duplicated
-`Schoolbook.value`/`Bounded` and `Difference.value`/`Bounded` into a shared
+provides reusable arithmetic. Shared workspace initialization now accompanies the canonical
 `WordRAM/Multiword/Digits` module, letting Transfer, Bitwise and Shift import digit infrastructure
 without depending on multiplication.
 The shared child-height lemmas in `Algorithms/Lean/FusionTree/Tree` support both

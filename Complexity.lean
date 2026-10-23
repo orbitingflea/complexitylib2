@@ -894,8 +894,10 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Poly
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Fold
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Int
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Int.Binary
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Int.BinaryDiv
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Iteration
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Matrix.Binary
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Binary
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.BinaryDiv
@@ -1270,10 +1272,12 @@ public import Complexity.Computability.WordRAM.Multiword.Bitwise
 public import Complexity.Computability.WordRAM.Multiword.Circuit
 public import Complexity.Computability.WordRAM.Multiword.CircuitRun
 public import Complexity.Computability.WordRAM.Multiword.Compile
+public import Complexity.Computability.WordRAM.Multiword.Digits
 public import Complexity.Computability.WordRAM.Multiword.Mul
 public import Complexity.Computability.WordRAM.Multiword.Shift
 public import Complexity.Computability.WordRAM.Multiword.Sub
 public import Complexity.Computability.WordRAM.Multiword.Transfer
+public import Complexity.Computability.WordRAM.Multiword.Workspace
 public import Complexity.Computability.WordRAM.Native
 public import Complexity.Computability.WordRAM.Notation
 public import Complexity.Computability.WordRAM.PackedCount
@@ -1331,6 +1335,9 @@ public import Complexity.Crypto.Computational.Homomorphic.GSW.Noise
 public import Complexity.Crypto.Computational.Homomorphic.GSW.Sampling
 public import Complexity.Crypto.Computational.Homomorphic.GSW.Sampling.Randomness
 public import Complexity.Crypto.Computational.Homomorphic.GSW.Sampling.Serialized
+public import Complexity.Crypto.Computational.Homomorphic.GSW.Serialized
+public import Complexity.Crypto.Computational.Homomorphic.GSW.Serialized.Correctness
+public import Complexity.Crypto.Computational.Homomorphic.GSW.Serialized.PolyTime
 public import Complexity.Crypto.Computational.Homomorphic.KeyChain
 public import Complexity.Crypto.Computational.Homomorphic.KeyChain.Hybrid
 public import Complexity.Crypto.Computational.Homomorphic.KeyChain.Hybrid.Game
@@ -1619,6 +1626,7 @@ public import Complexity.Foundations.Data.List.Basic
 public import Complexity.Foundations.Data.List.Equiv
 public import Complexity.Foundations.Data.List.OfFn
 public import Complexity.Foundations.Data.ListDecoding
+public import Complexity.Foundations.Data.Matrix.Binary
 public import Complexity.Foundations.Data.Matrix.Permanent
 public import Complexity.Foundations.Data.Matrix.TotallyRegular
 public import Complexity.Foundations.Data.MvPolynomial.Catalecticant
@@ -1853,4 +1861,5 @@ public import Complexity.Tactic.PolyTime
 public import Complexity.Tactic.PolyTime.Init
 public import Complexity.Tactic.Stateful
 public import Complexity.Tactic.Stateful.Init
+public import Complexity.Tactic.Synthesis
 public import Complexity.Tactic.WordRAM
