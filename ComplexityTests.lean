@@ -52,6 +52,7 @@ import ComplexityTests.BatchLookup
 import ComplexityTests.BatchOr
 import ComplexityTests.BipartiteMatching
 import ComplexityTests.BitStringProjection
+import ComplexityTests.BitStringRows
 import ComplexityTests.BitonicSort
 import ComplexityTests.BitonicTrace
 import ComplexityTests.BooleanAnalysisDecisionTree
@@ -115,6 +116,7 @@ import ComplexityTests.Crypto.FixedKeySecurity
 import ComplexityTests.Crypto.GMWPointwise
 import ComplexityTests.Crypto.GSW
 import ComplexityTests.Crypto.GSWHiding
+import ComplexityTests.Crypto.GSWSampling
 import ComplexityTests.Crypto.HomomorphicEvaluation
 import ComplexityTests.Crypto.HomomorphicExample
 import ComplexityTests.Crypto.HomomorphicFixedKey
