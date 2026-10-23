@@ -223,6 +223,15 @@ existing developments, source credit and saved branches remain available for a f
    `m*(n+1)*w` and `n*w`, and all `N^2` ciphertext bits.
    [Runtime tests](ComplexityTests/Crypto/GSWNative.lean) cover signed wraparound, ragged and
    truncated inputs, zero dimensions, bit order and growing-parameter clients.
+   [Serialized decryption and NAND](Complexity/Crypto/Computational/Homomorphic/GSW/Serialized/Evaluation.lean)
+   agree with the typed operations on every raw word, padding missing bits with zero and ignoring
+   excess bits. NAND retains modular integer counts and produces exactly `N^2` bits. Their
+   [native certificates](Complexity/Crypto/Computational/Homomorphic/GSW/Serialized/Evaluation/PolyTime.lean)
+   charge the full inputs and output with uniformly varying unary dimensions and binary arithmetic.
+   Correctness transports the existing strict noise margins, including every supported actual
+   key and encryption draw. [Regressions](ComplexityTests/Crypto/GSWEvaluation.lean) check small
+   widths, negative wraparound, asymmetric NAND products, positive noise and a native client
+   composing key generation, encryption, NAND and decryption.
    The [statistical hiding theorem](Complexity/Crypto/Computational/Homomorphic/GSW/Hiding.lean)
    proves the uniform-public-matrix step of their security argument. For `d = n + 1` and
    `N = d * w`, the actual ciphertext gives any randomized two-stage adversary acceptance
@@ -233,8 +242,45 @@ existing developments, source credit and saved branches remain available for a f
    it neither assumes whole-matrix two-universality nor gives a bound for every fixed matrix.
    [Regressions](ComplexityTests/Crypto/GSWHiding.lean) include a composite-modulus counterexample
    to whole-matrix universality and an adaptive game with exact nonzero advantage.
-   Computational security, native decryption and NAND certificates, admissible parameter families
-   and bootstrappability remain open in #486.
+   The [generated-key security theorem](Complexity/Crypto/Computational/Homomorphic/GSW/Security.lean)
+   proves single-challenge IND-CPA for the actual serialized key generator and encryption program
+   against uniform classical strict PPT adversaries. Its
+   [decision-LWE assumption](Complexity/Crypto/Computational/LWE/Basic.lean) compares the public
+   word `[B*t+e | B]` with a uniform matrix of the same shape; the
+   [distribution bridge](Complexity/Crypto/Computational/Homomorphic/GSW/LWE.lean) supplies exactly
+   the sampled centered-binomial error law, without exposing the secret or errors.
+   One uniform hidden-bit reduction preserves the adversary's full saved state and bounds its
+   chosen-message advantage by twice its decision-LWE advantage plus the statistical term above.
+   The [positive-noise parameter family](Complexity/Crypto/Computational/Homomorphic/GSW/Parameters.lean)
+   takes `n = η = λ+1`, `w = 16+8*ceil(log₂(λ+1))` and `m = (n+1)*w+2λ`.
+   It proves the entropy surplus, uniform native parameter routines and strict fresh/one-NAND
+   correctness margins simultaneously; the security theorem leaves only the specified LWE
+   hypothesis. [Regression clients](ComplexityTests/Crypto/GSWSecurity.lean) check saved-state
+   preservation, the attained factor-two loss, adaptive message choice and actual algorithm
+   certificates. A [checked formal abstract](ComplexityTests/Abstracts/GSWSecurityAbstract.lean)
+   spells out both algorithms, their native efficiency and this precise conditional security
+   result. It remains outside the curated headline catalogue while the full FHE recovery is open.
+   Hardness for the specified noise family is assumed; no worst-case lattice reduction is supplied.
+   A separate [depth-margin family](Complexity/Crypto/Computational/Homomorphic/GSW/DepthParameters.lean)
+   takes `t = 1+ceil(log₂(λ+2))`, `n = η = λ+1`, `w = 16384*t²`, `N = (n+1)*w`,
+   `m = N+2λ` and `L = 512*t`. It proves `4*m*η*(N+1)^L < 2^w` for every parameter,
+   including zero, together with the entropy surplus, polynomial bounds and uniform native
+   unary parameter routines. Only the modulus is returned in binary.
+   Its [security corollary](Complexity/Crypto/Computational/Homomorphic/GSW/DepthParameters/Security.lean)
+   assumes decision LWE for this exact new family; the earlier family's hardness premise is
+   insufficient. The actual augmented-decryption circuit still has to be constructed and proved
+   to fit `L`; this arithmetic result does not establish bootstrappability.
+   Full native circuit evaluation, shallow decryption circuits, bootstrappability with compatible
+   parameters and the concrete FHE instantiation remain open in #486. The earlier parameter family
+   proves fresh and one-NAND correctness; it does not yet supply the augmented-decryption circuit
+   or the separate joint circular-security assumption needed for the fixed-key endpoint.
+   The [code-composition API](Complexity/Computability/Circuit/Boolean/CodeComposition.lean)
+   provides a native polynomial-time constructor for shared-input blocks with different gate
+   counts, checked against the existing carry-save circuit without padding. This supports the
+   shallow-decryption generator in #528; that full circuit and its certificate remain open.
+   [Native carry-save generators](Complexity/Computability/Circuit/Boolean/CarrySave/PolyTime.lean)
+   construct the exact existing three-to-two and four-to-two reducers from unary width,
+   including all binary references and the unequal carry-bit blocks.
 4. **Completeness of oblivious transfer.** In the ideal oblivious-transfer hybrid model, every
    polynomial-time multiparty functionality admits a protocol secure against static malicious
    corruptions, with security defined by real/ideal simulation and allowing abort, under the
@@ -809,6 +855,15 @@ batches.
      now certifies construction of circuit codes from encoded instances, with separately
      prescribed unary input/output widths. Its proof reuses the uniform tableau writer,
      prefix hardwiring and shared-input circuit composition; it establishes no depth bound.
+     The [carry-lookahead adder](Complexity/Computability/Circuit/Boolean/CarryLookahead.lean)
+     computes exact unsigned addition with carry-in and carry-out at every width, including zero.
+     Its depth is at most `7 + 2*ceil(log₂(w+1))`, with polynomial size and every gate charged.
+     The modular version has depth at most `8 + 2*ceil(log₂(w+1))`; a carry-save finishing client
+     preserves the existing 4-to-2 reducer's value modulo `2^w` and clears its second word.
+     The [native generators](Complexity/Computability/Circuit/Boolean/CarryLookahead/PolyTime.lean)
+     construct the complete binary gate/output codes from unary width, reusing fixed formula
+     templates and shared-input code assembly. This establishes polynomial-time uniformity for
+     these arithmetic circuits; stronger uniformity and shallow cryptographic decryption remain open.
      Define logspace and DLOGTIME uniformity with explicit gate-address, direct-connection and
      input encodings. Certify circuit generation and evaluation and the relevant machine-to-
      circuit simulations, preserving size, depth and construction-resource bounds. Prove
@@ -943,6 +998,10 @@ The port still includes substantial mathematical developments beyond the complet
 results. Track these by their public theorems, rather than by source-file counts.
 Jukna coverage below is an additional target beyond the V1 port:
 
+* **Real-algebraic decision procedures.** The [sign-query counting identity](Complexity/Foundations/Data/Polynomial/SignQueries.lean)
+  expresses scaled finite sign-pattern counts through integer product-sign queries, including
+  distinct real roots. Porting the Sturm–Tarski query evaluator, native space certificates and
+  ETR upper bound from [lean-canny](https://github.com/SamuelSchlesinger/lean-canny) remains open.
 * **Mass-production constructor runtime.** Certify runtime separately from the native gate-cost
   bounds in [Uhlig](Complexity/Computability/Circuit/Boolean/MassProduction/Uhlig.lean) and
   [fine mass production](Complexity/Computability/Circuit/Boolean/MassProduction/Fine.lean).
@@ -1298,6 +1357,11 @@ for integration.
 Polynomial efficiency is sufficient for many reductions, but does not establish tight time or
 space bounds. Further class-level work needs resource certificates for the actual algorithms:
 
+* Binary-counted space loops: the [native `Nat.fold` certificate](Complexity/Computability/Machines/Turing/MultiTape/Complexity/PolySpace/Fold.lean)
+  ports lean-canny's indexed fold and adds a prefix-invariant rule. The child and seed may use
+  arbitrary polynomial space; every accumulator prefix must have polynomially bounded encoded
+  length. Extracting lean-canny's recursive evaluator, implicit arithmetic and ETR algorithm
+  remains separate work; this fold establishes none of their algebraic or class-level results.
 * Mathlib TM2 compatibility: the [polynomial-time bridge](Complexity/Computability/Machines/Turing/TM2/PolyTime.lean)
   transfers typed computations with finite working alphabets to the tidy multi-tape calculus
   under standard binary word encodings. The [polynomial-space bridge](Complexity/Computability/Machines/Turing/TM2/PolySpace.lean)

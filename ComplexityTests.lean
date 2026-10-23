@@ -14,6 +14,8 @@ import ComplexityTests.Abstracts.FaginAbstract
 import ComplexityTests.Abstracts.FaginBridge
 import ComplexityTests.Abstracts.FormulaBoundsAbstract
 import ComplexityTests.Abstracts.FormulaBoundsBridge
+import ComplexityTests.Abstracts.GSWSecurityAbstract
+import ComplexityTests.Abstracts.GSWSecurityBridge
 import ComplexityTests.Abstracts.PCPAbstract
 import ComplexityTests.Abstracts.PCPBridge
 import ComplexityTests.Abstracts.ResolutionAbstract
@@ -61,6 +63,8 @@ import ComplexityTests.BooleanHierarchyPH
 import ComplexityTests.Broadcast
 import ComplexityTests.CNF
 import ComplexityTests.CNFPolyTime
+import ComplexityTests.CarryLookahead
+import ComplexityTests.CarrySaveNative
 import ComplexityTests.CircuitCertificate
 import ComplexityTests.CircuitEvaluation
 import ComplexityTests.CircuitHamming.Approximation
@@ -115,9 +119,14 @@ import ComplexityTests.Crypto.Encryption
 import ComplexityTests.Crypto.FixedKeySecurity
 import ComplexityTests.Crypto.GMWPointwise
 import ComplexityTests.Crypto.GSW
+import ComplexityTests.Crypto.GSWDecryption
+import ComplexityTests.Crypto.GSWDepthParameters
+import ComplexityTests.Crypto.GSWEvaluation
 import ComplexityTests.Crypto.GSWHiding
 import ComplexityTests.Crypto.GSWNative
+import ComplexityTests.Crypto.GSWParameters
 import ComplexityTests.Crypto.GSWSampling
+import ComplexityTests.Crypto.GSWSecurity
 import ComplexityTests.Crypto.HomomorphicEvaluation
 import ComplexityTests.Crypto.HomomorphicExample
 import ComplexityTests.Crypto.HomomorphicFixedKey
@@ -324,6 +333,7 @@ import ComplexityTests.PPTTactic
 import ComplexityTests.PPTruthTable
 import ComplexityTests.PRGStretch
 import ComplexityTests.Parameterized
+import ComplexityTests.PolySpaceFold
 import ComplexityTests.PolyTimeContracts
 import ComplexityTests.PolyTimeMetadata
 import ComplexityTests.PolyTimePlain
@@ -396,6 +406,7 @@ import ComplexityTests.SeededEvaluator
 import ComplexityTests.SensitivitySeparation
 import ComplexityTests.ShannonSynthesis
 import ComplexityTests.ShortWords
+import ComplexityTests.SignQueries
 import ComplexityTests.SipserLautemann
 import ComplexityTests.SmallCountingClasses
 import ComplexityTests.Smoke
