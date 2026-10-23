@@ -2,8 +2,9 @@
 
 A standalone section that presents the definitions of
 `ComplexityTests/Abstracts/WordRAMAbstract.lean`, in the style of Section 4 of Demaine and
-Langerman's tiling paper. This directory is local to the fork; upstream renders the same abstract
-from its doc comments with `scripts/build_abstracts.py`.
+Langerman's tiling paper. This directory is local to the fork. `scripts/build_abstracts.py` can
+render the abstract from its doc comments, given a catalogue entry for it, but
+`abstracts/catalogue.json` has no such entry, so the catalogue workflow does not select it.
 
 - `section.tex`: the section; `section.pdf` is its build.
 - `extract_lean_snippets.py`: cuts the definitions of `WordRAMAbstract.lean`, up to its section
