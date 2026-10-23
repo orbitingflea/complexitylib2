@@ -116,6 +116,7 @@ import ComplexityTests.Crypto.FixedKeySecurity
 import ComplexityTests.Crypto.GMWPointwise
 import ComplexityTests.Crypto.GSW
 import ComplexityTests.Crypto.GSWHiding
+import ComplexityTests.Crypto.GSWNative
 import ComplexityTests.Crypto.GSWSampling
 import ComplexityTests.Crypto.HomomorphicEvaluation
 import ComplexityTests.Crypto.HomomorphicExample
@@ -210,6 +211,7 @@ import ComplexityTests.HessianSourceComplexity
 import ComplexityTests.HierarchyTheorems
 import ComplexityTests.Hypercontractivity
 import ComplexityTests.InductiveCounting
+import ComplexityTests.IntBinaryDiv
 import ComplexityTests.InteractiveProofs
 import ComplexityTests.Isolation
 import ComplexityTests.Iteration
@@ -408,6 +410,7 @@ import ComplexityTests.SparseLanguages
 import ComplexityTests.SparseMemory
 import ComplexityTests.StatefulRefinement
 import ComplexityTests.SubbotovskayaAndreev
+import ComplexityTests.SynthesisBuilder
 import ComplexityTests.TFNP
 import ComplexityTests.TFNPCompleteness
 import ComplexityTests.TQBF
