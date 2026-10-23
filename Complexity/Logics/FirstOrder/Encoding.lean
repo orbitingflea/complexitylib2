@@ -46,8 +46,6 @@ spelled out.
 ## Main definitions
 
 * `Cslib.Logic.Vocabulary`: an enumeration of the relation symbols of a language.
-* `Cslib.Logic.tupleEquiv`: number tuples along an enumeration of their coordinates.
-* `Cslib.Logic.tupleIndex`: the index of a tuple of `Fin n` in the truth table of its relation.
 * `Cslib.Logic.EncodedStructure`, `Cslib.Logic.encStructure`: inputs and their binary encoding.
 * `Cslib.Logic.Vocabulary.decode`, `Cslib.Logic.Vocabulary.WellFormed`,
   `Cslib.Logic.Vocabulary.checkShape`, `Cslib.Logic.Vocabulary.encode`: decoding,
@@ -56,8 +54,8 @@ spelled out.
 
 ## Main results
 
-* `Cslib.Logic.tupleIndex_lt_pow_iff`, `Cslib.Logic.tupleIndex_lt_iff`: arithmetic characterizations
-  of `< n ^ a` and `<` on `tupleIndex`.
+* `Cslib.Logic.Vocabulary.encode_congr`: encodings agree when a size cast preserves every
+  relation.
 * `Cslib.Logic.Vocabulary.decodeEncodeEquiv`: decoding an encoding of `M` gives a structure
   isomorphic to `M`.
 * `Cslib.Logic.Vocabulary.wellFormed_iff`: an input is well formed exactly when it is the
@@ -201,6 +199,22 @@ theorem wellFormed_encode (M : Type) [L.Structure M] {n : ℕ} (e : M ≃ Fin n)
   refine ⟨by simp [encode], fun i => ?_⟩
   rw [encode, List.getD_eq_getElem _ _ (by rw [List.length_ofFn]; exact i.2), List.getElem_ofFn]
   simp [arity, length_relTable]
+
+variable (v) in
+/-- Encodings agree when the numberings have equal sizes and the size cast preserves every
+relation. -/
+theorem encode_congr {M N : Type} [L.Structure M] [L.Structure N] {m n : ℕ} (e₁ : M ≃ Fin m)
+    (e₂ : N ≃ Fin n) (h : m = n)
+    (hrel : ∀ {r} (R : L.Relations r) (x : Fin r → Fin m),
+      RelMap R (e₁.symm ∘ x) ↔ RelMap R (e₂.symm ∘ Fin.cast h ∘ x)) :
+    v.encode M e₁ = v.encode N e₂ := by
+  subst h
+  simp only [encode, relTable]
+  congr 2
+  funext i
+  congr 1
+  funext j
+  exact decide_eq_decide.mpr (hrel _ _)
 
 /-- The structure decoded from an encoding of `M` interprets a relation of the tuples numbering
 the elements related in `M`. -/

@@ -30,8 +30,10 @@ file with indirect memory, and a different input and halting convention. Changin
 alone does not change these operational choices. No simulation between these models or Turing
 machines is proved here.
 
-This file defines the machine and its runs. Time-bounded decision, parameterized by an encoding
-and a word-size threshold, is `Cslib.WordRAM.DecidableInTime`; structured programs
+This file defines the machine and its runs. `Cslib.WordRAM.DecidableInTime` allows width-indexed
+code of uniformly bounded length, width-dependent encodings and time bounds, and arbitrary
+admissible input/width pairs. `Cslib.WordRAM.UniformDecidableInTime` uses one fixed program.
+Structured programs
 (`Cslib.WordRAM.Code`) compile
 to the flat programs of this file with the same instruction counts.
 
@@ -72,9 +74,9 @@ The definitions are adapted from the Lean formalization accompanying
   Algorithms that use arithmetic modulo `2 ^ w` [Hagerup][Hagerup1998] must reduce explicitly,
   for instance with the word size and half-word arithmetic; this is not formalized here.
 * Words are unsigned [Hagerup][Hagerup1998]. In the standard basis subtraction is truncated, and
-  division and remainder by zero follow Lean's conventions `x / 0 = 0` and `x % 0 = x`. These are
-  part of this machine's semantics; transfer to a model with other conventions requires a separate
-  simulation.
+  division and remainder by zero follow Lean's conventions `x / 0 = 0` and `x % 0 = x`. In the
+  exact basis these values are undefined, so the operation faults. These are part of this
+  machine's semantics; transfer to a model with other conventions requires a separate simulation.
 * The operations form a parameter, as the gates of a circuit do: word-RAM models differ in their
   instruction sets [Hagerup][Hagerup1998]. The standard basis has addition, subtraction,
   multiplication, bitwise operations and shifts as in Hagerup's multiplication RAM, together with
@@ -87,7 +89,8 @@ The definitions are adapted from the Lean formalization accompanying
   (`Cslib.WordRAM.Runs.bounded_init`); omitting them spares every program proof their side
   conditions.
 * Memory starts zeroed beyond the input, so a program may use any cell before writing it.
-* The program counter is not required to fit a word: a program has constant length.
+* The program counter is not required to fit a word. Each execution uses a finite program;
+  the complexity predicates additionally bound code length independently of word size.
 * Data instructions have one semantics, `Cslib.WordRAM.Op.eval`, shared by flat and structured
   programs; runs are counted with cslib's `Relation.RelatesInSteps`.
 
@@ -95,8 +98,14 @@ Compared with the source formalization, words are unsigned rather than two's-com
 the operations form a basis, whose standard instance adds bitwise operations, shifts and the word
 size to the source's arithmetic (`Cslib.WordRAM.Basis.arithmetic`); copies, loads,
 addresses and the halting output are not checked against the word size; the program counter is
-unbounded; and the time classes of `Cslib.WordRAM.LinearTime` measure the word size by the number
-of binary digits of the size rather than by `log₂ (size + 2) + 2`, which defines the same classes.
+unbounded; the time classes of `Cslib.WordRAM.LinearTime` measure the word size by the number
+of binary digits of the size rather than by `log₂ (size + 2) + 2`; and an operation may be
+undefined, which faults. In particular, the exact basis faults on subtraction below zero and on
+division and remainder by zero. The source does not reject these cases as such: its signed
+subtraction may give a negative word, its division and remainder follow Lean's integer conventions
+`x / 0 = 0` and `x % 0 = x`, and only its usual check that the result fits a signed word applies.
+The current classes allow width-indexed code; the `Uniform` variants retain the fixed-program
+convention.
 
 ## Main definitions
 

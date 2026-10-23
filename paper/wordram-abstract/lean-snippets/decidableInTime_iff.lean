@@ -1,3 +1,0 @@
-theorem decidableInTime_iff {α : Type u} (A : Set α) (encode : α → List ℕ) (T bits : α → ℕ) :
-    Abstract.DecidableInTime A encode T bits ↔
-      DecidableInTime .exact A encode T bits := ...
