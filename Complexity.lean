@@ -1315,6 +1315,10 @@ public import Complexity.Crypto.Computational.Homomorphic.FixedKey.Encoding
 public import Complexity.Crypto.Computational.Homomorphic.FixedKey.PolyTime
 public import Complexity.Crypto.Computational.Homomorphic.FixedKey.Reduction
 public import Complexity.Crypto.Computational.Homomorphic.FixedKey.Security
+public import Complexity.Crypto.Computational.Homomorphic.GSW.Basic
+public import Complexity.Crypto.Computational.Homomorphic.GSW.Decoding
+public import Complexity.Crypto.Computational.Homomorphic.GSW.Gadget
+public import Complexity.Crypto.Computational.Homomorphic.GSW.Noise
 public import Complexity.Crypto.Computational.Homomorphic.KeyChain
 public import Complexity.Crypto.Computational.Homomorphic.KeyChain.Hybrid
 public import Complexity.Crypto.Computational.Homomorphic.KeyChain.Hybrid.Game
@@ -1329,6 +1333,7 @@ public import Complexity.Crypto.Computational.Homomorphic.Layered.Correctness
 public import Complexity.Crypto.Computational.Homomorphic.Layered.PolyTime
 public import Complexity.Crypto.Computational.Homomorphic.Leveled.Basic
 public import Complexity.Crypto.Computational.Homomorphic.Leveled.Bootstrapping
+public import Complexity.Crypto.Computational.Homomorphic.Leveled.Compactness
 public import Complexity.Crypto.Computational.Homomorphic.Leveled.Correctness
 public import Complexity.Crypto.Computational.Homomorphic.Leveled.Encoding
 public import Complexity.Crypto.Computational.Homomorphic.Leveled.PolyTime
