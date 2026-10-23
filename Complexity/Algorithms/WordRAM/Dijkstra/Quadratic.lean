@@ -190,16 +190,6 @@ theorem setup_spec (hw : Fits w ((I.n + 2) ^ 2 * (I.maxWeight + 2))) :
   · left
     simp +decide [y, hvis]
 
-/-- A nonzero distance word decodes to a finite distance. -/
-private theorem decodeDist_ne_top {b : ℕ} (hb : b ≠ 0) : decodeDist b ≠ ⊤ := by
-  simp [decodeDist, hb]
-
-/-- Decoding preserves order between nonzero distance words. -/
-private theorem decodeDist_le {a b : ℕ} (ha : a ≠ 0) (hb : b ≠ 0) (h : a ≤ b) :
-    decodeDist a ≤ decodeDist b := by
-  simp only [decodeDist, ha, hb, ite_false]
-  exact_mod_cast Nat.sub_le_sub_right h 1
-
 /-- Word relaxation decodes to relaxation of tentative distances. -/
 private theorem decode_relaxWord {b : ℕ} (hb : b ≠ 0) (c : Option ℕ) (d : ℕ) :
     decodeDist (relaxWord b (Instance.encodeWeight c) d) =
