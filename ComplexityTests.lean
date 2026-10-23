@@ -52,6 +52,7 @@ import ComplexityTests.BatchLookup
 import ComplexityTests.BatchOr
 import ComplexityTests.BipartiteMatching
 import ComplexityTests.BitStringProjection
+import ComplexityTests.BitStringRows
 import ComplexityTests.BitonicSort
 import ComplexityTests.BitonicTrace
 import ComplexityTests.BooleanAnalysisDecisionTree
@@ -109,9 +110,13 @@ import ComplexityTests.CountingOracleEquivalence
 import ComplexityTests.CountingProducts
 import ComplexityTests.CountingSpace
 import ComplexityTests.CountingVerifier
+import ComplexityTests.Crypto.Bootstrapping
 import ComplexityTests.Crypto.Encryption
 import ComplexityTests.Crypto.FixedKeySecurity
 import ComplexityTests.Crypto.GMWPointwise
+import ComplexityTests.Crypto.GSW
+import ComplexityTests.Crypto.GSWHiding
+import ComplexityTests.Crypto.GSWSampling
 import ComplexityTests.Crypto.HomomorphicEvaluation
 import ComplexityTests.Crypto.HomomorphicExample
 import ComplexityTests.Crypto.HomomorphicFixedKey
@@ -180,6 +185,7 @@ import ComplexityTests.FusionSampling
 import ComplexityTests.FusionSemifilter
 import ComplexityTests.FusionTransport
 import ComplexityTests.FusionTree
+import ComplexityTests.FusionTreeHeight
 import ComplexityTests.FusionTreeLayout
 import ComplexityTests.FusionTreeQuery
 import ComplexityTests.FusionTreeRAM

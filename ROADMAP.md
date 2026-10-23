@@ -124,13 +124,20 @@ existing developments, source credit and saved branches remain available for a f
    uniformly in unary `(n, B)`. They yield efficient schemes for efficiently computed unary budget
    families. The decryption-circuit generator also supplies polynomial bounds on both derived
    widths; decryption itself has no budget parameter.
+   [Compactness](Complexity/Crypto/Computational/Homomorphic/Leveled/Compactness.lean) gives one
+   polynomial-size circuit family and common polynomial time and space bounds in the security
+   parameter for the complete tagged decryption algorithm, including endpoint decoding and tag
+   selection. The circuit family and resource bounds are independent of every budget and requested
+   depth family and cover all inputs of the prescribed widths, including malformed secrets. The
+   circuit result proves nonuniform existence; it does not provide a generator for these wrapper
+   circuits.
    [Refresh tests](ComplexityTests/Crypto/HomomorphicRefresh.lean),
    [layered tests](ComplexityTests/Crypto/HomomorphicLayered.lean), and
    [ordinary-circuit tests](ComplexityTests/Crypto/HomomorphicEvaluation.lean) instantiate the
-   hypotheses in an explicitly insecure scheme whose base evaluator rejects evaluated inputs.
-   They exercise key switching, repeated refresh, shared wires, constants, empty layers and zero
-   depth. [Compiler tests](ComplexityTests/CircuitLayering.lean) also cover dead gates, empty
-   outputs, shared OR gates, skipped depths, and malformed binary references.
+   construction and runtime hypotheses in an explicitly insecure scheme whose base evaluator
+   rejects evaluated inputs. They exercise key switching, repeated refresh, shared wires, constants,
+   empty layers and zero depth. [Compiler tests](ComplexityTests/CircuitLayering.lean) also cover
+   dead gates, empty outputs, shared OR gates, skipped depths, and malformed binary references.
    [Leveled tests](ComplexityTests/Crypto/HomomorphicLeveled.lean) check budgets zero, one and two,
    distinct initial/final secrets at positive budgets, and circuits of different actual depths
    under the same endpoint, malformed inputs and nonconstant efficient budget families.
@@ -142,9 +149,17 @@ existing developments, source credit and saved branches remain available for a f
    [key-chain reduction](Complexity/Crypto/Computational/Homomorphic/KeyChain/Security.lean)
    erases links in reverse order with uniform link/bit sampling and an executable polynomial
    cap derived from native key generation; no circular-security or efficient-width premise is
-   used. The [combined theorem](Complexity/Crypto/Computational/Homomorphic/Leveled/Bootstrapping.lean)
-   gives correctness, exact polynomial widths independent of the budget, and IND-CPA for the
-   same constructed scheme. [Key-chain tests](ComplexityTests/Crypto/KeyChainSecurity.lean) and
+   used. The [combined theorems](Complexity/Crypto/Computational/Homomorphic/Leveled/Bootstrapping.lean)
+   give correctness, exact polynomial widths independent of the budget, and IND-CPA for the
+   same constructed scheme. `Leveled.exists_scheme_of_polynomiallyBounded` covers every
+   `PolynomiallyBounded` requested depth family by selecting a computable unary budget
+   `c * (n + 1)^d` that dominates it at every parameter, including its finite prefix. The requested
+   family need not be computable: the algorithms execute the majorant. The theorem supplies native
+   certificates for all four algorithms and permits every circuit within the requested depth.
+   [Endpoint tests](ComplexityTests/Crypto/Bootstrapping.lean) cover arbitrary predicate-dependent
+   depth families, large finite-prefix spikes, and the full tagged decoder's compactness, while
+   retaining the security assumptions explicitly.
+   [Key-chain tests](ComplexityTests/Crypto/KeyChainSecurity.lean) and
    [leveled security tests](ComplexityTests/Crypto/LeveledSecurity.lean) exercise repeated random
    keys, retained encryption randomness, adaptive saved state, empty secrets, zero links and padding.
    This is a qualitative single-challenge security transfer, not Gentry's exact
@@ -169,10 +184,48 @@ existing developments, source credit and saved branches remain available for a f
    under one key, even though the explicitly insecure base fixture rejects evaluated inputs.
    [Security tests](ComplexityTests/Crypto/FixedKeySecurity.lean) reject joint leakage hidden by
    identical ciphertext marginals and keep a security-only fixture's failed correctness explicit.
-   These recover the generic conditional bootstrapping constructions. A concrete LWE-based
-   cryptosystem satisfying their hypotheses remains open in
-   [#322](https://github.com/cslib-community/complexitylib/issues/322); these reductions do not
-   supply that instantiation or Gentry's exact concrete-security loss.
+   Together these establish the generic qualitative conditional bootstrapping theorem tracked in
+   [#322](https://github.com/cslib-community/complexitylib/issues/322). A concrete LWE-based
+   cryptosystem satisfying its correctness, security, bootstrappability and native efficiency
+   hypotheses remains open in [#486](https://github.com/cslib-community/complexitylib/issues/486).
+   The insecure construction fixtures and security-only fixtures do not supply that joint
+   instantiation. The reductions do not claim Gentry's exact concrete-security loss.
+   The [deterministic GSW core](Complexity/Crypto/Computational/Homomorphic/GSW/Basic.lean)
+   constructs the public matrix, encryption with explicit binary coins, NAND and decryption for
+   modulus `q = 2^w` and Boolean ciphertext matrices of dimension `N = (n + 1) * w`.
+   It proves the exact integer error equations and correctness under the strict margin
+   `4 * |error| < q`. The [noise bounds](Complexity/Crypto/Computational/Homomorphic/GSW/Noise.lean)
+   are `m * β` for fresh encryption and `B₁ + N * B₂` for NAND.
+   [Tests](ComplexityTests/Crypto/GSW.lean) exercise both messages and all NAND inputs with nonzero
+   noise, including negative wraparound and decoder boundaries. This is the power-of-two
+   specialization of Gentry--Sahai--Waters (2013), omitting its redundant top digit.
+   The [finite samplers](Complexity/Crypto/Computational/Homomorphic/GSW/Sampling.lean)
+   instantiate actual key generation and encryption with uniform power-of-two residues,
+   independent binary coins and errors given by the difference of two independent `η`-bit counts.
+   Every supported error lies in `[-η, η]`. Fresh encryption and NAND of two fresh ciphertexts
+   are correct under the respective strict margins
+   `4*m*η < 2^w` and `4*(1+N)*m*η < 2^w`, respectively, with `w > 0`.
+   A [flat-tape identity](Complexity/Crypto/Computational/Homomorphic/GSW/Sampling/Randomness.lean)
+   preserves the full joint public-key, secret-key and ciphertext law using
+   `n*w + m*n*w + 2*m*η + N*m` fair bits.
+   [Serialized random-input samplers](Complexity/Crypto/Computational/Homomorphic/GSW/Sampling/Serialized.lean)
+   have uniform native PPT certificates and exact typed-distribution bridges, with unary
+   dimensions, binary residues and signed binary errors.
+   [Sampling tests](ComplexityTests/Crypto/GSWSampling.lean) include nonzero signed errors,
+   actual generated keys, both messages, NAND, empty dimensions and growing native inputs.
+   These results do not identify the finite noise with a Gaussian or assert its hardness.
+   The [statistical hiding theorem](Complexity/Crypto/Computational/Homomorphic/GSW/Hiding.lean)
+   proves the uniform-public-matrix step of their security argument. For `d = n + 1` and
+   `N = d * w`, the actual ciphertext gives any randomized two-stage adversary acceptance
+   probabilities differing by at most `N * sqrt(2^(w*d) / 2^m)`. The adversary sees the public
+   matrix before choosing its messages and retains arbitrary state. The underlying
+   [shared-matrix bound](Complexity/Probability/BitString/SubsetSum/Matrix.lean) works for every
+   positive modulus, with loss linear in the number of independently sampled binary rows;
+   it neither assumes whole-matrix two-universality nor gives a bound for every fixed matrix.
+   [Regressions](ComplexityTests/Crypto/GSWHiding.lean) include a composite-modulus counterexample
+   to whole-matrix universality and an adaptive game with exact nonzero advantage.
+   Computational security, native certificates for complete matrix algorithms, admissible parameter
+   families and bootstrappability remain open in #486.
 4. **Completeness of oblivious transfer.** In the ideal oblivious-transfer hybrid model, every
    polynomial-time multiparty functionality admits a protocol secure against static malicious
    corruptions, with security defined by real/ideal simulation and allowing abort, under the
@@ -214,6 +267,88 @@ existing developments, source credit and saved branches remain available for a f
     quantum polynomial-time algorithm for worst-case GapSVP and SIVP with approximation factor
     Õ(n/α). The noise distribution, modulus restrictions and quantum reduction are part of the
     theorem.
+
+## Modern FHE methods and deployment priorities
+
+The planning update is tracked in
+[#513](https://github.com/cslib-community/complexitylib/issues/513). The targets below remain
+unimplemented; the generic Gentry theorem and current GSW development do not establish them.
+First complete [#486](https://github.com/cslib-community/complexitylib/issues/486): actual GSW
+algorithms, the exact chosen-noise decision-LWE reduction, admissible parameters, and shallow
+augmented decryption connected to the leveled/fixed-key endpoints. The current native
+key-generation/encryption and security milestones are
+[#500](https://github.com/cslib-community/complexitylib/issues/500) and
+[#501](https://github.com/cslib-community/complexitylib/issues/501); completing them still leaves
+decryption/evaluation runtime and bootstrappability obligations.
+
+**Industrial context, checked 2026-10-23.** Current FHE libraries serve distinct workloads:
+
+| Workload | Methods and current implementation evidence |
+| --- | --- |
+| Exact modular arithmetic and packed integer computations | BFV/BGV are supported by [Microsoft SEAL](https://github.com/microsoft/SEAL) and [OpenFHE](https://github.com/openfheorg/openfhe-development). |
+| Approximate vector arithmetic, including numerical inference | CKKS is supported by SEAL and OpenFHE; its numerical approximation is part of the result contract. |
+| Boolean/integer operations, comparisons and lookup tables | [TFHE-rs](https://docs.zama.org/tfhe-rs/get-started) implements TFHE with programmable bootstrapping; OpenFHE also implements FHEW/TFHE-family methods. |
+
+There is commercial use beyond library availability: [Duality states that its secure data
+collaboration platform is built with OpenFHE](https://dualitytech.com/platform/open-source/), and
+[Zama documents TFHE-rs execution in its confidential-blockchain coprocessors](https://docs.zama.org/protocol/protocol/overview/coprocessor).
+These are vendor descriptions, not market-share measurements or independent deployment audits.
+Bounded-depth arithmetic can use leveled evaluation without bootstrapping; a bootstrap is a
+separate algorithmic capability, not something every workload invokes.
+
+Develop the following in reviewable milestones, reusing existing finite sampling, gadget algebra,
+native certificates and game reductions where their hypotheses match:
+
+1. **Shared ring arithmetic and precise RLWE experiments.** Construct the actual polynomial-ring
+   operations, starting with `R_q = (Z/qZ)[X]/(X^d + 1)` for power-of-two `d`. Prove residue-number
+   (RNS/CRT) conversions, rounding and modulus-switching error bounds; prove that forward/inverse
+   negacyclic NTTs implement ring multiplication under explicit modulus/root conditions. Give
+   native certificates for the serialized algorithms, including malformed inputs. The
+   [Intel HEXL kernels](https://github.com/IntelLabs/hexl) provide a concrete implementation target.
+   Define the exact RLWE secret/error distributions and distinguishing experiment separately:
+   an ordinary-LWE reduction for #486 does not establish this RLWE claim.
+2. **FHEW/TFHE programmable bootstrapping.** Follow
+   [Ducas–Micciancio](https://eprint.iacr.org/2014/816) and
+   [Chillotti–Gama–Georgieva–Izabachène](https://eprint.iacr.org/2016/870), a close next use of the
+   GSW gadget work. Construct ring-GSW external products, blind rotation, sample extraction and
+   key switching. For an explicit plaintext domain and admissible lookup table `f`, prove that
+   the actual bootstrap decrypts to `f(m)`, with its noise and failure bounds, output width and
+   total runtime. Account for negacyclic lookup restrictions and finite torus representations;
+   floating-point FFT implementations need their own rounding-error proof. Then assess
+   [smaller-key methods of Lee et al.](https://eprint.iacr.org/2022/198) and batched variants,
+   preserving their exact secret distributions and joint error bounds.
+3. **Exact packed BFV/BGV.** Formalize the constructions of
+   [Brakerski–Gentry–Vaikuntanathan](https://eprint.iacr.org/2011/277) and
+   [Fan–Vercauteren](https://eprint.iacr.org/2012/144), including slot encoding, multiplication,
+   relinearization, rotations and level/modulus management. For permitted arithmetic circuits,
+   prove decryption equals evaluation in the stated plaintext ring, with explicit depth, noise,
+   modulus and packing conditions. Distinguish equality modulo the plaintext modulus from
+   ordinary integer equality; the latter needs a range bound. Establish leveled evaluation
+   before adding a separately proved refresh algorithm.
+4. **Approximate packed CKKS and its bootstrap.** Follow
+   [Cheon–Kim–Kim–Song](https://eprint.iacr.org/2016/421). Define finite message encodings and the
+   complex-slot interpretation, then prove an explicit norm bound on decoded evaluation error
+   for bounded inputs and specified scales, levels and circuits. Include rescaling, rounding,
+   key switching and rotations in that bound. A bootstrap must prove its precision after modulus
+   raising, coefficient/slot transforms and approximate modular reduction; use the
+   [OpenFHE bootstrap description](https://github.com/openfheorg/openfhe-development/blob/main/src/pke/examples/CKKS_BOOTSTRAPPING.md)
+   as a concrete implementation reference. Approximate arithmetic requires an explicit
+   approximate-correctness interface, not the current exact Boolean equality contract.
+5. **Scheme switching and multiparty extensions.** OpenFHE's CKKS/FHEW switching, vectorized
+   functional bootstrapping and threshold variants motivate later targets. Prove each conversion
+   preserves the intended value within its range/precision contract and state the joint
+   evaluation-key security assumption. For threshold key generation/decryption, fix corruption
+   thresholds, interaction, robustness and decryption-query access explicitly; distinguish
+   honest-but-curious security from malicious security. These are protocol theorems beyond
+   single-key IND-CPA.
+
+For every scheme, specify whether encryption is public-key or symmetric and prove the matching
+chosen-plaintext security reduction for the actual algorithms and public evaluation keys. Keep
+ordinary LWE/RLWE assumptions, circular/KDM assumptions and concrete attack-cost estimates distinct.
+If correctness permits a nonzero decryption-failure probability, introduce that game explicitly
+and relate it to the current perfect-support interface. Require nonvacuous parameter families,
+composed error bounds, full-input native runtime and independent source/statement review before
+claiming an endpoint. Hardware acceleration benchmarks do not replace any of these proofs.
 
 ## Long-term coverage and reuse
 
@@ -1058,9 +1193,8 @@ provides reusable arithmetic. A focused API follow-up is to extract the duplicat
 `Schoolbook.value`/`Bounded` and `Difference.value`/`Bounded` into a shared
 `WordRAM/Multiword/Digits` module, letting Transfer, Bitwise and Shift import digit infrastructure
 without depending on multiplication.
-Likewise, move the generic child-height lemma duplicated in `Model` and
-`QueryProgram.child_height_lt` into `Algorithms/Lean/FusionTree/Tree`, for reuse by
-`Model.decode_rep` and `QueryProgram.exec_loop_height`.
+The shared child-height lemmas in `Algorithms/Lean/FusionTree/Tree` support both
+`Model.decode_rep` and `QueryProgram.exec_loop_height` without duplicate proofs.
 
 [Client resource contracts](Complexity/Foundations/Semantics/Stateful/CostHoare.lean) combine
 admissibility, postconditions and initial-state-dependent operation budgets. Their sequencing
@@ -1230,7 +1364,9 @@ space bounds. Further class-level work needs resource certificates for the actua
   individual operations by programs over smaller bases remain open (#293).
   Generalizing the structured program calculus and time-class APIs to arbitrary domains,
   weighted/bit costs, and simulations between these instances also remain open. No
-  real-RAM/Turing-machine equivalence is claimed;
+  real-RAM/Turing-machine equivalence is claimed. The redesigned typed core is proposed in
+  [CSLib #1158](https://github.com/leanprover/cslib/pull/1158); its scope and remaining compatibility
+  bridges are recorded in [UPSTREAM.md](UPSTREAM.md#coordination-before-submission);
 * Sparse RAM memory: [association-list semantics](Complexity/Computability/GenericRAM/SparseMemory/Basic.lean)
   and [native multitape TM certificates](Complexity/Computability/GenericRAM/SparseMemory/Turing.lean)
   implement default-valued reads and insert/replace writes using Mathlib's `AList` and the existing
