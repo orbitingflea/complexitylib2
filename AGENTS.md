@@ -111,6 +111,14 @@ ownership indefinitely.
 
 Reviewing submitted PRs is the highest priority. Keep reviews moving alongside other work.
 
+When choosing work, give simplification and usability real priority alongside new mathematics:
+replacing repeated proof plumbing with a small lemma, finishing a migration and removing what it
+superseded, removing unused scaffolding, fixing recurring build or search problems, and making
+results easy to find, import and apply. Choose these from the friction met during ongoing work,
+and carry each improvement through to the clients that benefit. In review, ask what the next
+person will no longer have to figure out; the answer should be visible in the code, examples or
+tooling.
+
 - Read the PR and existing reviews. Arrange review of uncovered questions under the review cycle
   below; do not commission a fresh review merely because a new coordinator arrived.
 - Give a clear verdict. For requested changes, post a short link in the task issue. This ends the
@@ -163,6 +171,13 @@ concrete and the change is small; otherwise record a specific follow-up with dec
 consumers, and a proposed home. Preserve public interfaces under the compatibility rules below.
 Do not expand a bounded PR into an unbounded architectural cleanup.
 
+"Lowest suitable" does not mean the most widely imported file. Adding a public declaration changes
+a module's public interface and can invalidate downstream build artifacts, even for clients that do
+not use the new declaration. Prefer a small topic module imported by its consumers over appending
+to a hub such as `Foundations/Data/List/Basic.lean` or `Probability/PMF.lean`; #569 records the
+measured fan-out. Exposed definition bodies (`@[expose]`) belong to the interface too, so expose
+only what downstream proofs must unfold.
+
 ### Improving library ergonomics
 
 When work exposes library friction, workers should improve the relevant API, lemma, documentation
@@ -204,6 +219,14 @@ lake exe checkInitImports
 ```
 
 `scripts/check.sh` runs this sequence. CI runs the same checks.
+
+For the edit loop, `scripts/check.sh --quick [--base REF]` builds changed Lean modules and their
+transitive importing clients, then checks import aggregates. The comparison uses the merge base
+with local `origin/main` by default, including committed, staged, unstaged and untracked changes;
+it does not fetch. Quick mode skips the global test/lint/style/init-import gates and is not full
+validation. Non-Lean changes, deletions/renames, changed aggregates, unsupported layouts and
+ambiguous change/import analysis fall back to all six gates. Run the default command before
+submitting a PR; quick success does not satisfy that requirement.
 
 `lake exe mk_all` regenerates `Complexity.lean` after adding a file. New test files go in
 `ComplexityTests/` and must be imported from `ComplexityTests.lean`.
@@ -278,10 +301,10 @@ lake exe checkInitImports
   laws directly, and for operations such as `PMF.bind` between different universes that the standard
   monad interface cannot express. Retain concise point-free composition and maps when naming an
   intermediate value would not improve readability. Check affected proofs when changing notation.
-- As in Mathlib, renaming, moving or removing a public declaration that is already on `main`
-  leaves a deprecated alias at the old full name, `@[deprecated (since := "YYYY-MM-DD")] alias
-  oldName := newName` (or a `@[deprecated]` theorem when the statement changes shape). Private
-  declarations and declarations introduced in the same unmerged branch need no alias.
+- The library supports no downstream users yet, so renaming, moving, removing or privatizing a
+  public declaration needs no deprecated alias: update every client in this repository (library,
+  tests, abstracts and guide) in the same change. Delete existing deprecated aliases when touching
+  their area. Revisit this rule before the first supported release.
 - `ComplexityTests/Axioms.lean` audits all declarations stored in imported `Complexity` modules
   for dependencies beyond `propext`, `Classical.choice` and `Quot.sound` and keeps its existing
   named guards. Add named `#print axioms` guards for an epic's headline theorems to the epic's
@@ -324,9 +347,11 @@ and [API review with explicit nonblocking nits](https://github.com/leanprover/cs
 ## Curated formal abstracts
 
 `abstracts/catalogue.json` selects the public headline results. Each selected group has a checked
-`*Abstract.lean` and `*Bridge.lean` under `ComplexityTests/Abstracts/`, imported by
-`ComplexityTests.lean`. The Lean definitions and statements are the source of truth; PDFs are
-generated from them, with proof bodies omitted. There is no separately maintained paper/TeX index.
+`*Abstract.lean` and `*Bridge.lean` under `abstracts/ComplexityAbstracts/`, imported by the
+dedicated `ComplexityAbstracts` library. `ComplexityTests.lean` imports that library and its
+regression tests. Existing declaration namespaces remain stable across the source relocation.
+The Lean definitions and statements are the source of truth; PDFs are generated from them, with
+proof bodies omitted. There is no separately maintained paper/TeX index.
 
 Selection has a higher bar than inclusion in the library: a headline must be a substantial proved
 endpoint with conventional, inspectable semantics, satisfiable hypotheses, explicit models and

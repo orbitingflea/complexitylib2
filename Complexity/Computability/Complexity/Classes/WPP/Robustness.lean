@@ -32,11 +32,18 @@ Thus the proof uses certified word sums and powers, without assuming indexed-pro
 The two-sided acceptance/rejection-target generalization is proved in `WPP.TwoSided`.
 Oracle lowness is a separate result.
 
+The public polynomial-time interfaces use `Turing.MultiTapeTM.ComputableInPolyTime`, following
+the plain-statement convention of #456. Their former tidy statement shapes are available under
+deprecated names with the suffix `_tidy`; convert tidy certificates with `.computableInPolyTime`
+when migrating a client to the unsuffixed API. Private machine-construction lemmas remain tidy.
+
 ## Main results
 
 * `GapP.prod_sub_mem`: uniform interpolation products are GapP.
 * `mem_WPP_iff_exists_polyTime_targets`, `mem_LWPP_iff_exists_polyTime_targets`:
   full one-sided polynomial-family robustness, stated with target lists.
+* `mem_WPP_of_polyTime_targets`, `mem_LWPP_of_polyTime_targets`: list constructors.
+* `polyTime_indexedTargets`: plain computability of an indexed target list.
 * `mem_WPP_of_indexed_targets`, `mem_LWPP_of_indexed_targets`: indexed-family forms.
 
 ## References
@@ -96,8 +103,9 @@ private theorem polyTime_selectedProduct {α : Type} {enc : α ↪ List Bool} {f
 value is GapP. The list length and its total encoded size may depend polynomially on the input. -/
 theorem GapP.prod_sub_mem {α : Type} {enc : α ↪ List Bool}
     {f : α → List ℤ} {g : α → ℤ}
-    (hf : ComputableTidilyInPolyTime f enc (encList encIntBin)) (hg : g ∈ GapP enc) :
+    (hf : ComputableInPolyTime f enc (encList encIntBin)) (hg : g ∈ GapP enc) :
     (fun a => ((f a).map (fun z => z - g a)).prod) ∈ GapP enc := by
+  have hf := hf.tidy
   have hc := GapP.of_polyTime (polyTime_selectedProduct hf)
   have hp := GapP.pow_mem_polyTime
     (GapP.comp_mem (GapP.neg_mem hg) (ComputableTidilyInPolyTime.fst enc encBits))
@@ -120,7 +128,7 @@ private theorem targetWitness {α : Type} {enc : α ↪ List Bool} {A : Set α}
   let F : α → ℤ := fun a => (f a).prod
   let P : α → ℤ := fun a => ((f a).map (fun z => z - g a)).prod
   have hF := ComputableTidilyInPolyTime.intBin_prod.comp hf
-  have hP := GapP.prod_sub_mem hf hg
+  have hP := GapP.prod_sub_mem hf.computableInPolyTime hg
   have hFn (a : α) : F a ≠ 0 := List.prod_ne_zero (hn a)
   have hyes (a : α) (ha : a ∈ A) : P a = 0 := by
     apply List.prod_eq_zero_iff.mpr
@@ -144,25 +152,25 @@ belongs to a uniformly computed list of nonzero binary integer targets on member
 The accepting target index need not be computable; the list length may vary with the input. -/
 theorem mem_WPP_of_polyTime_targets {α : Type} {enc : α ↪ List Bool} {A : Set α}
     {g : α → ℤ} {f : α → List ℤ} (hg : g ∈ GapP enc)
-    (hf : ComputableTidilyInPolyTime f enc (encList encIntBin))
+    (hf : ComputableInPolyTime f enc (encList encIntBin))
     (hn : ∀ a, (0 : ℤ) ∉ f a)
     (hy : ∀ a, a ∈ A → g a ∈ f a) (hno : ∀ a, a ∉ A → g a = 0) :
     A ∈ WPP enc := by
-  obtain ⟨G, hG, hR, hA⟩ := targetWitness hg hf hn hy hno
-  exact ⟨G, hG, _, .of_tidy (ComputableTidilyInPolyTime.intBin_prod.comp hf),
+  obtain ⟨G, hG, hR, hA⟩ := targetWitness hg hf.tidy hn hy hno
+  exact ⟨G, hG, _, .of_tidy (ComputableTidilyInPolyTime.intBin_prod.comp hf.tidy),
     fun a => List.prod_ne_zero (hn a), hR, hA⟩
 
 /-- **Polynomial-family robustness of LWPP.** The target list is uniformly computed from unary
 input length. Its length may grow polynomially, and the accepting index is only existential. -/
 theorem mem_LWPP_of_polyTime_targets {α : Type} {enc : α ↪ List Bool} {A : Set α}
     {g : α → ℤ} {f : ℕ → List ℤ} (hg : g ∈ GapP enc)
-    (hf : ComputableTidilyInPolyTime f encUnary (encList encIntBin))
+    (hf : ComputableInPolyTime f encUnary (encList encIntBin))
     (hn : ∀ n, (0 : ℤ) ∉ f n)
     (hy : ∀ a, a ∈ A → g a ∈ f (enc a).length) (hno : ∀ a, a ∉ A → g a = 0) :
     A ∈ LWPP enc := by
-  obtain ⟨G, hG, hR, hA⟩ := targetWitness hg (hf.comp (.encoding_length enc))
+  obtain ⟨G, hG, hR, hA⟩ := targetWitness hg (hf.tidy.comp (.encoding_length enc))
     (fun a => hn (enc a).length) hy hno
-  exact ⟨G, hG, fun n => (f n).prod, .of_tidy (ComputableTidilyInPolyTime.intBin_prod.comp hf),
+  exact ⟨G, hG, fun n => (f n).prod, .of_tidy (ComputableTidilyInPolyTime.intBin_prod.comp hf.tidy),
     fun n => List.prod_ne_zero (hn n), hR, hA⟩
 
 /-- The list of targets `f (a, 0), ..., f (a, r a - 1)` for an indexed target family. -/
@@ -172,10 +180,11 @@ def indexedTargets {α : Type} (f : α × ℕ → ℤ) (r : α → ℕ) (a : α)
 /-- Uniformly indexed binary integer targets over a unary-computable range form a polynomial-time
 target list. -/
 theorem polyTime_indexedTargets {α : Type} {enc : α ↪ List Bool} {f : α × ℕ → ℤ}
-    {r : α → ℕ} (hf : ComputableTidilyInPolyTime f (encPair enc encUnary) encIntBin)
-    (hr : ComputableTidilyInPolyTime r enc encUnary) :
-    ComputableTidilyInPolyTime (indexedTargets f r) enc (encList encIntBin) :=
-  ComputableTidilyInPolyTime.mapWithInput (ComputableTidilyInPolyTime.range.comp hr) hf
+    {r : α → ℕ} (hf : ComputableInPolyTime f (encPair enc encUnary) encIntBin)
+    (hr : ComputableInPolyTime r enc encUnary) :
+    ComputableInPolyTime (indexedTargets f r) enc (encList encIntBin) :=
+  .of_tidy (ComputableTidilyInPolyTime.mapWithInput
+    (ComputableTidilyInPolyTime.range.comp hr.tidy) hf.tidy)
 
 /-- A value matching `f (a, i)` for some `i < r a` belongs to `indexedTargets f r a`. -/
 theorem mem_indexedTargets {α : Type} {f : α × ℕ → ℤ} {r : α → ℕ}
@@ -189,8 +198,8 @@ selecting an accepting index is assumed. This includes [Hemaspaandra et al., The
 [HemaspaandraEtAl2018] by taking `r a` to be a polynomial in encoded input length. -/
 theorem mem_WPP_of_indexed_targets {α : Type} {enc : α ↪ List Bool} {A : Set α}
     {g : α → ℤ} {f : α × ℕ → ℤ} {r : α → ℕ} (hg : g ∈ GapP enc)
-    (hf : ComputableTidilyInPolyTime f (encPair enc encUnary) encIntBin)
-    (hr : ComputableTidilyInPolyTime r enc encUnary)
+    (hf : ComputableInPolyTime f (encPair enc encUnary) encIntBin)
+    (hr : ComputableInPolyTime r enc encUnary)
     (hn : ∀ a i, i < r a → f (a, i) ≠ 0)
     (hy : ∀ a, a ∈ A → ∃ i < r a, g a = f (a, i))
     (hno : ∀ a, a ∉ A → g a = 0) : A ∈ WPP enc := by
@@ -206,8 +215,8 @@ on unary input length. Zero-based indexing translates the one-based family in
 [Hemaspaandra et al., Theorem 3.1][HemaspaandraEtAl2018]. -/
 theorem mem_LWPP_of_indexed_targets {α : Type} {enc : α ↪ List Bool} {A : Set α}
     {g : α → ℤ} {f : ℕ × ℕ → ℤ} {r : ℕ → ℕ} (hg : g ∈ GapP enc)
-    (hf : ComputableTidilyInPolyTime f (encPair encUnary encUnary) encIntBin)
-    (hr : ComputableTidilyInPolyTime r encUnary encUnary)
+    (hf : ComputableInPolyTime f (encPair encUnary encUnary) encIntBin)
+    (hr : ComputableInPolyTime r encUnary encUnary)
     (hn : ∀ n i, i < r n → f (n, i) ≠ 0)
     (hy : ∀ a, a ∈ A → ∃ i < r (enc a).length, g a = f ((enc a).length, i))
     (hno : ∀ a, a ∉ A → g a = 0) : A ∈ LWPP enc := by
@@ -224,7 +233,7 @@ and a singleton list gives the converse. This is the verifier-based form of
 [Hemaspaandra et al., Theorem 3.7][HemaspaandraEtAl2018]. -/
 theorem mem_WPP_iff_exists_polyTime_targets {α : Type} {enc : α ↪ List Bool} {A : Set α} :
     A ∈ WPP enc ↔ ∃ g ∈ GapP enc, ∃ f : α → List ℤ,
-      ComputableTidilyInPolyTime f enc (encList encIntBin) ∧
+      ComputableInPolyTime f enc (encList encIntBin) ∧
       (∀ a, (0 : ℤ) ∉ f a) ∧ (∀ a, a ∈ A → g a ∈ f a) ∧
       ∀ a, a ∉ A → g a = 0 := by
   constructor
@@ -245,7 +254,7 @@ verifier-based form of [Hemaspaandra et al., Theorem 3.1][HemaspaandraEtAl2018];
 index is not required to be computable. -/
 theorem mem_LWPP_iff_exists_polyTime_targets {α : Type} {enc : α ↪ List Bool} {A : Set α} :
     A ∈ LWPP enc ↔ ∃ g ∈ GapP enc, ∃ f : ℕ → List ℤ,
-      ComputableTidilyInPolyTime f encUnary (encList encIntBin) ∧
+      ComputableInPolyTime f encUnary (encList encIntBin) ∧
       (∀ n, (0 : ℤ) ∉ f n) ∧ (∀ a, a ∈ A → g a ∈ f (enc a).length) ∧
       ∀ a, a ∉ A → g a = 0 := by
   constructor
@@ -260,5 +269,99 @@ theorem mem_LWPP_iff_exists_polyTime_targets {α : Type} {enc : α ↪ List Bool
       exact (hr a).resolve_right (fun h => ha ((hA a).mpr h))
   · rintro ⟨g, hg, f, hf, hn, hy, hno⟩
     exact mem_LWPP_of_polyTime_targets hg hf hn hy hno
+
+/-! ### Deprecated tidy interfaces
+
+These statements retain the former tidy types under `_tidy` names. The unsuffixed interfaces above
+use plain computability; convert a tidy certificate with `.computableInPolyTime`.
+-/
+
+/-- Legacy tidy interface; use
+`GapP.prod_sub_mem` with plain certificates. -/
+@[deprecated GapP.prod_sub_mem +typeChanged (since := "2026-10-23")]
+theorem GapP.prod_sub_mem_tidy {α : Type} {enc : α ↪ List Bool}
+    {f : α → List ℤ} {g : α → ℤ}
+    (hf : ComputableTidilyInPolyTime f enc (encList encIntBin)) (hg : g ∈ GapP enc) :
+    (fun a => ((f a).map (fun z => z - g a)).prod) ∈ GapP enc :=
+  GapP.prod_sub_mem (.of_tidy hf) hg
+
+/-- Legacy tidy interface; use
+`mem_WPP_of_polyTime_targets` with plain certificates. -/
+@[deprecated mem_WPP_of_polyTime_targets +typeChanged (since := "2026-10-23")]
+theorem mem_WPP_of_polyTime_targets_tidy {α : Type} {enc : α ↪ List Bool} {A : Set α}
+    {g : α → ℤ} {f : α → List ℤ} (hg : g ∈ GapP enc)
+    (hf : ComputableTidilyInPolyTime f enc (encList encIntBin))
+    (hn : ∀ a, (0 : ℤ) ∉ f a)
+    (hy : ∀ a, a ∈ A → g a ∈ f a) (hno : ∀ a, a ∉ A → g a = 0) :
+    A ∈ WPP enc :=
+  mem_WPP_of_polyTime_targets hg (.of_tidy hf) hn hy hno
+
+/-- Legacy tidy interface; use
+`mem_LWPP_of_polyTime_targets` with plain certificates. -/
+@[deprecated mem_LWPP_of_polyTime_targets +typeChanged (since := "2026-10-23")]
+theorem mem_LWPP_of_polyTime_targets_tidy {α : Type} {enc : α ↪ List Bool} {A : Set α}
+    {g : α → ℤ} {f : ℕ → List ℤ} (hg : g ∈ GapP enc)
+    (hf : ComputableTidilyInPolyTime f encUnary (encList encIntBin))
+    (hn : ∀ n, (0 : ℤ) ∉ f n)
+    (hy : ∀ a, a ∈ A → g a ∈ f (enc a).length) (hno : ∀ a, a ∉ A → g a = 0) :
+    A ∈ LWPP enc :=
+  mem_LWPP_of_polyTime_targets hg (.of_tidy hf) hn hy hno
+
+/-- Legacy tidy interface; use
+`polyTime_indexedTargets` with plain certificates. -/
+@[deprecated polyTime_indexedTargets +typeChanged (since := "2026-10-23")]
+theorem polyTime_indexedTargets_tidy {α : Type} {enc : α ↪ List Bool} {f : α × ℕ → ℤ}
+    {r : α → ℕ} (hf : ComputableTidilyInPolyTime f (encPair enc encUnary) encIntBin)
+    (hr : ComputableTidilyInPolyTime r enc encUnary) :
+    ComputableTidilyInPolyTime (indexedTargets f r) enc (encList encIntBin) :=
+  (polyTime_indexedTargets (.of_tidy hf) (.of_tidy hr)).tidy
+
+/-- Legacy tidy interface; use
+`mem_WPP_of_indexed_targets` with plain certificates. -/
+@[deprecated mem_WPP_of_indexed_targets +typeChanged (since := "2026-10-23")]
+theorem mem_WPP_of_indexed_targets_tidy {α : Type} {enc : α ↪ List Bool} {A : Set α}
+    {g : α → ℤ} {f : α × ℕ → ℤ} {r : α → ℕ} (hg : g ∈ GapP enc)
+    (hf : ComputableTidilyInPolyTime f (encPair enc encUnary) encIntBin)
+    (hr : ComputableTidilyInPolyTime r enc encUnary)
+    (hn : ∀ a i, i < r a → f (a, i) ≠ 0)
+    (hy : ∀ a, a ∈ A → ∃ i < r a, g a = f (a, i))
+    (hno : ∀ a, a ∉ A → g a = 0) : A ∈ WPP enc :=
+  mem_WPP_of_indexed_targets hg (.of_tidy hf) (.of_tidy hr) hn hy hno
+
+/-- Legacy tidy interface; use
+`mem_LWPP_of_indexed_targets` with plain certificates. -/
+@[deprecated mem_LWPP_of_indexed_targets +typeChanged (since := "2026-10-23")]
+theorem mem_LWPP_of_indexed_targets_tidy {α : Type} {enc : α ↪ List Bool} {A : Set α}
+    {g : α → ℤ} {f : ℕ × ℕ → ℤ} {r : ℕ → ℕ} (hg : g ∈ GapP enc)
+    (hf : ComputableTidilyInPolyTime f (encPair encUnary encUnary) encIntBin)
+    (hr : ComputableTidilyInPolyTime r encUnary encUnary)
+    (hn : ∀ n i, i < r n → f (n, i) ≠ 0)
+    (hy : ∀ a, a ∈ A → ∃ i < r (enc a).length, g a = f ((enc a).length, i))
+    (hno : ∀ a, a ∉ A → g a = 0) : A ∈ LWPP enc :=
+  mem_LWPP_of_indexed_targets hg (.of_tidy hf) (.of_tidy hr) hn hy hno
+
+/-- Legacy tidy interface; use
+`mem_WPP_iff_exists_polyTime_targets` with plain certificates. -/
+@[deprecated mem_WPP_iff_exists_polyTime_targets +typeChanged (since := "2026-10-23")]
+theorem mem_WPP_iff_exists_polyTime_targets_tidy {α : Type} {enc : α ↪ List Bool} {A : Set α} :
+    A ∈ WPP enc ↔ ∃ g ∈ GapP enc, ∃ f : α → List ℤ,
+      ComputableTidilyInPolyTime f enc (encList encIntBin) ∧
+      (∀ a, (0 : ℤ) ∉ f a) ∧ (∀ a, a ∈ A → g a ∈ f a) ∧
+      ∀ a, a ∉ A → g a = 0 :=
+  by
+  simpa only [computableInPolyTime_iff_computableTidilyInPolyTime] using
+    (mem_WPP_iff_exists_polyTime_targets (enc := enc) (A := A))
+
+/-- Legacy tidy interface; use
+`mem_LWPP_iff_exists_polyTime_targets` with plain certificates. -/
+@[deprecated mem_LWPP_iff_exists_polyTime_targets +typeChanged (since := "2026-10-23")]
+theorem mem_LWPP_iff_exists_polyTime_targets_tidy {α : Type} {enc : α ↪ List Bool} {A : Set α} :
+    A ∈ LWPP enc ↔ ∃ g ∈ GapP enc, ∃ f : ℕ → List ℤ,
+      ComputableTidilyInPolyTime f encUnary (encList encIntBin) ∧
+      (∀ n, (0 : ℤ) ∉ f n) ∧ (∀ a, a ∈ A → g a ∈ f (enc a).length) ∧
+      ∀ a, a ∉ A → g a = 0 :=
+  by
+  simpa only [computableInPolyTime_iff_computableTidilyInPolyTime] using
+    (mem_LWPP_iff_exists_polyTime_targets (enc := enc) (A := A))
 
 end Cslib.Complexity

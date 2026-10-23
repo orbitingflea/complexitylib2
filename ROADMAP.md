@@ -257,7 +257,7 @@ existing developments, source credit and saved branches remain available for a f
    correctness margins simultaneously; the security theorem leaves only the specified LWE
    hypothesis. [Regression clients](ComplexityTests/Crypto/GSWSecurity.lean) check saved-state
    preservation, the attained factor-two loss, adaptive message choice and actual algorithm
-   certificates. A [checked formal abstract](ComplexityTests/Abstracts/GSWSecurityAbstract.lean)
+   certificates. A [checked formal abstract](abstracts/ComplexityAbstracts/GSWSecurityAbstract.lean)
    spells out both algorithms, their native efficiency and this precise conditional security
    result. It remains outside the curated headline catalogue while the full FHE recovery is open.
    Hardness for the specified noise family is assumed; no worst-case lattice reduction is supplied.
@@ -281,6 +281,12 @@ existing developments, source credit and saved branches remain available for a f
    [Native carry-save generators](Complexity/Computability/Circuit/Boolean/CarrySave/PolyTime.lean)
    construct the exact existing three-to-two and four-to-two reducers from unary width,
    including all binary references and the unequal carry-bit blocks.
+   The [balanced-code generator](Complexity/Computability/Circuit/Boolean/BalancedCode.lean)
+   constructs the exact existing half-split tree from the complete native leaf-code list,
+   binary input arity and native operator/fallback codes. Its polynomial certificate charges
+   all interval-table rows and wire encodings, including dead gates and malformed raw data.
+   This completes the balanced-construction prerequisite #543; the actual shallow-decryption
+   circuit, its native generator and parameter fit remain the separate #528 objective.
 4. **Completeness of oblivious transfer.** In the ideal oblivious-transfer hybrid model, every
    polynomial-time multiparty functionality admits a protocol secure against static malicious
    corruptions, with security defined by real/ideal simulation and allowing abort, under the
@@ -993,10 +999,13 @@ batches.
    than mechanically. Generated PDFs are review and dissemination artifacts, not additional proofs.
 
 6. **Plain computability in definitions and public results (#456).** Plain
-   `ComputableInPolyTime` and its tidy bridges are in place. Redefine the classes and reductions
-   that still use `ComputableTidilyInPolyTime` (#546–#550), add plain space, big-O and FPT notions
+   `ComputableInPolyTime` and its tidy bridges are in place, and `P`, `NP`, `FNP` and the
+   polynomial-time reductions use it (#546). Redefine the classes and reductions that still use
+   `ComputableTidilyInPolyTime` (#547–#550), add plain space, big-O and FPT notions
    (#551), restate public characterizations and closure lemmas plainly, and switch the abstract
-   bridges to the shared predicate after #497.
+   bridges to the shared predicate after #497. WPP/LWPP list, indexed and two-sided robustness
+   results expose plain certificates with deprecated `_tidy` forms (#562); the
+   remaining public-result migration stays open under #456.
 
 ## Remaining theorem developments
 

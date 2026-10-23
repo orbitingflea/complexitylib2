@@ -23,9 +23,15 @@ of the differences between rejection targets and the original gap. This vanishes
 and on acceptance takes one of a uniformly computed family of nonzero products. The uniform
 product theorem and one-sided robustness then finish the construction.
 
+The public interfaces ask for `Turing.MultiTapeTM.ComputableInPolyTime` certificates, following
+the plain-statement convention of #456. Deprecated `_tidy` forms retain the former tidy statement
+shapes; `.computableInPolyTime` converts their certificates for the unsuffixed API.
+
 ## Main results
 
 * `mem_WPP_of_disjoint_targets`, `mem_LWPP_of_disjoint_targets`: two-sided robustness.
+* `mem_WPP_of_disjoint_indexed_targets`, `mem_LWPP_of_disjoint_indexed_targets`:
+  indexed two-sided robustness.
 * `mem_WPP_iff_exists_disjoint_targets`, `mem_LWPP_iff_exists_disjoint_targets`:
   the full two-sided polynomial-family characterizations.
 
@@ -69,13 +75,14 @@ private theorem transformedTargets_nonzero {yes no : List ℤ} (hd : yes.Disjoin
 Neither original list is required to avoid zero; no accepting or rejecting index is computed. -/
 theorem mem_WPP_of_disjoint_targets {α : Type} {enc : α ↪ List Bool} {A : Set α}
     {g : α → ℤ} {yes no : α → List ℤ} (hg : g ∈ GapP enc)
-    (hy : ComputableTidilyInPolyTime yes enc (encList encIntBin))
-    (hn : ComputableTidilyInPolyTime no enc (encList encIntBin))
+    (hy : ComputableInPolyTime yes enc (encList encIntBin))
+    (hn : ComputableInPolyTime no enc (encList encIntBin))
     (hd : ∀ a, (yes a).Disjoint (no a))
     (hyes : ∀ a, a ∈ A → g a ∈ yes a) (hno : ∀ a, a ∉ A → g a ∈ no a) :
     A ∈ WPP enc := by
   apply mem_WPP_of_polyTime_targets (GapP.prod_sub_mem hn hg)
-    (polyTime_transformedTargets hy hn) (fun a => transformedTargets_nonzero (hd a))
+    (polyTime_transformedTargets hy.tidy hn.tidy).computableInPolyTime
+    (fun a => transformedTargets_nonzero (hd a))
   · intro a ha
     exact List.mem_map.mpr ⟨g a, hyes a ha, rfl⟩
   · intro a ha
@@ -87,14 +94,16 @@ Disjointness is required at every natural length, including zero. Original zero 
 allowed on either side, provided the two lists remain disjoint. -/
 theorem mem_LWPP_of_disjoint_targets {α : Type} {enc : α ↪ List Bool} {A : Set α}
     {g : α → ℤ} {yes no : ℕ → List ℤ} (hg : g ∈ GapP enc)
-    (hy : ComputableTidilyInPolyTime yes encUnary (encList encIntBin))
-    (hn : ComputableTidilyInPolyTime no encUnary (encList encIntBin))
+    (hy : ComputableInPolyTime yes encUnary (encList encIntBin))
+    (hn : ComputableInPolyTime no encUnary (encList encIntBin))
     (hd : ∀ n, (yes n).Disjoint (no n))
     (hyes : ∀ a, a ∈ A → g a ∈ yes (enc a).length)
     (hno : ∀ a, a ∉ A → g a ∈ no (enc a).length) : A ∈ LWPP enc := by
   apply mem_LWPP_of_polyTime_targets
-    (GapP.prod_sub_mem (hn.comp (.encoding_length enc)) hg)
-    (polyTime_transformedTargets hy hn) (fun n => transformedTargets_nonzero (hd n))
+    (GapP.prod_sub_mem
+      (hn.comp (ComputableTidilyInPolyTime.encoding_length enc).computableInPolyTime) hg)
+    (polyTime_transformedTargets hy.tidy hn.tidy).computableInPolyTime
+    (fun n => transformedTargets_nonzero (hd n))
   · intro a ha
     exact List.mem_map.mpr ⟨g a, hyes a ha, rfl⟩
   · intro a ha
@@ -115,10 +124,10 @@ private theorem indexedTargets_disjoint {α : Type} {yes no : α × ℕ → ℤ}
  time with unary output. Disjointness concerns used indices; zero targets are allowed. -/
 theorem mem_WPP_of_disjoint_indexed_targets {α : Type} {enc : α ↪ List Bool} {A : Set α}
     {g : α → ℤ} {yes no : α × ℕ → ℤ} {ry rn : α → ℕ} (hg : g ∈ GapP enc)
-    (hy : ComputableTidilyInPolyTime yes (encPair enc encUnary) encIntBin)
-    (hn : ComputableTidilyInPolyTime no (encPair enc encUnary) encIntBin)
-    (hry : ComputableTidilyInPolyTime ry enc encUnary)
-    (hrn : ComputableTidilyInPolyTime rn enc encUnary)
+    (hy : ComputableInPolyTime yes (encPair enc encUnary) encIntBin)
+    (hn : ComputableInPolyTime no (encPair enc encUnary) encIntBin)
+    (hry : ComputableInPolyTime ry enc encUnary)
+    (hrn : ComputableInPolyTime rn enc encUnary)
     (hd : ∀ a i, i < ry a → ∀ j, j < rn a → yes (a, i) ≠ no (a, j))
     (hyes : ∀ a, a ∈ A → ∃ i < ry a, g a = yes (a, i))
     (hno : ∀ a, a ∉ A → ∃ j < rn a, g a = no (a, j)) : A ∈ WPP enc :=
@@ -131,10 +140,10 @@ Cross-family disjointness holds at all natural lengths and both counts have unar
 certificates. The standard positive polynomial-size families are instances. -/
 theorem mem_LWPP_of_disjoint_indexed_targets {α : Type} {enc : α ↪ List Bool} {A : Set α}
     {g : α → ℤ} {yes no : ℕ × ℕ → ℤ} {ry rn : ℕ → ℕ} (hg : g ∈ GapP enc)
-    (hy : ComputableTidilyInPolyTime yes (encPair encUnary encUnary) encIntBin)
-    (hn : ComputableTidilyInPolyTime no (encPair encUnary encUnary) encIntBin)
-    (hry : ComputableTidilyInPolyTime ry encUnary encUnary)
-    (hrn : ComputableTidilyInPolyTime rn encUnary encUnary)
+    (hy : ComputableInPolyTime yes (encPair encUnary encUnary) encIntBin)
+    (hn : ComputableInPolyTime no (encPair encUnary encUnary) encIntBin)
+    (hry : ComputableInPolyTime ry encUnary encUnary)
+    (hrn : ComputableInPolyTime rn encUnary encUnary)
     (hd : ∀ n i, i < ry n → ∀ j, j < rn n → yes (n, i) ≠ no (n, j))
     (hyes : ∀ a, a ∈ A → ∃ i < ry (enc a).length, g a = yes ((enc a).length, i))
     (hno : ∀ a, a ∉ A → ∃ j < rn (enc a).length, g a = no ((enc a).length, j)) :
@@ -147,8 +156,8 @@ theorem mem_LWPP_of_disjoint_indexed_targets {α : Type} {enc : α ↪ List Bool
 The converse uses singleton acceptance and zero-rejection lists. -/
 theorem mem_WPP_iff_exists_disjoint_targets {α : Type} {enc : α ↪ List Bool} {A : Set α} :
     A ∈ WPP enc ↔ ∃ g ∈ GapP enc, ∃ yes no : α → List ℤ,
-      ComputableTidilyInPolyTime yes enc (encList encIntBin) ∧
-      ComputableTidilyInPolyTime no enc (encList encIntBin) ∧
+      ComputableInPolyTime yes enc (encList encIntBin) ∧
+      ComputableInPolyTime no enc (encList encIntBin) ∧
       (∀ a, (yes a).Disjoint (no a)) ∧
       (∀ a, a ∈ A → g a ∈ yes a) ∧ ∀ a, a ∉ A → g a ∈ no a := by
   constructor
@@ -170,8 +179,8 @@ length, including length zero. This is
 [Hemaspaandra et al., Corollary 3.11][HemaspaandraEtAl2018]. -/
 theorem mem_LWPP_iff_exists_disjoint_targets {α : Type} {enc : α ↪ List Bool} {A : Set α} :
     A ∈ LWPP enc ↔ ∃ g ∈ GapP enc, ∃ yes no : ℕ → List ℤ,
-      ComputableTidilyInPolyTime yes encUnary (encList encIntBin) ∧
-      ComputableTidilyInPolyTime no encUnary (encList encIntBin) ∧
+      ComputableInPolyTime yes encUnary (encList encIntBin) ∧
+      ComputableInPolyTime no encUnary (encList encIntBin) ∧
       (∀ n, (yes n).Disjoint (no n)) ∧
       (∀ a, a ∈ A → g a ∈ yes (enc a).length) ∧
       ∀ a, a ∉ A → g a ∈ no (enc a).length := by
@@ -188,5 +197,93 @@ theorem mem_LWPP_iff_exists_disjoint_targets {α : Type} {enc : α ↪ List Bool
         (hr a).resolve_right (fun h => ha ((hA a).mpr h))
   · rintro ⟨g, hg, yes, no, hy, hn, hd, hyes, hno⟩
     exact mem_LWPP_of_disjoint_targets hg hy hn hd hyes hno
+
+/-! ### Deprecated tidy interfaces
+
+These statements retain the former tidy types under `_tidy` names. The unsuffixed interfaces above
+use plain computability; convert a tidy certificate with `.computableInPolyTime`.
+-/
+
+/-- Legacy tidy interface; use
+`mem_WPP_of_disjoint_targets` with plain certificates. -/
+@[deprecated mem_WPP_of_disjoint_targets +typeChanged (since := "2026-10-23")]
+theorem mem_WPP_of_disjoint_targets_tidy {α : Type} {enc : α ↪ List Bool} {A : Set α}
+    {g : α → ℤ} {yes no : α → List ℤ} (hg : g ∈ GapP enc)
+    (hy : ComputableTidilyInPolyTime yes enc (encList encIntBin))
+    (hn : ComputableTidilyInPolyTime no enc (encList encIntBin))
+    (hd : ∀ a, (yes a).Disjoint (no a))
+    (hyes : ∀ a, a ∈ A → g a ∈ yes a) (hno : ∀ a, a ∉ A → g a ∈ no a) :
+    A ∈ WPP enc :=
+  mem_WPP_of_disjoint_targets hg (.of_tidy hy) (.of_tidy hn) hd hyes hno
+
+/-- Legacy tidy interface; use
+`mem_LWPP_of_disjoint_targets` with plain certificates. -/
+@[deprecated mem_LWPP_of_disjoint_targets +typeChanged (since := "2026-10-23")]
+theorem mem_LWPP_of_disjoint_targets_tidy {α : Type} {enc : α ↪ List Bool} {A : Set α}
+    {g : α → ℤ} {yes no : ℕ → List ℤ} (hg : g ∈ GapP enc)
+    (hy : ComputableTidilyInPolyTime yes encUnary (encList encIntBin))
+    (hn : ComputableTidilyInPolyTime no encUnary (encList encIntBin))
+    (hd : ∀ n, (yes n).Disjoint (no n))
+    (hyes : ∀ a, a ∈ A → g a ∈ yes (enc a).length)
+    (hno : ∀ a, a ∉ A → g a ∈ no (enc a).length) : A ∈ LWPP enc :=
+  mem_LWPP_of_disjoint_targets hg (.of_tidy hy) (.of_tidy hn) hd hyes hno
+
+/-- Legacy tidy interface; use
+`mem_WPP_of_disjoint_indexed_targets` with plain certificates. -/
+@[deprecated mem_WPP_of_disjoint_indexed_targets +typeChanged (since := "2026-10-23")]
+theorem mem_WPP_of_disjoint_indexed_targets_tidy {α : Type} {enc : α ↪ List Bool} {A : Set α}
+    {g : α → ℤ} {yes no : α × ℕ → ℤ} {ry rn : α → ℕ} (hg : g ∈ GapP enc)
+    (hy : ComputableTidilyInPolyTime yes (encPair enc encUnary) encIntBin)
+    (hn : ComputableTidilyInPolyTime no (encPair enc encUnary) encIntBin)
+    (hry : ComputableTidilyInPolyTime ry enc encUnary)
+    (hrn : ComputableTidilyInPolyTime rn enc encUnary)
+    (hd : ∀ a i, i < ry a → ∀ j, j < rn a → yes (a, i) ≠ no (a, j))
+    (hyes : ∀ a, a ∈ A → ∃ i < ry a, g a = yes (a, i))
+    (hno : ∀ a, a ∉ A → ∃ j < rn a, g a = no (a, j)) : A ∈ WPP enc :=
+  mem_WPP_of_disjoint_indexed_targets hg (.of_tidy hy) (.of_tidy hn)
+    (.of_tidy hry) (.of_tidy hrn) hd hyes hno
+
+/-- Legacy tidy interface; use
+`mem_LWPP_of_disjoint_indexed_targets` with plain certificates. -/
+@[deprecated mem_LWPP_of_disjoint_indexed_targets +typeChanged (since := "2026-10-23")]
+theorem mem_LWPP_of_disjoint_indexed_targets_tidy {α : Type} {enc : α ↪ List Bool} {A : Set α}
+    {g : α → ℤ} {yes no : ℕ × ℕ → ℤ} {ry rn : ℕ → ℕ} (hg : g ∈ GapP enc)
+    (hy : ComputableTidilyInPolyTime yes (encPair encUnary encUnary) encIntBin)
+    (hn : ComputableTidilyInPolyTime no (encPair encUnary encUnary) encIntBin)
+    (hry : ComputableTidilyInPolyTime ry encUnary encUnary)
+    (hrn : ComputableTidilyInPolyTime rn encUnary encUnary)
+    (hd : ∀ n i, i < ry n → ∀ j, j < rn n → yes (n, i) ≠ no (n, j))
+    (hyes : ∀ a, a ∈ A → ∃ i < ry (enc a).length, g a = yes ((enc a).length, i))
+    (hno : ∀ a, a ∉ A → ∃ j < rn (enc a).length, g a = no ((enc a).length, j)) :
+    A ∈ LWPP enc :=
+  mem_LWPP_of_disjoint_indexed_targets hg (.of_tidy hy) (.of_tidy hn)
+    (.of_tidy hry) (.of_tidy hrn) hd hyes hno
+
+/-- Legacy tidy interface; use
+`mem_WPP_iff_exists_disjoint_targets` with plain certificates. -/
+@[deprecated mem_WPP_iff_exists_disjoint_targets +typeChanged (since := "2026-10-23")]
+theorem mem_WPP_iff_exists_disjoint_targets_tidy {α : Type} {enc : α ↪ List Bool} {A : Set α} :
+    A ∈ WPP enc ↔ ∃ g ∈ GapP enc, ∃ yes no : α → List ℤ,
+      ComputableTidilyInPolyTime yes enc (encList encIntBin) ∧
+      ComputableTidilyInPolyTime no enc (encList encIntBin) ∧
+      (∀ a, (yes a).Disjoint (no a)) ∧
+      (∀ a, a ∈ A → g a ∈ yes a) ∧ ∀ a, a ∉ A → g a ∈ no a :=
+  by
+  simpa only [computableInPolyTime_iff_computableTidilyInPolyTime] using
+    (mem_WPP_iff_exists_disjoint_targets (enc := enc) (A := A))
+
+/-- Legacy tidy interface; use
+`mem_LWPP_iff_exists_disjoint_targets` with plain certificates. -/
+@[deprecated mem_LWPP_iff_exists_disjoint_targets +typeChanged (since := "2026-10-23")]
+theorem mem_LWPP_iff_exists_disjoint_targets_tidy {α : Type} {enc : α ↪ List Bool} {A : Set α} :
+    A ∈ LWPP enc ↔ ∃ g ∈ GapP enc, ∃ yes no : ℕ → List ℤ,
+      ComputableTidilyInPolyTime yes encUnary (encList encIntBin) ∧
+      ComputableTidilyInPolyTime no encUnary (encList encIntBin) ∧
+      (∀ n, (yes n).Disjoint (no n)) ∧
+      (∀ a, a ∈ A → g a ∈ yes (enc a).length) ∧
+      ∀ a, a ∉ A → g a ∈ no (enc a).length :=
+  by
+  simpa only [computableInPolyTime_iff_computableTidilyInPolyTime] using
+    (mem_LWPP_iff_exists_disjoint_targets (enc := enc) (A := A))
 
 end Cslib.Complexity

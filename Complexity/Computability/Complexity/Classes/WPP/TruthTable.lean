@@ -155,7 +155,8 @@ theorem truthTable_mem_LWPP (hA : A ∈ LWPP (encPair enc encUnary))
     apply ComputableTidilyInPolyTime.intBin_prod_range
       (f := fun x : (ℕ × ℕ) × ℕ => f (2 * x.1.1 + 1 + x.2)) <;> fun_prop
   have hp : ComputableTidilyInPolyTime (fun n => p.eval n + 1) encUnary encUnary := by fun_prop
-  apply mem_LWPP_of_indexed_targets (answerGap_mem hg (GapP.of_polyTime hF) hr hd) hT hp
+  apply mem_LWPP_of_indexed_targets (answerGap_mem hg (GapP.of_polyTime hF) hr hd)
+    hT.computableInPolyTime hp.computableInPolyTime
   · intro n k _
     exact prod_ne_zero_iff.mpr fun i _ => hn _
   · intro a ha
@@ -176,7 +177,7 @@ theorem PolyTimeTruthTableReducible.mem_WPP {β : Type} {encB : β ↪ List Bool
   obtain ⟨r, q, d, hr, hq, hd, hL⟩ := h
   have hqB : q ⁻¹' B ∈ WPP (encPair enc encUnary) :=
     PolyTimeReducible.mem_WPP ⟨q, hq, fun _ => Iff.rfl⟩ hB
-  convert truthTable_mem_WPP hqB hr hd using 1
+  convert truthTable_mem_WPP hqB hr.tidy hd.tidy using 1
   ext a
   exact hL a
 
@@ -189,7 +190,7 @@ theorem PolyTimeTruthTableReducible.mem_LWPP {β : Type} {encB : β ↪ List Boo
   obtain ⟨r, q, d, hr, hq, hd, hL⟩ := h
   have hqB : q ⁻¹' B ∈ LWPP (encPair enc encUnary) :=
     PolyTimeReducible.mem_LWPP ⟨q, hq, fun _ => Iff.rfl⟩ hB
-  convert truthTable_mem_LWPP hqB hr hd using 1
+  convert truthTable_mem_LWPP hqB hr.tidy hd.tidy using 1
   ext a
   exact hL a
 

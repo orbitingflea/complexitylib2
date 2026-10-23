@@ -47,7 +47,7 @@ example : ∃ f : ℕ → ℕ, Monotone f ∧ ∃ c : ℕ, DecidableInTimeO SAT 
 private def Narrow : Set (CNF ℕ) := {φ | ∀ c ∈ φ, c.length ≤ 3}
 
 private theorem narrow_mem_P : Narrow ∈ P encCNF :=
-  ⟨_, computableTidilyInPolyTime_all_length_le 3, fun φ => by simp [Narrow]⟩
+  ⟨_, .of_tidy (computableTidilyInPolyTime_all_length_le 3), fun φ => by simp [Narrow]⟩
 
 example : Narrow ∈ FPT encCNF CNF.numVars := P_subset_FPT narrow_mem_P
 
@@ -145,8 +145,8 @@ private def narrowKernel (φ : CNF ℕ) : CNF ℕ :=
 private theorem isKernelization_narrowKernel :
     IsKernelization encCNF CNF.numVars Narrow narrowKernel
       fun _ => (encCNF ([] : CNF ℕ)).length + (encCNF narrowNo).length + 1 := by
-  refine ⟨ComputableTidilyInPolyTime.ite' (computableTidilyInPolyTime_all_length_le 3)
-    (ComputableTidilyInPolyTime.const []) (ComputableTidilyInPolyTime.const narrowNo),
+  refine ⟨.of_tidy (ComputableTidilyInPolyTime.ite' (computableTidilyInPolyTime_all_length_le 3)
+    (ComputableTidilyInPolyTime.const []) (ComputableTidilyInPolyTime.const narrowNo)),
     fun φ => ?_, fun φ => ?_, fun φ => ?_⟩
   · unfold narrowKernel
     by_cases hφ : ∀ c ∈ φ, c.length ≤ 3
