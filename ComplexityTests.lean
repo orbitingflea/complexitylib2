@@ -67,6 +67,7 @@ import ComplexityTests.CircuitHamming.Continuity
 import ComplexityTests.CircuitHamming.Gates
 import ComplexityTests.CircuitHamming.Parseval
 import ComplexityTests.CircuitHamming.Pointwise
+import ComplexityTests.CircuitLayerPadding
 import ComplexityTests.CircuitLayering
 import ComplexityTests.CircuitMetric
 import ComplexityTests.CircuitValueCompleteness
@@ -89,6 +90,7 @@ import ComplexityTests.ComparisonCircuits
 import ComplexityTests.Computability.Circuit.Boolean.ACC0
 import ComplexityTests.ComputationalCrypto
 import ComplexityTests.ConditioningCollision
+import ComplexityTests.ConfigurationGraph
 import ComplexityTests.ConfigurationPolyTime
 import ComplexityTests.Consolidation
 import ComplexityTests.ContextualPower
@@ -111,6 +113,7 @@ import ComplexityTests.Crypto.GMWPointwise
 import ComplexityTests.Crypto.HomomorphicEvaluation
 import ComplexityTests.Crypto.HomomorphicExample
 import ComplexityTests.Crypto.HomomorphicLayered
+import ComplexityTests.Crypto.HomomorphicLeveled
 import ComplexityTests.Crypto.HomomorphicRefresh
 import ComplexityTests.Crypto.Signature
 import ComplexityTests.Crypto.ZeroKnowledge
@@ -195,6 +198,7 @@ import ComplexityTests.HastadSharp
 import ComplexityTests.HessianSourceComplexity
 import ComplexityTests.HierarchyTheorems
 import ComplexityTests.Hypercontractivity
+import ComplexityTests.InductiveCounting
 import ComplexityTests.InteractiveProofs
 import ComplexityTests.Isolation
 import ComplexityTests.Iteration
@@ -237,6 +241,7 @@ import ComplexityTests.MemoizePPT
 import ComplexityTests.ModularGap
 import ComplexityTests.MonotoneCircuitValue
 import ComplexityTests.MultiTapePolyTime
+import ComplexityTests.NLComplement
 import ComplexityTests.NPCompleteGraphs
 import ComplexityTests.NPCompleteGraphs.Hamiltonian
 import ComplexityTests.NPCompleteGraphs.TSP
