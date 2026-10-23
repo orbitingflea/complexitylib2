@@ -31,6 +31,7 @@ public import Complexity.Algorithms.Reachability.InductiveCounting.Progress
 public import Complexity.Algorithms.Reachability.InductiveCounting.Semantics
 public import Complexity.Algorithms.Reachability.Reingold
 public import Complexity.Algorithms.Reachability.Savitch
+public import Complexity.Algorithms.WordRAM.Dijkstra.HeapStatement
 public import Complexity.Algorithms.WordRAM.Dijkstra.Invariant
 public import Complexity.Algorithms.WordRAM.Dijkstra.MinScan
 public import Complexity.Algorithms.WordRAM.Dijkstra.Program
