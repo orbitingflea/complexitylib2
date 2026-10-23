@@ -29,26 +29,6 @@ namespace Cslib.Algorithms.WordRAM.Dijkstra
 
 open Cslib.WordRAM HeapReg
 
-/-- Code `c₁` followed by `c₂`, with the sequence of `c₁` reassociated to the right, as the
-notation `ram[…]` builds it. -/
-private def cat : Code .standard 27 → Code .standard 27 → Code .standard 27
-  | .seq a b, c => .seq a (cat b c)
-  | a, c => .seq a c
-
-/-- Running `cat c₁ c₂` is running `c₁` and then `c₂`. -/
-private theorem execWithin_cat {w T₁ T₂ : ℕ} {c₁ c₂ : Code .standard 27} {x y z : Data 27}
-    (h₁ : ExecWithin w c₁ x y T₁) (h₂ : ExecWithin w c₂ y z T₂) :
-    ExecWithin w (cat c₁ c₂) x z (T₁ + T₂) := by
-  induction c₁ generalizing x T₁ with
-  | seq a b _ ihb =>
-    obtain ⟨n, hn, he⟩ := h₁
-    cases he with
-    | seq ha hb =>
-      exact ((Exec.within ha).seq (ihb (Exec.within hb))).mono (by omega)
-  | op => exact h₁.seq h₂
-  | branch => exact h₁.seq h₂
-  | loop => exact h₁.seq h₂
-
 /-- The straight-line start of `edgeBody`: read the edge and the distance word of its target. -/
 private def edgePrefix : Code .standard 27 := ram[
   t ← j + j; t ← t + eb; tv ← *t; t ← t + one; tc ← *t; j ← j + one;
@@ -63,8 +43,9 @@ private def insPrefix : Code .standard 27 := ram[
 private def decPrefix : Code .standard 27 := ram[ *t ← cand; t ← pb + tv; k ← *t ]
 
 /-- `edgeBody` split into its straight-line parts and the sift-ups. -/
-private theorem edgeBody_eq : edgeBody = cat edgePrefix (.branch (.eq dv zero)
-    (cat insPrefix siftUp) (.branch (.lt cand dv) (cat decPrefix siftUp) ram[ t ← t ])) := rfl
+private theorem edgeBody_eq : edgeBody = appendCode edgePrefix (.branch (.eq dv zero)
+    (appendCode insPrefix siftUp)
+    (.branch (.lt cand dv) (appendCode decPrefix siftUp) ram[ t ← t ])) := rfl
 
 /-- `edgeBody` writes only its scratch registers and `sz`. -/
 private theorem edgeBody_preserves :
@@ -162,7 +143,8 @@ private theorem edgeBody_spec {G : ListInstance} {w B J S C : ℕ} {V : Fin G.n}
         Function.update_of_ne (by omega), Function.update_of_ne (by omega)]
     refine ⟨z, ?_, hzj, by omega, hzsz ▸ hzh, ?_, ?_, ?_⟩
     · rw [edgeBody_eq]
-      refine (execWithin_cat e₁ (ExecWithin.branch_pos ?_ (execWithin_cat e₂ e₃))).mono ?_
+      refine (execWithin_append e₁
+        (ExecWithin.branch_pos ?_ (execWithin_append e₂ e₃))).mono ?_
       · simp +decide [Cond.holds_eq, y₁, hzero, hD0]
       · have := hlog (K := S + 1) (by omega)
         omega
@@ -216,8 +198,8 @@ private theorem edgeBody_spec {G : ListInstance} {w B J S C : ℕ} {V : Fin G.n}
       rw [hzm _ (Or.inl (by omega)), hm₂, Function.update_of_ne (by omega)]
     refine ⟨z, ?_, hzj, hzsz.le.trans (Nat.le_succ S), hzsz ▸ hzh, ?_, ?_, ?_⟩
     · rw [edgeBody_eq]
-      refine (execWithin_cat e₁ (ExecWithin.branch_neg ?_ (ExecWithin.branch_pos ?_
-        (execWithin_cat e₂ e₃)))).mono ?_
+      refine (execWithin_append e₁ (ExecWithin.branch_neg ?_ (ExecWithin.branch_pos ?_
+        (execWithin_append e₂ e₃)))).mono ?_
       · simp +decide [Cond.holds_eq, y₁, hzero, hD0]
       · simp +decide [Cond.holds_lt, y₁, hlt]
       · have := hlog (K := y.mem (G.dbase + 2 * G.n + 1 + V)) (hPS.trans hheap.size_le)
@@ -248,7 +230,8 @@ private theorem edgeBody_spec {G : ListInstance} {w B J S C : ℕ} {V : Fin G.n}
     refine ⟨y₁.set t (G.dbase + V), ?_, by simp +decide [y₁], by simp +decide [y₁, hsz],
       by simpa +decide [y₁, hsz] using hheap, ?_, fun v => Iff.rfl, fun a _ => rfl⟩
     · rw [edgeBody_eq]
-      refine (execWithin_cat e₁ (ExecWithin.branch_neg ?_ (ExecWithin.branch_neg ?_ e₂))).mono ?_
+      refine (execWithin_append e₁
+        (ExecWithin.branch_neg ?_ (ExecWithin.branch_neg ?_ e₂))).mono ?_
       · simp +decide [Cond.holds_eq, y₁, hzero, hD0]
       · simp +decide [Cond.holds_lt, y₁, hlt]
       · omega

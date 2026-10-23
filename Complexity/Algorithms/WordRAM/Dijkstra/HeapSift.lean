@@ -17,6 +17,11 @@ do on a heap with the invariant `Cslib.Algorithms.WordRAM.Dijkstra.HeapInv`, and
 take. A sift-up or a sift-down halves or doubles the repaired position at every step, so each
 takes `O(log sz)` instructions.
 
+## Main definitions
+
+* `Cslib.Algorithms.WordRAM.Dijkstra.appendCode`: one code block after another, nested as
+  `ram[…]` nests sequences, so that a program splits into blocks proved one at a time.
+
 ## Main results
 
 * `Cslib.Algorithms.WordRAM.Dijkstra.siftUp_spec`,
@@ -36,12 +41,12 @@ variable {N Db S : ℕ}
 
 /-- `appendCode c d` runs `c` and then `d`, as a sequence nested to the right, as the notation
 `ram[…]` nests it. -/
-private def appendCode {B : Basis} {r : ℕ} : Code B r → Code B r → Code B r
+def appendCode {B : Basis} {r : ℕ} : Code B r → Code B r → Code B r
   | .seq c₁ c₂, d => .seq c₁ (appendCode c₂ d)
   | c, d => .seq c d
 
 /-- Running `c` and then `d`. -/
-private theorem execWithin_append {w T₁ T₂ : ℕ} {c d : Code .standard 27} {x y z : Data 27}
+theorem execWithin_append {w T₁ T₂ : ℕ} {c d : Code .standard 27} {x y z : Data 27}
     (h₁ : ExecWithin w c x y T₁) (h₂ : ExecWithin w d y z T₂) :
     ExecWithin w (appendCode c d) x z (T₁ + T₂) := by
   induction c generalizing x T₁ with
