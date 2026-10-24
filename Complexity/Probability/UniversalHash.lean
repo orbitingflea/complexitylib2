@@ -10,6 +10,7 @@ module
 public import Complexity.Probability.Collision
 public import Complexity.Probability.HashFamily
 public import Complexity.Probability.StatisticalDistance
+import Complexity.Probability.PMF.Map
 import Complexity.Probability.PMF.Expect
 
 /-!
@@ -44,7 +45,7 @@ information-theoretic results; efficient sampling and evaluation require separat
 * [I. Haitner, S. Vadhan, *The Many Entropies in One-Way Functions*][HaitnerVadhan2017],
   Section 2.4.1, Definition 4 and Lemma 8.
 
-Adapted from `Probability/UniversalHash.lean` on the cslib `crypto` branch at
+Adapted from Probability/UniversalHash.lean on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`, using the upstream finite-PMF distance.
 
 -/

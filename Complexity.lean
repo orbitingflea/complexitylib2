@@ -30,6 +30,7 @@ public import Complexity.Algorithms.Reachability.InductiveCounting.Completeness
 public import Complexity.Algorithms.Reachability.InductiveCounting.Progress
 public import Complexity.Algorithms.Reachability.InductiveCounting.Semantics
 public import Complexity.Algorithms.Reachability.Reingold
+public import Complexity.Algorithms.Reachability.ReingoldEval
 public import Complexity.Algorithms.Reachability.Savitch
 public import Complexity.Algorithms.WordRAM.Dijkstra.BinaryHeap
 public import Complexity.Algorithms.WordRAM.Dijkstra.HeapProgram
@@ -944,6 +945,8 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Poly
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.RotationMap
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.RotationMap.Family
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.RotationMap.Tower
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.RotationMap.TowerTable
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.RotationMap.TowerTable.Family
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.RotationMap.Walk
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Sum
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Tape
@@ -1576,15 +1579,12 @@ public import Complexity.Foundations.Combinatorics.Expander.Products
 public import Complexity.Foundations.Combinatorics.Expander.Random
 public import Complexity.Foundations.Combinatorics.Expander.Reindex
 public import Complexity.Foundations.Combinatorics.Expander.Reingold
-public import Complexity.Foundations.Combinatorics.Expander.ReingoldEval
 public import Complexity.Foundations.Combinatorics.Expander.ReingoldVertex
 public import Complexity.Foundations.Combinatorics.Expander.SimpleGraph
 public import Complexity.Foundations.Combinatorics.Expander.SlotGraph
 public import Complexity.Foundations.Combinatorics.Expander.Tower
 public import Complexity.Foundations.Combinatorics.Expander.TowerBase
 public import Complexity.Foundations.Combinatorics.Expander.TowerFamily
-public import Complexity.Foundations.Combinatorics.Expander.TowerTable
-public import Complexity.Foundations.Combinatorics.Expander.TowerTable.Family
 public import Complexity.Foundations.Combinatorics.Expander.Walk
 public import Complexity.Foundations.Combinatorics.Expander.Walk.WithInput
 public import Complexity.Foundations.Combinatorics.FiniteCover
@@ -1921,8 +1921,11 @@ public import Complexity.Probability.MinEntropy.Flat
 public import Complexity.Probability.MinEntropy.LeftoverHash
 public import Complexity.Probability.Minimax
 public import Complexity.Probability.PMF
+public import Complexity.Probability.PMF.Bind
+public import Complexity.Probability.PMF.Event
 public import Complexity.Probability.PMF.Expect
 public import Complexity.Probability.PMF.Map
+public import Complexity.Probability.PMF.Uniform
 public import Complexity.Probability.PairwiseIndependent
 public import Complexity.Probability.PairwiseIndependentHash
 public import Complexity.Probability.PairwiseIndependentHash.Affine

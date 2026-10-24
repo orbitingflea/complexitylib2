@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Crypto.Computational.GGM.Hybrid
+import Complexity.Probability.PMF.Bind
 import Complexity.Computability.Probabilistic.Memoize
 import Complexity.Computability.Probabilistic.PPT.Capture
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
@@ -40,7 +41,7 @@ security reduction must replace these repeated sampler calls with a single PRG c
 * [O. Goldreich, S. Goldwasser, S. Micali, *How to Construct Random Functions*][GGM1986],
   Section 3.3, the simulation used in the proof of Theorem 3.
 
-Adapts `Crypto/Computational/GGM/Expansion.lean` on the cslib `crypto` branch at
+Adapts Crypto/Computational/GGM/Expansion.lean on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8` to the shared typed interpreter.
 -/
 

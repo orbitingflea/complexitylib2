@@ -10,6 +10,7 @@ module
 public import Complexity.Probability.PMF
 public import Mathlib.Data.Fintype.Pi
 public import Mathlib.Data.List.OfFn
+import Complexity.Probability.PMF.Bind
 import Mathlib.Data.Vector.Basic
 
 /-!
@@ -33,7 +34,7 @@ this finite uniform distribution to a program drawing one independent fair bit a
 
 ## References
 
-Adapted from `Cslib/Probability/BitString.lean` on the cslib `crypto` branch at
+Adapted from Cslib/Probability/BitString.lean on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`, placed in the shared bit-string namespace.
 -/
 
