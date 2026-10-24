@@ -536,7 +536,7 @@ private theorem sinkCode_spec {w K C : ℕ} {y : Data 27} (hdb : y.regs db = Db)
         ram_eval [sinkCode, swapCode, hdb, hhb, hpb, hk, hp, hvp, hszp, hvk, f₁, f₂, f₃, f₄,
           f₅, f₆, hlt]
       · simp +decide
-      · simp
+      · simp only [Data.set_regs, Data.write_regs, Function.update_idem, Function.update_self]
         omega
       · simp [swapMem]
     exact ⟨z, he, hframe z _ he, Or.inl ⟨hlt, hz⟩⟩
@@ -636,7 +636,7 @@ theorem siftDown_spec {w K : ℕ} {x : Data 27} (hone : x.regs one = 1)
       ∀ i, i ≠ l → i ≠ szp → x₁.regs i = x.regs i := by
     refine ⟨?z₀, ?e₀, ?_, ?_, ?_, ?_⟩
     case e₀ => ram_eval [downSetup, hone, hk, hsz, f₁, f₂]
-    · simp +decide
+    · simp +decide only [Data.set_regs, ne_eq, Function.update_of_ne, Function.update_self]
       omega
     · simp
     · rfl
