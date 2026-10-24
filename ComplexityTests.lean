@@ -164,6 +164,7 @@ import ComplexityTests.FormulaDepth
 import ComplexityTests.FoundationsExamples
 import ComplexityTests.FourierLearning
 import ComplexityTests.FrontierAverageCaseImports
+import ComplexityTests.FrontierFiniteEdges
 import ComplexityTests.FrontierRectangleImports
 import ComplexityTests.FunctionalGraph
 import ComplexityTests.FunctionalGraphSpectrum
@@ -407,6 +408,7 @@ import ComplexityTests.SeedFixing
 import ComplexityTests.SeededEvaluator
 import ComplexityTests.SensitivitySeparation
 import ComplexityTests.ShannonSynthesis
+import ComplexityTests.SharpPLowness
 import ComplexityTests.ShortWords
 import ComplexityTests.SignQueries
 import ComplexityTests.SipserLautemann
