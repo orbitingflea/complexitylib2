@@ -77,10 +77,10 @@ def maxWeight (G : Graph n) : ℕ :=
 
 The program reads the graph as a list of natural numbers: `n`, the source `s`, the `n + 1` offsets
 of the adjacency lists in an array of edges, and then the `m` edges, each as two numbers, its target
-and its weight. The input is placed in memory before the run at no cost, and all other memory cells
-and all registers start at `0`, so the program need not clear its arrays. When it halts, the memory
-cell `outAddr G v` of each vertex `v` holds `0` when `v` is unreachable from `s` and `d + 1` when
-the distance from `s` to `v` is `d`. The machine is a word RAM with `w`-bit words, and the theorem
+and its weight. The input and its length header are placed in memory before the run at no cost;
+memory beyond them and all registers start at `0`. When it halts, the memory cell `outAddr G v` of
+each vertex `v` holds `0` when `v` is unreachable from `s` and `d + 1` when the distance from `s` to
+`v` is `d`. The machine is a word RAM with `w`-bit words, and the theorem
 asks `8 (n + m + 2) (W + 2) < 2 ^ w`, where `W` is the largest weight, so a word size
 `w = O(log (n + m + W + 2))` suffices. Each instruction costs one unit of time, whatever its
 operands; the operations are those of the library's standard basis (`+`, truncated `-`, `*`, `/`,

@@ -26,9 +26,9 @@ sources" (`abstracts/README.md`), the abstract has, in source order:
 1. the module docstring;
 2. "Graphs and distances": `Graph`, `IsWalk`, `dist`, `numEdges`, `maxWeight`;
 3. "Input, output and cost": prose only, stating in words the input, the output cells, the
-   word-size condition and the cost model, including that placing the input costs nothing
-   (`C/Defs.lean`, `Data.init`) and that all other memory and the registers start at `0`, which
-   removes an initialization term in `n` (`D/HeapStatement.lean:18-20`);
+   word-size condition and the cost model, including that placing the input and its length
+   header costs nothing (`C/Defs.lean`, `Data.init`) and that memory beyond them and the registers
+   start at `0`, which removes an initialization term in `n` (`D/HeapStatement.lean:18-20`);
 4. "Representation details": `offset`, `encode`, `outAddr`, `encodeDist`, and the prose on the
    machine;
 5. "Main theorem": `dijkstra_logLinear` and the audit.
@@ -52,6 +52,11 @@ theorem dijkstra_logLinear :
 
 ## Machine choice: allowlist the library word RAM
 
+There are two options for the machine: (a) allowlist the library's word RAM modules `Defs` and
+`Basis` and state the theorem over the library's standard basis; (b) state it over the
+self-contained exact-basis machine of `X/WordRAMAbstract.lean`. The abstract uses (a). This is our
+choice for now; the user has not decided between (a) and (b).
+
 The library theorem is over `Basis.standard` (`D/HeapStatement.lean:157`, `:166`). The
 self-contained machine of `X/WordRAMAbstract.lean` is the exact basis, and its `runsAgree` relates
 it only to `Cslib.WordRAM.Program .exact r` (`X/WordRAMAbstract.lean:241-251`). I found no
@@ -59,9 +64,9 @@ simulation of a standard-basis program by an exact-basis one in the library (`rg
 `Complexity/`). Option (b) would therefore need a new instruction-level simulation in the bridge,
 and the constants `r` and `K` would change. Option (a) is allowed by the skill
 (`.agents/skills/lean-abstract/SKILL.md:37`), keeps the statement equal to the library's, and the
-audit shows the allowlist closes over `Defs` and `Basis` alone. The prose on the machine in the
-abstract's appendix states in prose what a reader needs of the five library names it uses: `Program`,
-`State.init`, `step`, `Runs` and `.halt`.
+audit shows the allowlist closes over `Defs` and `Basis` alone. The abstract's appendix states in
+prose what a reader needs of the five library names it uses: `Program`, `State.init`, `step`,
+`Runs` and `.halt`.
 
 ## Distance and the bridge
 
