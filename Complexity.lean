@@ -561,6 +561,7 @@ public import Complexity.Computability.Complexity.Classes.BPP.Reduction
 public import Complexity.Computability.Complexity.Classes.BPP.WorstCaseHardness
 public import Complexity.Computability.Complexity.Classes.BooleanHierarchy
 public import Complexity.Computability.Complexity.Classes.BooleanHierarchy.Closure
+public import Complexity.Computability.Complexity.Classes.BooleanHierarchy.Kadin
 public import Complexity.Computability.Complexity.Classes.BooleanHierarchy.PH
 public import Complexity.Computability.Complexity.Classes.CeqP
 public import Complexity.Computability.Complexity.Classes.Constructible
@@ -645,6 +646,7 @@ public import Complexity.Computability.Complexity.Classes.PH.Closure
 public import Complexity.Computability.Complexity.Classes.PH.Collapse
 public import Complexity.Computability.Complexity.Classes.PH.Kannan
 public import Complexity.Computability.Complexity.Classes.PH.KarpLipton
+public import Complexity.Computability.Complexity.Classes.PH.Projection
 public import Complexity.Computability.Complexity.Classes.PH.SipserLautemann
 public import Complexity.Computability.Complexity.Classes.PP
 public import Complexity.Computability.Complexity.Classes.PP.Bit
@@ -1720,6 +1722,7 @@ public import Complexity.Foundations.Geometry.Euclidean.Angle.Cap
 public import Complexity.Foundations.GroupTheory.Perm.Fin
 public import Complexity.Foundations.GroupTheory.Perm.FiveCycle
 public import Complexity.Foundations.GroupTheory.Perm.Last
+public import Complexity.Foundations.LinearAlgebra.Interpolation
 public import Complexity.Foundations.LinearAlgebra.KernelVector
 public import Complexity.Foundations.LinearAlgebra.Matrix.CutRank
 public import Complexity.Foundations.LinearAlgebra.Matrix.Lindsey
@@ -1893,6 +1896,9 @@ public import Complexity.Probability.EntropyConcentration
 public import Complexity.Probability.EntropyExtraction
 public import Complexity.Probability.Forking
 public import Complexity.Probability.Guessing
+public import Complexity.Probability.HashFamily
+public import Complexity.Probability.HashFamily.MultiplyShift
+public import Complexity.Probability.HashFamily.Polynomial
 public import Complexity.Probability.HashIsolation
 public import Complexity.Probability.IID
 public import Complexity.Probability.Isolation
@@ -1912,6 +1918,7 @@ public import Complexity.Probability.PairwiseIndependentHash
 public import Complexity.Probability.PairwiseIndependentHash.Affine
 public import Complexity.Probability.PairwiseIndependentHash.Shift
 public import Complexity.Probability.PairwiseIndependentHash.Toeplitz
+public import Complexity.Probability.PairwiseIndependentHash.Universal
 public import Complexity.Probability.Pinsker
 public import Complexity.Probability.Product
 public import Complexity.Probability.Quantile
