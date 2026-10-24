@@ -28,7 +28,7 @@ namespace Cslib.Algorithms.WordRAM.Dijkstra
 open Cslib.WordRAM Reg
 
 /-- The loop body of the relaxation scan. -/
-private def relaxBody : Code .standard 17 := ram[
+private def relaxBody : Code .exact 17 := ram_exact[
   tmp ← row + j;
   c ← *tmp;
   if c = zero then [ tmp ← tmp ] else [
@@ -55,31 +55,32 @@ private theorem relaxBody_spec {w R J Db B : ℕ} {y : Data 17}
     (B + y.mem (R + J) - 1)).set tmp (Db + J)).set dj (y.mem (Db + J))
   by_cases hc : y.mem (R + J) = 0
   · refine ⟨((y₁.set tmp (R + J)).set j (J + 1)), ?_, ?_, ?_⟩
-    · ram_eval [relaxBody, y₁, y₂, hzero, hone, hr, hj, hdb, hb, hfitR, hfitD, hfitC,
+    · ram_exact_eval [relaxBody, y₁, y₂, hzero, hone, hr, hj, hdb, hb, hfitR, hfitD, hfitC,
         hfitJ, hc, hsub]
     · simp +decide
     · intro a
       simp only [y₁, Data.set_mem, relaxWord, hc, ↓reduceIte]
       split <;> simp_all
-  · by_cases hd : y.mem (Db + J) = 0
+  · have hle : 1 ≤ B + y.mem (R + J) := by omega
+    by_cases hd : y.mem (Db + J) = 0
     · refine ⟨(y₂.write (Db + J) (B + y.mem (R + J) - 1)).set j (J + 1),
         ?_, ?_, ?_⟩
-      · ram_eval [relaxBody, y₁, y₂, hzero, hone, hr, hj, hdb, hb, hfitR, hfitD, hfitC,
-          hfitJ, hc, hd, hsub]
+      · ram_exact_eval [relaxBody, y₁, y₂, hzero, hone, hr, hj, hdb, hb, hfitR, hfitD, hfitC,
+          hfitJ, hc, hd, hle, hsub]
       · simp +decide
       · intro a
         simp +decide [y₂, y₁, relaxWord, hc, hd, Function.update_apply]
     · by_cases hl : B + y.mem (R + J) - 1 < y.mem (Db + J)
       · refine ⟨(y₂.write (Db + J) (B + y.mem (R + J) - 1)).set j (J + 1),
           ?_, ?_, ?_⟩
-        · ram_eval [relaxBody, y₁, y₂, hzero, hone, hr, hj, hdb, hb, hfitR, hfitD, hfitC,
-            hfitJ, hc, hd, hl, hsub]
+        · ram_exact_eval [relaxBody, y₁, y₂, hzero, hone, hr, hj, hdb, hb, hfitR, hfitD, hfitC,
+            hfitJ, hc, hd, hl, hle, hsub]
         · simp +decide
         · intro a
           simp +decide [y₂, y₁, relaxWord, hc, hd, hl, Function.update_apply]
       · refine ⟨(y₂.set tmp (Db + J)).set j (J + 1), ?_, ?_, ?_⟩
-        · ram_eval [relaxBody, y₁, y₂, hzero, hone, hr, hj, hdb, hb, hfitR, hfitD, hfitC,
-            hfitJ, hc, hd, hl, hsub]
+        · ram_exact_eval [relaxBody, y₁, y₂, hzero, hone, hr, hj, hdb, hb, hfitR, hfitD, hfitC,
+            hfitJ, hc, hd, hl, hle, hsub]
         · simp +decide
         · intro a
           simp only [y₂, y₁, Data.set_mem, relaxWord, hc, hd, hl, ↓reduceIte]
@@ -148,7 +149,7 @@ theorem relax_spec {w N Db U B : ℕ} {x : Data 17} (hzero : x.regs zero = 0)
       intro i hi
       apply he.regs_eq
       simp only [List.mem_cons, List.not_mem_nil, or_false, not_or] at hi
-      simp [relaxBody, Code.Preserves, Op.dest, Op.bin, ne_comm,
+      simp [relaxBody, Code.Preserves, Op.dest, Op.exactBin, ne_comm,
         hi.1, hi.2.1, hi.2.2.1, hi.2.2.2.1, hi.2.2.2.2]
     refine ⟨z, he, ⟨?_, ?_, ?_, ?_, ?_⟩, ?_⟩
     · intro i hi
@@ -176,14 +177,14 @@ theorem relax_spec {w N Db U B : ℕ} {x : Data 17} (hzero : x.regs zero = 0)
     simp only [Cond.holds_lt, hn'] at hexit
     omega
   refine ⟨y, ?_, hy.frame, ?_, hy.outside⟩
-  · have e₁ : ExecWithin w ram[row ← bv * n] x (x.set row (U * N)) 1 := by
-      ram_eval [hbv, hn, hfitM]
-    have e₂ : ExecWithin w ram[row ← row + three] (x.set row (U * N))
+  · have e₁ : ExecWithin w ram_exact[row ← bv * n] x (x.set row (U * N)) 1 := by
+      ram_exact_eval [hbv, hn, hfitM]
+    have e₂ : ExecWithin w ram_exact[row ← row + three] (x.set row (U * N))
         ((x.set row (U * N)).set row (U * N + 3)) 1 := by
-      ram_eval [hthree, hfitR]
-    have e₃ : ExecWithin (B := .standard) w ram[j ← zero]
+      ram_exact_eval [hthree, hfitR]
+    have e₃ : ExecWithin (B := .exact) w ram_exact[j ← zero]
         ((x.set row (U * N)).set row (U * N + 3)) y₀ 1 := by
-      ram_eval [y₀, hzero]
+      ram_exact_eval [y₀, hzero]
     exact (e₁.seq (e₂.seq (e₃.seq he))).mono (by
       simp only [y₀, Data.set_regs, Function.update_self, Nat.sub_zero]
       omega)

@@ -8,13 +8,14 @@ module
 -- upstream: candidate
 
 public import Complexity.Algorithms.WordRAM.Dijkstra.Statement
-public import Complexity.Computability.WordRAM.Notation
+public import Complexity.Algorithms.WordRAM.Dijkstra.ExactNotation
 
 /-!
 # Dijkstra's algorithm on the word RAM: the program
 
 This file writes the quadratic-time Dijkstra program as a structured word-RAM program over the
-standard basis [Dijkstra][Dijkstra1959] [Cormen et al., Section 24.3][CLRS2009].
+exact basis `Cslib.WordRAM.Basis.exact` [Dijkstra][Dijkstra1959] [Cormen et al., Section
+24.3][CLRS2009].
 
 The program reads the instance of `Cslib.Algorithms.WordRAM.Dijkstra.Instance.encode`, whose
 weight matrix entry for row `u` and column `v` sits at address `u n + v + 3`. It keeps two arrays
@@ -27,6 +28,9 @@ Each round scans the unvisited vertices for the least finite tentative distance
 (`Cslib.Algorithms.WordRAM.Dijkstra.minScan`). If there is none, the program stops; otherwise it
 marks that vertex visited and relaxes the edges of its matrix row
 (`Cslib.Algorithms.WordRAM.Dijkstra.relax`). There are at most `n` rounds of `O(n)` instructions.
+
+On the exact basis a subtraction below zero faults. The program's only subtraction is
+`best + c - 1` in the relaxation, which runs only for a matrix entry `c ≠ 0`.
 
 ## Main definitions
 
@@ -93,7 +97,7 @@ open Reg
 
 /-- Read `n` and the source, compute the addresses of the two arrays, set the distance word of
 the source to `1` (distance `0`), and start at round `0`. -/
-def setup : Code .standard 17 := ram[
+def setup : Code .exact 17 := ram_exact[
   one ← #1;
   three ← #3;
   n ← *one;
@@ -108,7 +112,7 @@ def setup : Code .standard 17 := ram[
 
 /-- Scan the vertices `j < n` that are not visited and have a nonzero distance word, and leave
 the least such word in `best` and its vertex in `bv`; `best` stays `0` if there is none. -/
-def minScan : Code .standard 17 := ram[
+def minScan : Code .exact 17 := ram_exact[
   best ← zero;
   j ← zero;
   while j < n do [
@@ -126,7 +130,7 @@ def minScan : Code .standard 17 := ram[
 /-- Relax every edge out of `bv`, whose distance word is `best`: for each `j < n` with an edge of
 matrix entry `c ≠ 0`, the candidate word `best + c - 1` replaces the distance word of `j` if that
 word is `0` or larger. -/
-def relax : Code .standard 17 := ram[
+def relax : Code .exact 17 := ram_exact[
   row ← bv * n;
   row ← row + three;
   j ← zero;
@@ -144,7 +148,7 @@ def relax : Code .standard 17 := ram[
 
 /-- One round: find the unvisited vertex of least finite tentative distance; stop if there is
 none, and otherwise mark it visited and relax its edges. -/
-def round : Code .standard 17 := ram[
+def round : Code .exact 17 := ram_exact[
   ⟪minScan⟫;
   if best = zero then [ k ← n ] else [
     tmp ← vbase + bv;
@@ -153,7 +157,7 @@ def round : Code .standard 17 := ram[
     k ← k + one ] ]
 
 /-- **Dijkstra's algorithm** with a linear-scan minimum, on the weight matrix. -/
-def dijkstra : Code .standard 17 := ram[ ⟪setup⟫; while k < n do [ ⟪round⟫ ] ]
+def dijkstra : Code .exact 17 := ram_exact[ ⟪setup⟫; while k < n do [ ⟪round⟫ ] ]
 
 /-- One relaxation on encoded words: the new distance word of a vertex with distance word `d`,
 through an edge of matrix entry `c` out of a vertex with distance word `b ≠ 0`. -/

@@ -124,27 +124,27 @@ where `W` is the largest weight, the flat program `p`, started on the input word
 halts within `K n ^ 2` instructions, the final `halt` included, and its memory then holds at
 `I.outAddr v` the encoded distance from the source to `v`, for every vertex `v`. The register
 value returned by `halt` is not part of the result. -/
-def QuadraticSpec {r : ℕ} (p : Program .standard r) (K : ℕ) : Prop :=
+def QuadraticSpec {r : ℕ} (p : Program .exact r) (K : ℕ) : Prop :=
   ∀ (I : Instance) (w : ℕ), Fits w ((I.n + 2) ^ 2 * (I.maxWeight + 2)) →
     ∃ t m, Runs w p (.init I.encode) t m ∧ (∃ v, step w p t = .halt v) ∧
       m + 1 ≤ K * I.n ^ 2 ∧
       ∀ v : Fin I.n, t.data.mem (I.outAddr v) = encodeDist (I.dist I.source v)
 
-/-- **Phase 1 main theorem (statement).** Some word-RAM program over the standard basis computes
+/-- **Phase 1 main theorem (statement).** Some word-RAM program over the exact basis computes
 all shortest-path distances from the source of a weighted directed graph with `n` vertices
 within `O(n ^ 2)` instructions. -/
 def QuadraticStatement : Prop :=
-  ∃ r, ∃ p : Program .standard r, ∃ K, QuadraticSpec p K
+  ∃ r, ∃ p : Program .exact r, ∃ K, QuadraticSpec p K
 
 /-- A query: an instance and a target vertex. -/
 abbrev Query := Σ I : Instance, Fin I.n
 
 /-- **Corollary form, in the library's notion of computation.** The encoded distance from the
-source to a queried target is uniformly computable over the standard basis in `O(n ^ 2)`
+source to a queried target is uniformly computable over the exact basis in `O(n ^ 2)`
 instructions, on the input words of the instance followed by the target, at every word size that
 holds `(n + 2) ^ 2 (W + 2)`. -/
 def QueryStatement : Prop :=
-  UniformComputableInO .standard (fun q : Query => encodeDist (q.1.dist q.1.source q.2))
+  UniformComputableInO .exact (fun q : Query => encodeDist (q.1.dist q.1.source q.2))
     (fun _ q => q.1.encode ++ [(q.2 : ℕ)]) (fun q => q.1.n) (fun n _ => n ^ 2)
     (fun q w => Fits w ((q.1.n + 2) ^ 2 * (q.1.maxWeight + 2)))
 
