@@ -1116,6 +1116,19 @@ public import Complexity.Computability.Machines.Turing.TM2.ConfigBound
 public import Complexity.Computability.Machines.Turing.TM2.Encoding
 public import Complexity.Computability.Machines.Turing.TM2.PolySpace
 public import Complexity.Computability.Machines.Turing.TM2.PolyTime
+public import Complexity.Computability.Machines.Turing.TM2.Recoding
+public import Complexity.Computability.Machines.Turing.TM2.Reverse.Bounds
+public import Complexity.Computability.Machines.Turing.TM2.Reverse.Cleanup
+public import Complexity.Computability.Machines.Turing.TM2.Reverse.Correct
+public import Complexity.Computability.Machines.Turing.TM2.Reverse.Data
+public import Complexity.Computability.Machines.Turing.TM2.Reverse.Execution
+public import Complexity.Computability.Machines.Turing.TM2.Reverse.Input
+public import Complexity.Computability.Machines.Turing.TM2.Reverse.InputProgram
+public import Complexity.Computability.Machines.Turing.TM2.Reverse.Program
+public import Complexity.Computability.Machines.Turing.TM2.Reverse.Representation
+public import Complexity.Computability.Machines.Turing.TM2.Reverse.Tape
+public import Complexity.Computability.Machines.Turing.TM2.Reverse.TapeSpace
+public import Complexity.Computability.Machines.Turing.TM2.Reverse.Transfer
 public import Complexity.Computability.Machines.Turing.TM2.Simulation
 public import Complexity.Computability.PCP.Amplification
 public import Complexity.Computability.PCP.Amplification.Arithmetic
@@ -1503,6 +1516,7 @@ public import Complexity.Crypto.Primitives.PRG.NisanWigderson.Design
 public import Complexity.Crypto.Primitives.PRG.NisanWigderson.Reconstruction
 public import Complexity.Crypto.Primitives.PRG.NisanWigderson.Sampling
 public import Complexity.Crypto.Protocols.Cipher.EvenMansour
+public import Complexity.Crypto.Protocols.MAC.CarterWegman
 public import Complexity.Crypto.Protocols.SigmaProtocol.Abort
 public import Complexity.Crypto.Protocols.SigmaProtocol.Basic
 public import Complexity.Crypto.Protocols.SigmaProtocol.Composition

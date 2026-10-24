@@ -92,6 +92,7 @@ import ComplexityTests.CountingProducts
 import ComplexityTests.CountingSpace
 import ComplexityTests.CountingVerifier
 import ComplexityTests.Crypto.Bootstrapping
+import ComplexityTests.Crypto.CarterWegman
 import ComplexityTests.Crypto.Commitment
 import ComplexityTests.Crypto.Encryption
 import ComplexityTests.Crypto.EvenMansour
@@ -257,6 +258,7 @@ import ComplexityTests.MassProduction.Pipeline
 import ComplexityTests.MassProduction.Scheduler
 import ComplexityTests.MassProduction.Uhlig
 import ComplexityTests.MathlibTM2
+import ComplexityTests.MathlibTM2Reverse
 import ComplexityTests.MathlibTM2Space
 import ComplexityTests.MemoizePPT
 import ComplexityTests.ModularGap
