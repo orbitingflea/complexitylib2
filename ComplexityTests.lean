@@ -119,6 +119,7 @@ import ComplexityTests.Crypto.HomomorphicLeveled
 import ComplexityTests.Crypto.HomomorphicRefresh
 import ComplexityTests.Crypto.KeyChainSecurity
 import ComplexityTests.Crypto.LeveledSecurity
+import ComplexityTests.Crypto.LubyRackoff
 import ComplexityTests.Crypto.Lyubashevsky
 import ComplexityTests.Crypto.LyubashevskyNative
 import ComplexityTests.Crypto.MAC
@@ -341,6 +342,7 @@ import ComplexityTests.PRGStretch
 import ComplexityTests.Parameterized
 import ComplexityTests.PlainAutomationSupport
 import ComplexityTests.PolySpaceFold
+import ComplexityTests.PolyTimeBinaryWord
 import ComplexityTests.PolyTimeContracts
 import ComplexityTests.PolyTimeMetadata
 import ComplexityTests.PolyTimeMixes
