@@ -836,6 +836,7 @@ public import Complexity.Computability.Interactive.Basic
 public import Complexity.Computability.Interactive.Plain
 public import Complexity.Computability.Interactive.Security
 public import Complexity.Computability.Interactive.Sequential
+public import Complexity.Computability.Interactive.Sumcheck
 public import Complexity.Computability.Kolmogorov.Basic
 public import Complexity.Computability.Kolmogorov.ChainRule
 public import Complexity.Computability.Kolmogorov.Depth
@@ -1614,7 +1615,6 @@ public import Complexity.Foundations.Combinatorics.FunctionalGraph.Spectrum
 public import Complexity.Foundations.Combinatorics.Hypergeometric
 public import Complexity.Foundations.Combinatorics.Lautemann
 public import Complexity.Foundations.Combinatorics.LineCode.Basic
-public import Complexity.Foundations.Combinatorics.LineCode.Field
 public import Complexity.Foundations.Combinatorics.LineCode.HighRate
 public import Complexity.Foundations.Combinatorics.LineCode.HighRate.Monomial
 public import Complexity.Foundations.Combinatorics.LineCode.HighRate.Packing
@@ -1637,6 +1637,7 @@ public import Complexity.Foundations.Data.BiTape
 public import Complexity.Foundations.Data.BitString.AffineDisperser
 public import Complexity.Foundations.Data.BitString.Agree
 public import Complexity.Foundations.Data.BitString.Basic
+public import Complexity.Foundations.Data.BitString.Binary
 public import Complexity.Foundations.Data.BitString.Block
 public import Complexity.Foundations.Data.BitString.Broadcast
 public import Complexity.Foundations.Data.BitString.Counter
@@ -1669,6 +1670,7 @@ public import Complexity.Foundations.Data.BitString.SumTree
 public import Complexity.Foundations.Data.BitString.Uhlig
 public import Complexity.Foundations.Data.BitString.Weight
 public import Complexity.Foundations.Data.BitString.WordCount
+public import Complexity.Foundations.Data.BitString.ZModTwo
 public import Complexity.Foundations.Data.Code.Basic
 public import Complexity.Foundations.Data.Code.BerlekampWelch
 public import Complexity.Foundations.Data.Code.Concatenation
@@ -1733,6 +1735,7 @@ public import Complexity.Foundations.Data.Set.Card
 public import Complexity.Foundations.Data.StackTape
 public import Complexity.Foundations.FieldTheory.Finite.BinaryField
 public import Complexity.Foundations.FieldTheory.Finite.ReducedMonomial
+public import Complexity.Foundations.FieldTheory.Finite.Subfield
 public import Complexity.Foundations.FieldTheory.Finite.UnitSum
 public import Complexity.Foundations.Geometry.Euclidean.Angle.Cap
 public import Complexity.Foundations.GroupTheory.Perm.Fin
@@ -1744,6 +1747,7 @@ public import Complexity.Foundations.LinearAlgebra.Matrix.CutRank
 public import Complexity.Foundations.LinearAlgebra.Matrix.Lindsey
 public import Complexity.Foundations.LinearAlgebra.Matrix.Rank
 public import Complexity.Foundations.LinearAlgebra.Matrix.SubmatrixRobust
+public import Complexity.Foundations.LinearAlgebra.Matrix.Toeplitz
 public import Complexity.Foundations.LinearAlgebra.Rank
 public import Complexity.Foundations.Order.Changes
 public import Complexity.Foundations.Order.UpperLower
