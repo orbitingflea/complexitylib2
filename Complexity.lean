@@ -751,6 +751,7 @@ public import Complexity.Computability.Complexity.FineGrained.BruteForce
 public import Complexity.Computability.Complexity.FineGrained.Exponents
 public import Complexity.Computability.Complexity.FineGrained.GraphProblems
 public import Complexity.Computability.Complexity.FineGrained.OrthogonalVectors
+public import Complexity.Computability.Complexity.FineGrained.PermutationIndependentSet
 public import Complexity.Computability.Complexity.FineGrained.Reduction
 public import Complexity.Computability.Complexity.FineGrained.Sparsification
 public import Complexity.Computability.Complexity.HardnessEncoding.PolyTime
@@ -854,6 +855,8 @@ public import Complexity.Computability.Languages.Slice
 public import Complexity.Computability.MCSP.AntiChecker
 public import Complexity.Computability.MCSP.Basic
 public import Complexity.Computability.MCSP.NP
+public import Complexity.Computability.MCSP.Partial
+public import Complexity.Computability.MCSP.PartialNP
 public import Complexity.Computability.MCSP.Shannon
 public import Complexity.Computability.MCSP.Succinct
 public import Complexity.Computability.Machines.ReadMachine.Basic
@@ -1561,6 +1564,7 @@ public import Complexity.Foundations.BooleanAnalysis.HarmonicTransform
 public import Complexity.Foundations.BooleanAnalysis.Hypercontractivity
 public import Complexity.Foundations.BooleanAnalysis.Hypercontractivity.Derivative
 public import Complexity.Foundations.BooleanAnalysis.Hypercontractivity.LpNorm
+public import Complexity.Foundations.BooleanAnalysis.Hypercontractivity.LpNormMeasure
 public import Complexity.Foundations.BooleanAnalysis.Hypercontractivity.Tensorization
 public import Complexity.Foundations.BooleanAnalysis.Hypercontractivity.TwoPoint
 public import Complexity.Foundations.BooleanAnalysis.Hypercube
@@ -1616,6 +1620,7 @@ public import Complexity.Foundations.Combinatorics.Expander.ReingoldVertex
 public import Complexity.Foundations.Combinatorics.Expander.Replacement
 public import Complexity.Foundations.Combinatorics.Expander.SimpleGraph
 public import Complexity.Foundations.Combinatorics.Expander.SlotGraph
+public import Complexity.Foundations.Combinatorics.Expander.Spectrum
 public import Complexity.Foundations.Combinatorics.Expander.Tensor
 public import Complexity.Foundations.Combinatorics.Expander.Tower
 public import Complexity.Foundations.Combinatorics.Expander.TowerFamily
@@ -1692,6 +1697,7 @@ public import Complexity.Foundations.Data.BitString.Uhlig
 public import Complexity.Foundations.Data.BitString.Weight
 public import Complexity.Foundations.Data.BitString.WordCount
 public import Complexity.Foundations.Data.BitString.ZModTwo
+public import Complexity.Foundations.Data.Code.AsymptoticallyGood
 public import Complexity.Foundations.Data.Code.Basic
 public import Complexity.Foundations.Data.Code.BerlekampWelch
 public import Complexity.Foundations.Data.Code.Concatenation
@@ -1715,6 +1721,7 @@ public import Complexity.Foundations.Data.Fin.Append
 public import Complexity.Foundations.Data.Fin.Order
 public import Complexity.Foundations.Data.Fin.Tuple
 public import Complexity.Foundations.Data.Finset.Expect
+public import Complexity.Foundations.Data.Finset.Markov
 public import Complexity.Foundations.Data.Finset.Quantile
 public import Complexity.Foundations.Data.Finset.Sampling
 public import Complexity.Foundations.Data.Finset.SymmDiff
@@ -1728,6 +1735,7 @@ public import Complexity.Foundations.Data.List.Fold
 public import Complexity.Foundations.Data.List.Lex
 public import Complexity.Foundations.Data.List.Lookup
 public import Complexity.Foundations.Data.List.OfFn
+public import Complexity.Foundations.Data.List.SelectDistinct
 public import Complexity.Foundations.Data.Matrix.Binary
 public import Complexity.Foundations.Data.Matrix.Permanent
 public import Complexity.Foundations.Data.Matrix.TotallyRegular
@@ -1825,6 +1833,7 @@ public import Complexity.Languages.Probabilistic.Presample
 public import Complexity.Languages.Probabilistic.QueryCount
 public import Complexity.Languages.Probabilistic.RandomOracle
 public import Complexity.Languages.Probabilistic.RandomOracle.Probabilistic
+public import Complexity.Languages.Probabilistic.RandomPermutation
 public import Complexity.Languages.Probabilistic.Repeat
 public import Complexity.Languages.Probabilistic.Selection
 public import Complexity.Languages.Probabilistic.Semantics
