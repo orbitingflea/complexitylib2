@@ -1,8 +1,9 @@
-# T15: formal abstract of Dijkstra's algorithm, O((m + 1) log n)
+# T15/T17: formal abstract of Dijkstra's algorithm, O((m + 1) log n)
 
 Branch `t15-dijkstra-abstract`, first based on `c766a2cf` (fork main with T14 merged), later
-merged with `origin/main` `ddd3a2a9`. Line numbers in `C/` and `D/` are at `c766a2cf`; those in `X/`
-are at the branch head. Paths: `C/` = `Complexity/Computability/WordRAM/`,
+merged with `origin/main` `ddd3a2a9` and then `dcf8b70f` (T16: the Dijkstra programs on the exact
+basis). T17 replaced the library's machine in the statement by the abstract's own exact-basis
+machine. Line numbers in `C/` are at `c766a2cf`; those in `D/` and `X/` are at the branch head. Paths: `C/` = `Complexity/Computability/WordRAM/`,
 `D/` = `Complexity/Algorithms/WordRAM/Dijkstra/`, `X/` = `abstracts/ComplexityAbstracts/`.
 "(inferred)" marks what I derived rather than read.
 
@@ -10,10 +11,12 @@ are at the branch head. Paths: `C/` = `Complexity/Computability/WordRAM/`,
 
 * `X/DijkstraAbstract.lean`: the abstract. It defines the graph, walks, the distance, the number
   of edges, the largest weight, the input and output layouts, and states `dijkstra_logLinear`.
-  The proof is one line through the bridge. `#check_abstract` passes with the allowlist
-  `Complexity.Computability.WordRAM.Defs` and `Complexity.Computability.WordRAM.Basis`.
+  It also defines its own word RAM over the exact basis. The proof is one term through the bridge.
+  `#check_abstract` passes with no allowlist: the abstract depends only on Lean, Mathlib and
+  CSLib.
 * `X/DijkstraBridge.lean`: proves that the walk distance equals the library's distance
-  (`walkDist_eq`) and transfers `logLinearStatement` (`logLinear`).
+  (`walkDist_eq`), that a run of a library program over `Basis.exact` is a run of its
+  translation (`runs_map`), and transfers `logLinearStatement` (`logLinear`).
 * `abstracts/ComplexityAbstracts.lean`: imports both.
 
 No library file changed. No `catalogue.json` entry was added.
@@ -29,8 +32,8 @@ sources" (`abstracts/README.md`), the abstract has, in source order:
    word-size condition and the cost model, including that placing the input and its length
    header costs nothing (`C/Defs.lean`, `Data.init`) and that memory beyond them and the registers
    start at `0`, which removes an initialization term in `n` (`D/HeapStatement.lean:18-20`);
-4. "Representation details": `offset`, `encode`, `outAddr`, `encodeDist`, and the prose on the
-   machine;
+4. "Representation details": `offset`, `encode`, `outAddr`, `encodeDist`, and the machine
+   (`AluOp`, `AluOp.eval`, `Instr`, `Program`, `State`, `Outcome`, `step`, `init`, `Runs`);
 5. "Main theorem": `dijkstra_logLinear` and the audit.
 
 The renderer moves a `## Representation details` group, up to the next `##` heading, to an
@@ -42,31 +45,69 @@ its definitions; `CookLevinAbstract.lean` does the same.
 
 ```lean
 theorem dijkstra_logLinear :
-    ∃ r, ∃ p : Cslib.WordRAM.Program .standard r, ∃ K, ∀ (n : ℕ) (G : Graph n) (s : Fin n) (w : ℕ),
+    ∃ r, ∃ p : Program r, ∃ K, ∀ (n : ℕ) (G : Graph n) (s : Fin n) (w : ℕ),
       8 * (n + numEdges G + 2) * (maxWeight G + 2) < 2 ^ w →
-      ∃ t steps, Cslib.WordRAM.Runs w p (Cslib.WordRAM.State.init (encode G s)) t steps ∧
-        (∃ v, Cslib.WordRAM.step w p t = .halt v) ∧
+      ∃ t steps, Runs w p (init (encode G s)) t steps ∧
+        (∃ v, step w p t = .halt v) ∧
         steps + 1 ≤ K * (numEdges G + 1) * (Nat.log 2 n + 1) ∧
-        ∀ v : Fin n, t.data.mem (outAddr G v) = encodeDist (dist G s v)
+        ∀ v : Fin n, t.mem (outAddr G v) = encodeDist (dist G s v)
 ```
 
-## Machine choice: allowlist the library word RAM
+Outside the machine names (`Program`, `Runs`, `init`, `step`, `.halt`, `t.mem`), the statement is
+the one at `ef8165b7`, where it used `Cslib.WordRAM.Program .standard r`, `Cslib.WordRAM.Runs`,
+`Cslib.WordRAM.State.init`, `Cslib.WordRAM.step` and `t.data.mem`.
 
-There are two options for the machine: (a) allowlist the library's word RAM modules `Defs` and
-`Basis` and state the theorem over the library's standard basis; (b) state it over the
-self-contained exact-basis machine of `X/WordRAMAbstract.lean`. The abstract uses (a). This is our
-choice for now; the user has not decided between (a) and (b).
+## The machine
 
-The library theorem is over `Basis.standard` (`D/HeapStatement.lean:157`, `:166`). The
-self-contained machine of `X/WordRAMAbstract.lean` is the exact basis, and its `runsAgree` relates
-it only to `Cslib.WordRAM.Program .exact r` (`X/WordRAMAbstract.lean:241-251`). I found no
-simulation of a standard-basis program by an exact-basis one in the library (`rg` over
-`Complexity/`). Option (b) would therefore need a new instruction-level simulation in the bridge,
-and the constants `r` and `K` would change. Option (a) is allowed by the skill
-(`.agents/skills/lean-abstract/SKILL.md:37`), keeps the statement equal to the library's, and the
-audit shows the allowlist closes over `Defs` and `Basis` alone. The abstract's appendix states in
-prose what a reader needs of the five library names it uses: `Program`, `State.init`, `step`,
-`Runs` and `.halt`.
+The user asked for the word RAM to appear in the abstract, depending only on Mathlib and public
+CSLib, and for the Dijkstra proof to use the exact basis (CoS brief T17, 2026-10-24). T16 moved the
+library theorem to the exact basis: `LogLinearSpec` and `LogLinearStatement` are over
+`Program .exact r` (`D/HeapStatement.lean:157`, `:166`), proved at `D/LogLinear.lean:422`.
+
+The abstract copies from `X/WordRAMAbstract.lean` exactly the definitions the statement needs:
+`AluOp`, `AluOp.eval`, `Instr`, `Program`, `State`, `Outcome`, `step` and `init`
+(`X/DijkstraAbstract.lean:139-243`). Their Lean code is character for character the same as in
+`X/WordRAMAbstract.lean` (checked with `diff`); the prose differs only where `WordRAMAbstract`
+names its `InputFits` and the library's `Runs.bounded_init`, which this abstract does not use. It
+does not copy `Halts`, `InputFits`, `Decides` or `DecidableInTime`.
+
+It adds `Runs` (`X/DijkstraAbstract.lean:249`), needed because `WordRAMAbstract`'s `Halts`
+exposes only the output, not the final memory:
+
+```lean
+def Runs (w : ℕ) (p : Program r) : State r → State r → ℕ → Prop :=
+  Relation.RelatesInSteps fun s t => step w p s = .next t
+```
+
+This is the library's definition (`C/Defs.lean`, `Runs` is `Relation.RelatesInSteps (Next w p)`
+with `Next w p s t := step w p s = .next t`), with CSLib's `Relation.RelatesInSteps`
+(`.lake/packages/cslib/Cslib/Foundations/Relation/RelatesInSteps.lean:40`). The docstring states
+what `RelatesInSteps` means.
+
+## The bridge for the machine
+
+Upstream allows a bridge to import another bridge: `X/SubsetSumBridge.lean:9` imports
+`CookLevinBridge`, and `.agents/skills/lean-abstract/SKILL.md` lists it as "Pattern A reusing
+another bridge". So `X/DijkstraBridge.lean` imports `X/WordRAMBridge.lean` and copies nothing.
+`WordRAMBridge` proves, for any presentation `S` of the exact word RAM with `Laws S`, that one step
+of a library program `q` over `Basis.exact` matches one step of its translation
+`q.map S.instrOf` (`step_matches`, `X/WordRAMBridge.lean:223`). The Dijkstra bridge adds:
+
+* `Machine.stateOf`: the abstract state with the `pc`, registers and memory of a library state;
+  `stateOf_init`: it maps the library's start state to the abstract `init`.
+* `Machine.step_next`, `Machine.step_halt`: a continuing or halting library step is the same step
+  of the translation (from `step_matches`).
+* `Machine.runs_map`: a library run of `k` steps is a run of `k` steps of the translation, by
+  induction on `Relation.RelatesInSteps`.
+* `logLinear`: for any `S` with `Laws S` and a memory projection `mem`, the program
+  `q.map S.instrOf` (with `q` from `logLinearStatement`) satisfies the abstract statement.
+
+`WordRAMBridge.Presentation` has two fields the Dijkstra abstract does not define, `Halts` and
+`OutcomeAgrees`. The abstract fills `Halts` with `DijkstraBridge.haltsVia`, a halting-run
+predicate defined from `step` by cases on the outcome (as `WordRAMAbstract`'s `Halts`), and
+`OutcomeAgrees` with `True`; the bridge uses neither, and both satisfy `Laws`. The abstract's
+proof discharges `Laws` with `constructor <;> simp_all [step, DijkstraBridge.haltsVia,
+AluOp.eval]`, as `WordRAMAbstract` does.
 
 ## Distance and the bridge
 
@@ -112,12 +153,11 @@ Compared with `LogLinearSpec` (`D/HeapStatement.lean:157-161`) and `LogLinearSta
 
 What the abstract does not say exactly or not self-contained:
 
-1. The machine is not defined in the file. It is read through the allowlisted modules `Defs` and
-   `Basis`; the file describes it in prose only, and the module docstring names both modules as
-   sources a reader must inspect.
+1. The machine is defined in the file. Its relation to the library's `Basis.exact` machine is
+   proved in the bridge, not stated in the abstract (unlike `WordRAMAbstract`'s `runsAgree`).
 2. The value returned by `halt` is not part of the result (as in the library).
 3. `Nat.log 2 n` is `⌊log₂ n⌋` for `n ≥ 1` and `0` for `n = 0`.
-4. The constants (`r = 27`, `K = 230`, `D/LogLinear.lean:421`) are hidden behind `∃`.
+4. The constants `r` and `K` are hidden behind `∃`.
 
 ## Rendering
 
@@ -132,11 +172,12 @@ and no TeX mapping for `⌊`, `⌋` or `ᵢ`, so the docstrings avoid them.
 
 * `scripts/check.sh`: all six gates pass.
 * `lake build --wfail --iofail ComplexityAbstracts.DijkstraAbstract`: passes.
-* `#check_abstract`: "abstract audit passed for `ComplexityAbstracts.DijkstraAbstract`: 14 root
-  declarations, 249 dependencies checked".
+* `#check_abstract` (no allowlist): "abstract audit passed for
+  `ComplexityAbstracts.DijkstraAbstract`: 218 root declarations, 229 dependencies checked". The
+  root count includes the declarations Lean generates for the new inductive types.
 * `#print axioms ComplexityAbstracts.DijkstraAbstract.dijkstra_logLinear`:
   `[propext, Classical.choice, Quot.sound]`.
-* `python3 -B scripts/build_abstracts.py --check`: passes (12 abstracts, 16 headline theorems;
+* `python3 -B scripts/build_abstracts.py --check`: passes (14 abstracts, 19 headline theorems;
   the new abstract is not in the catalogue).
 * `scripts/check_abstract_ci.py` checks GitHub CI of a pushed `main` commit before a release; it
   does not apply to a branch before merge, so I did not run it.
