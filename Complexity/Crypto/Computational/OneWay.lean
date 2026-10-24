@@ -11,6 +11,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Poly
 public import Complexity.Computability.Probabilistic.Parameter
 public import Complexity.Crypto.Game
 public import Complexity.Languages.Probabilistic.BitString
+import Complexity.Probability.PMF.Bind
 import Complexity.Crypto.Negligible.Basic
 import Complexity.Probability.PMF
 import Complexity.Tactic.PPT
@@ -45,7 +46,7 @@ one-way functions or permutations exist.
 
 * [S. Arora, B. Barak, *Computational Complexity: A Modern Approach*][AroraBarak09], Section 9.2.
 
-Adapted from `Crypto/Computational/OneWay.lean` on the cslib `crypto` branch at
+Adapted from Crypto/Computational/OneWay.lean on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`, using finite fair-bit programs, tidy deterministic
 certificates and the upstream nonnegative game API.
 -/
@@ -107,11 +108,11 @@ theorem OneWay.inversion_negligible {f : List Bool → List Bool} (h : OneWay f)
 
 /-- Establish one-wayness by bounding every efficient inverter's success probability. -/
 theorem OneWay.of_inversion_negligible {f : List Bool → List Bool}
-    (hf : ComputableTidilyInPolyTime f encBits encBits)
+    (hf : ComputableInPolyTime f encBits encBits)
     (h : ∀ adversary : Inverter, IsPPT encBits adversary →
       Negligible (fun n => Game.succProbability (ProbComp.eval (inversionGame f adversary n)))) :
     OneWay f := by
-  refine ⟨.of_tidy hf, fun adversary hPPT => ?_⟩
+  refine ⟨hf, fun adversary hPPT => ?_⟩
   simpa only [Game.advantage_pure_false] using h adversary hPPT
 
 /-- A length-preserving permutation that is one-way against every uniform PPT inverter. -/

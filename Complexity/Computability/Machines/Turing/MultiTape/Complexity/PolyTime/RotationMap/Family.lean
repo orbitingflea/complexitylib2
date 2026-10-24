@@ -7,7 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Foundations.Combinatorics.Expander.TowerTable.Family
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.RotationMap.TowerTable.Family
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.RotationMap.Tower
 import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Finite
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Finite
@@ -68,10 +68,10 @@ theorem polytime_contract (hb : 0 < b) (label : D ↪ List Bool)
     (ComputableTidilyInPolyTime.unary_mul.comp (hsize.prod hdecoded.fst')))
   have htarget := (polytime_lookup label).comp
     (htable.prod (hindex.prod hdecoded.snd'))
-  have hslot := (ComputableTidilyInPolyTime.unary_finMod hb (encFinite (Fin b))).comp
+  have hslot := (ComputableTidilyInPolyTime.unary_finMod hb (encFinEnum (Fin b))).comp
     (ComputableTidilyInPolyTime.unary_div.comp (htarget.fst'.prod hsize))
   have hencode : ComputableTidilyInPolyTime (id : (Fin b × (D × D)) → _)
-      (encPair (encFinite (Fin b)) (encPair label label)) slot := .of_finite _
+      (encPair (encFinEnum (Fin b)) (encPair label label)) slot := .of_finite _
   have hresult := (ComputableTidilyInPolyTime.unary_mod.comp
     (htarget.fst'.prod hsize)).prod (hencode.comp (hslot.prod htarget.snd'))
   have hlength := (ComputableTidilyInPolyTime.length

@@ -8,15 +8,15 @@ module
 -- upstream: candidate
 
 public import Complexity.Algorithms.WordRAM.Dijkstra.HeapStatement
-public import Complexity.Computability.WordRAM.Notation
+public import Complexity.Algorithms.WordRAM.Dijkstra.ExactNotation
 
 /-!
 # Dijkstra's algorithm with a binary heap: the program
 
 This file writes Dijkstra's algorithm [Dijkstra][Dijkstra1959] [Cormen et al., Section
-24.3][CLRS2009] on adjacency lists as a structured word-RAM program over 27 registers, with a
-binary min-heap [Cormen et al., Chapter 6][CLRS2009] that supports decrease-key through an array
-of positions.
+24.3][CLRS2009] on adjacency lists as a structured word-RAM program over the exact basis
+`Cslib.WordRAM.Basis.exact` and 27 registers, with a binary min-heap [Cormen et al., Chapter
+6][CLRS2009] that supports decrease-key through an array of positions.
 
 The program reads the input of `Cslib.Algorithms.WordRAM.Dijkstra.ListInstance.encode`: `n` at
 address `1`, the source at address `2`, the offset of vertex `u` at address `u + 3`, and edge `j`
@@ -36,6 +36,9 @@ word is nonzero and its position is `0`.
 Each round extracts the root `u` of the heap and scans the edges out of `u`. An edge to an
 undiscovered vertex inserts it with its new key; an edge that lowers the key of a vertex in the
 heap moves it up. The rounds stop when the heap is empty.
+
+On the exact basis a subtraction below zero or a division by zero faults. The program divides
+only by the constant `2`, and subtracts only `1` from the heap size, which is positive then.
 
 ## Main definitions
 
@@ -123,7 +126,7 @@ open HeapReg
 
 /-- Swap the heap entries at positions `k` and `p`, which hold the vertices `vk` and `vp`, and
 update their positions. -/
-def swapCode : Code .standard 27 := ram[
+def swapCode : Code .exact 27 := ram_exact[
   t ← hb + k; *t ← vp;
   t ← hb + p; *t ← vk;
   t ← pb + vp; *t ← k;
@@ -131,18 +134,18 @@ def swapCode : Code .standard 27 := ram[
 
 /-- One step of the sift-up: swap position `k` with its parent if the parent has the larger key,
 and otherwise stop by setting `k` to `1`. -/
-def siftUpBody : Code .standard 27 := ram[
+def siftUpBody : Code .exact 27 := ram_exact[
   p ← k / two;
   t ← hb + k; vk ← *t; t ← db + vk; dk ← *t;
   t ← hb + p; vp ← *t; t ← db + vp; dp ← *t;
   if dk < dp then [ ⟪swapCode⟫; k ← p ] else [ k ← one ] ]
 
 /-- **Sift-up** from position `k`. -/
-def siftUp : Code .standard 27 := ram[ while one < k do [ ⟪siftUpBody⟫ ] ]
+def siftUp : Code .exact 27 := ram_exact[ while one < k do [ ⟪siftUpBody⟫ ] ]
 
 /-- One step of the sift-down: swap position `k` with its child of least key if that key is
 smaller, and otherwise stop by setting `l` to `szp`. -/
-def siftDownBody : Code .standard 27 := ram[
+def siftDownBody : Code .exact 27 := ram_exact[
   p ← l;
   t ← hb + l; vp ← *t; t ← db + vp; dp ← *t;
   t ← l + one;
@@ -153,13 +156,13 @@ def siftDownBody : Code .standard 27 := ram[
   if dp < dk then [ ⟪swapCode⟫; k ← p; l ← k + k ] else [ l ← szp ] ]
 
 /-- **Sift-down** from position `k`. -/
-def siftDown : Code .standard 27 := ram[
+def siftDown : Code .exact 27 := ram_exact[
   l ← k + k; szp ← sz + one;
   while l < szp do [ ⟪siftDownBody⟫ ] ]
 
 /-- **Extract-min**: remove the root `u` of the heap, with distance word `best`, move the last
 entry to the root and sift it down. -/
-def extractMin : Code .standard 27 := ram[
+def extractMin : Code .exact 27 := ram_exact[
   t ← hb + one; u ← *t;
   t ← db + u; best ← *t;
   t ← pb + u; *t ← zero;
@@ -172,7 +175,7 @@ def extractMin : Code .standard 27 := ram[
 
 /-- **Insert** the vertex `tv`, whose distance word is already set, as a new last entry, and sift
 it up. -/
-def pushNew : Code .standard 27 := ram[
+def pushNew : Code .exact 27 := ram_exact[
   sz ← sz + one;
   t ← hb + sz; *t ← tv;
   t ← pb + tv; *t ← sz;
@@ -180,7 +183,7 @@ def pushNew : Code .standard 27 := ram[
 
 /-- Relax edge `j` out of `u`: read its target `tv` and weight `tc`, and if `best + tc` improves
 the distance word of `tv`, store it and insert `tv` into the heap or move it up (decrease-key). -/
-def edgeBody : Code .standard 27 := ram[
+def edgeBody : Code .exact 27 := ram_exact[
   t ← j + j; t ← t + eb; tv ← *t; t ← t + one; tc ← *t; j ← j + one;
   cand ← best + tc;
   t ← db + tv; dv ← *t;
@@ -188,11 +191,11 @@ def edgeBody : Code .standard 27 := ram[
     if cand < dv then [ *t ← cand; t ← pb + tv; k ← *t; ⟪siftUp⟫ ] else [ t ← t ] ] ]
 
 /-- The scan of the edges `j, …, jend - 1`. -/
-def relaxEdges : Code .standard 27 := ram[ while j < jend do [ ⟪edgeBody⟫ ] ]
+def relaxEdges : Code .exact 27 := ram_exact[ while j < jend do [ ⟪edgeBody⟫ ] ]
 
 /-- One round: extract the root `u` of the heap and relax the edges out of it, which are those
 between its offset, at address `u + 3`, and the next offset. -/
-def heapRound : Code .standard 27 := ram[
+def heapRound : Code .exact 27 := ram_exact[
   ⟪extractMin⟫;
   t ← u + three; j ← *t;
   t ← t + one; jend ← *t;
@@ -201,7 +204,7 @@ def heapRound : Code .standard 27 := ram[
 /-- The setup: load the constants and `n`, compute the array bases from `n` and the number `m`
 of edges, which is the offset at address `n + 3`, give the source the distance word `1` and make
 it the only heap entry. -/
-def heapSetup : Code .standard 27 := ram[
+def heapSetup : Code .exact 27 := ram_exact[
   one ← #1; two ← #2; three ← #3;
   t ← #1; n ← *t;
   t ← #2; u ← *t;
@@ -215,7 +218,7 @@ def heapSetup : Code .standard 27 := ram[
   sz ← one ]
 
 /-- **Dijkstra's algorithm with a binary heap**, on adjacency lists. -/
-def heapDijkstra : Code .standard 27 := ram[ ⟪heapSetup⟫; while zero < sz do [ ⟪heapRound⟫ ] ]
+def heapDijkstra : Code .exact 27 := ram_exact[ ⟪heapSetup⟫; while zero < sz do [ ⟪heapRound⟫ ] ]
 
 end Cslib.Algorithms.WordRAM.Dijkstra
 

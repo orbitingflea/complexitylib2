@@ -20,7 +20,7 @@ takes `O(⌊log₂ sz⌋ + 1)` instructions.
 ## Main definitions
 
 * `Cslib.Algorithms.WordRAM.Dijkstra.appendCode`: one code block after another, nested as
-  `ram[…]` nests sequences, so that a program splits into blocks proved one at a time.
+  `ram_exact[…]` nests sequences, so that a program splits into blocks proved one at a time.
 
 ## Main results
 
@@ -40,13 +40,13 @@ variable {N Db S : ℕ}
 /-! ### Sequencing -/
 
 /-- `appendCode c d` runs `c` and then `d`, as a sequence nested to the right, as the notation
-`ram[…]` nests it. -/
+`ram_exact[…]` nests it. -/
 def appendCode {B : Basis} {r : ℕ} : Code B r → Code B r → Code B r
   | .seq c₁ c₂, d => .seq c₁ (appendCode c₂ d)
   | c, d => .seq c d
 
 /-- Running `c` and then `d`. -/
-theorem execWithin_append {w T₁ T₂ : ℕ} {c d : Code .standard 27} {x y z : Data 27}
+theorem execWithin_append {w T₁ T₂ : ℕ} {c d : Code .exact 27} {x y z : Data 27}
     (h₁ : ExecWithin w c x y T₁) (h₂ : ExecWithin w d y z T₂) :
     ExecWithin w (appendCode c d) x z (T₁ + T₂) := by
   induction c generalizing x T₁ with
@@ -280,7 +280,7 @@ private theorem siftUpBody_spec {w K : ℕ} {y : Data 27} (hone : y.regs one = 1
     intro z T he i hi
     apply he.regs_eq
     simp only [List.mem_cons, List.not_mem_nil, or_false, not_or] at hi
-    simp [siftUpBody, swapCode, Code.Preserves, Op.dest, Op.bin, eq_comm, hi.1, hi.2.1,
+    simp [siftUpBody, swapCode, Code.Preserves, Op.dest, Op.exactBin, eq_comm, hi.1, hi.2.1,
       hi.2.2.1, hi.2.2.2.1, hi.2.2.2.2.1, hi.2.2.2.2.2.1, hi.2.2.2.2.2.2]
   have hkey : ∀ a, heapKey N Db y.mem a = y.mem (Db + y.mem (Db + N + a)) := fun _ => rfl
   rw [hkey, hkey, hvk, hvp]
@@ -289,7 +289,7 @@ private theorem siftUpBody_spec {w K : ℕ} {y : Data 27} (hone : y.regs one = 1
         z.mem = swapMem N Db y.mem K (K / 2) VK VP := by
       refine ⟨?z₁, ?e₁, ?_, ?_⟩
       case e₁ =>
-        ram_eval [siftUpBody, swapCode, hone, htwo, hdb, hhb, hpb, hk, hvk, hvp, f₁, f₂, f₃,
+        ram_exact_eval [siftUpBody, swapCode, hone, htwo, hdb, hhb, hpb, hk, hvk, hvp, f₁, f₂, f₃,
           f₄, f₅, f₆, f₇, hlt]
       · simp
       · simp [swapMem]
@@ -298,7 +298,7 @@ private theorem siftUpBody_spec {w K : ℕ} {y : Data 27} (hone : y.regs one = 1
         z.mem = y.mem := by
       refine ⟨?z₂, ?e₂, ?_, ?_⟩
       case e₂ =>
-        ram_eval [siftUpBody, swapCode, hone, htwo, hdb, hhb, hpb, hk, hvk, hvp, f₁, f₂, f₃,
+        ram_exact_eval [siftUpBody, swapCode, hone, htwo, hdb, hhb, hpb, hk, hvk, hvp, f₁, f₂, f₃,
           f₄, f₅, f₆, f₇, hlt]
       · simp
       · simp
@@ -413,7 +413,7 @@ private theorem minChild_spec {f : ℕ → ℕ} {a : ℕ} (ha : 2 * a ≤ S) :
     · exact not_lt.1 fun hlt => h ⟨hiS, hlt⟩
 
 /-- The first half of `siftDownBody`: it picks the child of least key. -/
-private def chooseCode : Code .standard 27 := ram[
+private def chooseCode : Code .exact 27 := ram_exact[
   p ← l;
   t ← hb + l; vp ← *t; t ← db + vp; dp ← *t;
   t ← l + one;
@@ -423,7 +423,7 @@ private def chooseCode : Code .standard 27 := ram[
 
 /-- The second half of `siftDownBody`: it swaps with the chosen child if that has the smaller
 key, and stops otherwise. -/
-private def sinkCode : Code .standard 27 := ram[
+private def sinkCode : Code .exact 27 := ram_exact[
   t ← hb + k; vk ← *t; t ← db + vk; dk ← *t;
   if dp < dk then [ ⟪swapCode⟫; k ← p; l ← k + k ] else [ l ← szp ] ]
 
@@ -452,7 +452,7 @@ private theorem chooseCode_spec {w K : ℕ} {y : Data 27} (hone : y.regs one = 1
     intro z T he i hi
     apply he.regs_eq
     simp only [List.mem_cons, List.not_mem_nil, or_false, not_or] at hi
-    simp [chooseCode, Code.Preserves, Op.dest, Op.bin, eq_comm, hi.1, hi.2.1,
+    simp [chooseCode, Code.Preserves, Op.dest, Op.exactBin, eq_comm, hi.1, hi.2.1,
       hi.2.2.1, hi.2.2.2.1, hi.2.2.2.2.1, hi.2.2.2.2.2]
   have hkey : ∀ a, heapKey N Db y.mem a = y.mem (Db + y.mem (Db + N + a)) := fun _ => rfl
   by_cases h₁ : 2 * K + 1 < S + 1
@@ -469,7 +469,8 @@ private theorem chooseCode_spec {w K : ℕ} {y : Data 27} (hone : y.regs one = 1
           z.regs p = 2 * K + 1 ∧ z.regs vp = VR ∧ z.regs dp = y.mem (Db + VR) := by
         refine ⟨?z₁, ?e₁, ?_, ?_, ?_, ?_⟩
         case e₁ =>
-          ram_eval [chooseCode, hone, hdb, hhb, hl, hszp, hvl, hvr, f₁, f₂, f₃, f₄, f₅, h₁, h₂]
+          ram_exact_eval [chooseCode, hone, hdb, hhb, hl, hszp, hvl, hvr, f₁, f₂, f₃, f₄, f₅, h₁,
+            h₂]
         all_goals simp +decide
       exact ⟨z, he, hframe z _ he, hz⟩
     · have hC : minChild (heapKey N Db y.mem) S K = 2 * K := by
@@ -480,7 +481,8 @@ private theorem chooseCode_spec {w K : ℕ} {y : Data 27} (hone : y.regs one = 1
           z.regs p = 2 * K ∧ z.regs vp = VL ∧ z.regs dp = y.mem (Db + VL) := by
         refine ⟨?z₂, ?e₂, ?_, ?_, ?_, ?_⟩
         case e₂ =>
-          ram_eval [chooseCode, hone, hdb, hhb, hl, hszp, hvl, hvr, f₁, f₂, f₃, f₄, f₅, h₁, h₂]
+          ram_exact_eval [chooseCode, hone, hdb, hhb, hl, hszp, hvl, hvr, f₁, f₂, f₃, f₄, f₅, h₁,
+            h₂]
         all_goals simp +decide
       exact ⟨z, he, hframe z _ he, hz⟩
   · have hC : minChild (heapKey N Db y.mem) S K = 2 * K := by
@@ -491,7 +493,7 @@ private theorem chooseCode_spec {w K : ℕ} {y : Data 27} (hone : y.regs one = 1
         z.regs p = 2 * K ∧ z.regs vp = VL ∧ z.regs dp = y.mem (Db + VL) := by
       refine ⟨?z₃, ?e₃, ?_, ?_, ?_, ?_⟩
       case e₃ =>
-        ram_eval [chooseCode, hone, hdb, hhb, hl, hszp, hvl, f₁, f₂, f₃, h₁]
+        ram_exact_eval [chooseCode, hone, hdb, hhb, hl, hszp, hvl, f₁, f₂, f₃, h₁]
       all_goals simp +decide
     exact ⟨z, he, hframe z _ he, hz⟩
 
@@ -524,7 +526,7 @@ private theorem sinkCode_spec {w K C : ℕ} {y : Data 27} (hdb : y.regs db = Db)
     intro z T he i hi
     apply he.regs_eq
     simp only [List.mem_cons, List.not_mem_nil, or_false, not_or] at hi
-    simp [sinkCode, swapCode, Code.Preserves, Op.dest, Op.bin, eq_comm, hi.1, hi.2.1,
+    simp [sinkCode, swapCode, Code.Preserves, Op.dest, Op.exactBin, eq_comm, hi.1, hi.2.1,
       hi.2.2.1, hi.2.2.2.1, hi.2.2.2.2]
   have hkey : heapKey N Db y.mem K = y.mem (Db + VK) := by simp only [heapKey, hvk]
   rw [hkey, hvk, hvc]
@@ -533,7 +535,7 @@ private theorem sinkCode_spec {w K C : ℕ} {y : Data 27} (hdb : y.regs db = Db)
         z.regs l = 2 * C ∧ z.mem = swapMem N Db y.mem K C VK VC := by
       refine ⟨?z₁, ?e₁, ?_, ?_, ?_⟩
       case e₁ =>
-        ram_eval [sinkCode, swapCode, hdb, hhb, hpb, hk, hp, hvp, hszp, hvk, f₁, f₂, f₃, f₄,
+        ram_exact_eval [sinkCode, swapCode, hdb, hhb, hpb, hk, hp, hvp, hszp, hvk, f₁, f₂, f₃, f₄,
           f₅, f₆, hlt]
       · simp +decide
       · simp only [Data.set_regs, Data.write_regs, Function.update_idem, Function.update_self]
@@ -544,7 +546,7 @@ private theorem sinkCode_spec {w K C : ℕ} {y : Data 27} (hdb : y.regs db = Db)
         z.regs l = S + 1 ∧ z.mem = y.mem := by
       refine ⟨?z₂, ?e₂, ?_, ?_, ?_⟩
       case e₂ =>
-        ram_eval [sinkCode, swapCode, hdb, hhb, hpb, hk, hp, hvp, hszp, hvk, f₁, f₂, hlt]
+        ram_exact_eval [sinkCode, swapCode, hdb, hhb, hpb, hk, hp, hvp, hszp, hvk, f₁, f₂, hlt]
       · simp +decide [hk]
       · simp +decide
       · simp
@@ -604,7 +606,7 @@ private structure DownInv (N Db S : ℕ) (x y : Data 27) : Prop where
   outside : ∀ a, a ≤ Db + N ∨ Db + 3 * N < a → y.mem a = x.mem a
 
 /-- The set-up of the sift-down loop. -/
-private def downSetup : Code .standard 27 := ram[ l ← k + k; szp ← sz + one ]
+private def downSetup : Code .exact 27 := ram_exact[ l ← k + k; szp ← sz + one ]
 
 /-- `siftDown` is `downSetup` followed by the loop. -/
 private theorem siftDown_eq :
@@ -635,7 +637,7 @@ theorem siftDown_spec {w K : ℕ} {x : Data 27} (hone : x.regs one = 1)
       x₁.regs l = 2 * K ∧ x₁.regs szp = S + 1 ∧ x₁.mem = x.mem ∧
       ∀ i, i ≠ l → i ≠ szp → x₁.regs i = x.regs i := by
     refine ⟨?z₀, ?e₀, ?_, ?_, ?_, ?_⟩
-    case e₀ => ram_eval [downSetup, hone, hk, hsz, f₁, f₂]
+    case e₀ => ram_exact_eval [downSetup, hone, hk, hsz, f₁, f₂]
     · simp +decide only [Data.set_regs, ne_eq, Function.update_of_ne, Function.update_self]
       omega
     · simp
@@ -741,17 +743,17 @@ theorem siftDown_spec {w K : ℕ} {x : Data 27} (hone : x.regs one = 1)
 
 /-- The part of `extractMin` before its test: it reads the root and removes it from the
 positions array, reads the last entry and shrinks the heap. -/
-private def extractHead : Code .standard 27 := ram[
+private def extractHead : Code .exact 27 := ram_exact[
   t ← hb + one; u ← *t; t ← db + u; best ← *t;
   t ← pb + u; *t ← zero;
   t ← hb + sz; vk ← *t; sz ← sz - one ]
 
 /-- The part of `extractMin` that moves the last entry to the root, before the sift-down. -/
-private def extractMove : Code .standard 27 := ram[
+private def extractMove : Code .exact 27 := ram_exact[
   t ← hb + one; *t ← vk; t ← pb + vk; *t ← one; k ← one ]
 
 /-- The part of `extractMin` run when the heap becomes empty. -/
-private def extractStop : Code .standard 27 := ram[ k ← k ]
+private def extractStop : Code .exact 27 := ram_exact[ k ← k ]
 
 /-- `extractMin` is `extractHead` followed by the test on the new size. -/
 private theorem extractMin_eq : extractMin = appendCode extractHead
@@ -789,7 +791,8 @@ theorem extractMin_spec {w : ℕ} {x : Data 27} (hzero : x.regs zero = 0) (hone 
       ∀ i ∉ [t, u, best, vk, sz], x₁.regs i = x.regs i := by
     refine ⟨?z₀, ?e₀, ?_, ?_, ?_, ?_, ?_, ?_⟩
     case e₀ =>
-      ram_eval [extractHead, hzero, hone, hdb, hhb, hpb, hsz, hU, hL, hne, f₁, f₂, f₃, f₄, f₅]
+      ram_exact_eval [extractHead, hzero, hone, hdb, hhb, hpb, hsz, hU, hL, hne, hS, f₁, f₂, f₃,
+        f₄, f₅]
     · simp +decide
     · simp +decide
     · simp +decide
@@ -816,7 +819,7 @@ theorem extractMin_spec {w : ℕ} {x : Data 27} (hzero : x.regs zero = 0) (hone 
         ∀ i ∉ [t, k], x₂.regs i = x₁.regs i := by
       refine ⟨?z₁, ?e₁, ?_, ?_, ?_⟩
       case e₁ =>
-        ram_eval [extractMove, hr₁ one (by decide) ▸ hone, hr₁ hb (by decide) ▸ hhb,
+        ram_exact_eval [extractMove, hr₁ one (by decide) ▸ hone, hr₁ hb (by decide) ▸ hhb,
           hr₁ pb (by decide) ▸ hpb, hx₁v, hx₁m, f₁, f₆]
       · simp +decide
       · simp [hx₁m]
@@ -854,7 +857,7 @@ theorem extractMin_spec {w : ℕ} {x : Data 27} (hzero : x.regs zero = 0) (hone 
       omega
     obtain ⟨x₂, he₂, hx₂⟩ : ∃ x₂, ExecWithin w extractStop x₁ x₂ 1 ∧ x₂ = x₁ := by
       refine ⟨?z₂, ?e₂, ?_⟩
-      case e₂ => ram_eval [extractStop]
+      case e₂ => ram_exact_eval [extractStop]
       simp [Data.set]
     subst hx₂
     have hheap' := hheap.extract_one

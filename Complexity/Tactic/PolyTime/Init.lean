@@ -37,7 +37,7 @@ rule for each efficiency predicate rather than one `apply` rule for each certifi
 
 ## References
 
-Adapted from `Cslib/Tactic/PolyTime/Init.lean` on the cslib `crypto` branch at
+Adapted from Cslib/Tactic/PolyTime/Init.lean on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`, sharing routine-call matching between both tactics.
 -/
 
@@ -72,7 +72,16 @@ def efficiencyKey (statement : Expr) : MetaM (Name × Name × Bool) := do
   let statement := statement.consumeMData
   let some predicate := statement.getAppFn.constName?
     | throwError "expected an efficiency statement"
-  let argument := if predicate == `Turing.MultiTapeTM.ComputableTidilyInPolyTime then
+  unless predicate == `Turing.MultiTapeTM.ComputableInPolyTime ||
+      predicate == `Turing.MultiTapeTM.ComputableTidilyInPolyTime ||
+      predicate == `Cslib.Probability.IsPPTOn || predicate == `Cslib.Probability.IsPPT ||
+      predicate == `Cslib.WordRAM.Refines ||
+      predicate == `Cslib.WordRAM.ComputableInPolyTime ||
+      predicate == `Cslib.WordRAM.UniformComputableInPolyTime do
+    throwError "unsupported efficiency predicate `{predicate}` for `program_certificate`; \
+      expected TM polynomial time, PPT, or a documented word-RAM certificate"
+  let argument := if predicate == `Turing.MultiTapeTM.ComputableTidilyInPolyTime ||
+      predicate == `Turing.MultiTapeTM.ComputableInPolyTime then
     statement.getAppArgs[2]! else statement.getAppArgs.back!
   let program ← Core.betaReduce (← etaExpand argument)
   let some (head, encoded) ← lambdaTelescope program fun _ body => pure (programHead? body)
@@ -125,8 +134,11 @@ private def hasGlobalFunProp (decl : Name) : CoreM Bool := do
     (← hasGlobalEntry transitionTheoremsExt (·.thmName) decl)
 
 /-- `@[program_certificate]` registers an efficiency certificate for `polytime` and `ppt`. Its
-conclusion must be a `ComputableTidilyInPolyTime`, `IsPPTOn` or `IsPPT` statement whose program
-body applies a constant, possibly under an output encoding.
+conclusion must be a `ComputableInPolyTime`, `ComputableTidilyInPolyTime`, `IsPPTOn` or `IsPPT`
+statement, or one of the word-RAM predicates `WordRAM.Refines`, `WordRAM.ComputableInPolyTime`,
+`WordRAM.UniformComputableInPolyTime` used by `Tactic.WordRAM`. The indexed argument must apply
+a constant, possibly under an output encoding. Other predicates are rejected rather than indexed
+by an unrelated final argument.
 Certificates are also registered with `fun_prop` for use in larger compositions, unless the same
 declaration already has a global registration.
 
@@ -148,6 +160,7 @@ initialize registerBuiltinAttribute {
         efficiencyKey conclusion
       return (certificate, key)
     if key.1 == `Turing.MultiTapeTM.ComputableTidilyInPolyTime ||
+        key.1 == `Turing.MultiTapeTM.ComputableInPolyTime ||
         key.1 == `Cslib.Probability.IsPPTOn then
       unless ← hasGlobalFunProp certificate do
         Attribute.add certificate `fun_prop .missing kind

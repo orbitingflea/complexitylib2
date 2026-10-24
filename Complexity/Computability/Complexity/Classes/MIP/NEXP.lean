@@ -19,6 +19,7 @@ import Complexity.Computability.Complexity.Classes.IP.Simulation
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Finite
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Fold
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Length
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Binary
@@ -296,8 +297,8 @@ theorem computableTidilyInPolyTime_instruction :
       (fun q : MultiTapeMachine.FiniteConfig k Bool Control (Fin p) × Bool =>
         (q.1.tapes.state, q.1.tapes.inputSymbol, q.1.tapes.workTapeSymbols, q.1.answerSymbols, q.2))
       (encPair encFiniteConfig encBool)
-      (encPair (encFinite (Option Control)) (encPair (encFinite (Option Bool))
-        (encPair (encFinite (Fin k → Option Bool)) (encPair (encFinite (Fin p → Option Bool))
+      (encPair (encFinite (Option Control)) (encPair (encFinEnum (Option Bool))
+        (encPair (encFinEnum (Fin k → Option Bool)) (encPair (encFinite (Fin p → Option Bool))
           encBool)))) := by
     fun_prop
   exact ((of_finite fun obs : Option Control × Option Bool × (Fin k → Option Bool) ×
@@ -806,7 +807,7 @@ theorem computableTidilyInPolyTime_checkCert (c d : ℕ) :
     have hlen : ComputableTidilyInPolyTime
         (fun q : List Bool × Cert => q.2.length)
         (encPair encBits encCert) encNat :=
-      unary_to_binary.comp ((length_list encCertEntry).comp (snd encBits encCert))
+      (ComputableInPolyTime.length_list_binary encCertEntry).tidy.comp (snd encBits encCert)
     exact binary_lt' hpow (binary_mul' (const 2) hlen)
   exact bool_and' (bool_and' (bool_and' h1 h2) h3) h4
 

@@ -11,6 +11,7 @@ public import Complexity.Computability.Complexity.Problems.TQBF
 public import Complexity.Foundations.Data.Polynomial.CoeffList
 public import Complexity.Languages.Probabilistic.Oracle.Interaction
 public import Complexity.Logics.Propositional.QBF.Arithmetization
+import Complexity.Probability.PMF.Bind
 import Complexity.Probability.PMF
 import Mathlib.Algebra.Polynomial.Roots
 import Mathlib.Tactic.Ring
@@ -152,7 +153,7 @@ noncomputable def honest : Query V F → StateT Unit PMF (List F) :=
   fun q s => PMF.pure (honestReply q, s)
 
 /-- Against the honest prover, the verifier accepts every true claim with certainty. -/
-theorem run_honest_verify (e : ArithQBF V) (r : V → F) (s : Unit) :
+private theorem run_honest_verify (e : ArithQBF V) (r : V → F) (s : Unit) :
     runWith honest (verify sampler e r (e.eval r)) s = PMF.pure (true, s) := by
   induction e generalizing r with
   | var v => simp only [verify, ArithQBF.eval_var, decide_true, ProbOracleComp.runWith_pure]

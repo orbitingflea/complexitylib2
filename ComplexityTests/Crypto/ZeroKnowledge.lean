@@ -29,11 +29,10 @@ example (r : List Bool) (b : Bool) :
   naorVerify_naorCommit r b (by decide)
 
 -- Concrete soundness check for Naor's statistical binding bound.
--- (We do not attempt an unconditional `BitCommitmentScheme` instance: standard statistically
--- binding, computationally hiding commitments imply one-way functions, whose existence is open,
--- although this has not been shown for the weaker hiding notion of `BitCommitmentScheme`. Instead
--- we test `naorVerify` and `naorBindingProb` unconditionally and instantiate `naorBitCommitment`
--- from a PRG / OWF below.)
+-- (We do not attempt an unconditional `BitCommitmentScheme` instance: statistically binding,
+-- computationally hiding commitments against stateful PPT receivers imply one-way functions,
+-- whose existence is open. Instead we test `naorVerify` and `naorBindingProb` unconditionally
+-- and instantiate `naorBitCommitment` from a PRG / OWF below.)
 example (n : ℕ) :
     naorBindingProb tripleGen (fun k => 3 * k + 1) n ≤ (1 / 2 : ENNReal) ^ (n + 1) :=
   naorBindingProb_le_of_three_mul_add_one length_tripleGen n le_rfl
@@ -115,6 +114,38 @@ noncomputable def univZeroKnowledgeProof :
         (congrArg (PMF.map Prod.fst)
           (GMW.eval_runTwoRound (fun _ => []) (fun _ => []) _ (0, [false, false, false])))
 
+/-- Unconditional general auxiliary-input zero-knowledge for `univZeroKnowledgeProof` across all
+arbitrary polynomially bounded valid instance, witness, and auxiliary-input families. -/
+theorem univZeroKnowledgeProof_auxiliaryInputZeroKnowledge :
+    univZeroKnowledgeProof.AuxiliaryInputZeroKnowledge := by
+  intro Vstar hV
+  refine ⟨fun n a z => Prod.fst <$>
+    GMW.runTwoRound (fun _ => []) (fun _ => []) (Vstar n a z) (0, [false, false, false]),
+    ?_, fun a w z _ _ _ _ _ _ => ?_⟩
+  · have hrun := GMW.isPPTOn_runTwoRound hV
+      (input := encPair encUnary (encPair encBits encBits))
+      (prepare := fun p : ℕ × List Bool × List Bool => p)
+      (reply1 := fun _ => []) (reply2 := fun _ => []) (bound := fun _ => 0)
+      (by fun_prop) (by fun_prop) (by fun_prop) (by fun_prop)
+      (fun _ _ => le_rfl) (fun _ _ => le_rfl)
+    exact hrun.map (by fun_prop)
+  · convert negligible_zero using 2 with n
+    have heq :
+        ProbComp.eval (Prod.fst <$> GMW.runTwoRound (fun _ => []) (fun _ => [])
+          (Vstar n (a n) (z n)) (0, [false, false, false])) =
+        ((univZeroKnowledgeProof.prover n (a n) (w n)).run (Vstar n (a n) (z n))
+          (univZeroKnowledgeProof.prover n (a n) (w n)).init).map Prod.fst :=
+      (ProbComp.eval_map _ _).trans
+        (congrArg (PMF.map Prod.fst)
+          (GMW.eval_runTwoRound (fun _ => []) (fun _ => []) _ (0, [false, false, false])))
+    rw [heq, Game.advantage_self]
+
+-- The stronger-to-restricted bridge recovers `GenerableZeroKnowledge` from
+-- `AuxiliaryInputZeroKnowledge`.
+example : GenerableZeroKnowledge encBits univZeroKnowledgeProof.prover
+    univZeroKnowledgeProof.isWitness :=
+  univZeroKnowledgeProof_auxiliaryInputZeroKnowledge.generableZeroKnowledge
+
 -- Concrete satisfiable 3CNF formula and witness check.
 private def satFormula : CNF ℕ := [[(0, true), (1, false)]]
 
@@ -149,6 +180,36 @@ example {α : Type} {enc : α ↪ List Bool} {A : Set α} (zk : ZeroKnowledgePro
 example {f : List Bool → List Bool} (hf : OneWay f) :
     Nonempty (ZeroKnowledgeProof encCNF ThreeSAT) :=
   hf.exists_zeroKnowledgeProof_of_mem_NP ThreeSAT.mem_NP
+
+-- Under an explicit advice-PRG premise, every NP language has a GMW zero-knowledge proof system
+-- satisfying general `AuxiliaryInputZeroKnowledge`.
+example {generator : List Bool → List Bool} {length : ℕ → ℕ}
+    (hG : PseudorandomGenerator generator length)
+    (hstretch : ∀ k, 3 * k + 1 ≤ length k)
+    (hAdv : GMW.AdvicePRG encCNF generator length) :
+    ∃ zk : ZeroKnowledgeProof encCNF ThreeSAT, zk.AuxiliaryInputZeroKnowledge :=
+  hG.exists_auxiliaryInputZeroKnowledge_of_mem_NP hstretch hAdv ThreeSAT.mem_NP
+
+/--
+info: 'Cslib.Crypto.AuxiliaryInputZeroKnowledge.generableZeroKnowledge' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.AuxiliaryInputZeroKnowledge.generableZeroKnowledge
+
+/--
+info: 'Cslib.Crypto.PseudorandomGenerator.auxiliaryInputZeroKnowledge_zeroKnowledgeProofThreeSAT' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms PseudorandomGenerator.auxiliaryInputZeroKnowledge_zeroKnowledgeProofThreeSAT
+
+/--
+info: 'Cslib.Crypto.PseudorandomGenerator.exists_auxiliaryInputZeroKnowledge_of_mem_NP' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.PseudorandomGenerator.exists_auxiliaryInputZeroKnowledge_of_mem_NP
 
 /--
 info: 'Cslib.Crypto.PseudorandomGenerator.naorBitCommitment' depends on axioms:

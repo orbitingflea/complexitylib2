@@ -154,16 +154,16 @@ program `p`, started on the input words of an adjacency-list instance, halts wit
 `K (m + 1) (⌊log₂ n⌋ + 1)` instructions, the final `halt` included, and its memory then holds at
 `G.outAddr v` the encoded distance from the source to `v`, for every vertex `v`. The register
 value returned by `halt` is not part of the result. -/
-def LogLinearSpec {r : ℕ} (p : Program .standard r) (K : ℕ) : Prop :=
+def LogLinearSpec {r : ℕ} (p : Program .exact r) (K : ℕ) : Prop :=
   ∀ (G : ListInstance) (w : ℕ), Fits w (8 * (G.n + G.m + 2) * (G.maxWeight + 2)) →
     ∃ t steps, Runs w p (.init G.encode) t steps ∧ (∃ v, step w p t = .halt v) ∧
       steps + 1 ≤ K * (G.m + 1) * (Nat.log 2 G.n + 1) ∧
       ∀ v : Fin G.n, t.data.mem (G.outAddr v) = encodeDist (G.dist G.source v)
 
-/-- **Phase 2 main theorem (statement).** Some word-RAM program over the standard basis computes
+/-- **Phase 2 main theorem (statement).** Some word-RAM program over the exact basis computes
 all shortest-path distances from the source of a weighted directed graph with `n` vertices and
 `m` edges, given by adjacency lists, within `O((m + 1) log n)` instructions. -/
 def LogLinearStatement : Prop :=
-  ∃ r, ∃ p : Program .standard r, ∃ K, LogLinearSpec p K
+  ∃ r, ∃ p : Program .exact r, ∃ K, LogLinearSpec p K
 
 end Cslib.Algorithms.WordRAM.Dijkstra

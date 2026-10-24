@@ -29,8 +29,11 @@ existing developments, source credit and saved branches remain available for a f
    polynomial-time verifiers with auxiliary input.
    - *Partial:* [Commitment](Complexity/Crypto/Computational/Commitment.lean) proves Naor's
      two-message bit commitment scheme (`naorCommit`, `naorBitCommitment`,
-     `OneWay.exists_bitCommitmentScheme`) with statistical binding and computational hiding over
-     deterministic polynomial-time receiver-string and bit families, and
+     `OneWay.exists_bitCommitmentScheme`) with statistical binding and computational hiding against
+     randomized stateful PPT receivers (`CommitmentReceiver`, `commitmentHidingGame`,
+     `StatefulHiding`, `PseudorandomGenerator.naorStatefulHiding`, with
+     `StatefulHiding.computational_hiding` bridging to deterministic polynomial-time receiver-string
+     and bit families), and
      [ZeroKnowledge](Complexity/Crypto/Computational/ZeroKnowledge.lean)
      ([GMW/Protocol](Complexity/Crypto/Computational/GMW/Protocol.lean),
      [GMW/Soundness](Complexity/Crypto/Computational/GMW/Soundness.lean),
@@ -39,25 +42,31 @@ existing developments, source credit and saved branches remain available for a f
      3-copy masked-3SAT truth-table commitment zero-knowledge proof system for `ThreeSAT` and every
      `A ∈ NP` (`ZeroKnowledgeProof`, `zeroKnowledgeProofThreeSAT`,
      `OneWay.exists_zeroKnowledgeProof_of_mem_NP`) from any uniform one-way function via HILL and
-     Cook–Levin, with uniform zero knowledge over deterministic polynomial-time-generable
+     Cook–Levin, with uniform zero knowledge (`GenerableZeroKnowledge`,
+     `ZeroKnowledgeProof.generableZeroKnowledge`) over deterministic polynomial-time-generable
      instance/witness/auxiliary-input families `(x n, w n, z n)` (and fixed-instance security via
      `zero_knowledge_const`) at soundness error `1 / 3` (the proof bounds it by `1 / 8 + 2^{-(n+8)}`). Because the
      auxiliary input is a deterministic polynomial-time function of `1^n`, this does not reach the
-     auxiliary-input statement above.
-   - *Pointwise reduction milestone (#427):*
+     general auxiliary-input statement above.
+   - *Pointwise reduction and auxiliary-input interface milestones (#427, #698):*
      `GMW.gmwView_advantage_le` bounds every valid instance/witness/auxiliary tuple by
      `(7/8)^(n+1)` plus `dyadicSize(n+1) * dyadicSize(totalLen(f a))` times one concrete
      PRG-challenge advantage at seed size `n+7`. The final test receives `(n,a,z,view)`;
      `isPPTOn_gmwViewReduction` charges the complete encoded tuple and challenge, including
-     adaptive queries and retained verifier randomness/state. The old uniform-family security
-     theorem is a corollary. `gmwView_negligible_of_advice_prg` covers arbitrary families with
-     separate polynomial length bounds only under an explicit stronger advice-PRG premise.
-     No implication from current uniform one-wayness/HILL to that premise is proved. The direct
+     adaptive queries and retained verifier randomness/state. `AuxiliaryInputZeroKnowledge`
+     (`ZeroKnowledgeProof.AuxiliaryInputZeroKnowledge`) states the general auxiliary-input notion
+     for arbitrary polynomially bounded valid families against full-input uniform strict PPT
+     distinguishers, with the stronger-to-restricted bridge
+     `AuxiliaryInputZeroKnowledge.generableZeroKnowledge`. Under the explicit advice-PRG premise
+     `GMW.AdvicePRG` (`gmwView_negligible_of_advice_prg`), the GMW proof systems satisfy
+     `ZeroKnowledgeProof.AuxiliaryInputZeroKnowledge`
+     (`PseudorandomGenerator.auxiliaryInputZeroKnowledge_zeroKnowledgeProofOfReduction`,
+     `PseudorandomGenerator.exists_auxiliaryInputZeroKnowledge_of_mem_NP`).
+     No implication from current uniform one-wayness/HILL to `GMW.AdvicePRG` is proved. The direct
      pad-replacement proof does not require the separate Naor commitment-hiding theorem.
    - *Open (this priority):* zero knowledge in Goldreich's sense (Def. 4.3.10), for every
      `x ∈ L` with arbitrary auxiliary input `z` against probabilistic polynomial-time verifiers;
-     hiding against randomized receivers whose state is passed to the distinguisher; witness-level
-     Levin reductions; and sequential soundness amplification to negligible error.
+     witness-level Levin reductions; and sequential soundness amplification to negligible error.
      The full auxiliary-input convention still needs a formal security-premise/clock bridge:
      polynomial time in total encoded input, used in #427, differs from a clock independent
      of an unbounded auxiliary word. The pointwise milestone does not complete this objective.
@@ -485,7 +494,10 @@ level-collapse equivalences `BH_{k+1} = BH_k ↔ BH_k = coBH_k ⇒ BH = BH_k`), 
 definitions and elementary containments/closures. Full Boolean-hierarchy Boolean closure is
 proved with explicit finite-level upper bounds, as is BH ⊆ Σ₂ ∩ Π₂ using same-level union and
 intersection closure of every Σₖ and Πₖ
-([hierarchy connection](Complexity/Computability/Complexity/Classes/BooleanHierarchy/PH.lean)).
+([hierarchy connection](Complexity/Computability/Complexity/Classes/BooleanHierarchy/PH.lean)),
+and Kadin's polynomial-hierarchy collapse (`coBH k ⊆ BH k → PH = Σ₃ᴾ`, `BH (k + 1) = BH k → PH = Σ₃ᴾ`,
+`DP = coDP → PH = Σ₃ᴾ`, and `SATUNSAT ∈ coDP → PH = Σ₃ᴾ`) is proved in
+[BooleanHierarchy.Kadin](Complexity/Computability/Complexity/Classes/BooleanHierarchy/Kadin.lean).
 Further proved results include LWPP many-one
 reduction closure, unary-indexed target normalization, and full one-sided polynomial-family
 multiple-target robustness: Poly-WPP = WPP and Poly-LWPP = LWPP, and the full two-sided
@@ -505,8 +517,20 @@ Oracle lowness of SPP (`GapPWithOracle_eq_GapP_of_mem_SPP`, hence lowness for `S
 and the unrelativized-`FP`-target classes `LWPPWithFixedTarget` and `WPPWithFixedTarget`), LWPP
 (`exists_mul_mem_GapP_of_mem_LWPP`, hence lowness for `C=P`, `PP`, and the unrelativized-`FP`-target
 classes `LWPPWithFixedTarget` and `WPPWithFixedTarget`), and WPP (`PPWithOracle_eq_PP_of_mem_WPP`)
-is proved in [WPP.Lowness](Complexity/Computability/Complexity/Classes/WPP/Lowness.lean);
-target-relativized `LWPP^A` / `WPP^A` definitions and lowness with `FP^A` targets are not claimed.
+is proved in [WPP.Lowness](Complexity/Computability/Complexity/Classes/WPP/Lowness.lean), and
+[SharpP.Lowness](Complexity/Computability/Complexity/Classes/SharpP/Lowness.lean) proves
+precomposition of `#P` and `GapP` with `FP^(UP ∩ coUP)` functions, the exact lowness
+characterizations `Low(#P) = UP ∩ coUP` (`SharpPWithOracle_eq_SharpP_iff`), `Low(UP ∩ coUP) = UP ∩ coUP`
+(`UPWithOracle_inter_coUPWithOracle_eq_iff`), `Low(GapP) = SPP` (`GapPWithOracle_eq_GapP_iff`),
+and `Low(SPP) = SPP` (`SPPWithOracle_eq_SPP_iff`), `UP ∩ coUP` lowness for `UP`, `coUP`, `FewP`,
+`US`, and `SBPWithFixedTarget`, and `SPP`/`FewP`/`UP ∩ coUP` lowness for relativized modular
+counting classes (`ModPWithOracle_eq_ModP_of_mem_SPP`, `coModPWithOracle_eq_coModP_of_mem_SPP`,
+`ParityPWithOracle_eq_ParityP_of_mem_SPP`);
+target-relativized `LWPP^A` / `WPP^A` / `SBP^A` definitions and lowness with `FP^A` targets are not claimed.
+[Oracle lowness of `NP ∩ coNP` and `UP ∩ coUP`](Complexity/Computability/Complexity/Classes/Oracle/Lowness.lean)
+proves `P^(NP ∩ coNP) = NP ∩ coNP`, `P^(UP ∩ coUP) = UP ∩ coUP`, `NP^(NP ∩ coNP) = NP`, the
+characterization `NP^A = NP ↔ A ∈ NP ∩ coNP` (`NPWithOracle_eq_NP_iff`), and
+`NP = coNP ↔ ∀ A ∈ NP, NP^A = NP` (`NP_eq_coNP_iff_forall_NPWithOracle_eq_NP`).
 PP is closed under polynomial-time truth-table reductions (Fortnow–Reingold), hence under
 intersection, union, difference, symmetric difference (Beigel–Reingold–Spielman) and
 polynomial-time bounded quantifiers ([PP.TruthTable](Complexity/Computability/Complexity/Classes/PP/TruthTable.lean)).
@@ -514,8 +538,7 @@ The proof uses Newman's sign-approximating polynomial on GapP. P is closed under
 reductions. Closure of PP under adaptive polynomial-time Turing reductions (`P^PP = PP`) would
 give `PH ⊆ PP` by Toda's theorem; it is open and not claimed.
 The binary-output FP-to-#P/GapP bridge is available. Parsimonious Cook–Levin gives #P-completeness of #SAT and SAT-based complete problems for ⊕P, US, ModₖP/coModₖP, PP (both threshold #SAT and MAJSAT) and C=P/coC=P ([CountingSAT](Complexity/Computability/Complexity/Problems/CountingSAT.lean)). Remaining extensions include
-permanent completeness, Kadin's polynomial-hierarchy collapse from a Boolean-hierarchy
-collapse, and target-relativized WPP/LWPP oracle classes with `FP^A` targets.
+permanent completeness and target-relativized WPP/LWPP oracle classes with `FP^A` targets.
 SBP and AWPP now have verifier-based definitions, the elementary NP/BPP/SPP-to-PP
 containments, many-one reduction closure, SBP union closure and AWPP Boolean closure.
 WPP ⊆ AWPP is proved, including signed binary-output targets. Uniform AWPP
@@ -1155,6 +1178,16 @@ Jukna coverage below is an additional target beyond the V1 port:
   and [Buss's polynomial kernel for vertex cover](Complexity/Computability/Complexity/Parameterized/VertexCover/BussKernel.lean)
   (#270) are proved; develop strongly uniform variants and the W hierarchy.
   The long-term coverage table identifies the broader class families.
+* **Universal hashing (#640, track D).** Proved (#663): one definition each of
+  [`ε`-universal and `ε`-Δ-universal](Complexity/Probability/HashFamily.lean) families;
+  pairwise independent families are
+  [universal and Δ-universal](Complexity/Probability/PairwiseIndependentHash/Universal.lean), the
+  Boolean-matrix and subset-sum families are Δ-universal, and the
+  [Carter–Wegman polynomial](Complexity/Probability/HashFamily/Polynomial.lean) and
+  [multiply-shift](Complexity/Probability/HashFamily/MultiplyShift.lean) families are proved.
+  Open: the leftover hash lemma stated over `ε`-universal families, with `IsTwoUniversal` as its
+  `1 / |Y|` case and the pseudoentropy clients updated, and Carter–Wegman MACs from Δ-universal
+  hashing.
 * **Sigma protocols, Schnorr identification and Fiat–Shamir (#581).** Boneh–Shoup Chapter 19.
   The exact algebraic core is proved:
   [Sigma protocols](Complexity/Crypto/Protocols/SigmaProtocol/Basic.lean) with explicit
@@ -1173,10 +1206,58 @@ Jukna coverage below is an additional target beyond the V1 port:
   against direct attacks by uniform strict PPT impersonators under it. The general
   [forking lemma](Complexity/Probability/Forking.lean) (Bellare–Neven) is proved, also for
   [oracle programs](Complexity/Languages/Probabilistic/Forking.lean) with explicit coins and
-  presampled answers. Open (see #640): Fiat–Shamir/Schnorr signatures in the random-oracle model
-  with the bound of Theorem 19.16, and security against eavesdropping in the strict-PPT model,
-  where simulating transcripts needs approximately uniform `ZMod q` samples and hence an explicit
-  statistical-distance term.
+  presampled answers. [Fiat–Shamir signatures](Complexity/Crypto/Protocols/SigmaProtocol/FiatShamir.lean)
+  in the [random-oracle model](Complexity/Crypto/Protocols/Signature/RandomOracle.lean) are
+  correct and, exactly, EUF-CMA secure with the bound
+  `Qs · (Qs + Qro) · δ + (Qro + 1)/N + √((Qro + 1) · ε')` of Theorem 19.16 and Equation 19.21,
+  by the
+  [difference lemma](Complexity/Languages/Probabilistic/UntilBad.lean), presampling and forking;
+  [Schnorr signatures](Complexity/Crypto/Protocols/SigmaProtocol/SchnorrSignature.lean) have
+  `1/q`-unpredictable commitments and the exact bound with `δ = 1/q`.
+  Open (see #640): computational Schnorr signatures under discrete log for strict PPT forgers,
+  and security against eavesdropping in the strict-PPT model, where simulating transcripts needs
+  approximately uniform `ZMod q` samples and hence an explicit statistical-distance term.
+* **Lattice identification and signatures (#640, track B).** The short-integer-solution
+  hypothesis, exact box rejection sampling and Lyubashevsky identification are in review (#660).
+  Open: Fiat–Shamir with aborts and signatures from SIS [Lyubashevsky 2009, 2012]; efficiency
+  certificates for the identification simulator and extractor; SIS for a general (prime) modulus;
+  module SIS and module LWE over polynomial rings, and Dilithium-style signatures as theory, not a
+  parameter set or ciphersuite.
+* **Zero-knowledge proof systems toward libzk (#643, #640).** The
+  [interactive-reduction core](Complexity/Computability/Interactive/Basic.lean) has typed
+  public-coin protocols with oracle access to the prover's messages, worlds for the oracle model,
+  and named extractors and simulators. It defines completeness, soundness, straight-line knowledge
+  soundness, round-by-round soundness and HVZK; knowledge soundness and HVZK are stated in the
+  plain model. In the plain model,
+  [sequential composition](Complexity/Computability/Interactive/Sequential.lean) is proved for
+  completeness, soundness, knowledge soundness and round-by-round soundness, and so is per-stage
+  iteration. [Round-by-round soundness implies soundness](Complexity/Computability/Interactive/Plain.lean).
+  [Sumcheck with a final evaluation check](Complexity/Computability/Interactive/Sumcheck.lean),
+  the first client, is perfectly complete and has soundness error `n · d / |F|`; both follow from
+  the one-round theorems by composition. Open, in order:
+  - the `PublicCoin → IP` bridge, with a uniform word verifier and adversarial decoding;
+  - parallel and AND/OR composition, and round-by-round knowledge soundness;
+  - oracle statements. Today a later phase cannot query an earlier phase's oracle message,
+    because `Verifier.append` routes the second verifier's queries only to its own messages.
+    Sumcheck followed by an evaluation query on a committed polynomial needs this, and so do FRI
+    and Ligero. The design item is virtual output oracles, as in ArkLib's
+    `OracleOutputSimulation`. Knowledge soundness and zero knowledge in oracle worlds go with it:
+    extractors that see the prover's queries, and simulators that program the world;
+  - efficiency-certified simulators and extractors, and auxiliary-input zero knowledge (#704)
+    on the core;
+  - polynomial commitment and evaluation-query reductions, and the Ligero IOP;
+  - the BCS transform from public-coin IOPs to non-interactive arguments in the random-oracle
+    model;
+  - VOLE as an ideal functionality and VOLE-in-the-head;
+  - the compositional structure of libzk (Shelat's IETF draft) as a composition of these
+    components, stated as theory without concrete ciphersuites.
+
+  The design is on #643, and the TQBF, PCP and GMW bridges are recorded there.
+* **Classic symmetric constructions (#640, track D).** Proved: PRF-based MACs (#677), keyed
+  collision-resistant hash families and Merkle–Damgård (#678), and universal hashing (#663).
+  Open: Luby–Rackoff (three Feistel rounds over a PRF give a PRP, four give a strong PRP), strongly
+  unforgeable MACs and Carter–Wegman MACs from Δ-universal hashing, the Naor–Reingold PRF from the
+  decisional Diffie–Hellman assumption, and Even–Mansour in the ideal-permutation model.
 
 The current V1 port excludes the circuitized anti-checker, hardness-magnification argument and
 MINKT/MINCKT developments. The long-term canon above includes metacomplexity; those results should
@@ -1427,12 +1508,13 @@ space bounds. Further class-level work needs resource certificates for the actua
   `1 ≤ H`); malformed-input handling and the refined `O(ℓ + H log(ℓ + 2))` parameter bound
   remain outstanding. Toward Williams's `TIME[t] ⊆ SPACE[√(t log t)]` (#361), the
   [fan-in-`d` procedure](Complexity/Computability/TreeEval/Ary/CookMertz.lean) is proved correct
-  over `d + 1` registers when `d · ℓ < |K| - 1` (milestone M1), and implicit Tree Evaluation (#367)
-  starts from
+  over `d + 1` registers when `d · ℓ < |K| - 1` (milestone M1); at `d = 2` it is the binary
+  procedure step for step, whose correctness is derived from it
+  ([`Ary.proc_ofBinary`](Complexity/Computability/TreeEval/CookMertz.lean)). Implicit Tree
+  Evaluation (#367) starts from
   [query machines in the space of their states](Complexity/Computability/Machines/Turing/MultiTape/Complexity/LogSpace/QueryMachine.lean),
   which charge neither the input nor the output; the fan-in-`d` space bound, subroutine calls for
-  implicit gates and leaves, a step-exact bridge to the binary procedure at `d = 2` (or deprecating
-  the binary copy), padding of non-perfect trees, and the remaining milestones are open;
+  implicit gates and leaves, padding of non-perfect trees, and the remaining milestones are open;
 * the space hierarchy below linear space: the
   [space hierarchy](Complexity/Computability/Complexity/Classes/Hierarchy/Space.lean) and
   `L ⊊ PSPACE` are proved for space-constructible bounds `g` with `n ≤ g n`, and the textbook
@@ -1443,7 +1525,7 @@ space bounds. Further class-level work needs resource certificates for the actua
 * Reingold's theorem: [USTCON ∈ L and SL = L](Complexity/Computability/Complexity/Classes/LogSpace/USTCON.lean)
   are proved for the adjacency-matrix encoding (with `SL` defined by logspace many-one reducibility
   to `USTCON`, completeness of `USTCON` for `SL` and `L`, and the unary-header injectivity lemma
-  shared with `TreeEval` in [List/Basic.lean](Complexity/Foundations/Data/List/Basic.lean)); a
+  shared with `TreeEval` in [List/Append.lean](Complexity/Foundations/Data/List/Append.lean)); a
   symmetric-Turing-machine model of `SL` and an edge-list variant of `USTCON` by a logspace
   reduction remain;
 * Native [NL = coNL](Complexity/Computability/Complexity/Classes/LogSpace/Complement.lean) is
@@ -1469,8 +1551,10 @@ space bounds. Further class-level work needs resource certificates for the actua
   native TM time/space bounds; it is equivalent to native computability when bounds are unrestricted.
   Polynomial bounds yield native polynomial time. A
   [bounded-natural addition model](Complexity/Computability/GenericRAM/Native/Nat.lean) supplies every
-  scalar certificate, and [checked word addition](Complexity/Computability/WordRAM/Native.lean)
-  handles all unary-encoded widths with binary operands. The native tidy calculus has
+  scalar certificate, and [WordRAM native primitives](Complexity/Computability/WordRAM/Native.lean)
+  supply complete polynomial-time `NativePrimitives` bundles for `Basis.standard`, `Basis.additive`,
+  `Basis.arithmetic`, and `Basis.exact` (plus restricted sub-bases and homomorphic preimages) across
+  all unary-encoded widths with binary operands (#489). The native tidy calculus has
   [fixed finite tuple rules](Complexity/Computability/Machines/Turing/MultiTape/Complexity/BigO/Pi.lean)
   with linear access/gather/update and arbitrary summed construction bounds,
   [retained-input option elimination](Complexity/Computability/Machines/Turing/MultiTape/Complexity/BigO/Option.lean)

@@ -35,7 +35,7 @@ identical requests, and preserves the complete joint law of the output and exter
 
 ## References
 
-Adapts the closed interpreter `Computability/Probabilistic/Realization/OracleSimulation.lean` of
+Adapts the closed interpreter Computability/Probabilistic/Realization/OracleSimulation.lean of
 the cslib `crypto` branch at `5ff69ca93402e7c947208dc56396d6d86203ccd8` to open oracles, using the
 reply truncation lemma `Turing.MultiTapePTM.finiteRunFrom_take_runOracle`.
 -/
@@ -98,8 +98,8 @@ theorem IsTidyOraclePPTOn.finiteStep [Fintype Operation] [Finite Control]
       (tag := fun pair : (ℕ × FiniteConfig k Bool Control Operation) × Bool =>
         (pair.1.2.tapes.inputSymbol, pair.1.2.tapes.workTapeSymbols,
           pair.1.2.answerSymbols, pair.2))
-      (tagEncoding := encPair (encFinite (Option Bool))
-        (encPair (encFinite (Fin k → Option Bool))
+      (tagEncoding := encPair (encFinEnum (Option Bool))
+        (encPair (encFinEnum (Fin k → Option Bool))
           (encPair (encFinite (Operation → Option Bool)) encBool)))
       (branch := fun symbols (pair : (ℕ × FiniteConfig k Bool Control Operation) × Bool) =>
         match machine.tr control symbols.1 symbols.2.1 symbols.2.2.1 symbols.2.2.2 with

@@ -298,6 +298,60 @@ class BuildAbstractsTests(unittest.TestCase):
         self.assertIn("a" * 40 + "/abstracts/ComplexityAbstracts/ExampleAbstract.lean", rendered)
         self.assertIn(r"\textcolor{leanblue}", rendered)
 
+    def test_selected_statement_with_bindings_is_displayed_in_full(self):
+        """Issue #699: statements with `let` bindings and `:=` in comments or strings keep
+        their full type, blank lines in proofs do not leak them, and an adjacent definition
+        is displayed."""
+        statement = ("theorem chosen :\n    let width := value + 1 -- an `:=` in a comment\n"
+                     '    let label := "a := b"\n    width = 1 ∧ label = label')
+        source = build.module_source_path(self.entry["module"], self.root)
+        source.write_text(SOURCE.replace(
+            "theorem chosen : value = 0 := rfl",
+            statement + " := by\n  simp\n\n  -- proofTailMarker\n  exact proofMarker\n"
+                        "def adjacentMarker : Nat := 3"))
+        self.assertEqual(build.load_catalogue(self.manifest, self.root), [self.entry])
+        self.assertEqual(build.selected_statement(source.read_text(),
+                                                  self.entry["headline_theorems"][0]), statement)
+        rendered = build.render_entry(self.entry, "owner/repo", "a" * 40, False, self.root)
+        for marker in ("width = 1", "label = label", "adjacent"):
+            self.assertIn(marker, rendered)
+        for marker in ("TailMarker", "proofMarker", "simp"):
+            self.assertNotIn(marker, rendered)
+
+    def test_multiline_absolute_value_statement_is_checked_in_full(self):
+        """#716 review: `Eq\n    |x| |x|` was cut at `Eq`, and the check accepted it."""
+        source = build.module_source_path(self.entry["module"], self.root)
+        for statement in ("theorem chosen (x : Int) : Eq\n    |x| |x|",
+                          "theorem chosen (x : Int) : Eq (|x|)\n    |x|",
+                          "theorem chosen (x : Int) : (fun y : Int => y = y)\n    |x|"):
+            with self.subTest(statement=statement):
+                source.write_text(SOURCE.replace("theorem chosen : value = 0 := rfl",
+                                                 statement + " := rfl"))
+                self.assertEqual(build.load_catalogue(self.manifest, self.root), [self.entry])
+                self.assertEqual(build.selected_statement(
+                    source.read_text(), self.entry["headline_theorems"][0]), statement)
+                rendered = build.render_entry(self.entry, "owner/repo", "a" * 40, False, self.root)
+                self.assertIn(statement.splitlines()[-1].strip(), rendered)
+        source.write_text(SOURCE.replace("theorem chosen : value = 0 := rfl",
+                                         "theorem chosen : ∀ n : Nat, n = n\n  |0 => rfl\n"
+                                         "  |_ => rfl"))
+        with self.assertRaisesRegex(ValueError, "chosen: Ambiguous"):
+            build.load_catalogue(self.manifest, self.root)
+
+    def test_truncated_statement_fails_the_coverage_check(self):
+        """Issue #699: a name-only check accepted `theorem chosen : let n` as rendered."""
+        source = build.module_source_path(self.entry["module"], self.root)
+        source.write_text(SOURCE.replace("theorem chosen : value = 0 := rfl",
+                                         "theorem chosen : let n := 1; n = value + 1 := by rfl"))
+        self.assertEqual(build.load_catalogue(self.manifest, self.root), [self.entry])
+        # The former renderer ended every statement at its first top-level `:=`.
+        with patch.object(build.render, "strip_theorem_proof",
+                          side_effect=lambda block: block.split(":=", 1)[0].rstrip()):
+            with self.assertRaisesRegex(ValueError, "not displayed in full: .*chosen"):
+                build.load_catalogue(self.manifest, self.root)
+            with self.assertRaisesRegex(ValueError, "not displayed in full: .*chosen"):
+                build.render_entry(self.entry, "owner/repo", "a" * 40, False, self.root)
+
     def test_attributed_unselected_theorems_do_not_leak_docs_or_proofs(self):
         sections = [{"kind": "decl", "doc": "Unselected compatibility helper.",
                      "code": '@[deprecated (since := "2026-10-23")]\n'
@@ -305,7 +359,7 @@ class BuildAbstractsTests(unittest.TestCase):
                     {"kind": "decl", "doc": "Selected result.",
                      "code": "@[simp]\ntheorem chosen : True := Bridge.chosen"}]
         output, displayed = build.render_sections(sections, {"chosen"})
-        self.assertEqual(displayed, {"chosen"})
+        self.assertEqual(displayed, {"chosen": "@[simp]\ntheorem chosen : True"})
         self.assertNotIn("helper", output)
         self.assertNotIn("Bridge", output)
         self.assertIn("chosen", output)
@@ -316,13 +370,28 @@ class BuildAbstractsTests(unittest.TestCase):
         for package in ("libertine.sty", "newtxmath.sty", "zi4.sty", "tcolorbox.sty"):
             if subprocess.run(["kpsewhich", package], capture_output=True).returncode:
                 self.skipTest(f"TeX package missing: {package}")
-        short = {"kind": "decl", "doc": "ExplanationMarker belongs to this declaration.",
-                 "code": "def ShortMarker : Nat :=\n  123456"}
-        long = {"kind": "decl", "doc": "A longer definition must remain breakable.",
-                "code": "def longDefinition : List Nat := [\n" +
-                        ",\n".join(f"  {n}" for n in range(1001, 1081)) + "]"}
-        body = r"\vbox to 0.94\textheight{\hbox{BeforeMarker}\vfil}\par" + "\n" + \
-            build.render_sections([short, long])[0]
+        short = {
+            "kind": "decl",
+            "doc": ("`firstparagraphmarker` stays above when room allows.\n\n"
+                    "`explanationstartmarker` begins a multi-line explanation that wraps across\n"
+                    "several words so it takes more than one line before `explanationendmarker`."),
+            "code": "def ShortMarker : Nat :=\n  123456",
+        }
+        long = {
+            "kind": "decl",
+            "doc": ("`longstart123` introduces a genuinely long definition across\n"
+                    "multiple lines ending with `longend456`."),
+            "code": "def longDefinition : List Nat := [\n" +
+                    ",\n".join(f"  {n}" for n in range(1001, 1081)) + "]",
+        }
+        rendered, _ = build.render_sections([short, long])
+        self.assertIn(r"\texttt{firstparagraphmarker} stays above when room allows." + "\n\n"
+                      "\\begin{leandeclaration}\n\n"
+                      r"\texttt{explanationstartmarker} begins a multi-line explanation that "
+                      "wraps across several words so it takes more than one line before "
+                      r"\texttt{explanationendmarker}.",
+                      rendered)
+        body = r"\vbox to 0.86\textheight{\hbox{BeforeMarker}\vfil}\par" + "\n" + rendered
         tex = self.root / "pagination.tex"
         tex.write_text(build.document(body))
         pdf = build.build_pdf(tex)
@@ -331,12 +400,112 @@ class BuildAbstractsTests(unittest.TestCase):
         def page_of(marker):
             return next(i for i, page in enumerate(pages) if marker in page)
 
-        self.assertGreater(page_of("ExplanationMarker"), page_of("BeforeMarker"))
-        self.assertEqual(page_of("ExplanationMarker"), page_of("ShortMarker"))
+        self.assertEqual(page_of("firstparagraphmarker"), page_of("BeforeMarker"))
+        self.assertGreater(page_of("explanationstartmarker"), page_of("BeforeMarker"))
+        self.assertEqual(page_of("explanationstartmarker"), page_of("explanationendmarker"))
+        self.assertEqual(page_of("explanationstartmarker"), page_of("ShortMarker"))
         self.assertEqual(page_of("ShortMarker"), page_of("123456"))
+        self.assertEqual(page_of("longstart123"), page_of("longend456"))
+        self.assertEqual(page_of("longstart123"), page_of("1001"))
         self.assertLess(page_of("1001"), page_of("1080"))
         for number in range(1001, 1081):
             self.assertIn(str(number), "\n".join(pages))
+
+    @unittest.skipUnless(shutil.which("latexmk") and shutil.which("pdftotext")
+                         and shutil.which("kpsewhich"), "TeX/Poppler not installed")
+    def test_footer_collision_detection_rejects_box_and_text_encroachment(self):
+        for package in ("libertine.sty", "newtxmath.sty", "zi4.sty", "tcolorbox.sty"):
+            if subprocess.run(["kpsewhich", package], capture_output=True).returncode:
+                self.skipTest(f"TeX package missing: {package}")
+        # A code box whose text stays well above the footer while its drawn frame extends into
+        # the footer clearance zone is rejected by the vector-border check.
+        protruding_box = (
+            r"\vbox to 0.90\textheight{\hbox{TopFiller}\vfil}\par"
+            r"\vbox to 0pt{\tcbset{leandeclarationmeasure/.style={unbreakable}}"
+            r"\begin{leanbox}\small\ttfamily\noindent "
+            r"def highText : Nat := 1\\[55pt]~"
+            r"\end{leanbox}\vss}"
+        )
+        box_tex = self.root / "footer_box_collision.tex"
+        box_tex.write_text(build.document(protruding_box))
+        with self.assertRaisesRegex(ValueError, "Code box encroaches on provenance footer"):
+            build.build_pdf(box_tex)
+
+        protruding_text = (
+            r"\vbox to 0.90\textheight{\hbox{TopFiller}\vfil}\par"
+            r"\vbox to 0pt{\noindent HighText\\[60pt]LowBodyTextMarker\vss}"
+        )
+        text_tex = self.root / "footer_text_collision.tex"
+        text_tex.write_text(build.document(protruding_text))
+        with self.assertRaisesRegex(ValueError, "Body text encroaches on provenance footer"):
+            build.build_pdf(text_tex)
+
+    @unittest.skipUnless(shutil.which("latexmk") and shutil.which("pdftotext")
+                         and shutil.which("kpsewhich"), "TeX/Poppler not installed")
+    def test_gsw_security_abstract_renders_without_split_explanations_or_footer_contact(self):
+        for package in ("libertine.sty", "newtxmath.sty", "zi4.sty", "tcolorbox.sty"):
+            if subprocess.run(["kpsewhich", package], capture_output=True).returncode:
+                self.skipTest(f"TeX package missing: {package}")
+        gsw_source = build.ROOT / "abstracts/ComplexityAbstracts/GSWSecurityAbstract.lean"
+        gsw_bridge = build.ROOT / "abstracts/ComplexityAbstracts/GSWSecurityBridge.lean"
+        shutil.copyfile(gsw_source, self.root / "abstracts/ComplexityAbstracts/GSWSecurityAbstract.lean")
+        shutil.copyfile(gsw_bridge, self.root / "abstracts/ComplexityAbstracts/GSWSecurityBridge.lean")
+        gsw_entry = {
+            "id": "gsw-security",
+            "title": "Generated-key GSW security from decision LWE",
+            "summary": "The explicit positive-noise GSW key generator and encryption program are "
+                       "uniform strict polynomial time and satisfy single-challenge IND-CPA under "
+                       "decision LWE for their exact centered-binomial error family.",
+            "scope": "Classical public-key IND-CPA under exact decision LWE; no LWE hardness, "
+                     "circular security, or bootstrappability claim.",
+            "module": "ComplexityAbstracts.GSWSecurityAbstract",
+            "namespace": "ComplexityTests.Abstracts.GSWSecurityAbstract",
+            "headline_theorems": [
+                "ComplexityTests.Abstracts.GSWSecurityAbstract.native_algorithms",
+                "ComplexityTests.Abstracts.GSWSecurityAbstract.indCPA",
+            ],
+        }
+        self.write_manifest([gsw_entry])
+        sha = "a406f81f19d5cb9c7383cacc1ca37e3d82e60eae"
+        with patch.object(build, "git", side_effect=[sha, ""]):
+            result = build.build(self.manifest, self.root / "build", root=self.root,
+                                 require_clean=True)
+        pdf = self.root / "build/gsw-security.pdf"
+        pages = subprocess.check_output(["pdftotext", "-layout", str(pdf), "-"],
+                                        text=True).split("\f")[:-1]
+        self.assertEqual(len(pages), 6)
+
+        def page_of(snippet):
+            matches = [index for index, page in enumerate(pages, 1) if snippet in page]
+            self.assertEqual(len(matches), 1, f"Expected {snippet!r} on one page, found {matches}")
+            return matches[0]
+
+        for start, end, decl in (
+            ("The security parameter is supplied in unary", "consecutive true bits.",
+             "def unaryEncoding"),
+            ("One deterministic finite-state binary multitape Turing machine",
+             "both bounds are uniform.", "def PolyTime"),
+            ("Native efficiency.", "supplies efficiency for free.",
+             "theorem native_algorithms"),
+            ("GSW generated-key IND-CPA from exact decision LWE.",
+             "retaining arbitrary saved words.", "theorem indCPA"),
+        ):
+            with self.subTest(decl=decl):
+                self.assertEqual(page_of(start), page_of(end))
+                self.assertEqual(page_of(start), page_of(decl))
+
+        doc_record = result["documents"][0]
+        self.assertEqual(doc_record["source_sha256"], build.digest(gsw_source))
+        self.assertEqual(
+            [item["url"].rsplit("#", 1)[-1] for item in doc_record["headlines"]],
+            ["L231", "L240"],
+        )
+        if shutil.which("pdfinfo"):
+            links = subprocess.check_output(["pdfinfo", "-url", str(pdf)], text=True)
+            for headline in doc_record["headlines"]:
+                self.assertIn(headline["url"], links)
+            self.assertIn(build.STYLE_SOURCE, links)
+            self.assertIn(build.EXTRACTION_SOURCE, links)
 
     def test_source_links_pin_the_declaration_line(self):
         line = build.declaration_line(SOURCE, self.entry["headline_theorems"][0])
@@ -370,7 +539,11 @@ class BuildAbstractsTests(unittest.TestCase):
                       result["documents"][0]["headlines"][0]["url"])
         self.assertIn({"path": "abstracts/ComplexityAbstracts/ExampleBridge.lean",
                        "sha256": build.digest(bridge)}, result["inputs"])
-        self.assertEqual(len(result["inputs"]), 5)
+        # The renderer's command and statement scanner is part of the rendering source.
+        self.assertIn({"path": "scripts/proof_lengths.py",
+                       "sha256": build.digest(self.root / "scripts/proof_lengths.py")},
+                      result["inputs"])
+        self.assertEqual(len(result["inputs"]), 6)
 
     def test_relative_manifest_and_output_paths_record_relative_inputs(self):
         def fake_pdf(tex):

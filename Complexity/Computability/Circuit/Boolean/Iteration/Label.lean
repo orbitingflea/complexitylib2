@@ -42,7 +42,7 @@ visit to the least state give its label directly (`shortLabel_eq_canonicalLabel`
 
 ## References
 
-* Adapted from `lean/Proofs/{ShortCycle,LabelEncoding}.lean` in
+* Adapted from lean/Proofs/{ShortCycle,LabelEncoding}.lean in
   [S. Schlesinger,
   *Square-root circuit bounds for iterated functions*][Schlesinger2026IteratedFunctions].
 -/
@@ -215,8 +215,8 @@ theorem shortRepresentative_eq : shortRepresentative f K x = canonicalCycle f x 
 
 include hx hK in
 theorem shortLength_eq : shortLength (w := w) f K x = BitVec.ofNat w (cycleLength f x) := by
-  have hmin : Function.minimalPeriod f x = cycleLength f x := by
-    simp only [cycleLength, (transientDepth_eq_zero_iff f x).mpr hx, Function.iterate_zero_apply]
+  have hmin : Function.minimalPeriod f x = cycleLength f x :=
+    (cycleLength_eq_minimalPeriod_of_mem_periodicPts f hx).symm
   apply firstIndex_spec _ ⟨cycleLength f x, by omega⟩
   · apply decide_eq_true
     refine ⟨cycleLength_pos f x, ?_⟩

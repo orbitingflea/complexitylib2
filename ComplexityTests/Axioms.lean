@@ -4154,58 +4154,58 @@ info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.filter' depends on axioms: 
 #print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.filter
 
 /--
-info: 'Cslib.Logic.PL.Literal.computableTidilyInPolyTime_negate' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Logic.PL.Literal.computableInPolyTime_negate' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.PL.Literal.computableTidilyInPolyTime_negate
+#print axioms Cslib.Logic.PL.Literal.computableInPolyTime_negate
 
 /--
-info: 'Cslib.Logic.PL.Clause.computableTidilyInPolyTime_impLits' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Logic.PL.Clause.computableInPolyTime_impLits' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.PL.Clause.computableTidilyInPolyTime_impLits
+#print axioms Cslib.Logic.PL.Clause.computableInPolyTime_impLits
 
 /--
-info: 'Cslib.Logic.PL.Clause.computableTidilyInPolyTime_imp' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Logic.PL.Clause.computableInPolyTime_imp' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.PL.Clause.computableTidilyInPolyTime_imp
+#print axioms Cslib.Logic.PL.Clause.computableInPolyTime_imp
 
 /--
-info: 'Cslib.Logic.PL.Clause.computableTidilyInPolyTime_relabel' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Logic.PL.Clause.computableInPolyTime_relabel' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.PL.Clause.computableTidilyInPolyTime_relabel
+#print axioms Cslib.Logic.PL.Clause.computableInPolyTime_relabel
 
 /--
-info: 'Cslib.Logic.PL.CNF.computableTidilyInPolyTime_relabel' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Logic.PL.CNF.computableInPolyTime_relabel' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.PL.CNF.computableTidilyInPolyTime_relabel
+#print axioms Cslib.Logic.PL.CNF.computableInPolyTime_relabel
 
 /--
-info: 'Cslib.Logic.PL.CNF.computableTidilyInPolyTime_vars' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Logic.PL.CNF.computableInPolyTime_vars' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.PL.CNF.computableTidilyInPolyTime_vars
+#print axioms Cslib.Logic.PL.CNF.computableInPolyTime_vars
 
 /--
-info: 'Cslib.Logic.PL.CNF.computableTidilyInPolyTime_atLeastOne' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Logic.PL.CNF.computableInPolyTime_atLeastOne' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.PL.CNF.computableTidilyInPolyTime_atLeastOne
+#print axioms Cslib.Logic.PL.CNF.computableInPolyTime_atLeastOne
 
 /--
-info: 'Cslib.Logic.PL.CNF.computableTidilyInPolyTime_atMostOne' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Logic.PL.CNF.computableInPolyTime_atMostOne' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.PL.CNF.computableTidilyInPolyTime_atMostOne
+#print axioms Cslib.Logic.PL.CNF.computableInPolyTime_atMostOne
 
 /--
-info: 'Cslib.Logic.PL.CNF.computableTidilyInPolyTime_exactlyOne' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Logic.PL.CNF.computableInPolyTime_exactlyOne' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.PL.CNF.computableTidilyInPolyTime_exactlyOne
+#print axioms Cslib.Logic.PL.CNF.computableInPolyTime_exactlyOne
 
 /--
 info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.of_enc_eq' depends on axioms: [propext, Classical.choice, Quot.sound]
@@ -5167,12 +5167,16 @@ info: 'Cslib.ProbOracleComp.run_interpret_simulation' depends on axioms:
 #guard_msgs in
 #print axioms Cslib.ProbOracleComp.run_interpret_simulation
 
+/-- info: 'Cslib.OracleComp.IsCostBounded.bind' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms Cslib.OracleComp.IsCostBounded.bind
+
 /--
-info: 'Cslib.ProbOracleComp.HasQueryBounds.bind' depends on axioms:
+info: 'Cslib.ProbOracleComp.isCostBounded_iff_transcript_cost_le' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs in
-#print axioms Cslib.ProbOracleComp.HasQueryBounds.bind
+#print axioms Cslib.ProbOracleComp.isCostBounded_iff_transcript_cost_le
 
 /--
 info: 'Cslib.Probability.IsPPTOn.memoize' depends on axioms:
@@ -5287,18 +5291,18 @@ info: 'Cslib.Probability.IsPPTOn.replicate' depends on axioms:
 #print axioms Cslib.Probability.IsPPTOn.replicate
 
 /--
-info: 'Cslib.ProbOracleComp.run_interpret_presample' depends on axioms:
+info: 'Cslib.ProbOracleComp.IsQueryBounded.run_interpret_presample' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs in
-#print axioms Cslib.ProbOracleComp.run_interpret_presample
+#print axioms Cslib.ProbOracleComp.IsQueryBounded.run_interpret_presample
 
 /--
-info: 'Cslib.ProbOracleComp.HasQueryBounds.eval_presample' depends on axioms:
+info: 'Cslib.ProbOracleComp.IsQueryBounded.eval_presample' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs in
-#print axioms Cslib.ProbOracleComp.HasQueryBounds.eval_presample
+#print axioms Cslib.ProbOracleComp.IsQueryBounded.eval_presample
 
 /--
 info: 'Cslib.Probability.IsOraclePPTOn.run_interpret_withSampleList' depends on axioms: [propext,
@@ -7125,13 +7129,6 @@ info: 'Cslib.RotationMap.TowerTable.valid_iterate' depends on axioms:
 #print axioms Cslib.RotationMap.TowerTable.valid_iterate
 
 /--
-info: 'Cslib.RotationMap.TowerTable.numberedIndex_eq' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.RotationMap.TowerTable.numberedIndex_eq
-
-/--
 info: 'Cslib.RotationMap.TowerTable.lookup_iterate_numbered' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
@@ -7891,13 +7888,6 @@ info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.findGreatest' depends on ax
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.findGreatest
-
-/--
-info: 'Cslib.Crypto.Game.coe_succProbability_eval_bind' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.Game.coe_succProbability_eval_bind
 
 /--
 info: 'Cslib.Crypto.Negligible.sqrt' depends on axioms:
@@ -10243,8 +10233,8 @@ info: 'Cslib.exists_card_eq_pow_not_containsSunflower' depends on axioms:
 #print axioms Cslib.exists_card_eq_pow_not_containsSunflower
 
 /--
-info: 'Cslib.Probability.PMF.card_pow_le_prod_card_image_restrict_erase' depends on axioms:
+info: 'Cslib.Finset.card_pow_le_prod_card_image_restrict_erase' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Probability.PMF.card_pow_le_prod_card_image_restrict_erase
+#print axioms Cslib.Finset.card_pow_le_prod_card_image_restrict_erase

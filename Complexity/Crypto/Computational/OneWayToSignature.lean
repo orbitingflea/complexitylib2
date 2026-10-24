@@ -13,6 +13,7 @@ public import Complexity.Crypto.Computational.OneWay
 public import Complexity.Crypto.Computational.Signature
 public import Complexity.Languages.Probabilistic.Repeat
 public import Complexity.Languages.Probabilistic.UniformNat
+import Complexity.Probability.PMF.Bind
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Div
 import Complexity.Computability.Probabilistic.CoinTape
@@ -147,7 +148,7 @@ theorem SignatureScheme.OneTimeEUFCMA.exists_oneWay {S : SignatureScheme}
   have hf : ComputableTidilyInPolyTime f encBits encBits :=
     (ComputableTidilyInPolyTime.of_eq (encIn := encPair encUnary encBits) (encMid := encBits)
       fun _ => rfl).comp (hparam.prod hpk)
-  refine ⟨f, OneWay.of_inversion_negligible hf ?_⟩
+  refine ⟨f, OneWay.of_inversion_negligible (.of_tidy hf) ?_⟩
   intro adversary hadversary
   let forgerBody (n : ℕ) (pk : List Bool) : ProbComp (List Bool × List Bool) := do
     let size ← sampleDyadicIndex (schedule (n + 1))

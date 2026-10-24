@@ -2,7 +2,9 @@ import ComplexityTests.AWPPAmplification
 import ComplexityTests.AWPPLowness
 import ComplexityTests.Abstracts.All
 import ComplexityTests.Abstracts.CheckTests
+import ComplexityTests.Abstracts.CommunicationTests
 import ComplexityTests.Abstracts.InputLayouts
+import ComplexityTests.Abstracts.SipserLautemannTests
 import ComplexityTests.AdaptivePPT
 import ComplexityTests.Advice
 import ComplexityTests.AffineController
@@ -32,6 +34,7 @@ import ComplexityTests.BooleanAnalysisDecisionTree
 import ComplexityTests.BooleanAnalysisExamples
 import ComplexityTests.BooleanHierarchyClosure
 import ComplexityTests.BooleanHierarchyPH
+import ComplexityTests.BoundedUniform
 import ComplexityTests.Broadcast
 import ComplexityTests.CNF
 import ComplexityTests.CNFPolyTime
@@ -89,7 +92,9 @@ import ComplexityTests.CountingProducts
 import ComplexityTests.CountingSpace
 import ComplexityTests.CountingVerifier
 import ComplexityTests.Crypto.Bootstrapping
+import ComplexityTests.Crypto.Commitment
 import ComplexityTests.Crypto.Encryption
+import ComplexityTests.Crypto.FiatShamir
 import ComplexityTests.Crypto.FixedKeySecurity
 import ComplexityTests.Crypto.Forking
 import ComplexityTests.Crypto.GMWPointwise
@@ -112,10 +117,13 @@ import ComplexityTests.Crypto.HomomorphicRefresh
 import ComplexityTests.Crypto.KeyChainSecurity
 import ComplexityTests.Crypto.LeveledSecurity
 import ComplexityTests.Crypto.MAC
+import ComplexityTests.Crypto.MerkleDamgard
+import ComplexityTests.Crypto.PlainConstructors
 import ComplexityTests.Crypto.SchnorrDiscreteLog
 import ComplexityTests.Crypto.SigmaIdentification
 import ComplexityTests.Crypto.SigmaProtocol
 import ComplexityTests.Crypto.Signature
+import ComplexityTests.Crypto.UntilBad
 import ComplexityTests.Crypto.ZeroKnowledge
 import ComplexityTests.CyclicFeedback
 import ComplexityTests.DataStructure
@@ -157,6 +165,7 @@ import ComplexityTests.FormulaDepth
 import ComplexityTests.FoundationsExamples
 import ComplexityTests.FourierLearning
 import ComplexityTests.FrontierAverageCaseImports
+import ComplexityTests.FrontierFiniteEdges
 import ComplexityTests.FrontierRectangleImports
 import ComplexityTests.FunctionalGraph
 import ComplexityTests.FunctionalGraphSpectrum
@@ -194,6 +203,7 @@ import ComplexityTests.GoldreichLevin
 import ComplexityTests.Halting
 import ComplexityTests.HardCore
 import ComplexityTests.HardnessAmplification
+import ComplexityTests.HashFamily
 import ComplexityTests.HashedParity
 import ComplexityTests.Hastad
 import ComplexityTests.HastadSharp
@@ -201,7 +211,9 @@ import ComplexityTests.HessianSourceComplexity
 import ComplexityTests.HierarchyTheorems
 import ComplexityTests.Hypercontractivity
 import ComplexityTests.InductiveCounting
+import ComplexityTests.IntBinaryDecode
 import ComplexityTests.IntBinaryDiv
+import ComplexityTests.Interactive
 import ComplexityTests.InteractiveProofs
 import ComplexityTests.Isolation
 import ComplexityTests.Iteration
@@ -210,6 +222,7 @@ import ComplexityTests.Iteration.Dynamics
 import ComplexityTests.Iteration.SparseDisplacement
 import ComplexityTests.Iteration.SparseTime
 import ComplexityTests.IterationFoundations
+import ComplexityTests.Kadin
 import ComplexityTests.KahnKalaiLinialFriedgut
 import ComplexityTests.Kannan
 import ComplexityTests.KarpLipton
@@ -219,6 +232,7 @@ import ComplexityTests.KeyedSort
 import ComplexityTests.KolmogorovCrypto
 import ComplexityTests.Ladner
 import ComplexityTests.LinearHash
+import ComplexityTests.ListBasicImports
 import ComplexityTests.ListEnumeration
 import ComplexityTests.ListZipIdx
 import ComplexityTests.LogSpace
@@ -231,6 +245,7 @@ import ComplexityTests.MachinePrograms
 import ComplexityTests.MachineSequential
 import ComplexityTests.MachineStateMap
 import ComplexityTests.ManyOne
+import ComplexityTests.ManyOneKernel
 import ComplexityTests.MassProduction
 import ComplexityTests.MassProduction.Fine
 import ComplexityTests.MassProduction.HighRate
@@ -264,9 +279,11 @@ import ComplexityTests.OneWayNormalization
 import ComplexityTests.OracleCircuits
 import ComplexityTests.OracleComposition
 import ComplexityTests.OracleComposition.Substitution
+import ComplexityTests.OracleLowness
 import ComplexityTests.OraclePPT
 import ComplexityTests.OracleReplay
 import ComplexityTests.OracleRepresentation
+import ComplexityTests.OracleSpecSum
 import ComplexityTests.OrderedAddition
 import ComplexityTests.OrderedBitSum
 import ComplexityTests.OrderedComposition
@@ -320,6 +337,7 @@ import ComplexityTests.PolyTimeContracts
 import ComplexityTests.PolyTimeMetadata
 import ComplexityTests.PolyTimeMixes
 import ComplexityTests.PolyTimePlain
+import ComplexityTests.PolyTimePlainDriver
 import ComplexityTests.PolyTimeScans
 import ComplexityTests.PolyTimeSearch
 import ComplexityTests.PolyTimeSum
@@ -330,9 +348,11 @@ import ComplexityTests.PostTuringMachine
 import ComplexityTests.Presample
 import ComplexityTests.ProbabilisticComposition
 import ComplexityTests.ProbabilisticSampling
+import ComplexityTests.ProbabilityNotation
 import ComplexityTests.ProbabilityToolkit
 import ComplexityTests.ProbabilityToolkit2
 import ComplexityTests.ProbabilityToolkit3
+import ComplexityTests.ProgramCertificateDiagnostics
 import ComplexityTests.Programs
 import ComplexityTests.ProofComplexity
 import ComplexityTests.ProofComplexity.Pigeonhole
@@ -370,6 +390,7 @@ import ComplexityTests.RationalHitting.Point
 import ComplexityTests.RationalHitting.Runtime
 import ComplexityTests.ReductionClasses
 import ComplexityTests.Reingold
+import ComplexityTests.RejectionSampling
 import ComplexityTests.Relativization
 import ComplexityTests.RelativizedCounting
 import ComplexityTests.RepeatedTrials
@@ -389,6 +410,7 @@ import ComplexityTests.SeedFixing
 import ComplexityTests.SeededEvaluator
 import ComplexityTests.SensitivitySeparation
 import ComplexityTests.ShannonSynthesis
+import ComplexityTests.SharpPLowness
 import ComplexityTests.ShortWords
 import ComplexityTests.SignQueries
 import ComplexityTests.SipserLautemann
@@ -405,6 +427,7 @@ import ComplexityTests.SparseLanguages
 import ComplexityTests.SparseMemory
 import ComplexityTests.StatefulRefinement
 import ComplexityTests.SubbotovskayaAndreev
+import ComplexityTests.Sumcheck
 import ComplexityTests.SynthesisBuilder
 import ComplexityTests.TFNP
 import ComplexityTests.TFNPCompleteness

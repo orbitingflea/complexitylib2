@@ -9,7 +9,7 @@ module
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO
 import Complexity.Computability.Machines.Turing.MultiTape.Combinators.Reverse
-import Complexity.Foundations.Data.List.Basic
+import Complexity.Foundations.Data.List.Fold
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.StreamFold
 import Mathlib.Tactic.Linarith
 
@@ -56,7 +56,8 @@ contracts separate from invariant propagation.
 ## References
 
 Uses Christian Reitwiessner's `ComputableTidilyInTimeAndSpace.streamFold` from the
-`crei/tidy-universal` branch; see the source marker in `Encodings/StreamFold.lean`.
+`crei/tidy-universal` branch; see the source marker in
+`Complexity/Computability/Machines/Turing/MultiTape/Encodings/StreamFold.lean`.
 -/
 
 @[expose] public section

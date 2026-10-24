@@ -25,7 +25,8 @@ The circuit value problem is in `P` (`Cslib.Complexity.CircuitValue.mem_P`): the
 evaluates the gate list with the polynomial-time evaluator
 `Cslib.Circuits.Boolean.computableTidilyInPolyTime_evalOutput`. Ladner showed that it is
 `P`-complete under logarithmic-space reductions [Ladner1975]; this is proved in
-`CircuitValue/Completeness.lean` (`Cslib.Complexity.CircuitValue.logSpaceComplete`).
+`Complexity/Computability/Complexity/Problems/CircuitValue/Completeness.lean`
+(`Cslib.Complexity.CircuitValue.logSpaceComplete`).
 
 ## Main definitions
 
@@ -78,7 +79,7 @@ namespace CircuitValue
 
 /-- The output of a circuit is the output of its code: the output wire is the only entry of the
 list of output wires. -/
-theorem eval_eq_evalOutput (x : Σ n, Circuit signature n 1 × BitString n) :
+private theorem eval_eq_evalOutput (x : Σ n, Circuit signature n 1 × BitString n) :
     x.2.1.eval interpretation x.2.2 0 =
       evalOutput (List.ofFn x.2.2) x.2.1.code.1 (x.2.1.code.2.headD 0) := by
   rw [Circuit.eval_eq_evalOutput]

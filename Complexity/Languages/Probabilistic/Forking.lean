@@ -7,7 +7,8 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Languages.Probabilistic.Oracle.Transcript
+public import Complexity.Languages.Probabilistic.Oracle
+public import Complexity.Languages.Probabilistic.QueryCount
 public import Complexity.Probability.Forking
 import Complexity.Languages.Probabilistic.Presample
 import Complexity.Languages.Probabilistic.Repeat
@@ -27,9 +28,12 @@ ask the same first `j + 1` queries, so the named query exists in both and is the
 two answers differ (`mem_support_fork`).
 
 `runWithAnswers` runs a program on a list of answers, deterministically, recording its queries.
+Sequencing splits the answers (`runWithAnswers_bind`), so properties of a program run through a
+stateful handler follow from properties of single calls
+(`runWithAnswers_run_interpret_invariant`).
 Answering queries from `q` presampled uniform answers has the law of answering them uniformly as
 they come, when the program asks at most `q` queries: this is the presampling theorem
-`ProbOracleComp.HasQueryBounds.eval_presample` (`interpret_uniform_eq`, and
+`OracleComp.IsQueryBounded.run_interpret_presample` (`interpret_uniform_eq`, and
 `run_interpret_countingUniform_eq` when the queries are also counted). Hence the general forking
 lemma (`Probability.Forking.le_add_sqrt_fork`) bounds the probability that the program, with
 uniform answers, validly names a query by `q / |H| + √(q · frk)` (`le_add_sqrt_fork`).
@@ -53,6 +57,9 @@ this form by drawing its coins in advance. The statements are exact; no efficien
   the named one, and answer it differently.
 * `Cslib.OracleComp.take_runWithAnswers`: a program's first `n + 1` queries depend only on its
   first `n` answers.
+* `Cslib.OracleComp.runWithAnswers_run_interpret_invariant`: an invariant of a handler's state
+  and the queries asked so far holds after running a program through the handler on fixed
+  answers.
 
 ## References
 
@@ -111,6 +118,69 @@ theorem take_runWithAnswers (default : H) (program : OracleComp (fun _ : Query =
           answers.tail.take n = answers'.tail.take n := by
         cases answers <;> cases answers' <;> simp_all
       simp only [runWithAnswers, List.take_succ_cons, hsplit.1, ih _ hsplit.2]
+
+/-- Running a sequenced program on a list of answers runs the first part on the list and the
+second part on the answers the first part left unused. -/
+theorem runWithAnswers_bind {β : Type} (default : H) (program : OracleComp (fun _ : Query => H) α)
+    (next : α → OracleComp (fun _ : Query => H) β) (answers : List H) :
+    runWithAnswers default (program >>= next) answers =
+      ((runWithAnswers default (next (runWithAnswers default program answers).1)
+          (answers.drop (runWithAnswers default program answers).2.length)).1,
+        (runWithAnswers default program answers).2 ++
+          (runWithAnswers default (next (runWithAnswers default program answers).1)
+            (answers.drop (runWithAnswers default program answers).2.length)).2) := by
+  induction program generalizing answers with
+  | pure a => rfl
+  | liftBind q cont ih =>
+    change runWithAnswers default (OracleComp.query q >>= fun a => cont a >>= next) answers = _
+    rw [runWithAnswers_query_bind, ih]
+    cases answers with
+    | nil => simp [runWithAnswers]
+    | cons a rest => rfl
+
+/-- A program making at most `n` calls asks at most `n` queries on every list of answers. -/
+theorem IsQueryBounded.length_runWithAnswers_le (default : H)
+    {program : OracleComp (fun _ : Query => H) α} {n : ℕ} (h : IsQueryBounded program n)
+    (answers : List H) : (runWithAnswers default program answers).2.length ≤ n := by
+  induction h generalizing answers with
+  | pure a n => exact Nat.zero_le n
+  | liftBind q cont n _ ih =>
+    change (q :: (runWithAnswers default (cont (answers.headD default)) answers.tail).2).length ≤ _
+    rw [List.length_cons]
+    exact Nat.succ_le_succ (ih _ _)
+
+/-- **An invariant of a handler's run on a list of answers.** A program runs through a stateful
+handler whose calls are oracle programs, and the resulting program runs on a list of answers. A
+property of the handler's state and of the queries asked so far that every handler call
+preserves, when run on the answers not yet used, holds at the end. -/
+theorem runWithAnswers_run_interpret_invariant {ι σ β : Type} {spec : ι → Type} (default : H)
+    (handler : (q : ι) → StateT σ (OracleComp (fun _ : Query => H)) (spec q))
+    (answers : List H) (invariant : σ → List Query → Prop)
+    (step : ∀ q s queries, invariant s queries →
+      invariant (runWithAnswers default ((handler q).run s) (answers.drop queries.length)).1.2
+        (queries ++ (runWithAnswers default ((handler q).run s)
+          (answers.drop queries.length)).2))
+    (program : OracleComp spec β) (s : σ) (queries : List Query) (hs : invariant s queries) :
+    invariant (runWithAnswers default ((interpret handler program).run s)
+        (answers.drop queries.length)).1.2
+      (queries ++ (runWithAnswers default ((interpret handler program).run s)
+        (answers.drop queries.length)).2) := by
+  induction program generalizing s queries with
+  | pure b => simpa using hs
+  | liftBind q cont ih =>
+    change invariant (runWithAnswers default
+        ((interpret handler (OracleComp.query q >>= cont)).run s)
+        (answers.drop queries.length)).1.2
+      (queries ++ (runWithAnswers default
+        ((interpret handler (OracleComp.query q >>= cont)).run s)
+        (answers.drop queries.length)).2)
+    simp only [interpret_bind, interpret_query, StateT.run_bind, runWithAnswers_bind,
+      List.drop_drop]
+    have hstep := step q s queries hs
+    have hnext := ih (runWithAnswers default ((handler q).run s)
+      (answers.drop queries.length)).1.1 _ _ hstep
+    simp only [List.length_append, List.append_assoc] at hnext
+    exact hnext
 
 /-! ### Presampled answers -/
 
@@ -175,15 +245,13 @@ private theorem eval_replicate_uniform [Fintype H] [Nonempty H] (q : ℕ) :
 
 /-- The lazy law of uniform answers is the law of `q` presampled uniform answers, for a program
 asking at most `q` queries: an instance of the presampling theorem
-`ProbOracleComp.HasQueryBounds.eval_presample`. -/
+`ProbOracleComp.IsQueryBounded.eval_presample`. -/
 theorem interpret_uniform_eq [Fintype H] [Nonempty H] (default : H)
-    (program : OracleComp (fun _ : Query => H) α) {size : Query → ℕ} {q maxSize : ℕ}
-    (hq : (interpret (fun q => ProbOracleComp.query (spec := fun _ : Query => H) q)
-      program).HasQueryBounds size q maxSize) :
+    (program : OracleComp (fun _ : Query => H) α) {q : ℕ} (hq : program.IsQueryBounded q) :
     interpret (fun _ => PMF.uniformOfFintype H) program =
       (PMF.uniformOfFintype (Fin q → H)).map fun h =>
         (runWithAnswers default program (List.ofFn h)).1 := by
-  have hp := hq.eval_presample (ProbComp.uniform H) default
+  have hp := hq.probOracleComp.eval_presample (ProbComp.uniform H) default
     (fun v _ s => (pure (v, s) : ProbComp (H × Unit))) ()
   rw [eval_run_uniform, ProbComp.eval_bind, eval_replicate_uniform] at hp
   simp only [eval_run_withSampleList, PMF.bind_map, Function.comp_def] at hp
@@ -242,14 +310,13 @@ private theorem eval_run_counting [Fintype H] [Nonempty H]
 /-- Counting variant of `interpret_uniform_eq`: answering uniformly as queries come, and counting
 them, has the law of running on `q` presampled uniform answers and counting the queries made. -/
 theorem run_interpret_countingUniform_eq [Fintype H] [Nonempty H] (default : H)
-    (program : OracleComp (fun _ : Query => H) α) {size : Query → ℕ} {q maxSize : ℕ}
-    (hq : (interpret (fun q => ProbOracleComp.query (spec := fun _ : Query => H) q)
-      program).HasQueryBounds size q maxSize) (count : ℕ) :
+    (program : OracleComp (fun _ : Query => H) α) {q : ℕ} (hq : program.IsQueryBounded q)
+    (count : ℕ) :
     (interpret countingUniform program).run count =
       (PMF.uniformOfFintype (Fin q → H)).map fun h =>
         ((runWithAnswers default program (List.ofFn h)).1,
           count + (runWithAnswers default program (List.ofFn h)).2.length) := by
-  have hp := hq.eval_presample (ProbComp.uniform H) default
+  have hp := hq.probOracleComp.eval_presample (ProbComp.uniform H) default
     (fun v _ n => (pure (v, n + 1) : ProbComp (H × ℕ))) count
   rw [eval_run_counting, ProbComp.eval_bind, eval_replicate_uniform] at hp
   simp only [eval_run_withSampleList_count, PMF.bind_map, Function.comp_def] at hp
@@ -292,9 +359,7 @@ made when they are answered uniformly as they come, then forking it succeeds wit
 `frk` such that `acc ≤ q / |H| + √(q · frk)`. -/
 theorem le_add_sqrt_fork (first : PMF S)
     (program : S → OracleComp (fun _ : Query => H) (Option ℕ × β)) (default : H)
-    {size : Query → ℕ} {q maxSize : ℕ}
-    (hq : ∀ s, (interpret (fun q => ProbOracleComp.query (spec := fun _ : Query => H) q)
-      (program s)).HasQueryBounds size q maxSize) :
+    {q : ℕ} (hq : ∀ s, (program s).IsQueryBounded q) :
     ((do
       let s ← first
       let run ← (interpret countingUniform (program s)).run 0

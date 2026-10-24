@@ -46,7 +46,7 @@ The state type may live in any universe. No order on it is needed.
 
 ## References
 
-* Adapted from `lean/Proofs/{CycleProjection,TargetTimes}.lean` in
+* Adapted from lean/Proofs/{CycleProjection,TargetTimes}.lean in
   [S. Schlesinger,
   *Square-root circuit bounds for iterated functions*][Schlesinger2026IteratedFunctions].
 -/
@@ -92,7 +92,7 @@ theorem cycleProjection_eq_self_iff (x : α) : cycleProjection f x = x ↔ x ∈
   (cycleProjection_eq_self_iff f _).mpr (cycleProjection_mem_periodicPts f x)
 
 /-- The cycle projection commutes with iterating `f`. -/
-theorem cycleProjection_iterate (x : α) (t : ℕ) :
+@[simp] theorem cycleProjection_iterate (x : α) (t : ℕ) :
     cycleProjection f (f^[t] x) = f^[t] (cycleProjection f x) := by
   unfold cycleProjection
   rw [← iterate_add_apply, ← iterate_add_apply, Nat.add_comm]

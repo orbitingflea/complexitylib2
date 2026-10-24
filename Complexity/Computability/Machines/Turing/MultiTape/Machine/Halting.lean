@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Machine.Program
+import Complexity.Probability.PMF.Bind
 
 /-!
 # Halting bounds for effectful machines
@@ -34,7 +35,7 @@ of either handler.
 
 ## References
 
-Adapted from `MultiTape/Oracle/Halting.lean` on the cslib `crypto` branch at
+Adapted from MultiTape/Oracle/Halting.lean on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8` to the common machine and typed program interface.
 -/
 

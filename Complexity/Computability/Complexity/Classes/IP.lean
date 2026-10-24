@@ -11,7 +11,7 @@ public import Complexity.Computability.Complexity.Classes.BPP
 public import Complexity.Computability.Complexity.Classes.NP
 public import Complexity.Computability.Probabilistic.Oracle
 public import Complexity.Languages.Probabilistic.BitString
-public import Complexity.Languages.Probabilistic.Oracle.Transcript
+public import Complexity.Languages.Probabilistic.Oracle.QueryCount
 public import Complexity.Languages.Probabilistic.Oracle.Interaction
 import Complexity.Computability.Probabilistic.Oracle.Composition
 import Complexity.Computability.Probabilistic.PPT.Capture
@@ -161,7 +161,7 @@ theorem acceptProb_sample_bind {β : Type} (program : ProbComp β)
   rfl
 
 /-- A verifier none of whose possible results accepts has acceptance probability zero. -/
-theorem acceptProb_eq_zero {verifier : WordOracleComp Operation Bool} (P : Prover Operation)
+private theorem acceptProb_eq_zero {verifier : WordOracleComp Operation Bool} (P : Prover Operation)
     (h : ∀ x ∈ (P.run verifier P.init).support, x.1 = false) : acceptProb verifier P = 0 := by
   rw [acceptProb, PMF.apply_eq_zero_iff, PMF.support_map]
   rintro ⟨x, hx, hx'⟩
@@ -206,8 +206,9 @@ the instance length bounds the number of messages and the length of each, agains
 theorem exists_queryBounds_of_mem_IP {A : Set α} (h : A ∈ IP enc) :
     ∃ verifier : α → WordOracleComp Unit Bool, IsOraclePPTOn enc encBool verifier ∧
       IsInteractiveProof verifier A (2 / 3) (1 / 3) ∧ ∃ c d : ℕ, ∀ a,
-        ProbOracleComp.HasQueryBounds (verifier a) (fun message => message.2.length)
-          (c * ((enc a).length + 1) ^ d) (c * ((enc a).length + 1) ^ d) := by
+        (verifier a).IsQueryBounded (c * ((enc a).length + 1) ^ d) ∧
+          (verifier a).QueriesSatisfy fun message =>
+            message.2.length ≤ c * ((enc a).length + 1) ^ d := by
   obtain ⟨verifier, hV, hproof⟩ := h
   exact ⟨verifier, hV, hproof, hV.query_bounds⟩
 
@@ -223,7 +224,7 @@ def npVerifier (enc : α ↪ List Bool) (p : Polynomial ℕ) (V : α × List Boo
 
 /-- The one-message verifier of a polynomial-time `NP` verifier is strict oracle PPT: it reads only
 a polynomially long prefix of the prover's reply. -/
-theorem isOraclePPTOn_npVerifier {p : Polynomial ℕ} {V : α × List Bool → Bool}
+private theorem isOraclePPTOn_npVerifier {p : Polynomial ℕ} {V : α × List Bool → Bool}
     (hV : ComputableTidilyInPolyTime V (encPair enc encBits) encBool) :
     IsOraclePPTOn enc encBool (npVerifier enc p V) := by
   unfold npVerifier
@@ -258,12 +259,12 @@ theorem NP_subset_IP (enc : α ↪ List Bool) : NP enc ⊆ IP enc := by
 
 /-- The interactive proof without messages for a bounded-error decider `V` with random strings of
 length `p`: sample a random string and run `V`. -/
-noncomputable def bppVerifier (enc : α ↪ List Bool) (p : Polynomial ℕ)
+private noncomputable def bppVerifier (enc : α ↪ List Bool) (p : Polynomial ℕ)
     (V : α × List Bool → Bool) (a : α) : WordOracleComp Unit Bool :=
   ProbOracleComp.sample ((fun r => V (a, r)) <$> BitString.sampleList (p.eval (enc a).length))
 
 /-- The verifier without messages of a polynomial-time decider is strict oracle PPT. -/
-theorem isOraclePPTOn_bppVerifier {p : Polynomial ℕ} {V : α × List Bool → Bool}
+private theorem isOraclePPTOn_bppVerifier {p : Polynomial ℕ} {V : α × List Bool → Bool}
     (hV : ComputableTidilyInPolyTime V (encPair enc encBits) encBool) :
     IsOraclePPTOn enc encBool (bppVerifier enc p V) := by
   have hcount : ComputableTidilyInPolyTime (fun a => p.eval (enc a).length) enc encUnary := by
@@ -272,7 +273,7 @@ theorem isOraclePPTOn_bppVerifier {p : Polynomial ℕ} {V : α × List Bool → 
 
 /-- The verifier without messages accepts every prover with the fraction of accepted random
 strings. -/
-theorem acceptProb_bppVerifier {p : Polynomial ℕ} {V : α × List Bool → Bool} (a : α)
+private theorem acceptProb_bppVerifier {p : Polynomial ℕ} {V : α × List Bool → Bool} (a : α)
     (P : Prover Unit) :
     acceptProb (bppVerifier enc p V a) P =
       (Finset.univ.filter fun r : Fin (p.eval (enc a).length) → Bool =>

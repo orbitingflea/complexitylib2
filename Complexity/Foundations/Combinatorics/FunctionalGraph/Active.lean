@@ -32,7 +32,7 @@ The state type may live in any universe; it is finite.
 
 ## References
 
-* Adapted from `lean/Proofs/ActiveCheckpoints.lean` in
+* Adapted from lean/Proofs/ActiveCheckpoints.lean in
   [S. Schlesinger,
   *Square-root circuit bounds for iterated functions*][Schlesinger2026IteratedFunctions].
 -/
@@ -55,7 +55,7 @@ noncomputable def activeVertices (L : ℕ) : Finset α :=
 
 /-- A state is active exactly when its transient depth is at least `L` or it is periodic with
 cycle length at least `L`. -/
-theorem mem_activeVertices (L : ℕ) (x : α) :
+@[simp] theorem mem_activeVertices (L : ℕ) (x : α) :
     x ∈ activeVertices f L ↔
       L ≤ transientDepth f x ∨ x ∈ periodicPts f ∧ L ≤ cycleLength f x := by
   classical

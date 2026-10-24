@@ -30,7 +30,7 @@ semantic chart used by the sparse live-time circuit.
 
 ## References
 
-* Adapted from `lean/Proofs/CounterIntervals.lean` at revision `c4cfa198` of
+* Adapted from lean/Proofs/CounterIntervals.lean at revision `c4cfa198` of
   [S. Schlesinger, *Square-root circuit bounds for iterated functions*]
   [Schlesinger2026IteratedFunctions].
 -/
@@ -78,7 +78,7 @@ theorem length_le_period (hf : Function.Injective f) (j : Fin R) :
     chart.stop j - chart.start j ≤ cycleLength f (BitVec.ofNat n (chart.start j)) := by
   let x := BitVec.ofNat n (chart.start j)
   have hdepth : transientDepth f x = 0 :=
-    (transientDepth_eq_zero_iff f x).mpr (hf.mem_periodicPts x)
+    transientDepth_eq_zero_of_mem_periodicPts f (hf.mem_periodicPts x)
   have hp : f^[cycleLength f x] x = x := by
     simpa only [hdepth, Function.iterate_zero_apply] using (isPeriodicPt_cycleLength f x).eq
   by_contra hlen

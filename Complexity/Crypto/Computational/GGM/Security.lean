@@ -36,7 +36,7 @@ evaluation, accommodating the strict PRG convention at seed length zero.
 * [O. Goldreich, S. Goldwasser, S. Micali, *How to Construct Random Functions*][GGM1986],
   Sections 3.2–3.3, construction and Theorem 3.
 
-Adapted from `Crypto/Computational/GGM/Security.lean` on the cslib `crypto` branch at
+Adapted from Crypto/Computational/GGM/Security.lean on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`, using the shared typed oracle and game calculus.
 -/
 
@@ -68,9 +68,9 @@ theorem GGM.pseudorandomFunction_of_indistinguishable {generator : List Bool →
     fun_prop
   apply negligible_of_le (hreduce.polynomiallyBounded_mul hloss)
   intro n
-  have hquery : ProbOracleComp.HasQueryBounds (adversary n []) (fun request => request.2.length)
-      (count n) (count n) := by simpa [count] using hqueries n []
-  have h := reduction_advantage generator adversary count n (count n) hquery
+  have hquery : (adversary n []).IsQueryBounded (count n) := by
+    simpa [count] using (hqueries n []).1
+  have h := reduction_advantage generator adversary count n hquery
   simpa only [distinguishingGame, PMF.monad_bind_eq_bind, ProbComp.eval_bind, ProbComp.eval_map,
     BitString.eval_sampleList,
     generatorEnsemble, Nat.cast_mul] using h.le

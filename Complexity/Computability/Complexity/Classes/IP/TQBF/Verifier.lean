@@ -82,9 +82,13 @@ namespace Machine
 
 /-! ### States -/
 
+instance : FinEnum ArithQBF.Kind :=
+  FinEnum.ofList [.var, .top, .bot, .not, .and, .or, .ex, .all, .lin]
+    fun k => by cases k <;> decide
+
 /-- Tokens of arithmetic formulas, the kind framed before the variable in binary. -/
-noncomputable abbrev encArithToken : ArithQBF.Kind × ℕ ↪ List Bool :=
-  encPair (encFinite ArithQBF.Kind) encNat
+abbrev encArithToken : ArithQBF.Kind × ℕ ↪ List Bool :=
+  encPair (encFinEnum ArithQBF.Kind) encNat
 
 /-- Points as lists of pairs of a variable, in binary, and a value, in unary. -/
 abbrev encPt : List (ℕ × ℕ) ↪ List Bool := encList (encPair encNat encUnary)
@@ -94,14 +98,14 @@ modulus less one, so that the modulus is positive, and the degree bound `D` of e
 abbrev Params := List ℕ × ℕ × ℕ
 
 /-- The encoding of the parameters, the numbers in unary. -/
-abbrev encParams : Params ↪ List Bool :=
+private abbrev encParams : Params ↪ List Bool :=
   encPair (encList encNat) (encPair encUnary encUnary)
 
 /-- The input of the loop: the parameters and the tokens of the arithmetic formula. -/
 abbrev LoopInput := Params × List (ArithQBF.Kind × ℕ)
 
 /-- The encoding of the input of the loop. -/
-noncomputable abbrev encLoopInput : LoopInput ↪ List Bool :=
+private abbrev encLoopInput : LoopInput ↪ List Bool :=
   encPair encParams (encList encArithToken)
 
 /-- A pending claim: a point and a value. -/
@@ -115,14 +119,14 @@ check so far passed. -/
 abbrev VState := List (ArithQBF.Kind × ℕ) × List Claim × Bool
 
 /-- The encoding of the states. -/
-noncomputable abbrev encVState : VState ↪ List Bool :=
+abbrev encVState : VState ↪ List Bool :=
   encPair (encList encArithToken) (encPair (encList encClaim) encBool)
 
 /-- The data of a step: the input of the loop and the current state. -/
 abbrev StepData := LoopInput × VState
 
 /-- The encoding of the data of a step. -/
-noncomputable abbrev encStepData : StepData ↪ List Bool := encPair encLoopInput encVState
+private abbrev encStepData : StepData ↪ List Bool := encPair encLoopInput encVState
 
 namespace StepData
 
@@ -151,7 +155,7 @@ end StepData
 /-! ### The step -/
 
 /-- The message of a step: the remaining tokens and the point of the claim on top of the stack. -/
-noncomputable def message (a : StepData) : List Bool :=
+def message (a : StepData) : List Bool :=
   encPair (encList encArithToken) encPt (a.2.1, a.top.1)
 
 /-- The state after a failed check: the token and the claim are dropped. -/
@@ -334,11 +338,11 @@ private lemma stepAt_pt (k : ArithQBF.Kind) :
   · exact ask_pt.bind_with (opCont_pt .lin)
 
 /-- **A step of the machine is strict oracle PPT** in the encoded input and state. -/
-theorem isOraclePPTOn_step :
+private theorem isOraclePPTOn_step :
     IsOraclePPTOn encStepData encVState (fun a : StepData => step a.1 a.2) := by
   unfold step
   exact IsOraclePPTOn.cond (by fun_prop)
-    (IsOraclePPTOn.finite_cases (tagEncoding := encFinite ArithQBF.Kind)
+    (IsOraclePPTOn.finite_cases (tagEncoding := encFinEnum ArithQBF.Kind)
       (tag := fun a : StepData => a.head.1) (branch := stepAt) (by fun_prop) stepAt_pt)
     (ComputableTidilyInPolyTime.isOraclePPTOn (f := fun a : StepData => a.2) (by fun_prop))
 
@@ -482,7 +486,7 @@ private lemma growth_polyBounded :
   nlinarith
 
 /-- **The machine is strict oracle PPT** in its encoded input. -/
-theorem isOraclePPTOn_loop : IsOraclePPTOn encLoopInput encVState loop := by
+private theorem isOraclePPTOn_loop : IsOraclePPTOn encLoopInput encVState loop := by
   unfold loop
   exact IsOraclePPTOn.iterateWith_of_bounded_growth (count := fun I => I.2.length) (by fun_prop)
     init_pt isOraclePPTOn_step growth_polyBounded
@@ -541,10 +545,10 @@ open ComputableTidilyInPolyTime TQBF
     ComputableTidilyInPolyTime QBF.Kind.isQuantifier encKind encBool := of_finite _
 
 @[local fun_prop] private lemma arith_pt :
-    ComputableTidilyInPolyTime QBF.Kind.arith encKind (encFinite ArithQBF.Kind) := of_finite _
+    ComputableTidilyInPolyTime QBF.Kind.arith encKind (encFinEnum ArithQBF.Kind) := of_finite _
 
 @[local fun_prop] private lemma lin_pt {α : Type} {enc : α ↪ List Bool} :
-    ComputableTidilyInPolyTime (fun _ : α => ArithQBF.Kind.lin) enc (encFinite ArithQBF.Kind) :=
+    ComputableTidilyInPolyTime (fun _ : α => ArithQBF.Kind.lin) enc (encFinEnum ArithQBF.Kind) :=
   const _
 
 private lemma linVars_pt : ComputableTidilyInPolyTime linVars encQBF (encList encNat) := by

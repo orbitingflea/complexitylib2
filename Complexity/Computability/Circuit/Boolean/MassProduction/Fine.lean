@@ -15,11 +15,11 @@ import Complexity.Computability.Circuit.Boolean.MassProduction.Pipeline
 import Complexity.Computability.Circuit.Boolean.MassProduction.Scheduler
 import Complexity.Computability.Circuit.Boolean.MassProduction.FineParameters
 import Complexity.Computability.Circuit.Boolean.MassProduction.Uhlig
-import Complexity.Foundations.Combinatorics.LineCode.Field
 import Complexity.Foundations.Combinatorics.LineCode.HighRate
 import Complexity.Foundations.Combinatorics.LineCode.HighRate.Packing
 import Complexity.Foundations.Combinatorics.LineCode.Menu
 import Complexity.Foundations.Data.BitString.Basic
+import Complexity.Foundations.FieldTheory.Finite.Subfield
 import Mathlib.Tactic.GCongr
 import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.Ring
@@ -69,8 +69,8 @@ are bounds on circuit size, not on the running time of any circuit constructor.
 
 ## References
 
-* Simplifies `MassProduction/Nonuniform/{FiniteBound,LupanovRuntime,EventualParameters,
-  OverheadPolynomial,LeadingCost,CodeQuantitative,SharpTheorem}.lean` in
+* Simplifies MassProduction/Nonuniform/{FiniteBound,LupanovRuntime,EventualParameters,
+  OverheadPolynomial,LeadingCost,CodeQuantitative,SharpTheorem}.lean in
   [S. Schlesinger, *Boolean circuit mass production formalization*][Schlesinger2026MassProduction].
 -/
 

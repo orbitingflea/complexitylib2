@@ -71,6 +71,17 @@ also loads private information, so such edits do reach its clients.
   unfold a definition by name. Reduction by `rfl` or `decide` is not recorded, and its counts are
   review signals, not rules.
 
+Tidy computability (`ComputableTidily…`, `ComputesTidily…`, `IsTidy…`) may appear anywhere inside
+proofs, through `.tidy`, `.of_tidy`, a proof-local `attribute [local fun_prop] … in` or a tidy
+`have`. It never appears in a public statement: a theorem's type, or a definition's type, exposed
+body or fields. Only the raw machine constructions in `scripts/tidy_allowlist.txt` are exempt.
+CI enforces this with `scripts/check_tidy_surface.py`. The existing tidy statements, which #456 is
+restating, are counted per module in `scripts/tidy_surface_baseline.json`, and CI fails when a
+module's count differs from its entry. When you remove some, lower the baseline in the same PR
+with `python3 scripts/check_tidy_surface.py --update`, so that they cannot come back. Until your
+PR lands, any other merge that removes tidy statements makes your baseline stale: rebase and
+rerun `--update`.
+
 ## AI assistance and review
 
 AI-assisted and human-written contributions follow the same standards. Disclose which AI tools
@@ -173,8 +184,8 @@ python3 scripts/upstream.py Complexity.Computability.DecisionTree.Basic --cslib 
 
 This previews copying a module to its mirrored CSLib path, rewriting imports, and removing the
 upstream marker. Omit `--dry-run` to prepare the worktree and regenerate its root imports.
-The script writes whole files; integrate additions to existing files and alternative destinations
-manually.
+The script writes whole new files and refuses to overwrite an existing destination; integrate
+additions to existing files and alternative destinations manually.
 Validate there according to CSLib's current instructions before opening a PR. Record its number
 and head SHA in the module's `-- upstream:` marker.
 

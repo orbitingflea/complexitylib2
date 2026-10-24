@@ -7,6 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 public import Complexity.Computability.Probabilistic.Parameter
 public import Complexity.Crypto.Game
 import Complexity.Crypto.Negligible.Basic
@@ -42,7 +43,7 @@ distributions. Both presentations use the shared `Game.Indistinguishable` defini
 * [S. Arora, B. Barak, *Computational Complexity: A Modern Approach*][AroraBarak09], Chapter 9.
 * [D. Boneh, V. Shoup, *A Graduate Course in Applied Cryptography*][BonehShoup2023], Section 3.2.
 
-Adapted from `Crypto/Computational/Basic.lean` on the cslib `crypto` branch at
+Adapted from Crypto/Computational/Basic.lean on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`, with arbitrary ensemble laws kept outside the program
 syntax and the current upstream nonnegative game API.
 -/
@@ -80,15 +81,6 @@ theorem eval_bind_eq_distinguishingGame (sample : ProbComp (List Bool))
     (adversary : List Bool → ProbComp Bool) :
     ProbComp.eval (sample >>= adversary) = distinguishingGame (ProbComp.eval sample) adversary :=
   ProbComp.eval_bind _ _
-
-/-- Success after sampling a finite intermediate value is its weighted average. -/
-theorem Game.coe_succProbability_eval_bind {α : Type} [Fintype α]
-    (source : ProbComp α) (next : α → ProbComp Bool) :
-    (Game.succProbability (ProbComp.eval (source >>= next)) : ℝ) =
-      ∑ a, (ProbComp.eval source a).toReal *
-        (Game.succProbability (ProbComp.eval (next a)) : ℝ) := by
-  simp only [Game.succProbability, ENNReal.coe_toNNReal_eq_toReal, ProbComp.eval_bind,
-    Probability.PMF.bind_apply_toReal]
 
 /-- Postprocessing the distinguisher's answer postprocesses the experiment's answer. -/
 theorem distinguishingGame_map (distribution : PMF (List Bool))
@@ -146,7 +138,7 @@ theorem ComputationallyIndistinguishable.bind {X Y : ℕ → PMF (List Bool)}
 /-- Efficient parameter-dependent deterministic postprocessing preserves indistinguishability. -/
 theorem ComputationallyIndistinguishable.map {X Y : ℕ → PMF (List Bool)}
     (h : ComputationallyIndistinguishable X Y) {f : ℕ → List Bool → List Bool}
-    (hf : ComputableTidilyInPolyTime (fun p : ℕ × List Bool => f p.1 p.2)
+    (hf : ComputableInPolyTime (fun p : ℕ × List Bool => f p.1 p.2)
       (encPair encUnary encBits) encBits) :
     ComputationallyIndistinguishable (fun n => (X n).map (f n)) (fun n => (Y n).map (f n)) := by
   have hp : IsPPT encBits (fun n word => pure (f n word)) := by ppt

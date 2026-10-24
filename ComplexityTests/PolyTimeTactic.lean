@@ -30,7 +30,7 @@ example (f : Bool → ℕ) : ComputableTidilyInPolyTime f encBool encUnary := by
 
 -- Fixed finite products also support lookup without a specialized callback certificate.
 example (f : Fin 7 × Bool → ℕ) :
-    ComputableTidilyInPolyTime f (encPair (encFinite (Fin 7)) encBool) encUnary := by
+    ComputableTidilyInPolyTime f (encPair (encFinEnum (Fin 7)) encBool) encUnary := by
   polytime
 
 -- A finite output alone does not certify an arbitrary function on an infinite input type.
@@ -346,7 +346,7 @@ example {α : Type} (encA : α ↪ List Bool) (encL : List α ↪ List Bool)
 
 -- Empty element types still have the empty list as a computational input.
 example : ComputableTidilyInPolyTime (List.head? (α := Fin 0))
-    (encList (encFinite (Fin 0))) (encOption (encFinite (Fin 0))) := by fun_prop
+    (encList (encFinEnum (Fin 0))) (encOption (encFinEnum (Fin 0))) := by fun_prop
 
 -- Nested range/map, Boolean folds and majority share the computation calculus.
 example (call : List Bool → ℕ → ℕ → Bool)
@@ -461,5 +461,18 @@ example : ComputableInPolyTime
     (encPair (encList encNat) (encList (encPair encNat encNat)))
     (encList (encPair encNat encNat)) := by
   polytime
+
+-- Binary list length is reached from `Complexity.Tactic.PolyTime`.
+example : ComputableInPolyTime (fun l : List ℕ => l.length)
+    (encList encNat) encNat := by
+  polytime
+
+example : ComputableInPolyTime (fun l : List ℕ => l.length)
+    (encList encNat) encNat := by
+  fun_prop
+
+example : ComputableInPolyTime (fun p : List ℕ × ℕ => p.1.length)
+    (encPair (encList encNat) encNat) encNat := by
+  fun_prop
 
 end ComplexityTests.PolyTimeTactic

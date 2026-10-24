@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Probabilistic.PPT.Capture
-import Complexity.Foundations.Data.List.Basic
+import Complexity.Foundations.Data.List.Fold
 import Mathlib.Data.Fintype.Basic
 
 /-!
@@ -24,7 +24,7 @@ return values of unbounded encoded length, which its certificate charges.
 
 ## References
 
-Adapts `Computability/Probabilistic/Finite.lean` on the cslib `crypto` branch at
+Adapts Computability/Probabilistic/Finite.lean on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`, using the existing tidy calculus and closed PPT rules.
 -/
 

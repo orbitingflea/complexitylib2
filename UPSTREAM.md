@@ -115,7 +115,9 @@ Do not add a ledger row for an ordinary candidate or repeat its source marker he
   encoded scalar primitives, with caller-selected configuration encoding and unrestricted
   input-dependent bounds. Its forgetful bridge reuses `IsComputable`; polynomiality is a separate
   bound property. `GenericRAM/Native/Nat` supplies a checked bounded-natural addition model;
-  `WordRAM/Native` certifies checked standard addition with unary width and binary operands.
+  `WordRAM/Native` supplies complete polynomial-time `NativePrimitives` bundles for
+  `Basis.standard`, `Basis.additive`, `Basis.arithmetic`, and `Basis.exact` (plus restricted
+  sub-bases and homomorphic preimages) with unary width and binary operands (#489).
   Both reuse Christian Reitwiessner's native arithmetic/encoding calculus.
   `GenericRAM/Simulation/{Finite,Turing,Run}` combine these per-symbol certificates with sparse
   memory and finite control to simulate single steps and clocked multi-step runs of any fixed
@@ -195,7 +197,7 @@ agreement during upstream review.
 | `Computability/Circuit/{Unfolding,MapOp}`, `Computability/Circuit/Encoding/MapOp` | Consider integrating into `Circuit/Formula`, `Circuit/Program`, and `Circuit/Encoding`, respectively. |
 | `Computability/Circuit/Boolean/FirstOrder` | Consider a descriptive-complexity directory. |
 | `Foundations/Data/BitString/{Agree,Block,Hoeffding}` | Add to CSLib's `Foundations/Data/BitString`. |
-| `Foundations/Data/List/Basic` | `List.getD_idxOf`, `List.countP_and_not_add_countP_and` and register-file/unary-header helpers; consider Mathlib's `Data/List/GetD` and `Data/List/Basic`. |
+| `Foundations/Data/List/{Fold,Lookup,Counting,Append}` | Fold invariants, lookup and register-file bounds, predicate counts, and append identities including unary headers; `Basic` reexports these topics. Consider Mathlib's `Data/List/GetD` and `Data/List/Basic`. |
 | `Foundations/Relation/RelatesWithinSteps` | `Function.iterate_trans` and bounded reachability helpers; consider Mathlib's `Logic/Function/Iterate` and `Logic/Relation`. |
 | `Foundations/BooleanAnalysis/Fourier` | Consider Mathlib beside `Analysis/Fourier/FiniteAbelian`. |
 | `Foundations/BooleanAnalysis/{Bernoulli,CoordinateSampling,Fibers,HarmonicMean,LightPatterns,MirrorSets}`, `Foundations/Analysis/HarmonicMean` | Consider Mathlib probability APIs; generic finite-type `harmonicMean` is split into `Foundations/Analysis/HarmonicMean` (#317). |
