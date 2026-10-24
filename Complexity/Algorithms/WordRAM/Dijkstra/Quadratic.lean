@@ -149,7 +149,7 @@ theorem setup_spec (hw : Fits w ((I.n + 2) ^ 2 * (I.maxWeight + 2))) :
     (I.n * I.n + 3)).set vbase (I.n * I.n + 3 + I.n)).set tmp
     (I.n * I.n + 3 + I.source)).write (I.n * I.n + 3 + I.source) 1).set k 0
   have he : ExecWithin w setup (.init I.encode) y 20 := by
-    ram_eval [setup, y, Data.init_regs, hnmem, hsmem, h1, h2, h3, hnn, hd, hv, hs]
+    ram_exact_eval [setup, y, Data.init_regs, hnmem, hsmem, h1, h2, h3, hnn, hd, hv, hs]
   have hm (a : ℕ) : y.mem a =
       Function.update (Data.init I.encode : Data 17).mem (I.outAddr I.source) 1 a := rfl
   have hdist : distOf I y = Function.update (fun _ => ⊤) I.source 0 := by
@@ -256,8 +256,8 @@ theorem round_spec (hw : Fits w ((I.n + 2) ^ 2 * (I.maxWeight + 2))) {y : Data 1
   have hxk : x.regs k = y.regs k := hregs k (by decide)
   by_cases hb : x.regs best = 0
   · let z := x.set k I.n
-    have ez : ExecWithin (B := .standard) w (.op (.copy k n)) x z 1 := by
-      simpa only [hx.n_eq] using (ExecWithin.copy (w := w) (B := .standard)
+    have ez : ExecWithin (B := .exact) w (.op (.copy k n)) x z 1 := by
+      simpa only [hx.n_eq] using (ExecWithin.copy (w := w) (B := .exact)
         (x := x) (d := k) (s := n))
     have hd : ∀ v ∉ visitedOf I z, distOf I z v = ⊤ := by
       intro v hv
@@ -308,14 +308,15 @@ theorem round_spec (hw : Fits w ((I.n + 2) ^ 2 * (I.maxWeight + 2))) {y : Data 1
       nlinarith
     let a := I.n * I.n + 3 + I.n + (u : ℕ)
     let z := (x.set tmp a).write a 1
-    have ea : ExecWithin w (.op (.bin .add tmp vbase bv)) x (x.set tmp a) 1 := by
+    have ea : ExecWithin w (.op (.exactBin .add tmp vbase bv)) x (x.set tmp a) 1 := by
       have hh : Fits w (x.regs vbase + x.regs bv) := by
         rw [hx.vbase_eq]
         exact hfV.of_le (by omega)
-      simpa only [BinOp.eval, hx.vbase_eq, a, u] using
-        (ExecWithin.bin (f := .add) (d := tmp) (i := vbase) (j := bv) hh)
-    have ez : ExecWithin (B := .standard) w (.op (.store tmp one)) (x.set tmp a) z 1 := by
-      simpa +decide [hx.one_eq] using (ExecWithin.store (w := w) (B := .standard)
+      simpa only [Op.exactBin, hx.vbase_eq, a, u] using
+        (ExecWithin.alu (B := .exact) (f := .bin .add) (d := tmp) (args := ![vbase, bv])
+          (v := x.regs vbase + x.regs bv) rfl hh)
+    have ez : ExecWithin (B := .exact) w (.op (.store tmp one)) (x.set tmp a) z 1 := by
+      simpa +decide [hx.one_eq] using (ExecWithin.store (w := w) (B := .exact)
         (x := x.set tmp a) (a := tmp) (s := one))
     have zm (b : ℕ) (hne : b ≠ a) : z.mem b = y.mem b := by
       simp [z, Function.update_of_ne hne, hmem]
@@ -387,12 +388,13 @@ theorem round_spec (hw : Fits w ((I.n + 2) ^ 2 * (I.maxWeight + 2))) {y : Data 1
     have tk : t.regs k = y.regs k := (treg k (by simp)).trans hxk
     have tone : t.regs one = 1 := (treg one (by simp)).trans hx.one_eq
     let r := t.set k (y.regs k + 1)
-    have er : ExecWithin w (.op (.bin .add k k one)) t r 1 := by
+    have er : ExecWithin w (.op (.exactBin .add k k one)) t r 1 := by
       have hh : Fits w (t.regs k + t.regs one) := by
         rw [tk, tone]
         exact hfV.of_le (by omega)
-      simpa only [BinOp.eval, tk, tone] using (ExecWithin.bin (f := .add)
-        (d := k) (i := k) (j := one) hh)
+      simpa only [Op.exactBin, tk, tone] using
+        (ExecWithin.alu (B := .exact) (f := .bin .add) (d := k) (args := ![k, one])
+          (v := t.regs k + t.regs one) rfl hh)
     refine ⟨r, ?_, ?_, ?_⟩
     · exact (ex.seq ((ea.seq (ez.seq (et.seq er))).branch_neg
         (by simpa only [Cond.holds_eq, hx.zero_eq] using hb))).mono (by omega)
@@ -460,7 +462,7 @@ theorem quadraticSpec : QuadraticSpec (dijkstra.program zero) 125 := by
     have : 1 ≤ 125 * I.n ^ 2 := by nlinarith
     omega
 
-/-- **Phase 1 main theorem.** Some word-RAM program over the standard basis computes all
+/-- **Phase 1 main theorem.** Some word-RAM program over the exact basis computes all
 shortest-path distances from the source of a weighted directed graph with `n` vertices within
 `O(n²)` instructions. -/
 theorem quadraticStatement : QuadraticStatement :=

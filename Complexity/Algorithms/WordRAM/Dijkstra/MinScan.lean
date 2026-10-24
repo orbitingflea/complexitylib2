@@ -105,7 +105,7 @@ private structure ScanInvariant (mem : ℕ → ℕ) (N Db Vb : ℕ) (y : Data 17
   result : ScanPrefix mem Db Vb (y.regs j) (y.regs best) (y.regs bv)
 
 /-- The loop body of the minimum scan. -/
-private def scanBody : Code .standard 17 := ram[
+private def scanBody : Code .exact 17 := ram_exact[
   tmp ← vbase + j;
   f ← *tmp;
   if f = zero then [
@@ -154,32 +154,32 @@ private theorem scanBody_spec {w N Db Vb : ℕ} {mem : ℕ → ℕ} {y : Data 17
     · let z := (y₂.set tmp (Db + y.regs j)).set j (y.regs j + 1)
       refine ⟨z, finish z ?_ (by simp [z, y₂, y₁, hm])
         (by simp [z]) ?_⟩
-      · ram_eval [scanBody, z, y₂, y₁, hz, ho, hdb, hvb, hm, hfd, hfv, hfj, hf, hd]
+      · ram_exact_eval [scanBody, z, y₂, y₁, hz, ho, hdb, hvb, hm, hfd, hfv, hfj, hf, hd]
       · simpa +decide [z, y₂, y₁] using hy.result.skip (Or.inr hd)
     · by_cases hb : y.regs best = 0
       · let z := ((y₂.set best (mem (Db + y.regs j))).set bv (y.regs j)).set j
           (y.regs j + 1)
         refine ⟨z, finish z ?_ (by simp [z, y₂, y₁, hm])
           (by simp [z]) ?_⟩
-        · ram_eval [scanBody, z, y₂, y₁, hz, ho, hdb, hvb, hm, hfd, hfv, hfj, hf, hd, hb]
+        · ram_exact_eval [scanBody, z, y₂, y₁, hz, ho, hdb, hvb, hm, hfd, hfv, hfj, hf, hd, hb]
         · simpa +decide [z] using hy.result.replace hf hd (Or.inl hb)
       · by_cases hlt : mem (Db + y.regs j) < y.regs best
         · let z := ((y₂.set best (mem (Db + y.regs j))).set bv (y.regs j)).set j
             (y.regs j + 1)
           refine ⟨z, finish z ?_ (by simp [z, y₂, y₁, hm])
             (by simp [z]) ?_⟩
-          · ram_eval [scanBody, z, y₂, y₁, hz, ho, hdb, hvb, hm, hfd, hfv, hfj,
+          · ram_exact_eval [scanBody, z, y₂, y₁, hz, ho, hdb, hvb, hm, hfd, hfv, hfj,
               hf, hd, hb, hlt]
           · simpa +decide [z] using hy.result.replace hf hd (Or.inr hlt)
         · let z := (y₂.set tmp (Db + y.regs j)).set j (y.regs j + 1)
           refine ⟨z, finish z ?_ (by simp [z, y₂, y₁, hm])
             (by simp [z]) ?_⟩
-          · ram_eval [scanBody, z, y₂, y₁, hz, ho, hdb, hvb, hm, hfd, hfv, hfj,
+          · ram_exact_eval [scanBody, z, y₂, y₁, hz, ho, hdb, hvb, hm, hfd, hfv, hfj,
               hf, hd, hb, hlt]
           · simpa +decide [z, y₂, y₁] using hy.result.keep hb (Nat.le_of_not_gt hlt)
   · let z := (y₁.set tmp (Vb + y.regs j)).set j (y.regs j + 1)
     refine ⟨z, finish z ?_ (by simp [z, y₁, hm]) (by simp [z]) ?_⟩
-    · ram_eval [scanBody, z, y₁, hz, ho, hvb, hm, hfv, hfj, hf]
+    · ram_exact_eval [scanBody, z, y₁, hz, ho, hvb, hm, hfv, hfj, hf]
     · simpa +decide [z, y₁] using hy.result.skip (Or.inl hf)
 
 /-- **The minimum scan.** With the distance words of the vertices `v < N` at `Db + v` and their
@@ -218,9 +218,9 @@ theorem minScan_spec {w N Db Vb : ℕ} {x : Data 17} (hzero : x.regs zero = 0)
   have e : ExecWithin w minScan x y (20 * N + 10) := by
     change ExecWithin w (.seq (.op (.copy best zero))
       (.seq (.op (.copy j zero)) (.loop (.lt j n) scanBody))) x y _
-    have e₁ := ExecWithin.copy (B := .standard) (w := w) (x := x)
+    have e₁ := ExecWithin.copy (B := .exact) (w := w) (x := x)
       (d := best) (s := zero)
-    have e₂ := ExecWithin.copy (B := .standard) (w := w)
+    have e₂ := ExecWithin.copy (B := .exact) (w := w)
       (x := x.set best (x.regs zero)) (d := j) (s := zero)
     have he' := e₁.seq (e₂.seq (by simpa +decide [x₀, hzero] using he))
     exact he'.mono (by omega)
@@ -228,7 +228,7 @@ theorem minScan_spec {w N Db Vb : ℕ} {x : Data 17} (hzero : x.regs zero = 0)
   · intro i hi
     apply e.regs_eq
     simp only [List.mem_cons, List.not_mem_nil, or_false, not_or] at hi
-    simp [minScan, Code.Preserves, Op.bin, Op.dest, eq_comm, hi.1, hi.2.1, hi.2.2.1,
+    simp [minScan, Code.Preserves, Op.exactBin, Op.dest, eq_comm, hi.1, hi.2.1, hi.2.2.1,
       hi.2.2.2.1, hi.2.2.2.2.1, hi.2.2.2.2.2]
   · simpa only [hj] using hy.result.1
   · simpa only [hj] using hy.result.2

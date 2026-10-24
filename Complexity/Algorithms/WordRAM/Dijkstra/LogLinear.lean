@@ -126,8 +126,8 @@ theorem heapSetup_spec (hw : Fits w (8 * (G.n + G.m + 2) * (G.maxWeight + 2))) :
     (G.dbase + G.n + 1)).write (G.dbase + G.n + 1) G.source).set t
     (G.dbase + 2 * G.n + 1 + G.source)).write (G.dbase + 2 * G.n + 1 + G.source) 1).set sz 1
   have he : ExecWithin w heapSetup (.init G.encode) y 25 := by
-    ram_eval [heapSetup, y, Data.init_regs, G.init_n, G.init_source, hoff, h1, h2, h3, hn, hn3,
-      hn4, hm2, hm2n, hm2n3, hDb', hDb, hhb, hpb₁, hpb', hpb, hds, hh1, hps]
+    ram_exact_eval [heapSetup, y, Data.init_regs, G.init_n, G.init_source, hoff, h1, h2, h3, hn,
+      hn3, hn4, hm2, hm2n, hm2n3, hDb', hDb, hhb, hpb₁, hpb', hpb, hds, hh1, hps]
   have hm (a : ℕ) : y.mem a = Function.update (Function.update (Function.update
       (Data.init G.encode : Data 27).mem (G.dbase + G.source) 1) (G.dbase + G.n + 1) G.source)
       (G.dbase + 2 * G.n + 1 + G.source) 1 a := rfl
@@ -233,11 +233,12 @@ theorem heapRound_spec (hw : Fits w (8 * (G.n + G.m + 2) * (G.maxWeight + 2))) {
   let x₂ := x₁.set j (G.offset U0)
   let x₃ := x₂.set t (U0 + 3 + 1)
   let x₄ := x₃.set jend (G.offset (U0 + 1))
-  have e₁ : ExecWithin w ram[t ← u + three] x x₁ 1 := by ram_eval [x₁, xu, xthree, hf3]
-  have e₂ : ExecWithin (B := .standard) w ram[j ← *t] x₁ x₂ 1 := by ram_eval [x₁, x₂, hoff₀]
-  have e₃ : ExecWithin w ram[t ← t + one] x₂ x₃ 1 := by ram_eval [x₁, x₂, x₃, xone, hf4]
-  have e₄ : ExecWithin (B := .standard) w ram[jend ← *t] x₃ x₄ 1 := by
-    ram_eval [x₁, x₂, x₃, x₄, hoff₁]
+  have e₁ : ExecWithin w ram_exact[t ← u + three] x x₁ 1 := by ram_exact_eval [x₁, xu, xthree, hf3]
+  have e₂ : ExecWithin (B := .exact) w ram_exact[j ← *t] x₁ x₂ 1 := by
+    ram_exact_eval [x₁, x₂, hoff₀]
+  have e₃ : ExecWithin w ram_exact[t ← t + one] x₂ x₃ 1 := by ram_exact_eval [x₁, x₂, x₃, xone, hf4]
+  have e₄ : ExecWithin (B := .exact) w ram_exact[jend ← *t] x₃ x₄ 1 := by
+    ram_exact_eval [x₁, x₂, x₃, x₄, hoff₁]
   have r₄ (i : Fin 27) (hi : i ∉ [t, j, jend]) : x₄.regs i = x.regs i := by
     simp only [List.mem_cons, List.not_mem_nil, or_false, not_or] at hi
     simp [x₄, x₃, x₂, x₁, hi.1, hi.2.1, hi.2.2]
@@ -415,7 +416,7 @@ theorem logLinearSpec : LogLinearSpec (heapDijkstra.program zero) 230 := by
   · have : 1 ≤ (G.m + 1) * (Nat.log 2 G.n + 1) := Nat.one_le_iff_ne_zero.mpr (by positivity)
     nlinarith
 
-/-- **Phase 2 main theorem.** Some word-RAM program over the standard basis computes all
+/-- **Phase 2 main theorem.** Some word-RAM program over the exact basis computes all
 shortest-path distances from the source of a weighted directed graph with `n` vertices and `m`
 edges, given by adjacency lists, within `O((m + 1) (⌊log₂ n⌋ + 1))` instructions. -/
 theorem logLinearStatement : LogLinearStatement :=
