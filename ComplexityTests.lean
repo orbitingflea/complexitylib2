@@ -118,6 +118,7 @@ import ComplexityTests.Crypto.KeyChainSecurity
 import ComplexityTests.Crypto.LeveledSecurity
 import ComplexityTests.Crypto.MAC
 import ComplexityTests.Crypto.MerkleDamgard
+import ComplexityTests.Crypto.PlainConstructors
 import ComplexityTests.Crypto.SchnorrDiscreteLog
 import ComplexityTests.Crypto.SigmaIdentification
 import ComplexityTests.Crypto.SigmaProtocol
@@ -212,6 +213,7 @@ import ComplexityTests.Hypercontractivity
 import ComplexityTests.InductiveCounting
 import ComplexityTests.IntBinaryDecode
 import ComplexityTests.IntBinaryDiv
+import ComplexityTests.Interactive
 import ComplexityTests.InteractiveProofs
 import ComplexityTests.Isolation
 import ComplexityTests.Iteration
