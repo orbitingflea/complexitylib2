@@ -627,6 +627,7 @@ public import Complexity.Computability.Complexity.Classes.Oracle.Counting
 public import Complexity.Computability.Complexity.Classes.Oracle.CountingEquivalence
 public import Complexity.Computability.Complexity.Classes.Oracle.Deterministic
 public import Complexity.Computability.Complexity.Classes.Oracle.Diagonal
+public import Complexity.Computability.Complexity.Classes.Oracle.Lowness
 public import Complexity.Computability.Complexity.Classes.Oracle.Monotone
 public import Complexity.Computability.Complexity.Classes.Oracle.PP
 public import Complexity.Computability.Complexity.Classes.Oracle.PolyTime
@@ -1162,6 +1163,7 @@ public import Complexity.Computability.PCP.RegularConstraintGraph
 public import Complexity.Computability.PCP.SelectedComposition
 public import Complexity.Computability.PCP.ThreeSAT
 public import Complexity.Computability.Probabilistic.Adaptive
+public import Complexity.Computability.Probabilistic.BoundedUniform
 public import Complexity.Computability.Probabilistic.CenteredBinomial
 public import Complexity.Computability.Probabilistic.CoinTape
 public import Complexity.Computability.Probabilistic.Finite
@@ -1475,6 +1477,7 @@ public import Complexity.Crypto.Computational.ZeroKnowledge
 public import Complexity.Crypto.Game
 public import Complexity.Crypto.Game.Hybrid
 public import Complexity.Crypto.Game.Statistical
+public import Complexity.Crypto.Game.UntilBad
 public import Complexity.Crypto.Negligible
 public import Complexity.Crypto.Negligible.Basic
 public import Complexity.Crypto.Negligible.Dyadic
@@ -1748,6 +1751,7 @@ public import Complexity.Foundations.Semantics.Stateful.Resource
 public import Complexity.Init
 public import Complexity.Languages.Probabilistic.Basic
 public import Complexity.Languages.Probabilistic.BitString
+public import Complexity.Languages.Probabilistic.BoundedUniform
 public import Complexity.Languages.Probabilistic.CenteredBinomial
 public import Complexity.Languages.Probabilistic.Concentration
 public import Complexity.Languages.Probabilistic.Forking

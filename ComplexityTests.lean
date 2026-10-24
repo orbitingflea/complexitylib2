@@ -34,6 +34,7 @@ import ComplexityTests.BooleanAnalysisDecisionTree
 import ComplexityTests.BooleanAnalysisExamples
 import ComplexityTests.BooleanHierarchyClosure
 import ComplexityTests.BooleanHierarchyPH
+import ComplexityTests.BoundedUniform
 import ComplexityTests.Broadcast
 import ComplexityTests.CNF
 import ComplexityTests.CNFPolyTime
@@ -121,6 +122,7 @@ import ComplexityTests.Crypto.SchnorrDiscreteLog
 import ComplexityTests.Crypto.SigmaIdentification
 import ComplexityTests.Crypto.SigmaProtocol
 import ComplexityTests.Crypto.Signature
+import ComplexityTests.Crypto.UntilBad
 import ComplexityTests.Crypto.ZeroKnowledge
 import ComplexityTests.CyclicFeedback
 import ComplexityTests.DataStructure
@@ -273,6 +275,7 @@ import ComplexityTests.OneWayNormalization
 import ComplexityTests.OracleCircuits
 import ComplexityTests.OracleComposition
 import ComplexityTests.OracleComposition.Substitution
+import ComplexityTests.OracleLowness
 import ComplexityTests.OraclePPT
 import ComplexityTests.OracleReplay
 import ComplexityTests.OracleRepresentation

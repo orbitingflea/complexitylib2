@@ -512,6 +512,10 @@ and the unrelativized-`FP`-target classes `LWPPWithFixedTarget` and `WPPWithFixe
 classes `LWPPWithFixedTarget` and `WPPWithFixedTarget`), and WPP (`PPWithOracle_eq_PP_of_mem_WPP`)
 is proved in [WPP.Lowness](Complexity/Computability/Complexity/Classes/WPP/Lowness.lean);
 target-relativized `LWPP^A` / `WPP^A` definitions and lowness with `FP^A` targets are not claimed.
+[Oracle lowness of `NP ∩ coNP` and `UP ∩ coUP`](Complexity/Computability/Complexity/Classes/Oracle/Lowness.lean)
+proves `P^(NP ∩ coNP) = NP ∩ coNP`, `P^(UP ∩ coUP) = UP ∩ coUP`, `NP^(NP ∩ coNP) = NP`, the
+characterization `NP^A = NP ↔ A ∈ NP ∩ coNP` (`NPWithOracle_eq_NP_iff`), and
+`NP = coNP ↔ ∀ A ∈ NP, NP^A = NP` (`NP_eq_coNP_iff_forall_NPWithOracle_eq_NP`).
 PP is closed under polynomial-time truth-table reductions (Fortnow–Reingold), hence under
 intersection, union, difference, symmetric difference (Beigel–Reingold–Spielman) and
 polynomial-time bounded quantifiers ([PP.TruthTable](Complexity/Computability/Complexity/Classes/PP/TruthTable.lean)).
@@ -1190,7 +1194,8 @@ Jukna coverage below is an additional target beyond the V1 port:
   presampled answers. [Fiat–Shamir signatures](Complexity/Crypto/Protocols/SigmaProtocol/FiatShamir.lean)
   in the [random-oracle model](Complexity/Crypto/Protocols/Signature/RandomOracle.lean) are
   correct and, exactly, EUF-CMA secure with the bound
-  `C(Q, 2) · δ + (Q + 1)/N + √((Q + 1) · ε')` of Theorem 19.16 and Equation 19.21, by the
+  `Qs · (Qs + Qro) · δ + (Qro + 1)/N + √((Qro + 1) · ε')` of Theorem 19.16 and Equation 19.21,
+  by the
   [difference lemma](Complexity/Languages/Probabilistic/UntilBad.lean), presampling and forking.
   Open (see #640): computational Schnorr signatures under discrete log for strict PPT forgers,
   and security against eavesdropping in the strict-PPT model, where simulating transcripts needs
