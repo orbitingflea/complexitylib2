@@ -2,7 +2,9 @@ import ComplexityTests.AWPPAmplification
 import ComplexityTests.AWPPLowness
 import ComplexityTests.Abstracts.All
 import ComplexityTests.Abstracts.CheckTests
+import ComplexityTests.Abstracts.CommunicationTests
 import ComplexityTests.Abstracts.InputLayouts
+import ComplexityTests.Abstracts.SipserLautemannTests
 import ComplexityTests.AdaptivePPT
 import ComplexityTests.Advice
 import ComplexityTests.AffineController
@@ -219,6 +221,7 @@ import ComplexityTests.KeyedSort
 import ComplexityTests.KolmogorovCrypto
 import ComplexityTests.Ladner
 import ComplexityTests.LinearHash
+import ComplexityTests.ListBasicImports
 import ComplexityTests.ListEnumeration
 import ComplexityTests.ListZipIdx
 import ComplexityTests.LogSpace
