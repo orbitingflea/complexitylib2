@@ -94,6 +94,7 @@ import ComplexityTests.CountingVerifier
 import ComplexityTests.Crypto.Bootstrapping
 import ComplexityTests.Crypto.CarterWegman
 import ComplexityTests.Crypto.Commitment
+import ComplexityTests.Crypto.DiffieHellman
 import ComplexityTests.Crypto.Encryption
 import ComplexityTests.Crypto.EvenMansour
 import ComplexityTests.Crypto.FiatShamir
@@ -151,6 +152,7 @@ import ComplexityTests.ExpanderFamily
 import ComplexityTests.ExpanderHitting
 import ComplexityTests.ExplicitExpanders
 import ComplexityTests.ExponentialPadding
+import ComplexityTests.Extractor
 import ComplexityTests.FOLogSpace
 import ComplexityTests.FOLogSpaceReduction
 import ComplexityTests.Fagin
@@ -423,6 +425,7 @@ import ComplexityTests.RotationWalk
 import ComplexityTests.Routing
 import ComplexityTests.SATPolyTime
 import ComplexityTests.SBPAmplification
+import ComplexityTests.STCON
 import ComplexityTests.SavedPrediction
 import ComplexityTests.SearchTree
 import ComplexityTests.SearchTreeErase

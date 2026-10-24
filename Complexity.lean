@@ -791,6 +791,10 @@ public import Complexity.Computability.Complexity.Problems.Partition
 public import Complexity.Computability.Complexity.Problems.SAT
 public import Complexity.Computability.Complexity.Problems.SAT.PolyTime
 public import Complexity.Computability.Complexity.Problems.SATUNSAT
+public import Complexity.Computability.Complexity.Problems.STCON
+public import Complexity.Computability.Complexity.Problems.STCON.Completeness
+public import Complexity.Computability.Complexity.Problems.STCON.Reduction
+public import Complexity.Computability.Complexity.Problems.STCON.Search
 public import Complexity.Computability.Complexity.Problems.SharpSAT
 public import Complexity.Computability.Complexity.Problems.SubsetSum
 public import Complexity.Computability.Complexity.Problems.SubsetSum.Digits
@@ -905,11 +909,14 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.LogS
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.LogSpace.ConfigurationGraph.Basic
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.LogSpace.ConfigurationGraph.Bounds
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.LogSpace.ConfigurationGraph.Correctness
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.LogSpace.ConfigurationGraph.Expr
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.LogSpace.ConfigurationGraph.Radix
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.LogSpace.ConfigurationGraph.Routines
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.LogSpace.ConfigurationGraph.Tape
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.LogSpace.Configurations
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.LogSpace.CounterProgram
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.LogSpace.CounterProgram.Boolean
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.LogSpace.CounterProgram.Nondeterministic
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.LogSpace.CounterProgram.Output
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.LogSpace.InductiveCounting
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.LogSpace.InductiveCounting.Bounds
@@ -1360,8 +1367,10 @@ public import Complexity.Computability.WordRAM.Trace
 public import Complexity.Crypto.Computational.Basic
 public import Complexity.Crypto.Computational.CollisionResistant
 public import Complexity.Crypto.Computational.Commitment
+public import Complexity.Crypto.Computational.DiffieHellman
 public import Complexity.Crypto.Computational.DiscreteLog
 public import Complexity.Crypto.Computational.DiscreteLog.SchnorrGroup
+public import Complexity.Crypto.Computational.ElGamal
 public import Complexity.Crypto.Computational.Encryption.Basic
 public import Complexity.Crypto.Computational.Encryption.Circular
 public import Complexity.Crypto.Computational.Encryption.PolyTime
@@ -1968,6 +1977,8 @@ public import Complexity.Probability.Divergence
 public import Complexity.Probability.Entropy
 public import Complexity.Probability.EntropyConcentration
 public import Complexity.Probability.EntropyExtraction
+public import Complexity.Probability.Extractor.Basic
+public import Complexity.Probability.Extractor.LeftoverHash
 public import Complexity.Probability.Forking
 public import Complexity.Probability.Guessing
 public import Complexity.Probability.HashFamily

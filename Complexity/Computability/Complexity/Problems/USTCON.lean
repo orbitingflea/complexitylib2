@@ -7,12 +7,8 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Init
+public import Complexity.Computability.Complexity.Problems.STCON
 public import Mathlib.Combinatorics.SimpleGraph.Connectivity.Connected
-public import Mathlib.Data.List.OfFn
-public import Mathlib.Data.List.GetD
-public import Mathlib.Data.Nat.Size
-import Complexity.Foundations.Data.List.Append
 
 /-!
 # Undirected s–t connectivity
@@ -22,17 +18,20 @@ graph on `Fin n`, given by its adjacency matrix, symmetric and with zero diagona
 two vertices `s` and `t`; it belongs to `Cslib.Complexity.USTCON` when `t` is reachable from `s`
 [Arora and Barak, Section 21.4][AroraBarak09] [Reingold, Section 4][Reingold2008].
 
-Instances are encoded (`Cslib.Complexity.encUSTCON`) by the unary header `1^n 0 1^s 0 1^t 0`
-followed by the adjacency matrix, row by row: the bit at `n + s + t + 3 + a * n + b` is the entry
-of the row `a` and the column `b`. The matrix has `n ^ 2` bits, so the header is no longer than the
-matrix plus three bits and every number a machine reads from it has logarithmically many binary
-digits; this is the adjacency matrix representation of Reingold's algorithm, with a header that a
-machine reading its input by address can parse by counting.
+Instances are encoded (`Cslib.Complexity.encUSTCON`) as their directed graphs
+(`Cslib.Complexity.USTCONInstance.toSTCONInstance`, encoded by `Cslib.Complexity.encSTCON`): the
+unary header `1^n 0 1^s 0 1^t 0` followed by the adjacency matrix, row by row, so that the bit at
+`n + s + t + 3 + a * n + b` is the entry of the row `a` and the column `b`. The matrix has `n ^ 2`
+bits, so the header is no longer than the matrix plus three bits and every number a machine reads
+from it has logarithmically many binary digits; this is the adjacency matrix representation of
+Reingold's algorithm, with a header that a machine reading its input by address can parse by
+counting.
 
 ## Main definitions
 
 * `Cslib.Complexity.USTCONInstance`: instances of undirected `s`–`t` connectivity.
 * `Cslib.Complexity.USTCONInstance.graph`: the simple graph of an instance.
+* `Cslib.Complexity.USTCONInstance.toSTCONInstance`: the directed graph of an instance.
 * `Cslib.Complexity.USTCONInstance.edgeTwo`, `Cslib.Complexity.USTCONInstance.emptyTwo`,
   `Cslib.Complexity.USTCONInstance.ofBool`: canonical two-vertex connected and disconnected
   instances.
@@ -101,110 +100,52 @@ instance : DecidableRel I.graph.Adj :=
 theorem graph_adj {a b : Fin I.n} : I.graph.Adj a b ↔ I.adj a b = true :=
   Iff.rfl
 
-/-- The column of an index below `n * n` is below `n`. -/
-theorem mod_lt_of_lt_mul {i n : ℕ} (h : i < n * n) : i % n < n :=
-  Nat.mod_lt _ (Nat.pos_of_ne_zero fun h0 ↦ by simp [h0] at h)
+/-- The directed graph of an instance, with its source and target: an arc in each direction for
+every edge. -/
+def toSTCONInstance : STCONInstance := ⟨I.n, I.adj, I.s, I.t⟩
 
-/-- The adjacency matrix, row by row: its bit at `i` is the entry of the row `i / n` and the
-column `i % n`. -/
-def matrix : List Bool :=
-  List.ofFn fun i : Fin (I.n * I.n) ↦
-    I.adj ⟨i / I.n, Nat.div_lt_of_lt_mul i.isLt⟩ ⟨i % I.n, mod_lt_of_lt_mul i.isLt⟩
+/-- Distinct instances have distinct directed graphs, since the adjacency matrix determines the
+proofs of symmetry and looplessness. -/
+theorem toSTCONInstance_injective : Function.Injective toSTCONInstance := by
+  rintro ⟨n, adj, symm, loopless, s, t⟩ ⟨n', adj', symm', loopless', s', t'⟩ h
+  simp only [toSTCONInstance, STCONInstance.mk.injEq] at h
+  obtain ⟨rfl, h⟩ := h
+  simp only [heq_eq_eq] at h
+  obtain ⟨rfl, rfl, rfl⟩ := h
+  rfl
 
-/-- The adjacency matrix has `n ^ 2` entries. -/
-@[simp]
-theorem length_matrix : I.matrix.length = I.n * I.n := by
-  simp [matrix]
-
-/-- The entry of the row `a` and the column `b` is the bit at `a * n + b` of the matrix. -/
-private theorem getD_matrix (a b : Fin I.n) : I.matrix.getD (a * I.n + b) false = I.adj a b := by
-  have hlt : (a : ℕ) * I.n + b < I.n * I.n := by
-    have := Nat.mul_le_mul_right I.n (Nat.succ_le_of_lt a.isLt)
-    rw [Nat.succ_mul] at this
-    omega
-  unfold matrix
-  rw [List.getD_eq_getElem (hn := by simpa using hlt), List.getElem_ofFn]
-  have hpos : 0 < I.n := Fin.pos a
-  congr 1
-  · ext
-    simp only
-    rw [Nat.add_comm, Nat.add_mul_div_right _ _ hpos, Nat.div_eq_of_lt b.isLt, Nat.zero_add]
-  · ext
-    simp only
-    rw [Nat.add_comm, Nat.add_mul_mod_self_right, Nat.mod_eq_of_lt b.isLt]
-
-/-- The encoding of an instance: the unary header `1^n 0 1^s 0 1^t 0`, then the adjacency matrix
-row by row. -/
-def encode : List Bool :=
-  List.replicate I.n true ++ false :: (List.replicate I.s true ++ false ::
-    (List.replicate I.t true ++ false :: I.matrix))
-
-/-- The number of vertices is at most the length of the encoding. -/
-private theorem n_le_length_encode : I.n ≤ I.encode.length := by
-  simp [encode]
+/-- The encoding of an instance, that of its directed graph (`Cslib.Complexity.encSTCON`): the
+unary header `1^n 0 1^s 0 1^t 0`, then the adjacency matrix row by row. -/
+def encode : List Bool := I.toSTCONInstance.encode
 
 /-- The number of binary digits of `n` is logarithmic in the length of the encoding. -/
 theorem size_n_le_log2 : Nat.size I.n ≤ Nat.log2 I.encode.length + 1 :=
-  Nat.size_le.2 (I.n_le_length_encode.trans_lt Nat.lt_log2_self)
-
-/-- Within a unary block followed by `false`, the bits are set before the end of the block. -/
-private theorem getD_replicate_append_false_of_le {m i : ℕ} (l : List Bool) (h : i ≤ m) :
-    (List.replicate m true ++ false :: l).getD i false = decide (i < m) := by
-  rcases h.lt_or_eq with h | rfl
-  · rw [List.getD_append _ _ _ _ (by simpa using h)]
-    simp [h]
-  · rw [List.getD_append_right _ _ _ _ (by simp)]
-    simp
-
-/-- After a unary block of length `m` followed by `false`, the bits are those of the rest. -/
-private theorem getD_replicate_append_false_add (m i : ℕ) (l : List Bool) :
-    (List.replicate m true ++ false :: l).getD (m + 1 + i) false = l.getD i false := by
-  rw [List.getD_append_right _ _ _ _ (by simp only [List.length_replicate]; omega)]
-  simp only [List.length_replicate, show m + 1 + i - m = i + 1 by omega, List.getD_cons_succ]
+  I.toSTCONInstance.size_n_le_log2
 
 /-- The header of the number of vertices: the bit at `i ≤ n` is set exactly when `i < n`. -/
 theorem getD_encode_n {i : ℕ} (h : i ≤ I.n) : I.encode.getD i false = decide (i < I.n) :=
-  getD_replicate_append_false_of_le _ h
+  I.toSTCONInstance.getD_encode_n h
 
 /-- The header of the source: the bit at `n + 1 + i`, for `i ≤ s`, is set exactly when `i < s`. -/
 theorem getD_encode_s {i : ℕ} (h : i ≤ I.s) :
-    I.encode.getD (I.n + 1 + i) false = decide (i < I.s) := by
-  rw [encode, getD_replicate_append_false_add]
-  exact getD_replicate_append_false_of_le _ h
+    I.encode.getD (I.n + 1 + i) false = decide (i < I.s) :=
+  I.toSTCONInstance.getD_encode_s h
 
 /-- The header of the target: the bit at `n + 1 + s + 1 + i`, for `i ≤ t`, is set exactly when
 `i < t`. -/
 theorem getD_encode_t {i : ℕ} (h : i ≤ I.t) :
-    I.encode.getD (I.n + 1 + I.s + 1 + i) false = decide (i < I.t) := by
-  rw [encode, show I.n + 1 + I.s + 1 + i = I.n + 1 + (I.s + 1 + i) by omega,
-    getD_replicate_append_false_add, getD_replicate_append_false_add]
-  exact getD_replicate_append_false_of_le _ h
+    I.encode.getD (I.n + 1 + I.s + 1 + i) false = decide (i < I.t) :=
+  I.toSTCONInstance.getD_encode_t h
 
 /-- **The bits of the matrix**: the bit at `n + s + t + 3 + a * n + b` of the encoding is the entry
 of the row `a` and the column `b`. -/
 theorem getD_encode_matrix (a b : Fin I.n) :
-    I.encode.getD (I.n + I.s + I.t + 3 + (a * I.n + b)) false = I.adj a b := by
-  rw [encode, show I.n + I.s + I.t + 3 + (a * I.n + b) =
-      I.n + 1 + (I.s + 1 + (I.t + 1 + (a * I.n + b))) by omega,
-    getD_replicate_append_false_add, getD_replicate_append_false_add,
-    getD_replicate_append_false_add, getD_matrix]
+    I.encode.getD (I.n + I.s + I.t + 3 + (a * I.n + b)) false = I.adj a b :=
+  I.toSTCONInstance.getD_encode_matrix a b
 
 /-- **The encoding is injective.** -/
-theorem encode_injective : Function.Injective encode := by
-  rintro ⟨n, adj, symm, loopless, s, t⟩ ⟨n', adj', symm', loopless', s', t'⟩ h
-  obtain ⟨rfl, h⟩ := List.replicate_true_append_false_inj h
-  obtain ⟨hs, h⟩ := List.replicate_true_append_false_inj h
-  obtain ⟨ht, h⟩ := List.replicate_true_append_false_inj h
-  have hadj : adj = adj' := by
-    funext a b
-    have := congrArg (fun l ↦ l.getD (a * n + b) false) h
-    exact (getD_matrix ⟨n, adj, symm, loopless, s, t⟩ a b).symm.trans
-      (this.trans (getD_matrix ⟨n, adj', symm', loopless', s', t'⟩ a b))
-  subst hadj
-  have hs' : s = s' := Fin.ext hs
-  have ht' : t = t' := Fin.ext ht
-  subst hs' ht'
-  rfl
+theorem encode_injective : Function.Injective encode :=
+  STCONInstance.encode_injective.comp toSTCONInstance_injective
 
 end USTCONInstance
 

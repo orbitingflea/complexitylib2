@@ -65,8 +65,8 @@ theorem to_of (I : Cslib.Complexity.USTCONInstance) : toInternal (ofInternal I) 
 
 theorem encode_eq (I : Instance) : encode I = Cslib.Complexity.encUSTCON (toInternal I) := by
   have matrix_eq : (List.ofFn fun row => List.ofFn (I.adjacency row)).flatten =
-      (toInternal I).matrix := by
-    rw [Cslib.Complexity.USTCONInstance.matrix, List.ofFn_mul]
+      (toInternal I).toSTCONInstance.matrix := by
+    rw [Cslib.Complexity.STCONInstance.matrix, List.ofFn_mul]
     congr 1
     apply congrArg List.ofFn
     funext row
@@ -83,7 +83,7 @@ theorem encode_eq (I : Instance) : encode I = Cslib.Complexity.encUSTCON (toInte
       rw [Nat.add_comm, Nat.add_mul_mod_self_right, Nat.mod_eq_of_lt col.isLt]
   change _ = List.replicate I.vertexCount true ++ false ::
     (List.replicate I.source.val true ++ false ::
-      (List.replicate I.target.val true ++ false :: (toInternal I).matrix))
+      (List.replicate I.target.val true ++ false :: (toInternal I).toSTCONInstance.matrix))
   rw [encode, matrix_eq]
 
 theorem encode_injective : Function.Injective encode := by
