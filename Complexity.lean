@@ -573,7 +573,6 @@ public import Complexity.Computability.Complexity.Classes.FewP.Machine
 public import Complexity.Computability.Complexity.Classes.Hierarchy
 public import Complexity.Computability.Complexity.Classes.Hierarchy.ShortDesc
 public import Complexity.Computability.Complexity.Classes.Hierarchy.Space
-public import Complexity.Computability.Complexity.Classes.Hierarchy.SpaceUniversal
 public import Complexity.Computability.Complexity.Classes.Hierarchy.Time
 public import Complexity.Computability.Complexity.Classes.IP
 public import Complexity.Computability.Complexity.Classes.IP.CoinFixing
@@ -865,6 +864,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.Tid
 public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.Transducer
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Arith
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO.Constructible
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO.Option
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO.Pi
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO.Plain
@@ -1093,6 +1093,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Universal.Machi
 public import Complexity.Computability.Machines.Turing.MultiTape.Universal.PolyTime
 public import Complexity.Computability.Machines.Turing.MultiTape.Universal.ResourceBound
 public import Complexity.Computability.Machines.Turing.MultiTape.Universal.Space
+public import Complexity.Computability.Machines.Turing.MultiTape.Universal.SpaceBudget
 public import Complexity.Computability.Machines.Turing.SingleTape.Partrec
 public import Complexity.Computability.Machines.Turing.SingleTape.PostTuringMachine
 public import Complexity.Computability.Machines.Turing.TM2.ConfigBound
@@ -1252,6 +1253,7 @@ public import Complexity.Computability.RAM.Cost
 public import Complexity.Computability.RAM.Defs
 public import Complexity.Computability.RAM.Input
 public import Complexity.Computability.RAM.Squaring
+public import Complexity.Computability.Reduction.ManyOne
 public import Complexity.Computability.TreeEval.Ary.Basic
 public import Complexity.Computability.TreeEval.Ary.CookMertz
 public import Complexity.Computability.TreeEval.Basic
@@ -1315,6 +1317,7 @@ public import Complexity.Computability.WordRAM.Structured
 public import Complexity.Computability.WordRAM.Time
 public import Complexity.Computability.WordRAM.Trace
 public import Complexity.Crypto.Computational.Basic
+public import Complexity.Crypto.Computational.CollisionResistant
 public import Complexity.Crypto.Computational.Commitment
 public import Complexity.Crypto.Computational.DiscreteLog
 public import Complexity.Crypto.Computational.DiscreteLog.SchnorrGroup
@@ -1407,6 +1410,7 @@ public import Complexity.Crypto.Computational.Hybrid.SavedPrediction
 public import Complexity.Crypto.Computational.Hybrid.Sequence
 public import Complexity.Crypto.Computational.LWE.Basic
 public import Complexity.Crypto.Computational.MAC
+public import Complexity.Crypto.Computational.MerkleDamgard
 public import Complexity.Crypto.Computational.OneWay
 public import Complexity.Crypto.Computational.OneWay.BPP
 public import Complexity.Crypto.Computational.OneWay.Collision
@@ -1483,9 +1487,11 @@ public import Complexity.Crypto.Primitives.PRG.NisanWigderson.Reconstruction
 public import Complexity.Crypto.Primitives.PRG.NisanWigderson.Sampling
 public import Complexity.Crypto.Protocols.SigmaProtocol.Basic
 public import Complexity.Crypto.Protocols.SigmaProtocol.Composition
+public import Complexity.Crypto.Protocols.SigmaProtocol.FiatShamir
 public import Complexity.Crypto.Protocols.SigmaProtocol.Identification
 public import Complexity.Crypto.Protocols.SigmaProtocol.Linear
 public import Complexity.Crypto.Protocols.SigmaProtocol.SchnorrIdentification
+public import Complexity.Crypto.Protocols.Signature.RandomOracle
 public import Complexity.Foundations.Analysis.HarmonicMean
 public import Complexity.Foundations.Analysis.MarkovInequality
 public import Complexity.Foundations.Analysis.SpecialFunctions.Arccos
@@ -1751,6 +1757,7 @@ public import Complexity.Languages.Probabilistic.Oracle.Simulation
 public import Complexity.Languages.Probabilistic.Oracle.Support
 public import Complexity.Languages.Probabilistic.Oracle.Transcript
 public import Complexity.Languages.Probabilistic.Presample
+public import Complexity.Languages.Probabilistic.QueryCount
 public import Complexity.Languages.Probabilistic.RandomOracle
 public import Complexity.Languages.Probabilistic.RandomOracle.Probabilistic
 public import Complexity.Languages.Probabilistic.Repeat
@@ -1759,6 +1766,7 @@ public import Complexity.Languages.Probabilistic.Simulation
 public import Complexity.Languages.Probabilistic.Transcript
 public import Complexity.Languages.Probabilistic.Traverse
 public import Complexity.Languages.Probabilistic.UniformNat
+public import Complexity.Languages.Probabilistic.UntilBad
 public import Complexity.Languages.Probabilistic.Vector
 public import Complexity.Logics.FirstOrder.Basic
 public import Complexity.Logics.FirstOrder.Encoding

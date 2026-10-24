@@ -29,8 +29,11 @@ existing developments, source credit and saved branches remain available for a f
    polynomial-time verifiers with auxiliary input.
    - *Partial:* [Commitment](Complexity/Crypto/Computational/Commitment.lean) proves Naor's
      two-message bit commitment scheme (`naorCommit`, `naorBitCommitment`,
-     `OneWay.exists_bitCommitmentScheme`) with statistical binding and computational hiding over
-     deterministic polynomial-time receiver-string and bit families, and
+     `OneWay.exists_bitCommitmentScheme`) with statistical binding and computational hiding against
+     randomized stateful PPT receivers (`CommitmentReceiver`, `commitmentHidingGame`,
+     `StatefulHiding`, `PseudorandomGenerator.naorStatefulHiding`, with
+     `StatefulHiding.computational_hiding` bridging to deterministic polynomial-time receiver-string
+     and bit families), and
      [ZeroKnowledge](Complexity/Crypto/Computational/ZeroKnowledge.lean)
      ([GMW/Protocol](Complexity/Crypto/Computational/GMW/Protocol.lean),
      [GMW/Soundness](Complexity/Crypto/Computational/GMW/Soundness.lean),
@@ -56,8 +59,7 @@ existing developments, source credit and saved branches remain available for a f
      pad-replacement proof does not require the separate Naor commitment-hiding theorem.
    - *Open (this priority):* zero knowledge in Goldreich's sense (Def. 4.3.10), for every
      `x ∈ L` with arbitrary auxiliary input `z` against probabilistic polynomial-time verifiers;
-     hiding against randomized receivers whose state is passed to the distinguisher; witness-level
-     Levin reductions; and sequential soundness amplification to negligible error.
+     witness-level Levin reductions; and sequential soundness amplification to negligible error.
      The full auxiliary-input convention still needs a formal security-premise/clock bridge:
      polynomial time in total encoded input, used in #427, differs from a clock independent
      of an unbounded auxiliary word. The pointwise milestone does not complete this objective.
@@ -1173,10 +1175,14 @@ Jukna coverage below is an additional target beyond the V1 port:
   against direct attacks by uniform strict PPT impersonators under it. The general
   [forking lemma](Complexity/Probability/Forking.lean) (Bellare–Neven) is proved, also for
   [oracle programs](Complexity/Languages/Probabilistic/Forking.lean) with explicit coins and
-  presampled answers. Open (see #640): Fiat–Shamir/Schnorr signatures in the random-oracle model
-  with the bound of Theorem 19.16, and security against eavesdropping in the strict-PPT model,
-  where simulating transcripts needs approximately uniform `ZMod q` samples and hence an explicit
-  statistical-distance term.
+  presampled answers. [Fiat–Shamir signatures](Complexity/Crypto/Protocols/SigmaProtocol/FiatShamir.lean)
+  in the [random-oracle model](Complexity/Crypto/Protocols/Signature/RandomOracle.lean) are
+  correct and, exactly, EUF-CMA secure with the bound
+  `C(Q, 2) · δ + (Q + 1)/N + √((Q + 1) · ε')` of Theorem 19.16 and Equation 19.21, by the
+  [difference lemma](Complexity/Languages/Probabilistic/UntilBad.lean), presampling and forking.
+  Open (see #640): computational Schnorr signatures under discrete log for strict PPT forgers,
+  and security against eavesdropping in the strict-PPT model, where simulating transcripts needs
+  approximately uniform `ZMod q` samples and hence an explicit statistical-distance term.
 
 The current V1 port excludes the circuitized anti-checker, hardness-magnification argument and
 MINKT/MINCKT developments. The long-term canon above includes metacomplexity; those results should
