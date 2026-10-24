@@ -53,6 +53,24 @@ Mathlib's standard linter set already enforces the mechanical part; reviews enfo
 Improving an interface never weakens the mathematics: keep the models, encodings, independent
 resource bounds and nonvacuity of the results it touches.
 
+### Public surface under the module system
+
+Under an ordinary `import`, importers rebuild only when a module's exported `.olean` changes. That
+file holds public statements, exposed bodies, attributes of public declarations, and the axioms
+each public declaration depends on. Editing docstrings, private declarations, proofs or
+non-exposed bodies leaves it unchanged, unless a proof edit changes that axiom set. `import all`
+also loads private information, so such edits do reach its clients.
+
+- Helpers are `private` by default. Keep `@[expose]` for bodies that downstream proofs unfold.
+- A private `@[fun_prop]` theorem still exports its rule, and `fun_prop` then fails in importers.
+  Write `attribute [local fun_prop] helper` instead. Private `simp` lemmas, Aesop rules and
+  instances stay local.
+- Ordinary imports cannot name private declarations. When privatizing, update the tests and
+  abstracts that name them in the same PR, or give a companion module `import all`.
+- `scripts/quality_report.py` records where each declaration is referenced and where other modules
+  unfold a definition by name. Reduction by `rfl` or `decide` is not recorded, and its counts are
+  review signals, not rules.
+
 ## AI assistance and review
 
 AI-assisted and human-written contributions follow the same standards. Disclose which AI tools

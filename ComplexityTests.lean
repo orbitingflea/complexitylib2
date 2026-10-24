@@ -104,6 +104,8 @@ import ComplexityTests.Crypto.HomomorphicLeveled
 import ComplexityTests.Crypto.HomomorphicRefresh
 import ComplexityTests.Crypto.KeyChainSecurity
 import ComplexityTests.Crypto.LeveledSecurity
+import ComplexityTests.Crypto.SigmaIdentification
+import ComplexityTests.Crypto.SigmaProtocol
 import ComplexityTests.Crypto.Signature
 import ComplexityTests.Crypto.ZeroKnowledge
 import ComplexityTests.CyclicFeedback
@@ -238,6 +240,7 @@ import ComplexityTests.NPCompleteGraphs.Hamiltonian
 import ComplexityTests.NPCompleteGraphs.TSP
 import ComplexityTests.NPCompleteGraphs.Undirected
 import ComplexityTests.NPCompleteNumbers
+import ComplexityTests.NPCompleteness
 import ComplexityTests.NPExistsAppend
 import ComplexityTests.NPWitness
 import ComplexityTests.NatBits
@@ -305,6 +308,7 @@ import ComplexityTests.Parameterized
 import ComplexityTests.PolySpaceFold
 import ComplexityTests.PolyTimeContracts
 import ComplexityTests.PolyTimeMetadata
+import ComplexityTests.PolyTimeMixes
 import ComplexityTests.PolyTimePlain
 import ComplexityTests.PolyTimeScans
 import ComplexityTests.PolyTimeSearch
@@ -432,7 +436,6 @@ import ComplexityTests.WeightedThresholdBounds
 import ComplexityTests.WordRAM
 import ComplexityTests.WordRAMBasis
 import ComplexityTests.WordRAMController
-import ComplexityTests.WordRAMDigitCompatibility
 import ComplexityTests.WordRAMDigits
 import ComplexityTests.WordRAMDynamic
 import ComplexityTests.WordRAMFamilies

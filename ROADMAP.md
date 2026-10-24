@@ -999,13 +999,15 @@ batches.
    than mechanically. Generated PDFs are review and dissemination artifacts, not additional proofs.
 
 6. **Plain computability in definitions and public results (#456).** Plain
-   `ComputableInPolyTime` and its tidy bridges are in place, and `P`, `NP`, `FNP` and the
-   polynomial-time reductions use it (#546). Redefine the classes and reductions that still use
-   `ComputableTidilyInPolyTime` (#547–#550), add plain space, big-O and FPT notions
-   (#551), restate public characterizations and closure lemmas plainly, and switch the abstract
-   bridges to the shared predicate after #497. WPP/LWPP list, indexed and two-sided robustness
-   results expose plain certificates with deprecated `_tidy` forms (#562); the
-   remaining public-result migration stays open under #456.
+   `ComputableInPolyTime` and its tidy bridges are in place, together with plain space, big-O and
+   FPT notions (#551). `P`, `NP`, `FNP` and the polynomial-time reductions (#546), the
+   probabilistic, counting and hierarchy classes (#547), the `TFNP` subclasses (#548), FPT
+   reductions, kernels and proof systems (#549) and the cryptographic primitives (#550, including
+   deterministic families in commitment hiding and zero-knowledge) use it, and the WPP/LWPP
+   robustness results expose plain certificates (#562). Remaining: isolating tidy computability
+   to proofs everywhere, by mechanically mirroring the calculus in plain form (#608), sweeping
+   the remaining public tidy statements and guarding the result in CI (#456), and switching the
+   abstract bridges to the shared predicate.
 
 ## Remaining theorem developments
 
@@ -1139,6 +1141,22 @@ Jukna coverage below is an additional target beyond the V1 port:
   and [Buss's polynomial kernel for vertex cover](Complexity/Computability/Complexity/Parameterized/VertexCover/BussKernel.lean)
   (#270) are proved; develop strongly uniform variants and the W hierarchy.
   The long-term coverage table identifies the broader class families.
+* **Sigma protocols, Schnorr identification and Fiat–Shamir (#581).** Boneh–Shoup Chapter 19.
+  The exact algebraic core is proved:
+  [Sigma protocols](Complexity/Crypto/Protocols/SigmaProtocol/Basic.lean) with explicit
+  extractors and perfect simulators, the
+  [linear-preimage protocol](Complexity/Crypto/Protocols/SigmaProtocol/Linear.lean) over prime
+  order `q` with Schnorr, Okamoto, Chaum–Pedersen and linear systems as instances, and
+  [AND/OR composition](Complexity/Crypto/Protocols/SigmaProtocol/Composition.lean). The exact
+  [rewinding lemma](Complexity/Probability/Rewinding.lean), the extraction bound
+  `ε ≤ 1/N + √ε'` and HVZK ⇒ eavesdropping security are proved for
+  [identification from Sigma protocols](Complexity/Crypto/Protocols/SigmaProtocol/Identification.lean)
+  and [Schnorr identification](Complexity/Crypto/Protocols/SigmaProtocol/SchnorrIdentification.lean).
+  Open: a discrete-log assumption for a group family with native polynomial-time operations,
+  efficiency of the reductions and the asymptotic security of Schnorr identification, and
+  Fiat–Shamir/Schnorr signatures in the random-oracle model with the forking bound of
+  Theorem 19.16. Strict PPT samples bit strings but not `ZMod q` exactly, so those bounds will
+  carry explicit statistical-distance terms.
 
 The current V1 port excludes the circuitized anti-checker, hardness-magnification argument and
 MINKT/MINCKT developments. The long-term canon above includes metacomplexity; those results should

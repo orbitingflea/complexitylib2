@@ -235,16 +235,14 @@ theorem OneWay.preimagePrefix_notMem_BPP (hf : OneWay f) :
 /-- **One-way functions imply `NP ⊄ BPP`**, for instances of the preimage-prefix problem. -/
 theorem OneWay.not_NP_subset_BPP (hf : OneWay f) :
     ¬ NP encPreimagePrefix ⊆ BPP encPreimagePrefix := fun h =>
-  hf.preimagePrefix_notMem_BPP (h (preimagePrefix_mem_NP hf.polyTime))
-
-@[deprecated (since := "2026-10-19")]
-alias OneWay.NP_not_subset_BPP := OneWay.not_NP_subset_BPP
+  hf.preimagePrefix_notMem_BPP (h (preimagePrefix_mem_NP hf.polyTime.tidy))
 
 /-- **One-way functions imply `SAT ∉ BPP`**: by the Cook–Levin theorem the preimage-prefix problem
 reduces to `SAT`, and `BPP` is closed under polynomial-time reductions. -/
 theorem OneWay.SAT_notMem_BPP (hf : OneWay f) : SAT ∉ BPP encCNF := fun h =>
   hf.preimagePrefix_notMem_BPP
-    ((CookLevin.SAT_npComplete.2 encPreimagePrefix _ (preimagePrefix_mem_NP hf.polyTime)).mem_BPP h)
+    ((CookLevin.SAT_npComplete.2 encPreimagePrefix _
+      (preimagePrefix_mem_NP hf.polyTime.tidy)).mem_BPP h)
 
 /-- If `SAT` is in `BPP`, no function is one-way. -/
 theorem not_oneWay_of_SAT_mem_BPP (h : SAT ∈ BPP encCNF) : ¬ OneWay f := fun hf =>
