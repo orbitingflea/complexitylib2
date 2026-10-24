@@ -30,22 +30,22 @@ namespace Cslib.Algorithms.WordRAM.Dijkstra
 open Cslib.WordRAM HeapReg
 
 /-- The straight-line start of `edgeBody`: read the edge and the distance word of its target. -/
-private def edgePrefix : Code .standard 27 := ram[
+private def edgePrefix : Code .exact 27 := ram_exact[
   t ← j + j; t ← t + eb; tv ← *t; t ← t + one; tc ← *t; j ← j + one;
   cand ← best + tc;
   t ← db + tv; dv ← *t ]
 
 /-- The straight-line start of an insertion: store the key and append the vertex to the heap. -/
-private def insPrefix : Code .standard 27 := ram[
+private def insPrefix : Code .exact 27 := ram_exact[
   *t ← cand; sz ← sz + one; t ← hb + sz; *t ← tv; t ← pb + tv; *t ← sz; k ← sz ]
 
 /-- The straight-line start of a decrease-key: store the key and read the position. -/
-private def decPrefix : Code .standard 27 := ram[ *t ← cand; t ← pb + tv; k ← *t ]
+private def decPrefix : Code .exact 27 := ram_exact[ *t ← cand; t ← pb + tv; k ← *t ]
 
 /-- `edgeBody` split into its straight-line parts and the sift-ups. -/
 private theorem edgeBody_eq : edgeBody = appendCode edgePrefix (.branch (.eq dv zero)
     (appendCode insPrefix siftUp)
-    (.branch (.lt cand dv) (appendCode decPrefix siftUp) ram[ t ← t ])) := rfl
+    (.branch (.lt cand dv) (appendCode decPrefix siftUp) ram_exact[ t ← t ])) := rfl
 
 /-- `edgeBody` writes only its scratch registers and `sz`. -/
 private theorem edgeBody_preserves :
@@ -110,7 +110,7 @@ private theorem edgeBody_spec {G : ListInstance} {w B J S C : ℕ} {V : Fin G.n}
     (J + J + (G.n + 4) + 1)).set tc C).set j (J + 1)).set cand (B + C)).set t
     (G.dbase + V)).set dv (y.mem (G.dbase + V))
   have e₁ : ExecWithin w edgePrefix y y₁ 9 := by
-    ram_eval [edgePrefix, y₁, hone, heb, hdb, hbest, hj, hT, hW, hfitC, f1, f2, f3, f4, f5]
+    ram_exact_eval [edgePrefix, y₁, hone, heb, hdb, hbest, hj, hT, hW, hfitC, f1, f2, f3, f4, f5]
   have hlog {K : ℕ} (hK : K ≤ G.n) : Nat.log 2 K ≤ Nat.log 2 G.n := Nat.log_mono_right hK
   by_cases hD0 : y.mem (G.dbase + V) = 0
   · -- `V` is undiscovered: insert it
@@ -124,7 +124,7 @@ private theorem edgeBody_spec {G : ListInstance} {w B J S C : ℕ} {V : Fin G.n}
       (G.dbase + G.n + (S + 1))).write (G.dbase + G.n + (S + 1)) V).set t
       (G.dbase + 2 * G.n + 1 + V)).write (G.dbase + 2 * G.n + 1 + V) (S + 1)).set k (S + 1)
     have e₂ : ExecWithin w insPrefix y₁ y₂ 7 := by
-      ram_eval [insPrefix, y₁, y₂, hone, hhb, hpb, hsz, f6, f7, f8]
+      ram_exact_eval [insPrefix, y₁, y₂, hone, hhb, hpb, hsz, f6, f7, f8]
     have hm₂ : y₂.mem = Function.update (Function.update (Function.update y.mem
         (G.dbase + V) (B + C)) (G.dbase + G.n + (S + 1)) V)
         (G.dbase + 2 * G.n + 1 + V) (S + 1) := rfl
@@ -181,7 +181,7 @@ private theorem edgeBody_spec {G : ListInstance} {w B J S C : ℕ} {V : Fin G.n}
     let y₂ := ((y₁.write (G.dbase + V) (B + C)).set t (G.dbase + 2 * G.n + 1 + V)).set k
       (y.mem (G.dbase + 2 * G.n + 1 + V))
     have e₂ : ExecWithin w decPrefix y₁ y₂ 3 := by
-      ram_eval [decPrefix, y₁, y₂, hpb, f8, hne]
+      ram_exact_eval [decPrefix, y₁, y₂, hpb, f8, hne]
     have hm₂ : y₂.mem = Function.update y.mem (G.dbase + V) (B + C) := rfl
     obtain ⟨hsh, hord⟩ := hheap.decrease (c := B + C) hV hP (by omega) hlt.le
     rw [← hm₂] at hsh hord
@@ -225,8 +225,8 @@ private theorem edgeBody_spec {G : ListInstance} {w B J S C : ℕ} {V : Fin G.n}
     · intro a ha
       rw [hzm _ (Or.inl (by omega)), hm₂, Function.update_of_ne (by omega)]
   · -- no change
-    have e₂ : ExecWithin (B := .standard) w ram[ t ← t ] y₁ (y₁.set t (G.dbase + V)) 1 := by
-      ram_eval [y₁]
+    have e₂ : ExecWithin (B := .exact) w ram_exact[ t ← t ] y₁ (y₁.set t (G.dbase + V)) 1 := by
+      ram_exact_eval [y₁]
     refine ⟨y₁.set t (G.dbase + V), ?_, by simp +decide [y₁], by simp +decide [y₁, hsz],
       by simpa +decide [y₁, hsz] using hheap, ?_, fun v => Iff.rfl, fun a _ => rfl⟩
     · rw [edgeBody_eq]
