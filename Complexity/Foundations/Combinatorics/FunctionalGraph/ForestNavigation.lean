@@ -75,6 +75,8 @@ def ForestAnchor (y a : α) : Prop :=
     ∃ d k, IsForestEdge f H a d ∧ d ≤ 2 * L ∧ k ≤ 2 * L ∧
       transientDepth f y ≤ transientDepth f a ∧ f^[k] y = f^[d - 1] a
 
+/-- If every orbit repeats among its first `L` states or meets `H` within `2 * L` steps, every
+state of `checkpointHull f H` has an anchor. -/
 theorem exists_forest_anchor (hL : 0 < L)
     (hcover : ∀ x, Repeats f x L ∨ ∃ t < 2 * L, f^[t] x ∈ H)
     {y : α} (hy : y ∈ checkpointHull f H) : ∃ a, ForestAnchor f H L y a := by
@@ -120,7 +122,7 @@ theorem forest_anchor_contains {y a : α} (hy : y ∈ checkpointHull f H)
 
 omit [Finite α] in
 /-- A target beyond a prefix remains reachable from every state in that prefix. -/
-theorem reaches_from_prefix {x y h : α} (hr : ∃ t, f^[t] x = y)
+private theorem reaches_from_prefix {x y h : α} (hr : ∃ t, f^[t] x = y)
     (hfar : ∀ i ≤ 2 * L, f^[i] x ≠ y) (hp : ∃ d ≤ 2 * L, f^[d] x = h) :
     ∃ t, f^[t] h = y := by
   obtain ⟨t, ht⟩ := hr
@@ -195,6 +197,8 @@ structure ForestEdgeTable where
   /-- The number of edges is at most `(forestMarks f H).card`. -/
   card_le : count ≤ (forestMarks f H).card
 
+/-- If every orbit repeats among its first `L` states or meets `H` within `2 * L` steps, a table
+of short compressed edges for the non-root marks exists. -/
 theorem exists_forest_edge_table (hL : 0 < L)
     (hcover : ∀ x, Repeats f x L ∨ ∃ t < 2 * L, f^[t] x ∈ H) :
     Nonempty (ForestEdgeTable f H L) := by
@@ -219,6 +223,7 @@ variable {f H L} (table : ForestEdgeTable f H L)
 /-- The last predecessor before the upper endpoint of the `j`-th compressed edge. -/
 def key (j : Fin table.count) : α := f^[table.length j - 1] (table.start j)
 
+/-- Distinct table entries have distinct last-predecessor keys. -/
 theorem key_injective : Function.Injective table.key := by
   intro i j he
   exact table.start_injective (forest_edge_last_injective f H (table.edge i) (table.edge j) he).1

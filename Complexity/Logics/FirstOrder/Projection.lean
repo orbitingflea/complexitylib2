@@ -26,23 +26,29 @@ as required by `Interpretation`; numeric constants can instead be represented by
 
 ## Main definitions
 
-* `Projection`: a numeric interpretation and a projection formula for each output relation.
-* `Projection.toInterpretation`: the ordinary interpretation on the sum vocabularies.
-* `Projection.inputStructure`: the output input-relation structure on the numeric model.
-* `Projection.tupleInputStructure`: the output input-relation structure on the full tuple domain.
-* `Projection.onFormula`: pull back a projection formula to a projection formula.
-* `Projection.comp`: composition, with product coordinates.
+* `Cslib.Logic.FO.Projection`: a numeric interpretation and a projection formula for each output
+  relation.
+* `Cslib.Logic.FO.Projection.toInterpretation`: the ordinary interpretation on the sum vocabularies.
+* `Cslib.Logic.FO.Projection.inputStructure`: the output input-relation structure on the numeric
+  model.
+* `Cslib.Logic.FO.Projection.tupleInputStructure`: the output input-relation structure on the full
+  tuple domain.
+* `Cslib.Logic.FO.Projection.onFormula`: pull back a projection formula to a projection formula.
+* `Cslib.Logic.FO.Projection.comp`: composition, with product coordinates.
 
 ## Main results
 
-* `Projection.realize_onFormula`: projection pullback preserves truth.
-* `Projection.modelEquiv`: agreement with the ordinary interpretation of sum vocabularies.
-* `Projection.tupleModelEquiv`: isomorphism of the numeric model with the full tuple domain when
-  the numeric domain formula always holds.
-* `Projection.compEquiv`: composition agrees with successive interpretations of both vocabularies.
-* `Projection.relMap_comp_inputStructure`, `Projection.realize_comp_rel_tupleStructure`: the input
-  relations of a composite projection are those of the iterated projection.
-* `Projection.IsQF.comp`: quantifier-free relativized projections compose.
+* `Cslib.Logic.FO.Projection.realize_onFormula`: projection pullback preserves truth.
+* `Cslib.Logic.FO.Projection.modelEquiv`: agreement with the ordinary interpretation of sum
+  vocabularies.
+* `Cslib.Logic.FO.Projection.tupleModelEquiv`: isomorphism of the numeric model with the full tuple
+  domain when the numeric domain formula always holds.
+* `Cslib.Logic.FO.Projection.compEquiv`: composition agrees with successive interpretations of both
+  vocabularies.
+* `Cslib.Logic.FO.Projection.relMap_comp_inputStructure`,
+  `Cslib.Logic.FO.Projection.realize_comp_rel_tupleStructure`: the input relations of a composite
+  projection are those of the iterated projection.
+* `Cslib.Logic.FO.Projection.IsQF.comp`: quantifier-free relativized projections compose.
 
 ## References
 
@@ -171,7 +177,7 @@ noncomputable def comp [Finite ι] [Finite κ] [N'.IsRelational]
 
 /-- A composite projection is isomorphic to successive interpretation, preserving both numeric
 and input relations. The underlying equivalence is the existing numeric composition map. -/
-noncomputable def compEquiv [Finite ι] [Finite κ]
+def compEquiv [Finite ι] [Finite κ]
     [N'.IsRelational] [N''.IsRelational] [L'.IsRelational] [L''.IsRelational]
     (J : Projection N' N'' L' L'' κ) (I : Projection N N' L L' ι)
     (M : Type*) [N.Structure M] [L.Structure M] :

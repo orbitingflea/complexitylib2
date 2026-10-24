@@ -117,7 +117,7 @@ theorem length_matrix : I.matrix.length = I.n * I.n := by
   simp [matrix]
 
 /-- The entry of the row `a` and the column `b` is the bit at `a * n + b` of the matrix. -/
-theorem getD_matrix (a b : Fin I.n) : I.matrix.getD (a * I.n + b) false = I.adj a b := by
+private theorem getD_matrix (a b : Fin I.n) : I.matrix.getD (a * I.n + b) false = I.adj a b := by
   have hlt : (a : ℕ) * I.n + b < I.n * I.n := by
     have := Nat.mul_le_mul_right I.n (Nat.succ_le_of_lt a.isLt)
     rw [Nat.succ_mul] at this
@@ -140,7 +140,7 @@ def encode : List Bool :=
     (List.replicate I.t true ++ false :: I.matrix))
 
 /-- The number of vertices is at most the length of the encoding. -/
-theorem n_le_length_encode : I.n ≤ I.encode.length := by
+private theorem n_le_length_encode : I.n ≤ I.encode.length := by
   simp [encode]
 
 /-- The number of binary digits of `n` is logarithmic in the length of the encoding. -/
@@ -213,7 +213,8 @@ end USTCONInstance
 def encUSTCON : USTCONInstance ↪ List Bool :=
   ⟨USTCONInstance.encode, USTCONInstance.encode_injective⟩
 
-/-- **Undirected `s`–`t` connectivity**: the instances in which `t` is reachable from `s`. -/
+/-- **Undirected `s`–`t` connectivity**: the instances in which `t` is reachable from `s`
+[Arora and Barak, Section 21.4][AroraBarak09], [Reingold][Reingold2008]. -/
 def USTCON : Set USTCONInstance :=
   {I | I.graph.Reachable I.s I.t}
 

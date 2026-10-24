@@ -42,6 +42,12 @@ are neighbours (see `Parity/DepthThree.lean`).
 * `Cslib.Logic.PL.ClauseSet.card_compl_isolatedDirections_le`: few non-isolated directions.
 * `Cslib.Logic.PL.ClauseSet.card_solutions_le_of_neighbors`: the bound in bounded degree.
 * `Cslib.Logic.PL.ClauseSet.card_solutions_le_of_not_containsSubcube`: the bound.
+
+## References
+
+* [R. Paturi, P. Pudlák, F. Zane, *Satisfiability coding lemma*][PaturiPudlakZane1999]
+* [R. Impagliazzo, R. Paturi, F. Zane, *Which problems have strongly exponential
+  complexity?*][ImpagliazzoPaturiZane2001]
 -/
 
 @[expose] public section
@@ -84,7 +90,7 @@ def Meets (C : Finset (Literal (Fin N))) (T : Finset (Fin N)) : Prop :=
 
 /-- A word satisfies every clause of `ψ` that a solution agreeing with it on the variables of the
 clause satisfies. -/
-theorem mem_solutions_of_agree {ψ : ClauseSet (Fin N)} {w : BitString N}
+private theorem mem_solutions_of_agree {ψ : ClauseSet (Fin N)} {w : BitString N}
     (h : ∀ C ∈ ψ, ∃ z ∈ ψ.solutions, ∀ l ∈ C, z l.1 = w l.1) : w ∈ ψ.solutions := by
   rw [mem_solutions]
   intro C hC
@@ -94,7 +100,7 @@ theorem mem_solutions_of_agree {ψ : ClauseSet (Fin N)} {w : BitString N}
 
 /-- **Closed parts of moves are moves**: if flipping `T` keeps `x` a solution and no clause meets
 both `T' ⊆ T` and `T \ T'`, flipping `T'` keeps it a solution. -/
-theorem flipOn_mem_solutions_of_closed {ψ : ClauseSet (Fin N)} {x : BitString N}
+private theorem flipOn_mem_solutions_of_closed {ψ : ClauseSet (Fin N)} {x : BitString N}
     {T T' : Finset (Fin N)} (hx : x ∈ ψ.solutions) (hT : flipOn T x ∈ ψ.solutions)
     (hsub : T' ⊆ T) (hclosed : ∀ C ∈ ψ, Meets C T' → ¬ Meets C (T \ T')) :
     flipOn T' x ∈ ψ.solutions := by
@@ -128,7 +134,7 @@ theorem flipOn_biUnion_mem_solutions_of_separated {ι : Type*} {ψ : ClauseSet (
     exact hmeet j hj ⟨l, hl, hlj⟩
 
 /-- Pairwise non-adjacent single-bit moves span a subcube of solutions. -/
-theorem flipOn_mem_solutions_of_independent {ψ : ClauseSet (Fin N)} {x : BitString N}
+private theorem flipOn_mem_solutions_of_independent {ψ : ClauseSet (Fin N)} {x : BitString N}
     {M : Finset (Fin N)} (hx : x ∈ ψ.solutions) (hmove : ∀ i ∈ M, flipOn {i} x ∈ ψ.solutions)
     (hind : ∀ u ∈ M, ∀ w ∈ M, u ≠ w → w ∉ ψ.neighbors u) {T : Finset (Fin N)} (hT : T ⊆ M) :
     flipOn T x ∈ ψ.solutions := by
@@ -235,8 +241,8 @@ theorem card_neighbors_le {ψ : ClauseSet (Fin N)} {k : ℕ} (hk : ∀ C ∈ ψ,
 /-- **The coding lemma for clause sets**: if every clause has at most `k ≥ 1` literals,
 `∑ₓ 2 ^ (ι(x) / k) ≤ 2 ^ N` over the solutions `x`, where `ι(x)` is the number of isolated
 directions of `x`. -/
-theorem sum_two_rpow_card_isolatedDirections_div_le {ψ : ClauseSet (Fin N)} {k : ℕ} (hk1 : 1 ≤ k)
-    (hk : ∀ C ∈ ψ, C.card ≤ k) :
+private theorem sum_two_rpow_card_isolatedDirections_div_le {ψ : ClauseSet (Fin N)} {k : ℕ}
+    (hk1 : 1 ≤ k) (hk : ∀ C ∈ ψ, C.card ≤ k) :
     ∑ x ∈ ψ.solutions, (2 : ℝ) ^ (((isolatedDirections ψ.solutions x).card : ℝ) / k) ≤
       2 ^ N := by
   have h := CNF.sum_two_rpow_card_isolated_div_le (φ := ψ.toCNF) hk1

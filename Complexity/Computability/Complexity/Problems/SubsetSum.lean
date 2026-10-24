@@ -21,7 +21,7 @@ import Complexity.Logics.Propositional.CNF.PolyTime
 
 `SubsetSum` is the set of pairs `(a, t)` of a list `a` of natural numbers, possibly with
 repetitions, and a target `t` such that some sub-multiset of `a` sums to `t` [Sipser, Section
-7.4][Sipser2013]. All numbers are encoded in binary (`Turing.MultiTapeTM.encNat`, digits least
+7.3][Sipser2013]. All numbers are encoded in binary (`Turing.MultiTapeTM.encNat`, digits least
 significant first); the `NP`-hardness proved here is for this encoding and is not strong
 `NP`-hardness. A certificate is a mask selecting entries of `a` (`Cslib.Complexity.maskSelect`),
 and the verifier adds the selected numbers in binary.
@@ -77,7 +77,8 @@ namespace Cslib.Complexity
 open Cslib.Logic.PL Turing.MultiTapeTM ComputableTidilyInPolyTime
 open scoped List
 
-/-- The instances `(a, t)` of subset sum: some sub-multiset of the numbers `a` sums to `t`. -/
+/-- The instances `(a, t)` of subset sum: some sub-multiset of the numbers `a` sums to `t`
+[Karp1972], [Sipser, Chapter 7][Sipser2013]. -/
 def SubsetSum : Set (List ℕ × ℕ) := {x | ∃ s ≤ (x.1 : Multiset ℕ), s.sum = x.2}
 
 theorem mem_SubsetSum {x : List ℕ × ℕ} :
@@ -220,7 +221,7 @@ theorem nodup_distinctVars : (distinctVars φ).Nodup := by
   rw [← hu.2, ← hv.2]
 
 /-- The variable of every literal of `φ` is listed in `distinctVars φ`. -/
-theorem mem_distinctVars_of_mem {j : ℕ} {l : Literal ℕ} (hl : l ∈ φ.getD j []) :
+private theorem mem_distinctVars_of_mem {j : ℕ} {l : Literal ℕ} (hl : l ∈ φ.getD j []) :
     l.1 ∈ distinctVars φ := by
   refine mem_distinctVars_of_mem_vars ?_
   rcases Nat.lt_or_ge j φ.length with hj | hj
@@ -236,7 +237,7 @@ theorem covers_eq_true_iff {i : ℕ} {b : Bool} {j : ℕ} :
   simp [covers]
 
 /-- A clause covers at most as many literal numbers as it has literals. -/
-theorem card_filter_covers_le (A : Finset (ℕ × Bool)) (j : ℕ) :
+private theorem card_filter_covers_le (A : Finset (ℕ × Bool)) (j : ℕ) :
     #{a ∈ A | covers φ a.1 a.2 j} ≤ (φ.getD j []).length := by
   classical
   calc #{a ∈ A | covers φ a.1 a.2 j}
@@ -255,7 +256,7 @@ private theorem card_filter_fst_le (A : Finset (ℕ × Bool)) (i : ℕ) : #{a �
     _ ≤ 2 := card_le_two
 
 /-- The positions of the digits one of a literal number. -/
-theorem mem_literalDigits {i : ℕ} {b : Bool} {p : ℕ} :
+private theorem mem_literalDigits {i : ℕ} {b : Bool} {p : ℕ} :
     p ∈ literalDigits φ i b ↔
       p = i ∨ ∃ j < φ.length, covers φ i b j = true ∧ p = (distinctVars φ).length + j := by
   simp only [literalDigits, List.mem_cons, List.mem_map, List.mem_filter, List.mem_range]
@@ -267,7 +268,7 @@ theorem mem_literalDigits {i : ℕ} {b : Bool} {p : ℕ} :
     · exact Or.inl h
     · exact Or.inr ⟨j, ⟨hj, hc⟩, rfl⟩
 
-theorem nodup_literalDigits {i : ℕ} (hi : i < (distinctVars φ).length) (b : Bool) :
+private theorem nodup_literalDigits {i : ℕ} (hi : i < (distinctVars φ).length) (b : Bool) :
     (literalDigits φ i b).Nodup := by
   refine List.nodup_cons.2 ⟨fun h => ?_, ((List.nodup_range).filter _).map
     (fun _ _ h => Nat.add_left_cancel h)⟩
@@ -278,27 +279,28 @@ theorem nodup_literalDigits {i : ℕ} (hi : i < (distinctVars φ).length) (b : B
 abbrev Item : Type := (ℕ × Bool) ⊕ (ℕ × Bool)
 
 /-- The digit positions of an item. -/
-def itemDigits (φ : CNF ℕ) : Item → List ℕ :=
+private def itemDigits (φ : CNF ℕ) : Item → List ℕ :=
   Sum.elim (fun a => literalDigits φ a.1 a.2) fun c => [(distinctVars φ).length + c.1]
 
 /-- The items of the digit construction, in the order of `digitNumbers`. -/
-def items (φ : CNF ℕ) : List Item :=
+private def items (φ : CNF ℕ) : List Item :=
   ((List.range (distinctVars φ).length).flatMap fun i => [.inl (i, true), .inl (i, false)]) ++
     (List.range φ.length).flatMap fun j => [.inr (j, true), .inr (j, false)]
 
-theorem digitNumbers_eq_map : digitNumbers φ = (items φ).map fun x => octal (itemDigits φ x) := by
+private theorem digitNumbers_eq_map : digitNumbers φ = (items φ).map fun x => octal
+    (itemDigits φ x) := by
   simp [digitNumbers, items, List.map_flatMap, itemDigits, octal]
 
 /-- All items, as a finite set. -/
-def itemSet (φ : CNF ℕ) : Finset Item :=
+private def itemSet (φ : CNF ℕ) : Finset Item :=
   (range (distinctVars φ).length ×ˢ univ).disjSum (range φ.length ×ˢ univ)
 
-theorem mem_items {x : Item} : x ∈ items φ ↔ x ∈ itemSet φ := by
+private theorem mem_items {x : Item} : x ∈ items φ ↔ x ∈ itemSet φ := by
   rcases x with ⟨i, b⟩ | ⟨j, c⟩
   · cases b <;> simp [items, itemSet]
   · cases c <;> simp [items, itemSet]
 
-theorem nodup_items : (items φ).Nodup := by
+private theorem nodup_items : (items φ).Nodup := by
   refine List.Nodup.append ?_ ?_ ?_
   · refine List.nodup_flatMap.2 ⟨fun i _ => by simp, ?_⟩
     exact List.nodup_range.pairwise_of_forall_ne fun i _ i' _ h => by
@@ -309,16 +311,16 @@ theorem nodup_items : (items φ).Nodup := by
   · simp [List.disjoint_left]
 
 /-- The digit positions of an item, as a finite set. -/
-def itemCol (φ : CNF ℕ) (x : Item) : Finset ℕ := (itemDigits φ x).toFinset
+private def itemCol (φ : CNF ℕ) (x : Item) : Finset ℕ := (itemDigits φ x).toFinset
 
-theorem octal_itemDigits {x : Item} (hx : x ∈ itemSet φ) :
+private theorem octal_itemDigits {x : Item} (hx : x ∈ itemSet φ) :
     octal (itemDigits φ x) = ∑ p ∈ itemCol φ x, 8 ^ p := by
   rw [itemCol, List.sum_toFinset _ ?_, octal]
   rcases x with a | c
   · exact nodup_literalDigits (by simpa [itemSet] using hx) a.2
   · simp [itemDigits]
 
-theorem itemCol_subset {x : Item} (hx : x ∈ itemSet φ) :
+private theorem itemCol_subset {x : Item} (hx : x ∈ itemSet φ) :
     itemCol φ x ⊆ range ((distinctVars φ).length + φ.length) := by
   intro p hp
   rw [itemCol, List.mem_toFinset] at hp
@@ -331,7 +333,7 @@ theorem itemCol_subset {x : Item} (hx : x ∈ itemSet φ) :
     lia
 
 /-- Membership of a variable position in the digits of a literal number. -/
-theorem mem_itemCol_inl_of_lt {a : ℕ × Bool} {i : ℕ} (hi : i < (distinctVars φ).length) :
+private theorem mem_itemCol_inl_of_lt {a : ℕ × Bool} {i : ℕ} (hi : i < (distinctVars φ).length) :
     i ∈ itemCol φ (.inl a) ↔ a.1 = i := by
   rw [itemCol, List.mem_toFinset, itemDigits, Sum.elim_inl]
   refine ⟨fun h => ?_, fun h => mem_literalDigits.2 (Or.inl h.symm)⟩
@@ -340,7 +342,7 @@ theorem mem_itemCol_inl_of_lt {a : ℕ × Bool} {i : ℕ} (hi : i < (distinctVar
   · lia
 
 /-- Membership of a clause position in the digits of a literal number. -/
-theorem mem_itemCol_inl_clause {a : ℕ × Bool} (ha : a.1 < (distinctVars φ).length) {j : ℕ}
+private theorem mem_itemCol_inl_clause {a : ℕ × Bool} (ha : a.1 < (distinctVars φ).length) {j : ℕ}
     (hj : j < φ.length) :
     (distinctVars φ).length + j ∈ itemCol φ (.inl a) ↔ covers φ a.1 a.2 j = true := by
   rw [itemCol, List.mem_toFinset, itemDigits, Sum.elim_inl, mem_literalDigits]
@@ -350,12 +352,12 @@ theorem mem_itemCol_inl_clause {a : ℕ × Bool} (ha : a.1 < (distinctVars φ).l
     · rwa [Nat.add_left_cancel h]
   · exact fun h => Or.inr ⟨j, hj, h, rfl⟩
 
-theorem mem_itemCol_inr {c : ℕ × Bool} {p : ℕ} :
+private theorem mem_itemCol_inr {c : ℕ × Bool} {p : ℕ} :
     p ∈ itemCol φ (.inr c) ↔ p = (distinctVars φ).length + c.1 := by
   simp [itemCol, itemDigits]
 
 /-- Column counts split into literal numbers and slack numbers. -/
-theorem card_filter_disjSum (A B : Finset (ℕ × Bool)) (p : ℕ) :
+private theorem card_filter_disjSum (A B : Finset (ℕ × Bool)) (p : ℕ) :
     #{x ∈ A.disjSum B | p ∈ itemCol φ x} =
       #{a ∈ A | p ∈ itemCol φ (.inl a)} + #{c ∈ B | p ∈ itemCol φ (.inr c)} := by
   rw [← card_disjSum]
@@ -365,7 +367,7 @@ theorem card_filter_disjSum (A B : Finset (ℕ × Bool)) (p : ℕ) :
 
 /-- The target as a number with base-8 digits: one at variable positions, three at clause
 positions. -/
-theorem digitTarget_eq :
+private theorem digitTarget_eq :
     digitTarget φ = ∑ p ∈ range ((distinctVars φ).length + φ.length),
       (if p < (distinctVars φ).length then 1 else 3) * 8 ^ p := by
   have hlist (n : ℕ) (f : ℕ → ℕ) : ((List.range n).map f).sum = ∑ i ∈ range n, f i := by
@@ -398,7 +400,8 @@ theorem digitTarget_lt : digitTarget φ < 8 ^ ((distinctVars φ).length + φ.len
   exact Nat.sum_range_mul_pow_lt fun p _ => by split <;> lia
 
 /-- The count at a variable position. -/
-theorem card_filter_var {A B : Finset (ℕ × Bool)} {i : ℕ} (hi : i < (distinctVars φ).length) :
+private theorem card_filter_var {A B : Finset (ℕ × Bool)} {i : ℕ}
+    (hi : i < (distinctVars φ).length) :
     #{x ∈ A.disjSum B | i ∈ itemCol φ x} = #{a ∈ A | a.1 = i} := by
   rw [card_filter_disjSum]
   simp_rw [mem_itemCol_inl_of_lt hi, mem_itemCol_inr]
@@ -407,7 +410,7 @@ theorem card_filter_var {A B : Finset (ℕ × Bool)} {i : ℕ} (hi : i < (distin
   rw [hB, card_empty, Nat.add_zero]
 
 /-- The count at a clause position. -/
-theorem card_filter_clause {A B : Finset (ℕ × Bool)}
+private theorem card_filter_clause {A B : Finset (ℕ × Bool)}
     (hA : A ⊆ range (distinctVars φ).length ×ˢ univ) {j : ℕ} (hj : j < φ.length) :
     #{x ∈ A.disjSum B | (distinctVars φ).length + j ∈ itemCol φ x} =
       #{a ∈ A | covers φ a.1 a.2 j} + #{c ∈ B | c.1 = j} := by
@@ -675,7 +678,8 @@ theorem polyTimeReducible_ThreeSAT_SubsetSum :
 theorem SubsetSum_npHard : NPHard (encPair (encList encNat) encNat) SubsetSum :=
   ThreeSAT_npHard.trans polyTimeReducible_ThreeSAT_SubsetSum
 
-/-- **Subset sum is NP-complete**, with the numbers and the target in binary. -/
+/-- **Subset sum is NP-complete**, with the numbers and the target in binary [Karp1972],
+[Sipser, Theorem 7.56][Sipser2013]. -/
 theorem SubsetSum_npComplete : NPComplete (encPair (encList encNat) encNat) SubsetSum :=
   ⟨SubsetSum.mem_NP, SubsetSum_npHard⟩
 

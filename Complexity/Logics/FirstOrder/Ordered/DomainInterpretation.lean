@@ -107,7 +107,7 @@ noncomputable def unrank (i : Fin (I.card M)) : Fin k → Fin M.size :=
 
 variable {I M}
 
-theorem mem_domainRanks {r : Fin (M.size ^ k)} :
+private theorem mem_domainRanks {r : Fin (M.size ^ k)} :
     r ∈ I.domainRanks M ↔ I.domain.Realize (lexEquiv.symm r) := by
   classical
   simp [domainRanks]
@@ -267,7 +267,7 @@ variable (I M) in
 /-- The target input relations on the ranks of the domain tuples. Numeric symbols are the
 canonical ones of `Fin (I.card M)`. -/
 @[instance_reducible]
-noncomputable def inputStructure : L'.Structure (Fin (I.card M)) where
+def inputStructure : L'.Structure (Fin (I.card M)) where
   RelMap R x := (I.rel R).Realize fun p => I.unrank M (x p.1) p.2
 
 variable (I) in

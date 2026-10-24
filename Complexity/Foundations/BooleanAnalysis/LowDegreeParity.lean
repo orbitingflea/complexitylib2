@@ -49,12 +49,6 @@ namespace Cslib.BitString
 
 open Finset
 
-/-- The sign `(-1) ^ b` of a bit, as a polynomial in the bit: `1 - 2 b`. -/
-theorem neg_one_pow_toNat_eq_one_sub_two_mul_bitVal {R : Type*} [CommRing R] (b : Bool) :
-    (-1 : R) ^ b.toNat = 1 - 2 * bitVal R b := by
-  cases b <;> simp only [Bool.toNat_false, Bool.toNat_true, pow_zero, pow_one, bitVal_false,
-    bitVal_true] <;> ring
-
 variable {F : Type*} [Field F] {ι : Type*}
 
 variable (F ι) in
@@ -73,6 +67,7 @@ theorem chi_mem_lowDegree (S : Finset ι) : chi F S ∈ lowDegree F ι #S := by
       simpa [two_mul] using Submodule.add_mem _ (bitVal_mem_lowDegree (R := F) i)
         (bitVal_mem_lowDegree (R := F) i))
 
+/-- The span of the characters of at most `H` coordinates grows with `H`. -/
 theorem signSpan_mono {H K : ℕ} (hHK : H ≤ K) : signSpan F ι H ≤ signSpan F ι K :=
   Submodule.span_mono (Set.image_mono fun _ hS => le_trans hS hHK)
 
@@ -97,6 +92,8 @@ theorem monomial_mem_signSpan [Invertible (2 : F)] (S : Finset ι) :
   exact Submodule.sum_mem _ fun T hT => Submodule.smul_mem _ _
     (Submodule.subset_span ⟨T, Finset.card_le_card (Finset.mem_powerset.mp hT), rfl⟩)
 
+/-- When `2` is invertible in `F`, every function of degree at most `H` lies in the span of the
+characters of at most `H` coordinates. -/
 theorem lowDegree_le_signSpan [Invertible (2 : F)] (H : ℕ) :
     lowDegree F ι H ≤ signSpan F ι H := by
   rw [lowDegree, Submodule.span_le]

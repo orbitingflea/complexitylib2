@@ -30,6 +30,9 @@ set and the maximum disjoint packing have equal size (`forest_duality`).
 
 * `Cslib.FunctionalGraph.ForestDuality.iter`: partial iteration of `σ : α → Option α`.
 * `Cslib.FunctionalGraph.ForestDuality.FPath`: a directed path given by start vertex and length.
+* `Cslib.FunctionalGraph.ForestDuality.FPath.Mem`: a vertex lies on a path.
+* `Cslib.FunctionalGraph.ForestDuality.FPath.End`: a path is nonempty and ends at a vertex.
+* `Cslib.FunctionalGraph.ForestDuality.FPath.Within`: every vertex of a path lies in `S`.
 * `Cslib.FunctionalGraph.ForestDuality.Covers`: a vertex set hitting all required paths in `S`.
 * `Cslib.FunctionalGraph.ForestDuality.Packing`: a pairwise vertex-disjoint family of required
   paths in `S`.
@@ -61,6 +64,7 @@ def iter : ℕ → α → Option α
   | 0, u => some u
   | k + 1, u => (iter k u).bind σ
 
+/-- Iterating `a + c` times is iterating `a` times and then, if defined, `c` more times. -/
 theorem iter_add (a c : ℕ) (u : α) : iter σ (a + c) u = (iter σ a u).bind (iter σ c) := by
   induction c with
   | zero =>
@@ -71,7 +75,7 @@ theorem iter_add (a c : ℕ) (u : α) : iter σ (a + c) u = (iter σ a u).bind (
     rw [ih]
     cases iter σ a u <;> rfl
 
-theorem iter_add_of_eq {a : ℕ} {u w : α} (h : iter σ a u = some w) (c : ℕ) :
+private theorem iter_add_of_eq {a : ℕ} {u w : α} (h : iter σ a u = some w) (c : ℕ) :
     iter σ (a + c) u = iter σ c w := by
   rw [iter_add, h]
   rfl
@@ -136,10 +140,10 @@ theorem packing_card_le_cover {r : α → ℕ} {S H : Finset α}
   exact hP.2 p hp q hq hne (g p) (hgM p hp) (he ▸ hgM q hq)
 
 /-- `w` lies strictly before `v` along a directed path. -/
-def Before (w v : α) : Prop :=
+private def Before (w v : α) : Prop :=
   ∃ k, 0 < k ∧ iter σ k w = some v
 
-theorem before_wellFounded [Finite α] (hac : Acyclic σ) : WellFounded (Before σ) := by
+private theorem before_wellFounded [Finite α] (hac : Acyclic σ) : WellFounded (Before σ) := by
   have : IsTrans α (Before σ) := ⟨fun a b c ⟨k, hk, hab⟩ ⟨l, hl, hbc⟩ =>
     ⟨k + l, by omega, by rw [iter_add_of_eq σ hab]; exact hbc⟩⟩
   have : Std.Irrefl (Before σ) := ⟨fun a ⟨k, hk, h⟩ => hac a k hk h⟩
@@ -147,7 +151,7 @@ theorem before_wellFounded [Finite α] (hac : Acyclic σ) : WellFounded (Before 
 
 /-- If a path `q` ending at `w` and a path `W` ending at `v` share a vertex `u`, then either `v`
 belongs to `q` or `w` lies strictly before `v`. -/
-theorem shared_vertex {q W : FPath α} {u v w : α} (hqw : q.End (σ := σ) w)
+private theorem shared_vertex {q W : FPath α} {u v w : α} (hqw : q.End (σ := σ) w)
     (hWv : W.End (σ := σ) v) (hqu : q.Mem (σ := σ) u) (hWu : W.Mem (σ := σ) u) :
     q.Mem (σ := σ) v ∨ Before σ w v := by
   obtain ⟨a, ha, hau⟩ := hqu

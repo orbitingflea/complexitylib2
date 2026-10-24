@@ -87,7 +87,8 @@ def encGraph : Graph ↪ List Bool :=
 in either direction. -/
 def Graph.toSimpleGraph (G : Graph) : SimpleGraph ℕ := SimpleGraph.fromRel fun u v => (u, v) ∈ G.2
 
-/-- The graphs with an independent set of `m` of their vertices. -/
+/-- The graphs with an independent set of `m` of their vertices
+[Arora and Barak, Section 2.4][AroraBarak09]. -/
 def IndependentSet : Set (Graph × ℕ) :=
   {x | ∃ S : Finset ℕ, (∀ v ∈ S, v ∈ x.1.1) ∧ x.1.toSimpleGraph.IsNIndepSet x.2 S}
 
@@ -272,12 +273,12 @@ theorem Occurrence.Conflict.symm {o o' : Occurrence} (h : o.Conflict o') : o'.Co
   · exact Or.inl ⟨h₁.symm, h₂.symm⟩
   · exact Or.inr ⟨h₁.symm, h₂.symm⟩
 
-theorem Occurrence.Conflict.ne {o o' : Occurrence} (h : o.Conflict o') : o ≠ o' := by
+private theorem Occurrence.Conflict.ne {o o' : Occurrence} (h : o.Conflict o') : o ≠ o' := by
   rintro rfl
   rcases h with ⟨-, h⟩ | ⟨-, h⟩ <;> exact h rfl
 
 /-- An occurrence is determined by its vertex. -/
-theorem vertex_injOn {φ : CNF ℕ} {o o' : Occurrence} (ho : o ∈ occurrences φ)
+private theorem vertex_injOn {φ : CNF ℕ} {o o' : Occurrence} (ho : o ∈ occurrences φ)
     (ho' : o' ∈ occurrences φ) (h : o.vertex = o'.vertex) : o = o' := by
   obtain ⟨i, j, l⟩ := o
   obtain ⟨i', j', l'⟩ := o'
@@ -501,7 +502,7 @@ theorem polyTimeReducible_SAT_IndependentSet :
 theorem IndependentSet_npHard : NPHard (encPair encGraph encNat) IndependentSet :=
   CookLevin.SAT_npHard.trans polyTimeReducible_SAT_IndependentSet
 
-/-- **`IndependentSet` is NP-complete.** -/
+/-- **`IndependentSet` is NP-complete** [Arora and Barak, Section 2.4][AroraBarak09]. -/
 theorem IndependentSet_npComplete : NPComplete (encPair encGraph encNat) IndependentSet :=
   ⟨IndependentSet.mem_NP, IndependentSet_npHard⟩
 

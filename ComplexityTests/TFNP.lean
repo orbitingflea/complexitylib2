@@ -129,7 +129,7 @@ example : SearchReducible encBits encBits emptyRel emptyRel :=
 time: such a problem reduces to it by solving the instance in the map back. -/
 example : SearchComplete (fun {α : Type} (enc : α ↪ List Bool) => TFNP enc ∩ FPSearch enc)
     encBits emptyRel := by
-  refine ⟨⟨emptyRel_mem_TFNP, emptyRel_mem_FPSearch⟩, fun enc R ⟨hR, hR'⟩ => ?_⟩
+  refine ⟨⟨emptyRel_mem_TFNP, emptyRel_mem_FPSearch⟩, fun _ enc R ⟨hR, hR'⟩ => ?_⟩
   obtain ⟨g, hg, hgR⟩ := exists_total_of_mem_FPSearch hR' hR.2
   exact .of_isTotalSearch emptyRel_mem_TFNP.2 (ComputableTidilyInPolyTime.const [])
     (hg.comp (ComputableTidilyInPolyTime.fst enc encBits)) fun a _ _ => hgR a
@@ -204,6 +204,16 @@ example : emptyRel ∈ PPP encBits :=
 
 example : emptyRel ∈ PPA encBits :=
   PPAD_subset_PPA (emptyRel_searchReducible_EndOfLine.mem_PPAD emptyRel_mem_FNP EndOfLine_mem_PPAD)
+
+/-- The family certifying a `PPAD` membership is plain (`mem_PPAD`). -/
+example : ∃ n : _ → ℕ, ComputableInPolyTime n encEndOfLine encUnary := by
+  obtain ⟨-, n, -, -, hn, -⟩ := mem_PPAD.mp EndOfLine_mem_PPAD
+  exact ⟨n, hn⟩
+
+/-- `mem_PPAD_iff_tidy` restates it tidily, for the tidy calculus. -/
+example : ∃ n : _ → ℕ, ComputableTidilyInPolyTime n encEndOfLine encUnary := by
+  obtain ⟨-, n, -, -, hn, -⟩ := mem_PPAD_iff_tidy.mp EndOfLine_mem_PPAD
+  exact ⟨n, hn⟩
 
 /-! ### Axiom guards -/
 

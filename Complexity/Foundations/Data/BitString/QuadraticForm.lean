@@ -7,7 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Foundations.BooleanAnalysis.LowDegree
+public import Complexity.Foundations.Data.BitString.Sign
 public import Complexity.Foundations.LinearAlgebra.Matrix.CutRank
 public import Mathlib.Data.ZMod.Defs
 import Mathlib.Data.ZMod.Basic
@@ -55,6 +55,8 @@ of `x` as a vector `v` over `𝔽₂`, it is true when `v ⬝ᵥ Q *ᵥ v = 1`. 
 def quadForm (Q : Matrix ι ι (ZMod 2)) (x : ι → Bool) : Bool :=
   decide ((fun i => bitVal (ZMod 2) (x i)) ⬝ᵥ Q *ᵥ (fun i => bitVal (ZMod 2) (x i)) = 1)
 
+/-- The quadratic form of `Q` is true at `x` exactly when `v ⬝ᵥ Q *ᵥ v = 1` for the vector `v`
+over `𝔽₂` of the bits of `x`. -/
 theorem quadForm_eq_true_iff (Q : Matrix ι ι (ZMod 2)) (x : ι → Bool) :
     quadForm Q x = true ↔
       (fun i => bitVal (ZMod 2) (x i)) ⬝ᵥ Q *ᵥ (fun i => bitVal (ZMod 2) (x i)) = 1 :=

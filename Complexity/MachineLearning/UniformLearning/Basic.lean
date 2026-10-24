@@ -157,7 +157,7 @@ theorem Learns.mono {A : Learner (ι → Bool) Bool m} {C C' : ConceptClass (ι 
 
 /-- The *uniform realizable family* of a concept class `C`: the distributions of a uniform point
 labelled by a concept of `C`. -/
-noncomputable def uniformRealizable (C : ConceptClass (ι → Bool) Bool) :
+def uniformRealizable (C : ConceptClass (ι → Bool) Bool) :
     Set (Measure ((ι → Bool) × Bool)) :=
   {D | ∃ f ∈ C, D = ((PMF.uniformOfFintype (ι → Bool)).map fun x => (x, f x)).toMeasure}
 
@@ -178,8 +178,6 @@ theorem error_map_eq_ofReal_uniformError (f h : (ι → Bool) → Bool) :
   rw [error, PMF.toMeasure_apply_eq_toOuterMeasure_apply _ ((Set.to_countable _).measurableSet),
     PMF.toOuterMeasure_map_apply]
   exact toOuterMeasure_uniformOfFintype_ne f h
-
-@[deprecated (since := "2026-10-19")] alias error_uniform_map := error_map_eq_ofReal_uniformError
 
 /-- **Learning under the uniform distribution is PAC learning** over the uniform realizable
 family: a learner that learns `C` from `m` uniform random examples with error `ε` and confidence

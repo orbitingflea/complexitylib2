@@ -119,7 +119,7 @@ theorem memoize_invariant [LawfulBEq Query] (distribution : Query → PMF Value)
 
 /-- Each memoized call adds at most one entry. Every new entry records an actual query and an
 answer in its sampling distribution's support. Repeated calls still appear in the transcript. -/
-theorem run_interpret_memoize_transcript (distribution : Query → PMF Value)
+private theorem run_interpret_memoize_transcript (distribution : Query → PMF Value)
     (program : OracleComp (fun _ : Query => Value) α) (cache cache' : List (Query × Value))
     (result : α) (transcript : OracleComp.Transcript (fun _ : Query => Value))
     (h : (result, cache', transcript) ∈ ((OracleComp.interpret
@@ -168,6 +168,7 @@ determines its value, so arbitrary initial lists are supported without a uniquen
 def ofList (cache : List (Query × Value)) : Cache (fun _ : Query => Value) :=
   fun q => cache.lookup q
 
+/-- The empty list represents the empty cache. -/
 @[simp] theorem ofList_nil : ofList ([] : List (Query × Value)) = fun _ => none := rfl
 
 variable [LawfulBEq Query] [DecidableEq Query]

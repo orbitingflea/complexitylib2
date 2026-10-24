@@ -383,7 +383,7 @@ theorem not_pseudorandomFunction_of_MCSP_mem_BPP (h : MCSP ∈ BPP MCSP.encInsta
   classical
   intro hprf
   obtain ⟨p, V, hV, hdec⟩ := h
-  obtain ⟨c, hc⟩ := KabanetsCai.exists_complexity_restriction_le hprf.polyTime
+  obtain ⟨c, hc⟩ := KabanetsCai.exists_complexity_restriction_le hprf.polyTime.tidy
   have hnegl := hprf.secure _ (isOraclePPT_mcspDistinguisher (p := p) (c + 2) hV.tidy)
   refine not_negligible_const (c := 1 / 4) (by norm_num) (negligible_of_eventually_le hnegl ?_)
   filter_upwards [eventually_tableArity c] with n ⟨hn, hm16, hmn, hsize⟩
@@ -459,58 +459,5 @@ theorem not_oneWay_of_MCSP_mem_BPP (h : MCSP ∈ BPP MCSP.encInstance) (f : List
 theorem not_oneWay_of_MCSP_mem_P (h : MCSP ∈ P MCSP.encInstance) (f : List Bool → List Bool) :
     ¬ OneWay f :=
   not_oneWay_of_MCSP_mem_BPP (P_subset_BPP h) f
-
-@[deprecated (since := "2026-10-19")]
-alias computableTidilyInPolyTime_tableArity := KabanetsCai.computableTidilyInPolyTime_tableArity
-
-@[deprecated (since := "2026-10-19")]
-alias computableTidilyInPolyTime_tableInstance :=
-  KabanetsCai.computableTidilyInPolyTime_tableInstance
-
-@[deprecated (since := "2026-10-19")]
-alias computableTidilyInPolyTime_tableQueries := KabanetsCai.computableTidilyInPolyTime_tableQueries
-
-@[deprecated (since := "2026-10-19")]
-alias computableTidilyInPolyTime_two_pow_tableArity :=
-  KabanetsCai.computableTidilyInPolyTime_two_pow_tableArity
-
-@[deprecated (since := "2026-10-19")]
-alias eval_prfIdealGame_mcspDistinguisher := KabanetsCai.eval_prfIdealGame_mcspDistinguisher
-
-@[deprecated (since := "2026-10-19")]
-alias eval_prfRealGame_mcspDistinguisher := KabanetsCai.eval_prfRealGame_mcspDistinguisher
-
-@[deprecated (since := "2026-10-19")]
-alias eventually_tableArity := KabanetsCai.eventually_tableArity
-
-@[deprecated (since := "2026-10-19")]
-alias interpret_mcspDistinguisher := KabanetsCai.interpret_mcspDistinguisher
-
-@[deprecated (since := "2026-10-19")]
-alias isOraclePPT_mcspDistinguisher := KabanetsCai.isOraclePPT_mcspDistinguisher
-
-@[deprecated (since := "2026-10-19")] alias isPPTOn_mcspRun := KabanetsCai.isPPTOn_mcspRun
-
-@[deprecated (since := "2026-10-19")] alias mcspDistinguisher := KabanetsCai.mcspDistinguisher
-
-@[deprecated (since := "2026-10-19")] alias mcspRun := KabanetsCai.mcspRun
-
-@[deprecated (since := "2026-10-19")] alias tableArity := KabanetsCai.tableArity
-
-@[deprecated (since := "2026-10-19")] alias tableInstance := KabanetsCai.tableInstance
-
-@[deprecated (since := "2026-10-19")]
-alias tableInstance_map_tableQueries := KabanetsCai.tableInstance_map_tableQueries
-
-@[deprecated (since := "2026-10-19")] alias toReal_eval_mcspRun := KabanetsCai.toReal_eval_mcspRun
-
-@[deprecated (since := "2026-10-19")]
-alias toReal_eval_mcspRun_le_one_third := KabanetsCai.toReal_eval_mcspRun_le_one_third
-
-@[deprecated (since := "2026-10-19")]
-alias toReal_map_restrictTable_mem_le := KabanetsCai.toReal_map_restrictTable_mem_le
-
-@[deprecated (since := "2026-10-19")]
-alias two_thirds_le_toReal_eval_mcspRun := KabanetsCai.two_thirds_le_toReal_eval_mcspRun
 
 end Cslib.Crypto

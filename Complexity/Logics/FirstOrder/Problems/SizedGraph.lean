@@ -61,8 +61,9 @@ these facts about sets of vertices.
 
 ## Main results
 
-* `Cslib.Logic.FO.sizedGraph.isoClosed_IndependentSet`, `isoClosed_Clique`,
-  `isoClosed_VertexCover`: closure under isomorphism.
+* `Cslib.Logic.FO.sizedGraph.isoClosed_IndependentSet`,
+  `Cslib.Logic.FO.sizedGraph.isoClosed_Clique`, `Cslib.Logic.FO.sizedGraph.isoClosed_VertexCover`:
+  closure under isomorphism.
 * `Cslib.Logic.FO.sizedGraph.qfReduces_IndependentSet_Clique`,
   `Cslib.Logic.FO.sizedGraph.qfReduces_Clique_IndependentSet`: complementing the edges.
 * `Cslib.Logic.FO.sizedGraph.qfReduces_IndependentSet_VertexCover`,
@@ -206,7 +207,7 @@ def complementSize : Interpretation sizedGraph sizedGraph Unit where
     | .size => ∼(rel₁ sizedGraph.size (0, ()))
 
 /-- A set of vertices is independent exactly when its complement is a vertex cover. -/
-theorem pairwise_not_adj_iff_compl {M : Type*} [sizedGraph.Structure M] (s : Set M) :
+private theorem pairwise_not_adj_iff_compl {M : Type*} [sizedGraph.Structure M] (s : Set M) :
     (s.Pairwise fun x y => ¬ RelMap sizedGraph.adj ![x, y]) ↔
       ∀ x y, x ≠ y → RelMap sizedGraph.adj ![x, y] → x ∈ sᶜ ∨ y ∈ sᶜ := by
   refine ⟨fun h x y hxy hadj => ?_, fun h x hx y hy hxy hadj => ?_⟩

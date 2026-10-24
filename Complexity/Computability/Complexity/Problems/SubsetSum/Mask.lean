@@ -62,6 +62,7 @@ theorem maskSelect_cons (a : α) (l : List α) (w : List Bool) :
   | nil => simp
   | cons b w => cases b <;> simp [List.map_map, Function.comp_def]
 
+/-- A mask selects a sublist. -/
 theorem maskSelect_sublist (l : List α) (w : List Bool) : maskSelect l w <+ l := by
   simpa only [maskSelect, List.zipIdx_map_fst] using
     (List.filter_sublist (p := fun p : α × ℕ => w.getD p.2 false) (l := l.zipIdx)).map Prod.fst
@@ -79,7 +80,7 @@ theorem exists_maskSelect_eq {s l : List α} (h : s <+ l) :
     exact ⟨true :: w, by simp [hw], by simp [maskSelect_cons, hs]⟩
 
 /-- Unselected positions beyond the list do not change the selection. -/
-theorem maskSelect_append_replicate_false (l : List α) (w : List Bool) (k : ℕ) :
+private theorem maskSelect_append_replicate_false (l : List α) (w : List Bool) (k : ℕ) :
     maskSelect l (w ++ List.replicate k false) = maskSelect l w := by
   unfold maskSelect
   congr 2

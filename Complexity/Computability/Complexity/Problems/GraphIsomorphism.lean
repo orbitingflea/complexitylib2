@@ -74,7 +74,7 @@ theorem vertexEquiv_apply (G : Graph) (i : Fin G.distinctVertices.length) :
     (G.vertexEquiv i : ℕ) = G.distinctVertices.getD i 0 := by
   simp [vertexEquiv, List.Nodup.getEquiv, List.getD_eq_getElem?_getD]
 
-theorem induced_adj_vertexEquiv (G : Graph) (i j : Fin G.distinctVertices.length) :
+private theorem induced_adj_vertexEquiv (G : Graph) (i j : Fin G.distinctVertices.length) :
     G.induced.Adj (G.vertexEquiv i) (G.vertexEquiv j) ↔ G.adjIndex i j = true := by
   rw [induced, SimpleGraph.induce_adj, adjIndex, adjBool_eq_true_iff, vertexEquiv_apply,
     vertexEquiv_apply]
@@ -93,10 +93,11 @@ theorem computableTidilyInPolyTime_adjIndex {γ : Type} {input : γ ↪ List Boo
 
 end Graph
 
-/-- The pairs of isomorphic graphs: the graphs induced on the declared vertices are isomorphic. -/
+/-- The pairs of isomorphic graphs: the graphs induced on the declared vertices are isomorphic
+[Arora and Barak, Section 8.1.3][AroraBarak09]. -/
 def GraphIsomorphism : Set (Graph × Graph) := {x | Nonempty (x.1.induced ≃g x.2.induced)}
 
-/-- The pairs of non-isomorphic graphs. -/
+/-- The pairs of non-isomorphic graphs [Arora and Barak, Section 8.1.3][AroraBarak09]. -/
 def GraphNonIsomorphism : Set (Graph × Graph) := GraphIsomorphismᶜ
 
 /-- Two graphs are isomorphic exactly when a bijection between the positions of their distinct

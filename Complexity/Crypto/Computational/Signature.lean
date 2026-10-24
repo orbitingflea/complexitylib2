@@ -7,6 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 public import Complexity.Computability.Probabilistic.Oracle.Parameter
 public import Complexity.Computability.Probabilistic.Parameter
 public import Complexity.Crypto.Game
@@ -93,8 +94,8 @@ structure SignatureScheme where
   keyGen_ppt : IsPPTOn encUnary (encPair encBits encBits) keyGen
   /-- Signing is uniformly strict PPT in the encoded secret key and message. -/
   sign_ppt : IsPPTOn (encPair encBits encBits) encBits (fun p => sign p.1 p.2)
-  /-- Verification is computable tidily in polynomial time on `(pk, msg, sig)`. -/
-  verify_polyTime : ComputableTidilyInPolyTime
+  /-- Verification is computable in plain polynomial time on `(pk, msg, sig)`. -/
+  verify_polyTime : ComputableInPolyTime
     (fun p : List Bool × List Bool × List Bool => verify p.1 p.2.1 p.2.2)
     (encPair encBits (encPair encBits encBits)) encBool
   /-- Every signature produced by `sign` on an `n`-bit message under a supported key pair at
@@ -103,6 +104,13 @@ structure SignatureScheme where
     ∀ msg, msg.length = n →
     ∀ sig, sig ∈ (ProbComp.eval (sign keys.2 msg)).support →
     verify keys.1 msg sig = true
+
+/-- The equivalent tidy contract used internally by compositional proofs. -/
+theorem SignatureScheme.verify_polyTime_tidy (h : SignatureScheme) :
+    ComputableTidilyInPolyTime
+    (fun p : List Bool × List Bool × List Bool => h.verify p.1 p.2.1 p.2.2)
+    (encPair encBits (encPair encBits encBits)) encBool := by
+  simpa only [← computableInPolyTime_iff_computableTidilyInPolyTime] using h.verify_polyTime
 
 namespace SignatureScheme
 
@@ -129,7 +137,7 @@ theorem computableTidilyInPolyTime_verify_comp (S : SignatureScheme)
     (hmsg : ComputableTidilyInPolyTime msg encIn encBits)
     (hsig : ComputableTidilyInPolyTime sig encIn encBits) :
     ComputableTidilyInPolyTime (fun a => S.verify (pk a) (msg a) (sig a)) encIn encBool :=
-  S.verify_polyTime.comp (hpk.prod (hmsg.prod hsig))
+  S.verify_polyTime.tidy.comp (hpk.prod (hmsg.prod hsig))
 
 @[fun_prop]
 private theorem computableTidilyInPolyTime_contains {γ : Type} {encIn : γ ↪ List Bool}
@@ -150,7 +158,7 @@ private theorem computableTidilyInPolyTime_contains {γ : Type} {encIn : γ ↪ 
 
 /-- Stateful signing oracle that signs the requested message under `sk` and prepends the message to
 the list of queried messages. -/
-noncomputable def signingOracle (S : SignatureScheme) (sk : List Bool)
+def signingOracle (S : SignatureScheme) (sk : List Bool)
     (request : Unit × List Bool) : StateT (List (List Bool)) ProbComp (List Bool) :=
   fun queried => do
     let sig ← S.sign sk request.2
@@ -159,7 +167,7 @@ noncomputable def signingOracle (S : SignatureScheme) (sk : List Bool)
 /-- The EUF-CMA experiment: sample `(pk, sk) ← S.keyGen n`, run the adaptive forger on `(n, pk)`
 with oracle access to `S.signingOracle sk`, and accept when the forger outputs a valid signature on
 an `n`-bit message that was never queried to the signing oracle. -/
-noncomputable def eufCmaGame (S : SignatureScheme) (adversary : Forger) (n : ℕ) :
+def eufCmaGame (S : SignatureScheme) (adversary : Forger) (n : ℕ) :
     ProbComp Bool := do
   let keys ← S.keyGen n
   let out ← (OracleComp.interpret
@@ -247,7 +255,7 @@ theorem EUFCMA.of_negligible {S : SignatureScheme}
 
 /-- One-time signing oracle that answers at most the first signing query using `S.sign sk` and
 returns the empty word without signing on any subsequent query. -/
-noncomputable def oneTimeSigningOracle (S : SignatureScheme) (sk : List Bool)
+def oneTimeSigningOracle (S : SignatureScheme) (sk : List Bool)
     (request : Unit × List Bool) : StateT (List (List Bool)) ProbComp (List Bool) :=
   fun queried =>
     if queried.isEmpty then do
@@ -260,7 +268,7 @@ noncomputable def oneTimeSigningOracle (S : SignatureScheme) (sk : List Bool)
 `(n, pk)` with oracle access to `S.oneTimeSigningOracle sk` (which answers at most one signing
 query), and accept when the forger outputs a valid signature on an `n`-bit message distinct from
 the queried message (if any). -/
-noncomputable def eufOneTimeGame (S : SignatureScheme) (adversary : Forger) (n : ℕ) :
+def eufOneTimeGame (S : SignatureScheme) (adversary : Forger) (n : ℕ) :
     ProbComp Bool := do
   let keys ← S.keyGen n
   let out ← (OracleComp.interpret

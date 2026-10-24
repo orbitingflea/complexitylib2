@@ -241,8 +241,6 @@ def degBound (x : V) : ArithQBF V → ℕ
   | .bin _ e₁ e₂ => degBound x e₁ + degBound x e₂
   | .op o v e => if v = x then 1 else o.degMul * degBound x e
 
-@[deprecated (since := "2026-10-19")] alias deg := degBound
-
 private theorem natDegree_one_sub_le (p : R[X]) : (1 - p).natDegree ≤ p.natDegree :=
   (natDegree_sub_le 1 p).trans (by rw [natDegree_one, Nat.zero_max])
 
@@ -474,8 +472,6 @@ theorem eval_boolean (σ : V → Bool) :
   simp only [Bool.cond_eq_ite] at h
   exact h
 
-@[deprecated (since := "2026-10-19")] alias eval_ite := eval_boolean
-
 /-! ### Linearization -/
 
 /-- Linearization of each variable of a list, the first one outermost. -/
@@ -494,7 +490,7 @@ omit [DecidableEq V] in
   | cons x xs ih => rw [lins_cons, toQBF, ih]
 
 /-- After linearizing the variables of `xs`, the degree in each of them is at most `1`. -/
-theorem degBound_lins (x : V) (xs : List V) :
+private theorem degBound_lins (x : V) (xs : List V) :
     (lins xs e).degBound x = if x ∈ xs then 1 else e.degBound x := by
   induction xs with
   | nil => simp
@@ -504,11 +500,9 @@ theorem degBound_lins (x : V) (xs : List V) :
     · simp [hy]
     · simp [hy, Ne.symm hy, Operator.degMul]
 
-@[deprecated (since := "2026-10-19")] alias deg_lins := degBound_lins
-
 /-- Linearizing the variables of `xs` costs at most `D` per variable when every degree is at most
 `D`. -/
-theorem roundDegree_lins_le (xs : List V) {D : ℕ} (h : ∀ x, e.degBound x ≤ D) (hD : 1 ≤ D) :
+private theorem roundDegree_lins_le (xs : List V) {D : ℕ} (h : ∀ x, e.degBound x ≤ D) (hD : 1 ≤ D) :
     (lins xs e).roundDegree ≤ xs.length * D + e.roundDegree := by
   induction xs with
   | nil => simp
@@ -526,7 +520,8 @@ omit [DecidableEq V] in
     omega
 
 omit [DecidableEq V] in
-theorem mem_vars_lins {xs : List V} {w : V} (h : w ∈ (lins xs e).vars) : w ∈ xs ∨ w ∈ e.vars := by
+private theorem mem_vars_lins {xs : List V} {w : V} (h : w ∈ (lins xs e).vars) :
+    w ∈ xs ∨ w ∈ e.vars := by
   induction xs with
   | nil => exact Or.inr h
   | cons x xs ih =>
@@ -537,8 +532,8 @@ theorem mem_vars_lins {xs : List V} {w : V} (h : w ∈ (lins xs e).vars) : w ∈
 
 /-- Linearizing the variables of `xs` keeps the largest round degree at most `D` when every degree
 is at most `D`. -/
-theorem maxRoundDegree_lins_le (xs : List V) {D : ℕ} (h : ∀ x, e.degBound x ≤ D) (hD : 1 ≤ D) :
-    (lins xs e).maxRoundDegree ≤ max D e.maxRoundDegree := by
+private theorem maxRoundDegree_lins_le (xs : List V) {D : ℕ} (h : ∀ x, e.degBound x ≤ D)
+    (hD : 1 ≤ D) : (lins xs e).maxRoundDegree ≤ max D e.maxRoundDegree := by
   induction xs with
   | nil => exact le_max_right _ _
   | cons y xs ih =>
@@ -619,9 +614,6 @@ theorem degBound_arithmetize_eq_zero {xs : List V} {x : V} (hx : x ∉ xs) {φ :
     simp only [vars, List.mem_cons, not_or] at hφ
     simp [arithmetize, degBound_lins, hx, degBound, Ne.symm hφ.1, ih hφ.2]
 
-@[deprecated (since := "2026-10-19")] alias deg_arithmetize_eq_zero :=
-  degBound_arithmetize_eq_zero
-
 /-- **Degrees stay small.** When `xs` contains every variable of `φ`, the arithmetization has
 degree at most the size of `φ` in every variable. -/
 theorem degBound_arithmetize_le {xs : List V} {φ : QBF V} (hxs : ∀ v ∈ φ.vars, v ∈ xs) (x : V) :
@@ -668,8 +660,6 @@ theorem degBound_arithmetize_le {xs : List V} {φ : QBF V} (hxs : ∀ v ∈ φ.v
       rw [arithmetize, degBound_lins] at this
       simp only [hx, ↓reduceIte] at this ⊢
       omega
-
-@[deprecated (since := "2026-10-19")] alias deg_arithmetize_le := degBound_arithmetize_le
 
 /-- The rounds of a quantifier and of the linearizations after it cost at most
 `(2 * |xs| + 1) * size φ` for the body `φ`. -/

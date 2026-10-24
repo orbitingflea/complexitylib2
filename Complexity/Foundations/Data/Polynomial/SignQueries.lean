@@ -32,7 +32,12 @@ time or space bound for sign determination.
 ## Main definitions
 
 * `Cslib.SignQueries.signCount`: the number of points realizing a sign pattern.
+* `Cslib.SignQueries.weight`: the coefficients of the quadratics giving twice the indicator of a
+  sign.
+* `Cslib.SignQueries.patternWeight`: the coefficient of an exponent vector in the expanded
+  indicator product.
 * `Cslib.SignQueries.queryPolynomial`: a product with exponents in `{0, 1, 2}`.
+* `Cslib.SignQueries.signSum`: the sum of the signs of a polynomial on a finite set of points.
 * `Cslib.SignQueries.tarskiQuery`: the sum of signs at distinct real roots.
 * `Cslib.SignQueries.scaledRootCount`: the integer combination of root sign queries.
 
@@ -68,7 +73,7 @@ def weight (s : SignType) (e : Fin 3) : ℤ :=
   | _, _ => 0
 
 /-- Evaluating a sign's quadratic at another sign gives twice the equality indicator. -/
-theorem weight_indicator (s t : SignType) :
+private theorem weight_indicator (s t : SignType) :
     (∑ e : Fin 3, weight s e * (t : ℤ) ^ e.val) = if t = s then 2 else 0 := by
   cases s <;> cases t <;> decide
 
@@ -82,7 +87,7 @@ def patternWeight {J : Type*} [Fintype J] (σ : J → SignType) (e : J → Fin 3
   ∏ i, weight (σ i) (e i)
 
 /-- Expanding the product of the sign quadratics gives the scaled pattern indicator. -/
-theorem product_indicator {J : Type*} [Fintype J] [DecidableEq J] (σ t : J → SignType) :
+private theorem product_indicator {J : Type*} [Fintype J] [DecidableEq J] (σ t : J → SignType) :
     (∑ e : J → Fin 3, patternWeight σ e * ∏ i, (t i : ℤ) ^ (e i).val) =
       if t = σ then 2 ^ Fintype.card J else 0 := by
   classical
@@ -120,7 +125,7 @@ noncomputable def queryPolynomial {R : Type*} [CommSemiring R] {J : Type*} [Fint
   ∏ i, Q i ^ (e i).val
 
 /-- The sign of a query polynomial is the product of the corresponding powers of signs. -/
-theorem sign_eval_queryPolynomial {J : Type*} [Fintype J]
+private theorem sign_eval_queryPolynomial {J : Type*} [Fintype J]
     (Q : J → ℝ[X]) (e : J → Fin 3) (x : ℝ) :
     (SignType.sign ((queryPolynomial Q e).eval x) : ℤ) =
       ∏ i, (SignType.sign ((Q i).eval x) : ℤ) ^ (e i).val := by

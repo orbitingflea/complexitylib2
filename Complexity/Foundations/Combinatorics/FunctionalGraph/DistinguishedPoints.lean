@@ -81,10 +81,12 @@ def runStages {β : Type v} (step : ℕ → β → β) : ℕ → β → β
   | 0, b => b
   | k + 1, b => step k (runStages step k b)
 
+/-- Running no stages leaves the state unchanged. -/
 @[simp]
 theorem runStages_zero {β : Type v} (step : ℕ → β → β) (b : β) :
     runStages step 0 b = b := rfl
 
+/-- Running `k + 1` stages runs the first `k` and then stage `k`. -/
 @[simp]
 theorem runStages_succ {β : Type v} (step : ℕ → β → β) (k : ℕ) (b : β) :
     runStages step (k + 1) b = step k (runStages step k b) := rfl
@@ -117,7 +119,7 @@ def scanStep (K i : ℕ) (σ : ScanState α) : ScanState α where
 def scan (K : ℕ) (x : α) : ScanState α :=
   runStages (scanStep f H K) (K + 1) ⟨x, false, 0, x⟩
 
-theorem scan_invariant (K : ℕ) (x : α) :
+private theorem scan_invariant (K : ℕ) (x : α) :
     ∀ k ≤ K + 1,
       (runStages (scanStep f H K) k ⟨x, false, 0, x⟩).u = f^[min k K] x ∧
       ((runStages (scanStep f H K) k ⟨x, false, 0, x⟩).found = true ↔
@@ -202,6 +204,7 @@ end Scan
 def correctionStep (d i : ℕ) (v : α) : α :=
   if d ≤ i then f v else v
 
+/-- Running `k` correction stages applies `f` exactly `k - d` times. -/
 theorem correction_run (d k : ℕ) (v : α) :
     runStages (correctionStep f d) k v = f^[k - d] v := by
   induction k with
@@ -242,7 +245,7 @@ def periodStep (y : α) (i : ℕ) (σ : PeriodState α) : PeriodState α where
 def periodWalk (K : ℕ) (y : α) : PeriodState α :=
   runStages (periodStep f y) K ⟨y, false, 1⟩
 
-theorem periodWalk_invariant (y : α) (k : ℕ) :
+private theorem periodWalk_invariant (y : α) (k : ℕ) :
     (runStages (periodStep f y) k ⟨y, false, 1⟩).w = f^[k] y ∧
     ((runStages (periodStep f y) k ⟨y, false, 1⟩).found = true ↔
       ∃ j, 1 ≤ j ∧ j ≤ k ∧ f^[j] y = y) ∧
@@ -313,6 +316,7 @@ end Period
 def walkStep (r i : ℕ) (v : α) : α :=
   if i < r then f v else v
 
+/-- Running `k` cycle-walk stages applies `f` exactly `min r k` times. -/
 theorem walk_run (r k : ℕ) (v : α) :
     runStages (walkStep f r) k v = f^[min r k] v := by
   induction k with

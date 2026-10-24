@@ -57,6 +57,7 @@ membership with a tidy verifier (`Turing.MultiTapeTM.ComputableTidilyInPolyTime`
   padding by `false` follows it, verifies with certificates of exactly that length.
 * `Cslib.Complexity.IsVerifier.guard`: guarding a verifier by a test on instances verifies the
   members that pass the test.
+* `Cslib.Complexity.NP_eq_coNP_iff_coNP_subset_NP`: `NP = coNP` exactly when `coNP ⊆ NP`.
 
 ## References
 
@@ -78,7 +79,7 @@ def IsVerifier (enc : α ↪ List Bool) (p : Polynomial ℕ) (V : α × List Boo
   ∀ a, a ∈ A ↔ ∃ w : List Bool, w.length = p.eval (enc a).length ∧ V (a, w) = true
 
 /-- The problems with polynomial-time verifiers and polynomially long certificates, with respect to
-the encoding `enc` of instances. -/
+the encoding `enc` of instances [Arora and Barak, Definition 2.1][AroraBarak09]. -/
 def NP (enc : α ↪ List Bool) : Set (Set α) :=
   {A | ∃ (p : Polynomial ℕ) (V : α × List Bool → Bool),
     ComputableInPolyTime V (encPair enc encBits) encBool ∧ IsVerifier enc p V A}
@@ -136,11 +137,21 @@ theorem IsVerifier.guard {c : α → Bool} (h : IsVerifier enc p V A) :
 
 end Padding
 
-/-- The problems whose complements are in `NP`. -/
+/-- The problems whose complements are in `NP` [Arora and Barak, Section 2.6][AroraBarak09]. -/
 def coNP (enc : α ↪ List Bool) : Set (Set α) := {A | Aᶜ ∈ NP enc}
 
 theorem mem_coNP {enc : α ↪ List Bool} {A : Set α} : A ∈ coNP enc ↔ Aᶜ ∈ NP enc := Iff.rfl
 
 theorem coNP_eq_preimage_compl_NP (enc : α ↪ List Bool) : coNP enc = compl ⁻¹' NP enc := rfl
+
+/-- `NP = coNP`, for problems with every encoding of their instances, exactly when `coNP ⊆ NP`
+for all of them. -/
+theorem NP_eq_coNP_iff_coNP_subset_NP :
+    (∀ {γ : Type} (encC : γ ↪ List Bool), NP encC = coNP encC) ↔
+      ∀ {γ : Type} (encC : γ ↪ List Bool), coNP encC ⊆ NP encC := by
+  refine ⟨fun h _ encC => (h encC).ge, fun h _ encC => ?_⟩
+  refine Set.Subset.antisymm (fun A hA => ?_) (h encC)
+  rw [mem_coNP]
+  exact h encC (by rwa [mem_coNP, compl_compl])
 
 end Cslib.Complexity

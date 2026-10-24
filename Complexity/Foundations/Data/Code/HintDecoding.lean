@@ -38,7 +38,9 @@ points (`Cslib.Code.card_hintDecode_ne_le`).
 ## Main definitions
 
 * `Cslib.Code.coeffWeight`: the weights extracting a coefficient from the values on all of `F`.
+* `Cslib.Code.henselCoeff`: the coefficient chosen by one Newton step.
 * `Cslib.Code.henselTrunc`: the Newton iteration from a hint.
+* `Cslib.Code.henselSeq`: the coefficients chosen by the Newton iteration.
 * `Cslib.Code.henselValue`: the value at `0` of the lifted root.
 * `Cslib.Code.hintDecode`: Sudan decoding with a hint.
 
@@ -88,12 +90,12 @@ theorem sum_coeffWeight_mul_eval {R : F[X]} (hR : R.natDegree < Fintype.card F) 
 /-! ### Newton iteration -/
 
 /-- The polynomial `Q(X + τ, A(X))`. -/
-noncomputable def shiftEval (Q : F[X][Y]) (τ : F) (A : F[X]) : F[X] :=
+private noncomputable def shiftEval (Q : F[X][Y]) (τ : F) (A : F[X]) : F[X] :=
   (Q.map (taylorAlgHom τ : F[X] →+* F[X])).eval A
 
 omit [Fintype F] [DecidableEq F] in
 /-- The value of `Q(X + τ, A(X))` at `s` is `Q(s + τ, A(s))`. -/
-theorem eval_shiftEval (Q : F[X][Y]) (τ : F) (A : F[X]) (s : F) :
+private theorem eval_shiftEval (Q : F[X][Y]) (τ : F) (A : F[X]) (s : F) :
     (shiftEval Q τ A).eval s = Q.evalEval (s + τ) (A.eval s) := by
   rw [shiftEval, eval_map, ← coe_evalRingHom, hom_eval₂, coe_evalRingHom]
   have : (evalRingHom s).comp (taylorAlgHom τ : F[X] →+* F[X]) = evalRingHom (s + τ) :=

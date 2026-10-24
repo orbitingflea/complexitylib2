@@ -58,8 +58,6 @@ that instance when the verifier and certificate-length checks pass, and a fixed 
 
 ## Main results
 
-* `Cslib.Complexity.ProofSystem.pSimulates_iff_tidy`: p-simulation with a tidy polynomial-time
-  translation.
 * `Cslib.Complexity.ProofSystem.PSimulates.simulates`: p-simulation implies simulation; both are
   preorders.
 * `Cslib.Complexity.ProofSystem.PolynomiallyBounded.of_simulates`: a proof system simulating a
@@ -70,7 +68,6 @@ that instance when the verifier and certificate-length checks pass, and a fixed 
   exactly when a `coNP`-complete set has a polynomially bounded proof system.
 * `Cslib.Complexity.ProofSystem.NP_eq_coNP_iff_exists_polynomiallyBounded`: `NP = coNP` exactly
   when `UNSAT` has a polynomially bounded proof system [CookReckhow1979].
-* `Cslib.Complexity.NP_eq_coNP_iff_coNP_subset_NP`: `NP = coNP` exactly when `coNP ⊆ NP`.
 
 ## References
 
@@ -86,16 +83,6 @@ namespace Cslib.Complexity
 open Turing.MultiTapeTM Turing.MultiTapeTM.ComputableTidilyInPolyTime
 
 variable {α : Type} {enc : α ↪ List Bool} {L : Set α}
-
-/-- `NP = coNP`, for problems with every encoding of their instances, exactly when `coNP ⊆ NP`
-for all of them. -/
-theorem NP_eq_coNP_iff_coNP_subset_NP :
-    (∀ {γ : Type} (encC : γ ↪ List Bool), NP encC = coNP encC) ↔
-      ∀ {γ : Type} (encC : γ ↪ List Bool), coNP encC ⊆ NP encC := by
-  refine ⟨fun h _ encC => (h encC).ge, fun h _ encC => ?_⟩
-  refine Set.Subset.antisymm (fun A hA => ?_) (h encC)
-  rw [mem_coNP]
-  exact h encC (by rwa [mem_coNP, compl_compl])
 
 /-- A **proof system** for `L` [CookReckhow1979]: a function, computable in polynomial time, from
 words onto `L`. A word `π` is a proof of `P π`; every word proves a member of `L`, and every member
@@ -139,13 +126,6 @@ def Simulates (Q P : ProofSystem enc L) : Prop :=
 every proof for `P` into a proof for `Q` of the same member. -/
 def PSimulates (Q P : ProofSystem enc L) : Prop :=
   ∃ t : List Bool → List Bool, ComputableInPolyTime t encBits encBits ∧ ∀ π, Q (t π) = P π
-
-/-- `Cslib.Complexity.ProofSystem.PSimulates` with a tidy polynomial-time translation, for proofs
-that compose machines. -/
-theorem pSimulates_iff_tidy {Q P : ProofSystem enc L} : Q.PSimulates P ↔
-    ∃ t : List Bool → List Bool, ComputableTidilyInPolyTime t encBits encBits ∧
-      ∀ π, Q (t π) = P π := by
-  simp only [PSimulates, computableInPolyTime_iff_computableTidilyInPolyTime]
 
 namespace Simulates
 
@@ -241,7 +221,7 @@ def verifierAccepts (D : Decoder enc) (p : Polynomial ℕ) (V : α × List Bool 
 decoded into an instance and a certificate using the total decoder `D`, `unframe` and `dropFrame`.
 It proves the decoded instance if `V` accepts and the certificate has the prescribed length;
 otherwise it proves `a₀`. A malformed frame can pass these checks. -/
-def ofVerifier (D : Decoder enc) (hV : ComputableTidilyInPolyTime V (encPair enc encBits) encBool)
+def ofVerifier (D : Decoder enc) (hV : ComputableInPolyTime V (encPair enc encBits) encBool)
     (hVL : IsVerifier enc p V L) {a₀ : α} (ha₀ : a₀ ∈ L) : ProofSystem enc L where
   toFun π := if verifierAccepts D p V π then verifierInstance D π else a₀
   computable := by
@@ -252,7 +232,8 @@ def ofVerifier (D : Decoder enc) (hV : ComputableTidilyInPolyTime V (encPair enc
         (fun π => p.eval (enc (verifierInstance D π)).length) encBits encUnary :=
       (unary_eval p).comp ((encoding_length enc).comp hi)
     have hacc : ComputableTidilyInPolyTime (verifierAccepts D p V) encBits encBool :=
-      .bool_and' (hV.comp (hi.prod .dropFrame)) (.decide_eq' (length_bits.comp .dropFrame) hlen)
+      .bool_and' (hV.tidy.comp (hi.prod .dropFrame))
+        (.decide_eq' (length_bits.comp .dropFrame) hlen)
     exact (hacc.cond hi (.const a₀)).computableInPolyTime
   range_eq := by
     refine Set.Subset.antisymm ?_ fun a ha => ?_
@@ -274,7 +255,7 @@ def ofVerifier (D : Decoder enc) (hV : ComputableTidilyInPolyTime V (encPair enc
 /-- A framed encoded instance followed by an accepted certificate of the prescribed length proves
 that instance. -/
 theorem ofVerifier_frame_append (D : Decoder enc)
-    (hV : ComputableTidilyInPolyTime V (encPair enc encBits) encBool)
+    (hV : ComputableInPolyTime V (encPair enc encBits) encBool)
     (hVL : IsVerifier enc p V L) {a₀ : α} (ha₀ : a₀ ∈ L) {a : α} {w : List Bool}
     (hw : w.length = p.eval (enc a).length) (hVw : V (a, w) = true) :
     ofVerifier D hV hVL ha₀ (frame (enc a) ++ w) = a := by
@@ -288,7 +269,7 @@ theorem ofVerifier_frame_append (D : Decoder enc)
 /-- The proof system of a verifier is polynomially bounded: an instance `a` has a proof of length
 `2 * (enc a).length + 1 + p (enc a).length`. -/
 theorem polynomiallyBounded_ofVerifier (D : Decoder enc)
-    (hV : ComputableTidilyInPolyTime V (encPair enc encBits) encBool)
+    (hV : ComputableInPolyTime V (encPair enc encBits) encBool)
     (hVL : IsVerifier enc p V L) {a₀ : α} (ha₀ : a₀ ∈ L) :
     (ofVerifier D hV hVL ha₀).PolynomiallyBounded := by
   refine ⟨2 * .X + 1 + p, fun a ha => ?_⟩
@@ -303,7 +284,7 @@ theorem exists_polynomiallyBounded_iff_mem_NP (D : Decoder enc) (hL : L.Nonempty
     (∃ P : ProofSystem enc L, P.PolynomiallyBounded) ↔ L ∈ NP enc := by
   refine ⟨fun ⟨_, hP⟩ => hP.mem_NP, fun ⟨p, V, hV, hVL⟩ => ?_⟩
   obtain ⟨a₀, ha₀⟩ := hL
-  exact ⟨_, polynomiallyBounded_ofVerifier D hV.tidy hVL ha₀⟩
+  exact ⟨_, polynomiallyBounded_ofVerifier D hV hVL ha₀⟩
 
 /-! ### The theorem of Cook and Reckhow -/
 

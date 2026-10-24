@@ -36,6 +36,7 @@ argument and need only equality tests to evaluate.
 
 * `Cslib.Code.lagrangeWeight`, `Cslib.Code.lagrangeDecode`: interpolation along a line.
 * `Cslib.Code.maj3`, `Cslib.Code.majTree`: majorities of three and majority trees.
+* `Cslib.Code.tripleEquiv`: the splitting of `3 ^ (L + 1)` indices into three blocks of `3 ^ L`.
 
 ## Main results
 
@@ -127,7 +128,7 @@ variable {α : Type*} [DecidableEq α]
 def maj3 (a b c : α) : α := if a = b then a else c
 
 /-- If `maj3 a b c` misses `y`, then two of `a`, `b`, `c` miss `y`. -/
-theorem two_ne_of_maj3_ne {a b c y : α} (h : maj3 a b c ≠ y) :
+private theorem two_ne_of_maj3_ne {a b c y : α} (h : maj3 a b c ≠ y) :
     (a ≠ y ∧ b ≠ y) ∨ (a ≠ y ∧ c ≠ y) ∨ (b ≠ y ∧ c ≠ y) := by
   unfold maj3 at h
   split_ifs at h with hab

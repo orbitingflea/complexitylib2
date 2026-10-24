@@ -188,7 +188,7 @@ theorem ComputesTidily.comp {tm₁ : MultiTapePTM k₁ Bool State₁ Operation}
     (by omega)
 
 /-- Run `tm₁` and then `tm₂` on the same input, both padded to `max k₁ k₂` work tapes. -/
-noncomputable def appendPTM (tm₁ : MultiTapePTM k₁ Bool State₁ Operation)
+def appendPTM (tm₁ : MultiTapePTM k₁ Bool State₁ Operation)
     (tm₂ : MultiTapePTM k₂ Bool State₂ Operation) :
     MultiTapePTM (max k₁ k₂) Bool (State₁ ⊕ State₂) Operation :=
   (tm₁.extendTapes (Fin.castLEEmb (le_max_left k₁ k₂))).seq
@@ -244,12 +244,6 @@ theorem ComputesTidily.prefix {prep : MultiTapeTM k₁ Bool State₁}
   simpa only [pure_bind] using h
 
 /-! ### Conditional branching (`branch` and `itePTM`) -/
-
-@[deprecated (since := "2026-10-22")]
-alias mapActionState := MultiTapeMachine.Action.mapState
-
-@[deprecated (since := "2026-10-22")]
-alias mapConfigState := MultiTapeMachine.Config.mapState
 
 /-- Read the cell under the head of work tape `i`, moving no head and writing nothing, then run
 `tm₁` if the cell is not blank and `tm₂` if it is. -/

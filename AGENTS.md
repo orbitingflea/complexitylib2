@@ -128,7 +128,12 @@ tooling.
 - Check affected `ROADMAP.md`, `abstracts/catalogue.json`, `UPSTREAM.md` and other documentation.
   Preserve source credit and the distinction between a completed milestone and its open objective.
 - Merge only with maintainer authority, required validation and independent review of the current
-  revision. Close completed issues and link any remaining work.
+  revision. Shepherding approved PRs through the merge queue and keeping the queue moving is a
+  coordinator responsibility: do not treat a PR as done when it is merely queued. Monitor queued
+  batches until they land on `main`, rebase or re-queue PRs ejected by conflicts or transient
+  failures, sequence broad tree-wide refactors so they do not stall smaller PRs behind cold cache
+  rebuilds, and diagnose and fix merge-queue or CI bottlenecks when the queue jams. Close
+  completed issues and link any remaining work once the change lands.
 - For your own implementation, follow the worker rules and obtain another coordinator's review.
   Changing roles or delegating authorship never makes an author eligible to approve their work.
 
@@ -161,6 +166,10 @@ objects, refs, worktree registrations, or metadata belonging to another session.
 
 Keep mutable build outputs separate. Integration experiments must be contained so their failure
 cannot damage the user's checkout or another worker's repository.
+
+Machines are shared between agents. Stop only processes and tasks you started, by PID or task
+ID; never use pattern-based kills such as `pkill -f`, which also hit other agents' builds. Keep
+scratch files under a directory or name unique to your agent.
 
 ### Placement and reuse
 
@@ -354,11 +363,11 @@ The Lean definitions and statements are the source of truth; PDFs are generated 
 proof bodies omitted. There is no separately maintained paper/TeX index.
 
 Selection has a higher bar than inclusion in the library: a headline must be a substantial proved
-endpoint with conventional, inspectable semantics, satisfiable hypotheses, explicit models and
-encodings, and honest quantitative bounds. Partial constructions, conditional substitutes for a
-standard theorem, bounded experiments and helper APIs do not become headlines by acquiring an
-abstract. Prefer a small coherent selection. Preserve Samuel's editorial choices and source credit;
-keep outstanding endpoints in `ROADMAP.md`.
+endpoint with conventional, inspectable semantics, hypotheses that are satisfiable or are standard
+open assumptions stated as such, explicit models and encodings, and honest quantitative bounds.
+Partial constructions, conditional substitutes for a standard theorem, bounded experiments and
+helper APIs do not become headlines by acquiring an abstract. Prefer a small coherent selection.
+Preserve Samuel's editorial choices and source credit; keep outstanding endpoints in `ROADMAP.md`.
 
 Before opening or updating **every AI-authored PR**, assess the selected abstracts against the
 final Lean changes. Update affected statements, definitions, scope notes and catalogue entries.

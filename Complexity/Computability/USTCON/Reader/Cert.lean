@@ -253,7 +253,7 @@ private theorem labelOfNat_eq (w : ℕ) :
 
 /-- **The label of a digit** is computed by a finite-state fold over the binary digits of `w`,
 within work space linear in their number. -/
-theorem labelOfNat_inSpace :
+private theorem labelOfNat_inSpace :
     ComputableTidilyInSpace labelOfNat encNat encLab fun w => (encNat w).length := by
   have hfold := of_inO (ComputableTidilyInO.foldl_bits_finite
     (encFinite (ZMod numLabels × ZMod numLabels)) modStep (0, 1))
@@ -468,16 +468,21 @@ private theorem stepT_inSpace : ComputableTidilyInSpace stepT encStepIn (encPair
 noncomputable def stateBudget (q : State) : ℕ :=
   stepBudget (q.toTuple, false)
 
-theorem stepBudget_bool (x : Tuple) (b : Bool) : stepBudget (x, b) = stepBudget (x, false) := by
+private theorem stepBudget_bool (x : Tuple) (b : Bool) : stepBudget (x, b) = stepBudget
+    (x, false) := by
   cases b <;> simp [stepBudget, encBool_apply]
 
+/-- The halting test of `machine` is tidily computable within the space budget of the state. -/
 theorem halt_inSpace : ComputableTidilyInSpace machine.halt encState encBool stateBudget :=
   (haltT_inSpace.of_encIn_eq State.toTuple fun _ ↦ rfl).of_enc_eq fun _ ↦ rfl
 
+/-- The address of `machine` is tidily computable within the space budget of the state. -/
 theorem addr_inSpace : ComputableTidilyInSpace machine.addr encState (encOption encNat)
     stateBudget :=
   (addrT_inSpace.of_encIn_eq State.toTuple fun _ ↦ rfl).of_enc_eq fun _ ↦ rfl
 
+/-- The step of `machine`, on a state and the bit read, is tidily computable within the space
+budget of the state. -/
 theorem step_inSpace :
     ComputableTidilyInSpace (fun p : State × Bool => machine.step p.1 p.2)
       (encPair encState encBool) (encPair encState encBits) fun p => stateBudget p.1 := by

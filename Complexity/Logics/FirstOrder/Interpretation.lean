@@ -210,7 +210,7 @@ noncomputable def onBoundedFormula : ∀ {n : ℕ}, L'.BoundedFormula α n → L
 omit [L'.IsRelational] [Finite ι] in
 /-- Under `snocVar`, the values of the coordinates of a sequence of elements extended by `y` are
 those of the extended sequence. -/
-theorem sumElim_comp_snocVar {n : ℕ} (v : α → I.Model M) (xs : Fin n → I.Model M)
+private theorem sumElim_comp_snocVar {n : ℕ} (v : α → I.Model M) (xs : Fin n → I.Model M)
     (y : I.Model M) :
     Sum.elim (fun p : (α ⊕ Fin n) × ι => (Sum.elim v xs p.1).1 p.2) y.1 ∘ snocVar =
       fun p => (Sum.elim v (Fin.snoc xs y) p.1).1 p.2 := by
@@ -324,7 +324,7 @@ variable [L''.IsRelational]
 
 /-- **The composite of interpretations** interprets, up to isomorphism, the structure interpreted
 by `J` in the structure interpreted by `I`. -/
-noncomputable def compEquiv [Finite κ] (J : Interpretation L' L'' κ)
+def compEquiv [Finite κ] (J : Interpretation L' L'' κ)
     (I : Interpretation L L' ι) : J.Model (I.Model M) ≃[L''] (J.comp I).Model M where
   toFun x := ⟨fun p => (x.1 p.1).1 p.2, by
     simp only [comp, Formula.realize_inf, Formula.realize_iInf, Formula.realize_relabel]

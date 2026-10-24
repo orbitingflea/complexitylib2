@@ -96,6 +96,7 @@ degree `a + w * b` at most `D`. For `w ≥ 1` the bound `b ≤ D` holds for all 
 def monomials (w D : ℕ) : Finset (ℕ × ℕ) :=
   {ab ∈ range (D + 1) ×ˢ range (D + 1) | ab.1 + w * ab.2 ≤ D}
 
+/-- `(a, b)` is in `monomials w D` exactly when `a ≤ D`, `b ≤ D` and `a + w * b ≤ D`. -/
 theorem mem_monomials {w D : ℕ} {ab : ℕ × ℕ} :
     ab ∈ monomials w D ↔ ab.1 ≤ D ∧ ab.2 ≤ D ∧ ab.1 + w * ab.2 ≤ D := by
   simp only [monomials, mem_filter, mem_product, mem_range, Nat.lt_succ_iff, and_assoc]
@@ -214,7 +215,7 @@ theorem IsInterpolant.natDegree_mul_sub_one_le (hQ : IsInterpolant α w k D Q) :
   omega
 
 /-- If `P` has degree less than `k`, then `Q(X, P(X))` has degree at most `D`. -/
-theorem IsInterpolant.natDegree_eval_le (hQ : IsInterpolant α w k D Q) {P : F[X]}
+private theorem IsInterpolant.natDegree_eval_le (hQ : IsInterpolant α w k D Q) {P : F[X]}
     (hP : P.degree < k) : (Q.eval P).natDegree ≤ D := by
   refine natDegree_eval_le_of_weighted (d := k - 1) ?_ hQ.weightedDegree_le
   rcases eq_or_ne P 0 with rfl | hP0

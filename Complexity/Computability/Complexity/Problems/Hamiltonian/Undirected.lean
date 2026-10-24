@@ -92,7 +92,7 @@ private theorem eq_of_idxOf_eq {G : Graph} {u v : ℕ} (hv : v ∈ G.1)
   ((List.idxOf_inj hv).1 h.symm).symm
 
 /-- Gadget vertices of a declared vertex determine the vertex and the position in the gadget. -/
-theorem splitVertex_eq_splitVertex_iff_of_mem {G : Graph} {u v r r' : ℕ} (hv : v ∈ G.1) :
+private theorem splitVertex_eq_splitVertex_iff_of_mem {G : Graph} {u v r r' : ℕ} (hv : v ∈ G.1) :
     G.splitVertex u r = G.splitVertex v r' ↔ u = v ∧ r = r' := by
   rw [splitVertex_eq_splitVertex_iff]
   exact ⟨fun h => ⟨eq_of_idxOf_eq hv h.1, h.2⟩, fun h => ⟨h.1 ▸ rfl, h.2⟩⟩
@@ -588,7 +588,7 @@ theorem polyTimeReducible_DirHamCycle_HamCycle :
 theorem HamPath_npHard : NPHard (encPair encGraph (encPair encNat encNat)) HamPath :=
   DirHamPath_npHard.trans polyTimeReducible_DirHamPath_HamPath
 
-/-- **`HamPath` is NP-complete.** -/
+/-- **`HamPath` is NP-complete** [Sipser, Theorem 7.55][Sipser2013]. -/
 theorem HamPath_npComplete : NPComplete (encPair encGraph (encPair encNat encNat)) HamPath :=
   ⟨HamPath.mem_NP, HamPath_npHard⟩
 
@@ -596,7 +596,7 @@ theorem HamPath_npComplete : NPComplete (encPair encGraph (encPair encNat encNat
 theorem HamCycle_npHard : NPHard encGraph HamCycle :=
   DirHamCycle_npHard.trans polyTimeReducible_DirHamCycle_HamCycle
 
-/-- **`HamCycle` is NP-complete.** -/
+/-- **`HamCycle` is NP-complete** [Karp1972]. -/
 theorem HamCycle_npComplete : NPComplete encGraph HamCycle :=
   ⟨HamCycle.mem_NP, HamCycle_npHard⟩
 

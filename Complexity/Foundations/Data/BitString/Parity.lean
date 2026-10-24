@@ -7,7 +7,8 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Foundations.Data.BitString.Basic
+public import Cslib.Foundations.Data.BitString
+public import Mathlib.Algebra.Ring.BooleanRing
 public import Mathlib.Algebra.BigOperators.Group.Finset.Defs
 public import Mathlib.Algebra.Group.Hom.Defs
 public import Mathlib.Data.Finset.Card
@@ -19,7 +20,6 @@ public import Mathlib.Data.Fintype.Pi
 public import Mathlib.Logic.Function.Const
 public import Mathlib.Logic.Function.DependsOn
 import Mathlib.Algebra.BigOperators.Ring.Finset
-import Mathlib.Algebra.Ring.BooleanRing
 import Mathlib.Data.Fintype.BigOperators
 import Mathlib.GroupTheory.Index
 
@@ -34,7 +34,7 @@ In the Boolean ring `Bool`, where `a + b = (a ^^ b)`, the parity on `s` is the s
 `s` (`parityOn_eq_sum`), so it splits over disjoint unions (`parityOn_union`), the parity on a
 symmetric difference is the exclusive or of the parities (`parityOn_symmDiff`), and it is additive
 for the coordinatewise sum of bit strings (`parityOn_add`, bundled as `parityOnAddMonoidHom`). Bit
-strings are added with `+`, under which each is its own negative (`BitString.add_self`), and
+strings are added with `+`, under which each is its own negative (`BooleanRing.add_self`), and
 single bits with `^^`. Flipping one of the bits negates the parity (`parityOn_update_not`), so
 the parity of a nonempty set of bits is not constant and depends on each of them; being additive,
 it then takes each value on exactly half of the inputs (`card_filter_parityOn_eq`).
@@ -94,10 +94,12 @@ theorem parityOn_eq_sum (s : Finset ι) (x : ι → Bool) : parityOn s x = ∑ i
   rw [sum_congr rfl fun i _ => h (x i), sum_boole, natCast_bool]
   rfl
 
+/-- The parity on the empty set is `false`. -/
 @[simp] theorem parityOn_empty (x : ι → Bool) : parityOn ∅ x = false := by
   rw [parityOn_eq_sum, sum_empty]
   rfl
 
+/-- The parity on a singleton `{i}` is the bit `x i`. -/
 @[simp] theorem parityOn_singleton (i : ι) (x : ι → Bool) : parityOn {i} x = x i := by
   rw [parityOn_eq_sum, sum_singleton]
 
@@ -122,6 +124,7 @@ def parityOnAddMonoidHom (s : Finset ι) : (ι → Bool) →+ Bool where
     exact sum_const_zero
   map_add' := parityOn_add s
 
+/-- `parityOnAddMonoidHom s` evaluates to `parityOn s`. -/
 @[simp] theorem parityOnAddMonoidHom_apply (s : Finset ι) (x : ι → Bool) :
     parityOnAddMonoidHom s x = parityOn s x :=
   rfl
@@ -130,16 +133,19 @@ section DecidableEq
 
 variable [DecidableEq ι] {s t : Finset ι} {i : ι}
 
+/-- Adding a new position `i ∉ s` to the set exclusive-ors the bit `x i` into the parity. -/
 theorem parityOn_insert (hi : i ∉ s) (x : ι → Bool) :
     parityOn (insert i s) x = (x i ^^ parityOn s x) := by
   simp only [parityOn_eq_sum]
   exact sum_insert hi
 
+/-- For `i ∈ s`, the parity on `s` is `x i` exclusive-or the parity on `s.erase i`. -/
 theorem parityOn_eq_xor_erase (hi : i ∈ s) (x : ι → Bool) :
     parityOn s x = (x i ^^ parityOn (s.erase i) x) := by
   simp only [parityOn_eq_sum]
   exact (add_sum_erase s x hi).symm
 
+/-- Changing a bit outside `s` does not change the parity on `s`. -/
 theorem parityOn_update_of_notMem (hi : i ∉ s) (x : ι → Bool) (b : Bool) :
     parityOn s (update x i b) = parityOn s x :=
   parityOn_congr fun _ hj => update_of_ne (ne_of_mem_of_not_mem hj hi) _ _

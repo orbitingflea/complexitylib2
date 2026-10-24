@@ -54,7 +54,8 @@ namespace Cslib.Complexity
 open Cslib.Logic.PL Turing.MultiTapeTM
 
 /-- The satisfiable formulas all of whose clauses have exactly three literals, not necessarily
-distinct. -/
+distinct. The 3-satisfiability of [Garey and Johnson, Problem LO2][GareyJohnson1979] requires
+them to be distinct. -/
 def ExactThreeSAT : Set (CNF ℕ) := {φ | (∀ c ∈ φ, c.length = 3) ∧ φ.Satisfiable}
 
 namespace ExactThreeSAT
@@ -66,7 +67,7 @@ def padClause (c : Clause ℕ) : Clause ℕ :=
   else if c.length = 2 then c ++ [c.headD (0, true)] else c
 
 /-- Padding a clause neither adds nor removes literals. -/
-theorem mem_padClause (c : Clause ℕ) (l : Literal ℕ) : l ∈ padClause c ↔ l ∈ c := by
+private theorem mem_padClause (c : Clause ℕ) (l : Literal ℕ) : l ∈ padClause c ↔ l ∈ c := by
   rcases c with _ | ⟨a, _ | ⟨b, _ | ⟨d, t⟩⟩⟩
   · simp [padClause]
   · simp [padClause]
@@ -77,7 +78,7 @@ theorem mem_padClause (c : Clause ℕ) (l : Literal ℕ) : l ∈ padClause c ↔
   · simp [padClause]
 
 /-- Padding a clause does not shorten it. -/
-theorem length_le_length_padClause (c : Clause ℕ) : c.length ≤ (padClause c).length := by
+private theorem length_le_length_padClause (c : Clause ℕ) : c.length ≤ (padClause c).length := by
   unfold padClause
   split_ifs <;> simp
 
