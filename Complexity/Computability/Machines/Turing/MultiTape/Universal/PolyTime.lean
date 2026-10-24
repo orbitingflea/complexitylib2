@@ -10,7 +10,8 @@ module
 public import Complexity.Computability.Machines.Turing.MultiTape.Universal.ResourceBound
 public import Complexity.Computability.Machines.Turing.MultiTape.Universal.Decode
 public import Complexity.Computability.Machines.Turing.MultiTape.Universal.Compose
-public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 
@@ -41,12 +42,17 @@ single bit, independently of hierarchy theorems and Ladner's language.
   and output size.
 * `Turing.MultiTapeTM.Universal.computableTidilyInPolyTime_decodeDesc`,
   `Turing.MultiTapeTM.Universal.computableTidilyInPolyTime_map_eBit`,
-  `Turing.MultiTapeTM.Universal.computableTidilyInPolyTime_eBit`: polynomial-time description
-  decoding and bit coding.
+  `Turing.MultiTapeTM.Universal.computableTidilyInPolyTime_eBit`,
+  `Turing.MultiTapeTM.Universal.computableInPolyTime_decodeDesc`,
+  `Turing.MultiTapeTM.Universal.computableInPolyTime_map_eBit`,
+  `Turing.MultiTapeTM.Universal.computableInPolyTime_eBit`,
+  `Turing.MultiTapeTM.Universal.computableInPolyTime_map_ne_zero`: polynomial-time description
+  decoding, bit coding, and output-symbol decoding.
 
 * `Turing.MultiTapeTM.Universal.universal_bounds_unary`: the time and space of the universal
   function, polynomially in the length of its input with the number of steps in unary.
-* `Turing.MultiTapeTM.Universal.computableTidilyInPolyTime_universal`: the universal function,
+* `Turing.MultiTapeTM.Universal.computableTidilyInPolyTime_universal`,
+  `Turing.MultiTapeTM.Universal.computableInPolyTime_universal`: the universal function,
   with its number of steps in unary, is polynomial-time.
 
 ## References
@@ -219,5 +225,43 @@ theorem computableTidilyInPolyTime_universal :
       (PolyBounded.of_forall_le 100025 8 fun i => (universal_bounds_unary i).1))
     ((PolyBounded.of_forall_le 1 d fun _ => by simp).add
       (PolyBounded.of_forall_le 205 3 fun i => (universal_bounds_unary i).2))
+
+/-! ### Plain `ComputableInPolyTime` wrappers for the universal simulator -/
+
+/-- Plain polynomial-time certificate for `decodeDesc`. -/
+@[fun_prop]
+theorem computableInPolyTime_decodeDesc :
+    ComputableInPolyTime decodeDesc encBits eDesc :=
+  .of_tidy computableTidilyInPolyTime_decodeDesc
+
+/-- Plain polynomial-time certificate for coding a bit string as unary symbol numbers. -/
+@[fun_prop]
+theorem computableInPolyTime_map_eBit :
+    ComputableInPolyTime (fun w : List Bool => w.map eBit) encBits (encList encUnary) :=
+  .of_tidy computableTidilyInPolyTime_map_eBit
+
+/-- Plain polynomial-time certificate for coding a single bit as a unary symbol number. -/
+@[fun_prop]
+theorem computableInPolyTime_eBit :
+    ComputableInPolyTime (fun b : Bool => eBit b) encBool encUnary :=
+  .of_tidy computableTidilyInPolyTime_eBit
+
+/-- Decoding a list of unary symbol numbers to bits via `(· != 0)` is computable in polynomial
+time. -/
+@[fun_prop]
+theorem computableInPolyTime_map_ne_zero :
+    ComputableInPolyTime (fun l : List ℕ => l.map (· != 0)) (encList encUnary) encBits := by
+  have hbit : ComputableTidilyInPolyTime (fun n : ℕ => n != 0) encUnary encBool := by
+    convert bool_not.comp ComputableTidilyInDegree.unary_isZero.computableTidilyInPolyTime using 1
+    funext n
+    cases n <;> rfl
+  exact .of_tidy (listToBits.comp (ComputableTidilyInPolyTime.map hbit))
+
+/-- Plain polynomial-time certificate for the universal simulator with a unary step budget. -/
+@[fun_prop]
+theorem computableInPolyTime_universal :
+    ComputableInPolyTime universal
+      (encPair eDesc (encPair (encList encUnary) encUnary)) eOut :=
+  .of_tidy computableTidilyInPolyTime_universal
 
 end Turing.MultiTapeTM.Universal

@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Init
+public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Option
 public import Complexity.Computability.Machines.Turing.MultiTape.Halting.Basic
 public import Complexity.Computability.Machines.Turing.MultiTape.Halting.Computable
 public import Complexity.Computability.Machines.Turing.MultiTape.Halting.Reduction
@@ -38,9 +39,14 @@ and mapping reductions with Mathlib's `Partrec`, `Computable`, `ComputablePred`,
 * `Turing.MultiTapeTM.primrec_runFor` and `MultiTapeTM.partrec_eval`: for every finite-state binary
   multi-tape Turing machine `tm : MultiTapeTM k Bool State`, `tm.runFor` is `Primrec₂` and `tm.eval`
   is `Partrec`.
-* `Turing.MultiTapeTM.IsComputable.computable`, `IsComputable.computable_bits`, and
-  `IsComputable.computable_bool`: every function satisfying `IsComputable f encIn encOut`
-  (with computable `encIn` and left-invertible `encOut`) is `Computable` in Mathlib's sense.
+* `Turing.MultiTapeTM.IsComputable.computable`, `IsComputable.computable_bits`,
+  `IsComputable.computable_bool`, `IsComputable.computable_option`,
+  `IsComputable.computable_option_bits`, and `ComputableInPolyTime.isComputable`: every function
+  satisfying `IsComputable f encIn encOut` (with computable `encIn` and left-invertible `encOut`)
+  is `Computable` in Mathlib's sense, and polynomial-time functions are `IsComputable`.
+* `Turing.MultiTapeTM.computable_frame`, `Turing.MultiTapeTM.primrec_encUnary`,
+  `Turing.MultiTapeTM.computable_encUnary`, and `Turing.MultiTapeTM.computable_encPair`:
+  Mathlib `Primrec`/`Computable` certificates for `frame`, `encUnary`, and `encPair`.
 * `Turing.MultiTapeTM.IsDecidable.computablePred` and `IsDecidable.computablePred_bits`: every set
   satisfying `MultiTapeTM.IsDecidable L enc` (with computable `enc`) satisfies Mathlib's
   `ComputablePred (· ∈ L)`.
@@ -683,6 +689,61 @@ theorem IsComputable.computable_bool {α : Type*} [Primcodable α]
   hf.computable hIn
     (Primrec.option_getD.comp Primrec.list_head? (Primrec.const false)).to_comp
     (fun _ => rfl)
+
+/-- Functions computable in polynomial time are computable (`IsComputable`). -/
+theorem ComputableInPolyTime.isComputable {α β : Type*} {f : α → β}
+    {encIn : α ↪ List Bool} {encMid : β ↪ List Bool}
+    (h : ComputableInPolyTime f encIn encMid) : IsComputable f encIn encMid :=
+  let ⟨_, _, _, h⟩ := h
+  h.2.isComputable
+
+/-- Bit-word framing (`frame`) is `Computable` in Mathlib's sense. -/
+theorem computable_frame : Computable frame :=
+  let ⟨_, h⟩ := ComputableTidilyInLinearTimeAndSpace.of_frame (f := frame) (encIn := encBits)
+    (encOut := encBits) (fun _ => rfl)
+  h.computableInTimeAndSpace.isComputable.computable_bits
+
+/-- Unary natural-number encoding (`encUnary`) is primitive recursive (`Primrec`). -/
+theorem primrec_encUnary : Primrec encUnary :=
+  (Primrec.list_map (Primrec.list_range.comp Primrec.id) (Primrec.const true).to₂).of_eq fun _ => by
+    simp
+
+/-- Unary natural-number encoding (`encUnary`) is `Computable` in Mathlib's sense. -/
+theorem computable_encUnary : Computable encUnary :=
+  primrec_encUnary.to_comp
+
+/-- If `encA` and `encB` are `Computable` in Mathlib's sense, then `encPair encA encB` is
+`Computable`. -/
+theorem computable_encPair {α β : Type} [Primcodable α] [Primcodable β]
+    {encA : α ↪ List Bool} {encB : β ↪ List Bool}
+    (hA : Computable encA) (hB : Computable encB) :
+    Computable (encPair encA encB) :=
+  (Primrec.list_append.to_comp.comp
+    (computable_frame.comp (hA.comp Computable.fst))
+    (hB.comp Computable.snd)).of_eq fun ⟨_, _⟩ => rfl
+
+/-- If `IsComputable f encIn (encOption encOut)`, `encIn` is `Computable`, and `decOut` is a
+computable left inverse of `encOut`, then `f` is `Computable` in Mathlib's sense. -/
+theorem IsComputable.computable_option {α β : Type*} [Primcodable α] [Primcodable β]
+    {f : α → Option β} {encIn : α ↪ List Bool} {encOut : β ↪ List Bool} {decOut : List Bool → β}
+    (hf : IsComputable f encIn (encOption encOut)) (hIn : Computable encIn)
+    (hOut : Computable decOut) (hdec : ∀ b, decOut (encOut b) = b) :
+    Computable f := by
+  have hdecOpt : Computable (fun w : List Bool =>
+      bif decide (w = []) then none else some (decOut w.tail)) :=
+    Computable.cond (Primrec.eq.comp Primrec.id (Primrec.const [])).decide.to_comp
+      (Computable.const none)
+      (Primrec.option_some.to_comp.comp (hOut.comp Primrec.list_tail.to_comp))
+  exact hf.computable hIn hdecOpt fun b => by cases b <;> simp [hdec]
+
+/-- Any `Option (List Bool)`-valued function `f : α → Option (List Bool)` that is
+`MultiTapeTM.IsComputable` with respect to a computable input encoding `encIn` and
+`encOption encBits` is `Computable` in Mathlib's sense. -/
+theorem IsComputable.computable_option_bits {α : Type*} [Primcodable α]
+    {f : α → Option (List Bool)} {encIn : α ↪ List Bool}
+    (hf : IsComputable f encIn (encOption encBits)) (hIn : Computable encIn) :
+    Computable f :=
+  hf.computable_option hIn Computable.id (fun _ => rfl)
 
 /-- Any set `L : Set α` that is `MultiTapeTM.IsDecidable` with respect to a computable encoding
 `enc` satisfies Mathlib's `ComputablePred (· ∈ L)`. -/
