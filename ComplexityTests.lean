@@ -120,6 +120,7 @@ import ComplexityTests.Crypto.HomomorphicRefresh
 import ComplexityTests.Crypto.KeyChainSecurity
 import ComplexityTests.Crypto.LeveledSecurity
 import ComplexityTests.Crypto.Lyubashevsky
+import ComplexityTests.Crypto.LyubashevskyNative
 import ComplexityTests.Crypto.MAC
 import ComplexityTests.Crypto.MerkleDamgard
 import ComplexityTests.Crypto.PlainConstructors
@@ -288,6 +289,7 @@ import ComplexityTests.OracleLowness
 import ComplexityTests.OraclePPT
 import ComplexityTests.OracleReplay
 import ComplexityTests.OracleRepresentation
+import ComplexityTests.OracleSemantics
 import ComplexityTests.OracleSpecSum
 import ComplexityTests.OrderedAddition
 import ComplexityTests.OrderedBitSum

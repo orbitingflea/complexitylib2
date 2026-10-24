@@ -356,6 +356,7 @@ public import Complexity.Computability.Circuit.Clique
 public import Complexity.Computability.Circuit.Complexity
 public import Complexity.Computability.Circuit.CompositionDepth
 public import Complexity.Computability.Circuit.Continuity
+public import Complexity.Computability.Circuit.Counting
 public import Complexity.Computability.Circuit.Cyclic
 public import Complexity.Computability.Circuit.Cyclic.Feedback
 public import Complexity.Computability.Circuit.Decomposable
@@ -1524,6 +1525,7 @@ public import Complexity.Crypto.Protocols.SigmaProtocol.FiatShamir
 public import Complexity.Crypto.Protocols.SigmaProtocol.Identification
 public import Complexity.Crypto.Protocols.SigmaProtocol.Linear
 public import Complexity.Crypto.Protocols.SigmaProtocol.Lyubashevsky
+public import Complexity.Crypto.Protocols.SigmaProtocol.Lyubashevsky.NativeExtract
 public import Complexity.Crypto.Protocols.SigmaProtocol.SchnorrIdentification
 public import Complexity.Crypto.Protocols.SigmaProtocol.SchnorrSignature
 public import Complexity.Crypto.Protocols.Signature.RandomOracle
@@ -1597,18 +1599,18 @@ public import Complexity.Foundations.Combinatorics.Expander.Mixing
 public import Complexity.Foundations.Combinatorics.Expander.Multigraph
 public import Complexity.Foundations.Combinatorics.Expander.Perm
 public import Complexity.Foundations.Combinatorics.Expander.Power
-public import Complexity.Foundations.Combinatorics.Expander.Products
 public import Complexity.Foundations.Combinatorics.Expander.Random
 public import Complexity.Foundations.Combinatorics.Expander.Reindex
 public import Complexity.Foundations.Combinatorics.Expander.Reingold
 public import Complexity.Foundations.Combinatorics.Expander.ReingoldVertex
+public import Complexity.Foundations.Combinatorics.Expander.Replacement
 public import Complexity.Foundations.Combinatorics.Expander.SimpleGraph
 public import Complexity.Foundations.Combinatorics.Expander.SlotGraph
+public import Complexity.Foundations.Combinatorics.Expander.Tensor
 public import Complexity.Foundations.Combinatorics.Expander.Tower
-public import Complexity.Foundations.Combinatorics.Expander.TowerBase
 public import Complexity.Foundations.Combinatorics.Expander.TowerFamily
 public import Complexity.Foundations.Combinatorics.Expander.Walk
-public import Complexity.Foundations.Combinatorics.Expander.Walk.WithInput
+public import Complexity.Foundations.Combinatorics.Expander.Zigzag
 public import Complexity.Foundations.Combinatorics.FiniteCover
 public import Complexity.Foundations.Combinatorics.FiniteCover.Basic
 public import Complexity.Foundations.Combinatorics.FunctionalGraph
@@ -1809,6 +1811,7 @@ public import Complexity.Languages.Probabilistic.RandomOracle
 public import Complexity.Languages.Probabilistic.RandomOracle.Probabilistic
 public import Complexity.Languages.Probabilistic.Repeat
 public import Complexity.Languages.Probabilistic.Selection
+public import Complexity.Languages.Probabilistic.Semantics
 public import Complexity.Languages.Probabilistic.Simulation
 public import Complexity.Languages.Probabilistic.Sum
 public import Complexity.Languages.Probabilistic.Transcript
