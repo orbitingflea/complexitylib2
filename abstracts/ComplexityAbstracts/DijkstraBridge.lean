@@ -22,6 +22,18 @@ transfers `Cslib.Algorithms.WordRAM.Dijkstra.logLinearStatement` to the walk dis
 
 * `walkDist_eq`: the walk distance is the library's distance.
 * `logLinear`: the library's main theorem, over unfolded adjacency lists and the walk distance.
+
+## Syntax in the imports
+
+The library's Dijkstra program is written in the word-RAM program syntax of
+`Complexity/Computability/WordRAM/Notation.lean`, so the import of the library theorem brings that
+file in (`LogLinear` → `HeapRelax` → `HeapSift` → `BinaryHeap` → `HeapProgram` → `Notation`).
+It declares the scoped term syntax `ram[`, `ram_block%` and `ram_stmt%` (active only after
+`open Cslib.WordRAM`), and globally the syntax category `wramStmt` with its statement forms,
+`wramBlock`, the `macro_rules` for those terms, and the `ram_eval` tactic with its `macro_rules`.
+This is a reviewed exception to the rule that bridge imports declare no syntax:
+`DijkstraAbstract.lean` opens no namespace and uses none of these tokens, so they do not change how
+it elaborates.
 -/
 
 namespace ComplexityAbstracts.DijkstraBridge
