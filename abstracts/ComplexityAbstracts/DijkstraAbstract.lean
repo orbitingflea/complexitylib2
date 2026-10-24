@@ -251,8 +251,9 @@ def Runs (w : ℕ) (p : Program r) : State r → State r → ℕ → Prop :=
 
 /-! ## Main theorem -/
 
-/-- **Dijkstra's algorithm.** Some program `p` of the word RAM above (over the exact basis), with
-some number `r` of registers, and some constant `K` satisfy the following.
+/-- **Dijkstra's algorithm.** Some program `p` of the word RAM defined in the representation
+details (over the exact basis), with some number `r` of registers, and some constant `K` satisfy
+the following.
 For every graph `G` with `n` vertices and `m` edges and largest weight `W`, every source `s`, and
 every word size `w` with `8 (n + m + 2) (W + 2) < 2 ^ w`: started on the input `encode G s`, the
 program runs for `steps` steps to a state `t` whose next instruction is `halt`, executes
