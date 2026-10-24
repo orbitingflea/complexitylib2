@@ -121,9 +121,10 @@ theorem encode_length : G.encode.length = G.n + 2 * G.m + 3 := by
     induction l with
     | nil => simp
     | cons a l ih =>
-      simp [ih]
+      simp only [List.flatMap_cons, List.cons_append, List.nil_append, List.length_cons, ih]
       ring
-  simp [encode, edgeWords_eq, h, length_edges]
+  simp only [encode, edgeWords_eq, List.length_cons, List.length_append, List.length_map,
+    List.length_range, h, length_edges, Nat.add_right_cancel_iff]
   ring
 
 /-- The offset of `u + 1` is the offset of `u` plus the length of the list of `u`. -/
