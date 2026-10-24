@@ -109,6 +109,7 @@ import ComplexityTests.Crypto.GSWNative
 import ComplexityTests.Crypto.GSWParameters
 import ComplexityTests.Crypto.GSWSampling
 import ComplexityTests.Crypto.GSWSecurity
+import ComplexityTests.Crypto.GameBounds
 import ComplexityTests.Crypto.HomomorphicEvaluation
 import ComplexityTests.Crypto.HomomorphicExample
 import ComplexityTests.Crypto.HomomorphicFixedKey
@@ -334,6 +335,7 @@ import ComplexityTests.PPTTactic
 import ComplexityTests.PPTruthTable
 import ComplexityTests.PRGStretch
 import ComplexityTests.Parameterized
+import ComplexityTests.PlainAutomationSupport
 import ComplexityTests.PolySpaceFold
 import ComplexityTests.PolyTimeContracts
 import ComplexityTests.PolyTimeMetadata
