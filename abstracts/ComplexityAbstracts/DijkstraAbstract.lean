@@ -18,13 +18,15 @@ below states this bound for a program on the word RAM, with the graph given by a
 
 The graph, its distances, the input and output layouts and the word-size condition are defined here
 from scratch. The machine is the library's word RAM `Cslib.WordRAM` over its standard basis of
-operations; the appendix says what a reader needs of it. To check that the theorem says what is
-claimed, a reader only needs to inspect the definitions and the theorem statement in this file. Lean
-checks the proof through `DijkstraBridge`, which proves that the distance here is the library's and
-applies the library theorem `Cslib.Algorithms.WordRAM.Dijkstra.logLinearStatement`.
-`#check_abstract` checks mechanically that every definition and theorem statement here depends only
-on this file, Lean, Mathlib, upstream CSLib, and the modules `Defs` and `Basis` of the library's
-word RAM.
+operations, defined in the library modules `Complexity/Computability/WordRAM/Defs.lean` and
+`Complexity/Computability/WordRAM/Basis.lean`. To check that the theorem says what is claimed, a
+reader must inspect the definitions and the theorem statement in this file, and the definitions that
+the statement uses from those two modules. The appendix describes the machine in words; it is a
+summary, not a replacement for those definitions. Lean checks the proof through `DijkstraBridge`,
+which proves that the distance here is the library's and applies the library theorem
+`Cslib.Algorithms.WordRAM.Dijkstra.logLinearStatement`. `#check_abstract` checks mechanically that
+every definition and theorem statement here depends only on this file, Lean, Mathlib, upstream
+CSLib, and the modules `Defs` and `Basis` of the library's word RAM.
 
 ## References
 
@@ -75,14 +77,16 @@ def maxWeight (G : Graph n) : ℕ :=
 
 The program reads the graph as a list of natural numbers: `n`, the source `s`, the `n + 1` offsets
 of the adjacency lists in an array of edges, and then the `m` edges, each as two numbers, its target
-and its weight. When it halts, the memory cell `outAddr G v` of each vertex `v` holds `0` when `v`
-is unreachable from `s` and `d + 1` when the distance from `s` to `v` is `d`. The machine is a word
-RAM with `w`-bit words, and the theorem asks `8 (n + m + 2) (W + 2) < 2 ^ w`, where `W` is the
-largest weight, so a word size of order `log (n + m + W)` suffices. Each instruction costs one unit
-of time, whatever its operands; the operations are those of the library's standard basis (`+`,
-truncated `-`, `*`, `/`, `%`, bitwise operations and shifts), and a value of `2 ^ w` or more makes
-the machine fault. The bound counts the instructions executed, the final `halt` included. The
-appendix gives the exact layout (`offset`, `encode`, `outAddr`, `encodeDist`) and the machine.
+and its weight. The input is placed in memory before the run at no cost, and all other memory cells
+and all registers start at `0`, so the program need not clear its arrays. When it halts, the memory
+cell `outAddr G v` of each vertex `v` holds `0` when `v` is unreachable from `s` and `d + 1` when
+the distance from `s` to `v` is `d`. The machine is a word RAM with `w`-bit words, and the theorem
+asks `8 (n + m + 2) (W + 2) < 2 ^ w`, where `W` is the largest weight, so a word size
+`w = O(log (n + m + W + 2))` suffices. Each instruction costs one unit of time, whatever its
+operands; the operations are those of the library's standard basis (`+`, truncated `-`, `*`, `/`,
+`%`, bitwise operations and shifts), and a constant or operation result of `2 ^ w` or more faults.
+The bound counts the instructions executed, the final `halt` included. The appendix gives the exact
+layout (`offset`, `encode`, `outAddr`, `encodeDist`) and the machine.
 -/
 
 /-! ## Representation details
@@ -117,8 +121,9 @@ def outAddr (G : Graph n) (v : Fin n) : ℕ := n + 2 * numEdges G + 4 + v
 noncomputable def encodeDist (d : ℕ∞) : ℕ := if d = ⊤ then 0 else d.toNat + 1
 
 /-! **The machine.** The statement uses five names of the library's word RAM (`Cslib.WordRAM`, in
-the allowlisted modules `Defs` and `Basis`). At word size `w`, a machine has registers `0, …, r - 1`
-and a memory cell at every address `a : ℕ`, all holding natural numbers.
+the allowlisted modules `Defs` and `Basis`, whose definitions are the reference; this appendix
+summarizes them). At word size `w`, a machine has registers `0, …, r - 1` and a memory cell at
+every address `a : ℕ`, all holding natural numbers.
 
 `Cslib.WordRAM.Program .standard r` is a program with `r` registers: a list of instructions,
 numbered from `0`. The instructions load a constant, copy a register, apply an operation of the

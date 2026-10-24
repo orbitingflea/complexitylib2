@@ -26,7 +26,9 @@ sources" (`abstracts/README.md`), the abstract has, in source order:
 1. the module docstring;
 2. "Graphs and distances": `Graph`, `IsWalk`, `dist`, `numEdges`, `maxWeight`;
 3. "Input, output and cost": prose only, stating in words the input, the output cells, the
-   word-size condition and the cost model;
+   word-size condition and the cost model, including that placing the input costs nothing
+   (`C/Defs.lean`, `Data.init`) and that all other memory and the registers start at `0`, which
+   removes an initialization term in `n` (`D/HeapStatement.lean:18-20`);
 4. "Representation details": `offset`, `encode`, `outAddr`, `encodeDist`, and the prose on the
    machine;
 5. "Main theorem": `dijkstra_logLinear` and the audit.
@@ -106,7 +108,8 @@ Compared with `LogLinearSpec` (`D/HeapStatement.lean:157-161`) and `LogLinearSta
 What the abstract does not say exactly or not self-contained:
 
 1. The machine is not defined in the file. It is read through the allowlisted modules `Defs` and
-   `Basis`; the file describes it in prose only.
+   `Basis`; the file describes it in prose only, and the module docstring names both modules as
+   sources a reader must inspect.
 2. The value returned by `halt` is not part of the result (as in the library).
 3. `Nat.log 2 n` is `⌊log₂ n⌋` for `n ≥ 1` and `0` for `n = 0`.
 4. The constants (`r = 27`, `K = 230`, `D/LogLinear.lean:421`) are hidden behind `∃`.
