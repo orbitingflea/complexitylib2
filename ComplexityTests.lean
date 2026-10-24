@@ -280,6 +280,7 @@ import ComplexityTests.OracleLowness
 import ComplexityTests.OraclePPT
 import ComplexityTests.OracleReplay
 import ComplexityTests.OracleRepresentation
+import ComplexityTests.OracleSpecSum
 import ComplexityTests.OrderedAddition
 import ComplexityTests.OrderedBitSum
 import ComplexityTests.OrderedComposition
@@ -333,6 +334,7 @@ import ComplexityTests.PolyTimeContracts
 import ComplexityTests.PolyTimeMetadata
 import ComplexityTests.PolyTimeMixes
 import ComplexityTests.PolyTimePlain
+import ComplexityTests.PolyTimePlainDriver
 import ComplexityTests.PolyTimeScans
 import ComplexityTests.PolyTimeSearch
 import ComplexityTests.PolyTimeSum
