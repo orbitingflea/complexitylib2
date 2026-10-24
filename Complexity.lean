@@ -1497,6 +1497,7 @@ public import Complexity.Crypto.Protocols.SigmaProtocol.FiatShamir
 public import Complexity.Crypto.Protocols.SigmaProtocol.Identification
 public import Complexity.Crypto.Protocols.SigmaProtocol.Linear
 public import Complexity.Crypto.Protocols.SigmaProtocol.SchnorrIdentification
+public import Complexity.Crypto.Protocols.SigmaProtocol.SchnorrSignature
 public import Complexity.Crypto.Protocols.Signature.RandomOracle
 public import Complexity.Foundations.Analysis.HarmonicMean
 public import Complexity.Foundations.Analysis.MarkovInequality
@@ -1759,6 +1760,7 @@ public import Complexity.Languages.Probabilistic.Forking
 public import Complexity.Languages.Probabilistic.Iteration
 public import Complexity.Languages.Probabilistic.LinearHash
 public import Complexity.Languages.Probabilistic.Memoize
+public import Complexity.Languages.Probabilistic.Notation
 public import Complexity.Languages.Probabilistic.Oracle
 public import Complexity.Languages.Probabilistic.Oracle.Interaction
 public import Complexity.Languages.Probabilistic.Oracle.Simulation
@@ -1927,12 +1929,14 @@ public import Complexity.Probability.PairwiseIndependentHash.Universal
 public import Complexity.Probability.Pinsker
 public import Complexity.Probability.Product
 public import Complexity.Probability.Quantile
+public import Complexity.Probability.RejectionSampling
 public import Complexity.Probability.Rewinding
 public import Complexity.Probability.Shearer
 public import Complexity.Probability.SmallBias
 public import Complexity.Probability.SmallBias.Powering
 public import Complexity.Probability.StatisticalDistance
 public import Complexity.Probability.StatisticalDistance.Product
+public import Complexity.Probability.StatisticalDistance.UniformMod
 public import Complexity.Probability.Uniform
 public import Complexity.Probability.UniformNat
 public import Complexity.Probability.UniversalHash
