@@ -1,7 +1,8 @@
 # T15: formal abstract of Dijkstra's algorithm, O((m + 1) log n)
 
-Branch `t15-dijkstra-abstract`, based on `c766a2cf` (fork main with T14 merged). Line numbers are
-at that commit. Paths: `C/` = `Complexity/Computability/WordRAM/`,
+Branch `t15-dijkstra-abstract`, first based on `c766a2cf` (fork main with T14 merged), later
+merged with `origin/main` `ddd3a2a9`. Line numbers in `C/` and `D/` are at `c766a2cf`; those in `X/`
+are at the branch head. Paths: `C/` = `Complexity/Computability/WordRAM/`,
 `D/` = `Complexity/Algorithms/WordRAM/Dijkstra/`, `X/` = `abstracts/ComplexityAbstracts/`.
 "(inferred)" marks what I derived rather than read.
 
@@ -16,6 +17,24 @@ at that commit. Paths: `C/` = `Complexity/Computability/WordRAM/`,
 * `abstracts/ComplexityAbstracts.lean`: imports both.
 
 No library file changed. No `catalogue.json` entry was added.
+
+## Layout
+
+Following "Lead with the mathematics" (`.agents/skills/lean-abstract/SKILL.md`) and "Layout and
+sources" (`abstracts/README.md`), the abstract has, in source order:
+
+1. the module docstring;
+2. "Graphs and distances": `Graph`, `IsWalk`, `dist`, `numEdges`, `maxWeight`;
+3. "Input, output and cost": prose only, stating in words the input, the output cells, the
+   word-size condition and the cost model;
+4. "Representation details": `offset`, `encode`, `outAddr`, `encodeDist`, and the prose on the
+   machine;
+5. "Main theorem": `dijkstra_logLinear` and the audit.
+
+The renderer moves a `## Representation details` group, up to the next `##` heading, to an
+appendix after the main text (`scripts/abstract_to_tex.py`, `split_sections` and
+`presentation_sections`). The group sits before the theorem in the source because the theorem uses
+its definitions; `CookLevinAbstract.lean` does the same.
 
 ## Main theorem
 
@@ -38,8 +57,8 @@ simulation of a standard-basis program by an exact-basis one in the library (`rg
 `Complexity/`). Option (b) would therefore need a new instruction-level simulation in the bridge,
 and the constants `r` and `K` would change. Option (a) is allowed by the skill
 (`.agents/skills/lean-abstract/SKILL.md:37`), keeps the statement equal to the library's, and the
-audit shows the allowlist closes over `Defs` and `Basis` alone. The section "The machine" in the
-abstract states in prose what a reader needs of the five library names it uses: `Program`,
+audit shows the allowlist closes over `Defs` and `Basis` alone. The prose on the machine in the
+abstract's appendix states in prose what a reader needs of the five library names it uses: `Program`,
 `State.init`, `step`, `Runs` and `.halt`.
 
 ## Distance and the bridge
@@ -57,12 +76,12 @@ noncomputable def dist (G : Graph n) (u v : Fin n) : ℕ∞ :=
 
 The library defines it as the least `Quiver.Path` weight of the weight-matrix instance that keeps
 the lightest parallel edge (`D/HeapStatement.lean:82-96`, `D/Statement.lean:89`). The bridge
-takes any walk predicate `W` with the two defining laws (`WalkLaws`, `X/DijkstraBridge.lean:33`)
-and proves `walkDist_eq` (`X/DijkstraBridge.lean:114`) by two inequalities:
+takes any walk predicate `W` with the two defining laws (`WalkLaws`, `X/DijkstraBridge.lean:45`)
+and proves `walkDist_eq` (`X/DijkstraBridge.lean:126`) by two inequalities:
 
-* every path is a walk of the same weight (`exists_walk`, `X/DijkstraBridge.lean:65`);
+* every path is a walk of the same weight (`exists_walk`, `X/DijkstraBridge.lean:77`);
 * every walk gives a path of at most its weight, replacing each edge by the lightest one between
-  the same endpoints (`exists_path`, `X/DijkstraBridge.lean:84`), using `lightest_eq_some_iff`
+  the same endpoints (`exists_path`, `X/DijkstraBridge.lean:96`), using `lightest_eq_some_iff`
   and `lightest_eq_none_iff` (`D/HeapStatement.lean:125`, `:138`).
 
 The abstract passes `@IsWalk` with both laws proved by `Iff.rfl`. The laws are needed because
@@ -97,7 +116,8 @@ What the abstract does not say exactly or not self-contained:
 The PDF was rendered with upstream's renderer without changing `catalogue.json`: a helper script
 outside the repository imports `scripts/build_abstracts.py`, builds an in-memory catalogue entry
 (id `dijkstra`, headline `ComplexityAbstracts.DijkstraAbstract.dijkstra_logLinear`), and calls
-`render_entry`, `document` and `build_pdf`. The renderer has no list support in section comments
+`render_entry`, `document` and `build_pdf`. The abstract imports no shared foundation, so the entry
+lists none. The renderer has no list support in section comments
 and no TeX mapping for `⌊`, `⌋` or `ᵢ`, so the docstrings avoid them.
 
 ## Checks

@@ -16,15 +16,15 @@ vertex `s`, the single-source shortest-path problem asks for the distance from `
 vertex. Dijkstra's algorithm with a binary heap solves it in `O((m + 1) log n)` time. The theorem
 below states this bound for a program on the word RAM, with the graph given by adjacency lists.
 
-The graph, its distances, the input and output layouts and the word-size condition are defined
-here from scratch. The machine is the library's word RAM `Cslib.WordRAM` over its standard basis
-of operations; the section "The machine" says what a reader needs of it. To check that the
-theorem says what is claimed, a reader only needs to inspect the definitions and the theorem
-statement in this file. Lean checks the proof through `DijkstraBridge`, which proves that the
-distance here is the library's and applies the library theorem
-`Cslib.Algorithms.WordRAM.Dijkstra.logLinearStatement`. `#check_abstract` checks mechanically that
-every definition and theorem statement here depends only on this file, Lean, Mathlib, upstream
-CSLib, and the modules `Defs` and `Basis` of the library's word RAM.
+The graph, its distances, the input and output layouts and the word-size condition are defined here
+from scratch. The machine is the library's word RAM `Cslib.WordRAM` over its standard basis of
+operations; the appendix says what a reader needs of it. To check that the theorem says what is
+claimed, a reader only needs to inspect the definitions and the theorem statement in this file. Lean
+checks the proof through `DijkstraBridge`, which proves that the distance here is the library's and
+applies the library theorem `Cslib.Algorithms.WordRAM.Dijkstra.logLinearStatement`.
+`#check_abstract` checks mechanically that every definition and theorem statement here depends only
+on this file, Lean, Mathlib, upstream CSLib, and the modules `Defs` and `Basis` of the library's
+word RAM.
 
 ## References
 
@@ -71,7 +71,21 @@ def numEdges (G : Graph n) : ℕ := ∑ u, (G u).length
 def maxWeight (G : Graph n) : ℕ :=
   Finset.univ.sup fun u => ((G u).map Prod.snd).foldr max 0
 
-/-! ## Input and output
+/-! ## Input, output and cost
+
+The program reads the graph as a list of natural numbers: `n`, the source `s`, the `n + 1` offsets
+of the adjacency lists in an array of edges, and then the `m` edges, each as two numbers, its target
+and its weight. When it halts, the memory cell `outAddr G v` of each vertex `v` holds `0` when `v`
+is unreachable from `s` and `d + 1` when the distance from `s` to `v` is `d`. The machine is a word
+RAM with `w`-bit words, and the theorem asks `8 (n + m + 2) (W + 2) < 2 ^ w`, where `W` is the
+largest weight, so a word size of order `log (n + m + W)` suffices. Each instruction costs one unit
+of time, whatever its operands; the operations are those of the library's standard basis (`+`,
+truncated `-`, `*`, `/`, `%`, bitwise operations and shifts), and a value of `2 ^ w` or more makes
+the machine fault. The bound counts the instructions executed, the final `halt` included. The
+appendix gives the exact layout (`offset`, `encode`, `outAddr`, `encodeDist`) and the machine.
+-/
+
+/-! ## Representation details
 
 The input is a list of natural numbers: `n`, the source, the `n + 1` offsets of the adjacency
 lists in the edge array, and the edges, in the order of the lists `G 0, …, G (n - 1)`, each as
@@ -102,11 +116,9 @@ def outAddr (G : Graph n) (v : Fin n) : ℕ := n + 2 * numEdges G + 4 + v
 /-- A distance as an output word: `0` for `⊤` (unreachable) and `d + 1` for distance `d`. -/
 noncomputable def encodeDist (d : ℕ∞) : ℕ := if d = ⊤ then 0 else d.toNat + 1
 
-/-! ## The machine
-
-The statement uses five names of the library's word RAM (`Cslib.WordRAM`, in the allowlisted
-modules `Defs` and `Basis`). At word size `w`, a machine has registers `0, …, r - 1` and a memory
-cell at every address `a : ℕ`, all holding natural numbers.
+/-! **The machine.** The statement uses five names of the library's word RAM (`Cslib.WordRAM`, in
+the allowlisted modules `Defs` and `Basis`). At word size `w`, a machine has registers `0, …, r - 1`
+and a memory cell at every address `a : ℕ`, all holding natural numbers.
 
 `Cslib.WordRAM.Program .standard r` is a program with `r` registers: a list of instructions,
 numbered from `0`. The instructions load a constant, copy a register, apply an operation of the
