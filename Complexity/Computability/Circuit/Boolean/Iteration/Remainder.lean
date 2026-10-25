@@ -218,7 +218,7 @@ def subMod (a b d : BitVec w) : BitVec w :=
   let rb := streamRemainder d fun i : Fin w => b.getLsbD i.val
   if ra.ult rb then ra + d - rb else ra - rb
 
-private theorem add_sub_mod_mod_eq_ite (a b d : ℕ) (hd : 0 < d) :
+theorem add_sub_mod_mod_eq_ite (a b d : ℕ) (hd : 0 < d) :
     (a + d - b % d) % d = if a % d < b % d then a % d + d - b % d else a % d - b % d := by
   have ha := Nat.mod_lt a hd
   have hb := Nat.mod_lt b hd

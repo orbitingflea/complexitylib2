@@ -84,7 +84,7 @@ section LabelCoverSoundness
 `W : I → α → ℝ`, and vertex-wise sub-probability distributions `p : ℕ → α → ℝ` (`0 ≤ p u a` and
 `∑ a, p u a ≤ 1`), choosing the best label at each vertex produces a deterministic assignment
 `f : ℕ → α` whose payoff is at least the expected payoff under `p`. -/
-private theorem exists_choice_sum_le {I α : Type*} [Fintype I] [Fintype α] [Nonempty α]
+theorem exists_choice_sum_le {I α : Type*} [Fintype I] [Fintype α] [Nonempty α]
     (v : I → ℕ) (W : I → α → ℝ) (hW : ∀ i a, 0 ≤ W i a)
     (p : ℕ → α → ℝ) (hp0 : ∀ u a, 0 ≤ p u a) (hp1 : ∀ u, ∑ a : α, p u a ≤ 1) :
     ∃ f : ℕ → α, (∑ i : I, ∑ a : α, p (v i) a * W i a) ≤ ∑ i : I, W i (f (v i)) := by

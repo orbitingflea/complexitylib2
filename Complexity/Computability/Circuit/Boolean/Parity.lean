@@ -52,7 +52,7 @@ def Program.appendXor (p : Program Boolean.signature n g) (u v : Wire n g) :
     ⟨.not, ![Wire.gate (Fin.last (g + 1))]⟩).gate
     ⟨.and, ![Wire.gate (Fin.last g).castSucc.castSucc, Wire.gate (Fin.last (g + 2))]⟩
 
-private theorem Program.trace_appendXor (p : Program Boolean.signature n g) (u v : Wire n g)
+theorem Program.trace_appendXor (p : Program Boolean.signature n g) (u v : Wire n g)
     (x : BitString n) :
     (p.appendXor u v).trace Boolean.interpretation x (.gate (Fin.last (g + 3))) =
       (p.trace Boolean.interpretation x u ^^ p.trace Boolean.interpretation x v) := by

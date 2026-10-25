@@ -305,7 +305,7 @@ theorem decodeQBF_pt : Turing.MultiTapeTM.ComputableInPolyTime decodeQBF encBits
   .of_tidy ((ComputableTidilyInPolyTime.ite' isCode_pt.tidy ComputableTidilyInPolyTime.id'
     (ComputableTidilyInPolyTime.const (encQBF .bot))).of_enc_eq fun w => encQBF_decodeQBF w)
 
-private theorem decodeQBF_encQBF (φ : QBF ℕ) : decodeQBF (encQBF φ) = φ :=
+theorem decodeQBF_encQBF (φ : QBF ℕ) : decodeQBF (encQBF φ) = φ :=
   encQBF.injective (by simp [encQBF_decodeQBF, (isCode_iff _).mpr ⟨φ, rfl⟩])
 
 end Cslib.Complexity.TQBF

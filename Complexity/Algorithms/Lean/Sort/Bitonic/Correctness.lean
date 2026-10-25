@@ -34,7 +34,7 @@ namespace Cslib.BitonicSort
 variable {α κ : Type*}
 
 /-- Every minimum half-entry lies below every maximum half-entry of a bitonic tuple. -/
-private theorem IsBitonic.min_le_max_halves [LinearOrder κ] {n : ℕ} (first second : Fin n → κ)
+theorem IsBitonic.min_le_max_halves [LinearOrder κ] {n : ℕ} (first second : Fin n → κ)
     (h : IsBitonic (Fin.append first second)) (i j : Fin n) :
     min (first i) (second i) ≤ max (first j) (second j) := by
   rcases lt_trichotomy i j with hij | hij | hij
@@ -58,7 +58,7 @@ private theorem append_right_value {n m : ℕ} (first : Fin n → κ) (second : 
   exact (congrArg (Fin.append first second) heq).trans (Fin.append_right _ _ _)
 
 /-- An increasing tuple followed by a decreasing tuple is bitonic. -/
-private theorem isBitonic_append [LinearOrder κ] {n m : ℕ} {first : Fin n → κ}
+theorem isBitonic_append [LinearOrder κ] {n m : ℕ} {first : Fin n → κ}
     {second : Fin m → κ} (hfirst : Monotone first) (hsecond : Antitone second) :
     IsBitonic (Fin.append first second) := by
   have hpeak (i j k : Fin (n + m)) (hij : i < j) (hjk : j < k) :
@@ -187,7 +187,7 @@ theorem merge_sorted [LinearOrder κ] (key : α → κ) (depth : ℕ) (ascending
       exact hpairs.min_le_max_halves left right i j
 
 /-- Batcher sorting orders the keys in either direction on every input. -/
-private theorem sort_sorted [LinearOrder κ] (key : α → κ) (depth : ℕ) (ascending : Bool)
+theorem sort_sorted [LinearOrder κ] (key : α → κ) (depth : ℕ) (ascending : Bool)
     (input : Fin (arity depth) → α) :
     if ascending then Monotone (key ∘ sort key depth ascending input)
     else Antitone (key ∘ sort key depth ascending input) := by

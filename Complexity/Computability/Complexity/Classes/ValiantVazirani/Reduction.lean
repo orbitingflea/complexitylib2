@@ -293,7 +293,7 @@ private theorem eval_hashCNF (σ : Var → Bool) (vars : List ℕ) (k : ℕ) (w 
 
 /-- A sequence that starts at `c` and adds `f j` at each step `j < n` holds `c + ∑ j' < j, f j'`
 up to step `n`. -/
-private theorem eq_add_sum_of_step {z f : ℕ → Bool} {c : Bool} {n : ℕ} (h0 : z 0 = c)
+theorem eq_add_sum_of_step {z f : ℕ → Bool} {c : Bool} {n : ℕ} (h0 : z 0 = c)
     (hstep : ∀ j < n, z (j + 1) = (z j ^^ f j)) :
     ∀ j ≤ n, z j = c + ∑ j' ∈ Finset.range j, f j' := by
   intro j hj
@@ -401,7 +401,7 @@ private theorem mem_vars_hashCNF {vars : List ℕ} {k : ℕ} {w : List Bool} {u 
 
 /-- **Soundness.** A satisfying assignment of the reduced formula restricts to one of `φ`: the
 equations only add constraints. -/
-private theorem satisfiable_of_satisfiable_reduceWith {φ : CNF ℕ} {k : ℕ} {w : List Bool}
+theorem satisfiable_of_satisfiable_reduceWith {φ : CNF ℕ} {k : ℕ} {w : List Bool}
     (h : (reduceWith φ k w).Satisfiable) : φ.Satisfiable := by
   obtain ⟨τ, hτ⟩ := h
   simp only [reduceWith, CNF.eval_relabel, CNF.eval_append, Bool.and_eq_true] at hτ
@@ -418,7 +418,7 @@ open Classical in
 noncomputable def solutions (φ : CNF ℕ) : Finset (BitString φ.vars.length) :=
   Finset.univ.filter fun x => ∃ σ : ℕ → Bool, φ.eval σ = true ∧ point φ.vars σ = x
 
-private theorem mem_solutions {φ : CNF ℕ} {x : BitString φ.vars.length} :
+theorem mem_solutions {φ : CNF ℕ} {x : BitString φ.vars.length} :
     x ∈ solutions φ ↔ ∃ σ : ℕ → Bool, φ.eval σ = true ∧ point φ.vars σ = x := by
   simp [solutions]
 
@@ -494,7 +494,7 @@ solutions, `2 ^ (log₂ s + 2)` lies between `2 s` and `4 s`. -/
 private noncomputable def goodRows (φ : CNF ℕ) : ℕ := Nat.log 2 (solutions φ).card + 2
 
 /-- A satisfiable formula has a solution. -/
-private theorem solutions_nonempty {φ : CNF ℕ} (hφ : φ.Satisfiable) : (solutions φ).Nonempty :=
+theorem solutions_nonempty {φ : CNF ℕ} (hφ : φ.Satisfiable) : (solutions φ).Nonempty :=
   let ⟨σ, hσ⟩ := hφ
   ⟨_, mem_solutions.2 ⟨σ, hσ, rfl⟩⟩
 

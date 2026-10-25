@@ -346,7 +346,7 @@ def hstepB (T : List ℕ) : ℕ :=
     (List.range T.length).all fun j => agreesB T i j).getD (Nat.log 2 (Nat.log 2 T.length))
 
 /-- The least index below `m` passing a test, or `m`, as a search over `List.range m`. -/
-private theorem find?_range_getD_eq_sInf (m : ℕ) (p : ℕ → Bool) :
+theorem find?_range_getD_eq_sInf (m : ℕ) (p : ℕ → Bool) :
     ((List.range m).find? p).getD m = sInf {i | i = m ∨ p i = true} := by
   set v := ((List.range m).find? p).getD m with hv
   have hmem : v ∈ {i | i = m ∨ p i = true} ∧ ∀ i < v, i ∉ {i | i = m ∨ p i = true} := by
@@ -484,7 +484,7 @@ private theorem computableTidilyInPolyTime_verifier :
   fun_prop
 
 /-- Padding a certificate with `false` does not change the assignment it describes. -/
-private theorem assignment_append_replicate (φ : CNF ℕ) (w : List Bool) (k : ℕ) :
+theorem assignment_append_replicate (φ : CNF ℕ) (w : List Bool) (k : ℕ) :
     SAT.assignment φ (w ++ List.replicate k false) = SAT.assignment φ w := by
   funext v
   simp only [SAT.assignment, List.getD_eq_getElem?_getD, List.getElem?_append]

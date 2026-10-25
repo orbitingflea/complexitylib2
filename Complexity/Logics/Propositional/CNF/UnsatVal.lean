@@ -290,7 +290,7 @@ theorem Clause.IsExactThreeDistinct.card_eval_eq_true {c : Clause (Fin 3)}
 
 /-- The expected number of falsified clauses in an exact 3-CNF formula with distinct variables per
 clause under a uniform random assignment is `φ.length / 8`. -/
-private theorem CNF.IsExactThreeDistinct.expect_countUnsat {φ : CNF ι}
+theorem CNF.IsExactThreeDistinct.expect_countUnsat {φ : CNF ι}
     (hφ : φ.IsExactThreeDistinct) :
     (𝔼 σ : ι → Bool, (φ.countUnsat σ : ℝ)) = (φ.length : ℝ) / 8 := by
   induction φ with
@@ -311,7 +311,7 @@ end FintypeCube
 
 /-- Relabelling a clause along a map that is injective on its variables preserves
 `Clause.IsExactThreeDistinct`. -/
-private theorem Clause.IsExactThreeDistinct.relabel_of_injOn {f : V → ι} {c : Clause V}
+theorem Clause.IsExactThreeDistinct.relabel_of_injOn {f : V → ι} {c : Clause V}
     (hf : ∀ x ∈ c.map Prod.fst, ∀ y ∈ c.map Prod.fst, f x = f y → x = y)
     (hc : c.IsExactThreeDistinct) : (c.relabel f).IsExactThreeDistinct := by
   refine ⟨by rw [Clause.length_relabel, hc.1], ?_⟩

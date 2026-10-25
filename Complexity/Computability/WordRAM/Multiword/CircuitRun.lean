@@ -58,7 +58,7 @@ private theorem update_prefix (v : Fin n → ℕ) (d : Fin n) :
 namespace Operation
 
 /-- Evaluation depends only on the earlier source values of a node. -/
-private theorem eval_congr {d : Fin n} {op : Operation n} {v u : Fin n → ℕ}
+theorem eval_congr {d : Fin n} {op : Operation n} {v u : Fin n → ℕ}
     (he : op.Earlier d) (h : ∀ j, j.val < d.val → v j = u j) :
     op.eval v = op.eval u := by
   cases op with
@@ -68,7 +68,7 @@ private theorem eval_congr {d : Fin n} {op : Operation n} {v u : Fin n → ℕ}
     simp only [eval, h a he.1, h b he.2]
 
 /-- The admissibility bounds depend only on the earlier source values of a node. -/
-private theorem admissible_congr {w : ℕ} {d : Fin n} {op : Operation n} {v u : Fin n → ℕ}
+theorem admissible_congr {w : ℕ} {d : Fin n} {op : Operation n} {v u : Fin n → ℕ}
     (he : op.Earlier d) (h : ∀ j, j.val < d.val → v j = u j) :
     op.Admissible w v ↔ op.Admissible w u := by
   cases op with

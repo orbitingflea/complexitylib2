@@ -120,7 +120,7 @@ private theorem runFrom_leaf {p : ℕ} [Fact p.Prime] {st : List Frame} {v : Fin
 
 /-- Sums over the positions of a table of `n` blocks of `ℓ` bits whose position within the block
 is `i`, as sums over the blocks. -/
-private theorem sum_range_mul_ite_mod {M : Type*} [AddCommMonoid M] (n : ℕ) {i : ℕ} (hi : i < ℓ)
+theorem sum_range_mul_ite_mod {M : Type*} [AddCommMonoid M] (n : ℕ) {i : ℕ} (hi : i < ℓ)
     (F : ℕ → M) :
     ∑ q ∈ Finset.range (n * ℓ), (if q % ℓ = i then F q else 0) =
       ∑ k ∈ Finset.range n, F (k * ℓ + i) := by
@@ -187,7 +187,7 @@ private theorem runFrom_scan_loop {p : ℕ} [Fact p.Prime] {fr : Frame} {st : Li
         · simp [hb, hi, modifyAt, List.getD_eq_getElem?_getD]
       · simp [hb, BitString.bitVal]
 
-private theorem mul_add_div_self (k : ℕ) (i : Fin ℓ) : (k * ℓ + i) / ℓ = k := by
+theorem mul_add_div_self (k : ℕ) (i : Fin ℓ) : (k * ℓ + i) / ℓ = k := by
   rw [Nat.add_comm, Nat.add_mul_div_right _ _ (Nat.zero_lt_of_lt i.isLt), Nat.div_eq_of_lt i.isLt,
     zero_add]
 

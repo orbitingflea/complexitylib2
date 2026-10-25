@@ -48,7 +48,7 @@ open Cslib.WordRAM
 open Cslib.Algorithms.Lean.FusionTree
 
 /-- A nonempty valid tree's cached minimum is one of its actual leaf keys. -/
-private theorem minimum_mem {B : ℕ} {t : Tree} (ht : Tree.Valid B t)
+theorem minimum_mem {B : ℕ} {t : Tree} (ht : Tree.Valid B t)
     (hne : t.keys ≠ []) : t.minimum ∈ t.keys := by
   rw [Tree.minimum_eq_headD ht]
   obtain ⟨x, xs, hx⟩ := List.exists_cons_of_ne_nil hne

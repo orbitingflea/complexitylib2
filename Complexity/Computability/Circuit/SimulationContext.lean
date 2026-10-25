@@ -63,7 +63,7 @@ def Circuit.withContext (c : Circuit σ n m) (q : ℕ) : Circuit (σ.withContext
   (c.comp (wiring σ (Fin.natAdd q))).mapLines (Line.withContext q)
 
 /-- Adding context does not add gates or change their costs. -/
-private theorem Circuit.cost_program_withContext (c : Circuit σ n m) (q : ℕ) (cost : σ.Op → ℕ) :
+theorem Circuit.cost_program_withContext (c : Circuit σ n m) (q : ℕ) (cost : σ.Op → ℕ) :
     (c.withContext q).program.cost cost = c.program.cost cost := by
   change ((c.comp (wiring σ (Fin.natAdd q))).program.mapLines
     (Line.withContext q)).cost cost = _

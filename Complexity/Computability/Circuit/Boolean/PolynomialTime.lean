@@ -131,7 +131,7 @@ theorem ofFn_substitute_frameWiring {n P : ℕ} (x : Fin n → Bool) (r : Fin P 
 noncomputable def framedSlice (L : Language Bool) (n P : ℕ) : BooleanFunction (n + P) :=
   fun y => L.slice (2 * n + 1 + P) (substitute (frameWiring n P) y)
 
-private theorem framedSlice_append_eq_true {L : Language Bool} {n P : ℕ} (x : Fin n → Bool)
+theorem framedSlice_append_eq_true {L : Language Bool} {n P : ℕ} (x : Fin n → Bool)
     (r : Fin P → Bool) :
     framedSlice L n P (Fin.append x r) = true ↔ frame (List.ofFn x) ++ List.ofFn r ∈ L := by
   rw [framedSlice, Language.slice_eq_true_iff, ofFn_substitute_frameWiring]

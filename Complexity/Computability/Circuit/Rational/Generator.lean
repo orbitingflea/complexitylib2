@@ -242,7 +242,7 @@ private lemma condition_degree {n s N e : ℕ} (hs : 1 ≤ s) (f : Formula n) (h
         gcongr
         exact ((Formula.certificate_bounds f s hs hf).2 h hh).2)
 
-private lemma integer_grid {K : Type*} [Field K] [CharZero K] (P : List (MvPolynomial (Fin 3) K))
+lemma integer_grid {K : Type*} [Field K] [CharZero K] (P : List (MvPolynomial (Fin 3) K))
     (hP : ∀ p ∈ P, p ≠ 0) (d H : ℕ) (hd : ∀ p ∈ P, p.totalDegree ≤ d)
     (hH : P.length * d < H) :
     ∃ x : Fin 3 → Fin H, ∀ p ∈ P, eval (fun i => (((x i).val + 1 : ℕ) : K)) p ≠ 0 := by

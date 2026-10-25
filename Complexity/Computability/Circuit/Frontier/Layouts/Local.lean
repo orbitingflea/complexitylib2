@@ -73,7 +73,7 @@ variable {V E : Type*} (G : Multigraph V E)
 
 /-- **Independent sets count edges once.** If no edge has both endpoints in `I`, the edges of
 a set `X` at the vertices of `I` are the disjoint union of those at each vertex of `I`. -/
-private theorem ncard_inter_touching [Finite E] {I : Finset V}
+theorem ncard_inter_touching [Finite E] {I : Finset V}
     (hI : ∀ e, ¬(G.src e ∈ I ∧ G.tgt e ∈ I))
     (X : Set E) : (X ∩ G.touching I).ncard = ∑ v ∈ I, (X ∩ G.incidenceSet v).ncard := by
   classical

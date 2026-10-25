@@ -108,7 +108,7 @@ def Program.replaceGates : {s : ℕ} → Program σ n s → (Fin s → Option P)
       ((r (Fin.last _)).elim line.liftConstants Line.const)
 
 /-- The lines of a program with gates replaced by constants. -/
-private theorem Program.lines_replaceGates (p : Program σ n s) (r : Fin s → Option P) (g : Fin s) :
+theorem Program.lines_replaceGates (p : Program σ n s) (r : Fin s → Option P) (g : Fin s) :
     (p.replaceGates r).lines g = (r g).elim (p.lines g).liftConstants Line.const := by
   induction p with
   | empty => exact g.elim0
@@ -137,18 +137,18 @@ theorem Program.lines_eraseGates (p : Program σ n s) (g : Fin s) :
   rw [eraseGates, lines_replaceGates]
   split_ifs <;> rfl
 
-private theorem Program.lines_eraseGates_of_special (p : Program σ n s) {g : Fin s}
+theorem Program.lines_eraseGates_of_special (p : Program σ n s) {g : Fin s}
     (hg : special g) :
     (p.eraseGates special).lines g = Line.const ⟨g, hg⟩ := by
   simp only [lines_eraseGates, hg, ↓reduceDIte]
 
-private theorem Program.lines_eraseGates_of_not_special (p : Program σ n s) {g : Fin s}
+theorem Program.lines_eraseGates_of_not_special (p : Program σ n s) {g : Fin s}
     (hg : ¬special g) : (p.eraseGates special).lines g = (p.lines g).liftConstants := by
   simp only [lines_eraseGates, hg, ↓reduceDIte]
 
 /-- The arity of a gate of the erased program: zero for a special gate, and the arity of the
 gate otherwise. -/
-private theorem Program.arity_lines_eraseGates (p : Program σ n s) (g : Fin s) :
+theorem Program.arity_lines_eraseGates (p : Program σ n s) (g : Fin s) :
     (σ.withConstants {g // special g}).Arity ((p.eraseGates special).lines g).op =
       if special g then 0 else σ.Arity (p.lines g).op := by
   by_cases hg : special g

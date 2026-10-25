@@ -717,7 +717,7 @@ theorem computableInPolyTime_bussKernel :
   .of_tidy (computableTidilyInPolyTime_bussKernel)
 
 /-- Buss's kernel has target at most `k`, or `1`. -/
-private theorem bussKernel_snd_le (x : Graph × ℕ) : (bussKernel x).2 ≤ max x.2 1 := by
+theorem bussKernel_snd_le (x : Graph × ℕ) : (bussKernel x).2 ≤ max x.2 1 := by
   unfold bussKernel
   split_ifs with h
   · exact le_max_of_le_left ((param_le_cap x).trans (cap_le_snd x))

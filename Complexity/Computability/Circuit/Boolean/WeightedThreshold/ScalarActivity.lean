@@ -399,7 +399,7 @@ private theorem isChain_le_getElem {α : Type*} [Preorder α] {ts : List α}
 
 /-- Any ordered list `ts` along which `Φ` alternates between consecutive elements has length at
 most `T + 1` whenever `ChangesAtMost Φ T`. -/
-private theorem length_le_succ_of_changesAtMost_of_isChain {α β : Type*} [Preorder α] {Φ : α → β}
+theorem length_le_succ_of_changesAtMost_of_isChain {α β : Type*} [Preorder α] {Φ : α → β}
     {T : ℕ}
     (hΦ : ChangesAtMost Φ T) {ts : List α} (hmono : ts.IsChain (· ≤ ·))
     (halt : (ts.map Φ).IsChain (· ≠ ·)) :

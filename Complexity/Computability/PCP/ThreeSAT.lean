@@ -193,7 +193,7 @@ private theorem card_edges_ofCNF : Fintype.card (Fin φ.length × Fin 3) = 3 * �
 
 /-- **Soundness**: a labelling violates at least a third of the proportion of clauses that the
 assignment read off from it falsifies. -/
-private theorem countUnsat_div_le_unsatFrac (A : V ⊕ Fin φ.length → Fin 3 → Bool) :
+theorem countUnsat_div_le_unsatFrac (A : V ⊕ Fin φ.length → Fin 3 → Bool) :
     (φ.countUnsat (cnfAssignment A) : ℝ) / φ.length / 3 ≤ (ofCNF φ).unsatFrac A := by
   rw [unsatFrac, card_edges_ofCNF, Nat.cast_mul, div_div, mul_comm (φ.length : ℝ), Nat.cast_ofNat]
   gcongr

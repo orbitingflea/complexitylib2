@@ -335,7 +335,7 @@ theorem PairCover.size_toCircuit_le (c : PairCover target input) :
   nlinarith
 
 /-- Every unrestricted pair cover yields a quadratic upper bound for native AND complexity. -/
-private theorem PairCover.ecomplexityFrom_le_sq (c : PairCover target input) :
+theorem PairCover.ecomplexityFrom_le_sq (c : PairCover target input) :
     ecomplexityFrom (Monotone.setInterpretation U) Monotone.andCost
       (fun _ : Unit => fun _ : Fin 1 => target) (fun _ => input) ≤
         (c.pairs.length : ℕ∞) ^ 2 := by

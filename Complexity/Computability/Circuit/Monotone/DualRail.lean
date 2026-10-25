@@ -73,7 +73,7 @@ def railBits (x : List Bool) : List Bool := true :: x.flatMap fun b => [b, !b]
     simp only [List.length_append, List.length_cons, List.length_nil]
     omega
 
-private theorem railBits_append (x : List Bool) (v : Bool) :
+theorem railBits_append (x : List Bool) (v : Bool) :
     railBits (x ++ [v]) = railBits x ++ [v, !v] := by
   simp [railBits]
 
@@ -140,7 +140,7 @@ def dualCode (gates : List (Boolean.Op × List ℕ)) : List (Op × List ℕ) := 
   | cons g gates ih => simp only [dualCode, List.flatMap_cons, List.length_append,
       length_dualGates, List.length_cons] at ih ⊢; omega
 
-private theorem dualCode_append (gates gates' : List (Boolean.Op × List ℕ)) :
+theorem dualCode_append (gates gates' : List (Boolean.Op × List ℕ)) :
     dualCode (gates ++ gates') = dualCode gates ++ dualCode gates' :=
   List.flatMap_append
 

@@ -161,7 +161,7 @@ theorem prefix_search {i j : ℕ} (hij : i ≤ j) (start : α) :
     rw [← Nat.add_assoc, search_succ]
     exact prefix_expand _
 
-private theorem start_mem_search (rounds : ℕ) (start : α) : start ∈ search succ rounds start :=
+theorem start_mem_search (rounds : ℕ) (start : α) : start ∈ search succ rounds start :=
   (prefix_search (Nat.zero_le rounds) start).subset (by simp)
 
 /-- **The found elements are distinct.** -/

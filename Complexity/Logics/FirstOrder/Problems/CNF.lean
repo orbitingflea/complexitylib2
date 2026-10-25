@@ -270,7 +270,7 @@ private theorem literals_copies (j : J) (c : M) :
 
 /-- A positive number of disjoint copies of a CNF structure is satisfiable exactly when the
 structure is. -/
-private theorem satisfiable_copies_iff [Nonempty J] : Satisfiable (Copies J M) ↔ Satisfiable M := by
+theorem satisfiable_copies_iff [Nonempty J] : Satisfiable (Copies J M) ↔ Satisfiable M := by
   constructor
   · rintro ⟨A, hA⟩
     obtain ⟨j₀⟩ := ‹Nonempty J›
@@ -288,7 +288,7 @@ private theorem satisfiable_copies_iff [Nonempty J] : Satisfiable (Copies J M) �
 
 /-- A positive number of disjoint copies of a CNF structure is a 3-CNF structure exactly when the
 structure is. -/
-private theorem isThreeCNF_copies_iff [Nonempty J] : IsThreeCNF (Copies J M) ↔ IsThreeCNF M := by
+theorem isThreeCNF_copies_iff [Nonempty J] : IsThreeCNF (Copies J M) ↔ IsThreeCNF M := by
   have hinj (j : J) : Function.Injective fun l : Bool × M => (l.1, (⟨j, l.2⟩ : Copies J M)) := by
     intro l l' h
     simp only [Prod.mk.injEq, Copies.mk.injEq, true_and] at h

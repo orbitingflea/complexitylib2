@@ -161,7 +161,7 @@ theorem acceptProb_sample_bind {β : Type} (program : ProbComp β)
   rfl
 
 /-- A verifier none of whose possible results accepts has acceptance probability zero. -/
-private theorem acceptProb_eq_zero {verifier : WordOracleComp Operation Bool} (P : Prover Operation)
+theorem acceptProb_eq_zero {verifier : WordOracleComp Operation Bool} (P : Prover Operation)
     (h : ∀ x ∈ (P.run verifier P.init).support, x.1 = false) : acceptProb verifier P = 0 := by
   rw [acceptProb, PMF.apply_eq_zero_iff, PMF.support_map]
   rintro ⟨x, hx, hx'⟩

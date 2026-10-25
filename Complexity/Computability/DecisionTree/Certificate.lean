@@ -119,7 +119,7 @@ private theorem certificateComplexityFor_restrict_lt {f : BooleanFunction n} {x 
   lia
 
 /-- Restricting does not raise certificate complexity for a value. -/
-private theorem certificateComplexityFor_restrict_le {f : BooleanFunction n} (S : Finset (Fin n))
+theorem certificateComplexityFor_restrict_le {f : BooleanFunction n} (S : Finset (Fin n))
     (a : BitString n) (c : Bool) :
     certificateComplexityFor (fun y => f (S.piecewise a y)) c ≤ certificateComplexityFor f c := by
   refine Finset.sup_le fun z hz => ?_

@@ -51,7 +51,7 @@ def reindex (e : I ≃ J) (f : (I → Bool) → Bool) : (J → Bool) → Bool :=
 open scoped Classical in
 /-- Pulling back along `e` the input `x` with the image block `B.map e.toEmbedding` flipped gives
 the pullback `fun i => x (e i)` with `B` flipped. -/
-private theorem flip_reindex (e : I ≃ J) (x : J → Bool) (B : Finset I) :
+theorem flip_reindex (e : I ≃ J) (x : J → Bool) (B : Finset I) :
     (fun i => BitString.flipOn (B.map e.toEmbedding) x (e i)) =
       BitString.flipOn B (fun i => x (e i)) := by
   funext i
@@ -60,7 +60,7 @@ private theorem flip_reindex (e : I ≃ J) (x : J → Bool) (B : Finset I) :
 open scoped Classical in
 /-- Singleton case of `flip_reindex`: pulling back `BitString.flipOn {e i} x` along `e` gives the
 pullback of `x` with `i` flipped. -/
-private theorem flip_reindex_singleton (e : I ≃ J) (x : J → Bool) (i : I) :
+theorem flip_reindex_singleton (e : I ≃ J) (x : J → Bool) (i : I) :
     (fun a => BitString.flipOn {e i} x (e a)) = BitString.flipOn {i} (fun a => x (e a)) := by
   simpa using flip_reindex e x {i}
 

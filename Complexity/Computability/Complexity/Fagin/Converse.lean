@@ -99,10 +99,10 @@ arities of `v`. -/
 def maxArity : ℕ :=
   Finset.univ.sup v.arity + 1
 
-private theorem one_le_maxArity : 1 ≤ v.maxArity :=
+theorem one_le_maxArity : 1 ≤ v.maxArity :=
   Nat.le_add_left 1 _
 
-private theorem arity_le_maxArity (i : Fin v.count) : v.arity i ≤ v.maxArity :=
+theorem arity_le_maxArity (i : Fin v.count) : v.arity i ≤ v.maxArity :=
   (Finset.le_sup (Finset.mem_univ i)).trans (Nat.le_add_right _ 1)
 
 /-- For a well-formed input `a` with `1 ≤ a.1`, the `m`-th prefix of `encStructure a` has length at

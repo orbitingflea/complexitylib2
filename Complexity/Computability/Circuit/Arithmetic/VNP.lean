@@ -101,7 +101,7 @@ private theorem projection_booleanSum (ρ : Fin k → Fin n ⊕ K) (P : MvPolyno
   | right i => cases e i <;> simp [booleanAssignment, liftProjection]
 
 /-- A Boolean sum has no larger degree than the summed polynomial. -/
-private theorem totalDegree_booleanSum_le (P : MvPolynomial (Fin (n + m)) K) :
+theorem totalDegree_booleanSum_le (P : MvPolynomial (Fin (n + m)) K) :
     (booleanSum m P).totalDegree ≤ P.totalDegree :=
   totalDegree_finsetSum_le fun _ _ => totalDegree_projection_le _ _
 

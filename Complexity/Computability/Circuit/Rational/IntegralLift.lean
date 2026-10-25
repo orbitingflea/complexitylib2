@@ -396,7 +396,7 @@ lemma U_bound (n N e H : ℕ) (x : Fin 3 → ℕ) (hH : 1 ≤ H) (hx : ∀ l, x 
     CyclotomicRing.dimension e + 2 * CyclotomicRing.dimension e by omega, pow_add]
   ring
 
-private lemma scaled_normalization {d : ℕ} (A B : Mat d) (hA : A.det ≠ 0) (c : ℚ) (hc : c ≠ 0) :
+lemma scaled_normalization {d : ℕ} (A B : Mat d) (hA : A.det ≠ 0) (c : ℚ) (hc : c ≠ 0) :
     (c • A)⁻¹ * (c • B) = A⁻¹ * B := by
   let : Invertible c := invertibleOfNonzero hc
   have hi : (c • A)⁻¹ = c⁻¹ • A⁻¹ := by

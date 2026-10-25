@@ -238,7 +238,7 @@ private theorem smallSides_of_rectangleFree {K : ℕ} (hS : RectangleFree P.acce
 variable {P} in
 /-- Small sides force `K > 1` once some input is accepted: at the first layer both sides of an
 accepted input are nonempty. -/
-private theorem SmallSides.one_lt [Finite ι] [Finite U] {K : ℕ} (hS : P.SmallSides K)
+theorem SmallSides.one_lt [Finite ι] [Finite U] {K : ℕ} (hS : P.SmallSides K)
     (hne : P.accepted.Nonempty) : 1 < K := by
   obtain ⟨x, hx⟩ := hne
   rcases hS 0 (Nat.zero_le _) x hx with h | h

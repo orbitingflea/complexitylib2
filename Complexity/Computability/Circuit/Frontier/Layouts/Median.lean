@@ -111,14 +111,14 @@ namespace IsMedian
 variable {score : E → α} {v : V} {m : α}
 
 /-- Some edge at `v` scores at most a median. -/
-private theorem exists_score_le (h : G.IsMedian score v m) :
+theorem exists_score_le (h : G.IsMedian score v m) :
     ∃ e ∈ G.incidenceSet v, score e ≤ m := by
   obtain ⟨e, he⟩ := nonempty_of_ncard_ne_zero (s := {e ∈ G.incidenceSet v | score e ≤ m})
     (by have := h.1; omega)
   exact ⟨e, he⟩
 
 /-- Some edge at `v` scores at least a median. -/
-private theorem exists_le_score (h : G.IsMedian score v m) :
+theorem exists_le_score (h : G.IsMedian score v m) :
     ∃ e ∈ G.incidenceSet v, m ≤ score e := by
   obtain ⟨e, he⟩ := nonempty_of_ncard_ne_zero (s := {e ∈ G.incidenceSet v | m ≤ score e})
     (by have := h.2; omega)
@@ -240,7 +240,7 @@ private theorem ncard_edgeCut_le_score_le [Finite V] (h3 : ∀ v, (G.incidenceSe
       (((hP _ hu).trans_lt ht).trans_le hle')
 
 /-- The endpoints of a set of edges number at most twice the edges. -/
-private theorem ncard_endpoints_le (F : Set E) :
+theorem ncard_endpoints_le (F : Set E) :
     {w | ∃ e ∈ F, G.src e = w ∨ G.tgt e = w}.ncard ≤ 2 * F.ncard := by
   refine (ncard_le_ncard (t := G.src '' F ∪ G.tgt '' F) ?_).trans
     ((ncard_union_le _ _).trans ?_)

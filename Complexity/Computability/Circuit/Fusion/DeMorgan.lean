@@ -137,7 +137,7 @@ variable {n : ℕ}
 
 open Boolean in
 /-- An unrestricted cover compiles to a monotone circuit computing `f` from its literals. -/
-private theorem PairCover.computesFrom_toCircuit {f : BooleanFunction n}
+theorem PairCover.computesFrom_toCircuit {f : BooleanFunction n}
     (c : PairCover {x | f x = true} (fun i => {x | AltFormula.literals x i = true})) :
     c.toCircuit.ComputesFrom Monotone.interpretation (fun x (_ : Fin 1) => f x)
       AltFormula.literals :=

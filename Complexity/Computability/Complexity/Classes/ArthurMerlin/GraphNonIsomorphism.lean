@@ -85,12 +85,12 @@ namespace PublicCoin
 variable {n : ℕ}
 
 /-- Relabelling by a product of permutations is relabelling twice. -/
-private theorem reindex_mul (σ τ : Equiv.Perm (Fin n)) (M : Matrix (Fin n) (Fin n) Bool) :
+theorem reindex_mul (σ τ : Equiv.Perm (Fin n)) (M : Matrix (Fin n) (Fin n) Bool) :
     Matrix.reindex (σ * τ) (σ * τ) M = Matrix.reindex σ σ (Matrix.reindex τ τ M) :=
   (DFunLike.congr_fun (Matrix.reindex_trans τ τ σ σ) M).symm
 
 /-- Relabelling by the identity permutation does nothing. -/
-private theorem reindex_one (M : Matrix (Fin n) (Fin n) Bool) : Matrix.reindex 1 1 M = M :=
+theorem reindex_one (M : Matrix (Fin n) (Fin n) Bool) : Matrix.reindex 1 1 M = M :=
   Matrix.reindex_refl_refl M
 
 /-- `Matrix.reindex τ τ A = M` says that `τ` carries `A` to `M`. -/

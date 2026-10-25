@@ -96,7 +96,7 @@ private theorem packedBit_place (a : BitString p) (z : BitString w) :
   · exact fun hf => ⟨a, rfl, rfl, rfl, hf⟩
 
 /-- Numbering the nonzero scalars by `scalar` sums over the punctured line. -/
-private theorem sum_scalar {M : Type*} [AddCommMonoid M] (scalar : Fin s ≃ {c : K // c ≠ 0})
+theorem sum_scalar {M : Type*} [AddCommMonoid M] (scalar : Fin s ≃ {c : K // c ≠ 0})
     (g : K → M) : ∑ j, g (scalar j : K) = ∑ c ∈ (univ : Finset K).erase 0, g c := by
   rw [Finset.sum_subtype ((univ : Finset K).erase 0) (p := fun c => c ≠ 0)
     (fun c => by simp only [Finset.mem_erase, Finset.mem_univ, and_true]) g]

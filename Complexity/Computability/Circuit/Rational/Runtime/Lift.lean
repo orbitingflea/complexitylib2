@@ -66,7 +66,7 @@ namespace Rational
 
 /-! ### Magnitude bounds -/
 
-private lemma natAbs_pow_le {z : ℤ} {H : ℕ} (hH : 1 ≤ H) (hz : z.natAbs ≤ H) {q M : ℕ}
+lemma natAbs_pow_le {z : ℤ} {H : ℕ} (hH : 1 ≤ H) (hz : z.natAbs ≤ H) {q M : ℕ}
     (hq : q ≤ M) :
     (z ^ q).natAbs ≤ H ^ M := by
   rw [Int.natAbs_pow]

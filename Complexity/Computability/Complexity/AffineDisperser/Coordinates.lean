@@ -76,7 +76,7 @@ theorem repr_fieldOfBits (B : Basis (Fin n) (ZMod 2) F) (a : List Bool) (u : Fin
 theorem fieldOfBits_nil (B : Basis (Fin n) (ZMod 2) F) : fieldOfBits B [] = 0 := by
   simp [fieldOfBits]
 
-private theorem bitEquiv_symm_foldl_xor (l : List Bool) :
+theorem bitEquiv_symm_foldl_xor (l : List Bool) :
     bitEquiv.symm (l.foldl xor false) = (l.map bitEquiv.symm).sum := by
   rw [← map_list_sum]
   congr 1
@@ -245,7 +245,7 @@ theorem fieldOfBits_esymmCoords {B : Basis (Fin n) (ZMod 2) F} {tab : List (List
 
 /-- The trace is the trace of the multiplication matrix: the sum of the diagonal coordinates
 `[x * b i]_i`. -/
-private theorem trace_eq_sum_repr_mul {R S : Type*} [CommRing R] [CommRing S] [Algebra R S]
+theorem trace_eq_sum_repr_mul {R S : Type*} [CommRing R] [CommRing S] [Algebra R S]
     {ι : Type*} [Fintype ι] (b : Basis ι R S) (x : S) :
     Algebra.trace R S x = ∑ i, b.repr (x * b i) i := by
   classical
@@ -289,7 +289,7 @@ input bits. -/
 def blockPos {r n N : ℕ} (h : r * n ≤ N) (q : Fin r × Fin n) : Fin N :=
   Fin.castLE h (finProdFinEquiv q)
 
-private theorem getD_take_drop (x : List Bool) {n u : ℕ} (hu : u < n) (i : ℕ) :
+theorem getD_take_drop (x : List Bool) {n u : ℕ} (hu : u < n) (i : ℕ) :
     ((x.drop (n * i)).take n).getD u false = x.getD (n * i + u) false := by
   rw [List.getD_eq_getElem?_getD, List.getD_eq_getElem?_getD, List.getElem?_take_of_lt hu,
     List.getElem?_drop]

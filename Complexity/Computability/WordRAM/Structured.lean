@@ -636,13 +636,13 @@ theorem Data.comap_regs (x : Data r') (i : Fin r) : (x.comap f).regs i = x.regs 
 @[simp]
 theorem Data.comap_mem (x : Data r') : (x.comap f).mem = x.mem := rfl
 
-private theorem Data.comap_extend (hf : f.Injective) (y : Data r) (x : Data r') :
+theorem Data.comap_extend (hf : f.Injective) (y : Data r) (x : Data r') :
     (y.extend f x).comap f = y := by
   ext i
   · exact hf.extend_apply _ _ i
   · rfl
 
-private theorem Data.extend_extend (hf : f.Injective) (y z : Data r) (x : Data r') :
+theorem Data.extend_extend (hf : f.Injective) (y z : Data r) (x : Data r') :
     z.extend f (y.extend f x) = z.extend f x := by
   ext j
   · simp only [Data.extend]

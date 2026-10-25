@@ -648,7 +648,7 @@ theorem bitonicSortCircuit_perm {k r : ℕ} (key : Fin k → Fin r) (depth : ℕ
   exact BitonicSort.sort_perm _ _ _ _
 
 /-- A layer uses `n` copies of the comparator under any assignment of gate costs. -/
-private theorem cost_program_bitonicLayerCircuit {k r : ℕ} (key : Fin k → Fin r) (n : ℕ)
+theorem cost_program_bitonicLayerCircuit {k r : ℕ} (key : Fin k → Fin r) (n : ℕ)
     (ascending : Bool) (cost : signature.Op → ℕ) :
     (bitonicLayerCircuit key n ascending).program.cost cost =
       n * (compareSwapCircuit key).program.cost cost := by

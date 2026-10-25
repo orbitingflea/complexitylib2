@@ -270,7 +270,7 @@ def blrTest : LocalTest (ι → Bool) ((ι → Bool) × (ι → Bool)) (Fin 3) B
   Accepts _ a := (a 0 ^^ a 1) = a 2
 
 /-- The linearity test accepts with the probability `blrAcceptance`. -/
-private theorem acceptProb_blrTest [Fintype ι] [DecidableEq ι] (f : (ι → Bool) → Bool) :
+theorem acceptProb_blrTest [Fintype ι] [DecidableEq ι] (f : (ι → Bool) → Bool) :
     (blrTest ι).acceptProb f = blrAcceptance f := by
   simp only [LocalTest.acceptProb, Fintype.expect_prod_type, LocalTest.Passes, blrTest,
     blrAcceptance, Matrix.cons_val]
@@ -289,7 +289,7 @@ def tensorTest : LocalTest ((ι → Bool) ⊕ (ι × ι → Bool))
   Accepts _ a := (a 0 ^^ a 1) = ((a 2 ^^ a 3) && (a 4 ^^ a 5))
 
 /-- The tensor test accepts with the probability `tensorTestAcceptance`. -/
-private theorem acceptProb_tensorTest [Fintype ι] [DecidableEq ι] (f : (ι → Bool) → Bool)
+theorem acceptProb_tensorTest [Fintype ι] [DecidableEq ι] (f : (ι → Bool) → Bool)
     (g : (ι × ι → Bool) → Bool) :
     (tensorTest ι).acceptProb (Sum.elim f g) = tensorTestAcceptance f g := by
   simp only [LocalTest.acceptProb, Fintype.expect_prod_type, LocalTest.Passes, tensorTest,
@@ -308,7 +308,7 @@ def equationTest [Fintype κ] (A : κ → ι → Bool) (b : κ → Bool) :
   Accepts ω a := (a 0 ^^ a 1) = hadamardCode ω.1 b
 
 /-- The equation test accepts with the probability `equationTestAcceptance`. -/
-private theorem acceptProb_equationTest [Fintype ι] [DecidableEq ι] [Fintype κ] [DecidableEq κ]
+theorem acceptProb_equationTest [Fintype ι] [DecidableEq ι] [Fintype κ] [DecidableEq κ]
     (g : (ι → Bool) → Bool) (A : κ → ι → Bool) (b : κ → Bool) :
     (equationTest A b).acceptProb g = equationTestAcceptance g A b := by
   simp only [LocalTest.acceptProb, Fintype.expect_prod_type, LocalTest.Passes, equationTest,

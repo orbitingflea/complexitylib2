@@ -165,7 +165,7 @@ theorem mem_universalTMRunFor_iff_simulate {p x : List Bool} {t : ℕ} :
   rcases simulate (decodeDesc (unframe p)) ((dropFrame p).map eBit) t with ⟨out, _ | _⟩ <;>
     simp [eq_comm]
 
-private theorem universalTMRunFor_mono (p : List Bool) {t₁ t₂ : ℕ} (ht : t₁ ≤ t₂) {x : List Bool}
+theorem universalTMRunFor_mono (p : List Bool) {t₁ t₂ : ℕ} (ht : t₁ ≤ t₂) {x : List Bool}
     (h : x ∈ universalTMRunFor p t₁) :
     x ∈ universalTMRunFor p t₂ := by
   obtain ⟨out, hout, rfl⟩ := mem_universalTMRunFor_iff.mp h

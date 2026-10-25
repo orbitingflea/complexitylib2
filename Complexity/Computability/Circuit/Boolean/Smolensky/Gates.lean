@@ -188,7 +188,7 @@ theorem natCast_pow_eq_bitVal (c : ℕ) :
     simp [h, hc, bitVal]
 
 /-- In characteristic `p`, the `(p - 1)`-st power of a nonzero count is `1`. -/
-private theorem natCast_pow_eq_one {c : ℕ} (hc : (c : R) ≠ 0) : (c : R) ^ (p - 1) = 1 := by
+theorem natCast_pow_eq_one {c : ℕ} (hc : (c : R) ≠ 0) : (c : R) ^ (p - 1) = 1 := by
   have h : c % p ≠ 0 := fun h => hc ((CharP.cast_eq_zero_iff R p c).2 (Nat.dvd_of_mod_eq_zero h))
   simp [natCast_pow_eq_bitVal, h, bitVal]
 

@@ -88,7 +88,7 @@ section Finite
 variable [Finite ι] [Finite U]
 
 /-- Membership in `S` agrees with membership in `T` or with membership in `Tᶜ`. -/
-private theorem agreement_add_agreement_compl [Nonempty U] (S T : Set (ι → U)) :
+theorem agreement_add_agreement_compl [Nonempty U] (S T : Set (ι → U)) :
     agreement S T + agreement S Tᶜ = 1 := by
   have hN : (0 : ℝ) < Nat.card (ι → U) := by exact_mod_cast Nat.card_pos
   have hcompl : {x : ι → U | x ∈ S ↔ x ∈ Tᶜ} = {x | x ∈ S ↔ x ∈ T}ᶜ := by

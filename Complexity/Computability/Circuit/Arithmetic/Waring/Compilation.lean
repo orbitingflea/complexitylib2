@@ -79,7 +79,7 @@ theorem Term.eval_toCircuit [Semiring R] (zero one : C) (constant : C → R)
   rfl
 
 /-- Exact weighted term cost, including all coefficient and zero/one constants. -/
-private theorem Term.cost_program_toCircuit (zero one : C) (weight : ArithOp C → ℕ) (t : Term C d) :
+theorem Term.cost_program_toCircuit (zero one : C) (weight : ArithOp C → ℕ) (t : Term C d) :
     (t.toCircuit zero one).program.cost weight =
       weight (.const zero) +
         (∑ i, (weight (.const (t.coefficients i)) + weight .mul + weight .add)) +
@@ -94,13 +94,13 @@ private theorem Term.cost_program_toCircuit (zero one : C) (weight : ArithOp C �
 def termMultiplicationCount (d : ℕ) : ℕ := d + binaryMultiplicationCount d + 1
 
 /-- Exact term multiplication count, including the final scale multiplication at degree zero. -/
-private theorem Term.mulCost_toCircuit (zero one : C) (t : Term C d) :
+theorem Term.mulCost_toCircuit (zero one : C) (t : Term C d) :
     (t.toCircuit zero one).program.cost ArithOp.mulCost = termMultiplicationCount d := by
   rw [Term.cost_program_toCircuit]
   by_cases hd : d = 0 <;> simp [ArithOp.mulCost, termMultiplicationCount, hd]
 
 /-- There is one linear-form addition per variable, including the initial addition to zero. -/
-private theorem Term.addCost_toCircuit (zero one : C) (t : Term C d) :
+theorem Term.addCost_toCircuit (zero one : C) (t : Term C d) :
     (t.toCircuit zero one).program.cost ArithOp.addCost = d := by
   rw [Term.cost_program_toCircuit]
   simp [ArithOp.addCost]

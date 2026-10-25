@@ -127,7 +127,7 @@ theorem clear_zero (m : ℕ → ℕ) (base : ℕ) : clear m base 0 = m := by
   funext a
   simp [clear]
 
-private theorem clear_succ (m : ℕ → ℕ) (base k : ℕ) :
+theorem clear_succ (m : ℕ → ℕ) (base k : ℕ) :
     clear m base (k + 1) = Function.update (clear m base k) (base + k) 0 := by
   funext a
   simp only [clear, Function.update_apply]

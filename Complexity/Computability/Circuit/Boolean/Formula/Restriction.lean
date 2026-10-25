@@ -84,14 +84,14 @@ def constValue? : Formula signature n → Option Bool
   rfl
 
 /-- A formula with a constant value is that constant. -/
-private theorem eq_const_of_constValue? {F : Formula signature n} {b : Bool}
+theorem eq_const_of_constValue? {F : Formula signature n} {b : Bool}
     (h : F.constValue? = some b) :
     F = const b := by
   match F, h with
   | gate (.const _) args, rfl => exact congrArg (gate _) (funext fun j => j.elim0)
 
 /-- A formula is either a constant or has `constValue? = none`. -/
-private theorem eq_const_or_constValue?_eq_none (F : Formula signature n) :
+theorem eq_const_or_constValue?_eq_none (F : Formula signature n) :
     (∃ b, F = const b) ∨ F.constValue? = none := by
   cases h : F.constValue? with
   | none => exact Or.inr rfl
@@ -294,11 +294,11 @@ otherwise. -/
     (F.or G).restrict ρ = mkOr (F.restrict ρ) (G.restrict ρ) :=
   rfl
 
-private theorem restrict_input_of_eq_none {i : Fin n} (h : ρ i = none) :
+theorem restrict_input_of_eq_none {i : Fin n} (h : ρ i = none) :
     (input i : Formula signature n).restrict ρ = input i := by
   simp [h]
 
-private theorem restrict_input_of_eq_some {i : Fin n} {b : Bool} (h : ρ i = some b) :
+theorem restrict_input_of_eq_some {i : Fin n} {b : Bool} (h : ρ i = some b) :
     (input i : Formula signature n).restrict ρ = const b := by
   simp [h]
 
@@ -380,7 +380,7 @@ theorem IsSimplified.constValue?_eq_none {F : Formula signature n} (hF : F.IsSim
   cases hF <;> rfl
 
 /-- A simplified formula has a leaf. -/
-private theorem IsSimplified.one_le_leafSize {F : Formula signature n} (hF : F.IsSimplified) :
+theorem IsSimplified.one_le_leafSize {F : Formula signature n} (hF : F.IsSimplified) :
     1 ≤ F.leafSize := by
   induction hF <;> simp only [leafSize_input, leafSize_not, leafSize_and, leafSize_or] <;> omega
 

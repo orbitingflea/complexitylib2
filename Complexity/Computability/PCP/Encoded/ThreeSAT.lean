@@ -51,7 +51,7 @@ def clauseHolds (κ : Clause ℕ) (a : Fin 3 → Bool) : Bool :=
   (List.finRange 3).any fun q => κ[q.val]?.elim false (fun l => a q == l.2)
 
 /-- The Boolean test agrees with the existing mathematical clause predicate. -/
-private theorem clauseHolds_eq_true (κ : Clause ℕ) (a : Fin 3 → Bool) :
+theorem clauseHolds_eq_true (κ : Clause ℕ) (a : Fin 3 → Bool) :
     clauseHolds κ a = true ↔ ConstraintGraph.ClauseHolds κ a := by
   simp only [clauseHolds, List.any_eq_true, List.mem_finRange, true_and,
     ConstraintGraph.ClauseHolds]
@@ -210,7 +210,7 @@ theorem satisfiable_ofCNF_iff (variableCount : ℕ) (φ : CNF ℕ)
   exact ConstraintGraph.satisfiable_ofCNF_iff φ h3
 
 /-- Bounded variable names ensure every generated endpoint lies in the declared vertex range. -/
-private theorem wellFormed_ofCNF (variableCount : ℕ) (φ : CNF ℕ)
+theorem wellFormed_ofCNF (variableCount : ℕ) (φ : CNF ℕ)
     (hvars : ∀ v ∈ φ.vars, v < variableCount) : (ofCNF variableCount φ).WellFormed := by
   intro e he
   obtain ⟨⟨j, q⟩, hp, rfl⟩ := List.mem_map.mp he

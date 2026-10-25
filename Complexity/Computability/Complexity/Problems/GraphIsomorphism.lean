@@ -64,7 +64,7 @@ namespace Graph
 def adjIndex (G : Graph) (i j : ℕ) : Bool :=
   G.adjBool (G.distinctVertices.getD i 0) (G.distinctVertices.getD j 0)
 
-private theorem induced_adj_vertexEquiv (G : Graph) (i j : Fin G.distinctVertices.length) :
+theorem induced_adj_vertexEquiv (G : Graph) (i j : Fin G.distinctVertices.length) :
     G.induced.Adj (G.vertexEquiv i) (G.vertexEquiv j) ↔ G.adjIndex i j = true := by
   rw [induced_adj, adjIndex, adjBool_eq_true_iff, vertexEquiv_apply, vertexEquiv_apply]
 

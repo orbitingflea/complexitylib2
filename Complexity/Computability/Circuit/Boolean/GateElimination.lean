@@ -125,7 +125,7 @@ private theorem isConstOrLiteral_literal (i : Fin n) :
   Or.inr ⟨i, EqUpToNeg.refl _⟩
 
 /-- A function of bit `i` alone is constant or a literal. -/
-private theorem isConstOrLiteral_of_eq_comp (f : Bool → Bool) (h : ∀ x, φ x = f (x i)) :
+theorem isConstOrLiteral_of_eq_comp (f : Bool → Bool) (h : ∀ x, φ x = f (x i)) :
     IsConstOrLiteral φ := by
   cases h0 : f false <;> cases h1 : f true
   · exact Or.inl fun x y => by rw [h, h]; cases x i <;> cases y i <;> simp [h0, h1]

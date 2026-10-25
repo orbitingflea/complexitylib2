@@ -211,7 +211,7 @@ private theorem Clause.length_splitAux (fresh : ℕ → W) (j : ℕ) (carry : Li
     · exact hrest
 
 /-- Splitting a clause of width `w` gives `w - 2` clauses, and at least one. -/
-private theorem Clause.length_split3 (fresh : ℕ → W) (j : ℕ) (c : Clause W) :
+theorem Clause.length_split3 (fresh : ℕ → W) (j : ℕ) (c : Clause W) :
     (Clause.split3 fresh j c).length = max 1 (c.length - 2) := by
   cases c with
   | nil => rfl

@@ -132,7 +132,7 @@ theorem updates_of_notMem {σ : V → Bool} {vs : List V} {x : V} (hx : x ∉ vs
       rw [updates, ih hx.2, Function.update_of_ne hx.1]
 
 /-- Updating distinct variables by as many values sets them to these values. -/
-private theorem map_updates {σ : V → Bool} {vs : List V} (hvs : vs.Nodup) {bs : List Bool}
+theorem map_updates {σ : V → Bool} {vs : List V} (hvs : vs.Nodup) {bs : List Bool}
     (hlen : bs.length = vs.length) : vs.map (updates σ vs bs) = bs := by
   induction vs generalizing σ bs with
   | nil => exact (List.length_eq_zero_iff.mp hlen).symm

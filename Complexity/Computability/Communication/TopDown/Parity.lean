@@ -65,7 +65,7 @@ private theorem parity_class_nonempty_deficit {n : ℕ} (hn : 0 < n) (b : Bool) 
 
 /-- The points are density limits of a parity class when masks are nonempty with probability at
 least `3 / 4`. -/
-private theorem parity_isDensityLimit {n : ℕ} {p : ℝ} (hp : 0 ≤ p) (hp' : p ≤ 1)
+theorem parity_isDensityLimit {n : ℕ} {p : ℝ} (hp : 0 ≤ p) (hp' : p ≤ 1)
     (hsmall : (1 - p) ^ n ≤ 1 / 4) (b : Bool) (x : Fin n → Bool) :
     IsDensityLimit (univ.filter fun z : Fin n → Bool => parity n z = b) p 1 x := by
   have hpoint (P : Fin n → Bool) : (if ∃ i, P i = true then (1 : ℝ) else 0) ≤

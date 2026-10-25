@@ -107,7 +107,7 @@ def PipelineSizeBound (A E : ℕ) : Prop :=
           A * (2 ^ p + t * (s + 1) + copies * (s + 1) ^ ℓ) *
             (p + w + ℓ * b + Nat.log 2 (t + copies) + 2) ^ E
 
-private theorem pow_le_pow_add {B E E' : ℕ} {x : ℕ} (hx : x ≤ B) (hB : 1 ≤ B) :
+theorem pow_le_pow_add {B E E' : ℕ} {x : ℕ} (hx : x ≤ B) (hB : 1 ≤ B) :
     x ^ E ≤ B ^ (E + E') :=
   (Nat.pow_le_pow_left hx E).trans (Nat.pow_le_pow_right hB (Nat.le_add_right E E'))
 

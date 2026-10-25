@@ -119,7 +119,7 @@ theorem uniformError_le_one (f h : (ι → Bool) → Bool) : uniformError f h �
   exact_mod_cast this
 
 /-- The error is the probability that a uniform point is misclassified. -/
-private theorem toOuterMeasure_uniformOfFintype_ne (f h : (ι → Bool) → Bool) :
+theorem toOuterMeasure_uniformOfFintype_ne (f h : (ι → Bool) → Bool) :
     (PMF.uniformOfFintype (ι → Bool)).toOuterMeasure {x | h x ≠ f x} =
       ENNReal.ofReal (uniformError f h) := by
   rw [← ENNReal.ofReal_toReal (PMF.toOuterMeasure_ne_top _ _), PMF.toOuterMeasure_apply_toReal]

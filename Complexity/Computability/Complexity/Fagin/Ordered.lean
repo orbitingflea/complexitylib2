@@ -61,7 +61,7 @@ theorem Definable.esoDefinable {L : Language.{u, v}} {K : Query L} (hK : Definab
 
 /-- The existing fixed-sentence encoding is exactly the new arbitrary-query encoding applied
 to the class defined by that sentence. Its size and shape rejection behavior is unchanged. -/
-private theorem encodedLanguage_sentence {L : Language} [L.IsRelational] (v : Vocabulary L)
+theorem encodedLanguage_sentence {L : Language} [L.IsRelational] (v : Vocabulary L)
     (φ : (language L).Sentence) :
     Query.encodedLanguage {M : Ordered.Structure L | φ.Realize M} v =
       queryLanguage v φ := rfl

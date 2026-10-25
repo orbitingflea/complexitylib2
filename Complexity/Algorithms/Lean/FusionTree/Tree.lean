@@ -359,7 +359,7 @@ theorem listPredecessor_eq_none_iff (q : ℕ) (xs : List ℕ) :
         contradiction
       simp [listPredecessor, hs, Option.or, ht]
 
-private theorem listPredecessor_append (q : ℕ) (xs ys : List ℕ) :
+theorem listPredecessor_append (q : ℕ) (xs ys : List ℕ) :
     listPredecessor q (xs ++ ys) = (listPredecessor q ys).or (listPredecessor q xs) := by
   induction xs with
   | nil => simp [listPredecessor]
@@ -367,7 +367,7 @@ private theorem listPredecessor_append (q : ℕ) (xs ys : List ℕ) :
     simp only [List.cons_append, listPredecessor, ih]
     cases listPredecessor q ys <;> cases listPredecessor q xs <;> rfl
 
-private theorem listPredecessor_ne_none_iff {q : ℕ} {xs : List ℕ}
+theorem listPredecessor_ne_none_iff {q : ℕ} {xs : List ℕ}
     (hn : xs ≠ []) (hs : xs.Pairwise (· ≤ ·)) :
     listPredecessor q xs ≠ none ↔ xs.headD 0 ≤ q := by
   obtain ⟨x, xs, rfl⟩ := List.exists_cons_of_ne_nil hn
@@ -456,7 +456,7 @@ decreasing_by
   simp_wf
   omega
 
-private theorem listPredecessor_some_spec {q p : ℕ} {xs : List ℕ}
+theorem listPredecessor_some_spec {q p : ℕ} {xs : List ℕ}
     (hs : xs.Pairwise (· ≤ ·)) (hp : listPredecessor q xs = some p) :
     p ∈ xs ∧ p ≤ q ∧ ∀ x ∈ xs, x ≤ q → x ≤ p := by
   revert hs hp

@@ -98,7 +98,7 @@ zeros, a one, then `w`. -/
 def encodeWord (L : ℕ) (w : List Bool) : List Bool :=
   List.replicate (L - w.length) false ++ true :: w
 
-private theorem idxOf_true_replicate_false_append (n : ℕ) (w : List Bool) :
+theorem idxOf_true_replicate_false_append (n : ℕ) (w : List Bool) :
     (List.replicate n false ++ true :: w).idxOf true = n := by
   induction n with
   | zero => simp

@@ -280,7 +280,7 @@ theorem order_reversal_sum (M : ℕ) (a : K)
       Fintype.card_fin, smul_eq_mul]
   omega
 
-private lemma sum_fin_val_le_square (h : ℕ) : (∑ j : Fin h, j.val) ≤ h * h := by
+lemma sum_fin_val_le_square (h : ℕ) : (∑ j : Fin h, j.val) ≤ h * h := by
   calc
     _ ≤ ∑ _j : Fin h, h := Finset.sum_le_sum fun j _ => Nat.le_of_lt j.isLt
     _ = h * h := by simp

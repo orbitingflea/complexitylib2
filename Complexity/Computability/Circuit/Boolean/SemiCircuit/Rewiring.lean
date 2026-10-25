@@ -242,7 +242,7 @@ private theorem rewire_gate_of_ne {J K : ℕ} {g : Gate} (hKJ : K ≠ J) :
     (C.rewire J g).gate K = C.gate K :=
   Function.update_of_ne hKJ _ _
 
-private theorem rewire_gate_self {J : ℕ} {g : Gate} : (C.rewire J g).gate J = g :=
+theorem rewire_gate_self {J : ℕ} {g : Gate} : (C.rewire J g).gate J = g :=
   Function.update_self _ _ _
 
 /-- Rewiring a gate to read only parameters preserves well-formedness. -/

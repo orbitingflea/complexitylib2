@@ -315,7 +315,7 @@ theorem formulaSize_sub_sq_mul_pow_three_le_andreev (h : BooleanFunction b) (hb 
 
 /-- Specialization of Andreev's reduction to `r = Nat.log 2 b + 2`, for which `2 * b ≤ 2 ^ r`
 always holds. -/
-private theorem formulaSize_sub_sq_mul_pow_three_le_andreev_log (h : BooleanFunction b) (hb : 1 ≤ b)
+theorem formulaSize_sub_sq_mul_pow_three_le_andreev_log (h : BooleanFunction b) (hb : 1 ≤ b)
     {m : ℕ} (hm : Nat.log 2 b + 2 ≤ m) :
     (formulaSize h - 2 * b * (Nat.log 2 b + 2)) ^ 2 * m ^ 3 ≤
       4 * formulaSize (andreev b m) ^ 2 * (Nat.log 2 b + 2) ^ 3 := by

@@ -84,7 +84,7 @@ variable [Fact p.Prime]
     simp [sgnVal, Iter.sgn, Nat.cast_sub this.le]
 
 /-- Fermat: a nonzero residue to the power `p - 2` is its inverse. -/
-private theorem pow_sub_two_eq_inv {a : ZMod p} (ha : a ≠ 0) : a ^ (p - 2) = a⁻¹ := by
+theorem pow_sub_two_eq_inv {a : ZMod p} (ha : a ≠ 0) : a ^ (p - 2) = a⁻¹ := by
   have hp := (Fact.out : p.Prime).two_le
   refine eq_inv_of_mul_eq_one_left ?_
   rw [← pow_succ, show p - 2 + 1 = p - 1 by omega, ZMod.pow_card_sub_one_eq_one ha]

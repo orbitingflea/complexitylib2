@@ -90,7 +90,7 @@ theorem mem_IndependentSet_of_subsingleton [Subsingleton M] :
 
 /-- **Independent set is invariant under copies**: the largest independent sets of `J` disjoint
 copies of a graph are unions of largest independent sets of the copies. -/
-private theorem independentSet_copies_iff [Finite J] [Finite M] [Nonempty J] :
+theorem independentSet_copies_iff [Finite J] [Finite M] [Nonempty J] :
     (Bundled.of (Copies J M) : Bundled.{w} sizedGraph.Structure) ∈ IndependentSet ↔
       (Bundled.of M : Bundled.{w} sizedGraph.Structure) ∈ IndependentSet := by
   have hsize : {x : Copies J M | RelMap sizedGraph.size ![x]}.ncard =

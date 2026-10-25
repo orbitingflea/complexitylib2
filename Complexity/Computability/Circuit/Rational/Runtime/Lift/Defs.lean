@@ -77,7 +77,7 @@ open Polynomial
 
 /-! ### Index bridges -/
 
-private lemma val_finEquiv {m : ℕ} [NeZero m] (i : Fin m) : (ZMod.finEquiv m i).val = i.val := by
+lemma val_finEquiv {m : ℕ} [NeZero m] (i : Fin m) : (ZMod.finEquiv m i).val = i.val := by
   cases m with
   | zero => exact (NeZero.ne 0 rfl).elim
   | succ m => rfl
@@ -88,13 +88,13 @@ lemma val_finEquiv_symm {m : ℕ} [NeZero m] (z : ZMod m) :
   rw [← val_finEquiv, RingEquiv.apply_symm_apply]
 
 /-- A sum over `List.range m` is a sum over `Fin m`. -/
-private lemma sum_range_eq_sum_fin {A : Type*} [AddCommMonoid A] (m : ℕ) (f : ℕ → A) :
+lemma sum_range_eq_sum_fin {A : Type*} [AddCommMonoid A] (m : ℕ) (f : ℕ → A) :
     ((List.range m).map f).sum = ∑ i : Fin m, f i := by
   rw [← List.map_coe_finRange_eq_range, List.map_map, ← List.ofFn_eq_map, List.sum_ofFn]
   rfl
 
 /-- A sum over `List.range m` is a sum over the residues modulo `m`. -/
-private lemma sum_range_eq_sum_zmod {A : Type*} [AddCommMonoid A] (m : ℕ) [NeZero m] (f : ℕ → A) :
+lemma sum_range_eq_sum_zmod {A : Type*} [AddCommMonoid A] (m : ℕ) [NeZero m] (f : ℕ → A) :
     ((List.range m).map f).sum = ∑ z : ZMod m, f z.val := by
   rw [sum_range_eq_sum_fin]
   exact Fintype.sum_equiv (ZMod.finEquiv m).toEquiv _ _ fun i => by
@@ -102,7 +102,7 @@ private lemma sum_range_eq_sum_zmod {A : Type*} [AddCommMonoid A] (m : ℕ) [NeZ
     rw [val_finEquiv]
 
 /-- Residue subtraction on values, without truncated subtraction below zero. -/
-private lemma val_sub_eq_mod {m : ℕ} [NeZero m] (u v : ZMod m) :
+lemma val_sub_eq_mod {m : ℕ} [NeZero m] (u v : ZMod m) :
     (u - v).val = (u.val + m - v.val) % m := by
   have hv := v.val_lt
   rw [← ZMod.val_natCast, Nat.cast_sub (by omega), Nat.cast_add, ZMod.natCast_self,

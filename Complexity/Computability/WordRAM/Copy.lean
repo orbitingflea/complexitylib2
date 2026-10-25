@@ -59,7 +59,7 @@ theorem copyPrefix_outside {mem : ℕ → ℕ} {src dst k a : ℕ}
     (ha : ¬(dst ≤ a ∧ a < dst + k)) : copyPrefix mem src dst k a = mem a := by
   simp [copyPrefix, ha]
 
-private theorem copyPrefix_succ (mem : ℕ → ℕ) (src dst k : ℕ) :
+theorem copyPrefix_succ (mem : ℕ → ℕ) (src dst k : ℕ) :
     copyPrefix mem src dst (k + 1) =
       Function.update (copyPrefix mem src dst k) (dst + k) (mem (src + k)) := by
   funext a

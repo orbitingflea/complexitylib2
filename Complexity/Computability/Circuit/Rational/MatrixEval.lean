@@ -50,11 +50,11 @@ namespace Cslib.Circuits.Rational
 
 open Rational.Formula Rational.Output
 
-private theorem matrix_inverse_left {d : ℕ} (a : Mat d) (ha : a.det ≠ 0) :
+theorem matrix_inverse_left {d : ℕ} (a : Mat d) (ha : a.det ≠ 0) :
     a * (a.det⁻¹ • a.adjugate) = 1 := by
   rw [Matrix.mul_smul, Matrix.mul_adjugate, smul_smul, inv_mul_cancel₀ ha, one_smul]
 
-private theorem matrix_inverse_right {d : ℕ} (a : Mat d) (ha : a.det ≠ 0) :
+theorem matrix_inverse_right {d : ℕ} (a : Mat d) (ha : a.det ≠ 0) :
     (a.det⁻¹ • a.adjugate) * a = 1 := by
   rw [Matrix.smul_mul, Matrix.adjugate_mul, smul_smul, inv_mul_cancel₀ ha, one_smul]
 

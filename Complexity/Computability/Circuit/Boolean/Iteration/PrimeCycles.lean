@@ -157,7 +157,7 @@ theorem lcmBelow_add_dvd {m n : ℕ} (h : n ≤ m) :
         exact hpow
       omega
 
-private theorem lcmBelow_add_le {m n : ℕ} (h : n ≤ m) :
+theorem lcmBelow_add_le {m n : ℕ} (h : n ≤ m) :
     lcmBelow (m + n) ≤ lcmBelow m * (m + n).choose m :=
   Nat.le_of_dvd (Nat.mul_pos (lcmBelow_pos m) (Nat.choose_pos (Nat.le_add_right m n)))
     (lcmBelow_add_dvd h)

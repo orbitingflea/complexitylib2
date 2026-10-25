@@ -271,7 +271,7 @@ private theorem replay_coinStep (t : ℕ) (cfg : FiniteConfig k Bool Control Uni
         split_ifs with hm <;> simp [hm]
 
 /-- A fold in the state and exception monad is a fold of results. -/
-private theorem foldlM_run {σ ε β γ : Type} (g : β → γ → StateT σ (Except ε) β) (l : List γ)
+theorem foldlM_run {σ ε β γ : Type} (g : β → γ → StateT σ (Except ε) β) (l : List γ)
     (b : β) (s : σ) :
     (l.foldlM g b).run s =
       l.foldl (fun acc c => acc.bind fun p => (g p.1 c).run p.2) (.ok (b, s)) := by

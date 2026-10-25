@@ -110,12 +110,12 @@ private theorem eval_append_units (σ : ℕ → Bool) (φ : CNF ℕ) (answers : 
     (φ ++ units answers).eval σ = true ↔ φ.eval σ = true ∧ ∀ l ∈ answers, σ l.1 = l.2 := by
   simp [units, CNF.eval_eq_true_iff, Clause.eval_eq_true_iff, or_imp, forall_and]
 
-private theorem length_encCNF_append (φ ψ : CNF ℕ) :
+theorem length_encCNF_append (φ ψ : CNF ℕ) :
     (encCNF (φ ++ ψ)).length = (encCNF φ).length + (encCNF ψ).length := by
   simp [encCNF]
 
 /-- A variable of a formula takes fewer bits than the formula. -/
-private theorem length_encNat_le_of_mem_vars {φ : CNF ℕ} {v : ℕ} (hv : v ∈ φ.vars) :
+theorem length_encNat_le_of_mem_vars {φ : CNF ℕ} {v : ℕ} (hv : v ∈ φ.vars) :
     (encNat v).length ≤ (encCNF φ).length := by
   obtain ⟨l, hl, rfl⟩ := List.mem_map.1 hv
   obtain ⟨c, hc, hl⟩ := List.mem_flatten.1 hl

@@ -209,7 +209,7 @@ private theorem card_darts_degreeReduce :
 
 /-- The labelling of the half-edges by the labels of their vertices violates only the edge-links
 of the edges violated by the labelling of the vertices. -/
-private theorem card_unsatEdges_degreeReduce_comp_endpoint_le (σ : V → α) :
+theorem card_unsatEdges_degreeReduce_comp_endpoint_le (σ : V → α) :
     #((G.degreeReduce H).toConstraintGraph.unsatEdges (σ ∘ G.endpoint)) ≤
       2 * #(G.unsatEdges σ) := by
   classical
@@ -356,7 +356,7 @@ private theorem mul_card_filter_ne_le_card_filter_isRight [DecidableEq α]
 clouds have spectral expansion at most `μ`, every labelling of the half-edges violates a proportion
 of the darts at least `min 1 ((1 - μ) |D|) / (2 (1 + |D|))` times the value of `G`, whatever the
 alphabet. -/
-private theorem le_unsatFrac_degreeReduce [Nonempty α] (hH : ∀ v, (H v).spectralExpansion ≤ μ)
+theorem le_unsatFrac_degreeReduce [Nonempty α] (hH : ∀ v, (H v).spectralExpansion ≤ μ)
     (A : E × Bool → α) :
     min 1 ((1 - μ) * Fintype.card D) / (2 * (1 + Fintype.card D)) * G.unsatVal ≤
       (G.degreeReduce H).toConstraintGraph.unsatFrac A := by

@@ -53,7 +53,7 @@ open scoped Classical in
 noncomputable def roundSet (N : ℕ) (edge : ℕ → ℕ → Bool) (source k : ℕ) : Finset ℕ :=
   (Finset.range N).filter (· ∈ Relation.reachableWithin (Graph N edge) source k)
 
-private theorem reachable_lt (hsource : source < N)
+theorem reachable_lt (hsource : source < N)
     (h : Relation.ReflTransGen (Graph N edge) source u) : u < N := by
   induction h with
   | refl => exact hsource
@@ -72,7 +72,7 @@ theorem mem_roundSet (hsource : source < N) :
   exact (Finset.mem_filter).trans ⟨And.right, fun h => ⟨Finset.mem_range.mpr
     (within_lt hsource h), h⟩⟩
 
-private theorem roundSet_zero (hsource : source < N) : roundSet N edge source 0 = {source} := by
+theorem roundSet_zero (hsource : source < N) : roundSet N edge source 0 = {source} := by
   ext u
   rw [mem_roundSet hsource, ← Relation.mem_reachableWithin, Relation.reachableWithin_zero]
   simp
@@ -82,7 +82,7 @@ theorem roundSet_card_le : (roundSet N edge source k).card ≤ N := by
   classical
   exact (Finset.card_le_card (Finset.filter_subset _ _)).trans_eq (Finset.card_range N)
 
-private theorem mem_roundSet_succ (hsource : source < N) (hv : v < N) :
+theorem mem_roundSet_succ (hsource : source < N) (hv : v < N) :
     v ∈ roundSet N edge source (k + 1) ↔
       ∃ u ∈ roundSet N edge source k, u = v ∨ edge u v = true := by
   rw [mem_roundSet hsource, ← Relation.mem_reachableWithin, Relation.mem_reachableWithin_succ]
@@ -100,7 +100,7 @@ private theorem mem_roundSet_succ (hsource : source < N) (hv : v < N) :
     · exact .single ⟨within_lt hsource hu', hv, huv⟩
 
 /-- Round `N - 1` is already the entire reachable set. -/
-private theorem mem_roundSet_final (hsource : source < N) (hk : k + 1 = N) :
+theorem mem_roundSet_final (hsource : source < N) (hk : k + 1 = N) :
     u ∈ roundSet N edge source k ↔ Relation.ReflTransGen (Graph N edge) source u := by
   have hs : {u | Relation.ReflTransGen (Graph N edge) source u} ⊆
       (Finset.range N : Set ℕ) := fun u hu => Finset.mem_range.mpr (reachable_lt hsource hu)

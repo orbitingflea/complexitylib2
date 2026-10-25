@@ -194,7 +194,7 @@ def PPolyOracle (A : Language Bool) : Set (Language Bool) :=
       (C n).Computes (oracleInterpretation A) (single (L.slice n))}
 
 /-- A De Morgan program in the oracle basis has fan-in at most two. -/
-private theorem fanInAtMost_mapOp_toOracle {g : ℕ} (p : Program signature n g) {r : ℕ}
+theorem fanInAtMost_mapOp_toOracle {g : ℕ} (p : Program signature n g) {r : ℕ}
     (hr : 2 ≤ r) :
     (p.mapOp toOracle).FanInAtMost r := by
   induction p with

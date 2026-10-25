@@ -98,7 +98,7 @@ def hardwired {n m : ℕ} (place : Fin m → Fin n ⊕ Bool) (x : BitString n) :
   fun j => Sum.elim x id (place j)
 
 /-- Hardwiring constants and duplicating or permuting inputs costs the two constants. -/
-private theorem exists_hardwired_comp {n m p : ℕ} (u : Circuit signature m p)
+theorem exists_hardwired_comp {n m p : ℕ} (u : Circuit signature m p)
     (place : Fin m → Fin n ⊕ Bool) :
     ∃ d : Circuit signature n p,
       (∀ x, d.eval interpretation x = u.eval interpretation (hardwired place x)) ∧
@@ -110,7 +110,7 @@ private theorem exists_hardwired_comp {n m p : ℕ} (u : Circuit signature m p)
     exact le_rfl
 
 /-- Hardwire constants, run `u`, and read selected output wires. -/
-private theorem exists_hardwired_projection {n m p k : ℕ} (u : Circuit signature m p)
+theorem exists_hardwired_projection {n m p k : ℕ} (u : Circuit signature m p)
     (place : Fin m → Fin n ⊕ Bool) (select : Fin k → Fin p) :
     ∃ d : Circuit signature n k,
       (∀ x, d.eval interpretation x =
@@ -342,7 +342,7 @@ def start (D : Description σ n G) (x : Fin n → V) : Config σ V n G :=
   ⟨D, x, fun _ => default, 0⟩
 
 /-- The widened lines of a program read only earlier gates. -/
-private theorem lines_wire_lt {g : ℕ} (p : Program σ n g) (j : Fin g) :
+theorem lines_wire_lt {g : ℕ} (p : Program σ n g) (j : Fin g) :
     ∀ (a : Fin (σ.Arity (p.lines j).op)) (b : Fin g),
       (p.lines j).wires a = Wire.gate b → b.val < j.val := by
   induction p with

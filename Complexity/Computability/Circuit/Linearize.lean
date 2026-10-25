@@ -109,7 +109,7 @@ theorem polynomialInterpretation_apply (R : Type*) [CommRing R] [Algebra F R] (o
 
 /-- Evaluation of a program with polynomial operations commutes with algebra
 homomorphisms. -/
-private theorem Program.map_trace_polynomialInterpretation {R S : Type*} [CommRing R] [Algebra F R]
+theorem Program.map_trace_polynomialInterpretation {R S : Type*} [CommRing R] [Algebra F R]
     [CommRing S] [Algebra F S] (φ : R →ₐ[F] S) (p : Program σ n s) (x : Fin n → R)
     (w : Wire n s) :
     φ (p.trace (polynomialInterpretation P R) x w) =
@@ -131,7 +131,7 @@ noncomputable def taylorOp (P : MvPolynomial (Fin k) F) (z : Fin k → F) :
   ⟨k, fun a => eval z (pderiv a P), eval z P - ∑ a, eval z (pderiv a P) * z a⟩
 
 /-- The value of the first-order Taylor expansion of `P` at `z`. -/
-private theorem affineInterpretation_taylorOp (P : MvPolynomial (Fin k) F) (z y : Fin k → F) :
+theorem affineInterpretation_taylorOp (P : MvPolynomial (Fin k) F) (z y : Fin k → F) :
     affineInterpretation F (taylorOp P z) y =
       eval z P + ∑ a, eval z (pderiv a P) * (y a - z a) := by
   simp only [taylorOp, affineInterpretation_apply, mul_sub, Finset.sum_sub_distrib]
@@ -149,7 +149,7 @@ noncomputable def Program.linearize : ∀ {s : ℕ}, Program σ n s → Program 
         line.wires⟩
 
 /-- Linearization preserves the arity of every gate. -/
-private theorem Program.arity_lines_linearize (p : Program σ n s) (g : Fin s) :
+theorem Program.arity_lines_linearize (p : Program σ n s) (g : Fin s) :
     (affineSignature F).Arity ((p.linearize P).lines g).op = σ.Arity (p.lines g).op := by
   induction p with
   | empty => exact g.elim0
@@ -161,12 +161,12 @@ private theorem Program.arity_lines_linearize (p : Program σ n s) (g : Fin s) :
       exact ih g
 
 /-- Linearization preserves the inner gates. -/
-private theorem Program.innerGates_linearize (p : Program σ n s) :
+theorem Program.innerGates_linearize (p : Program σ n s) :
     (p.linearize P).innerGates = p.innerGates :=
   Finset.filter_congr fun g _ => by rw [arity_lines_linearize]
 
 /-- Linearization preserves fan-in. -/
-private theorem Program.fanInAtMost_linearize (p : Program σ n s) (r : ℕ) :
+theorem Program.fanInAtMost_linearize (p : Program σ n s) (r : ℕ) :
     (p.linearize P).FanInAtMost r ↔ p.FanInAtMost r := by
   simp only [Program.fanInAtMost_iff]
   exact forall_congr' fun g => iff_of_eq (congrArg (· ≤ r) (p.arity_lines_linearize P g))

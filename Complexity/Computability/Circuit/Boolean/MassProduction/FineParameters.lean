@@ -148,7 +148,7 @@ theorem dimension_mul_fieldWidth_le (n : ℕ) :
     rw [Nat.sub_eq_zero_of_le (by omega), Nat.zero_div, Nat.mul_zero]
 
 /-- Linear growth eventually dominates any affine function of `log₂ (n + 2)`. -/
-private theorem eventually_add_mul_log_le (A B : ℕ) :
+theorem eventually_add_mul_log_le (A B : ℕ) :
     ∀ᶠ n in atTop, A + B * Nat.log 2 (n + 2) ≤ n := by
   filter_upwards [Nat.eventually_mul_log_le (2 * B + 1) one_lt_two,
     eventually_ge_atTop (2 * (A + 2 * B) + 4)] with n hlog hn
@@ -312,7 +312,7 @@ theorem mul_add_le_of_slack {P n w p den num R L O : ℕ}
   omega
 
 /-- Any polynomial is eventually below `2 ^ (n / c)`. -/
-private theorem eventually_mul_pow_le_two_pow_div (A E c : ℕ) (hc : 0 < c) :
+theorem eventually_mul_pow_le_two_pow_div (A E c : ℕ) (hc : 0 < c) :
     ∀ᶠ n in atTop, A * (n + 1) ^ E ≤ 2 ^ (n / c) := by
   have htend : Tendsto (fun n : ℕ => n / c) atTop atTop :=
     tendsto_atTop_atTop.mpr fun k => ⟨c * k, fun n hn =>

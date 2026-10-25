@@ -88,7 +88,7 @@ def restrictAt (i : Fin n) (b : Bool) (F : Formula signature n) : Formula signat
     (F.restrictAt i b).eval interpretation x = F.eval interpretation (update x i b) := by
   simp [restrictAt]
 
-private theorem leafSize_restrictAt_add_leafSizeIn_le (F : Formula signature n) (i : Fin n)
+theorem leafSize_restrictAt_add_leafSizeIn_le (F : Formula signature n) (i : Fin n)
     (b : Bool) :
     (F.restrictAt i b).leafSize + F.leafSizeIn {i} ≤ F.leafSize :=
   leafSize_restrict_update_le F i b
@@ -118,7 +118,7 @@ theorem restrictAt_input_self (i : Fin n) (b : Bool) :
     (input i : Formula signature n).restrictAt i b = const b := by
   simp [restrictAt]
 
-private theorem restrictAt_input_of_ne {i j : Fin n} (h : j ≠ i) (b : Bool) :
+theorem restrictAt_input_of_ne {i j : Fin n} (h : j ≠ i) (b : Bool) :
     (input j : Formula signature n).restrictAt i b = input j := by
   simp [restrictAt, h]
 
@@ -138,7 +138,7 @@ theorem isLeafMinimal_iff_leafSize_eq_formulaSize {F : Formula signature n} :
     fun h _ hG => h ▸ formulaSize_le hG⟩
 
 /-- Every argument of a leaf-minimal gate is leaf-minimal. -/
-private theorem IsLeafMinimal.arg {op : Op} {args : Fin (signature.Arity op) → Formula signature n}
+theorem IsLeafMinimal.arg {op : Op} {args : Fin (signature.Arity op) → Formula signature n}
     (hF : (gate op args).IsLeafMinimal) (j : Fin (signature.Arity op)) :
     (args j).IsLeafMinimal := by
   intro G hG
@@ -161,25 +161,25 @@ private theorem IsLeafMinimal.arg {op : Op} {args : Fin (signature.Arity op) →
   rw [← hsum1, ← hsum2, update_self, heq] at hle
   omega
 
-private theorem IsLeafMinimal.of_not {F : Formula signature n} (h : F.not.IsLeafMinimal) :
+theorem IsLeafMinimal.of_not {F : Formula signature n} (h : F.not.IsLeafMinimal) :
     F.IsLeafMinimal :=
   h.arg 0
 
-private theorem IsLeafMinimal.left_of_and {F G : Formula signature n}
+theorem IsLeafMinimal.left_of_and {F G : Formula signature n}
     (h : (F.and G).IsLeafMinimal) :
     F.IsLeafMinimal :=
   h.arg 0
 
-private theorem IsLeafMinimal.right_of_and {F G : Formula signature n}
+theorem IsLeafMinimal.right_of_and {F G : Formula signature n}
     (h : (F.and G).IsLeafMinimal) :
     G.IsLeafMinimal :=
   h.arg 1
 
-private theorem IsLeafMinimal.left_of_or {F G : Formula signature n} (h : (F.or G).IsLeafMinimal) :
+theorem IsLeafMinimal.left_of_or {F G : Formula signature n} (h : (F.or G).IsLeafMinimal) :
     F.IsLeafMinimal :=
   h.arg 0
 
-private theorem IsLeafMinimal.right_of_or {F G : Formula signature n} (h : (F.or G).IsLeafMinimal) :
+theorem IsLeafMinimal.right_of_or {F G : Formula signature n} (h : (F.or G).IsLeafMinimal) :
     G.IsLeafMinimal :=
   h.arg 1
 
@@ -443,7 +443,7 @@ theorem sum_formulaSize_restrict_update_le (f : BooleanFunction n)
 /-- Uniform single-step shrinkage inequality valid for every formula size, including `1`:
 the sum over all `2 |ρ.free|` single-variable extensions of `ρ` is at most
 `(2 |ρ.free| - 3) L(f↾ρ) + 1`. -/
-private theorem sum_formulaSize_restrict_update_le_add_one (f : BooleanFunction n)
+theorem sum_formulaSize_restrict_update_le_add_one (f : BooleanFunction n)
     (ρ : PartialAssignment (Fin n)) :
     ∑ i ∈ ρ.free,
         (formulaSize (f ∘ PartialAssignment.fill (update ρ i (some false))) +

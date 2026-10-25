@@ -29,7 +29,7 @@ namespace Cslib.Circuits
 variable {σ τ : Signature} (φ : σ.Hom τ) {n g m : ℕ}
 
 /-- The code of a translated line: the translated operation on the same wires. -/
-private theorem Line.code_mapOp (line : Line σ n g) :
+theorem Line.code_mapOp (line : Line σ n g) :
     (line.mapOp φ).code = (φ line.op, line.code.2) := by
   simp only [Line.code, Line.mapOp_op, Line.mapOp_wires]
   congr 1
@@ -37,7 +37,7 @@ private theorem Line.code_mapOp (line : Line σ n g) :
   simp
 
 /-- The code of a translated program: the operations of its gates translated. -/
-private theorem Program.code_mapOp (p : Program σ n g) :
+theorem Program.code_mapOp (p : Program σ n g) :
     (p.mapOp φ).code = p.code.map fun g => (φ g.1, g.2) := by
   induction p with
   | empty => rfl

@@ -133,7 +133,7 @@ theorem complexity_const (b : Bool) :
 /-- **Discrete intermediate values.** If changing one coordinate raises a measure by at most `B`,
 and the measure is at most `t` at `u` and above `t` at `v`, then it lies in `(t, t + B]`
 somewhere. -/
-private theorem exists_lt_le_add_of_update_le {ι α : Type*} [Finite ι] [DecidableEq ι]
+theorem exists_lt_le_add_of_update_le {ι α : Type*} [Finite ι] [DecidableEq ι]
     (μ : (ι → α) → ℕ) {B t : ℕ} (hμ : ∀ w i a, μ (Function.update w i a) ≤ μ w + B)
     {u v : ι → α} (hu : μ u ≤ t) (hv : t < μ v) : ∃ w, t < μ w ∧ μ w ≤ t + B := by
   have := Fintype.ofFinite ι
@@ -205,7 +205,7 @@ theorem SIZE_ssubset {s t : ℕ → ℕ} (hst : s ≤ t) (ht : ∀ n, 1 ≤ t n)
 
 /-- Polynomials are eventually below `2 ^ n / n`: `(n + 1) ^ k n ≤ 2 ^ k n ^ (k + 1)`, which is
 eventually below `2 ^ n`. -/
-private theorem eventually_pow_lt_two_pow_div (k : ℕ) :
+theorem eventually_pow_lt_two_pow_div (k : ℕ) :
     ∀ᶠ n : ℕ in atTop, (((n + 1) ^ k : ℕ) : ℝ) < 2 ^ n / n := by
   filter_upwards [Nat.eventually_mul_pow_le_pow (2 ^ (k + 1)) (k + 1) Nat.one_lt_two,
     eventually_ge_atTop 1] with n hn hn1

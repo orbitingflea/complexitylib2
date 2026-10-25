@@ -146,7 +146,7 @@ theorem complexity_directProduct_two_pow_le {p m L H : ℕ}
 /-! ### Arithmetic estimates -/
 
 /-- `(1 + 1 / M) ^ d ≤ 1 + 1 / R` when `(R + 1) d ≤ M`, without denominators. -/
-private theorem mul_add_one_pow_le {R M d : ℕ} (h : (R + 1) * d ≤ M) :
+theorem mul_add_one_pow_le {R M d : ℕ} (h : (R + 1) * d ≤ M) :
     R * (M + 1) ^ d ≤ (R + 1) * M ^ d := by
   -- `(M + 1) ^ d * (M - d) ≤ M ^ (d + 1)` by induction.
   have key : ∀ e : ℕ, e ≤ M → (M + 1) ^ e * (M - e) ≤ M ^ (e + 1) := by

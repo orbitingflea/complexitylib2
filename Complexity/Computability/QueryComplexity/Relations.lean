@@ -89,7 +89,7 @@ open Finset BitString
 variable {n : ℕ}
 
 /-- Flipping the coordinates on which `y` differs from `x` turns `x` into `y`. -/
-private theorem BitString.flipBlock_filter_ne (x y : BitString n) : flipBlock
+theorem BitString.flipBlock_filter_ne (x y : BitString n) : flipBlock
     {i | y i ≠ x i} x = y := by
   funext i
   by_cases h : y i = x i
@@ -213,16 +213,6 @@ theorem certificateComplexityFor_le_sensitivityFor_mul_blockSensitivityFor
 
 /-! ### Restricting by the answers to a certificate -/
 
-/-- Restricting by answers on `S` does not raise `C_b(f)`. -/
-private theorem certificateComplexityFor_comp_piecewise_le (f : BooleanFunction n)
-    (S : Finset (Fin n))
-    (a : BitString n) (b : Bool) :
-    certificateComplexityFor (fun y => f (S.piecewise a y)) b ≤ certificateComplexityFor f b :=
-  Finset.sup_le fun z hz => by
-    obtain ⟨T, hT, hcard⟩ := exists_isCertificate_card_eq f (S.piecewise a z)
-    exact (certificateComplexityAt_le hT.restrict).trans ((card_le_card sdiff_subset).trans
-      (hcard.trans_le (certificateComplexityAt_le_certificateComplexityFor (mem_filter.1 hz).2)))
-
 /-- Flipping a block in the free coordinates commutes with filling in `S`. -/
 private theorem piecewise_flipBlock (S B : Finset (Fin n)) (a z : BitString n) :
     S.piecewise a (flipBlock B z) = flipBlock (B \ S) (S.piecewise a z) := by
@@ -337,7 +327,7 @@ theorem complexity_le_blockSensitivityFor_mul_certificateComplexityFor (f : Bool
     -- query the certificate of `w`, then continue with a tree for the restricted function
     refine (complexity_le_card_add S (d := m * certificateComplexityFor f true) fun a =>
       (ih _ (blockSensitivityFor_comp_piecewise_false_le hS hw a hf)).trans
-        (Nat.mul_le_mul_left m (certificateComplexityFor_comp_piecewise_le f S a true))).trans ?_
+        (Nat.mul_le_mul_left m (certificateComplexityFor_restrict_le S a true))).trans ?_
     rw [hScard, Nat.succ_mul, add_comm]
     exact Nat.add_le_add_left (certificateComplexityAt_le_certificateComplexityFor hw) _
 

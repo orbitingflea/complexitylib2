@@ -67,12 +67,12 @@ private lemma encodeNat_le (a L : ℕ) (ha : a < 2 ^ L) : (encodeNat a).length �
   exact Nat.add_le_add_right (Nat.mul_le_mul_left 2 ((Nat.digits_length_le_iff (by omega) a).mpr
     ha)) 1
 
-private lemma ratio_num_le (a b : ℤ) (hb : b ≠ 0) : (Rat.divInt a b).num.natAbs ≤ a.natAbs := by
+lemma ratio_num_le (a b : ℤ) (hb : b ≠ 0) : (Rat.divInt a b).num.natAbs ≤ a.natAbs := by
   by_cases ha : a = 0
   · simp [ha]
   · exact Int.natAbs_le_of_dvd_ne_zero (Rat.num_dvd a hb) ha
 
-private lemma ratio_den_le (a b : ℤ) (hb : b ≠ 0) : (Rat.divInt a b).den ≤ b.natAbs := by
+lemma ratio_den_le (a b : ℤ) (hb : b ≠ 0) : (Rat.divInt a b).den ≤ b.natAbs := by
   simpa only [Int.natAbs_natCast] using Int.natAbs_le_of_dvd_ne_zero (Rat.den_dvd a b) hb
 
 private lemma encodeRat_ratio_le (a b : ℤ) (hb : b ≠ 0) (L : ℕ)
@@ -83,7 +83,7 @@ private lemma encodeRat_ratio_le (a b : ℤ) (hb : b ≠ 0) (L : ℕ)
   simp only [encodeRat, List.length_append, List.length_singleton]
   omega
 
-private lemma determinant_bound {d : ℕ} (A : Matrix (Fin d) (Fin d) ℤ) (B : ℕ)
+lemma determinant_bound {d : ℕ} (A : Matrix (Fin d) (Fin d) ℤ) (B : ℕ)
     (hA : ∀ i j, |A i j| ≤ B) : |A.det| ≤ (d.factorial : ℤ) * (B : ℤ) ^ d := by
   have h := Matrix.det_le (abv := AbsoluteValue.abs) (x := (B : ℤ)) (A := A) (by simpa using hA)
   simpa only [AbsoluteValue.abs_apply, nsmul_eq_mul, Fintype.card_fin] using h

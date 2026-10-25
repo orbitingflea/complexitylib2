@@ -91,7 +91,7 @@ theorem parityOn_incidence_update_not [DecidableEq E] (σ : E → Bool) (e : E) 
 
 /-- On a connected multigraph, the parities at any two vertices `u` and `w`, and nowhere else, can
 be flipped: some assignment has parity `1` exactly at `u` and `w` (and nowhere if `u = w`). -/
-private theorem exists_forall_parityOn_incidence_eq_xor [Finite V]
+theorem exists_forall_parityOn_incidence_eq_xor [Finite V]
     (hG : (Multigraph.toSimpleGraph ends).Connected) (u w : V) :
     ∃ τ : E → Bool, ∀ v,
       parityOn (Multigraph.incidence ends v) τ = (decide (v = u) ^^ decide (v = w)) := by
@@ -144,7 +144,7 @@ theorem parityOn_univ_parityOn_incidence_eq_false (σ : E → Bool) :
       simp [hab, h], sum_pair h, BooleanRing.add_self]
 
 /-- An assignment satisfying the constraints of all vertices has even total charge. -/
-private theorem parityOn_univ_eq_false_of_forall {σ : E → Bool} {χ : V → Bool}
+theorem parityOn_univ_eq_false_of_forall {σ : E → Bool} {χ : V → Bool}
     (h : ∀ v, parityOn (Multigraph.incidence ends v) σ = χ v) : parityOn univ χ = false := by
   rw [← parityOn_univ_parityOn_incidence_eq_false (ends := ends) σ]
   exact parityOn_congr fun v _ => (h v).symm
@@ -152,7 +152,7 @@ private theorem parityOn_univ_eq_false_of_forall {σ : E → Bool} {χ : V → B
 /-- On a connected multigraph, for every vertex `u` some assignment satisfies the constraints of
 all vertices except possibly `u`: its parity at `v` is `χ v`, flipped at `u` when the total charge
 is odd. -/
-private theorem exists_forall_parityOn_incidence_eq (hG : (Multigraph.toSimpleGraph ends).Connected)
+theorem exists_forall_parityOn_incidence_eq (hG : (Multigraph.toSimpleGraph ends).Connected)
     (χ : V → Bool) (u : V) :
     ∃ σ : E → Bool, ∀ v,
       parityOn (Multigraph.incidence ends v) σ = ((parityOn univ χ && decide (v = u)) ^^ χ v) := by

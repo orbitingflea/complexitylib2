@@ -155,7 +155,7 @@ variable [Finite U] [Nontrivial U]
 /-- **The cycle rank of the graph of a nondeterministic circuit** deciding a large
 `K`-rectangle-free set `S ⊆ U^n` is at most `(r - 1) s - n + log_q K + 1` for fan-in at most `r`,
 where `s` counts the inner gates. Only the `n` ordinary inputs are subtracted. -/
-private theorem cycleRank_le_of_nondeterministicDecides (hfan : c.FanInAtMost r)
+theorem cycleRank_le_of_nondeterministicDecides (hfan : c.FanInAtMost r)
     (hS : c.NondeterministicDecides I Acc S) (hfree : RectangleFree S K)
     (hbig : Nat.card U * K ^ 2 ≤ S.ncard) :
     ((Compiler.graph c).cycleRank : ℝ) ≤
@@ -183,7 +183,7 @@ private theorem cycleRank_le_of_nondeterministicDecides (hfan : c.FanInAtMost r)
 /-- **Every layout of the graph of a nondeterministic circuit is wide.** For a circuit of fan-in
 at most `r ≥ 2` deciding a large `K`-rectangle-free set `S` nondeterministically, every layout `π`
 of its graph satisfies `log_q |S| ≤ width π + (r + 2) + 3 log_q K + log_q (|V| + 1)`. -/
-private theorem logb_ncard_le_width_of_nondeterministicDecides (hr : 2 ≤ r) (hfan : c.FanInAtMost r)
+theorem logb_ncard_le_width_of_nondeterministicDecides (hr : 2 ≤ r) (hfan : c.FanInAtMost r)
     (hS : c.NondeterministicDecides I Acc S) (hfree : RectangleFree S K)
     (hbig : Nat.card U * K ^ 2 ≤ S.ncard) (π : Layout (Compiler.Vertex c)) :
     Real.logb (Nat.card U) S.ncard ≤
@@ -265,7 +265,7 @@ hypothesis for subcubic graphs with coefficient `A > 0`. Under the hypotheses of
 every circuit of fan-in at most two with any number of witness inputs deciding `S_n`
 nondeterministically, over any basis and interpretation on `U`, has more than `(1 + 1/A - ε) n`
 inner gates. -/
-private theorem eventually_lt_innerSize_of_nondeterministicDecides {A : ℝ} (hA : 0 < A)
+theorem eventually_lt_innerSize_of_nondeterministicDecides {A : ℝ} (hA : 0 < A)
     (hlayout : LayoutBound 3 A) (hfree : ∀ᶠ n in atTop, RectangleFree (S n) (K n))
     (hK : (fun n => Real.log (K n)) =o[atTop] fun n => (n : ℝ))
     (hdense : (fun n => n * Real.log (Nat.card U) - Real.log (S n).ncard) =o[atTop]

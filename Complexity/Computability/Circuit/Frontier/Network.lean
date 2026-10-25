@@ -431,7 +431,7 @@ theorem unambiguous_branchingProgram
 
 /-- **Edges by width.** At a step that processes a vertex, an edge of the program is determined
 by the values of an assignment on the two frontiers and the inputs read at the vertex. -/
-private theorem ncard_edges_le [Finite ι] [Finite U] [Finite E] {t : ℕ} (ht : t < Nat.card V) :
+theorem ncard_edges_le [Finite ι] [Finite U] [Finite E] {t : ℕ} (ht : t < Nat.card V) :
     ((N.branchingProgram π).edges t).ncard ≤
       Nat.card U ^ ((N.frontier π t ∪ N.frontier π (t + 1)).ncard +
         (N.readAt (π.symm ⟨t, ht⟩)).ncard) := by
@@ -457,7 +457,7 @@ private theorem ncard_edges_le [Finite ι] [Finite U] [Finite E] {t : ℕ} (ht :
 
 /-- At the last step both frontiers are empty, so an edge of the program is determined by the
 unread inputs. -/
-private theorem ncard_edges_last_le [Finite ι] [Finite U] :
+theorem ncard_edges_last_le [Finite ι] [Finite U] :
     ((N.branchingProgram π).edges (Nat.card V)).ncard ≤ Nat.card U ^ N.readᶜ.ncard := by
   have hempty (s : ℕ) (hs : Nat.card V ≤ s) (α : E → U) :
       N.frontierValues π s α = fun _ => none := by

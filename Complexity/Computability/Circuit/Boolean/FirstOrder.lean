@@ -287,7 +287,7 @@ end Structures
 sentence is decided on the structures with `n` elements, given by their atomic facts, by a formula
 of negations and unbounded fan-in conjunctions and disjunctions whose depth does not depend on `n`
 and whose size is polynomial in `n`. -/
-private theorem exists_formula_realize (φ : L.Sentence) (e : Atom L n ≃ Fin N) :
+theorem exists_formula_realize (φ : L.Sentence) (e : Atom L n ≃ Fin N) :
     ∃ F : Formula Unbounded.signature N,
       (∀ x : Atom L n → Bool, F.eval Unbounded.interpretation (x ∘ e.symm) = true ↔
         Model x ⊨ φ) ∧

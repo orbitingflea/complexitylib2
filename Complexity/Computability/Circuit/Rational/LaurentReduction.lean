@@ -488,7 +488,7 @@ private theorem reduction_weighted_supported {ι : Type*} [Finite ι]
   exact he ▸ weighted_high_reduction_zero w A (u • x) hnI' hd u⁻¹
     (inv_ne_zero hu) (he.symm ▸ hyI)
 
-private lemma exists_independent_subfamily {V : Type*} [AddCommGroup V] [Module K V]
+lemma exists_independent_subfamily {V : Type*} [AddCommGroup V] [Module K V]
     {h : ℕ} (v : Fin h → V) :
     ∃ (k : ℕ) (a : Fin k → Fin h), Function.Injective a ∧
       Submodule.span K (Set.range (v ∘ a)) = Submodule.span K (Set.range v) ∧

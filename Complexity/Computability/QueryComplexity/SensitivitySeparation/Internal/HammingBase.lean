@@ -49,7 +49,7 @@ namespace Internal
 variable {I C : Type} [Fintype I]
 
 /-- Flipping one coordinate yields an input at Hamming distance `1` from the original. -/
-private theorem hammingDist_flip_self [DecidableEq I] (x : I → Bool) (i : I) :
+theorem hammingDist_flip_self [DecidableEq I] (x : I → Bool) (i : I) :
     hammingDist x (BitString.flipOn {i} x) = 1 := by
   have h : (Finset.univ.filter fun j => x j ≠ BitString.flipOn {i} x j) = {i} := by
     ext j
@@ -62,7 +62,7 @@ private theorem hammingDist_flip_self [DecidableEq I] (x : I → Bool) (i : I) :
 
 /-- A one-bit flip decreases the Hamming distance to any `z` by at most one:
 `hammingDist x z ≤ hammingDist (BitString.flipOn {i} x) z + 1`. -/
-private theorem hammingDist_le_flip_add_one [DecidableEq I] (x z : I → Bool) (i : I) :
+theorem hammingDist_le_flip_add_one [DecidableEq I] (x z : I → Bool) (i : I) :
     hammingDist x z ≤ hammingDist (BitString.flipOn {i} x) z + 1 := by
   have h := hammingDist_triangle x (BitString.flipOn {i} x) z
   rw [hammingDist_flip_self] at h
@@ -70,7 +70,7 @@ private theorem hammingDist_le_flip_add_one [DecidableEq I] (x z : I → Bool) (
 
 /-- A one-bit flip increases the Hamming distance to any `z` by at most one:
 `hammingDist (BitString.flipOn {i} x) z ≤ hammingDist x z + 1`. -/
-private theorem hammingDist_flip_le_add_one [DecidableEq I] (x z : I → Bool) (i : I) :
+theorem hammingDist_flip_le_add_one [DecidableEq I] (x z : I → Bool) (i : I) :
     hammingDist (BitString.flipOn {i} x) z ≤ hammingDist x z + 1 := by
   have h := hammingDist_triangle (BitString.flipOn {i} x) x z
   rw [hammingDist_comm (BitString.flipOn {i} x) x, hammingDist_flip_self] at h
@@ -78,7 +78,7 @@ private theorem hammingDist_flip_le_add_one [DecidableEq I] (x z : I → Bool) (
 
 /-- If `x i = z i`, flipping coordinate `i` of `x` increases the Hamming distance to `z`
 by exactly one. -/
-private theorem hammingDist_flip_eq_add_one [DecidableEq I] (x z : I → Bool) (i : I)
+theorem hammingDist_flip_eq_add_one [DecidableEq I] (x z : I → Bool) (i : I)
     (hi : x i = z i) :
     hammingDist (BitString.flipOn {i} x) z = hammingDist x z + 1 := by
   have h : (Finset.univ.filter fun j => BitString.flipOn {i} x j ≠ z j) =

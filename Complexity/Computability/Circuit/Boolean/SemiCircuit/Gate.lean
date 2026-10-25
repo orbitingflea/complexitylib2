@@ -241,7 +241,7 @@ theorem eval_subst {g : Gate} {v : ℕ} {ℓ : Lit} {val : ℕ → Bool} (h : va
     (g.subst v ℓ).eval val = g.eval val := by
   simp only [eval, subst, eval_substArg h]
 
-private theorem substArg_eq_node_of_ne {a : Arg} {v z : ℕ} {target : Arg} (hzv : z ≠ v)
+theorem substArg_eq_node_of_ne {a : Arg} {v z : ℕ} {target : Arg} (hzv : z ≠ v)
     (hzt : target ≠ .node z) : a.substArg v target = .node z ↔ a = .node z := by
   unfold Arg.substArg
   by_cases ha : a = .node v
@@ -249,7 +249,7 @@ private theorem substArg_eq_node_of_ne {a : Arg} {v z : ℕ} {target : Arg} (hzv
     exact ⟨fun h => absurd h hzt, fun h => absurd (Arg.node.inj h) (Ne.symm hzv)⟩
   · rw [ite_eq_right ha]
 
-private theorem eq_node_of_substArg_eq_node {a : Arg} {v z : ℕ} {target : Arg}
+theorem eq_node_of_substArg_eq_node {a : Arg} {v z : ℕ} {target : Arg}
     (h : a.substArg v target = .node z) : a = .node z ∨ (a = .node v ∧ target = .node z) := by
   unfold Arg.substArg at h
   by_cases ha : a = .node v
@@ -461,7 +461,7 @@ instance (op : Bool → Bool → Bool) : Decidable (IsAffineOp op) :=
   inferInstanceAs (Decidable (_ = _))
 
 /-- An AND-type operation becomes constant when either argument takes a suitable value. -/
-private theorem exists_eq_of_not_isAffineOp {op : Bool → Bool → Bool} (h : ¬ IsAffineOp op) :
+theorem exists_eq_of_not_isAffineOp {op : Bool → Bool → Bool} (h : ¬ IsAffineOp op) :
     (∃ b, op b false = op b true) ∧ (∃ b, op false b = op true b) := by
   unfold IsAffineOp at h
   constructor
@@ -513,7 +513,7 @@ def IsUnaryOp (op : Bool → Bool → Bool) : Prop :=
 
 /-- An operation that is not a projection or a negated projection is constant on a diagonal
 `{(c + a, a)}` for a suitable `c`, and likewise on `{(a, c + a)}`. -/
-private theorem exists_diag_const (op : Bool → Bool → Bool) :
+theorem exists_diag_const (op : Bool → Bool → Bool) :
     ((∃ c, op c false = op (!c) true) ∧ (∃ c, op false c = op true (!c))) ∨ IsUnaryOp op := by
   by_cases h0 : op false false = op true true
   · exact Or.inl ⟨⟨false, h0⟩, ⟨false, h0⟩⟩

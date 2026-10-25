@@ -116,13 +116,13 @@ def reduce (φ : CNF ℕ) : CNF ℕ :=
   if φ.any List.isEmpty then contradiction else toExactThreeSAT φ
 
 /-- Padding the clauses does not change the number of clauses an assignment falsifies. -/
-private theorem countUnsat_toExactThreeSAT (σ : ℕ → Bool) (φ : CNF ℕ) :
+theorem countUnsat_toExactThreeSAT (σ : ℕ → Bool) (φ : CNF ℕ) :
     (toExactThreeSAT φ).countUnsat σ = φ.countUnsat σ := by
   simp only [toExactThreeSAT, CNF.countUnsat, List.countP_map, Function.comp_def,
     ExactThreeSAT.eval_padClause]
 
 /-- Padding the clauses does not change the value of a formula. -/
-private theorem unsatVal_toExactThreeSAT (φ : CNF ℕ) :
+theorem unsatVal_toExactThreeSAT (φ : CNF ℕ) :
     (toExactThreeSAT φ).unsatVal = φ.unsatVal := by
   unfold CNF.unsatVal
   simp only [countUnsat_toExactThreeSAT]

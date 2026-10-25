@@ -151,16 +151,16 @@ theorem mem_toClauseSet {ψ : CNF V} {C : Finset (Literal V)} :
     C ∈ ψ.toClauseSet ↔ ∃ D ∈ ψ, D.toFinset = C := by
   simp [CNF.toClauseSet]
 
-private theorem toClauseSet_append (ψ χ : CNF V) :
+theorem toClauseSet_append (ψ χ : CNF V) :
     (ψ ++ χ).toClauseSet = ψ.toClauseSet ∪ χ.toClauseSet := by
   simp [CNF.toClauseSet, List.toFinset_append]
 
-private theorem toClauseSet_mono {ψ χ : CNF V} (h : ψ ⊆ χ) : ψ.toClauseSet ⊆ χ.toClauseSet := by
+theorem toClauseSet_mono {ψ χ : CNF V} (h : ψ ⊆ χ) : ψ.toClauseSet ⊆ χ.toClauseSet := by
   intro C hC
   obtain ⟨D, hD, rfl⟩ := mem_toClauseSet.mp hC
   exact mem_toClauseSet.mpr ⟨D, h hD, rfl⟩
 
-private theorem subclause_eq_true_iff {D C : Clause V} :
+theorem subclause_eq_true_iff {D C : Clause V} :
     subclause D C = true ↔ D.toFinset ⊆ C.toFinset := by
   simp only [subclause, List.all_eq_true, List.any_eq_true, beq_iff_eq, exists_eq_right]
   constructor
@@ -213,7 +213,7 @@ private theorem toClauseSet_flower {ψ : CNF V} (hnd : ∀ C ∈ ψ, C.Nodup) (c
     simp only [Bool.and_eq_true, beq_iff_eq, subclause_eq_true_iff]
     exact ⟨by rw [← List.toFinset_card_of_nodup (hnd C hC), hcard], hH⟩
 
-private theorem toFinset_filter_not_mem (C H : Clause V) :
+theorem toFinset_filter_not_mem (C H : Clause V) :
     (C.filter fun l => !H.any (· == l)).toFinset = C.toFinset \ H.toFinset := by
   ext l
   rw [List.mem_toFinset, List.mem_filter, Finset.mem_sdiff, List.mem_toFinset, List.mem_toFinset]

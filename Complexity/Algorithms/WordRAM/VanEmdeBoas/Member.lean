@@ -174,7 +174,7 @@ private theorem memberNext_constants {base query : ℕ} {s : Data 32}
   split_ifs <;> simp +decide [hz, ho, ht, hthree, hfour, hfive]
 
 /-- A query above the cached maximum is absent; this fact uses validity, not outside memory. -/
-private theorem member_eq_false_of_max_lt {d m M query : ℕ} {tree : Tree d}
+theorem member_eq_false_of_max_lt {d m M query : ℕ} {tree : Tree d}
     (ht : tree.Valid) (hb : tree.bounds = some (m, M)) (hx : M < query) :
     tree.member query = false := by
   have hnot : ¬tree.Contains query := by
@@ -188,7 +188,7 @@ private theorem member_eq_false_of_max_lt {d m M query : ℕ} {tree : Tree d}
   · exact False.elim (hnot ((Tree.member_iff_contains ht query).mp he))
 
 /-- The cached maximum is a valid early successful membership result. -/
-private theorem member_maximum {d m M : ℕ} {tree : Tree d}
+theorem member_maximum {d m M : ℕ} {tree : Tree d}
     (ht : tree.Valid) (hb : tree.bounds = some (m, M)) : tree.member M = true :=
   (Tree.member_iff_contains ht M).mpr (ht.contains_maximum hb)
 

@@ -56,7 +56,7 @@ namespace Cslib.Logic.PL
 open Finset Filter
 
 /-- A polynomial is eventually below an exponential with base `r > 1`. -/
-private theorem exists_mul_pow_le_pow (C : ℝ) (d : ℕ) {r : ℝ} (hr : 1 < r) :
+theorem exists_mul_pow_le_pow (C : ℝ) (d : ℕ) {r : ℝ} (hr : 1 < r) :
     ∃ α : ℕ, 1 ≤ α ∧ C * (α : ℝ) ^ d ≤ r ^ α := by
   have hlim := tendsto_pow_const_div_const_pow_of_one_lt d hr
   have hC : 0 < |C| + 1 := by positivity

@@ -60,7 +60,7 @@ structure Equation where
   rhs : Bool
 
 /-- Adding `t` to a set of terms over `𝔽₂` removes it if present and inserts it otherwise. -/
-private theorem symmDiff_singleton_eq (s : Finset ℕ) (t : ℕ) :
+theorem symmDiff_singleton_eq (s : Finset ℕ) (t : ℕ) :
     s ∆ {t} = if t ∈ s then s.erase t else insert t s := by
   ext z
   by_cases hz : z = t
@@ -68,7 +68,7 @@ private theorem symmDiff_singleton_eq (s : Finset ℕ) (t : ℕ) :
     split_ifs with h <;> simp [Finset.mem_symmDiff, h]
   · split_ifs <;> simp [Finset.mem_symmDiff, hz]
 
-private theorem sum_symmDiff_singleton (s : Finset ℕ) (t : ℕ) (val : ℕ → Bool) :
+theorem sum_symmDiff_singleton (s : Finset ℕ) (t : ℕ) (val : ℕ → Bool) :
     ∑ i ∈ s ∆ {t}, val i = ∑ i ∈ s, val i + val t := by
   rw [symmDiff_singleton_eq]
   split_ifs with ht
@@ -85,7 +85,7 @@ theorem mem_symmDiff_singleton {s : Finset ℕ} {t z : ℕ} : z ∈ s ∆ {t} �
     split_ifs with ht <;> simp [ht]
   · split_ifs with ht <;> simp [hz]
 
-private theorem card_symmDiff_singleton_le (s : Finset ℕ) (t : ℕ) :
+theorem card_symmDiff_singleton_le (s : Finset ℕ) (t : ℕ) :
     (s ∆ {t}).card ≤ s.card + 1 := by
   rw [symmDiff_singleton_eq]
   split_ifs with h

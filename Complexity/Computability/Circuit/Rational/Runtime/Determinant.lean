@@ -236,7 +236,7 @@ private lemma sum_map_drop_range (d lo : ℕ) (f : ℕ → ℤ) :
     rw [BirdDet.sumFrom_stop d lo f hlo, List.drop_eq_nil_of_le (by simpa using hlo)]
     rfl
 
-private lemma sum_map_drop_range_fin {d : ℕ} (i : Fin d) (f : ℕ → ℤ) :
+lemma sum_map_drop_range_fin {d : ℕ} (i : Fin d) (f : ℕ → ℤ) :
     (((List.range d).drop (i.val + 1)).map f).sum = ∑ k ∈ Finset.Ioi i, f k.val := by
   rw [sum_map_drop_range, DeterminantAlgorithm.sumFrom_fin_tail]
 
@@ -300,7 +300,7 @@ theorem detRows_rowsOf_denote {d : ℕ} (A : DeterminantAlgorithm.Table d) :
 
 /-! ### Size bounds -/
 
-private lemma natAbs_sum_le {l : List ℤ} {C : ℕ} (h : ∀ x ∈ l, x.natAbs ≤ C) :
+lemma natAbs_sum_le {l : List ℤ} {C : ℕ} (h : ∀ x ∈ l, x.natAbs ≤ C) :
     l.sum.natAbs ≤ l.length * C := by
   induction l with
   | nil => simp
@@ -312,7 +312,7 @@ private lemma natAbs_sum_le {l : List ℤ} {C : ℕ} (h : ∀ x ∈ l, x.natAbs 
       _ = (l.length + 1) * C := by ring
 
 /-- Every prefix sum of a list is bounded by its length times a bound on its entries. -/
-private lemma natAbs_take_sum_le {l : List ℤ} {C : ℕ} (h : ∀ x ∈ l, x.natAbs ≤ C) (m : ℕ) :
+lemma natAbs_take_sum_le {l : List ℤ} {C : ℕ} (h : ∀ x ∈ l, x.natAbs ≤ C) (m : ℕ) :
     (l.take m).sum.natAbs ≤ l.length * C :=
   (natAbs_sum_le fun x hx => h x (List.mem_of_mem_take hx)).trans
     (Nat.mul_le_mul_right _ (List.length_take_le' _ _))

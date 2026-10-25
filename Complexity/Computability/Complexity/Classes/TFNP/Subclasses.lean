@@ -644,7 +644,7 @@ theorem PPAD_subset_PPP : PPAD enc ⊆ PPP enc := by
 
 /-- Every directed end-of-line family search-reduces to its associated bipartite undirected parity
 family. -/
-private theorem endOfLineRel_searchReducible_leafRel {n : α → ℕ} {P S : α × List Bool → List Bool}
+theorem endOfLineRel_searchReducible_leafRel {n : α → ℕ} {P S : α × List Bool → List Bool}
     (hP_len : ∀ a u, u.length = n a → (P (a, u)).length = n a)
     (hS_len : ∀ a u, u.length = n a → (S (a, u)).length = n a) :
     SearchReducible enc enc (endOfLineRel n P S)

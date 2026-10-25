@@ -352,7 +352,7 @@ theorem successor_executes_log {d w base stackBase₀ query : ℕ} {tree : Tree 
 
 /-- `Tree.successor` on a valid tree computes the mathematical `OrderedSet.least` of the stored
 elements strictly greater than the query. -/
-private theorem successor_eq_least {d : ℕ} {t : Tree d} (ht : t.Valid) (q : ℕ) :
+theorem successor_eq_least {d : ℕ} {t : Tree d} (ht : t.Valid) (q : ℕ) :
     t.successor q = OrderedSet.least (t.elements.filter (q < ·)) := by
   apply OrderedSet.LeastResult.eq_least
   cases hs : t.successor q with
