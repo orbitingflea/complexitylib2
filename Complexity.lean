@@ -870,10 +870,13 @@ public import Complexity.Computability.Interactive.Sumcheck
 public import Complexity.Computability.Kolmogorov.AverageCase
 public import Complexity.Computability.Kolmogorov.Basic
 public import Complexity.Computability.Kolmogorov.ChainRule
+public import Complexity.Computability.Kolmogorov.Conditional
 public import Complexity.Computability.Kolmogorov.Depth
 public import Complexity.Computability.Kolmogorov.Incompressibility
 public import Complexity.Computability.Kolmogorov.Invariance
 public import Complexity.Computability.Kolmogorov.MINKT
+public import Complexity.Computability.Kolmogorov.MINcKT
+public import Complexity.Computability.Kolmogorov.MKtP
 public import Complexity.Computability.Kolmogorov.MultiTape
 public import Complexity.Computability.Kolmogorov.NisanWigderson
 public import Complexity.Computability.Kolmogorov.Partrec
@@ -1818,6 +1821,7 @@ public import Complexity.Foundations.Data.Code.LocalDecoding
 public import Complexity.Foundations.Data.Code.LocalListDecoding
 public import Complexity.Foundations.Data.Code.LowDegreeExtension
 public import Complexity.Foundations.Data.Code.Multilinearity
+public import Complexity.Foundations.Data.Code.MultilinearitySoundness
 public import Complexity.Foundations.Data.Code.ReedMuller
 public import Complexity.Foundations.Data.Code.ReedSolomon
 public import Complexity.Foundations.Data.Code.SelfCorrection
@@ -1833,6 +1837,7 @@ public import Complexity.Foundations.Data.Finset.Quantile
 public import Complexity.Foundations.Data.Finset.Sampling
 public import Complexity.Foundations.Data.Finset.SymmDiff
 public import Complexity.Foundations.Data.Hamming
+public import Complexity.Foundations.Data.Hamming.Expansion
 public import Complexity.Foundations.Data.Int.Order
 public import Complexity.Foundations.Data.List.Append
 public import Complexity.Foundations.Data.List.BalancedFold

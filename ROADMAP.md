@@ -345,8 +345,10 @@ each statement against the numbered result. Organize modules by subject, not cha
   circuitized anti-checker with an efficient generator, hardness magnification (packaging
   `MCSP/FormulaMagnification.lean` Lemma 16 into Oliveira–Santhanam Theorem 1 / Theorem 17
   `NP ⊄ Formula[poly]` separations and Theorem 5 / Theorem 27 zero-error average-case formula
-  magnification), MINCKT and
-  hardness results for MINKT, as independently scoped developments; the reverse
+  magnification), and hardness results for `MINKT` and `MINcKT` (whose definitions, conditional
+  `K^t` measure, and `NP` memberships are in `Kolmogorov/MINKT.lean`,
+  `Kolmogorov/Conditional.lean`, and `Kolmogorov/MINcKT.lean`), as independently scoped
+  developments; the reverse
   multi-tape-to-single-tape simulation and machine-backed Nisan–Wigderson decoding.
 - **Quantum computation** ([#896]): BQP ⊆ PP; reusable
   circuit, channel and measurement semantics with uniformity and approximation costs, reusing
