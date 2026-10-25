@@ -149,7 +149,7 @@ theorem bernoulliAverage_sumElim {ι κ : Type*} [Fintype ι] [Fintype κ]
     rw [← Sum.elim_comp_inl_inr P]
     rfl
 
-private theorem bernoulliWeight_split {ι : Type*} [Fintype ι] (p : ℝ) (s x : ι → Bool) :
+theorem bernoulliWeight_split {ι : Type*} [Fintype ι] (p : ℝ) (s x : ι → Bool) :
     bernoulliWeight p x = bernoulliWeight p (fun i : {i // s i = true} => x i) *
       bernoulliWeight p (fun i : {i // s i ≠ true} => x i) :=
   (Fintype.prod_subtype_mul_prod_subtype (fun i => s i = true)

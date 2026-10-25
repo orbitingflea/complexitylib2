@@ -493,7 +493,7 @@ end Projection
 /-! ### Korten's entropy lemma -/
 
 /-- The log-sum inequality, from Jensen's inequality for `x log x`. -/
-private theorem sum_mul_log_ge {β : Type*} [Fintype β] [Nonempty β] {m : β → ℝ}
+theorem sum_mul_log_ge {β : Type*} [Fintype β] [Nonempty β] {m : β → ℝ}
     (hm : ∀ b, 0 ≤ m b) :
     (∑ b, m b) * Real.log ((∑ b, m b) / Fintype.card β) ≤ ∑ b, m b * Real.log (m b) := by
   have hc : (0 : ℝ) < Fintype.card β := by exact_mod_cast Fintype.card_pos
@@ -506,7 +506,7 @@ private theorem sum_mul_log_ge {β : Type*} [Fintype β] [Nonempty β] {m : β �
 
 /-- The logarithm of the size of the fiber of a uniform point of `X` under a map to `β` is on
 average at least `log |X| - log |β|`. -/
-private theorem expect_log_card_fiber {α β : Type*} [Fintype β] [Nonempty β] [DecidableEq β]
+theorem expect_log_card_fiber {α β : Type*} [Fintype β] [Nonempty β] [DecidableEq β]
     (X : Finset α) (hX : X.Nonempty) (g : α → β) :
     Real.log X.card - Real.log (Fintype.card β) ≤
       𝔼 x ∈ X, Real.log (X.filter (fun y => g y = g x)).card := by

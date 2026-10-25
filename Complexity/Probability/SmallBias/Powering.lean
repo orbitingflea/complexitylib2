@@ -81,7 +81,7 @@ private theorem chi_powering (S : Finset (Fin n)) (s : F × F) :
 
 /-- The inner product of `bits a` with the bits of a uniformly random field element is unbiased
 unless `a = 0`. -/
-private theorem expect_signVal_dotProduct [DecidableEq F] (a : F) :
+theorem expect_signVal_dotProduct [DecidableEq F] (a : F) :
     𝔼 y, signVal (bits a ⬝ᵥ bits y) = if a = 0 then 1 else 0 := by
   rw [Fintype.expect_equiv bits.toEquiv (fun y => signVal (bits a ⬝ᵥ bits y))
     (fun v => signVal (bits a ⬝ᵥ v)) fun _ => rfl]
@@ -102,7 +102,7 @@ theorem bias_powering [DecidableEq F] (S : Finset (Fin n)) :
 
 /-- A nonempty sum of distinct powers `x ^ i`, `i < n`, vanishes at fewer than `n` points of a
 field. -/
-private theorem card_filter_sum_pow_eq_zero_le [DecidableEq F] {S : Finset (Fin n)}
+theorem card_filter_sum_pow_eq_zero_le [DecidableEq F] {S : Finset (Fin n)}
     (hS : S.Nonempty) :
     #{x : F | ∑ i ∈ S, x ^ (i : ℕ) = 0} ≤ n - 1 := by
   classical

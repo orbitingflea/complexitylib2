@@ -63,7 +63,7 @@ open Finset Function Module
 variable {ι : Type*}
 
 /-- Flipping a bit of `T` negates the character of `T`. -/
-private theorem chi_update_not_of_mem {R : Type*} [CommRing R] [DecidableEq ι] {T : Finset ι}
+theorem chi_update_not_of_mem {R : Type*} [CommRing R] [DecidableEq ι] {T : Finset ι}
     {i : ι}
     (hi : i ∈ T) (x : ι → Bool) : chi R T (update x i (!x i)) = -chi R T x := by
   have h := chi_update_of_mem (R := R) hi x (x i)

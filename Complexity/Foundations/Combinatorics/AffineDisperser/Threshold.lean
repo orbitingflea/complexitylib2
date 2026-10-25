@@ -54,7 +54,7 @@ namespace Cslib.AffineDisperser
 open Filter Explicit
 
 /-- Exponentials beat polynomials: `c * (n + 1) ^ k ≤ 2 ^ n` for all large `n`. -/
-private theorem eventually_mul_pow_le_two_pow (c k : ℕ) :
+theorem eventually_mul_pow_le_two_pow (c k : ℕ) :
     ∀ᶠ n : ℕ in atTop, c * (n + 1) ^ k ≤ 2 ^ n := by
   filter_upwards [Nat.eventually_mul_pow_le_pow (c * 2 ^ k) k one_lt_two,
     eventually_ge_atTop 1] with n hn hn1
@@ -92,7 +92,7 @@ private theorem eventually_chebyshevFactor_le :
     _ = 2 ^ (s + q * (8 * s + 10)) := by rw [← pow_mul, ← pow_add]
     _ ≤ 2 ^ L := Nat.pow_le_pow_right two_pos h3
 
-private theorem tendsto_log_two_atTop : Tendsto (Nat.log 2) atTop atTop :=
+theorem tendsto_log_two_atTop : Tendsto (Nat.log 2) atTop atTop :=
   tendsto_atTop_atTop.2 fun b => ⟨2 ^ b, fun _ hN => Nat.le_log_of_pow_le one_lt_two hN⟩
 
 /-- Decomposing `explicitThreshold N` into the budget `N / (⌊log₂ N⌋ + 1) ^ 2`, the block-count

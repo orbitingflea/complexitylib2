@@ -66,7 +66,7 @@ variable {ι : Type*} [Fintype ι] [DecidableEq ι] {β : ι → Type*} [∀ i, 
 
 /-- The words differing from `x` exactly at the positions `S`: a different letter at each position
 of `S`. -/
-private theorem card_filter_filter_ne_eq (x : ∀ i, β i) (S : Finset ι) :
+theorem card_filter_filter_ne_eq (x : ∀ i, β i) (S : Finset ι) :
     #{y : ∀ i, β i | ({i | x i ≠ y i} : Finset ι) = S} = ∏ i ∈ S, (Fintype.card (β i) - 1) := by
   have h : #{y : ∀ i, β i | ({i | x i ≠ y i} : Finset ι) = S} =
       Fintype.card (∀ i, {b : β i // (i ∈ S ↔ x i ≠ b)}) := by

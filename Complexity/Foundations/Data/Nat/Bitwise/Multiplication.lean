@@ -105,7 +105,7 @@ private theorem sum_pairs (x y : ℕ) :
 /-- The weighted contribution of all columns strictly below `k`. -/
 def mulPrefix (x y k : ℕ) : ℕ := ∑ j ∈ range k, mulColumn x y j * 2 ^ j
 
-private theorem mulPrefix_succ (x y k : ℕ) :
+theorem mulPrefix_succ (x y k : ℕ) :
     mulPrefix x y (k + 1) = mulPrefix x y k + mulColumn x y k * 2 ^ k := sum_range_succ _ _
 
 private theorem mulPrefix_eq_filter (x y k : ℕ) :
@@ -162,7 +162,7 @@ def mulCarry (x y k : ℕ) : ℕ := mulPrefix x y k / 2 ^ k
 /-- No carry enters column `0`. -/
 @[simp] theorem mulCarry_zero (x y : ℕ) : mulCarry x y 0 = 0 := by simp [mulCarry, mulPrefix]
 
-private theorem mulCarry_succ (x y k : ℕ) :
+theorem mulCarry_succ (x y k : ℕ) :
     mulCarry x y (k + 1) = (mulCarry x y k + mulColumn x y k) / 2 := by
   simp only [mulCarry, mulPrefix_succ, pow_succ, ← Nat.div_div_eq_div_mul,
     Nat.add_mul_div_right _ _ (Nat.two_pow_pos k)]

@@ -183,7 +183,7 @@ private theorem resample_cons {n : ℕ} (s y x : Fin n → Bool) (a b c : Bool) 
   funext i
   refine Fin.cases ?_ (fun j => ?_) i <;> simp [resample, Set.piecewise]
 
-private theorem projectionAverage_cons_false {n : ℕ}
+theorem projectionAverage_cons_false {n : ℕ}
     (f : (Fin (n + 1) → Bool) → ℝ) (selected x : Fin n → Bool) (b : Bool) :
     projectionAverage f (Fin.cons false selected) (Fin.cons b x) =
       projectionAverage (fun x => (f (Fin.cons false x) + f (Fin.cons true x)) / 2)
@@ -193,7 +193,7 @@ private theorem projectionAverage_cons_false {n : ℕ}
   simp only [resample_cons, Bool.false_eq_true, ite_false]
   rw [← expect_div, expect_add_distrib]
 
-private theorem projectionAverage_cons_true {n : ℕ}
+theorem projectionAverage_cons_true {n : ℕ}
     (f : (Fin (n + 1) → Bool) → ℝ) (selected x : Fin n → Bool) (b : Bool) :
     projectionAverage f (Fin.cons true selected) (Fin.cons b x) =
       projectionAverage (fun x => f (Fin.cons b x)) selected x := by
@@ -202,7 +202,7 @@ private theorem projectionAverage_cons_true {n : ℕ}
   simp only [resample_cons, ite_true]
   ring
 
-private theorem harmonicTransform_cons_false {n : ℕ}
+theorem harmonicTransform_cons_false {n : ℕ}
     (f : (Fin (n + 1) → Bool) → ℝ) (selected : Fin n → Bool) :
     harmonicTransform f (Fin.cons false selected) =
       harmonicTransform
@@ -214,7 +214,7 @@ private theorem harmonicTransform_cons_false {n : ℕ}
   simp_rw [projectionAverage_cons_false]
   simp [harmonicMean, Fintype.expect_prod_type]
 
-private theorem harmonicTransform_cons_true {n : ℕ}
+theorem harmonicTransform_cons_true {n : ℕ}
     {f : (Fin (n + 1) → Bool) → ℝ} (hf : ∀ x, 0 ≤ f x) (selected : Fin n → Bool) :
     harmonicTransform f (Fin.cons true selected) =
       2 * harmonicTransform (fun x => f (Fin.cons false x)) selected *

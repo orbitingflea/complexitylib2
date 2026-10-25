@@ -112,7 +112,7 @@ private theorem sum_sum_filter_mem_fourierCoeff_sq_div_card (f : (ι → Bool) �
   · simp [not_not.1 hS]
 
 /-- The weight `∑_{S ∋ i} f̂(S) ^ 2 / |S|` is at most the influence of `i`. -/
-private theorem sum_filter_mem_fourierCoeff_sq_div_card_le_influence (f : (ι → Bool) → ℝ) (i : ι) :
+theorem sum_filter_mem_fourierCoeff_sq_div_card_le_influence (f : (ι → Bool) → ℝ) (i : ι) :
     ∑ S with i ∈ S, fourierCoeff f S ^ 2 / #S ≤ influence i f := by
   rw [influence_eq_sum_fourierCoeff_sq]
   refine sum_le_sum fun S hS => div_le_self (sq_nonneg _) ?_

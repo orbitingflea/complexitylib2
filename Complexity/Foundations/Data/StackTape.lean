@@ -148,7 +148,7 @@ lemma ofList_append_replicate_none (l : List (Option Symbol)) (n : ℕ) :
     ofList (l.map some) = mapSome l := by
   exact ofList_toList (mapSome l)
 
-private lemma listBlank_mk_cons_toList (a : Option Symbol) (tape : StackTape Symbol) :
+lemma listBlank_mk_cons_toList (a : Option Symbol) (tape : StackTape Symbol) :
     _root_.Turing.ListBlank.mk (cons a tape).toList =
       _root_.Turing.ListBlank.cons a (_root_.Turing.ListBlank.mk tape.toList) := by
   cases a with

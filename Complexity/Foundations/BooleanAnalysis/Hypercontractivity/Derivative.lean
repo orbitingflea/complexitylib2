@@ -39,7 +39,7 @@ variable {ι : Type*} [Fintype ι] [DecidableEq ι]
 omit [Fintype ι] in
 /-- A power of the absolute value of the derivative of a Boolean function, read as signs, is the
 absolute value: the derivative takes the values `0` and `±1`. -/
-private theorem abs_derivative_signVal_rpow (f : (ι → Bool) → Bool) (i : ι) (x : ι → Bool) {p : ℝ}
+theorem abs_derivative_signVal_rpow (f : (ι → Bool) → Bool) (i : ι) (x : ι → Bool) {p : ℝ}
     (hp : p ≠ 0) :
     |derivative i (fun x => signVal (f x)) x| ^ p = |derivative i (fun x => signVal (f x)) x| := by
   simp only [derivative]
