@@ -159,7 +159,7 @@ def rank : DecisionTree ι β → ℕ
 theorem rank_leaf (b : β) : (leaf b : DecisionTree ι β).rank = 0 :=
   rfl
 
-theorem rank_node (i : ι) (left right : DecisionTree ι β) :
+private theorem rank_node (i : ι) (left right : DecisionTree ι β) :
     (node i left right).rank =
       if left.rank = right.rank then left.rank + 1 else max left.rank right.rank :=
   rfl
@@ -265,8 +265,8 @@ theorem IsDecisionList.rank_le_one {t : DecisionTree ι β} (h : t.IsDecisionLis
       split_ifs <;> omega
 
 /-- A decision list has at most `depth + 1` structural leaves. -/
-theorem IsDecisionList.leafCount_le_depth_add_one {t : DecisionTree ι β} (h : t.IsDecisionList) :
-    t.leafCount ≤ t.depth + 1 :=
+theorem IsDecisionList.leafCount_le_depth_add_one {t : DecisionTree ι β}
+    (h : t.IsDecisionList) : t.leafCount ≤ t.depth + 1 :=
   t.leafCount_le_depth_add_one_of_rank_le_one h.rank_le_one
 
 /-- A decision list has at most `depth` internal nodes. -/
@@ -294,7 +294,7 @@ def energy : DecisionTree ι β → ℕ
 theorem energy_leaf (b : β) : (leaf b : DecisionTree ι β).energy = 0 :=
   rfl
 
-theorem energy_node (i : ι) (left right : DecisionTree ι β) :
+private theorem energy_node (i : ι) (left right : DecisionTree ι β) :
     (node i left right).energy = max left.energy (right.energy + 1) :=
   rfl
 

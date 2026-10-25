@@ -120,7 +120,7 @@ theorem exists_short_hash_split (size width count : ℕ) (hsize : 0 < size) (hco
       have hsizePow : (2 : ℝ) ^ initial * (dyadicSize (16 * count) : ℝ) ^ 2 ≤ size := by
         rw [← hpower, ← pow_add]
         have h : 2 ^ (initial + margin) ≤ size :=
-          (Nat.pow_le_pow_right (by decide : 0 < 2) hinitial').trans
+          (Nat.pow_le_pow_right two_pos hinitial').trans
             (Nat.pow_log_le_self 2 (by lia))
         exact_mod_cast h
       have hsizeReal : (0 : ℝ) < size := by exact_mod_cast hsize
@@ -254,7 +254,7 @@ theorem matrix_fiber_mean_correlation_le {n count : ℕ} [NeZero count] {Image :
       simpa only [Nat.card_eq_fintype_card, Fintype.card_fun, Fintype.card_bool,
         Fintype.card_fin] using Fintype.card_subtype_le (fun x => f x = image)
     have hlog := Nat.log_mono_right (b := 2) hcard
-    rw [Nat.log_pow (by decide : 1 < 2)] at hlog
+    rw [Nat.log_pow Nat.one_lt_two] at hlog
     dsimp [cutoff]
     lia
   have hpoint (i : Fin count) :

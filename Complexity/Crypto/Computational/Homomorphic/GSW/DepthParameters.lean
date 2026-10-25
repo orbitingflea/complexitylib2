@@ -71,7 +71,7 @@ def modulus (security : ℕ) : ℕ := 2 ^ width security
 
 /-- The logarithmic size is uniformly bounded away from zero. -/
 theorem two_le_logSize (security : ℕ) : 2 ≤ logSize security := by
-  have := Nat.clog_pos (by decide : 1 < 2) (by omega : 1 < security + 2)
+  have := Nat.clog_pos Nat.one_lt_two (by omega : 1 < security + 2)
   unfold logSize
   omega
 
@@ -126,7 +126,7 @@ private theorem sizes_le_pow (security : ℕ) :
   let t := logSize security
   have ht : 2 ≤ t := two_le_logSize security
   have hn : security + 2 ≤ 2 ^ t :=
-    (Nat.le_pow_clog (by decide : 1 < 2) _).trans
+    (Nat.le_pow_clog Nat.one_lt_two _).trans
       (Nat.pow_le_pow_right (by decide) (by dsimp [t, logSize]; omega))
   have hlog : t ≤ 2 ^ t := (Nat.lt_two_pow_self (n := t)).le
   have hrows : rows security ≤ 2 ^ (14 + 3 * t) := by

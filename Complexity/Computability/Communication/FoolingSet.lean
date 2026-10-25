@@ -92,7 +92,7 @@ theorem succ_le_ecomplexity (hS : IsFoolingSet f z S) (hz : ∃ x y, f x y ≠ z
     (hn : 2 ^ n ≤ #S) : (n + 1 : ℕ∞) ≤ Protocol.ecomplexityFun f := by
   refine Protocol.le_ecomplexityFun_iff.mpr fun p hp => ?_
   have h := hn.trans_lt (hS.card_lt_two_pow hp hz)
-  exact_mod_cast (Nat.pow_lt_pow_iff_right (by decide : 1 < 2)).mp h
+  exact_mod_cast (Nat.pow_lt_pow_iff_right Nat.one_lt_two).mp h
 
 end IsFoolingSet
 

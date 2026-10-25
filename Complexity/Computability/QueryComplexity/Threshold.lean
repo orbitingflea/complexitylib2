@@ -88,8 +88,8 @@ theorem sensitivityAt_threshold_of_weight_eq {x : BitString n} (hx : weight x = 
 
 /-- At an input of weight `j - 1`, for `j ≥ 1`, the sensitive coordinates of `Th^n_j` are its
 false bits. -/
-theorem sensitivityAt_threshold_of_weight_add_one_eq {x : BitString n} (hx : weight x + 1 = j) :
-    sensitivityAt (threshold n j) x = n + 1 - j := by
+theorem sensitivityAt_threshold_of_weight_add_one_eq {x : BitString n}
+    (hx : weight x + 1 = j) : sensitivityAt (threshold n j) x = n + 1 - j := by
   have : sensitiveCoords (threshold n j) x = univ.filter fun i => x i = false := by
     ext i
     have h : weight x ≠ j := by omega

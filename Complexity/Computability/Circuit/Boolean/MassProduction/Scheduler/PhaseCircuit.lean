@@ -168,7 +168,7 @@ private theorem synthesis_duplicate
   have hpad : arity p * s + pad = arity d := by
     have : arity p * s ≤ arity d := by
       rw [arity_eq_two_pow d]
-      exact Nat.le_pow_clog (by decide : 1 < 2) _
+      exact Nat.le_pow_clog Nat.one_lt_two _
     lia
   let ι := Fin (arity p) × Fin s × Fin (ℓ * b)
   let eι := Fintype.equivFin ι

@@ -1,6 +1,6 @@
 # Selected formal abstracts
 
-The catalogue promotes fourteen major result groups. Each has a checked Lean abstract with the
+The catalogue promotes fifteen major result groups. Each has a checked Lean abstract with the
 definitions needed to understand its statement, a bridge to the library proof, and an audited
 dependency boundary. Some abstracts also allowlist a few library modules for foundational models
 (for example circuit signatures or oracle runs); each such abstract names them in its docstring, and
@@ -37,6 +37,7 @@ former paper/TeX index is retired; Git history retains its sources.
 | [Fagin: logic captures NP](ComplexityAbstracts/FaginAbstract.lean) · [PDF](https://www.cslib.io/complexitylib/abstracts/fagin.pdf) | Finite relational signatures, explicit encodings, empty universes and nullary relations. |
 | [Savitch: NPSPACE equals PSPACE](ComplexityAbstracts/SavitchAbstract.lean) · [PDF](https://www.cslib.io/complexitylib/abstracts/savitch.pdf) | Native machines and polynomial space; this abstract states class equality rather than a parameterized quadratic-space bound. |
 | [Reingold: undirected reachability is in L](ComplexityAbstracts/USTCONAbstract.lean) · [PDF](https://www.cslib.io/complexitylib/abstracts/reingold.pdf) | Explicit unary-size header and adjacency-matrix encoding; native logspace, without a reduction-defined SL corollary. |
+| [Immerman–Szelepcsényi: NL equals coNL](ComplexityAbstracts/ImmermanSzelepcsenyiAbstract.lean) · [PDF](https://www.cslib.io/complexitylib/abstracts/immerman-szelepcsenyi.pdf) | One finite-state native machine per problem, every-prefix work space c(floor(log₂ n) + 1), every branch terminating, arbitrary injective encodings; directed non-reachability on unary-header adjacency matrices as the corollary. |
 | [Shamir: IP equals PSPACE](ComplexityAbstracts/ShamirAbstract.lean) · [PDF](https://www.cslib.io/complexitylib/abstracts/shamir.pdf) | All prover strategies are quantified explicitly, with a uniform native clock and specified completeness and soundness. |
 | [Toda: a counting oracle decides the polynomial hierarchy](ComplexityAbstracts/TodaAbstract.lean) · [PDF](https://www.cslib.io/complexitylib/abstracts/toda.pdf) | Witness counts and oracle bit answers are explicit; correctness holds for every extension of valid oracle answers. |
 | [Barrington: five states capture NC¹](ComplexityAbstracts/BarringtonAbstract.lean) · [PDF](https://www.cslib.io/complexitylib/abstracts/barrington.pdf) | Nonuniform circuits and permutation programs; no uniform generator or compiler runtime is asserted. |

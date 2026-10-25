@@ -86,7 +86,7 @@ theorem active_mass_fixed_power (n : ℕ) (c : Circuit signature n n) (T L : ℕ
   let d := Nat.clog 2 (H.card + 4 * L + 1)
   have hcapacity : H.card + (4 * L + 1) ≤ BitonicSort.arity d := by
     simpa only [BitonicSort.arity_eq_two_pow, d, Nat.add_assoc] using
-      Nat.le_pow_clog (by decide : 1 < 2) (H.card + 4 * L + 1)
+      Nat.le_pow_clog Nat.one_lt_two (H.card + 4 * L + 1)
   have hN : H.card ≤ 2 ^ n := by
     simpa only [Fintype.card_fun, Fintype.card_fin, Fintype.card_bool] using
       Finset.card_le_univ H
@@ -97,7 +97,7 @@ theorem active_mass_fixed_power (n : ℕ) (c : Circuit signature n n) (T L : ℕ
     omega
   have hR : 2 ^ d ≤ 2 * (H.card + 4 * L + 1) := by
     have hpos : 0 < d := Nat.clog_pos (by decide) (by omega)
-    have hp := Nat.pow_pred_clog_lt_self (by decide : 1 < 2)
+    have hp := Nat.pow_pred_clog_lt_self Nat.one_lt_two
       (show 1 < H.card + 4 * L + 1 by omega)
     have hpow : 2 ^ d = 2 ^ (d - 1) * 2 := by rw [← Nat.pow_succ, show (d - 1).succ = d by omega]
     rw [hpow]

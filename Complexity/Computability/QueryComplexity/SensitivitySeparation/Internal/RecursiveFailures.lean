@@ -104,7 +104,7 @@ theorem targetFailures_empty_iff {k r h : ℕ} {I : Type}
 open scoped Classical in
 /-- A row `i` has no failed gate if and only if, for every outgoing neighbor `j` of `i`, the gate
 predicate `F (gateIndex q)` rejects the child `recursiveChild x j (label i j)`. -/
-theorem gateFailures_empty_iff {k r h : ℕ} {I : Type} (T : Tournament k)
+private theorem gateFailures_empty_iff {k r h : ℕ} {I : Type} (T : Tournament k)
     (label : Fin k → Fin k → Fin r) (F : Fin (h + 1) → (I → Bool) → Bool)
     (q : Fin h) (x : ((Fin k × Fin r) × I) → Bool) (i : Fin k) :
     gateFailures T label F q x i = ∅ ↔

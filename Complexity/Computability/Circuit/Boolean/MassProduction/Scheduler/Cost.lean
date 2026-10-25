@@ -150,7 +150,7 @@ private theorem stage3_le {D L b s p r : ℕ} (hk : arity p ≤ 2 ^ D)
     by_cases h0 : arity p * s = 0
     · rw [hd, h0]
       simp
-    · have := Nat.pow_clog_le_mul (by decide : 1 < 2) h0
+    · have := Nat.pow_clog_le_mul Nat.one_lt_two h0
       lia
   have hA1 : 1 ≤ arity d := by rw [arity_eq_two_pow]; exact Nat.one_le_two_pow
   have hd1 : d + 1 ≤ W := by
@@ -208,7 +208,7 @@ theorem phaseCost_le {D L b s p a r : ℕ} (hk : a + arity p = 2 ^ D)
   have hkn : arity p ≤ 2 ^ D := by lia
   have hpD : p ≤ D := by
     by_contra h
-    have := Nat.pow_lt_pow_right (by decide : 1 < 2) (not_le.mp h)
+    have := Nat.pow_lt_pow_right Nat.one_lt_two (not_le.mp h)
     have := arity_eq_two_pow p
     lia
   have hk1 : 1 ≤ arity p := by rw [arity_eq_two_pow]; exact Nat.one_le_two_pow

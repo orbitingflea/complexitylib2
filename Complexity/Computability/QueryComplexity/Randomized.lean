@@ -163,7 +163,8 @@ theorem errorProb_nonneg : 0 ≤ μ.errorProb f x :=
 theorem errorProb_le_one : μ.errorProb f x ≤ 1 :=
   StdSimplex.sum_mul_le_of_forall_le fun _ _ => ite_le_one'
 
-theorem errorProb_eq_zero_iff : μ.errorProb f x = 0 ↔ ∀ t ∈ μ.weights.support, t.eval x = f x := by
+theorem errorProb_eq_zero_iff :
+    μ.errorProb f x = 0 ↔ ∀ t ∈ μ.weights.support, t.eval x = f x := by
   classical
   rw [errorProb, Finsupp.sum, Finset.sum_eq_zero_iff_of_nonneg fun t _ =>
     mul_nonneg (μ.weights_nonneg t) ite_nonneg']
@@ -171,11 +172,11 @@ theorem errorProb_eq_zero_iff : μ.errorProb f x = 0 ↔ ∀ t ∈ μ.weights.su
   rw [mul_eq_zero, or_iff_right (Finsupp.mem_support_iff.mp ht)]
   split_ifs with h <;> simp [h]
 
-theorem errorProb_single_of_eq (h : t.eval x = f x) :
+private theorem errorProb_single_of_eq (h : t.eval x = f x) :
     errorProb (StdSimplex.single t : RandomizedDecisionTree ι β) f x = 0 := by
   simp [errorProb, h]
 
-theorem errorProb_single_of_ne (h : t.eval x ≠ f x) :
+private theorem errorProb_single_of_ne (h : t.eval x ≠ f x) :
     errorProb (StdSimplex.single t : RandomizedDecisionTree ι β) f x = 1 := by
   simp [errorProb, h]
 

@@ -100,7 +100,7 @@ theorem samples_le (security : ℕ) : samples security ≤ 34 * (security + 1) ^
 
 /-- The modulus dominates the eighth power of the positive parameter. -/
 theorem modulus_ge (security : ℕ) : 65536 * (security + 1) ^ 8 ≤ modulus security := by
-  have h := Nat.pow_le_pow_left (Nat.le_pow_clog (by decide : 1 < 2) (security + 1)) 8
+  have h := Nat.pow_le_pow_left (Nat.le_pow_clog Nat.one_lt_two (security + 1)) 8
   calc
     _ ≤ 65536 * (2 ^ Nat.clog 2 (security + 1)) ^ 8 := Nat.mul_le_mul_left _ h
     _ = modulus security := by simp [modulus, width, pow_add, pow_mul, Nat.mul_comm]
@@ -108,7 +108,7 @@ theorem modulus_ge (security : ℕ) : 65536 * (security + 1) ^ 8 ≤ modulus sec
 /-- The modulus also has an explicit polynomial upper bound. -/
 theorem modulus_le (security : ℕ) : modulus security ≤ 16777216 * (security + 1) ^ 8 := by
   have h := Nat.pow_le_pow_left
-    (Nat.pow_clog_le_mul (by decide : 1 < 2) (by omega : security + 1 ≠ 0)) 8
+    (Nat.pow_clog_le_mul Nat.one_lt_two (by omega : security + 1 ≠ 0)) 8
   calc
     modulus security = 65536 * (2 ^ Nat.clog 2 (security + 1)) ^ 8 := by
       simp [modulus, width, pow_add, pow_mul, Nat.mul_comm]

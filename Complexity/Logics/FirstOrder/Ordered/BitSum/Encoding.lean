@@ -96,7 +96,7 @@ theorem encodesNode_sumTree (f : ℕ → Bool) {m h j q : ℕ}
     have hb : b ≤ j := by
       have hp := Nat.ge_two_pow_of_testBit hz
       have ht := BitString.sumTree_lt f j q
-      have := (Nat.pow_lt_pow_iff_right (by decide : 1 < 2)).mp (lt_of_le_of_lt hp ht)
+      have := (Nat.pow_lt_pow_iff_right Nat.one_lt_two).mp (lt_of_le_of_lt hp ht)
       lia
     have ha := lt_of_lt_of_le (BitString.sumTreeAddress_lt hj hb hq) hspace
     obtain ⟨r, t, he⟩ := BitString.exists_sumTreeWords_address ha

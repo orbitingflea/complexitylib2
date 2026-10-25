@@ -245,7 +245,7 @@ def padding (requests sources : ℕ) : ℕ :=
 theorem add_padding_eq_arity (requests sources : ℕ) :
     requests + (sources + padding requests sources) =
       BitonicSort.arity (depth requests sources) := by
-  have h := Nat.le_pow_clog (by decide : 1 < 2) (requests + sources)
+  have h := Nat.le_pow_clog Nat.one_lt_two (requests + sources)
   simp only [padding, depth, BitonicSort.arity_eq_two_pow]
   lia
 
@@ -255,7 +255,7 @@ theorem arity_depth_le (requests sources : ℕ) :
   rw [BitonicSort.arity_eq_two_pow]
   by_cases h : requests + sources = 0
   · simp [depth, h]
-  · exact (Nat.pow_clog_le_mul (by decide : 1 < 2) h).trans (by lia)
+  · exact (Nat.pow_clog_le_mul Nat.one_lt_two h).trans (by lia)
 
 end batchOrCircuit
 

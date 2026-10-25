@@ -163,7 +163,7 @@ theorem padded_hardCore {f : List Bool → List Bool} (hf : OneWay f) :
   intro adversary hPPT
   have heven := negligible_parityPrediction hf _ (isPPT_paddedPredictor hPPT 0)
   have hodd := negligible_parityPrediction hf _ (isPPT_paddedPredictor hPPT 1)
-  apply negligible_of_le ((heven.add hodd).div_const (by decide : 0 < 2))
+  apply negligible_of_le ((heven.add hodd).div_const two_pos)
   intro n
   have hgame := eval_paddedPrediction f adversary (n / 2) (n % 2) (by lia)
   have hlen : 2 * (n / 2) + n % 2 = n := by lia

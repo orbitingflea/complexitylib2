@@ -151,7 +151,7 @@ theorem realize_highestBit (x h : (language L).Term α) (v : α → Fin n) :
   · rintro ⟨hx, ht⟩
     refine ⟨Nat.testBit_of_two_pow_le_and_two_pow_add_one_gt hx ht, fun i hi => ?_⟩
     have hp := Nat.ge_two_pow_of_testBit hi
-    have hh := (Nat.pow_lt_pow_iff_right (by decide : 1 < 2)).mp (lt_of_le_of_lt hp ht)
+    have hh := (Nat.pow_lt_pow_iff_right Nat.one_lt_two).mp (lt_of_le_of_lt hp ht)
     change (i ()).val ≤ (h.realize v).val
     lia
 

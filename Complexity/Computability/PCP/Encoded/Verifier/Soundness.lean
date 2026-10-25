@@ -102,7 +102,7 @@ theorem rejectProb_edgeVerifier (width : ℕ) (decode : (Fin width → Bool) →
         exact indexVerdict_min g eval labels i.val
   rw [hmap]
   simp [PMF.map_apply, tsum_fintype, PMF.uniformOfFintype_apply, ← Finset.sum_filter,
-    card_reject_indexVerdict g eval labels (Nat.le_pow_clog (by decide : 1 < 2) _), div_eq_mul_inv,
+    card_reject_indexVerdict g eval labels (Nat.le_pow_clog Nat.one_lt_two _), div_eq_mul_inv,
     labels]
 
 /-- Rounding the edge sampling range to a power of two loses at most half the rejection rate. -/
@@ -119,7 +119,7 @@ private theorem unsatFrac_div_two_le_rejectProb (width : ℕ) (decode : (Fin wid
     simp only [ENNReal.toReal_natCast, ENNReal.toReal_pow, ENNReal.toReal_ofNat,
       ConstraintGraph.unsatFrac, Fintype.card_fin, div_div]
     apply div_le_div_of_nonneg_left (Nat.cast_nonneg _) (by positivity)
-    have h := Nat.pow_clog_le_mul (by decide : 1 < 2) hpos.ne'
+    have h := Nat.pow_clog_le_mul Nat.one_lt_two hpos.ne'
     exact_mod_cast (by simpa only [Nat.mul_comm] using h)
 
 /-- The graph's unsatisfiability value bounds rejection for every proof word. -/

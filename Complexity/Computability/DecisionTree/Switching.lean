@@ -100,7 +100,7 @@ private theorem satisfying_of_mem (ht : (t.map Prod.fst).Nodup) {l : Literal ι}
     (t.stageCode x W).length = W.length := by
   induction W <;> simp_all [stageCode]
 
-theorem stageCode_eq_nil_iff {x : ι → Bool} {W : List ι} :
+private theorem stageCode_eq_nil_iff {x : ι → Bool} {W : List ι} :
     t.stageCode x W = [] ↔ W = [] := by
   cases W <;> simp [stageCode]
 

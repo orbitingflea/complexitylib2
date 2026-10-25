@@ -153,7 +153,7 @@ theorem size_batchLookupCircuit_le {k v : ℕ} (table : BitString k → BitStrin
     _ ≤ 24 * (2 * (requests + 2 ^ k)) * (depth requests k + 1) ^ 2 * (k + v + 1) := by
       gcongr
       rw [BitonicSort.arity_eq_two_pow]
-      exact Nat.pow_clog_le_mul (by decide : 1 < 2) hn
+      exact Nat.pow_clog_le_mul Nat.one_lt_two hn
     _ = _ := by dsimp only [depth, batchOrCircuit.depth]; ring
 
 /-- Independent applications of any fixed table admit a shared lookup circuit. -/

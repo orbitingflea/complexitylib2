@@ -46,6 +46,8 @@ allowNonModules = true
 
 [[lean_lib]]
 name = "ComplexityTests"
+roots = []
+globs = ["ComplexityTests.+"]
 leanOptions = {weak.linter.style.header = false}
 # The test files do not use the module system, but they import Mathlib, whose package sets
 # `requiresModuleSystem`.

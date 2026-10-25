@@ -85,13 +85,6 @@ theorem word_counterRemainder (T : ℕ) (x : BitString k) :
       BitVec.ofNat k (if (word x).toNat = 0 then 0 else T % (word x).toNat) :=
   ModulusCounter.remainder_word T x
 
-/-- Carry-safe modular addition `addResidue a b r` computes
-`ModulusCounter.advance a.toNat b.toNat T` whenever `r.toNat = T % a.toNat` on positive moduli. -/
-theorem addResidue_eq_addWrapSpec (a b r : BitVec k) (T : ℕ)
-    (hr : 0 < a.toNat → r.toNat = T % a.toNat) :
-    addResidue a b r = BitVec.ofNat k (ModulusCounter.advance a.toNat b.toNat T) :=
-  ModulusCounter.addResidue_spec a b r T hr
-
 /-- A circuit for `(counterStep k)^[T]` yields a circuit for `counterRemainder T` with at most one
 extra gate. -/
 theorem counterRemainder_of_power (T : ℕ) (c : Circuit signature (k + k) (k + k))

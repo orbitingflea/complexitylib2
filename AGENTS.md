@@ -210,14 +210,26 @@ campaign or separate design study for every small improvement.
 
 ## Lean development: use the Lean MCP server first
 
-Use MCP goal inspection, diagnostics and theorem search while iterating; reserve `lake` commands
-for validation checkpoints. If MCP tools are unavailable, say so and use the smallest shell check.
+Before the first Lean MCP operation that can elaborate or build in a checkout, run
+`scripts/cache/ensure.sh`. Run it again after pulling, switching branches, or changing the
+toolchain or dependency pins. This applies regardless of the agent client: MCP's
+`lean_build(fetch_cache=true)` fetches Mathlib's cache, not the Complexitylib cache.
+The bootstrap attempts both and suppresses repeated downloads for the same checkout state
+for ten minutes; `scripts/cache/ensure.sh --refresh` retries immediately. A miss or download
+failure leaves Lean to compile the missing outputs.
 
-In a fresh checkout or worktree, run `scripts/cache/get.sh` before the first build. Lake's local
-artifact cache then shares outputs between all checkouts on the machine, so a module is compiled
-once per machine for given inputs. Proof-only edits do not rebuild dependents; statement and
-definition changes in widely imported modules do. [scripts/cache/README.md](scripts/cache/README.md)
-describes both caches.
+Use MCP goal inspection, diagnostics and theorem search while iterating; reserve builds for
+validation checkpoints. `scripts/build.sh [Lake build arguments]`, `scripts/check.sh` and
+`scripts/worktree.sh create` run the same bootstrap automatically. Bare `lake` and MCP commands do
+not invoke it. If MCP tools are unavailable, say so and use the smallest shell check.
+
+`scripts/worktree.sh` never points a worktree at the primary checkout, refuses targets or cache
+symlinks that do, and isolates dependency Git control files and external symlinks so worktree
+operations cannot write into the primary checkout. Lake's local artifact cache then shares
+Complexitylib outputs between checkouts on the same machine with the same inputs. Proof-only edits
+do not rebuild dependents; statement and definition changes in widely imported modules do.
+[scripts/cache/README.md](scripts/cache/README.md) describes the caches and the deliberate opt-out
+for builds that must not download artifacts.
 
 ## Validation sequence
 
@@ -230,7 +242,7 @@ lake exe lint-style
 lake exe checkInitImports
 ```
 
-`scripts/check.sh` runs this sequence. CI runs the same checks.
+`scripts/check.sh` restores optional caches and runs this sequence. CI runs the same checks.
 
 For the edit loop, `scripts/check.sh --quick [--base REF]` builds changed Lean modules and their
 transitive importing clients, then checks import aggregates. The comparison uses the merge base
@@ -241,7 +253,7 @@ ambiguous change/import analysis fall back to all six gates. Run the default com
 submitting a PR; quick success does not satisfy that requirement.
 
 `lake exe mk_all` regenerates `Complexity.lean` after adding a file. New test files go in
-`ComplexityTests/` and must be imported from `ComplexityTests.lean`.
+`ComplexityTests/`; the test library is built from a Lake glob, so there is no aggregator to update.
 
 ## File rules
 
@@ -381,10 +393,10 @@ and [API review with explicit nonblocking nits](https://github.com/leanprover/cs
 
 `abstracts/catalogue.json` selects the public headline results. Each selected group has a checked
 `*Abstract.lean` and `*Bridge.lean` under `abstracts/ComplexityAbstracts/`, imported by the
-dedicated `ComplexityAbstracts` library. `ComplexityTests.lean` imports that library and its
-regression tests. Existing declaration namespaces remain stable across the source relocation.
-The Lean definitions and statements are the source of truth; PDFs are generated from them, with
-proof bodies omitted. There is no separately maintained paper/TeX index.
+dedicated `ComplexityAbstracts` library. `ComplexityTests/Abstracts/All.lean` imports that library,
+and its regression tests sit beside it. Existing declaration namespaces remain stable across the
+source relocation. The Lean definitions and statements are the source of truth; PDFs are generated
+from them, with proof bodies omitted. There is no separately maintained paper/TeX index.
 
 Selection has a higher bar than inclusion in the library: a headline must be a substantial proved
 endpoint with conventional, inspectable semantics, hypotheses that are satisfiable or are standard

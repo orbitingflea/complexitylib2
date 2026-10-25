@@ -53,7 +53,7 @@ namespace Internal
 
 /-- For a target candidate `i`, the final predicate rejects the child of row `i` at the column
 `targetWitness F x hr i`. -/
-theorem targetWitness_false {k r h : ℕ} {I : Type} (T : Tournament k)
+private theorem targetWitness_false {k r h : ℕ} {I : Type} (T : Tournament k)
     (label : Fin k → Fin k → Fin r) (F : Fin (h + 1) → (I → Bool) → Bool)
     (q : Fin h) (x : ((Fin k × Fin r) × I) → Bool) (hr : 0 < r) (i : Fin k)
     (hi : i ∈ targetCandidates T label F q x) :

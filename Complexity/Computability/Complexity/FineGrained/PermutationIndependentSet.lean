@@ -400,7 +400,7 @@ theorem div_blockSize_lt_numBlocks {N p : ℕ} (hp : p < N) :
   omega
 
 theorem numBlocks_lt_two_pow_wordLen (N : ℕ) : numBlocks N < 2 ^ wordLen N :=
-  Nat.lt_pow_succ_log_self (by decide : 1 < 2) (numBlocks N)
+  Nat.lt_pow_succ_log_self Nat.one_lt_two (numBlocks N)
 
 theorem blockSize_le (N : ℕ) : blockSize N ≤ N + 1 := by
   have := Nat.log_le_self 2 N
@@ -417,10 +417,10 @@ theorem log_numBlocks_le (N : ℕ) : Nat.log 2 (numBlocks N) ≤ 5 * blockSize N
     unfold blockSize
     omega
   have hN : N < 2 ^ (4 * blockSize N) :=
-    (Nat.lt_pow_succ_log_self (by decide : 1 < 2) N).trans_le
-      (Nat.pow_le_pow_right (by decide : 0 < 2) hlog)
+    (Nat.lt_pow_succ_log_self Nat.one_lt_two N).trans_le
+      (Nat.pow_le_pow_right two_pos hlog)
   have hpow : 2 ^ (4 * blockSize N) < 2 ^ (5 * blockSize N) :=
-    Nat.pow_lt_pow_right (by decide : 1 < 2) (by have := blockSize_pos N; omega)
+    Nat.pow_lt_pow_right Nat.one_lt_two (by have := blockSize_pos N; omega)
   have hnb : numBlocks N < 2 ^ (5 * blockSize N) := by
     have := numBlocks_le N
     omega
@@ -445,7 +445,7 @@ theorem numAssignments_le (N : ℕ) : numAssignments N ≤ 4 * N + 4 := by
   have hpow : 2 ^ (2 * k) ≤ N + 1 := by
     rcases Nat.eq_zero_or_pos N with rfl | hN
     · simp [k]
-    · exact (Nat.pow_le_pow_right (by decide : 0 < 2) h2k).trans
+    · exact (Nat.pow_le_pow_right two_pos h2k).trans
         ((Nat.pow_log_le_self 2 (by omega)).trans (Nat.le_succ N))
   have heq : numAssignments N = 4 * 2 ^ (2 * k) := by
     unfold numAssignments blockSize
@@ -502,7 +502,7 @@ theorem searchBits_le_div_add (N : ℕ) {M : ℕ} (hM : 0 < M) :
     have h4k : 4 * k ≤ Nat.log 2 N := by omega
     have hpow4 : (2 ^ k) ^ 4 ≤ N := by
       calc (2 ^ k) ^ 4 = 2 ^ (4 * k) := by rw [← pow_mul, Nat.mul_comm]
-        _ ≤ 2 ^ Nat.log 2 N := Nat.pow_le_pow_right (by decide : 0 < 2) h4k
+        _ ≤ 2 ^ Nat.log 2 N := Nat.pow_le_pow_right two_pos h4k
         _ ≤ N := Nat.pow_log_le_self 2 hN0
     have hmul : 48 * (2 ^ k) ^ 3 * M ≤ N := by
       calc 48 * (2 ^ k) ^ 3 * M = 48 * M * (2 ^ k) ^ 3 := by ring
@@ -701,7 +701,7 @@ theorem exists_block_assignments_of_coloring {N : ℕ} (f : Fin N → Fin 3) :
     have h0 : (a i).val.testBit (2 * u) = decide (col i.val u % 2 = 1) := by
       rw [BitVec.testBit_toNat, BitVec.getLsbD_ofBoolListLE, List.getD_eq_getElem?_getD,
         List.getElem?_eq_getElem (by simp [word]; omega)]
-      simp [word, bitFn, Nat.mul_div_right _ (by decide : 0 < 2)]
+      simp [word, bitFn, Nat.mul_div_right _ two_pos]
     have h1 : (a i).val.testBit (2 * u + 1) = decide (col i.val u / 2 = 1) := by
       rw [BitVec.testBit_toNat, BitVec.getLsbD_ofBoolListLE, List.getD_eq_getElem?_getD,
         List.getElem?_eq_getElem (by simp [word]; omega)]
@@ -895,7 +895,7 @@ private theorem computableTidilyInPolyTime_numAssignments :
     (fun _ _ _ _ h => by rw [h, pow_succ])
     (size := fun n => 4 * n + 4) (polyBounded (by fun_prop)) (fun n i state hi h => by
       simp only [encUnary_apply, List.length_replicate, h]
-      exact (Nat.pow_le_pow_right (by decide : 0 < 2) hi).trans (numAssignments_le n))
+      exact (Nat.pow_le_pow_right two_pos hi).trans (numAssignments_le n))
   convert hefficient using 1
   funext n
   exact (hspec n).symm
@@ -1320,7 +1320,7 @@ theorem decidableInExpTime_ThreeColoring_of_bpis {M : ℕ} (hM : 0 < M) {δ : �
     have h1 := hK_M N
     have h2 : rounds H ≤ 2 ^ K_M * 2 ^ (N / M) := by
       calc rounds H = 2 ^ searchBits N := rfl
-        _ ≤ 2 ^ (N / M + K_M) := Nat.pow_le_pow_right (by decide : 0 < 2) h1
+        _ ≤ 2 ^ (N / M + K_M) := Nat.pow_le_pow_right two_pos h1
         _ = 2 ^ K_M * 2 ^ (N / M) := by rw [pow_add, Nat.mul_comm]
     have h3 : 1 ≤ 2 ^ (N / M) := Nat.one_le_two_pow
     nlinarith
@@ -1524,9 +1524,9 @@ theorem ETH.not_decidableInSubexpTime_BipartitePermutationIndependentSet_clog (h
     simp [this]
   · have hclog : Nat.clog 2 G.1 ≤ 2 * Nat.log 2 G.1 := by
       have h1 : Nat.clog 2 G.1 ≤ Nat.log 2 G.1 + 1 := by
-        rw [Nat.clog_le_iff_le_pow (by decide : 1 < 2)]
-        exact (Nat.lt_pow_succ_log_self (by decide : 1 < 2) G.1).le
-      have h2 : 1 ≤ Nat.log 2 G.1 := Nat.log_pos (by decide : 1 < 2) hG
+        rw [Nat.clog_le_iff_le_pow Nat.one_lt_two]
+        exact (Nat.lt_pow_succ_log_self Nat.one_lt_two G.1).le
+      have h2 : 1 ≤ Nat.log 2 G.1 := Nat.log_pos Nat.one_lt_two hG
       omega
     calc G.1 * Nat.clog 2 G.1 ≤ G.1 * (2 * Nat.log 2 G.1) := Nat.mul_le_mul_left G.1 hclog
       _ ≤ 2 * (G.1 * Nat.log 2 G.1) + 2 := by ring_nf; omega
@@ -1544,8 +1544,8 @@ theorem ETH.not_decidableInSubexpTime_BipartitePermutationIndependentSet_two_mul
   · interval_cases G.1 <;> decide
   · have hlog : Nat.log 2 (2 * G.1) ≤ 2 * Nat.log 2 G.1 := by
       have h1 : Nat.log 2 (2 * G.1) = Nat.log 2 G.1 + 1 := by
-        rw [Nat.mul_comm, Nat.log_mul_base (by decide : 1 < 2) (by omega)]
-      have h2 : 1 ≤ Nat.log 2 G.1 := Nat.log_pos (by decide : 1 < 2) hG
+        rw [Nat.mul_comm, Nat.log_mul_base Nat.one_lt_two (by omega)]
+      have h2 : 1 ≤ Nat.log 2 G.1 := Nat.log_pos Nat.one_lt_two hG
       omega
     calc (2 * G.1) * Nat.log 2 (2 * G.1)
         ≤ (2 * G.1) * (2 * Nat.log 2 G.1) := Nat.mul_le_mul_left _ hlog

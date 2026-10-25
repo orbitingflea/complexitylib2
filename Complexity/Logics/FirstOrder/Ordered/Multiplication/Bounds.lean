@@ -82,7 +82,7 @@ theorem exists_parameters {n : ℕ} (hn : 257 ≤ n) :
     dsimp [e]
     lia
   refine ⟨h, e, d + 1, hlo, hhi, hh, hspace, he, by lia, ?_, ?_, ?_, ?_⟩
-  · have hp := Nat.pow_lt_pow_right (by decide : 1 < 2) hds
+  · have hp := Nat.pow_lt_pow_right Nat.one_lt_two hds
     have : h + 1 ≤ 2 ^ d := by lia
     exact lt_of_le_of_lt this hp
   · rw [pow_succ]

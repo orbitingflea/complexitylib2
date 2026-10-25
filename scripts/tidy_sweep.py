@@ -374,7 +374,7 @@ class Model:
         qr.collect_references(self.lib, self.decls, self.owners)
         qr.classify(self.decls)
         self.allowlist = allowlist
-        roots = sorted(self.lib.ileans) if partial else qr.ROOTS
+        roots = sorted(self.lib.ileans) if partial else qr.root_modules()
         out = qr.run(["lake", "env", "lean", "--run", "scripts/QualityReport.lean", "--names",
                       *roots], capture_output=True).stdout
         names, _, tokens = out.partition("\n--tokens--\n")

@@ -22,10 +22,15 @@
 # Cache seeding note:
 #   Package sources are hard-linked (`cp -al`) by default. Root build/config caches and every
 #   package's `.lake` cache are copied with independent inodes, preserving modes and mtimes.
-#   Cache symlinks are dereferenced so their mutable targets are copied too; source symlinks
-#   are preserved. Do not edit shared package sources. `--copy-cslib` also copies cslib's sources
+#   Cache symlinks and any package symlinks whose targets are absolute or escape the package
+#   directory are dereferenced so their targets are copied too; internal relative source symlinks
+#   are preserved. Dependency `.git` directories and `gitdir:` pointer files are isolated so Git
+#   operations inside a worktree cannot modify the primary checkout's `HEAD` or `index`.
+#   `create` and `seed` also run `scripts/cache/ensure.sh` (`scripts/cache/get.sh`) in the
+#   worktree unless `COMPLEXITYLIB_WORKTREE_SKIP_CACHE_BOOTSTRAP=1` is set.
+#   Do not edit shared package sources. `--copy-cslib` also copies cslib's sources
 #   (for upstream edits or a pin bump); `--copy-packages` copies every package's sources.
-#   Seeding skips existing destination caches; it does not repair previously shared caches.
+#   Seeding refuses the primary checkout and skips existing destination caches.
 #
 # Pruning considers registered worktrees directly under `.worktrees/`, retaining locked,
 # symlinked, dirty and unmerged worktrees. Git removes eligible worktrees and their caches.
@@ -37,30 +42,237 @@ GIT_COMMON_DIR="$(git -C "$SCRIPT_DIR" rev-parse --path-format=absolute --git-co
 ROOT="$(cd "$GIT_COMMON_DIR/.." && pwd)"
 cd "$ROOT"
 
+resolve_path() {
+  python3 - "$1" <<'PY'
+import os, sys
+print(os.path.realpath(sys.argv[1]))
+PY
+}
+
+# isolate_git_dir <source_git> <dest_git>: materialize an independent .git directory so Git
+# commands or control-file writes in the seeded package never mutate the primary checkout's
+# HEAD, index, config, or refs (including when source_git is a `gitdir:` pointer file).
+isolate_git_dir() {
+  local source_git="$1" dest_git="$2"
+  python3 - "$source_git" "$dest_git" <<'PY'
+import os, pathlib, shutil, subprocess, sys
+
+src = pathlib.Path(sys.argv[1])
+dst = pathlib.Path(sys.argv[2])
+
+if src.is_file() or (src.is_symlink() and src.resolve().is_file()):
+    raw = src.read_text(encoding="utf-8").strip()
+    if not raw.startswith("gitdir:"):
+        raise SystemExit(f"Unsupported .git file format: {src}")
+    gitdir_str = raw.split(":", 1)[1].strip()
+    gitdir = (src.parent / gitdir_str).resolve()
+else:
+    gitdir = src.resolve()
+
+commondir = gitdir
+commondir_file = gitdir / "commondir"
+if commondir_file.is_file():
+    rel_common = commondir_file.read_text(encoding="utf-8").strip()
+    commondir = (gitdir / rel_common).resolve()
+
+if dst.exists() or dst.is_symlink():
+    if dst.is_symlink() or dst.is_file():
+        dst.unlink()
+    else:
+        shutil.rmtree(dst)
+dst.mkdir(parents=True, exist_ok=True)
+
+head_src = gitdir / "HEAD"
+if head_src.is_file():
+    shutil.copy2(head_src, dst / "HEAD")
+else:
+    (dst / "HEAD").write_text("ref: refs/heads/main\n", encoding="utf-8")
+
+for name in ("config", "packed-refs", "shallow", "index"):
+    cand = gitdir / name if (gitdir / name).is_file() else commondir / name
+    if cand.is_file():
+        shutil.copy2(cand, dst / name)
+
+if (dst / "config").is_file():
+    subprocess.run(
+        ["git", "config", "--file", str(dst / "config"), "--unset-all", "core.worktree"],
+        check=False,
+    )
+    subprocess.run(
+        ["git", "config", "--file", str(dst / "config"), "core.bare", "false"],
+        check=False,
+    )
+
+for dirname in ("refs", "info"):
+    cand = gitdir / dirname if (gitdir / dirname).is_dir() else commondir / dirname
+    if cand.is_dir():
+        shutil.copytree(cand, dst / dirname, symlinks=False, dirs_exist_ok=True)
+    else:
+        (dst / dirname).mkdir(parents=True, exist_ok=True)
+
+def link_or_copy(s: str, d: str) -> None:
+    try:
+        os.link(s, d)
+    except OSError:
+        shutil.copy2(s, d)
+
+objects_src = commondir / "objects"
+if objects_src.is_dir():
+    shutil.copytree(
+        objects_src, dst / "objects", copy_function=link_or_copy, symlinks=False, dirs_exist_ok=True
+    )
+else:
+    (dst / "objects").mkdir(parents=True, exist_ok=True)
+
+pkg_root = dst.parent.resolve()
+dst_real = dst.resolve()
+top = pathlib.Path(
+    subprocess.check_output(
+        ["git", "-C", str(pkg_root), "rev-parse", "--show-toplevel"], text=True
+    ).strip()
+).resolve()
+abs_gitdir = pathlib.Path(
+    subprocess.check_output(
+        ["git", "-C", str(pkg_root), "rev-parse", "--absolute-git-dir"], text=True
+    ).strip()
+).resolve()
+common_gitdir = pathlib.Path(
+    subprocess.check_output(
+        ["git", "-C", str(pkg_root), "rev-parse", "--path-format=absolute", "--git-common-dir"],
+        text=True,
+    ).strip()
+).resolve()
+if top != pkg_root or abs_gitdir != dst_real or common_gitdir != dst_real:
+    raise SystemExit(
+        f"Isolated git directory validation failed for {pkg_root}: "
+        f"toplevel={top}, gitdir={abs_gitdir}, commondir={common_gitdir}"
+    )
+PY
+}
+
+# dereference_escaping_symlinks <source_pkg_dir> <dest_pkg_dir>: replace any symlink in
+# dest_pkg_dir (outside .lake and .git) whose target is absolute or resolves outside
+# source_pkg_dir with an independent copy of its target.
+dereference_escaping_symlinks() {
+  local source="$1" destination="$2"
+  python3 - "$source" "$destination" <<'PY'
+import os, pathlib, shutil, sys
+
+src_root = pathlib.Path(os.path.realpath(sys.argv[1]))
+dst_root = pathlib.Path(sys.argv[2])
+
+def is_within(child: pathlib.Path, parent: pathlib.Path) -> bool:
+    try:
+        child.relative_to(parent)
+        return True
+    except ValueError:
+        return False
+
+def walk_dir(rel: pathlib.Path) -> None:
+    cur_dst = dst_root / rel
+    if not cur_dst.is_dir() or cur_dst.is_symlink():
+        return
+    for entry in list(cur_dst.iterdir()):
+        if rel == pathlib.Path(".") and entry.name in (".lake", ".git"):
+            continue
+        entry_rel = rel / entry.name
+        src_entry = src_root / entry_rel
+        if entry.is_symlink():
+            link_target = os.readlink(entry)
+            resolved = pathlib.Path(os.path.realpath(src_entry))
+            if os.path.isabs(link_target) or not is_within(resolved, src_root):
+                entry.unlink()
+                if resolved.is_dir():
+                    shutil.copytree(resolved, entry, symlinks=False)
+                elif resolved.exists():
+                    shutil.copy2(resolved, entry, follow_symlinks=True)
+            continue
+        if entry.is_dir():
+            walk_dir(entry_rel)
+
+walk_dir(pathlib.Path("."))
+PY
+}
+
 # seed_package <source> <destination> <copy_sources>. Copy caches without first hard-linking them.
 seed_package() (
-  local source="$1" destination="$2" copy_sources="$3" entry
+  local source="$1" destination="$2" copy_sources="$3" entry base
   mkdir -p "$destination"
   shopt -s dotglob nullglob
   for entry in "$source"/*; do
-    if [ "$(basename "$entry")" = ".lake" ]; then
+    base="$(basename "$entry")"
+    if [ "$base" = ".lake" ]; then
       cp -aL "$entry" "$destination/.lake"
+    elif [ "$base" = ".git" ]; then
+      isolate_git_dir "$entry" "$destination/.git"
     elif [ "$copy_sources" = "true" ]; then
       cp -a "$entry" "$destination/"
     else
       cp -al "$entry" "$destination/"
     fi
   done
+  dereference_escaping_symlinks "$source" "$destination"
 )
 
-# seed_lake <worktree_path> <copy_mode>, where copy_mode is `none`, `cslib` or `all`.
-seed_lake() {
+bootstrap_worktree_cache() {
   local wt_path="$1"
-  local copy_mode="${2:-none}"
-  if [ ! -d "$ROOT/.lake" ]; then
-    echo "No root .lake directory found at $ROOT/.lake; skipping cache seed."
+  local wt_real
+  wt_real="$(resolve_path "$wt_path")"
+  if [ "${COMPLEXITYLIB_WORKTREE_SKIP_CACHE_BOOTSTRAP:-0}" = "1" ]; then
     return 0
   fi
+  if [ -x "$wt_path/scripts/cache/ensure.sh" ]; then
+    (cd "$wt_path" && COMPLEXITYLIB_CACHE_CHECKOUT="$wt_real" ./scripts/cache/ensure.sh) || true
+  elif [ -x "$ROOT/scripts/cache/ensure.sh" ]; then
+    (cd "$wt_path" && COMPLEXITYLIB_CACHE_CHECKOUT="$wt_real" "$ROOT/scripts/cache/ensure.sh" --checkout "$wt_real") || true
+  fi
+}
+
+# refuse_primary_or_symlink_target <wt_path> [prospective|seed]
+refuse_primary_or_symlink_target() {
+  local wt_path="$1"
+  local mode="${2:-seed}"
+  local root_real wt_real
+  root_real="$(resolve_path "$ROOT")"
+  wt_real="$(resolve_path "$wt_path")"
+  if [ "$wt_real" = "$root_real" ]; then
+    echo "Refusing to seed primary checkout: $wt_path" >&2
+    return 1
+  fi
+  case "$wt_real" in
+    "$root_real/.lake"|"$root_real/.lake/"*)
+      echo "Refusing to seed inside primary checkout .lake: $wt_path" >&2
+      return 1
+      ;;
+    "$root_real/.git"|"$root_real/.git/"*)
+      echo "Refusing to seed inside primary checkout .git: $wt_path" >&2
+      return 1
+      ;;
+    "$root_real"/*)
+      local wt_top=""
+      if [ -d "$wt_real" ] && [ -e "$wt_real/.git" ]; then
+        wt_top="$(git -C "$wt_real" rev-parse --show-toplevel 2>/dev/null || true)"
+        if [ -n "$wt_top" ]; then
+          wt_top="$(resolve_path "$wt_top")"
+        fi
+      fi
+      if [ "$wt_top" != "$wt_real" ]; then
+        if [ "$mode" = "prospective" ]; then
+          case "$wt_real" in
+            "$root_real/.worktrees/"*)
+              ;;
+            *)
+              echo "Refusing to seed inside primary checkout subdirectory: $wt_path" >&2
+              return 1
+              ;;
+          esac
+        else
+          echo "Refusing to seed inside primary checkout subdirectory: $wt_path" >&2
+          return 1
+        fi
+      fi
+      ;;
+  esac
   local path
   for path in "$wt_path/.lake" "$wt_path/.lake/packages" \
       "$wt_path/.lake/build" "$wt_path/.lake/config"; do
@@ -68,7 +280,39 @@ seed_lake() {
       echo "Refusing to seed through destination cache symlink: $path" >&2
       return 1
     fi
+    if [ -e "$path" ]; then
+      local path_real
+      path_real="$(resolve_path "$path")"
+      case "$path_real" in
+        "$root_real"|"$root_real/.lake"|"$root_real/.lake/"*)
+          echo "Refusing to seed destination path resolving into primary checkout: $path" >&2
+          return 1
+          ;;
+      esac
+    fi
   done
+  if [ -d "$wt_path/.lake/packages" ]; then
+    local pkg_entry
+    shopt -s dotglob nullglob
+    for pkg_entry in "$wt_path/.lake/packages"/*; do
+      if [ -L "$pkg_entry" ]; then
+        echo "Refusing to seed through destination package symlink: $pkg_entry" >&2
+        return 1
+      fi
+    done
+  fi
+}
+
+# seed_lake <worktree_path> <copy_mode>, where copy_mode is `none`, `cslib` or `all`.
+seed_lake() {
+  local wt_path="$1"
+  local copy_mode="${2:-none}"
+  refuse_primary_or_symlink_target "$wt_path" "seed"
+  if [ ! -d "$ROOT/.lake" ]; then
+    echo "No root .lake directory found at $ROOT/.lake; skipping cache seed."
+    bootstrap_worktree_cache "$wt_path"
+    return 0
+  fi
   mkdir -p "$wt_path/.lake"
   if [ -d "$ROOT/.lake/packages" ] && [ ! -d "$wt_path/.lake/packages" ]; then
     mkdir -p "$wt_path/.lake/packages"
@@ -89,6 +333,7 @@ seed_lake() {
   if [ -d "$ROOT/.lake/build" ] && [ ! -d "$wt_path/.lake/build" ]; then
     cp -aL "$ROOT/.lake/build" "$wt_path/.lake/build"
   fi
+  bootstrap_worktree_cache "$wt_path"
 }
 
 # copy_mode_flag <current_mode> <arg>: print the new copy mode, or fail on conflicting flags.
@@ -134,6 +379,7 @@ case "$cmd" in
       dir_name="${branch//\//-}"
     fi
     wt_path="$ROOT/.worktrees/$dir_name"
+    refuse_primary_or_symlink_target "$wt_path" "prospective"
     if git show-ref --verify --quiet "refs/heads/$branch"; then
       if [ "$force_reset" = "true" ]; then
         effective_base="${base_ref:-origin/main}"

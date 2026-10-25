@@ -7,7 +7,11 @@
 # `main` CI has uploaded (Lake looks back up to 100 commits). Missing outputs are not an error:
 # `lake build` compiles whatever the cache did not provide. See scripts/cache/README.md.
 set -u
-cd "$(dirname "$0")/../.." || exit 1
+if [ -n "${COMPLEXITYLIB_CACHE_CHECKOUT:-}" ]; then
+  cd "$COMPLEXITYLIB_CACHE_CHECKOUT" || exit 1
+else
+  cd "$(dirname "$0")/../.." || exit 1
+fi
 
 url="${COMPLEXITYLIB_CACHE_URL-https://storage.googleapis.com/complexitylib-lake-cache}"
 

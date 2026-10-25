@@ -68,7 +68,7 @@ theorem shannonScale_le_of_le_add {n p padding : ℕ} (hn : 0 < n)
     (hle : n ≤ p) (hp : p ≤ n + padding) :
     2 ^ p / p ≤ (2 * 2 ^ padding) * (2 ^ n / n) := by
   have hpow : 2 ^ p ≤ 2 ^ padding * 2 ^ n := by
-    simpa only [Nat.pow_add, Nat.mul_comm] using Nat.pow_le_pow_right (by decide : 0 < 2) hp
+    simpa only [Nat.pow_add, Nat.mul_comm] using Nat.pow_le_pow_right two_pos hp
   have hn' : n ≤ 2 ^ n :=
     (show n ≤ 2 * n by lia).trans (Nat.mul_le_pow (by decide : 2 ≠ 1) n)
   exact ((Nat.div_le_div_left hle hn).trans (Nat.div_le_div_right hpow)).trans (mul_div_le hn hn')

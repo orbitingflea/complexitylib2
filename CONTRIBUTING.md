@@ -102,10 +102,16 @@ Maintainers decide scope and acceptance, and arrange the independent API and cor
 required by [AGENTS.md](AGENTS.md#review-cycle). Contributors need not install a maintainer's
 agent tooling to submit a change.
 
-Run `scripts/check.sh` for the six project checks. The test suite audits the axiom dependencies
-of every declaration stored in imported `Complexity` modules; the named headline checks remain
-readable regression tests. This trusts the compiled Lean artifacts and permits `Classical.choice`;
-it does not certify efficient computation or agreement with a textbook statement.
+Run `scripts/build.sh [Lake build arguments]` for a build or `scripts/check.sh` for the six project
+checks; both attempt cache restoration first. Before the first MCP elaboration/build in a
+checkout, and after changing branches or pins, run `scripts/cache/ensure.sh`. The command is
+shared by all agent clients. See the [cache guide](scripts/cache/README.md#automatic-restoration)
+for retries and intentional opt-out.
+
+The test suite audits the axiom dependencies of every declaration stored in imported `Complexity`
+modules; the named headline checks remain readable regression tests. This trusts the compiled Lean
+artifacts and permits `Classical.choice`; it does not certify efficient computation or agreement
+with a textbook statement.
 
 For concurrent local validation, choose a thread budget for the shared host, for example
 `LEAN_NUM_THREADS=2 scripts/check.sh`. Lean's
@@ -118,11 +124,14 @@ the root checkout and, when `<branch>` exists only on `origin`, checks it out tr
 forbidden proof tokens, and `set_option` justifications (pass `--check-simp` to also run the
 heuristic check for non-terminal bare `simp` calls in candidate modules).
 
-The helper hard-links package sources by default, but copies root and dependency build caches
-with independent files, including symlink targets. Do not edit shared package sources; use
-`--copy-cslib` or `--copy-packages` when those sources must change. Seeding preserves existing
-destination caches and does not repair worktrees created with shared dependency caches by an
-older helper; use a fresh worktree for isolated validation.
+The helper hard-links package sources by default, copies root and dependency build caches with
+independent files (including symlink targets), isolates dependency `.git` directories and pointer
+files, dereferences any package symlink whose target escapes the package directory, and runs
+`scripts/cache/ensure.sh` (`scripts/cache/get.sh`) before the first build. It never points a
+worktree at the primary checkout and refuses targets or symlinks that do. Do not edit shared
+package sources; use `--copy-cslib` or `--copy-packages` when those sources must change. Seeding
+preserves existing destination caches and does not repair worktrees created with shared dependency
+caches by an older helper; use a fresh worktree for isolated validation.
 
 Coordinate with a run's owner before rescheduling it, preserve completed artifacts, and record
 an interrupted run as incomplete. A fresh run must pass all six strict checks on the final revision.
@@ -170,10 +179,10 @@ Keep incomplete endpoints in `ROADMAP.md` and credit mathematical and formalizat
 
 Every AI-authored PR must assess its final Lean changes against the selection. Update affected
 abstracts and scope notes, or explain why the catalogue is unaffected. Proof-only changes with
-unchanged statements and scope can record that assessment without rewriting the abstract. Follow
-the repository's `lean-abstract` skill, import new abstracts in `ComplexityTests.lean`, and run their
-`#check_abstract` audits. Allow only narrow, explained foundational models; do not allowlist the
-result's class definitions or construction to evade a self-contained statement.
+unchanged statements and scope can record that assessment without rewriting the abstract. Follow the
+repository's `lean-abstract` skill, import new abstracts in `ComplexityTests/Abstracts/All.lean`,
+and run their `#check_abstract` audits. Allow only narrow, explained foundational models; do not
+allowlist the result's class definitions or construction to evade a self-contained statement.
 
 Arrange independent API, correctness and abstract reviews against the final source revision.
 Reviewers must check quantifiers, semantics, encodings, bounds, nonvacuity and readability. Record

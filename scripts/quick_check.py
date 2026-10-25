@@ -69,10 +69,10 @@ def source_modules(root: Path) -> tuple[dict[str, str], set[str], set[str]]:
     physical_sources: set[Path] = set()
     aggregates: set[str] = set()
     roots: set[str] = set()
-    allowed = {"name", "srcDir", "leanOptions", "allowNonModules"}
+    allowed = {"name", "srcDir", "leanOptions", "allowNonModules", "roots", "globs"}
     for library in libraries:
         if not isinstance(library, dict) or set(library) - allowed:
-            raise FullCheck("custom Lake library roots/globs/options need full checks")
+            raise FullCheck("custom Lake library options need full checks")
         name = library.get("name", "")
         if not re.fullmatch(r"[A-Za-z_][A-Za-z_0-9]*(\.[A-Za-z_][A-Za-z_0-9]*)*", name):
             raise FullCheck("unsupported library name")
@@ -82,15 +82,23 @@ def source_modules(root: Path) -> tuple[dict[str, str], set[str], set[str]]:
         relative = Path(*name.split("."))
         aggregator = source / relative.with_suffix(".lean")
         directory = source / relative
-        if not aggregator.is_file() or not directory.is_dir():
+        # The one supported glob layout: no roots and exactly the library's own submodules
+        # (`roots = []`, `globs = ["Name.+"]`), which Lake builds without an aggregator file.
+        globbed = "roots" in library or "globs" in library
+        if globbed and (library.get("roots") != [] or library.get("globs") != [f"{name}.+"]):
+            raise FullCheck("custom Lake library roots/globs need full checks")
+        if globbed and aggregator.exists():
+            raise FullCheck(f"glob library {name} also has an aggregator file")
+        if (not globbed and not aggregator.is_file()) or not directory.is_dir():
             raise FullCheck(f"missing library root {name}")
         # rglob does not descend through directory symlinks: reject them explicitly,
         # including the library root, before trusting the discovered import graph.
         if directory.is_symlink() or any(path.is_symlink() for path in directory.rglob("*")):
             raise FullCheck("symlinked source directories/files need full checks")
         roots.add(name)
-        aggregates.add(name)
-        for path in [aggregator, *sorted(directory.rglob("*.lean"))]:
+        if not globbed:
+            aggregates.add(name)
+        for path in [*([] if globbed else [aggregator]), *sorted(directory.rglob("*.lean"))]:
             if path.is_symlink() or not path.resolve().is_relative_to(source.resolve()):
                 raise FullCheck("symlinked source file is outside quick-check scope")
             parts = path.relative_to(source).with_suffix("").parts

@@ -227,14 +227,14 @@ theorem exists_repeat_power (c : Circuit signature n n) (T L : ℕ) (hL : 0 < L)
   let d := Nat.clog 2 (2 * L + 1)
   have hcap : 0 + (2 * L + 1) ≤ BitonicSort.arity d := by
     simpa only [Nat.zero_add, BitonicSort.arity_eq_two_pow] using
-      Nat.le_pow_clog (by decide : 1 < 2) (2 * L + 1)
+      Nat.le_pow_clog Nat.one_lt_two (2 * L + 1)
   have hd : d ≤ n + 2 := by
     apply Nat.clog_le_of_le_pow
     simp only [Nat.pow_succ]
     have := Nat.one_le_two_pow (n := n)
     omega
   have hpow : 2 ^ d ≤ 2 * (0 + 2 * L + 1) := by
-    have hp := Nat.pow_pred_clog_lt_self (by decide : 1 < 2) (show 1 < 2 * L + 1 by omega)
+    have hp := Nat.pow_pred_clog_lt_self Nat.one_lt_two (show 1 < 2 * L + 1 by omega)
     have hdpos : 0 < d := Nat.clog_pos (by decide) (by omega)
     rw [show 2 ^ d = 2 ^ (d - 1) * 2 by rw [← Nat.pow_succ, show (d - 1).succ = d by omega]]
     change 2 ^ (d - 1) < 2 * L + 1 at hp

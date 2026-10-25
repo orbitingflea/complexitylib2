@@ -184,7 +184,7 @@ theorem maskedSample_dyadic_mass_ge_eventually {α β : ℕ → Type}
       simpa only [one_div, inv_pow, div_eq_mul_inv, one_mul] using hn
     exact_mod_cast (div_le_one (by positivity : (0 : ℝ) < 2 ^ n)).mp hratio
   have hlog : Nat.log 2 (bound n) ≤ n := by
-    simpa only [Nat.log_pow (by decide : 1 < 2)] using Nat.log_mono_right (b := 2) hpow
+    simpa only [Nat.log_pow Nat.one_lt_two] using Nat.log_mono_right (b := 2) hpow
   intro mask hmask pair hpair
   refine le_trans ?_ (maskedSample_dyadic_mass_ge (source n) (observe n) (truth n) mask
     (sourceBits n) (bound n) (hsource n) hmask pair hpair)

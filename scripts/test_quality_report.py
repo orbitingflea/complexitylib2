@@ -212,23 +212,33 @@ class OutputCheckTests(unittest.TestCase):
                 {"module": module, "directImports": [[i, False, False, False] for i in imports]}))
 
     def test_outputs_of_deleted_modules_are_ignored(self) -> None:
-        self.write_ileans({"Complexity": ["Complexity.A"], "ComplexityTests": [],
-                           "ComplexityAbstracts": [], "Complexity.A": ["Mathlib.Init"],
-                           "Complexity.Deleted": []})
-        self.assertEqual(list(q.load_ileans(self.reference)), ["Complexity.A"])
+        self.write_ileans({"Complexity": ["Complexity.A"], "ComplexityAbstracts": [],
+                           "Complexity.A": ["Mathlib.Init"], "Complexity.Deleted": []})
+        self.assertEqual(list(q.load_ileans(self.reference, glob=lambda root: [])),
+                         ["Complexity.A"])
+
+    def test_glob_library_modules_are_read_from_sources(self) -> None:
+        self.write_ileans({"Complexity": [], "ComplexityAbstracts": [],
+                           "ComplexityTests.T": ["Complexity.B"], "Complexity.B": [],
+                           "ComplexityTests.Stale": []})
+        glob = lambda root: ["ComplexityTests.T"] if root == "ComplexityTests" else []
+        self.assertEqual(sorted(q.load_ileans(self.reference, glob=glob)),
+                         ["Complexity.B", "ComplexityTests.T"])
+        self.assertEqual(q.root_modules(glob),
+                         ["Complexity", "ComplexityTests.T", "ComplexityAbstracts"])
 
     def test_missing_reachable_output_is_refused(self) -> None:
-        self.write_ileans({"Complexity": ["Complexity.Live"], "ComplexityTests": [],
-                           "ComplexityAbstracts": [], "Complexity.Live": ["Complexity.Missing"]})
+        self.write_ileans({"Complexity": ["Complexity.Live"], "ComplexityAbstracts": [],
+                           "Complexity.Live": ["Complexity.Missing"]})
         with self.assertRaises(SystemExit) as error:
-            q.load_ileans(self.reference)
+            q.load_ileans(self.reference, glob=lambda root: [])
         self.assertIn("Missing.ilean is missing (imported by Complexity.Live)",
                       str(error.exception.code))
 
     def test_missing_root_output_is_refused(self) -> None:
-        self.write_ileans({"Complexity": [], "ComplexityTests": []})
+        self.write_ileans({"Complexity": []})
         with self.assertRaises(SystemExit) as error:
-            q.load_ileans(self.reference)
+            q.load_ileans(self.reference, glob=lambda root: [])
         self.assertIn("ComplexityAbstracts.ilean is missing (a root)", str(error.exception.code))
 
 

@@ -571,7 +571,7 @@ developments, not assertions that every prerequisite is missing or assignments t
 
 | Area | Coverage to establish or extend |
 | --- | --- |
-| Structural complexity | Time/space and exponential hierarchies; oracle and advice classes; unambiguous and promise classes; completeness, padding, self-reducibility, Ladner's theorem, relativization and oracle separations. Preserve each reduction's resource bound. |
+| Structural complexity | Time/space and exponential hierarchies; oracle and advice classes; unambiguous and promise classes; completeness, padding, self-reducibility, Ladner's theorem, relativization and oracle separations. `PRIMES ∈ P` (AKS, #893): the [AKS identity and the easy direction of correctness](Complexity/Foundations/NumberTheory/AKS/Criterion.lean) are proved; the hard direction, the small-`r` bound and the polynomial-time algorithm on binary inputs remain. Preserve each reduction's resource bound. |
 | Space and alternation | Build on native `NPSPACE = PSPACE`, TQBF completeness, `NL ⊆ P`, [PH ⊆ PSPACE](Complexity/Computability/Complexity/Classes/Inclusions.lean) and [AP = PSPACE](Complexity/Computability/Complexity/Classes/Alternation/Savitch.lean). Extend the [machine-class milestones](#machine-class-milestones), alternating time/space classes and bounded-alternation characterizations of PH. Distinguish polynomial-space simulation from sharp bounds for sublinear space. |
 | Counting and modular classes | Build on `#P`, `GapP`, `PP`, [parity-P](Complexity/Computability/Complexity/Classes/ParityP.lean) and [Toda's PH ⊆ P^#P theorem](Complexity/Computability/Complexity/Classes/Toda.lean), with a fixed polynomial-time program correct against every oracle answering the counting function's bits. Extend counting reductions and machine characterizations, permanent completeness, modular/counting hierarchies and the oracle-algorithm form of Stockmeyer approximate counting. |
 | Interactive and probabilistic proofs | [IP ⊆ PSPACE](Complexity/Computability/Complexity/Classes/IP/PSPACE.lean) is proved for the strict polynomial-time, private-coin verifier model. [IP = PSPACE](Complexity/Computability/Complexity/Classes/IP/Shamir.lean) is proved, with a machine-certified Shamir–Shen-style verifier for TQBF, and [computational zero-knowledge proofs for NP](Complexity/Crypto/Computational/ZeroKnowledge.lean) (via a 3-copy masked-3SAT truth-table commitment protocol following Goldreich–Micali–Wigderson) are proved from one-way functions for uniform polynomial-time-generable instance/witness/auxiliary-input families at soundness error `1 / 3`. [Arthur–Merlin classes](Complexity/Computability/Complexity/Classes/ArthurMerlin.lean) are defined, with amplification, `AM ⊆ Π₂`, the set lower bound protocol and graph non-isomorphism in AM; develop public/private-coin transformations, the deferred BFL reverse inclusion, universal-instance and arbitrary-auxiliary-input zero knowledge, witness-level Levin reductions, statistical/perfect zero knowledge and sequential soundness amplification. [Classical MIP](Complexity/Computability/Complexity/Classes/MIP.lean) with a constant number of provers satisfies `IP ⊆ MIP₂ ⊆ MIP ⊆ NEXP`, with deterministic prover optimality and Karp-reduction closure. Reuse the existing PCP and probabilistic foundations. |
@@ -1188,29 +1188,6 @@ Jukna coverage below is an additional target beyond the V1 port:
   the [leftover hash lemma](Complexity/Probability/UniversalHash.lean) is proved over
   `ε`-universal families (`IsUniversalHash.leftover_hash`) with `IsTwoUniversal` as its
   `1 / |Output|` case and the pseudoentropy clients updated.
-  [Feistel networks and the Luby–Rackoff theorem](Complexity/Crypto/Protocols/Cipher/LubyRackoff.lean)
-  (#748, #834, Boneh–Shoup Section 4.4 / Luby–Rackoff 1988), backed by the shared
-  [lazy bidirectional random-permutation sampler](Complexity/Languages/Probabilistic/RandomPermutation.lean)
-  (#834), prove the `Q.choose 2 * ε + Q.choose 2 / |G|`
-  3-round adaptive CPA bound with Δ-universal Round 1
-  (`advantage_feistel3HashIdealGame_randomFunctionGame_le`), the `2 * Q.choose 2 / |G|`
-  uniform-random-round corollary (`advantage_feistel3RandomRoundsGame_randomFunctionGame_le`), the
-  3-round and 4-round PRF-to-Feistel hybrid bounds
-  (`advantage_feistel3KeyedGame_randomFunctionGame_le`,
-  `advantage_feistel4StrongKeyedGame_feistel4StrongRandomRoundsGame_le`), the PRP-PRF switching
-  bound `Q.choose 2 / |G|²` and 3-round PRP bounds against a uniform random permutation
-  (`advantage_idealPermGame_randomFunctionGame_le`,
-  `advantage_feistel3RandomRoundsGame_idealPermGame_le`,
-  `advantage_feistel3KeyedGame_idealPermGame_le`), and the 3-query
-  chosen-ciphertext attack against 3-round Feistel (`eval_feistel3_feistel3CCAAttack`, with the
-  equal-input sanity check `advantage_feistel3CCAAttack_self`, the finite positive gap
-  `(|Equiv.Perm (G × G)|)⁻¹ ≤ advantage` against the true bidirectional random-permutation game
-  `idealStrongGame` for `|G| ≥ 3` in `le_advantage_feistel3CCAAttack_idealStrongGame`, the
-  quantitative nonnegligible lower bound `1 - |G|⁻¹ - 4 / |G|² ≤ advantage` against
-  `idealStrongGame` for any `l₀ ≠ l₁` in `le_advantage_feistel3CCAAttack_idealStrongGame_of_ne`,
-  and the separate exact `1 - |G|⁻¹` bound against the independent-table benchmark
-  `independentTableStrongGame` in `advantage_feistel3CCAAttack_independentTable`). Open in #748:
-  the 4-round information-theoretic bidirectional random-round collision bound.
 * **Sigma protocols, Schnorr identification and Fiat–Shamir (#581).** Boneh–Shoup Chapter 19.
   The exact algebraic core is proved:
   [Sigma protocols](Complexity/Crypto/Protocols/SigmaProtocol/Basic.lean) with explicit
@@ -1292,21 +1269,43 @@ Jukna coverage below is an additional target beyond the V1 port:
 * **Classic symmetric constructions (#640, track D).** Proved: PRF-based MACs (#677), keyed
   collision-resistant hash families and Merkle–Damgård (#678), universal hashing (#663),
   [Carter–Wegman MACs from Δ-universal hashing](Complexity/Crypto/Protocols/MAC/CarterWegman.lean)
-  (#736, including one-time, adaptive multi-query issued-counter, arbitrary-pad hybrid, and exact
-  single-query fixed-nonce `prfRealGame`/`prfIdealGame` reduction bounds), and the Even–Mansour
-  cipher in the ideal-permutation model (algebraic permutations, one-query secrecy, one-sided query
-  security, 2-query breaks when omitting either whitening key, the Boneh–Shoup Theorem 4.10
-  bad-key transcript intersection bound `2 * Q_e * Q_π / |G|`, exact equivalence of the two-sided
-  ideal and fixed-key real games with lazy bidirectional random-permutation samplers in
-  `evenMansourIdealGame_eq_lazy` and `realGameForKey_eq_lazy`, the key-shifted lazy permutation
+  (#736, #746, #842, including one-time, adaptive multi-query issued-counter, arbitrary-pad hybrid,
+  and exact single-query fixed-nonce `prfRealGame`/`prfIdealGame` reduction bounds), and the
+  Even–Mansour cipher in the ideal-permutation model (algebraic permutations, one-query secrecy,
+  one-sided query security, 2-query breaks when omitting either whitening key, the Boneh–Shoup
+  Theorem 4.10 bad-key transcript intersection bound `2 * Q_e * Q_π / |G|`, exact equivalence of
+  the two-sided ideal and fixed-key real games with lazy bidirectional random-permutation samplers
+  in `evenMansourIdealGame_eq_lazy` and `realGameForKey_eq_lazy`, the key-shifted lazy permutation
   coupling inequality `run_idealLazyHandler_good_le_realLazyHandler`, and the full two-sided PRP
   `Game.advantage` bounds `2 * Q_e * Q_π / |G|` in
   `advantage_evenMansourRealGame_evenMansourIdealGame_le` and
   `advantage_singleKeyEvenMansourRealGame_evenMansourIdealGame_le`, #761, #834).
-  Open: `IsOraclePPT` admissibility, uniform word-level forger/hash families, the asymptotic
-  `PseudorandomFunction` corollary, and fresh-nonce multi-query Carter–Wegman MAC security;
-  the 4-round strong Feistel information-theoretic collision bound (#748); and the Naor–Reingold
-  PRF from the decisional Diffie–Hellman assumption.
+  [Feistel networks and the Luby–Rackoff theorem](Complexity/Crypto/Protocols/Cipher/LubyRackoff.lean)
+  (#748, #834, Boneh–Shoup Section 4.4 / Luby–Rackoff 1988), backed by the shared
+  [lazy bidirectional random-permutation sampler](Complexity/Languages/Probabilistic/RandomPermutation.lean)
+  (#834), prove the `Q.choose 2 * ε + Q.choose 2 / |G|`
+  3-round adaptive CPA bound with Δ-universal Round 1
+  (`advantage_feistel3HashIdealGame_randomFunctionGame_le`), the `2 * Q.choose 2 / |G|`
+  uniform-random-round corollary (`advantage_feistel3RandomRoundsGame_randomFunctionGame_le`), the
+  3-round and 4-round PRF-to-Feistel hybrid bounds
+  (`advantage_feistel3KeyedGame_randomFunctionGame_le`,
+  `advantage_feistel4StrongKeyedGame_feistel4StrongRandomRoundsGame_le`), the PRP-PRF switching
+  bound `Q.choose 2 / |G|²` and 3-round PRP bounds against a uniform random permutation
+  (`advantage_idealPermGame_randomFunctionGame_le`,
+  `advantage_feistel3RandomRoundsGame_idealPermGame_le`,
+  `advantage_feistel3KeyedGame_idealPermGame_le`), and the 3-query
+  chosen-ciphertext attack against 3-round Feistel (`eval_feistel3_feistel3CCAAttack`, with the
+  equal-input sanity check `advantage_feistel3CCAAttack_self`, the finite positive gap
+  `(|Equiv.Perm (G × G)|)⁻¹ ≤ advantage` against the true bidirectional random-permutation game
+  `idealStrongGame` for `|G| ≥ 3` in `le_advantage_feistel3CCAAttack_idealStrongGame`, the
+  quantitative nonnegligible lower bound `1 - |G|⁻¹ - 4 / |G|² ≤ advantage` against
+  `idealStrongGame` for any `l₀ ≠ l₁` in `le_advantage_feistel3CCAAttack_idealStrongGame_of_ne`,
+  and the separate exact `1 - |G|⁻¹` bound against the independent-table benchmark
+  `independentTableStrongGame` in `advantage_feistel3CCAAttack_independentTable`).
+  Open: `IsOraclePPT` admissibility of the PRF-pad reduction, uniform word-level forger/hash
+  families, the asymptotic `PseudorandomFunction` corollary, and fresh-nonce multi-query
+  Carter–Wegman MAC security (#736); the 4-round strong Feistel information-theoretic collision
+  bound (#748); and the Naor–Reingold PRF from the decisional Diffie–Hellman assumption.
 
 * **Lattice Sigma protocols and post-quantum signatures (#640, track B).** Proved (#645): the
   [SIS hypothesis](Complexity/Crypto/Computational/SIS/Basic.lean) for power-of-two moduli, exact
@@ -1596,7 +1595,8 @@ space bounds. Further class-level work needs resource certificates for the actua
   reduction remain;
 * Native [NL = coNL](Complexity/Computability/Complexity/Classes/LogSpace/Complement.lean) is
   proved by streaming inductive counting, including complement deciders for recognizers with
-  looping branches. Directed `s`–`t` connectivity on adjacency matrices is
+  looping branches, and has a
+  [formal abstract](abstracts/ComplexityAbstracts/ImmermanSzelepcsenyiAbstract.lean). Directed `s`–`t` connectivity on adjacency matrices is
   [NL-complete](Complexity/Computability/Complexity/Problems/STCON/Completeness.lean) under
   logspace reductions, and so is its complement; 2SAT and `NSPACE(s) = coNSPACE(s)` remain (#885).
   `PH ⊆ PSPACE` is also proved by evaluating quantified predicates in

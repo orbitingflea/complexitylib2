@@ -259,6 +259,6 @@ theorem ecomplexity_dotProduct (hn : 0 < n) :
   have h := (two_pow_lt_leafCount_of_run_eq_dotProduct (Protocol.solves_univ_iff.mp hp)).trans_le
     p.leafCount_le_two_pow_depth
   rw [Fintype.card_fin] at h
-  exact_mod_cast (Nat.pow_lt_pow_iff_right (by decide : 1 < 2)).mp h
+  exact_mod_cast (Nat.pow_lt_pow_iff_right Nat.one_lt_two).mp h
 
 end Cslib.Communication

@@ -70,6 +70,19 @@
       "namespace": "ComplexityTests.Abstracts.USTCONAbstract"
     },
     {
+      "id": "immerman-szelepcsenyi",
+      "title": "Immerman–Szelepcsényi: NL equals coNL",
+      "module": "ComplexityAbstracts.ImmermanSzelepcsenyiAbstract",
+      "headline_theorems": [
+        "ComplexityAbstracts.ImmermanSzelepcsenyiAbstract.nl_eq_conl"
+      ],
+      "supporting_theorems": [
+        "ComplexityAbstracts.ImmermanSzelepcsenyiAbstract.stcon_compl_mem_nl"
+      ],
+      "summary": "Nondeterministic logarithmic space is closed under complement.",
+      "scope": "One finite-state native machine per problem, every-prefix work space c(floor(log₂ n) + 1), every branch terminating, arbitrary injective encodings; directed non-reachability on unary-header adjacency matrices as the corollary."
+    },
+    {
       "id": "shamir",
       "title": "Shamir: IP equals PSPACE",
       "module": "ComplexityAbstracts.ShamirAbstract",

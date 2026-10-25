@@ -49,7 +49,7 @@ the selection is not an exhaustive API reference.
 * [Fagin: logic captures NP](abstracts/ComplexityAbstracts/FaginAbstract.lean): Existential second-order logic captures precisely the isomorphism-invariant NP properties of finite relational structures.
 * [Savitch: NPSPACE equals PSPACE](abstracts/ComplexityAbstracts/SavitchAbstract.lean): Nondeterminism does not enlarge polynomial space.
 * [Reingold: undirected reachability is in L](abstracts/ComplexityAbstracts/USTCONAbstract.lean): Undirected graph connectivity can be decided with logarithmic work space.
-* [Immerman–Szelepcsényi: NL equals coNL](Complexity/Computability/Complexity/Classes/LogSpace/Complement.lean): Native nondeterministic logarithmic-space machines are closed under complement, with every branch of the complement machine halting.
+* [Immerman–Szelepcsényi: NL equals coNL](abstracts/ComplexityAbstracts/ImmermanSzelepcsenyiAbstract.lean): Nondeterministic logarithmic space is closed under complement.
 * [Shamir: IP equals PSPACE](abstracts/ComplexityAbstracts/ShamirAbstract.lean): Interaction and randomness give a polynomial-time verifier the power of polynomial space.
 * [Toda: a counting oracle decides the polynomial hierarchy](abstracts/ComplexityAbstracts/TodaAbstract.lean): Every problem in the polynomial hierarchy is decidable in polynomial time with an exact counting oracle.
 * [Barrington: five states capture NC¹](abstracts/ComplexityAbstracts/BarringtonAbstract.lean): Polynomial-length permutation programs on five states capture logarithmic-depth polynomial-size Boolean circuits.
@@ -68,12 +68,15 @@ namespaces begin with `Cslib`, and Turing-machine declarations use `Turing`. Use
 From a checkout:
 
 ```bash
-scripts/cache/get.sh   # prebuilt Mathlib and Complexitylib outputs
-lake build --wfail --iofail
+scripts/build.sh --wfail --iofail
 ```
 
-`scripts/cache/get.sh` downloads the outputs CI built for `main`, so `lake build` compiles only
-local changes; without it the first build compiles the whole library. See
+The wrapper restores Mathlib and Complexitylib caches before invoking `lake build`, then
+compiles changed or missing modules. It forwards Lake arguments and its exit status.
+`scripts/check.sh` also restores caches before validation. Before using Lean through MCP or
+another editor, run `scripts/cache/ensure.sh`; bare `lake` and MCP commands do not call it.
+Repeated bootstrap calls for the same checkout state reuse a ten-minute attempt stamp.
+Use `scripts/cache/ensure.sh --refresh` to retry immediately. See
 [scripts/cache/README.md](scripts/cache/README.md) for how the caches work and what they trust.
 
 Import the specific modules you need. `import Complexity` imports the whole library.

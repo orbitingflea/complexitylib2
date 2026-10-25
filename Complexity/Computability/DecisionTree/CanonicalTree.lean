@@ -196,7 +196,7 @@ termination_by #ρ.free
 decreasing_by exact card_free_assign_lt h _
 
 /-- The query path depends only on the free bits of the input. -/
-theorem pathLength_congr {ρ : PartialAssignment ι} {x y : ι → Bool}
+private theorem pathLength_congr {ρ : PartialAssignment ι} {x y : ι → Bool}
     (h : ∀ i ∈ ρ.free, x i = y i) :
     F.pathLength ρ x = F.pathLength ρ y := by
   by_cases hq : F.queried ρ = []

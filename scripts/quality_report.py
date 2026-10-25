@@ -46,6 +46,22 @@ sys.path.insert(0, str(ROOT / "scripts"))
 from proof_lengths import masks, scan as scan_proofs  # noqa: E402
 
 ROOTS = ("Complexity", "ComplexityTests", "ComplexityAbstracts")
+# Libraries that Lake builds from a glob (`lakefile.toml`) have no root aggregator file: their
+# modules are exactly the source files under their directory.
+GLOB_ROOTS = ("ComplexityTests",)
+
+
+def glob_modules(root: str) -> list[str]:
+    """The modules of a glob-built library, from its source files."""
+    return sorted(".".join(p.relative_to(ROOT).with_suffix("").parts)
+                  for p in (ROOT / root).rglob("*.lean"))
+
+
+def root_modules(glob=glob_modules) -> list[str]:
+    """Modules whose imports cover all three libraries: the aggregator roots and every module
+    of a glob-built library."""
+    return [m for root in ROOTS
+            for m in (glob(root) if root in GLOB_ROOTS else [root])]
 # Documents outside module docstrings whose backquoted names count as intended API.
 EXTERNAL_DOCS = ("README.md", "abstracts/README.md")
 # The areas of #587: its table, completed by its assignment of the remaining paths
@@ -411,13 +427,16 @@ def listed_modules(text: str) -> list[str]:
     return ROOT_IMPORT.findall(text)
 
 
-def load_ileans(build_dir: Path, missing: list[str] | None = None) -> dict[str, dict]:
+def load_ileans(build_dir: Path, missing: list[str] | None = None,
+                glob=glob_modules) -> dict[str, dict]:
     """The `.ilean` data of the modules the three libraries' roots import, by module name.
 
     A long-lived build directory keeps the outputs of modules that were since deleted or moved,
     and `lake build --no-build` does not notice them, so modules are found by following imports
-    from the roots rather than by listing files. Every root and every module they import must have
-    one; a missing file means the build is incomplete. The roots themselves are left out.
+    from the roots rather than by listing files. A glob-built library (`GLOB_ROOTS`) has no root
+    file, so its source files are the starting points instead. Every starting point and every
+    module they import must have one; a missing file means the build is incomplete. The aggregator
+    roots themselves are left out.
 
     Given a list `missing`, the build may be partial instead (for a tree that does not build
     completely): the modules are those the roots' source files import, and the ones without an
@@ -425,14 +444,16 @@ def load_ileans(build_dir: Path, missing: list[str] | None = None) -> dict[str, 
     if missing is not None:
         ileans = {}
         for root in ROOTS:
-            for module in listed_modules(source_path(root).read_text()):
+            modules = (glob(root) if root in GLOB_ROOTS
+                       else listed_modules(source_path(root).read_text()))
+            for module in modules:
                 path = build_dir / (module.replace(".", "/") + ".ilean")
                 if path.is_file():
                     ileans[module] = json.loads(path.read_text())
                 else:
                     missing.append(module)
         return ileans
-    ileans, todo = {}, [(root, None) for root in ROOTS]
+    ileans, todo = {}, [(module, None) for module in root_modules(glob)]
     while todo:
         module, importer = todo.pop()
         if module in ileans:
@@ -445,7 +466,8 @@ def load_ileans(build_dir: Path, missing: list[str] | None = None) -> dict[str, 
         todo.extend((i[0], module) for i in ileans[module]["directImports"]
                     if i[0].split(".")[0] in ROOTS)
     for root in ROOTS:
-        del ileans[root]
+        if root not in GLOB_ROOTS:
+            del ileans[root]
     return ileans
 
 
@@ -699,7 +721,8 @@ def tidy_usage_report(lib: Library, prefixes: tuple[str, ...] = TIDY_INTERNAL_PR
     keys = ("public_tidy_statements", "private_tidy_declarations",
             "local_tidy_fun_prop", "bridge_occurrences")
     source_hash = hashlib.sha256()
-    for path in [source_path(root) for root in ROOTS] + [p for _, p, _ in sources]:
+    for path in ([source_path(root) for root in ROOTS if root not in GLOB_ROOTS]
+                 + [p for _, p, _ in sources]):
         source_hash.update(path.relative_to(ROOT).as_posix().encode() + b"\0")
         source_hash.update(path.read_bytes() + b"\0")
     provenance = {"revision": run(["git", "rev-parse", "HEAD"], capture_output=True).stdout.strip(),
@@ -708,7 +731,7 @@ def tidy_usage_report(lib: Library, prefixes: tuple[str, ...] = TIDY_INTERNAL_PR
                                     capture_output=True).stdout.strip()),
                   "source_dirty": bool(run(["git", "status", "--porcelain", "--",
                       "Complexity", "ComplexityTests", "abstracts", "guide",
-                      "Complexity.lean", "ComplexityTests.lean"],
+                      "Complexity.lean"],
                       capture_output=True).stdout.strip()),
                   "scanned_source_sha256": source_hash.hexdigest(),
                   "scanned_files": len(sources), "build_dir": str(lib.build_dir)}

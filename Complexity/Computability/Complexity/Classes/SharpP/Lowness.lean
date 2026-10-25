@@ -1066,7 +1066,7 @@ theorem coModPWithOracle_eq_coModP_of_mem_SPP (hk : 0 < k) (hA : A ∈ SPP encBi
 [Fenner, Fortnow and Kurtz][FennerFortnowKurtz1994]). -/
 theorem ParityPWithOracle_eq_ParityP_of_mem_SPP (hA : A ∈ SPP encBits) (enc : α ↪ List Bool) :
     ParityPWithOracle A enc = ParityP enc := by
-  rw [← ModPWithOracle_two, ← ModP_two, ModPWithOracle_eq_ModP_of_mem_SPP (by decide : 0 < 2) hA]
+  rw [← ModPWithOracle_two, ← ModP_two, ModPWithOracle_eq_ModP_of_mem_SPP two_pos hA]
 
 /-- **`FewP` is low for `ModP k`** for every positive modulus `0 < k`. -/
 theorem ModPWithOracle_eq_ModP_of_mem_FewP (hk : 0 < k) (hA : A ∈ FewP encBits)

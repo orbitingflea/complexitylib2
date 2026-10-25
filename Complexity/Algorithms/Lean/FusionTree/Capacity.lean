@@ -61,7 +61,7 @@ theorem branching_capacity {w : ℕ} (hw : 9 ≤ Nat.log 2 w) :
 
 /-- One comparison of bases works uniformly in the small- and large-width regimes. -/
 private theorem word_le_branching_pow (w : ℕ) : w ≤ branching w ^ 14 := by
-  have hupper := (Nat.lt_pow_succ_log_self (by decide : 1 < 2) w).le
+  have hupper := (Nat.lt_pow_succ_log_self Nat.one_lt_two w).le
   unfold branching
   split
   · rename_i hw

@@ -56,7 +56,7 @@ def normalizedMax (M : ℝ) (n : ℕ) (s₀ s₁ : ℝ) : ℝ :=
   max (s₀ / M ^ n) (s₁ / M ^ (n + 1))
 
 /-- For `0 < M` and `0 ≤ s₀`, the normalized maximum is nonnegative. -/
-theorem normalizedMax_nonneg {M s₀ s₁ : ℝ} {n : ℕ}
+private theorem normalizedMax_nonneg {M s₀ s₁ : ℝ} {n : ℕ}
     (hM : 0 < M) (hs₀ : 0 ≤ s₀) : 0 ≤ normalizedMax M n s₀ s₁ :=
   (div_nonneg hs₀ (pow_pos hM n).le).trans (le_max_left _ _)
 

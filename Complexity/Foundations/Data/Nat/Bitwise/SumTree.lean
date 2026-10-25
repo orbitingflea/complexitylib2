@@ -96,7 +96,7 @@ theorem _root_.Nat.sum_testBit_eq_length_bitIndices {x k : ℕ} (hx : x < 2 ^ k)
     · intro hi
       refine ⟨?_, hi⟩
       have := Nat.ge_two_pow_of_testBit hi
-      exact (Nat.pow_lt_pow_iff_right (by decide : 1 < 2)).mp (lt_of_le_of_lt this hx)
+      exact (Nat.pow_lt_pow_iff_right Nat.one_lt_two).mp (lt_of_le_of_lt this hx)
   calc
     (∑ i ∈ range k, (x.testBit i).toNat) =
         ∑ i ∈ range k, if x.testBit i = true then 1 else 0 := by

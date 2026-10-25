@@ -76,7 +76,7 @@ theorem dyadicSize_le (bound : ℕ) : dyadicSize bound ≤ 2 * (bound + 1) := by
 @[simp] theorem dyadicSize_dyadicSize (bound : ℕ) :
     dyadicSize (dyadicSize bound) = 2 * dyadicSize bound := by
   simp only [dyadicSize]
-  rw [Nat.log_pow (by decide : 1 < 2), pow_succ, Nat.mul_comm]
+  rw [Nat.log_pow Nat.one_lt_two, pow_succ, Nat.mul_comm]
 
 /-- The sampling range grows only linearly with its bound. -/
 @[fun_prop] theorem dyadicSize_polynomiallyBounded : PolynomiallyBounded dyadicSize := by

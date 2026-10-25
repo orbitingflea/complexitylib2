@@ -62,7 +62,7 @@ theorem maskCount_pos (n precision : ℕ) : 0 < maskCount n precision := by
 /-- The subset masks meet the recovery theorem's required count. -/
 theorem subsetCount_maskCount_ge (n precision : ℕ) :
     2 * n * precision ^ 2 ≤ 2 ^ maskCount n precision - 1 := by
-  have h := Nat.lt_pow_succ_log_self (by decide : 1 < 2) (2 * n * precision ^ 2 + 1)
+  have h := Nat.lt_pow_succ_log_self Nat.one_lt_two (2 * n * precision ^ 2 + 1)
   change 2 * n * precision ^ 2 + 1 < 2 ^ maskCount n precision at h
   lia
 

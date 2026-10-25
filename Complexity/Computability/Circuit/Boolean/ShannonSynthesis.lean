@@ -65,7 +65,7 @@ private theorem address_estimates (hn : 16 ≤ n) :
   have hlog : 1 ≤ Nat.log 2 n := Nat.le_log_of_pow_le (by decide) (by lia)
   have heq : Nat.log 2 n = addressWidth n + 1 := by unfold addressWidth; lia
   have hlo := Nat.pow_log_le_self 2 (show n ≠ 0 by lia)
-  have hhi := Nat.lt_pow_succ_log_self (by decide : 1 < 2) n
+  have hhi := Nat.lt_pow_succ_log_self Nat.one_lt_two n
   rw [heq, pow_succ] at hlo
   rw [heq, pow_succ, pow_succ] at hhi
   lia

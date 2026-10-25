@@ -400,7 +400,7 @@ theorem bitsEnumList {count : α → ℕ}
   have h := iterate (init := fun _ => [[]]) hcount (const [[]]) hstep
     (.of_polynomiallyBounded _ hsize) (fun a index hi => by
       rw [hiterate, length_encList_enumList]
-      exact (Nat.mul_le_mul (Nat.pow_le_pow_right (by decide : 0 < 2) hi)
+      exact (Nat.mul_le_mul (Nat.pow_le_pow_right two_pos hi)
         (by lia : 2 * index + 1 ≤ 2 * count a + 1)).trans (hbudget a))
   simpa only [hiterate] using h
 

@@ -85,7 +85,6 @@ structure Routines {α σ : Type} (M : NondeterministicQueryMachine σ)
     (fun inp ws => inp = enc a ∧ ws = boundary s flag)
     (fun _ _ _ e => e = [M.accept s]) t (c * S a)
 
-set_option maxHeartbeats 1600000 in -- Framed callback assembly normalizes eight space budgets.
 /-- Compile local query-machine callbacks into concrete finite native routines. -/
 theorem exists_routines {α σ : Type} {enc : α ↪ List Bool} {encS : σ ↪ List Bool}
     (M : NondeterministicQueryMachine σ)

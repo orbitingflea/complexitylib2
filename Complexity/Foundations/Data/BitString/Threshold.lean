@@ -72,7 +72,7 @@ theorem card_filter_eq_le_half_of_strictMajorityOn_ne (s : Finset ι) (vote : ι
 /-- A nonempty constant vote has its constant value. -/
 @[simp] theorem strictMajorityOn_const (s : Finset ι) (hs : s.Nonempty) (bit : Bool) :
     strictMajorityOn s (fun _ => bit) = bit := by
-  cases bit <;> simp [strictMajorityOn, Nat.div_lt_self hs.card_pos (by decide : 1 < 2)]
+  cases bit <;> simp [strictMajorityOn, Nat.div_lt_self hs.card_pos Nat.one_lt_two]
 
 end BitString
 

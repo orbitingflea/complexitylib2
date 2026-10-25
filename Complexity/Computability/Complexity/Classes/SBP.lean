@@ -203,7 +203,7 @@ and multiply counts. This is an elementary consequence of counting closure and
 [Arora–Barak's BPP amplification][AroraBarak09]. -/
 theorem inter_mem_SBP_of_mem_BPP (hA : A ∈ SBP enc) (hB : B ∈ BPP enc) :
     A ∩ B ∈ SBP enc := by
-  obtain ⟨f, hf, k, hk, hkpos, hA⟩ := exists_SBP_gap_pow hA (by decide : 0 < 2)
+  obtain ⟨f, hf, k, hk, hkpos, hA⟩ := exists_SBP_gap_pow hA two_pos
   obtain ⟨p, hp⟩ := SharpP.exists_le_two_pow hf
   obtain ⟨q, V, hV, hB⟩ := mem_BPP_iff_forall_decidesWithErrorExponent.mp hB (p + 2)
   let c a := acceptCount V a (q.eval (enc a).length)

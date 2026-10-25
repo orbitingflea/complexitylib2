@@ -73,7 +73,7 @@ private theorem sum_isolation_error_le (size count : ℕ) (hsize : 0 < size) :
       _ = _ := by rw [pow_succ]; field_simp
   have hratio : mass / (2 : ℝ) ^ cutoff ≤ 2 := by
     rw [div_le_iff₀ (by positivity)]
-    have h := Nat.lt_pow_succ_log_self (by decide : 1 < 2) size
+    have h := Nat.lt_pow_succ_log_self Nat.one_lt_two size
     have hr : (size : ℝ) < 2 ^ (cutoff + 1) := by exact_mod_cast h
     rw [pow_succ] at hr
     dsimp [mass]

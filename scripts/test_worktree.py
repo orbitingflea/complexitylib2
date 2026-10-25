@@ -1,4 +1,4 @@
-"""Temporary-repository tests for worktree branch selection and cache isolation."""
+"""Temporary-repository tests for worktree branch selection, cache bootstrap, and isolation."""
 
 from __future__ import annotations
 
@@ -20,6 +20,7 @@ GIT_ENV = {
     "GIT_COMMITTER_EMAIL": "test@example.com",
     "GIT_CONFIG_GLOBAL": os.devnull,
     "GIT_CONFIG_NOSYSTEM": "1",
+    "COMPLEXITYLIB_WORKTREE_SKIP_CACHE_BOOTSTRAP": "1",
 }
 
 
@@ -77,14 +78,14 @@ class WorktreeCreateTests(unittest.TestCase):
         git(self.other, "switch", "--quiet", "main")
         return sha
 
-    def create(self, *args: str) -> subprocess.CompletedProcess[str]:
+    def create(self, *args: str, env: dict[str, str] | None = None) -> subprocess.CompletedProcess[str]:
         return subprocess.run(
             ["bash", str(self.work / "scripts/worktree.sh"), "create", *args],
             cwd=self.work,
             capture_output=True,
             text=True,
             check=False,
-            env=GIT_ENV,
+            env=env or GIT_ENV,
         )
 
     def upstream(self, wt: pathlib.Path) -> str | None:
@@ -146,6 +147,49 @@ class WorktreeCreateTests(unittest.TestCase):
             self.assertFalse(os.path.samefile(root, worker))
             worker.write_bytes(b"worker cache\n")
             self.assertEqual(root.read_bytes(), b"root cache\n")
+
+    def test_create_runs_cache_bootstrap_when_present(self) -> None:
+        ensure = self.work / "scripts/cache/ensure.sh"
+        ensure.parent.mkdir(parents=True, exist_ok=True)
+        ensure.write_text(
+            "#!/usr/bin/env bash\nprintf 'bootstrapped %s\\n' \"$PWD\" > .cache-bootstrapped\n",
+            encoding="utf-8",
+        )
+        ensure.chmod(0o755)
+        env = {**GIT_ENV, "COMPLEXITYLIB_WORKTREE_SKIP_CACHE_BOOTSTRAP": "0"}
+        result = self.create("feature/bootstrap", "bootstrap", env=env)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        marker = self.work / ".worktrees/bootstrap/.cache-bootstrapped"
+        self.assertTrue(marker.is_file())
+        self.assertIn(".worktrees/bootstrap", marker.read_text(encoding="utf-8"))
+
+    def test_create_fallback_cache_bootstrap_targets_worktree_not_root(self) -> None:
+        repo_root = SCRIPT.parent.parent
+        ensure_src = repo_root / "scripts/cache/ensure.sh"
+        ensure = self.work / "scripts/cache/ensure.sh"
+        ensure.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy(ensure_src, ensure)
+        ensure.chmod(0o755)
+        get_sh = self.work / "scripts/cache/get.sh"
+        get_sh.write_text(
+            "#!/usr/bin/env bash\n"
+            "set -euo pipefail\n"
+            "target=\"${COMPLEXITYLIB_CACHE_CHECKOUT:-$PWD}\"\n"
+            "mkdir -p \"$target/.lake/build\"\n"
+            "printf '%s\\n' \"$PWD\" > \"$target/.lake/build/fetched-from\"\n",
+            encoding="utf-8",
+        )
+        get_sh.chmod(0o755)
+        env = {**GIT_ENV, "COMPLEXITYLIB_WORKTREE_SKIP_CACHE_BOOTSTRAP": "0"}
+        result = self.create("feature/fallback-bootstrap", "fallback-bootstrap", env=env)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        wt = (self.work / ".worktrees/fallback-bootstrap").resolve()
+        self.assertFalse((wt / "scripts/cache/ensure.sh").exists())
+        fetched = wt / ".lake/build/fetched-from"
+        self.assertTrue(fetched.is_file())
+        self.assertEqual(pathlib.Path(fetched.read_text(encoding="utf-8").strip()).resolve(), wt)
+        self.assertTrue((wt / ".lake/cache-bootstrap/attempt.json").is_file())
+        self.assertFalse((self.work / ".lake/cache-bootstrap/attempt.json").exists())
 
 
 @unittest.skipUnless(shutil.which("git"), "git is required")
@@ -246,18 +290,231 @@ class WorktreeSeedTests(unittest.TestCase):
         self.assertEqual(cache.read_text(), "worker state\n")
 
     def test_destination_cache_symlinks_are_refused_before_writing(self) -> None:
-        for path in (".lake", ".lake/packages", ".lake/build", ".lake/config"):
+        for path in (".lake", ".lake/packages", ".lake/build", ".lake/config",
+                     ".lake/packages/cslib"):
             with self.subTest(path=path):
                 target = self.tmp / path.replace("/", "-")
                 external = self.tmp / (target.name + "-external")
                 external.mkdir()
                 link = target / path
-                link.parent.mkdir(parents=True)
+                link.parent.mkdir(parents=True, exist_ok=True)
                 link.symlink_to(external, target_is_directory=True)
                 result = self.seed(target)
                 self.assertNotEqual(result.returncode, 0)
                 self.assertIn("symlink", result.stderr)
                 self.assertEqual(list(external.iterdir()), [])
+
+    def test_refuses_seeding_primary_checkout_directly_or_via_symlink(self) -> None:
+        direct = self.seed(self.root)
+        self.assertNotEqual(direct.returncode, 0)
+        self.assertIn("primary checkout", direct.stderr)
+
+        link_to_root = self.tmp / "root-link"
+        link_to_root.symlink_to(self.root, target_is_directory=True)
+        via_link = self.seed(link_to_root)
+        self.assertNotEqual(via_link.returncode, 0)
+        self.assertIn("primary checkout", via_link.stderr)
+
+        inside_lake = self.seed(self.root / ".lake")
+        self.assertNotEqual(inside_lake.returncode, 0)
+        self.assertIn("primary checkout", inside_lake.stderr)
+
+    def test_refuses_seeding_primary_subdirectories_or_aliases_unless_registered_worktree(self) -> None:
+        tracked = self.root / "tracked-subdir"
+        tracked.mkdir()
+        (tracked / "File.lean").write_text("tracked\n", encoding="utf-8")
+        git(self.root, "add", "tracked-subdir/File.lean")
+        git(self.root, "commit", "--quiet", "-m", "tracked subdir")
+
+        direct_subdir = self.seed(tracked)
+        self.assertNotEqual(direct_subdir.returncode, 0)
+        self.assertIn("primary checkout", direct_subdir.stderr)
+        self.assertFalse((tracked / ".lake").exists())
+
+        alias = self.tmp / "subdir-alias"
+        alias.symlink_to(tracked, target_is_directory=True)
+        via_alias = self.seed(alias)
+        self.assertNotEqual(via_alias.returncode, 0)
+        self.assertIn("primary checkout", via_alias.stderr)
+        self.assertFalse((tracked / ".lake").exists())
+
+        unregistered = self.root / ".worktrees/unregistered"
+        unregistered.mkdir(parents=True)
+        unreg_res = self.seed(unregistered)
+        self.assertNotEqual(unreg_res.returncode, 0)
+        self.assertIn("primary checkout", unreg_res.stderr)
+
+        registered = self.root / ".worktrees/registered"
+        git(self.root, "worktree", "add", "--quiet", "-b", "nested-wt", str(registered))
+        reg_res = self.seed(registered)
+        self.assertEqual(reg_res.returncode, 0, reg_res.stderr)
+        self.assert_cache_isolated(registered)
+
+    def test_create_refuses_prohibited_targets_before_git_worktree_add(self) -> None:
+        shutil.rmtree(self.root / ".lake", ignore_errors=True)
+        before_wt_list = git(self.root, "worktree", "list", "--porcelain")
+
+        for idx, bad_dir in enumerate(("..", "../.lake/forbidden", "../forbidden-subdir", ".")):
+            with self.subTest(bad_dir=bad_dir):
+                branch = f"fixture-invalid-target-{idx}"
+                res = subprocess.run(
+                    [str(self.root / "scripts/worktree.sh"), "create", branch, bad_dir, "HEAD"],
+                    cwd=self.root, text=True, capture_output=True, env=GIT_ENV,
+                )
+                self.assertNotEqual(res.returncode, 0)
+                self.assertIn("primary checkout", res.stderr)
+                self.assertFalse((self.root / ".lake").exists())
+                self.assertFalse((self.root / "forbidden-subdir").exists())
+                self.assertEqual(git(self.root, "worktree", "list", "--porcelain"), before_wt_list)
+
+    def test_source_symlinks_to_primary_checkout_are_dereferenced(self) -> None:
+        primary_file = self.root / "PrimarySecret.lean"
+        primary_file.write_text("primary content\n", encoding="utf-8")
+        primary_dir = self.root / "PrimaryDir"
+        primary_dir.mkdir()
+        (primary_dir / "Inside.lean").write_text("primary dir content\n", encoding="utf-8")
+
+        cslib = self.root / ".lake/packages/cslib"
+        (cslib / "AbsFileLink.lean").symlink_to(primary_file)
+        (cslib / "RelEscapeLink.lean").symlink_to("../../../PrimarySecret.lean")
+        (cslib / "DirEscapeLink").symlink_to(primary_dir, target_is_directory=True)
+
+        for flag in (None, "--copy-cslib", "--copy-packages"):
+            with self.subTest(flag=flag):
+                target = self.tmp / f"escape-{flag}"
+                result = self.seed(target, *([flag] if flag else []))
+                self.assertEqual(result.returncode, 0, result.stderr)
+                seeded_cslib = target / ".lake/packages/cslib"
+                for name in ("AbsFileLink.lean", "RelEscapeLink.lean", "DirEscapeLink"):
+                    seeded_path = seeded_cslib / name
+                    self.assertFalse(seeded_path.is_symlink(), name)
+                (seeded_cslib / "AbsFileLink.lean").write_text("mutated\n", encoding="utf-8")
+                (seeded_cslib / "RelEscapeLink.lean").write_text("mutated\n", encoding="utf-8")
+                (seeded_cslib / "DirEscapeLink/Inside.lean").write_text(
+                    "mutated dir\n", encoding="utf-8"
+                )
+                self.assertEqual(
+                    primary_file.read_text(encoding="utf-8"), "primary content\n"
+                )
+                self.assertEqual(
+                    (primary_dir / "Inside.lean").read_text(encoding="utf-8"),
+                    "primary dir content\n",
+                )
+
+    def test_gitfile_dependency_control_metadata_isolated(self) -> None:
+        origin = self.tmp / "dep-origin"
+        origin.mkdir()
+        git(origin, "init", "--quiet", "-b", "main")
+        (origin / "Source.lean").write_bytes(b"tracked cslib\n")
+        (origin / ".gitignore").write_text(".lake/\n", encoding="utf-8")
+        git(origin, "add", "Source.lean", ".gitignore")
+        git(origin, "commit", "--quiet", "-m", "dep")
+        cslib_rev = git(origin, "rev-parse", "HEAD")
+
+        pkg = self.root / ".lake/packages/cslib"
+        shutil.rmtree(pkg)
+        git(origin, "worktree", "add", "--quiet", "--detach", str(pkg), cslib_rev)
+        (pkg / "SourceLink.lean").symlink_to("Source.lean")
+        for path in ("build/lib/Lean/Dependency.trace", "config/lakefile.olean"):
+            cache = pkg / ".lake" / path
+            cache.parent.mkdir(parents=True, exist_ok=True)
+            cache.write_text("root cache\n", encoding="utf-8")
+        self.assertTrue((pkg / ".git").is_file())
+
+        primary_gitdir = git(pkg, "rev-parse", "--absolute-git-dir")
+        before_index = git(pkg, "ls-files", "-v", "--", "Source.lean")
+        before_head = (pathlib.Path(primary_gitdir) / "HEAD").read_text(encoding="utf-8")
+
+        for idx, flags in enumerate(((), ("--copy-cslib",), ("--copy-packages",))):
+            with self.subTest(flags=flags):
+                wt = self.tmp / f"gitfile-wt-{idx}"
+                res = self.seed(wt, *flags)
+                self.assertEqual(res.returncode, 0, res.stderr)
+                copied = wt / ".lake/packages/cslib"
+                self.assertTrue((copied / ".git").is_dir())
+                self.assertFalse((copied / ".git").is_symlink())
+                self.assertFalse((copied / ".git/objects").is_symlink())
+                copy_gitdir = git(copied, "rev-parse", "--absolute-git-dir")
+                self.assertNotEqual(primary_gitdir, copy_gitdir)
+                subprocess.run(
+                    ["git", "-C", str(copied), "update-index", "--assume-unchanged", "Source.lean"],
+                    env=GIT_ENV, capture_output=True, text=True, check=False,
+                )
+                subprocess.run(
+                    ["git", "-C", str(copied), "symbolic-ref", "HEAD", "refs/heads/copy-branch"],
+                    env=GIT_ENV, capture_output=True, text=True, check=False,
+                )
+                self.assertEqual(git(pkg, "ls-files", "-v", "--", "Source.lean"), before_index)
+                self.assertEqual(
+                    (pathlib.Path(primary_gitdir) / "HEAD").read_text(encoding="utf-8"),
+                    before_head,
+                )
+
+    def test_core_worktree_in_dependency_git_config_is_unset_in_copied_package(self) -> None:
+        origin = self.tmp / "dep-origin-worktree"
+        origin.mkdir()
+        git(origin, "init", "--quiet", "-b", "main")
+        (origin / "Source.lean").write_text("committed cslib\n", encoding="utf-8")
+        (origin / ".gitignore").write_text(".lake/\n", encoding="utf-8")
+        git(origin, "add", "Source.lean", ".gitignore")
+        git(origin, "commit", "--quiet", "-m", "dep")
+        cslib_rev = git(origin, "rev-parse", "HEAD")
+
+        pkg = self.root / ".lake/packages/cslib"
+        for git_kind in ("gitdir", "gitfile", "gitsymlink"):
+            shutil.rmtree(pkg, ignore_errors=True)
+            if git_kind == "gitdir":
+                subprocess.run(
+                    ["git", "clone", "--quiet", str(origin), str(pkg)],
+                    check=True, env=GIT_ENV,
+                )
+            elif git_kind == "gitfile":
+                wt_parent = self.tmp / f"wt-origin-{git_kind}"
+                shutil.copytree(origin, wt_parent)
+                git(wt_parent, "worktree", "add", "--quiet", "--detach", str(pkg), cslib_rev)
+            else:
+                ext_clone = self.tmp / f"ext-clone-{git_kind}"
+                subprocess.run(
+                    ["git", "clone", "--quiet", str(origin), str(ext_clone)],
+                    check=True, env=GIT_ENV,
+                )
+                ext_git = self.tmp / f"ext-git-{git_kind}"
+                shutil.move(str(ext_clone / ".git"), str(ext_git))
+                shutil.move(str(ext_clone), str(pkg))
+                (pkg / ".git").symlink_to(ext_git, target_is_directory=True)
+            git(pkg, "config", "core.worktree", str(pkg.resolve()))
+            (pkg / "Source.lean").write_text("primary dirty source\n", encoding="utf-8")
+            for path in ("build/lib/Lean/Dependency.trace", "config/lakefile.olean"):
+                cache = pkg / ".lake" / path
+                cache.parent.mkdir(parents=True, exist_ok=True)
+                cache.write_text("root cache\n", encoding="utf-8")
+
+            for idx, flags in enumerate(((), ("--copy-cslib",), ("--copy-packages",))):
+                with self.subTest(git_kind=git_kind, flags=flags):
+                    wt = self.tmp / f"core-wt-{git_kind}-{idx}"
+                    res = self.seed(wt, *flags)
+                    self.assertEqual(res.returncode, 0, res.stderr)
+                    copied = (wt / ".lake/packages/cslib").resolve()
+                    self.assertEqual(
+                        pathlib.Path(git(copied, "rev-parse", "--show-toplevel")).resolve(),
+                        copied,
+                    )
+                    self.assertEqual(
+                        pathlib.Path(git(copied, "rev-parse", "--absolute-git-dir")).resolve(),
+                        (copied / ".git").resolve(),
+                    )
+                    self.assertEqual(
+                        (copied / git(copied, "rev-parse", "--git-common-dir")).resolve(),
+                        (copied / ".git").resolve(),
+                    )
+                    subprocess.run(
+                        ["git", "-C", str(copied), "checkout-index", "--all", "--force"],
+                        check=True, env=GIT_ENV,
+                    )
+                    self.assertEqual(
+                        (pkg / "Source.lean").read_text(encoding="utf-8"),
+                        "primary dirty source\n",
+                    )
 
 
 @unittest.skipUnless(shutil.which("git"), "git is required")
@@ -289,10 +546,10 @@ class WorktreePruneTests(unittest.TestCase):
         cache.write_bytes(b"keep this cache\n")
         return cache
 
-    def prune(self, *flags: str, env=None) -> subprocess.CompletedProcess[str]:
+    def prune(self, *args: str, env: dict[str, str] | None = None) -> subprocess.CompletedProcess[str]:
         return subprocess.run(
-            ["bash", str(self.root / "scripts/worktree.sh"), "prune-merged", "main", *flags],
-            capture_output=True, text=True, check=False, env=GIT_ENV if env is None else env,
+            ["bash", str(self.root / "scripts/worktree.sh"), "prune-merged", "main", *args],
+            cwd=self.root, capture_output=True, text=True, check=False, env=env or GIT_ENV,
         )
 
     def test_unregistered_directory_retains_its_cache(self) -> None:
@@ -314,8 +571,8 @@ class WorktreePruneTests(unittest.TestCase):
         self.assertFalse(removable.exists())
         self.assertIn(str(locked.resolve()), git(self.root, "worktree", "list", "--porcelain"))
 
-    def test_merged_registered_worktree_with_special_path_is_removed_by_git(self) -> None:
-        for name in ("merged worker", "merged\nworker"):
+    def test_merged_worktree_and_nested_git_cache_are_removed(self) -> None:
+        for name in ("merged", "merged worker", "merged\nworker"):
             with self.subTest(name=name):
                 target = self.root / ".worktrees" / name
                 self.registered(target)
