@@ -9,6 +9,7 @@ module
 
 public import Complexity.Computability.Circuit.Frontier.Compiler
 public import Mathlib.Analysis.SpecialFunctions.Log.Base
+import Complexity.Computability.Circuit.Complexity
 
 /-!
 # From small circuits to wide graphs
@@ -80,7 +81,7 @@ Boolean function, with `Acc = {true}`, the set of inputs it maps to `true`. -/
 theorem Circuit.Computes.decides {c : Circuit σ n 1} {I : Interpretation σ U}
     {f : (Fin n → U) → U} (h : c.Computes I (single f)) (Acc : Set U) :
     c.Decides I Acc {x | f x ∈ Acc} := fun x => by
-  rw [Set.mem_ofPred_eq, congrFun (h x) 0, single_apply]
+  rw [Set.mem_ofPred_eq, ← Circuit.computes_single_iff.1 h x]
 
 namespace Frontier
 

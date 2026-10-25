@@ -1003,6 +1003,16 @@ theorem length_bits_comp {α : Type} {input : α ↪ List Bool} {word : α → L
     ComputableInPolyTime (fun a => (word a).length) input encUnary :=
   length_bits.comp hword
 
+/-- Enumerate `0, …, n - 1`, with the bound and the elements in unary. -/
+theorem range : ComputableInPolyTime List.range encUnary (encList encUnary) :=
+  .of_tidy ComputableTidilyInPolyTime.range
+
+/-- Enumerate `0, …, n a - 1` for a computed unary bound, fixing the intermediate encoding. -/
+theorem unary_range' {α : Type} {input : α ↪ List Bool} {n : α → ℕ}
+    (hn : ComputableInPolyTime n input encUnary) :
+    ComputableInPolyTime (fun a => List.range (n a)) input (encList encUnary) :=
+  range.comp hn
+
 end Turing.MultiTapeTM.ComputableInPolyTime
 
 namespace Turing.MultiTapeTM

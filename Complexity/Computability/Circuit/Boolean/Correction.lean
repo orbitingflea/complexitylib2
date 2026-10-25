@@ -186,14 +186,12 @@ private theorem complexityOn_pi_le (s : Set (BitString n)) (f : Fin k → Boolea
   choose c hc hsize using fun i =>
     exists_computesOn_size_eq_complexityOn (I := interpretation) (S := s) (f := single (f i))
   have hcongr : Set.EqOn (fun x i => f i x) (fun x i => (c i).eval interpretation x 0) s :=
-    fun x hx => funext fun i => (congrFun (hc i hx) 0).symm
+    fun x hx => funext fun i => (Circuit.computesOn_single_iff.1 (hc i) x hx).symm
   rw [complexityOn_congr hcongr]
   refine complexityOn_le_complexity.trans ((complexity_pi_le _).trans
     (sum_le_sum fun i _ => ?_))
   rw [← hsize i]
-  refine complexity_le_of_computes (c i) fun x => funext fun j => ?_
-  rw [Fin.fin_one_eq_zero j]
-  rfl
+  refine complexity_le_of_computes (c i) (Circuit.computes_single_iff.2 fun _ => rfl)
 
 /-- **Sparse correction with separate labels.** If `f` and `g` agree outside `s`, and agree on
 every output outside the range of `select`, then their complexities differ by at most the

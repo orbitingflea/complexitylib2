@@ -136,7 +136,9 @@ tooling.
   completed issues and link any remaining work once the change lands.
 - For your own implementation, follow the worker rules and obtain another coordinator's review.
   Changing roles or delegating authorship never makes an author eligible to approve their work.
-  The one exception is a validated coordinator fix, described under [Review cycle](#review-cycle).
+  The exceptions are validated coordinator fixes and the delegated-review exception for changes
+  that preserve every public statement's meaning, both described under
+  [Review cycle](#review-cycle).
 
 If a shared GitHub account prevents formal approval, use one brief PR comment naming the reviewer
 agent/session, revision and verdict. This is agent review, not platform or human approval.
@@ -354,6 +356,17 @@ validation in the PR. Such a fix needs no second reviewer: the coordinator who m
 the resulting revision. Other reviewers, and coordinators for everything else, send findings back to
 the author as review comments. That includes changes to public statements, the meaning of
 definitions or the API, and any fix the coordinator is less sure of.
+
+**Delegated-review exception (coordinators only).** A coordinator may approve a PR authored under
+its own delegation when the change leaves the meaning of every public statement and definition
+unchanged: proof-only, documentation-only and test-only changes, mechanical refactors,
+privatizations, restacks and generated-baseline updates. The review is performed by a reviewing
+agent that did not author the change, working in a context separate from the one that briefed the
+author, and the verdict names this delegated-review exception and the classification. A reviewer
+outside the delegating fleet must still approve any PR that introduces or changes a public theorem
+statement or definition, a curated abstract or a security claim, and any PR whose classification is
+in doubt. Another coordinator audits a sample of these approvals. Workers and non-coordinator
+reviewers never approve work from their own fleet.
 
 Finish with a short approval or a clear request for changes. A substantive concern may need a
 long explanation; a clean review does not need a checklist of everything inspected. Record the

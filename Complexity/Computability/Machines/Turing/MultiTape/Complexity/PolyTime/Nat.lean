@@ -245,4 +245,38 @@ theorem unary_sub :
   encUnary :=
   .of_tidy Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_sub
 
+/-- Comparison of unary naturals. -/
+@[fun_prop]
+theorem unary_le :
+    ComputableInPolyTime (fun p : ℕ × ℕ => decide (p.1 ≤ p.2))
+      (encPair encUnary encUnary) encBool :=
+  .of_tidy ComputableTidilyInPolyTime.unary_le
+
+/-- Strict comparison of unary naturals. -/
+@[fun_prop]
+theorem unary_lt :
+    ComputableInPolyTime (fun p : ℕ × ℕ => decide (p.1 < p.2))
+      (encPair encUnary encUnary) encBool :=
+  .of_tidy ComputableTidilyInPolyTime.unary_lt
+
+/-- Compare computed unary values, with both operand encodings fixed. -/
+@[fun_prop]
+theorem unary_le' {α : Type} {input : α ↪ List Bool} {left right : α → ℕ}
+    (hleft : ComputableInPolyTime left input encUnary)
+    (hright : ComputableInPolyTime right input encUnary) :
+    ComputableInPolyTime (fun a => decide (left a ≤ right a)) input encBool :=
+  unary_le.comp (hleft.prod hright)
+
+/-- Strictly compare computed unary values, with both operand encodings fixed. -/
+@[fun_prop]
+theorem unary_lt' {α : Type} {input : α ↪ List Bool} {left right : α → ℕ}
+    (hleft : ComputableInPolyTime left input encUnary)
+    (hright : ComputableInPolyTime right input encUnary) :
+    ComputableInPolyTime (fun a => decide (left a < right a)) input encBool :=
+  unary_lt.comp (hleft.prod hright)
+
+/-- Convert a unary natural to its binary encoding. -/
+theorem unary_to_binary : ComputableInPolyTime (fun n : ℕ => n) encUnary encNat :=
+  .of_tidy ComputableTidilyInPolyTime.unary_to_binary
+
 end Turing.MultiTapeTM.ComputableInPolyTime
