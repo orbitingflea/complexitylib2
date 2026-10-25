@@ -21,7 +21,7 @@ the FHE industrial context, the first-order design decisions and the repository'
 | Metacomplexity: time-bounded Kolmogorov complexity, partial MCSP, hardness magnification | [#798], audit [#884] |
 | Plain computability: delete the tidy calculus, keeping a machine-level kernel | [#862], from [#456] |
 | Consolidation: duplicates, accurate statements and docs, less churn | [#949], [#939] |
-| A concrete LWE-based fully homomorphic scheme | [#486] |
+| A concrete LWE-based fully homomorphic scheme | [#486]; follow-ups [#1104] |
 | Boneh–Shoup cryptography tracks; zero-knowledge architecture | [#640], [#643] |
 | Crypto frontier tracks: Kilian's succinct arguments, chosen-ciphertext security, signatures from one-way functions | [#999], [#1000], [#1001] |
 | OpenAI math TCS results: review Fortnow's rewrites and extract in-scope results | [#1002] |
@@ -33,7 +33,7 @@ Priorities live in this list and in the tiers of [#897].
 
 1. [Goldreich–Micali–Wigderson zero knowledge in full](#cryptographic-landmarks)
 2. [Rompel's signature theorem](#cryptographic-landmarks) ([#1001])
-3. [Gentry's bootstrapping, instantiated](#cryptographic-landmarks) ([#486])
+3. [Gentry's bootstrapping, instantiated](#cryptographic-landmarks) ([#486]; follow-ups [#1104])
 4. [Completeness of oblivious transfer](#cryptographic-landmarks)
 5. [Håstad's optimal MAX-E3SAT hardness](#approximation-and-pcp) ([#886])
 6. [Williams's NEXP ⊄ ACC⁰](#circuits-and-algebraic-complexity) ([#889])
@@ -63,9 +63,10 @@ Priorities live in this list and in the tiers of [#897].
 - **Gentry's bootstrapping, instantiated** ([#486]). GSW at its logarithmic-depth parameter
   family instantiates the generic theorem: leveled FHE under decision LWE with quasi-polynomial
   modulus for exactly that family, and FHE under the additional one-key circular-security
-  assumption. Open: the checked formal abstract of these endpoints, a uniform generator for the
-  leveled scheme's wrapper decryption circuits (uniform compactness), reuse of evaluated
-  ciphertexts as fresh inputs (multi-hop evaluation), and Gentry's exact concrete-security loss.
+  assumption. The checked formal abstract `gsw-fhe` states both endpoints with GSW's algorithms
+  written out. Open in [#1104]: a uniform generator for the leveled scheme's wrapper decryption
+  circuits (uniform compactness), reuse of evaluated ciphertexts as fresh inputs (multi-hop
+  evaluation), and Gentry's exact concrete-security loss.
 - **Completeness of oblivious transfer.** In the ideal OT-hybrid model, every polynomial-time
   multiparty functionality admits a protocol secure against static malicious corruptions, with
   real/ideal simulation and abort, under the standard communication assumptions.
@@ -481,3 +482,4 @@ not planned, not as proved.
 [#1000]: https://github.com/cslib-community/complexitylib/issues/1000
 [#1001]: https://github.com/cslib-community/complexitylib/issues/1001
 [#1002]: https://github.com/cslib-community/complexitylib/issues/1002
+[#1104]: https://github.com/cslib-community/complexitylib/issues/1104
