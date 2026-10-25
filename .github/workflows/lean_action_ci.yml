@@ -107,6 +107,25 @@ jobs:
           set -e
           git fetch --no-tags --depth=1 origin "$BASE"
           python3 -B scripts/check_changed_files.py --base "$BASE"
+      # Advisory only: public definitions that a pull request adds or changes and that share a
+      # large anonymized subterm with an existing definition, or only rename one (AGENTS.md, "New
+      # statements and definitions"). Candidates go to the job summary and appear as notices; the
+      # step never fails the job. Its compiled-fixture tests need Lean, so the Python tests at the
+      # start skip them; they run here. See scripts/parallel_defs.py. The comparison base is the
+      # first parent of the checked-out merge commit: `pull_request.base.sha` can be an older tip of
+      # the base branch, and comparing with it would attribute later base commits to the PR.
+      - name: "Parallel-definition notice (advisory)"
+        if: github.event_name == 'pull_request'
+        continue-on-error: true
+        timeout-minutes: 10
+        env:
+          RECORDED_BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          BASE=$(git cat-file -p HEAD | sed -n 's/^parent //p' | head -n 1)
+          BASE=${BASE:-$RECORDED_BASE}
+          git fetch --no-tags --depth=1 origin "$BASE"
+          python3 -B scripts/parallel_defs.py --base "$BASE" --github --no-build-check
+          python3 -B -m unittest scripts/test_parallel_defs.py
       - name: "lake exe mk_all --check"
         run: |
           set -e

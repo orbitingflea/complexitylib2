@@ -404,6 +404,9 @@ where it fails) is for the author and reviewers to judge; reviewers may ask for 
 definition could be vacuous or trivially satisfied.
 
 Reuse existing definitions rather than adding parallel notions; extend or generalize them instead.
+A PR that adds a public definition states in its description the existing notions it considered
+and why none could be reused or generalized, and reviewers treat a definition whose body matches an
+existing one up to its carrier or argument types as a finding.
 
 ## Curated formal abstracts
 

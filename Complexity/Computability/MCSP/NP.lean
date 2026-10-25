@@ -40,8 +40,9 @@ so they stay polynomially long in the length of the table.
 * `Cslib.MCSP.encInstance`: the encoding of instances.
 * `Cslib.MCSP.sampleBudget`, `Cslib.MCSP.budget`: certificate gate budgets for `t` samples and for
   a full `2 ^ n`-entry truth table.
-* `Cslib.MCSP.checkCertificateOn`, `Cslib.MCSP.checkCertificate`: the generic parameterized
-  certificate verifiers over a list of tests and over all `2 ^ m` inputs.
+* `Cslib.MCSP.validCertificate`, `Cslib.MCSP.evalCertificate`,
+  `Cslib.MCSP.checkCertificateOn`, `Cslib.MCSP.checkCertificate`: certificate well-formedness,
+  evaluation, and generic parameterized verifiers over a list of tests and over all `2 ^ m` inputs.
 * `Cslib.MCSP.tableFunction`: the Boolean function read from a truth-table list.
 * `Cslib.MCSP.verifier`: the verifier.
 * `Cslib.MCSP.tableVerifier`: the verifier on the bits of a truth table and a threshold.
@@ -51,7 +52,10 @@ so they stay polynomially long in the length of the table.
 * `Cslib.MCSP.exists_circuit_of_checkCertificateOn`,
   `Cslib.MCSP.exists_checkCertificateOn_append`,
   `Cslib.MCSP.exists_circuit_of_checkCertificate`,
-  `Cslib.MCSP.exists_checkCertificate_append`: soundness and completeness of the generic verifiers.
+  `Cslib.MCSP.exists_checkCertificate_append`,
+  `Cslib.MCSP.exists_circuit_of_validCertificate`,
+  `Cslib.MCSP.exists_validCertificate_of_circuit`: soundness and completeness of the generic
+  verifiers and of `validCertificate` / `evalCertificate`.
 * `Cslib.MCSP.mem_of_verifier_eq_true`, `Cslib.MCSP.exists_verifier_append`: the verifier accepts
   some certificate exactly for the instances in MCSP, certificates of a fixed length suffice, and
   bits after them are ignored.
@@ -59,9 +63,11 @@ so they stay polynomially long in the length of the table.
   and completeness of `tableVerifier` on truth-table lists of length `2 ^ m`.
 * `Cslib.MCSP.isVerifier`: the verifier is correct.
 * `Cslib.MCSP.computableInPolyTime_tableValue`: truth table lookup is polynomial-time.
-* `Cslib.MCSP.computableInPolyTime_checkCertificateOn`,
-  `Cslib.MCSP.computableInPolyTime_checkCertificate`: generic certificate verification is
-  polynomial-time.
+* `Cslib.MCSP.computableInPolyTime_validCertificate`,
+  `Cslib.MCSP.computableInPolyTime_evalCertificate`,
+  `Cslib.MCSP.computableInPolyTime_checkCertificateOn`,
+  `Cslib.MCSP.computableInPolyTime_checkCertificate`: certificate well-formedness, evaluation, and
+  generic verification are polynomial-time.
 * `Cslib.MCSP.computableInPolyTime_verifier`,
   `Cslib.MCSP.computableInPolyTime_tableVerifier`: the verifiers are polynomial-time.
 * `Cslib.MCSP.mem_NP`: MCSP is in `NP`.
@@ -116,13 +122,23 @@ def tableValue (table y : List Bool) : Bool :=
 def tableFunction (m : ℕ) (T : List Bool) : BooleanFunction m :=
   fun y => tableValue T (List.ofFn y)
 
+/-- Whether `w`, read as a certificate for `m` inputs and gate budget `S`, describes a well-formed
+circuit code with a valid output wire. -/
+def validCertificate (m S : ℕ) (w : List Bool) : Bool :=
+  let c := readCertificate m S w
+  codeCheck m c.1 && decide (c.2 < m + c.1.length)
+
+/-- Evaluate the certificate `w` (for `m` inputs and gate budget `S`) on input `y`. -/
+def evalCertificate (m S : ℕ) (w y : List Bool) : Bool :=
+  let c := readCertificate m S w
+  evalOutput y c.1 c.2
+
 /-- A certificate verifier parameterized by a list of tests, the input bitstring of each test, and
 the acceptance condition on a test and the circuit output on its input. -/
 def checkCertificateOn {α : Type} (tests : List α) (input : α → List Bool)
     (accept : α → Bool → Bool) (m S : ℕ) (w : List Bool) : Bool :=
-  let c := readCertificate m S w
-  (codeCheck m c.1 && decide (c.2 < m + c.1.length)) &&
-    tests.all fun t => accept t (evalOutput (input t) c.1 c.2)
+  validCertificate m S w &&
+    tests.all fun t => accept t (evalCertificate m S w (input t))
 
 /-- A certificate verifier on all `2 ^ m` inputs, parameterized by the acceptance condition on an
 input and the circuit output on that input. -/
@@ -138,8 +154,8 @@ theorem exists_circuit_of_checkCertificateOn {α : Type} {tests : List α}
       ∀ t ∈ tests, ∀ y : BitString m, input t = List.ofFn y →
         accept t (C.eval interpretation y 0) = true := by
   set r := readCertificate m S w
-  simp only [checkCertificateOn, Bool.and_eq_true, decide_eq_true_eq, List.all_eq_true,
-    codeCheck_eq_true_iff] at hw
+  simp only [checkCertificateOn, validCertificate, evalCertificate, Bool.and_eq_true,
+    decide_eq_true_eq, List.all_eq_true, codeCheck_eq_true_iff] at hw
   obtain ⟨⟨hcode, hout⟩, hall⟩ := hw
   have hsome : (Circuit.ofCode m 1 (r.1, [r.2]) : Option (Circuit signature _ 1)).isSome :=
     Circuit.isSome_ofCode_iff.2 ⟨hcode, rfl, by simpa using hout⟩
@@ -169,7 +185,8 @@ theorem exists_checkCertificateOn_append {α : Type} {tests : List α}
     rfl
   refine ⟨certificate m S C.code.1 (C.outputs 0).toNat, length_certificate_code C hcS,
     fun extra => ?_⟩
-  simp only [checkCertificateOn, readCertificate_certificate_code_append C hcS,
+  simp only [checkCertificateOn, validCertificate, evalCertificate,
+    readCertificate_certificate_code_append C hcS,
     Bool.and_eq_true, codeCheck_eq_true_iff.2 hcode, decide_eq_true_eq, List.all_eq_true,
     true_and]
   refine ⟨by rw [Circuit.length_code_fst]; exact (C.outputs 0).toNat_lt, fun t ht => ?_⟩
@@ -198,6 +215,34 @@ theorem exists_checkCertificate_append {accept : List Bool → Bool → Bool}
     ⟨fun i => y[i.val]'(by rw [BitString.mem_enumList.1 hy]; exact i.isLt),
       List.ext_getElem (by simp [BitString.mem_enumList.1 hy]) fun _ _ _ => by simp⟩
   exact ⟨y', rfl, haccept y'⟩
+
+/-- Soundness of `validCertificate`: a well-formed certificate for `(n, s)` decodes to a circuit of
+size at most `s` whose evaluation agrees with `evalCertificate`. -/
+theorem exists_circuit_of_validCertificate {n s : ℕ} {w : List Bool}
+    (hw : validCertificate n s w = true) :
+    ∃ C : Circuit signature n 1, C.size ≤ s ∧
+      ∀ x : BitString n, C.eval interpretation x 0 = evalCertificate n s w (List.ofFn x) := by
+  have hcheck : checkCertificate (fun y out => out == evalCertificate n s w y) n s w = true := by
+    simp [checkCertificate, checkCertificateOn, hw]
+  obtain ⟨C, hcS, heval⟩ := exists_circuit_of_checkCertificate hcheck
+  exact ⟨C, hcS, fun x => beq_iff_eq.1 (heval x)⟩
+
+/-- Completeness of `validCertificate`: every circuit of size at most `s` on `n` inputs has a
+canonical certificate of length `certLength n s` satisfying `validCertificate` whose
+`evalCertificate` agrees with the circuit on all `n`-bit inputs. -/
+theorem exists_validCertificate_of_circuit {n s : ℕ} (C : Circuit signature n 1)
+    (hcS : C.size ≤ s) :
+    ∃ w : List Bool, w.length = certLength n s ∧ validCertificate n s w = true ∧
+      ∀ x : BitString n, evalCertificate n s w (List.ofFn x) = C.eval interpretation x 0 := by
+  obtain ⟨w, hlen, hcheck⟩ := exists_checkCertificate_append
+    (accept := fun y out => out == C.eval interpretation (BitString.ofList n y) 0) hcS
+    (fun y => by simp)
+  have hw := hcheck []
+  rw [List.append_nil] at hw
+  simp only [checkCertificate, checkCertificateOn, Bool.and_eq_true, List.all_eq_true,
+    beq_iff_eq] at hw
+  refine ⟨w, hlen, hw.1, fun x => ?_⟩
+  simpa using hw.2 (List.ofFn x) (BitString.mem_enumList.2 List.length_ofFn)
 
 /-- The verifier for MCSP: the certificate must describe a circuit on `n` inputs with at most
 `budget n s` gates (`readCertificate`) that agrees with the truth table on all `2 ^ n` inputs. -/
@@ -342,6 +387,41 @@ theorem computableInPolyTime_tableValue :
     (bitsBoundedBinaryValueWithInput (length_bits.comp (fst encBits encBits))
       (bitsReverse.comp (snd encBits encBits))) false)
 
+/-- Checking well-formedness of a certificate is computable in polynomial time when `m` and `S`
+are given in unary. -/
+@[fun_prop]
+theorem computableInPolyTime_validCertificate {γ : Type} {encIn : γ ↪ List Bool}
+    {m S : γ → ℕ} {w : γ → List Bool}
+    (hm : ComputableInPolyTime m encIn encUnary)
+    (hS : ComputableInPolyTime S encIn encUnary)
+    (hw : ComputableInPolyTime w encIn encBits) :
+    ComputableInPolyTime (fun a => validCertificate (m a) (S a) (w a)) encIn encBool := by
+  refine .of_tidy ?_
+  have hm_t := hm.tidy
+  have hc := (computableInPolyTime_readCertificate hm hS hw).tidy
+  have hcode := (computableInPolyTime_codeCheck hm (.of_tidy hc.fst')).tidy
+  have hbound : ComputableTidilyInPolyTime
+      (fun a => decide ((readCertificate (m a) (S a) (w a)).2 <
+        m a + (readCertificate (m a) (S a) (w a)).1.length))
+      encIn encBool :=
+    binary_lt' hc.snd' (unary_to_binary.comp (unary_add.comp
+      (hm_t.prod ((length_list encGate).comp hc.fst'))))
+  unfold validCertificate
+  exact bool_and' hcode hbound
+
+/-- Evaluating a certificate on an input is computable in polynomial time when `m` and `S` are
+given in unary. -/
+@[fun_prop]
+theorem computableInPolyTime_evalCertificate {γ : Type} {encIn : γ ↪ List Bool}
+    {m S : γ → ℕ} {w y : γ → List Bool}
+    (hm : ComputableInPolyTime m encIn encUnary)
+    (hS : ComputableInPolyTime S encIn encUnary)
+    (hw : ComputableInPolyTime w encIn encBits)
+    (hy : ComputableInPolyTime y encIn encBits) :
+    ComputableInPolyTime (fun a => evalCertificate (m a) (S a) (w a) (y a)) encIn encBool := by
+  have hc := (computableInPolyTime_readCertificate hm hS hw).tidy
+  exact computableInPolyTime_evalOutput hy (.of_tidy hc.fst') (.of_tidy hc.snd')
+
 /-- A generic certificate verifier on a supplied list of tests is computable in polynomial time
 when its test list, input extraction, and acceptance condition are polynomial-time. -/
 theorem computableInPolyTime_checkCertificateOn {γ α : Type}
@@ -359,32 +439,20 @@ theorem computableInPolyTime_checkCertificateOn {γ α : Type}
       (fun a => checkCertificateOn (tests a) input (accept a) (m a) (S a) (w a))
       encIn encBool := by
   refine .of_tidy ?_
-  have hm_t := hm.tidy
-  have hc := (computableInPolyTime_readCertificate hm hS hw).tidy
+  have hvalid := (computableInPolyTime_validCertificate hm hS hw).tidy
   have htests_t := htests.tidy
   have hout : ComputableTidilyInPolyTime
-      (fun p : γ × α =>
-        evalOutput (input p.2) (readCertificate (m p.1) (S p.1) (w p.1)).1
-          (readCertificate (m p.1) (S p.1) (w p.1)).2)
+      (fun p : γ × α => evalCertificate (m p.1) (S p.1) (w p.1) (input p.2))
       (encPair encIn encTest) encBool :=
-    (computableInPolyTime_evalOutput (.of_tidy (hinput.tidy.comp (snd encIn encTest)))
-      (.of_tidy (hc.comp (fst encIn encTest)).fst')
-      (.of_tidy (hc.comp (fst encIn encTest)).snd')).tidy
+    (computableInPolyTime_evalCertificate (hm.comp (.of_tidy (fst encIn encTest)))
+      (hS.comp (.of_tidy (fst encIn encTest))) (hw.comp (.of_tidy (fst encIn encTest)))
+      (hinput.comp (.of_tidy (snd encIn encTest)))).tidy
   have htest : ComputableTidilyInPolyTime
-      (fun p : γ × α => accept p.1 p.2
-        (evalOutput (input p.2) (readCertificate (m p.1) (S p.1) (w p.1)).1
-          (readCertificate (m p.1) (S p.1) (w p.1)).2))
+      (fun p : γ × α => accept p.1 p.2 (evalCertificate (m p.1) (S p.1) (w p.1) (input p.2)))
       (encPair encIn encTest) encBool :=
     haccept.tidy.comp ((id' (encIn := encPair encIn encTest)).prod hout)
-  have hcode := (computableInPolyTime_codeCheck hm (.of_tidy hc.fst')).tidy
-  have hbound : ComputableTidilyInPolyTime
-      (fun a => decide ((readCertificate (m a) (S a) (w a)).2 <
-        m a + (readCertificate (m a) (S a) (w a)).1.length))
-      encIn encBool :=
-    binary_lt' hc.snd' (unary_to_binary.comp (unary_add.comp
-      (hm_t.prod ((length_list encGate).comp hc.fst'))))
   unfold checkCertificateOn
-  exact bool_and' (bool_and' hcode hbound) (allWithInput htests_t htest)
+  exact bool_and' hvalid (allWithInput htests_t htest)
 
 /-- A generic certificate verifier is computable in polynomial time when its acceptance condition
 is polynomial-time and the number of inputs is bounded by the input length. -/
