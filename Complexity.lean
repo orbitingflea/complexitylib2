@@ -759,6 +759,7 @@ public import Complexity.Computability.Complexity.Fagin.Verifier
 public import Complexity.Computability.Complexity.FineGrained
 public import Complexity.Computability.Complexity.FineGrained.Assignment
 public import Complexity.Computability.Complexity.FineGrained.BruteForce
+public import Complexity.Computability.Complexity.FineGrained.ExhaustiveSearch
 public import Complexity.Computability.Complexity.FineGrained.Exponents
 public import Complexity.Computability.Complexity.FineGrained.GraphProblems
 public import Complexity.Computability.Complexity.FineGrained.OrthogonalVectors
@@ -1443,12 +1444,15 @@ public import Complexity.Crypto.Computational.Homomorphic.FixedKey.PolyTime
 public import Complexity.Crypto.Computational.Homomorphic.FixedKey.Reduction
 public import Complexity.Crypto.Computational.Homomorphic.FixedKey.Security
 public import Complexity.Crypto.Computational.Homomorphic.GSW.Basic
+public import Complexity.Crypto.Computational.Homomorphic.GSW.CircuitEvaluation
+public import Complexity.Crypto.Computational.Homomorphic.GSW.CircuitEvaluation.PolyTime
 public import Complexity.Crypto.Computational.Homomorphic.GSW.Decoding
 public import Complexity.Crypto.Computational.Homomorphic.GSW.Decryption
 public import Complexity.Crypto.Computational.Homomorphic.GSW.DecryptionCircuit
 public import Complexity.Crypto.Computational.Homomorphic.GSW.DecryptionCircuit.Parameters
 public import Complexity.Crypto.Computational.Homomorphic.GSW.DecryptionCircuit.PolyTime
 public import Complexity.Crypto.Computational.Homomorphic.GSW.DepthParameters
+public import Complexity.Crypto.Computational.Homomorphic.GSW.DepthParameters.Scheme
 public import Complexity.Crypto.Computational.Homomorphic.GSW.DepthParameters.Security
 public import Complexity.Crypto.Computational.Homomorphic.GSW.Gadget
 public import Complexity.Crypto.Computational.Homomorphic.GSW.Hiding
@@ -1493,6 +1497,7 @@ public import Complexity.Crypto.Computational.LWE.Basic
 public import Complexity.Crypto.Computational.MAC
 public import Complexity.Crypto.Computational.MerkleDamgard
 public import Complexity.Crypto.Computational.MerkleTree
+public import Complexity.Crypto.Computational.MerkleTree.Binding
 public import Complexity.Crypto.Computational.OneWay
 public import Complexity.Crypto.Computational.OneWay.Amplification
 public import Complexity.Crypto.Computational.OneWay.BPP

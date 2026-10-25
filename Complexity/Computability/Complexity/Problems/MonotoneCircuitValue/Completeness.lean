@@ -275,7 +275,7 @@ theorem computableInLogSpace_dualTableauInstance :
       simp only [encNat_apply, List.length_cons, List.length_nil, zero_add, add_zero,
         Order.add_one_le_iff]
       omega
-  have hs := (ComputableTidilyInSpace.fst encWState encBool).weaken hin
+  have hs := (ComputableTidilyInSpace.fst encNat3 encBool).weaken hin
   have hn := fst' (snd' hs)
   have hi := snd' (snd' hs)
   refine (dualSpec tm C d).computableInLogSpace

@@ -182,9 +182,6 @@ theorem iterate_divStep_self (d r : ℕ) : divStep^[r] (d, 0, r) = (d, r / d, r 
   have : r / d ≤ r := Nat.div_le_self r d
   rw [Nat.min_eq_right this, Nat.mod_eq_sub_mul_div]
 
-/-- The encoding of triples of naturals. -/
-abbrev encNat3 : ℕ × ℕ × ℕ ↪ List Bool := encPair encNat (encPair encNat encNat)
-
 theorem divStep_inSpace :
     ComputableTidilyInSpace divStep encNat3 encNat3 fun s => (encNat3 s).length + 1 := by
   have hl : (fun s => (encNat3 s).length) ≼ fun s => (encNat3 s).length + 1 := .of_le fun _ => by

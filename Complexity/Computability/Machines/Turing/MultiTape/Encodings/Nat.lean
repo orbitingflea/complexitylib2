@@ -26,6 +26,7 @@ followed by a final carry digit. Its tidy computability is derived from that of 
 ## Main definitions
 
 * `Turing.MultiTapeTM.encNat`: natural numbers encoded by their binary digits.
+* `Turing.MultiTapeTM.encNat3`: triples of natural numbers encoded in binary.
 
 ## Main results
 
@@ -41,6 +42,9 @@ namespace Turing.MultiTapeTM
 
 @[simp]
 public lemma encNat_apply (n : ℕ) : encNat n = n.bits := rfl
+
+/-- The framed binary encoding of triples of natural numbers. -/
+public abbrev encNat3 : ℕ × ℕ × ℕ ↪ List Bool := encPair encNat (encPair encNat encNat)
 
 namespace NatSucc
 

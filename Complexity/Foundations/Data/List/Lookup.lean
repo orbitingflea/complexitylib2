@@ -10,6 +10,7 @@ module
 public import Complexity.Init
 public import Mathlib.Data.List.Basic
 public import Mathlib.Order.Lattice.Nat
+import Mathlib.Data.List.Forall2
 import Mathlib.Data.List.GetD
 import Mathlib.Data.List.OfFn
 
@@ -21,6 +22,7 @@ import Mathlib.Data.List.OfFn
 * `List.getD_mem_or`, `List.getD_idxOf`: a defaulted lookup returns a member or the default,
   and returns a member at its first index.
 * `List.getD_set_self`, `List.getD_set_ne`: reading an updated entry or an unchanged entry.
+* `List.Forall₂.getD`: related lists are related at every in-range defaulted lookup.
 * `List.forall_mem_set_of_forall_mem`, `List.getD_le_of_forall_le`: preserve invariants under
   updates and bound defaulted reads of numeric register files.
 * `List.getD_map_range`: read a function tabulated over a bounded range.
@@ -30,6 +32,14 @@ import Mathlib.Data.List.OfFn
 -/
 
 @[expose] public section
+
+/-- Related lists are related at every in-range defaulted lookup, whatever the defaults. -/
+theorem List.Forall₂.getD {α β : Type*} {R : α → β → Prop} {l₁ : List α} {l₂ : List β}
+    (h : List.Forall₂ R l₁ l₂) {i : ℕ} (hi : i < l₁.length) (d₁ : α) (d₂ : β) :
+    R (l₁.getD i d₁) (l₂.getD i d₂) := by
+  have hi' : i < l₂.length := hi.trans_eq h.length_eq
+  simpa only [List.getD_eq_getElem _ _ hi, List.getD_eq_getElem _ _ hi',
+    List.get_eq_getElem] using h.get hi hi'
 
 /-- Reading the updated entry of a list. -/
 theorem List.getD_set_self {α : Type*} {l : List α} {i : ℕ} {x d : α} (h : i < l.length) :
