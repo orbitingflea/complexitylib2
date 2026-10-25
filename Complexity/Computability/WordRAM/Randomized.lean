@@ -10,9 +10,11 @@ module
 public import Complexity.Init
 public import Complexity.Computability.WordRAM.Randomized.Defs
 public import Complexity.Computability.WordRAM.Randomized.Structured
+public import Complexity.Computability.WordRAM.Randomized.Expected
 
 /-!
 # Randomized word RAM (re-export)
 
-Convenience root module re-exporting the flat and structured randomized word-RAM semantics.
+Convenience root module re-exporting the flat, structured, and expected-time randomized word-RAM
+semantics.
 -/
