@@ -8,8 +8,10 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.NormalForm
+public import Complexity.Computability.Machines.Turing.MultiTape.Internal.LinearPrimitives
 public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.Foldl
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Pair
+public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.List
 public import Complexity.Computability.Machines.Turing.MultiTape.ResourceBounds.Polynomial
 
 /-!
@@ -23,6 +25,7 @@ or bridge participates in their statements or derivations.
 
 * `ComputableInPolyTime.comp`, `.pair`, `.ite`, `.foldl`: direct closure rules.
 * `ComputableInPolyTime.fst`, `.snd`: ordinary encoded-pair projections.
+* `ComputableInPolyTime.frame`, `.unframe`, `.dropFrame`: total word framing and parsers.
 -/
 
 @[expose] public section
@@ -44,6 +47,33 @@ private theorem of_computesTidily {f : α → β} {k : ℕ} {State : Type} [Fini
     ComputableInPolyTime f encIn encMid :=
   ⟨T, T, hT, hT, k, State, inferInstance, tm,
     fun a => ((h a).mono (ht a) (hs a)).computesInTimeAndSpace⟩
+
+/-- Frame a raw word with the existing streaming encoder. -/
+@[fun_prop]
+theorem frame : ComputableInPolyTime Turing.MultiTapeTM.frame encBits encBits := by
+  obtain ⟨c, k, State, hfinite, tm, htm⟩ :=
+    (ComputableInLinearTimeAndSpace.of_frame (fun _ => rfl) :
+      ComputableInLinearTimeAndSpace Turing.MultiTapeTM.frame encBits encBits)
+  exact ⟨fun n => c * (n + 1), fun n => c * (n + 1), by fun_prop, by fun_prop,
+    k, State, hfinite, tm, htm⟩
+
+/-- Read the first framed word, including incomplete or malformed inputs. -/
+@[fun_prop]
+theorem unframe : ComputableInPolyTime Turing.MultiTapeTM.unframe encBits encBits := by
+  obtain ⟨c, k, State, hfinite, tm, htm⟩ :=
+    (ComputableInLinearTimeAndSpace.of_unframe (fun _ => rfl) :
+      ComputableInLinearTimeAndSpace Turing.MultiTapeTM.unframe encBits encBits)
+  exact ⟨fun n => c * (n + 1), fun n => c * (n + 1), by fun_prop, by fun_prop,
+    k, State, hfinite, tm, htm⟩
+
+/-- Drop the first framed word, including incomplete or malformed inputs. -/
+@[fun_prop]
+theorem dropFrame : ComputableInPolyTime Turing.MultiTapeTM.dropFrame encBits encBits := by
+  obtain ⟨c, k, State, hfinite, tm, htm⟩ :=
+    (ComputableInLinearTimeAndSpace.of_dropFrame (fun _ => rfl) :
+      ComputableInLinearTimeAndSpace Turing.MultiTapeTM.dropFrame encBits encBits)
+  exact ⟨fun n => c * (n + 1), fun n => c * (n + 1), by fun_prop, by fun_prop,
+    k, State, hfinite, tm, htm⟩
 
 /-- **Composition**, through the machine-level composition of tidy machines. The intermediate word
 is no longer than the time of the inner machine. -/

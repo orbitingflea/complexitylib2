@@ -90,3 +90,20 @@ end Resources
 /-- info: 'Turing.MultiTapeTM.ComputableInPolyTime.exists_degree' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Turing.MultiTapeTM.ComputableInPolyTime.exists_degree
+
+-- The ordinary word interfaces work on every input, including malformed frames.
+example : unframe ([] : List Bool) = [] := rfl
+example : unframe [true] = [] := rfl
+example : dropFrame [true] = [] := rfl
+example : dropFrame [false, true] = [true] := rfl
+
+example {α : Type} {input : α ↪ List Bool} {word : α → List Bool}
+    (hword : ComputableInPolyTime word input encBits) :
+    ComputableInPolyTime (fun a => (frame (word a), unframe (word a), dropFrame (word a)))
+      input (encPair encBits (encPair encBits encBits)) := by
+  fun_prop
+
+example {α : Type} {_input : α ↪ List Bool} (_unknown : α → List Bool) : True := by
+  fail_if_success
+    have : ComputableInPolyTime (fun a => unframe (_unknown a)) _input encBits := by fun_prop
+  trivial
