@@ -30,7 +30,8 @@ Collection XOR has a declared width and treats missing bits as false.
 
 ## Main results
 
-* `Cslib.BitString.ofFn_add`, `Cslib.BitString.dotProduct_eq_foldl`: algebraic representation laws.
+* `Cslib.BitString.ofFn_add`, `Cslib.BitString.zipWith_xor_self_left`,
+  `Cslib.BitString.dotProduct_eq_foldl`: algebraic representation and cancellation laws.
 * `Cslib.BitString.listStrictMajority_map`: a list with distinct voting indices agrees with
   finite-set strict majority.
 * `Cslib.BitString.listXorSelected_eq_ofFn_sum`: the selector fold computes the finite mask sum.
@@ -54,6 +55,17 @@ theorem ofFn_add {n : ℕ} (left right : BitString n) :
   apply List.ext_getElem (by simp)
   intro i hi hi'
   simp [List.getElem_zipWith, Bool.add_eq_xor]
+
+/-- Pointwise XOR of equal-length bit lists is left-involutive:
+`List.zipWith Bool.xor pad (List.zipWith Bool.xor pad msg) = msg`. -/
+theorem zipWith_xor_self_left :
+    ∀ pad msg : List Bool, pad.length = msg.length →
+      List.zipWith Bool.xor pad (List.zipWith Bool.xor pad msg) = msg
+  | [], [], _ => rfl
+  | b :: pad, m :: msg, h => by
+    simp only [List.length_cons, Nat.add_right_cancel_iff] at h
+    simp only [List.zipWith_cons_cons, zipWith_xor_self_left pad msg h]
+    cases b <;> cases m <;> rfl
 
 /-- A Boolean dot product is a pointwise AND followed by a parity fold on words. -/
 theorem dotProduct_eq_foldl {n : ℕ} (left right : BitString n) :

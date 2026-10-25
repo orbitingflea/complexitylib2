@@ -460,9 +460,9 @@ theorem mem_BPP_iff_exists_mem_BPTIME {α : Type} {enc : α ↪ List Bool} {A : 
       two_thirds_le_div_iff] at hprob
     rw [heval]
     constructor
-    · intro ha
+    · intro (ha : a ∈ A)
       simpa [MultiTapeTM.indicator, ha] using hprob
-    · intro ha
+    · intro (ha : a ∉ A)
       refine hprob.trans (Nat.mul_le_mul_left 3 (Finset.card_le_card fun r => ?_))
       simp only [MultiTapeTM.indicator, ha, Finset.mem_filter, Finset.mem_univ, true_and,
         decide_eq_false_iff_not]

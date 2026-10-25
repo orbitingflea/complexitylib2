@@ -98,13 +98,21 @@ jobs:
       # Lints for the files a pull request adds or changes: names in module docstrings' "Main …"
       # lists exist, and a new test file does more than restate signatures. See
       # scripts/check_changed_files.py. The checkout is shallow, so the base commit is fetched
-      # and compared directly.
+      # and compared directly. On pull requests, as in the parallel-definition step below, the
+      # base is the first parent of the checked-out merge commit: `pull_request.base.sha` can be
+      # an older tip of `main`, and comparing with it would lint files that later commits on `main`
+      # changed. Merge-group runs keep `merge_group.base_sha`, which is always fetchable.
       - name: "Changed-file lints"
         if: github.event_name == 'pull_request' || github.event_name == 'merge_group'
         env:
-          BASE: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha }}
+          RECORDED_BASE: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha }}
         run: |
           set -e
+          BASE=
+          if [ "$GITHUB_EVENT_NAME" = pull_request ]; then
+            BASE=$(git cat-file -p HEAD | sed -n 's/^parent //p' | head -n 1)
+          fi
+          BASE=${BASE:-$RECORDED_BASE}
           git fetch --no-tags --depth=1 origin "$BASE"
           python3 -B scripts/check_changed_files.py --base "$BASE"
       # Advisory only: public definitions that a pull request adds or changes and that share a

@@ -38,7 +38,9 @@ Reductions of promise problems are Karp reductions in the sense of Goldreich's s
 asking every problem separating the yes-instances from the no-instances to be NP-hard, which
 `PromiseProblem.NPHard.npHard_of_subset` derives.
 
-Probabilistic promise classes (`PromiseBPP`, `PromiseRP`, `PromiseCoRP`) live in
+Probabilistic promise classes are defined with their decision specializations: `PromiseBPP` in
+`Complexity.Computability.Complexity.Classes.BPP`, and `PromiseRP` and `PromiseCoRP` in
+`Complexity.Computability.Complexity.Classes.RP`. Their PPT characterizations live in
 `Complexity.Computability.Complexity.Classes.Promise.Probabilistic`, and randomized one-sided
 reductions (`RPReducible`, `RPReducibleWithError`) live in
 `Complexity.Computability.Complexity.Classes.Promise.Randomized`.

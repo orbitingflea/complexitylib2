@@ -64,8 +64,8 @@ is.
   `Cslib.BitString.two_mul_hammingDist_add_proj`: projections and their shifts are half the cube
   apart.
 * `Cslib.BitString.hammingDist_flip_self`, `Cslib.BitString.hammingDist_le_flip_add_one`,
-  `Cslib.BitString.hammingDist_flip_le_add_one`, `Cslib.BitString.hammingDist_flip_eq_add_one`:
-  effect of flipping one coordinate on Hamming distance.
+  `Cslib.BitString.hammingDist_flip_le_add_one`, `Cslib.BitString.hammingDist_flip_eq_add_one`,
+  `Cslib.BitString.hammingDist_flip`: effect of flipping one coordinate on Hamming distance.
 
 ## References
 
@@ -327,6 +327,18 @@ theorem hammingDist_flip_eq_add_one (x z : ι → Bool) (i : ι)
   rw [hammingDist, h, Finset.card_insert_of_notMem]
   · rfl
   · simp [hi]
+
+/-- Flipping one coordinate changes the Hamming distance to `z` by one: it increases by one if
+`x i = z i` and decreases by one otherwise. -/
+theorem hammingDist_flip (x z : ι → Bool) (i : ι) :
+    hammingDist (flipOn {i} x) z =
+      if x i = z i then hammingDist x z + 1 else hammingDist x z - 1 := by
+  split_ifs with hi
+  · exact hammingDist_flip_eq_add_one x z i hi
+  · have h := hammingDist_flip_eq_add_one (flipOn {i} x) z i
+      (by rw [flipOn_singleton_self]; cases hx : x i <;> cases hz : z i <;> simp_all)
+    rw [flipOn_flipOn] at h
+    omega
 
 end Fintype
 

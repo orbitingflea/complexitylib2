@@ -92,7 +92,7 @@ example {X : PromiseProblem α} {Y : PromiseProblem β}
 `1 / 2`); on `false`, it rejects both coins (acceptance probability `0`). -/
 example : PromiseProblem.ofSet ({true} : Set Bool) ∈ PromiseRP encBool := by
   refine ⟨1, fun p : Bool × List Bool => p.1 && p.2.headD false, by fun_prop,
-    fun a ha => ?_, fun a ha r => ?_⟩
+    fun a => ⟨fun ha => ?_, fun ha r => ?_⟩⟩
   · obtain rfl : a = true := ha
     generalize hk : (1 : Polynomial ℕ).eval (encBool true).length = k
     rw [Polynomial.eval_one] at hk
