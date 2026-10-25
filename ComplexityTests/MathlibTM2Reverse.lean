@@ -6,7 +6,7 @@ Authors: Erik Demaine
 
 import Complexity.Computability.Machines.Turing.TM2.Reverse.Transfer
 
-/-! Public clients and named axiom guards for the reverse stack-machine compiler. -/
+/-! Public clients for the reverse stack-machine compiler. -/
 
 namespace ComplexityTests.MathlibTM2Reverse
 
@@ -132,47 +132,5 @@ example : ∃ (f : List Bool → Bool) (h : TM2Computable (encList (encFinite Bo
   Cslib.Complexity.mem_PSPACE_iff_tm2.mp
     (Cslib.Complexity.mem_PSPACE_of_computableInPolySpace
       (.of_tidy (.of_polyTime (.listIsEmpty' (encFinite Bool)))) (fun _ => Iff.rfl))
-
-/--
-info: 'Turing.MultiTapeTM.ToTM2.outputsInTime' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeTM.ToTM2.outputsInTime
-
-/--
-info: 'Turing.MultiTapeTM.ToTM2.reachable_stack_bound' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeTM.ToTM2.reachable_stack_bound
-
-/--
-info: 'Turing.MultiTapeTM.ComputableInTimeAndSpace.exists_tm2Computable_bool' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeTM.ComputableInTimeAndSpace.exists_tm2Computable_bool
-
-/--
-info: 'Turing.MultiTapeTM.computableInPolyTime_iff_tm2' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeTM.computableInPolyTime_iff_tm2
-
-/--
-info: 'Turing.MultiTapeTM.computableInPolySpace_iff_tm2' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeTM.computableInPolySpace_iff_tm2
-
-/--
-info: 'Cslib.Complexity.mem_PSPACE_iff_tm2' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.mem_PSPACE_iff_tm2
 
 end ComplexityTests.MathlibTM2Reverse

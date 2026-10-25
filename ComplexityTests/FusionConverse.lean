@@ -94,17 +94,4 @@ example : ∃ a, ∃ g : BooleanFunction (2 + a),
 example : econondeterministicAndComplexity (fun x : BitString 2 => x 0 ^^ x 1) ≤ 1 := by
   exact econondeterministicAndComplexity_le_cost xorVerifier (by decide) xorCircuit xor_computes
 
-/--
-info: 'Cslib.Circuits.Fusion.PairCover.exists_forallGuess' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Circuits.Fusion.PairCover.exists_forallGuess
-/--
-info: 'Cslib.Circuits.Fusion.conondeterministicAndComplexity_bounds' depends on axioms: [propext,
- Classical.choice,
- Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Circuits.Fusion.conondeterministicAndComplexity_bounds
-
 end ComplexityTests.FusionConverse

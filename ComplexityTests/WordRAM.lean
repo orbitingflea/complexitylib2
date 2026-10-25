@@ -275,48 +275,6 @@ end ElementDistinctness
 /-! ## Axioms -/
 
 /--
-info: 'Cslib.Algorithms.WordRAM.ElementDistinctness.decidesInTime_nodup' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Algorithms.WordRAM.ElementDistinctness.decidesInTime_nodup
-
-/--
-info: 'Cslib.Algorithms.WordRAM.ElementDistinctness.uniformLinearTime_nodup' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Algorithms.WordRAM.ElementDistinctness.uniformLinearTime_nodup
-
-/--
-info: 'Cslib.Algorithms.WordRAM.ElementDistinctness.decidesInTime_nodup_additive' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Algorithms.WordRAM.ElementDistinctness.decidesInTime_nodup_additive
-
-/--
-info: 'Cslib.Algorithms.WordRAM.ElementDistinctness.uniformLinearTime_nodup_additive'
-depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Algorithms.WordRAM.ElementDistinctness.uniformLinearTime_nodup_additive
-
-/--
-info: 'Cslib.WordRAM.Exec.runs' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.WordRAM.Exec.runs
-
-/--
-info: 'Cslib.WordRAM.UniformDecidableInTime.of_code' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.WordRAM.UniformDecidableInTime.of_code
-
-/--
 info: 'Cslib.WordRAM.UniformDecidableInTime.decidableInTime' depends on axioms: [propext]
 -/
 #guard_msgs (whitespace := lax) in
@@ -342,20 +300,5 @@ info: 'Cslib.WordRAM.ExecWithin.loop_invariant' depends on axioms:
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.WordRAM.ExecWithin.loop_invariant
-
-/--
-info: 'Cslib.WordRAM.Exec.rename' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.WordRAM.Exec.rename
-
-/--
-info: 'Cslib.WordRAM.alloc_exec' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.WordRAM.alloc_exec
-
 
 end ComplexityTests.WordRAM

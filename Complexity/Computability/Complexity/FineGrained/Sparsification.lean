@@ -55,6 +55,7 @@ runs a fixed number `2 ^ (n / M + 2)` of rounds, the last ones on the empty stac
 ## Main results
 
 * `Cslib.Complexity.Sparsify.search_eq_true_iff`: the search decides satisfiability.
+* `Cslib.Complexity.Sparsify.decidableInExpTime_search`: the time of the search.
 * `Cslib.Complexity.exists_decidableInExpTime_numVars_of_length`: from clauses to variables.
 * `Cslib.Complexity.DecidableInSubexpTime.numVars_of_length`: subexponential time in the number of
   clauses gives subexponential time in the number of variables.

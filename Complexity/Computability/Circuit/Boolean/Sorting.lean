@@ -58,6 +58,7 @@ The circuit constructor is executable; the gate-count theorems do not certify it
 
 ## Main results
 
+* `Cslib.Circuits.Boolean.cost_program_bitonicSortTraceCircuit`: exact cost of the traced sort.
 * `Cslib.Circuits.Boolean.eval_bitonicSortCircuit`: agreement with the generic algorithm.
 * `Cslib.Circuits.Boolean.eval_bitonicSortTraceCircuit`: exact trace and record semantics.
 * `Cslib.Circuits.Boolean.monotone_bitonicSortCircuit` and

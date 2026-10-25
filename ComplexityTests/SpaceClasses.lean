@@ -75,40 +75,4 @@ example (A : Set (List Bool)) : A ∈ L encBits ↔ A ∈ DSPACE encBits Nat.log
 example (A : Set (List Bool)) : A ∈ PSPACE encBits ↔ ∃ k, A ∈ DSPACE encBits (· ^ k) :=
   mem_PSPACE_iff_exists_mem_DSPACE
 
-/-! ### Axioms -/
-
-/--
-info: 'Turing.MultiTapeTM.ComputableInTimeAndSpace.exists_time_two_pow' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeTM.ComputableInTimeAndSpace.exists_time_two_pow
-
-/--
-info: 'Cslib.Complexity.mem_DSPACE_iff' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.mem_DSPACE_iff
-
-/--
-info: 'Cslib.Complexity.exists_mem_DTIME_of_mem_DSPACE' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.exists_mem_DTIME_of_mem_DSPACE
-
-/--
-info: 'Cslib.Complexity.mem_L_iff_mem_DSPACE' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.mem_L_iff_mem_DSPACE
-
-/--
-info: 'Cslib.Complexity.mem_PSPACE_iff_exists_mem_DSPACE' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.mem_PSPACE_iff_exists_mem_DSPACE
-
 end ComplexityTests.SpaceClasses

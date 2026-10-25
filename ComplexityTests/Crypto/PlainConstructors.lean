@@ -25,8 +25,3 @@ example {X Y : ℕ → PMF (List Bool)} (h : ComputationallyIndistinguishable X 
     ComputationallyIndistinguishable (fun n => (X n).map (fun word => word.take n))
       (fun n => (Y n).map (fun word => word.take n)) :=
   h.map (by polytime)
-
-/-- info: 'Cslib.Crypto.OneWay.of_inversion_negligible' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms OneWay.of_inversion_negligible

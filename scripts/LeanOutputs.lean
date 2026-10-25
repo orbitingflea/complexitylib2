@@ -7,9 +7,9 @@ Authors: Samuel Schlesinger
 import Lean
 
 /-!
-# Declaration data for `scripts/quality_report.py`
+# Declaration data for `scripts/lean_outputs.py`
 
-Run as `lake env lean --run scripts/QualityReport.lean <lib-dir> [<pairs>] < modules.txt`, with one
+Run as `lake env lean --run scripts/LeanOutputs.lean <lib-dir> [<pairs>] < modules.txt`, with one
 module name per line on standard input. For every module it reads the three parts of the built
 `.olean` (exported, server and private) without importing them, and prints one JSON line per
 constant:
@@ -19,15 +19,12 @@ constant:
   `axiom`); `e`: its kind in the exported part, or `""` when it is not exported. Under the module
   system a public theorem is exported as an `axiom` (statement only), a definition whose body is not
   exposed as an `axiom`, and an exposed definition as a `def`;
-* `doc`: whether it has a docstring (Markdown, Verso or `@[inherit_doc]`);
 * `tidy`: the constants named `ComputableTidily…`, `ComputesTidily…` or `IsTidy…` in its type;
   `tb`: for an exported definition, those in its exposed body outside proofs. Proofs are the
   subterms whose type is a proposition, together with the statements of proof-local `have`s (a
   `let` whose type is a proposition): tidy computability is allowed there (#456). Telling them
   apart needs types, so the modules of the definitions whose body mentions a tidy constant are
   imported (at the exported level) for this, and their rows are printed last;
-* `u`: for an exported constant, the other constants of the same module that its exported
-  statement or exposed body mentions (these cannot become private while it stays public);
 * `r`: its declaration range `[line, column, endLine, endColumn, selLine, selColumn, selEndLine,
   selEndColumn]`, with 1-based lines and code-point columns, when one is recorded.
 
@@ -40,7 +37,7 @@ the conclusion, with binder info `0` explicit, `1` implicit, `2` strict implicit
 flag `1` when the type is an application of a listed tidy predicate, `2` when it mentions a tidy
 constant otherwise, and `0` when it mentions none.
 
-Run as `lake env lean --run scripts/QualityReport.lean --names <module>...`, it instead prints
+Run as `lake env lean --run scripts/LeanOutputs.lean --names <module>...`, it instead prints
 every name the given modules and their transitive imports export (constants and `export`
 aliases), one per line, then a line `--tokens--` and the parser tokens they declare (global and
 scoped notations, syntax and macros), for the name resolution of `scripts/tidy_sweep.py`.
@@ -52,7 +49,7 @@ whose types are alpha-equivalent (`k = "thm"`), or whose types and exposed bodie
 
 open Lean
 
-namespace ComplexityScripts.QualityReport
+namespace ComplexityScripts.LeanOutputs
 
 def kindOf : ConstantInfo → String
   | .defnInfo _ => "def"
@@ -101,7 +98,7 @@ unsafe def tidyBodies (libDir : System.FilePath) (modules : Array Name) (names :
   if names.isEmpty then return {}
   initSearchPath (← findSysroot) [libDir]
   let env ← importModules (modules.map ({ module := · })) {} (level := .exported)
-  let ctx : Core.Context := { fileName := "<QualityReport>", fileMap := default }
+  let ctx : Core.Context := { fileName := "<LeanOutputs>", fileMap := default }
   let mut result : NameMap (Array String) := {}
   for n in names do
     let some (.defnInfo v) := env.find? n
@@ -110,18 +107,6 @@ unsafe def tidyBodies (libDir : System.FilePath) (modules : Array Name) (names :
     discard <| (tidyOutsideProofs found v.value).toIO ctx { env }
     result := result.insert n ((← found.get).toArray.map toString)
   return result
-
-/-- The declarations named by entries of the extensions whose names end in one of `suffixes`.
-Every such extension is a `MapDeclarationExtension`, whose entries are pairs headed by a name. -/
-unsafe def entryNames (entries : Array (Name × Array EnvExtensionEntry)) (suffixes : List String) :
-    NameSet := Id.run do
-  let mut names : NameSet := {}
-  for (ext, es) in entries do
-    if let .str _ s := ext then
-      if suffixes.contains s then
-        for e in es do
-          names := names.insert (unsafeCast e : Name × Unit).1
-  return names
 
 unsafe def declRanges (entries : Array (Name × Array EnvExtensionEntry)) :
     NameMap DeclarationRanges := Id.run do
@@ -216,22 +201,13 @@ unsafe def run (libDir : System.FilePath) (pairs : Option String := none) : IO U
     let mut exported : Std.HashMap Name ConstantInfo := {}
     for c in exportedData.constants do
       exported := exported.insert c.name c
-    let docs := entryNames fullData.entries
-      ["docStringExt", "versoDocStringExt", "inheritDocStringExt"]
     let ranges := declRanges fullData.entries
-    let sameModule : NameSet := fullData.constNames.foldl (·.insert ·) {}
     for c in fullData.constants do
       let e := exported[c.name]?
       let tidy := c.type.getUsedConstants.filter isTidy |>.map (·.toString)
-      let uses := match e with
-        | some (.defnInfo v) => v.type.getUsedConstants ++ v.value.getUsedConstants
-        | some ec => ec.type.getUsedConstants
-        | none => #[]
-      let uses := uses.filter (fun n => n != c.name && sameModule.contains n) |>.toList.eraseDups
       let mut row : List (String × Json) := [
         ("n", c.name.toString), ("m", mod), ("k", kindOf c), ("e", (e.map kindOf).getD ""),
-        ("doc", docs.contains c.name), ("tidy", toJson tidy),
-        ("u", toJson (uses.map (·.toString))),
+        ("tidy", toJson tidy),
         ("r", (ranges.find? c.name).map rangeJson |>.getD .null)]
       if pairs.isSome then
         if let some ec := e then
@@ -306,10 +282,10 @@ unsafe def names (roots : List Name) : IO Unit := do
   for t in tokens do stdout.putStrLn t
   if regions.isEmpty then stdout.flush
 
-end ComplexityScripts.QualityReport
+end ComplexityScripts.LeanOutputs
 
 unsafe def main (args : List String) : IO Unit :=
   if args.head? == some "--names" then
-    ComplexityScripts.QualityReport.names (args.drop 1 |>.map String.toName)
+    ComplexityScripts.LeanOutputs.names (args.drop 1 |>.map String.toName)
   else
-    ComplexityScripts.QualityReport.run (args.headD ".lake/build/lib/lean") args[1]?
+    ComplexityScripts.LeanOutputs.run (args.headD ".lake/build/lib/lean") args[1]?

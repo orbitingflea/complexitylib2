@@ -8,9 +8,9 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Circuit.Boolean.SemiCircuit.Gate
+public import Complexity.Foundations.Data.Finset.SymmDiff
 public import Mathlib.Algebra.BigOperators.Group.Finset.Basic
 public import Mathlib.Order.SymmDiff
-import Mathlib.Data.Finset.SymmDiff
 
 /-!
 # Equations over `𝔽₂`
@@ -58,39 +58,6 @@ structure Equation where
   terms : Finset ℕ
   /-- The right-hand side. -/
   rhs : Bool
-
-/-- Adding `t` to a set of terms over `𝔽₂` removes it if present and inserts it otherwise. -/
-theorem symmDiff_singleton_eq (s : Finset ℕ) (t : ℕ) :
-    s ∆ {t} = if t ∈ s then s.erase t else insert t s := by
-  ext z
-  by_cases hz : z = t
-  · subst hz
-    split_ifs with h <;> simp [Finset.mem_symmDiff, h]
-  · split_ifs <;> simp [Finset.mem_symmDiff, hz]
-
-theorem sum_symmDiff_singleton (s : Finset ℕ) (t : ℕ) (val : ℕ → Bool) :
-    ∑ i ∈ s ∆ {t}, val i = ∑ i ∈ s, val i + val t := by
-  rw [symmDiff_singleton_eq]
-  split_ifs with ht
-  · rw [← Finset.add_sum_erase s val ht, add_comm (val t), add_assoc, BooleanRing.add_self,
-      add_zero]
-  · rw [Finset.sum_insert ht, add_comm]
-
-/-- An element belongs to `s ∆ {t}` if and only if its membership in `s` differs from equality
-with `t`. -/
-theorem mem_symmDiff_singleton {s : Finset ℕ} {t z : ℕ} : z ∈ s ∆ {t} ↔ (z ∈ s ↔ z ≠ t) := by
-  rw [symmDiff_singleton_eq]
-  by_cases hz : z = t
-  · subst hz
-    split_ifs with ht <;> simp [ht]
-  · split_ifs with ht <;> simp [hz]
-
-theorem card_symmDiff_singleton_le (s : Finset ℕ) (t : ℕ) :
-    (s ∆ {t}).card ≤ s.card + 1 := by
-  rw [symmDiff_singleton_eq]
-  split_ifs with h
-  · exact (Finset.card_erase_le).trans (Nat.le_succ _)
-  · exact Finset.card_insert_le _ _
 
 namespace Equation
 

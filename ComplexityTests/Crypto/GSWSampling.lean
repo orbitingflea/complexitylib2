@@ -152,39 +152,4 @@ example : IsPPTOn encUnary encSerializedKeyInputs
 example : IsPPTOn encUnary encSerializedCoins (fun size => sampleCoinsSerialized size size size) :=
   isPPTOn_sampleCoinsSerialized (by fun_prop) (by fun_prop) (by fun_prop)
 
-/--
-info: 'Cslib.Crypto.Homomorphic.GSW.keyGen_encrypt_correct' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms keyGen_encrypt_correct
-
-/--
-info: 'Cslib.Crypto.Homomorphic.GSW.keyGen_nand_correct' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms keyGen_nand_correct
-
-/--
-info: 'Cslib.Crypto.Homomorphic.GSW.exists_uniform_seed_keyGen_encrypt' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms exists_uniform_seed_keyGen_encrypt
-
-/--
-info: 'Cslib.Crypto.Homomorphic.GSW.isPPTOn_sampleKeyInputsSerialized' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms isPPTOn_sampleKeyInputsSerialized
-
-/--
-info: 'Cslib.Crypto.Homomorphic.GSW.isPPTOn_sampleCoinsSerialized' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms isPPTOn_sampleCoinsSerialized
-
 end ComplexityTests.GSWSampling

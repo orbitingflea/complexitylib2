@@ -142,6 +142,24 @@ class CheckHygieneTests(unittest.TestCase):
                          ["Complexity/QuotedText.lean:7: forbidden `native_decide`"])
 
 
+class BibliographyTests(unittest.TestCase):
+    def test_sorted_unique_keys_pass(self) -> None:
+        text = ("@article{arora2010,\n}\n\n@book{ AroraBarak09,\n  title = {A}\n}\n\n"
+                "@misc{Sipser2013,\n  note = {@inline is not an entry}\n}\n")
+        self.assertEqual(check_hygiene.check_bibliography(text), [])
+
+    def test_unsorted_and_duplicate_keys_fail(self) -> None:
+        text = "@book{Zed,\n}\n@book{alpha,\n}\n@misc{ZED,\n}\n"
+        self.assertEqual(check_hygiene.check_bibliography(text), [
+            "references.bib:5: duplicate key `ZED` (first at line 1)",
+            "references.bib:3: entry `alpha` comes after `Zed`; keep entries sorted by key",
+        ])
+
+    def test_repository_bibliography_is_sorted(self) -> None:
+        text = (check_hygiene.ROOT / "references.bib").read_text(encoding="utf-8")
+        self.assertEqual(check_hygiene.check_bibliography(text), [])
+
+
 class CheckHygieneCLITests(unittest.TestCase):
     def setUp(self) -> None:
         tmp = tempfile.TemporaryDirectory()

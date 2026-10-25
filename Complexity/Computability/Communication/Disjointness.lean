@@ -101,13 +101,13 @@ def parts (m : ℕ) : Finset (U × Finset U × Finset U) :=
   {T | T.1 ∉ T.2.1 ∧ T.1 ∉ T.2.2 ∧ Disjoint T.2.1 T.2.2 ∧ #T.2.1 = m ∧ #T.2.2 = m}
 
 /-- Membership in `parts`. -/
-theorem mem_parts {T : U × Finset U × Finset U} :
+private theorem mem_parts {T : U × Finset U × Finset U} :
     T ∈ parts U m ↔
       T.1 ∉ T.2.1 ∧ T.1 ∉ T.2.2 ∧ Disjoint T.2.1 T.2.2 ∧ #T.2.1 = m ∧ #T.2.2 = m := by
   simp only [parts, mem_filter, mem_univ, true_and]
 
 /-- In a partition `(i, Tx, Ty)` of `2 m + 1` points, `Tx` is the complement of `Ty` and `i`. -/
-theorem compl_insert_eq_of_mem_parts (hU : Fintype.card U = 2 * m + 1)
+private theorem compl_insert_eq_of_mem_parts (hU : Fintype.card U = 2 * m + 1)
     {T : U × Finset U × Finset U} (hT : T ∈ parts U m) :
     (insert T.1 T.2.2)ᶜ = T.2.1 := by
   obtain ⟨h1, h2, h3, h4, h5⟩ := mem_parts.mp hT
@@ -129,7 +129,7 @@ private theorem mem_parts_of_mem_compl (hU : Fintype.card U = 2 * m + 1)
 
 /-- Summing over the partitions `(i, Tx, Ty)` of `2 m + 1` points is summing over the sets `Ty`
 of `m` points and the points `i` outside them. -/
-theorem sum_parts (hU : Fintype.card U = 2 * m + 1) {M : Type*} [AddCommMonoid M]
+private theorem sum_parts (hU : Fintype.card U = 2 * m + 1) {M : Type*} [AddCommMonoid M]
     (F : U × Finset U × Finset U → M) :
     ∑ T ∈ parts U m, F T =
       ∑ Ty ∈ powersetCard m univ, ∑ i ∈ Tyᶜ, F (i, (insert i Ty)ᶜ, Ty) := by
@@ -148,7 +148,7 @@ theorem sum_parts (hU : Fintype.card U = 2 * m + 1) {M : Type*} [AddCommMonoid M
     simp only [compl_insert_eq_of_mem_parts hU hT]
 
 /-- Exchanging the two sets of a partition. -/
-theorem sum_parts_swap {M : Type*} [AddCommMonoid M]
+private theorem sum_parts_swap {M : Type*} [AddCommMonoid M]
     (F : U × Finset U × Finset U → M) :
     ∑ T ∈ parts U m, F T = ∑ T ∈ parts U m, F (T.1, T.2.2, T.2.1) := by
   refine sum_nbij' (fun T => (T.1, T.2.2, T.2.1)) (fun T => (T.1, T.2.2, T.2.1)) ?_ ?_
@@ -170,7 +170,7 @@ theorem card_parts (hU : Fintype.card U = 2 * m + 1) :
   omega
 
 /-- There is a partition. -/
-theorem card_parts_pos (hU : Fintype.card U = 2 * m + 1) :
+private theorem card_parts_pos (hU : Fintype.card U = 2 * m + 1) :
     0 < #(parts U m) := by
   rw [card_parts hU, card_powersetCard, card_univ, hU]
   exact Nat.mul_pos (Nat.choose_pos (by omega)) (Nat.succ_pos m)
@@ -340,7 +340,7 @@ noncomputable def hardWeight (q : Finset U × Finset U) : ℝ :=
     (2 * #(parts U m) * 4 ^ m)
 
 /-- The weights are nonnegative. -/
-theorem hardWeight_nonneg (q : Finset U × Finset U) : 0 ≤ hardWeight m q := by
+private theorem hardWeight_nonneg (q : Finset U × Finset U) : 0 ≤ hardWeight m q := by
   unfold hardWeight
   refine div_nonneg (sum_nonneg fun T _ => ?_) (by positivity)
   split_ifs <;> norm_num
@@ -518,7 +518,7 @@ noncomputable def hardDist (hU : Fintype.card U = 2 * m + 1) :
       sum_hardWeight hU, ENNReal.ofReal_one])
 
 /-- The masses of `hardDist` are the weights `hardWeight`. -/
-theorem hardDist_apply_toReal (hU : Fintype.card U = 2 * m + 1)
+private theorem hardDist_apply_toReal (hU : Fintype.card U = 2 * m + 1)
     (q : Finset U × Finset U) : (hardDist m hU q).toReal = hardWeight m q := by
   rw [hardDist, PMF.ofFintype_apply, ENNReal.toReal_ofReal (hardWeight_nonneg q)]
 

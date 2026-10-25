@@ -71,27 +71,4 @@ example (setup : ℕ → PMF schnorrGroups.Desc) (hDL : schnorrGroups.DiscreteLo
   PrimeOrderGroupFamily.negligible_schnorrDirectGame hDL (ComputableInPolyTime.of_eq fun _ => rfl)
     hsize negligible_inv_two_pow silent_isPPT
 
-/-! ### Axioms -/
-
-/--
-info: 'Cslib.Crypto.PrimeOrderGroupFamily.negligible_schnorrDirectGame' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms PrimeOrderGroupFamily.negligible_schnorrDirectGame
-
-/--
-info: 'Cslib.Crypto.PrimeOrderGroupFamily.succProbability_schnorrDirectGame_le' depends on
-axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms PrimeOrderGroupFamily.succProbability_schnorrDirectGame_le
-
-/--
-info: 'Turing.MultiTapeTM.ComputableInPolyTime.binary_powMod' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms ComputableInPolyTime.binary_powMod
-
 end ComplexityTests.Crypto.SchnorrDiscreteLog

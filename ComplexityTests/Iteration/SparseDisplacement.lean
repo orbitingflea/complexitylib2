@@ -85,40 +85,4 @@ example : disagreement ((fun _ : Fin 4 => 0) ∘ edit) (edit ∘ (fun _ => 0)) =
   ext x
   simp [mem_disagreement, edit]
 
-/--
-info: 'Cslib.FunctionalGraph.commutation_defect_card' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.FunctionalGraph.commutation_defect_card
-
-/--
-info: 'Cslib.Circuits.Boolean.Iteration.thresholdSum_displacement' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Boolean.Iteration.thresholdSum_displacement
-
-/--
-info: 'Cslib.Circuits.Boolean.Iteration.sparse_counter_centralizer' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Boolean.Iteration.sparse_counter_centralizer
-
-/--
-info: 'Cslib.Circuits.Boolean.Iteration.sparse_counter_power' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Boolean.Iteration.sparse_counter_power
-
-/--
-info: 'Cslib.Circuits.Boolean.Iteration.sparse_coordinate_power' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Boolean.Iteration.sparse_coordinate_power
-
-
 end ComplexityTests.Iteration.SparseDisplacement

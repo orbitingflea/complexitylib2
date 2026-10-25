@@ -10,6 +10,7 @@ module
 
 public import Complexity.Computability.Circuit.Boolean.Synthesis
 public import Complexity.Computability.Languages.Slice
+public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.List
 public import Complexity.Foundations.Data.Nat.PolynomialBound.Closure
 
 /-!
@@ -24,12 +25,15 @@ different lengths be related, so `P/poly` contains undecidable languages.
 `PPoly` is defined through the minimal circuit size of each slice (`Cslib.Circuits.complexity`);
 `mem_PPoly_iff_exists_circuits` is the textbook formulation with an explicit family of circuits.
 Size counts gates, constants included, which changes sizes by at most a constant factor and so does
-not change the class.
+not change the class. For decision problems over an arbitrary type `α` with encoding
+`enc : α ↪ List Bool`, `PPolyOn enc` is the class of problems whose image under `enc` agrees with a
+language in `PPoly`.
 
 ## Main definitions
 
 * `Cslib.Circuits.Boolean.SIZE`: the languages with circuits of size at most `s n` at each length.
-* `Cslib.Circuits.Boolean.PPoly`.
+* `Cslib.Circuits.Boolean.PPoly`: the languages over `Bool` with circuits of polynomial size.
+* `Cslib.Circuits.Boolean.PPolyOn`: problems with circuits of polynomial size under an encoding.
 
 ## Main results
 
@@ -40,6 +44,8 @@ not change the class.
   polynomial budget are in `P/poly`.
 * `Cslib.Circuits.Boolean.PPoly.compl`, `PPoly.sup`, `PPoly.inf`: closure under the Boolean
   operations.
+* `Cslib.Circuits.Boolean.mem_PPolyOn_encBits_iff`, `Cslib.Circuits.Boolean.PPolyOn.compl`:
+  agreement with `PPoly` on `encBits` and closure of `PPolyOn` under complement.
 
 ## References
 
@@ -138,5 +144,36 @@ theorem inf (hL : L ∈ PPoly) (hM : M ∈ PPoly) : L ⊓ M ∈ PPoly := by
   simpa [this] using complexity_and_le (L.slice n) (M.slice n)
 
 end PPoly
+
+/-- **Problems with circuits of polynomial size.** A decision problem `A : Set α`, with encoding
+`enc : α ↪ List Bool` of its instances, lies in `PPolyOn enc` when some language `L ∈ PPoly`
+agrees with `A` along `enc`. -/
+def PPolyOn {α : Type*} (enc : α ↪ List Bool) : Set (Set α) :=
+  {A | ∃ L ∈ PPoly, ∀ a, a ∈ A ↔ enc a ∈ L}
+
+/-- A problem is in `PPolyOn enc` if and only if some language in `P/poly` agrees with it along
+`enc`. -/
+theorem mem_PPolyOn {α : Type*} {enc : α ↪ List Bool} {A : Set α} :
+    A ∈ PPolyOn enc ↔ ∃ L ∈ PPoly, ∀ a, a ∈ A ↔ enc a ∈ L :=
+  Iff.rfl
+
+/-- Over bitstrings (`encBits`), membership in `PPolyOn encBits` is membership in `PPoly`. -/
+@[simp]
+theorem mem_PPolyOn_encBits_iff {A : Language Bool} :
+    (A : Set (List Bool)) ∈ PPolyOn Turing.MultiTapeTM.encBits ↔ A ∈ PPoly :=
+  ⟨fun ⟨L, hL, h⟩ => (Language.ext fun w => h w : A = L) ▸ hL,
+    fun hA => ⟨A, hA, fun _ => Iff.rfl⟩⟩
+
+/-- `PPolyOn` is closed under complement. -/
+theorem PPolyOn.compl {α : Type*} {enc : α ↪ List Bool} {A : Set α}
+    (hA : A ∈ PPolyOn enc) : Aᶜ ∈ PPolyOn enc := by
+  obtain ⟨L, hL, h⟩ := hA
+  exact ⟨Lᶜ, PPoly.compl hL, fun a => not_congr (h a)⟩
+
+/-- A complement lies in `PPolyOn enc` if and only if the problem does. -/
+@[simp]
+theorem compl_mem_PPolyOn_iff {α : Type*} {enc : α ↪ List Bool} {A : Set α} :
+    Aᶜ ∈ PPolyOn enc ↔ A ∈ PPolyOn enc :=
+  ⟨fun h => by simpa using PPolyOn.compl h, PPolyOn.compl⟩
 
 end Cslib.Circuits.Boolean

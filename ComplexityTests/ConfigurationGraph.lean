@@ -29,16 +29,16 @@ private theorem accepts_acceptMachine (w : List Bool) : acceptMachine.Accepts w 
 
 /-- A concrete machine satisfies all hypotheses of the exact graph bridge, including at `[]`. -/
 example (w : List Bool) : ∃ u,
-    Relation.ReflTransGen (Edge acceptMachine (radixExponent Unit 0) w)
-      (startID acceptMachine (radixExponent Unit 0) w.length) u ∧
-      bad (k := 0) (State := Unit) (radixExponent Unit 0) w.length u = true :=
+    Relation.ReflTransGen (Edge acceptMachine (radix (radixExponent Unit 0) w.length) w)
+      (startID acceptMachine (radix (radixExponent Unit 0) w.length)) u ∧
+      bad (k := 0) (State := Unit) (radix (radixExponent Unit 0) w.length) w.length u = true :=
   (accepts_iff_reachable_bad_of_runsInSpace 0
     (MultiTapeNTM.runsInSpace_zero_tapes _ _ _)).mp (accepts_acceptMachine w)
 
 /-- An out-of-range source ID cannot create an edge, even with an arbitrary supplied bit. -/
-example (D n v : ℕ) (b : Option Bool) :
-    edgeWithSymbol acceptMachine D n (vertexBound (k := 0) D n) v b = false := by
-  cases h : edgeWithSymbol acceptMachine D n (vertexBound (k := 0) D n) v b with
+example (B n v : ℕ) (b : Option Bool) :
+    edgeWithSymbol acceptMachine B n (vertexBound (k := 0) B) v b = false := by
+  cases h : edgeWithSymbol acceptMachine B n (vertexBound (k := 0) B) v b with
   | false => rfl
   | true => have := (lt_vertexBound_of_edgeWithSymbol h).1; omega
 
@@ -58,35 +58,21 @@ example : outputStep 0 (some false) = 2 := by decide
 example (b : Bool) : outputStep 1 (some b) = 2 := by cases b <;> decide
 example (b : Option Bool) : outputStep 2 b = 2 := by rcases b with _ | _ | _ <;> decide
 
-example (D : ℕ) : ComputableTidilyInSpace
-    (fun a : ℕ × ℕ => queryIndex (k := 0) D a.1 a.2)
-    encVertex encNat (fun a => (encVertex a).length) := queryIndex_inSpace D
+/-- Encoded radix, length, source, target, and the one supplied input symbol. -/
+private abbrev encEdge : ℕ × ℕ × ℕ × ℕ × Option Bool ↪ List Bool :=
+  encPair encNat (encPair encNat (encPair encNat (encPair encNat (encOption encBool))))
 
-example (D : ℕ) : ComputableTidilyInSpace
-    (fun a : ℕ × ℕ × ℕ × Option Bool =>
-      edgeWithSymbol acceptMachine D a.1 a.2.1 a.2.2.1 a.2.2.2)
-    encEdge encBool (fun a => (encEdge a).length) := edgeWithSymbol_inSpace acceptMachine D
-
-/--
-info: 'Turing.MultiTapeNTM.ConfigurationGraph.accepts_iff_reachable_bad_of_runsInSpace'
-depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeNTM.ConfigurationGraph.accepts_iff_reachable_bad_of_runsInSpace
-
-/--
-info: 'Turing.MultiTapeNTM.ConfigurationGraph.edgeWithSymbol_inSpace' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeNTM.ConfigurationGraph.edgeWithSymbol_inSpace
-
-/--
-info: 'Turing.MultiTapeNTM.ConfigurationGraph.reachable_lt_pow_of_runsInSpace' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeNTM.ConfigurationGraph.reachable_lt_pow_of_runsInSpace
+open ComputableTidilyInSpace in
+/-- The edge routine on its exact encoded arguments, in linear workspace. -/
+example : ComputableTidilyInSpace
+    (fun a : ℕ × ℕ × ℕ × ℕ × Option Bool =>
+      edgeWithSymbol acceptMachine a.1 a.2.1 a.2.2.1 a.2.2.2.1 a.2.2.2.2)
+    encEdge encBool (fun a => (encEdge a).length) := by
+  have hr₁ := snd encNat (encPair encNat (encPair encNat (encPair encNat (encOption encBool))))
+  have hr₂ := budget_comp_linear (snd _ _) hr₁
+  have hr₃ := budget_comp_linear (snd _ _) hr₂
+  exact edgeWithSymbol_budget acceptMachine (fst _ _) (budget_comp_linear (fst _ _) hr₁)
+    (budget_comp_linear (fst _ _) hr₂) (budget_comp_linear (fst _ _) hr₃)
+    (budget_comp_linear (snd _ _) hr₃) (.refl _)
 
 end ComplexityTests.ConfigurationGraph

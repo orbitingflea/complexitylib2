@@ -90,20 +90,4 @@ example : (Forking.fork (PMF.pure ()) (OracleComp.forkingAlgorithm false 1
     nameWithoutAsking)).map Option.isSome true = 0 := by
   simp [Forking.fork, OracleComp.forkingAlgorithm, OracleComp.validIndex, nameWithoutAsking]
 
-/-! ### Axioms -/
-
-/--
-info: 'Cslib.Probability.Forking.sq_div_sub_le_fork' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Forking.sq_div_sub_le_fork
-
-/--
-info: 'Cslib.OracleComp.le_add_sqrt_fork' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms OracleComp.le_add_sqrt_fork
-
 end ComplexityTests.Crypto.Forking

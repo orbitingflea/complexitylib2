@@ -110,20 +110,4 @@ example : Fin 3 ⊨
     apply (realize_closeEx _ _).mpr
     exact ⟨fun _ => 2, Formula.realize_equal.mpr rfl⟩)
 
-/--
-info: 'Cslib.Logic.FO.Ordered.realize_bit' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Logic.FO.Ordered.realize_bit
-/--
-info: 'Cslib.Logic.FO.Ordered.realize_inputFormula' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Logic.FO.Ordered.realize_inputFormula
-/--
-info: 'Cslib.Logic.FO.Ordered.realize_forget_onSentence' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Logic.FO.Ordered.realize_forget_onSentence
-
 end ComplexityTests.OrderedFirstOrder

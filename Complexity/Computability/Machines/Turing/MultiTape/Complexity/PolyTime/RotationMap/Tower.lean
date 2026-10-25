@@ -22,6 +22,8 @@ unary neighbor, finite return label and framing. Fixed base rotations use finite
 
 ## Main results
 
+* `Cslib.RotationMap.TowerTable.polytime_next`,
+  `Cslib.RotationMap.TowerTable.polytime_nextRow`: constructing next level and rows in polytime.
 * `Cslib.RotationMap.TowerTable.polytime_build`: a uniform certificate for the complete table.
 * `Cslib.RotationMap.TowerTable.polytime_lookup`: read both components of a stored rotation.
 * `Cslib.RotationMap.TowerTable.length_encoding_le`: bound all rows and encoded entries.

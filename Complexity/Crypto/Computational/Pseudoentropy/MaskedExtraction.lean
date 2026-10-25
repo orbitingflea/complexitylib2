@@ -22,10 +22,12 @@ revealing every observation and the complete hash seed.
 ## Main results
 
 * `maskedSample_map_fst`: preserve the full public marginal.
-* `maskedSample_weight_mass_ge`: bound positive masses independently of stored votes.
+* `maskedSample_mass_ge`, `maskedSample_weight_mass_ge`: bound positive masses independently of
+  stored votes.
 * `maskedSample_weight_mass_ge_eventually`: one eventual bound for every vote mask.
-* `maskedSample_extract_dist_bind_le`: extraction against every finite-output test of the
-  observations, seed, and output, including infinite observation types.
+* `maskedSample_weight_extract_dist_bind_le`, `maskedSample_extract_dist_bind_le`: extraction
+  against every finite-output test of the observations, seed, and output, including infinite
+  observation types.
 
 ## References
 

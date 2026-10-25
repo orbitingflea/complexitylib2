@@ -37,6 +37,7 @@ The proof:
 ## Main results
 
 * `Cslib.Complexity.SigmaP_two_subset_AM_of_coNP_subset_AM`: `coNP ⊆ AM` gives `Σ₂ ⊆ AM`.
+* `Cslib.Complexity.PiP_two_subset_SigmaP_two_of_coNP_subset_AM`: `coNP ⊆ AM` gives `Π₂ ⊆ Σ₂`.
 * `Cslib.Complexity.PH_eq_SigmaP_two_of_coNP_subset_AM`: **Boppana–Håstad–Zachos**.
 * `Cslib.Complexity.SigmaP_two_eq_AM_of_coNP_subset_AM`,
   `Cslib.Complexity.PiP_two_eq_SigmaP_two_of_coNP_subset_AM`: `Σ₂ = Π₂ = AM`.

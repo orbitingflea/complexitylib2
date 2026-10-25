@@ -77,24 +77,6 @@ open Finset
 
 variable {n g : ℕ}
 
-private theorem changesAtMost_threshold {H : Type*} (out : Bool → H) (c : ℝ) :
-    ChangesAtMost (fun t => out (decide (c ≤ t))) 1 := by
-  intro z hz S hS
-  have hcut (i) (hi : i ∈ S) : z i < c ∧ c ≤ z (i + 1) := by
-    have hn : ¬ c ≤ z i := by
-      intro hc
-      exact hS i hi (by simp [hc, hc.trans (hz (Nat.le_succ i))])
-    have hp : c ≤ z (i + 1) := by
-      by_contra hn'
-      exact hS i hi (by simp [hn, hn'])
-    exact ⟨lt_of_not_ge hn, hp⟩
-  apply Finset.card_le_one.mpr
-  intro i hi j hj
-  by_contra hne
-  rcases Nat.lt_or_gt_of_ne hne with h | h
-  · exact (not_lt_of_ge ((hcut i hi).2.trans (hz h))) (hcut j hj).1
-  · exact (not_lt_of_ge ((hcut j hj).2.trans (hz h))) (hcut i hi).1
-
 private theorem masked_eval_succ (p : Program signature n g) (gate : Fin g) (x : Fin n → Bool) :
     (fun j : Fin g => if j.val < gate.val + 1 then p.eval interpretation x j else false) =
       Function.update (fun j => if j.val < gate.val then p.eval interpretation x j else false)
@@ -132,7 +114,7 @@ private theorem masked_eval_step (p : Program signature n g) (gate : Fin g) :
       fun z t => Function.update z gate (decide ((p.lines gate).op.threshold ≤
         t + ∑ j, gateWeight p gate j * (z j).toNat)), ?_, ?_⟩
     · intro z
-      exact (changesAtMost_threshold (Function.update z gate) _).comp_monotone
+      exact ((ChangesAtMost.decide_le _).comp (Function.update z gate)).comp_monotone
         (monotone_id.add_const _)
     · exact masked_eval_succ p gate
   · simp only [hgate, ite_false, BlockKind.Step]

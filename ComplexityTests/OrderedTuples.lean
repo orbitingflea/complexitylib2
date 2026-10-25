@@ -95,19 +95,4 @@ example : Fin 3 ⊨ (tupleConstants L 1).onSentence separated := by
   simp only [lexRank_tupleConstants_value] at hr
   contradiction
 
-/-- info: 'Cslib.Logic.FO.Ordered.lexRank_lt_iff' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Cslib.Logic.FO.Ordered.lexRank_lt_iff
-
-/-- info: 'Cslib.Logic.FO.Ordered.realize_tupleLe' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Cslib.Logic.FO.Ordered.realize_tupleLe
-
-/-- info: 'Cslib.Logic.FO.Ordered.lexRank_tupleConstants_value' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Cslib.Logic.FO.Ordered.lexRank_tupleConstants_value
-
 end Cslib.Tests.OrderedTuples

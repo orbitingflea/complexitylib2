@@ -47,6 +47,8 @@ fan-in two `s > (L - ε) n` with `L = 1 + π / (3 arccos ((1 + 2√2)/4)) ≈ 4.
 
 ## Main results
 
+* `Cslib.Circuits.Frontier.eventually_two_sub_mul_lt_innerSize_of_nondeterministicDecides`:
+  unconditional (2 - ε)n frontier lower bound for nondeterministic circuits of fan-in two.
 * `Cslib.Circuits.Frontier.Compiler.accepted_hiddenNetwork`: exactness of the hidden network.
 * `Cslib.Circuits.Frontier.exists_graph_of_nondeterministicDecides`: the reduction theorem for
   nondeterministic circuits.

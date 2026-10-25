@@ -132,42 +132,8 @@ example (cs : Fin 0 → Circuit signature 0 1) :
         ∀ x j, c.eval interpretation x j = (cs j).eval interpretation x 0 :=
   exists_circuit_bundleCode cs 0 (fun j => j.elim0)
 
-/-- info: 'Cslib.Circuits.Program.code_append' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Cslib.Circuits.Program.code_append
-
-/-- info: 'Cslib.Circuits.Boolean.appendCode_code' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Cslib.Circuits.Boolean.appendCode_code
-
-/-- info: 'ComplexityTests.CodeComposition.constructor_polynomialTime' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms constructor_polynomialTime
-
 /-- info: 'Cslib.Circuits.Boolean.bundleCode_eq_foldl_appendCode' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs in
 #print axioms Cslib.Circuits.Boolean.bundleCode_eq_foldl_appendCode
-
-/-- info: 'ComplexityTests.CodeComposition.bundler_polynomialTime' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms bundler_polynomialTime
-
-/-- info: 'ComplexityTests.CodeComposition.varying_bundler_polynomialTime' depends on axioms: [propext,
- Classical.choice,
- Quot.sound] -/
-#guard_msgs in
-#print axioms varying_bundler_polynomialTime
-
-/-- info: 'Cslib.Circuits.Boolean.appendCodes_code' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Cslib.Circuits.Boolean.appendCodes_code
-
-/-- info: 'Cslib.Circuits.Boolean.exists_circuit_bundleCode' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Cslib.Circuits.Boolean.exists_circuit_bundleCode
 
 end ComplexityTests.CodeComposition

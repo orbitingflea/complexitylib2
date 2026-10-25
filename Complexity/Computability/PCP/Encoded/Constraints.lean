@@ -33,6 +33,8 @@ No decidability or efficiency is inferred for arbitrary proposition-valued const
 * `Cslib.PCP.Encoded.Graph.toGraph_mapConstraints`: exact interpretation after descriptor change.
 * `Cslib.PCP.Encoded.Graph.isPolyTime_tabulateConstraints`: materializing all finite tables is
   polynomial-time, including the unchanged endpoints and graph storage.
+* `Cslib.PCP.Encoded.Graph.length_encoding_tabulateConstraints_le`: tabulation adds at most a
+  constant number of bits per edge.
 
 ## References
 

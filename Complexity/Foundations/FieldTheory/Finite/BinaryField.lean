@@ -54,6 +54,7 @@ need `w ≠ 0`.
 
 ## Main results
 
+* `Cslib.monic_of_ne_zero`: every nonzero binary polynomial is monic.
 * `Cslib.irreducible_leastIrreducible`, `Cslib.monic_leastIrreducible`,
   `Cslib.natDegree_leastIrreducible`: `leastIrreducible w` is monic and irreducible, of degree `w`
   when `w ≠ 0`.
@@ -211,10 +212,13 @@ theorem exists_code_leastIrreducible {p : ℕ} (hp : p ≠ 0) :
   · exact hlog ▸ Nat.pow_log_le_self 2 hm0
   · exact hlog ▸ Nat.lt_pow_succ_log_self one_lt_two m
 
+/-- Every nonzero binary polynomial is monic. -/
+theorem monic_of_ne_zero {q : (ZMod 2)[X]} (hq : q ≠ 0) : q.Monic :=
+  (by decide : ∀ c : ZMod 2, c ≠ 0 → c = 1) _ (leadingCoeff_ne_zero.2 hq)
+
 /-- `leastIrreducible w` is monic for every degree `w`, as every nonzero binary polynomial is. -/
 theorem monic_leastIrreducible (w : ℕ) : (leastIrreducible w).Monic :=
-  (by decide : ∀ c : ZMod 2, c ≠ 0 → c = 1) _
-    (leadingCoeff_ne_zero.2 (irreducible_leastIrreducible w).ne_zero)
+  monic_of_ne_zero (irreducible_leastIrreducible w).ne_zero
 
 /-- **The explicit binary field of degree `w`**: binary polynomials modulo the irreducible
 polynomial of degree `w` with the least code. -/

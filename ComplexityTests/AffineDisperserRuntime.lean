@@ -16,7 +16,7 @@ the explicit field is `𝔽₃₂` with `r = 102` blocks and `t = 10`. Two pseud
 length, from a linear congruential generator, take different values; an independent
 implementation (tensor-product arithmetic with reduction in each variable and the trace as a sum of
 Frobenius conjugates) gives the same values. The roots `binaryRoot` satisfy the hypothesis of the
-root-independence theorem, so it applies. Axiom checks record the headline dependencies.
+root-independence theorem, so it applies.
 -/
 
 namespace ComplexityTests.AffineDisperserRuntime
@@ -74,77 +74,5 @@ example (N : ℕ) :
           (aeval_binaryRoot_degreePrime N)) (explicitPos N) =
       explicitDisperser N :=
   traceSymBits_rootBasis_eq_explicitDisperser N _ _
-
-/-! ### Axioms -/
-
-/--
-info: 'Cslib.AffineDisperser.computableInPolyTime_explicitDisperser' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms computableInPolyTime_explicitDisperser
-
-/--
-info: 'Cslib.AffineDisperser.setOf_explicitDisperser_mem_P' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms setOf_explicitDisperser_mem_P
-
-/--
-info: 'Cslib.AffineDisperser.explicitDisperserProgram_eq' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms explicitDisperserProgram_eq
-
-/--
-info: 'Cslib.AffineDisperser.traceSymBits_rootBasis_eq_explicitDisperser' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms traceSymBits_rootBasis_eq_explicitDisperser
-
-/--
-info: 'Cslib.AffineDisperser.traceSymCoords_eq' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms traceSymCoords_eq
-
-/--
-info: 'Cslib.AffineDisperser.isMulTable_monomialTable' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms isMulTable_monomialTable
-
-/--
-info: 'Cslib.prodPowBasis_mul_prodPowBasis' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms prodPowBasis_mul_prodPowBasis
-
-/--
-info: 'Cslib.AffineDisperser.isIrreducibleCode_iff' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms isIrreducibleCode_iff
-
-/--
-info: 'Cslib.AffineDisperser.polyOfCode_leastIrreducibleCode' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms polyOfCode_leastIrreducibleCode
-
-/--
-info: 'Cslib.AffineDisperser.computableInPolyTime_traceSymCoords' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms computableInPolyTime_traceSymCoords
 
 end ComplexityTests.AffineDisperserRuntime

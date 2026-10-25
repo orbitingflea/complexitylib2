@@ -10,9 +10,8 @@ import Cslib.Crypto.Primitives.PRG.Basic
 /-! Truth-table languages on concrete words, a `P/poly`-natural property, a large property useful
 against `P/poly`, circuit tests, the Razborov–Rudich distinguisher on the property of hard
 functions at every input length from `16` on, the GGM family on fixed-width labels for a toy
-generator with its circuits and security theorem, the identity and constant families as witnesses
-that exponential security is consistent and has content, and the axioms of the headline
-theorems. -/
+generator with its circuits and security theorem, and the identity and constant families as
+witnesses that exponential security is consistent and has content. -/
 
 namespace ComplexityTests.NaturalProofs
 
@@ -247,119 +246,5 @@ example {G : ∀ k, PRG.Generator (BitString k) (BitString (2 * k))} {d : ℕ}
     ¬ IsNatural PPoly fun n => {f : BooleanFunction n |
       2 ^ n / (5 * n) < complexity interpretation (single f)} := fun hC =>
   not_isUseful_PPoly_of_isNatural_of_generator hsize hG hC isUseful_PPoly_setOf_lt_complexity
-
-/-! ### Axioms -/
-
-/--
-info: 'Cslib.Circuits.Boolean.advantage_truthTableGenerator_truthTableTest' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Boolean.advantage_truthTableGenerator_truthTableTest
-
-/--
-info: 'Cslib.Circuits.Boolean.not_secure_truthTableGenerator' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Boolean.not_secure_truthTableGenerator
-
-/--
-info: 'Cslib.Circuits.Boolean.not_isUseful_PPoly_of_isNatural' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Boolean.not_isUseful_PPoly_of_isNatural
-
-/--
-info: 'Cslib.Circuits.Boolean.truthTableLanguage_setOf_lt_complexity_notMem_PPoly' depends on
-axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Boolean.truthTableLanguage_setOf_lt_complexity_notMem_PPoly
-
-/--
-info: 'Cslib.Circuits.Boolean.isUseful_PPoly_iff' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Boolean.isUseful_PPoly_iff
-
-/--
-info: 'Cslib.Circuits.Boolean.NaturalProof.IsNatural.PPoly_of_P' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Boolean.NaturalProof.IsNatural.PPoly_of_P
-
-/--
-info: 'Cslib.Circuits.Boolean.isLarge_setOf_lt_complexity' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Boolean.isLarge_setOf_lt_complexity
-
-/--
-info: 'Cslib.Circuits.Boolean.isUseful_PPoly_setOf_lt_complexity' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Boolean.isUseful_PPoly_setOf_lt_complexity
-
-/--
-info: 'Cslib.Crypto.GGM.secure_truthTableGenerator_booleanFamily' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.GGM.secure_truthTableGenerator_booleanFamily
-
-/--
-info: 'Cslib.Crypto.GGM.complexity_booleanFamily_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.GGM.complexity_booleanFamily_le
-
-/--
-info: 'Cslib.Crypto.GGM.ofFn_evalBits' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.GGM.ofFn_evalBits
-
-/--
-info: 'Cslib.Crypto.GGM.isExponentiallySecure_booleanFamily' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.GGM.isExponentiallySecure_booleanFamily
-
-/--
-info: 'Cslib.Crypto.PRG.IsSubexponentiallySecure.of_rpow' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.PRG.IsSubexponentiallySecure.of_rpow
-
-/--
-info: 'Cslib.Circuits.Boolean.not_isUseful_PPoly_of_isNatural_of_generator' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Boolean.not_isUseful_PPoly_of_isNatural_of_generator
-
-/--
-info: 'Cslib.Circuits.Boolean.not_isNatural_PPoly_setOf_lt_complexity' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Boolean.not_isNatural_PPoly_setOf_lt_complexity
-
-/--
-info: 'Cslib.Crypto.PRG.abs_expect_comp_sub_expect_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.PRG.abs_expect_comp_sub_expect_le
 
 end ComplexityTests.NaturalProofs

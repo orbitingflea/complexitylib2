@@ -60,6 +60,7 @@ enumerative coding for weight-bounded words (Theorem 4.3) is in
   `Cslib.Circuits.Boolean.WeightedThreshold.length_le_sum_choose_gateActivity_of_isChain`:
   alternating-run capacity bounds along `scalarScore w`.
 * `Cslib.Circuits.Boolean.WeightedThreshold.two_pow_lt_mul_card_attainableTranscripts_of_direction`,
+  `WeightedThreshold.two_pow_lt_mul_max_card_attainableTranscripts_of_direction`,
   `Cslib.Circuits.Boolean.WeightedThreshold.two_pow_lt_mul_sum_choose_of_direction`,
   `Cslib.Circuits.Boolean.WeightedThreshold.two_pow_lt_mul_sum_choose_gateActivity_of_direction`:
   rectangle-free scalar activity bounds (Corollary 4.2).
@@ -382,46 +383,6 @@ theorem changesAtMost_scalarReadout {β : Type*} (p : Program signature n g) (w 
     ChangesAtMost (scalarReadout p w readout) ((attainableTranscripts p).card - 1) :=
   (piecesAtMost_scalarReadout p w hw readout).changesAtMost
 
-private theorem isChain_le_getElem {α : Type*} [Preorder α] {ts : List α}
-    (hmono : ts.IsChain (· ≤ ·)) {i j : ℕ} (hi : i < ts.length) (hj : j < ts.length)
-    (hij : i ≤ j) :
-    ts[i] ≤ ts[j] := by
-  induction j with
-  | zero =>
-    have : i = 0 := by omega
-    subst this
-    exact le_rfl
-  | succ j ih =>
-    rcases Nat.eq_or_lt_of_le hij with rfl | hlt
-    · exact le_rfl
-    · have hj' : j < ts.length := by omega
-      exact (ih hj' (by omega)).trans (List.isChain_iff_getElem.mp hmono j hj)
-
-/-- Any ordered list `ts` along which `Φ` alternates between consecutive elements has length at
-most `T + 1` whenever `ChangesAtMost Φ T`. -/
-theorem length_le_succ_of_changesAtMost_of_isChain {α β : Type*} [Preorder α] {Φ : α → β}
-    {T : ℕ}
-    (hΦ : ChangesAtMost Φ T) {ts : List α} (hmono : ts.IsChain (· ≤ ·))
-    (halt : (ts.map Φ).IsChain (· ≠ ·)) :
-    ts.length ≤ T + 1 := by
-  rcases Nat.eq_zero_or_pos ts.length with h0 | hpos
-  · omega
-  · let z : ℕ → α := fun i => ts[min i (ts.length - 1)]'(by omega)
-    have hz : Monotone z := fun i j hij =>
-      isChain_le_getElem hmono (by omega) (by omega) (min_le_min_right _ hij)
-    have hchg : ∀ i ∈ range (ts.length - 1), Φ (z i) ≠ Φ (z (i + 1)) := by
-      intro i hi
-      have hi' : i + 1 < ts.length := by
-        rw [mem_range] at hi
-        omega
-      have h1 : min i (ts.length - 1) = i := by omega
-      have h2 : min (i + 1) (ts.length - 1) = i + 1 := by omega
-      have hne := List.isChain_iff_getElem.mp halt i (by simpa using hi')
-      simpa [z, h1, h2] using hne
-    have hcard := hΦ z hz (range (ts.length - 1)) hchg
-    rw [card_range] at hcard
-    omega
-
 /-- **Theorem 4.1 (Alternating-run capacity bound)**: if `xs : List (Fin n → Bool)` has
 nondecreasing scalar scores along `w` and alternating readout values, then
 `xs.length ≤ (attainableTranscripts p).card`. -/
@@ -437,8 +398,8 @@ theorem length_le_card_attainableTranscripts_of_isChain {β : Type*} (p : Progra
     rw [List.map_map]
     refine List.map_congr_left fun x _ => ?_
     exact scalarReadout_scalarScore p w hw readout x
-  have hlen := length_le_succ_of_changesAtMost_of_isChain
-    (changesAtMost_scalarReadout p w hw readout) hmono (hmap.symm ▸ halt)
+  have hlen := (changesAtMost_scalarReadout p w hw readout).length_le_succ_of_isChain
+    hmono (hmap.symm ▸ halt)
   rw [List.length_map] at hlen
   omega
 

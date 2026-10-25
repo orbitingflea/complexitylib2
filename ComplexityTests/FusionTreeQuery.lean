@@ -143,24 +143,4 @@ example : Static.workingWords 16 ∅ ≤ 1042 := by
 example : Static.workingWords 16 sampleSet ≤ 1168 * sampleSet.card :=
   Static.workingWords_le_of_nonempty 16 (by decide)
 
-/-- info: 'Cslib.Algorithms.WordRAM.FusionTree.QueryProgram.query_spec' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms QueryProgram.query_spec
-
-/-- info: 'Cslib.Algorithms.WordRAM.FusionTree.Static.query_spec' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms Static.query_spec
-
-/-- info: 'Cslib.Algorithms.WordRAM.FusionTree.NodeProgram.exec' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms NodeProgram.exec
-
-/-- info: 'Cslib.Algorithms.WordRAM.FusionTree.preprocessed_encoding_exists' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms preprocessed_encoding_exists
-
 end FusionTreeQueryTests

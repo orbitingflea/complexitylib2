@@ -11,6 +11,8 @@ public import Complexity.Computability.Complexity.Problems.SAT
 public import Complexity.Computability.Machines.Turing.MultiTape.Universal.Machine
 public import Complexity.Computability.Machines.Turing.MultiTape.Universal.Compose
 public import Complexity.Computability.Machines.Turing.MultiTape.Universal.Decode
+public import Complexity.Foundations.Data.List.Append
+import Complexity.Foundations.Data.Nat.Bits
 import Mathlib.Data.Nat.Size
 
 /-!
@@ -83,35 +85,16 @@ def word (j : ℕ) : List Bool := (j + 1).bits.dropLast
 `true`. -/
 def index (w : List Bool) : ℕ := w.foldr Nat.bit 1 - 1
 
-theorem foldr_bit_one_ne_zero (w : List Bool) : w.foldr Nat.bit 1 ≠ 0 := by
-  induction w with
-  | nil => simp
-  | cons b w ih => exact Nat.bit_ne_zero b ih
-
-theorem bits_foldr_bit_one (w : List Bool) : (w.foldr Nat.bit 1).bits = w ++ [true] := by
-  induction w with
-  | nil => simp
-  | cons b w ih =>
-    rw [List.foldr_cons, Nat.bits_append_bit _ _ fun h => absurd h (foldr_bit_one_ne_zero w), ih,
-      List.cons_append]
-
-theorem foldr_bit_one_lt (w : List Bool) : w.foldr Nat.bit 1 < 2 ^ (w.length + 1) := by
-  induction w with
-  | nil => simp
-  | cons b w ih =>
-    rw [List.foldr_cons, Nat.bit_val, List.length_cons, pow_succ]
-    cases b <;> simp only [Bool.toNat_false, Bool.toNat_true] <;> omega
-
 /-- **Every word has an index.** -/
 @[simp]
 theorem word_index (w : List Bool) : word (index w) = w := by
-  rw [word, index, Nat.sub_add_cancel (Nat.one_le_iff_ne_zero.mpr (foldr_bit_one_ne_zero w)),
-    bits_foldr_bit_one, List.dropLast_concat]
+  rw [word, index, Nat.sub_add_cancel (Nat.one_le_iff_ne_zero.mpr (Nat.foldr_bit_one_ne_zero w)),
+    Nat.bits_foldr_bit_one, List.dropLast_concat]
 
 /-- The index of a word of length `l` is less than `2 ^ (l + 1) - 1`. -/
 theorem index_add_two_le (w : List Bool) : index w + 2 ≤ 2 ^ (w.length + 1) := by
-  have h₁ := foldr_bit_one_lt w
-  have h₂ := foldr_bit_one_ne_zero w
+  have h₁ := Nat.foldr_bit_one_lt w
+  have h₂ := Nat.foldr_bit_one_ne_zero w
   rw [index]
   omega
 
@@ -138,34 +121,16 @@ theorem length_pad (u : List Bool) (k : ℕ) : (pad u k).length = u.length + 1 +
   simp only [pad, List.length_append, List.length_cons, List.length_replicate]
   omega
 
-theorem idxOf_false_replicate_append (k : ℕ) (l : List Bool) :
-    (List.replicate k true ++ false :: l).idxOf false = k := by
-  induction k with
-  | zero => simp
-  | succ k ih =>
-    rw [List.replicate_succ, List.cons_append, List.idxOf_cons_ne _ (by decide), ih]
-
 /-- **Padding is undone.** -/
 @[simp]
 theorem unpad_pad (u : List Bool) (k : ℕ) : unpad (pad u k) = (u, k) := by
   have hrev : (pad u k).reverse = List.replicate k true ++ false :: u.reverse := by
     simp [pad]
-  rw [unpad, hrev, idxOf_false_replicate_append, length_pad,
+  rw [unpad, hrev, List.idxOf_false_replicate_append, length_pad,
     show u.length + 1 + k - (k + 1) = u.length by omega, pad, List.take_left' rfl]
 
 theorem pad_inj {u u' : List Bool} {k k' : ℕ} : pad u k = pad u' k' ↔ u = u' ∧ k = k' :=
   ⟨fun h => by simpa using congrArg unpad h, fun ⟨hu, hk⟩ => hu ▸ hk ▸ rfl⟩
-
-/-- A word with a `false` is a run of `true`s up to its first `false`, and what follows. -/
-theorem eq_replicate_idxOf_false {l : List Bool} (hl : false ∈ l) :
-    l = List.replicate (l.idxOf false) true ++ false :: l.drop (l.idxOf false + 1) := by
-  induction l with
-  | nil => simp at hl
-  | cons b l ih =>
-    cases b
-    · simp
-    · rw [List.idxOf_cons_ne _ (by decide), List.replicate_succ, List.cons_append,
-        List.drop_succ_cons, ← ih (by simpa using hl)]
 
 /-- **A word with a `false` is its padded split.** -/
 theorem pad_unpad {y : List Bool} (hy : (unpad y).2 < y.length) :
@@ -174,7 +139,7 @@ theorem pad_unpad {y : List Bool} (hy : (unpad y).2 < y.length) :
     List.idxOf_lt_length_iff.mp (by simpa [unpad] using hy)
   obtain ⟨v, k, rfl⟩ : ∃ v k, y = pad v k := by
     refine ⟨(y.reverse.drop (y.reverse.idxOf false + 1)).reverse, y.reverse.idxOf false, ?_⟩
-    conv_lhs => rw [← List.reverse_reverse y, eq_replicate_idxOf_false hmem]
+    conv_lhs => rw [← List.reverse_reverse y, List.eq_replicate_idxOf_false hmem]
     simp [pad]
   rw [unpad_pad]
 

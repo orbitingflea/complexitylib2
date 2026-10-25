@@ -39,6 +39,8 @@ The constructor is executable; its gate bounds do not certify the constructor's 
 
 ## Main results
 
+* `Cslib.Circuits.Boolean.broadcastCircuit.eval_values_eq_true_iff`,
+  `Cslib.Circuits.Boolean.eval_broadcastCircuit_value`: sorted destination values and shared scans.
 * `Cslib.BitString.propagate_sorted_tagged_eq_true_iff`: the propagated value at a destination
   is true precisely when a matching source has a true value.
 * `Cslib.Circuits.Boolean.eval_broadcastCircuit_header`: every header is preserved.

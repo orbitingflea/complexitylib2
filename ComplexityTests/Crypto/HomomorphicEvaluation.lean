@@ -115,19 +115,4 @@ example : IsPPTOn
   apply Scheme.isPPTOn_evaluateCircuit decryptionCircuits encrypt_ppt evaluate_ppt circuits_poly
   all_goals fun_prop
 
-/--
-info: 'Cslib.Crypto.Homomorphic.Scheme.encryptedWires_evaluateCircuit_of_generatedChain'
-depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Scheme.encryptedWires_evaluateCircuit_of_generatedChain
-
-/--
-info: 'Cslib.Crypto.Homomorphic.Scheme.isPPTOn_evaluateCircuit' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Scheme.isPPTOn_evaluateCircuit
-
 end ComplexityTests.HomomorphicEvaluation

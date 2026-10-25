@@ -40,6 +40,8 @@ written in the client's input representation.
 * `Cslib.PCP.Encoded.Graph.toGraph_compose`: exact agreement with mathematical composition.
 * `Cslib.PCP.Encoded.Graph.le_unsatVal_compose`: the existing `1/476` gap bound transfers.
 * `Cslib.PCP.Encoded.Graph.satisfiable_composeTabulated_iff`: satisfiability is preserved.
+* `Cslib.PCP.Encoded.Graph.unsatVal_composeTabulated_eq`: tabulating the output constraints
+  preserves the value of the composition.
 
 ## References
 

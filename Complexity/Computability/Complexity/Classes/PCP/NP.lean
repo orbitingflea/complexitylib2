@@ -31,6 +31,8 @@ in the soundness argument, never by the polynomial-time verifier.
 
 ## Main results
 
+* `PCPVerifier.isPolyTime_queryTable`: the complete address table is computable in polynomial
+  time under the logarithmic coin bound.
 * `PCPVerifier.isPolyTime_tableVerifier`: uniform efficiency, including malformed tables.
 * `PCPVerifier.tableVerifier_complete`, `PCPVerifier.tableVerifier_sound`: exact proof transfer.
 * `Cslib.Complexity.PCP_log_subset_NP`: logarithmic-randomness PCP is contained in NP.

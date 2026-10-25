@@ -33,6 +33,9 @@ certificates need no completeness assumption on those lists; gap and satisfiabil
 * `Cslib.PCP.Encoded.Graph.isPolyTime_amplifyIter_clog`: a certificate for logarithmically many
   rounds, including their full intermediate and output table encodings.
 * `Cslib.PCP.Encoded.Graph.satisfiable_amplifyIter_iff`: complete rounds preserve satisfiability.
+* `Cslib.PCP.Encoded.Graph.min_le_unsatVal_amplifyIter`,
+  `Cslib.PCP.Encoded.Graph.gap_le_unsatVal_amplifyIter`: complete rounds double the value up to
+  the fixed threshold, so `k` rounds with at most `2 ^ k` edges reach the gap.
 * `Cslib.PCP.Encoded.Graph.gap_le_unsatVal_amplifyIter_clog`: logarithmically many complete rounds
   give a fixed positive gap on every unsatisfiable input.
 

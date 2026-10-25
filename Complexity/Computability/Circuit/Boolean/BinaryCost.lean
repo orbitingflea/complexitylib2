@@ -7,6 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
+import Complexity.Computability.Circuit.FanIn
 public import Complexity.Computability.Circuit.Simulation
 public import Complexity.Computability.Circuit.Support
 public import Cslib.Computability.Circuit.Boolean.Basic
@@ -142,102 +143,12 @@ theorem Program.cost_binaryCost_le (p : Program Boolean.signature n g) :
     p.cost Boolean.binaryCost ≤ g :=
   (p.cost_le_mul Boolean.binaryCost_le_one).trans_eq (one_mul g)
 
-private theorem wire_castSucc_injective' :
-    Function.Injective (Wire.castSucc : Wire n g → Wire n (g + 1)) := by
-  intro a b h
-  cases a <;> cases b <;> simp_all [Wire.castSucc]
-
 /-- In a De Morgan program, the number of inputs supporting a frontier of wires is at most the size
 of the frontier plus the number of binary (AND/OR) gates in the program. -/
 theorem Program.card_biUnion_wireSupport_le_cost_binaryCost
     (p : Program signature n g) (frontier : Finset (Wire n g)) :
-    (frontier.biUnion p.wireSupport).card ≤ frontier.card + p.cost binaryCost := by
-  induction p with
-  | empty =>
-    simp only [Program.cost_empty, Nat.add_zero]
-    have hsub : frontier.biUnion (Program.empty (σ := signature)).wireSupport ⊆
-        Finset.univ.filter fun i : Fin n => Wire.input i ∈ frontier := by
-      intro i hi
-      rw [Finset.mem_biUnion] at hi
-      obtain ⟨w, hw, hi⟩ := hi
-      cases w with
-      | input j =>
-        simp only [Program.wireSupport_input, Finset.mem_singleton] at hi
-        subst hi
-        exact Finset.mem_filter.mpr ⟨Finset.mem_univ _, hw⟩
-      | gate j => exact j.elim0
-    refine (Finset.card_le_card hsub).trans ?_
-    apply Finset.card_le_card_of_injOn Wire.input
-    · intro i hi
-      simpa using hi
-    · intro a _ b _ h
-      cases h
-      rfl
-  | @gate g p line ih =>
-    let prior := Finset.univ.filter fun w : Wire n g => w.castSucc ∈ frontier
-    let lineInputs := Finset.univ.image line.wires
-    let opened :=
-      if Wire.gate (Fin.last g) ∈ frontier then prior ∪ lineInputs else prior
-    have hsub : frontier.biUnion (p.gate line).wireSupport ⊆ opened.biUnion p.wireSupport := by
-      intro i hi
-      rw [Finset.mem_biUnion] at hi ⊢
-      obtain ⟨w, hw, hi⟩ := hi
-      revert hw hi
-      induction w using Wire.lastCases with
-      | last =>
-        intro hlast hi
-        rw [Program.wireSupport_gate_last] at hi
-        obtain ⟨arg, hi⟩ := Line.mem_inputSupport.mp hi
-        exact ⟨line.wires arg, by simp [opened, lineInputs, hlast], hi⟩
-      | castSucc w =>
-        intro hw hi
-        rw [Program.wireSupport_gate_castSucc] at hi
-        refine ⟨w, ?_, hi⟩
-        by_cases hlast : Wire.gate (Fin.last g) ∈ frontier <;>
-          simp [opened, hlast, prior, hw]
-    have hline : lineInputs.card ≤ 1 + binaryCost line.op := by
-      calc lineInputs.card ≤ (Finset.univ : Finset (Fin (signature.Arity line.op))).card :=
-            Finset.card_image_le
-        _ = signature.Arity line.op := by simp
-        _ ≤ 1 + binaryCost line.op := Boolean.arity_le_one_add_binaryCost line.op
-    have hopened : opened.card ≤ frontier.card + binaryCost line.op := by
-      by_cases hlast : Wire.gate (Fin.last g) ∈ frontier
-      · have hprior : prior.card ≤ (frontier.erase (Wire.gate (Fin.last g))).card := by
-          apply Finset.card_le_card_of_injOn Wire.castSucc
-          · intro w hw
-            change Wire.castSucc w ∈ frontier.erase (Wire.gate (Fin.last g))
-            rw [Finset.mem_erase]
-            refine ⟨?_, by simpa [prior] using hw⟩
-            cases w with
-            | input _ => simp
-            | gate _ => simp [Fin.castSucc_ne_last]
-          · exact wire_castSucc_injective'.injOn
-        have herase := Finset.card_erase_of_mem hlast
-        have hpos : 1 ≤ frontier.card := Finset.one_le_card.mpr ⟨_, hlast⟩
-        have hopened_eq : opened = prior ∪ lineInputs := by simp [opened, hlast]
-        rw [hopened_eq]
-        calc (prior ∪ lineInputs).card ≤ prior.card + lineInputs.card :=
-              Finset.card_union_le _ _
-          _ ≤ (frontier.erase (Wire.gate (Fin.last g))).card + (1 + binaryCost line.op) :=
-              Nat.add_le_add hprior hline
-          _ = frontier.card - 1 + (1 + binaryCost line.op) := by rw [herase]
-          _ = frontier.card + binaryCost line.op := by omega
-      · have hprior : prior.card ≤ frontier.card := by
-          apply Finset.card_le_card_of_injOn Wire.castSucc
-          · intro w hw
-            simpa [prior] using hw
-          · exact wire_castSucc_injective'.injOn
-        have hopened_eq : opened = prior := by simp [opened, hlast]
-        rw [hopened_eq]
-        omega
-    calc (frontier.biUnion (p.gate line).wireSupport).card
-        ≤ (opened.biUnion p.wireSupport).card := Finset.card_le_card hsub
-      _ ≤ opened.card + p.cost binaryCost := ih opened
-      _ ≤ frontier.card + binaryCost line.op + p.cost binaryCost :=
-          Nat.add_le_add_right hopened _
-      _ = frontier.card + (p.gate line).cost binaryCost := by
-          rw [Program.cost_gate]
-          omega
+    (frontier.biUnion p.wireSupport).card ≤ frontier.card + p.cost binaryCost :=
+  p.card_biUnion_wireSupport_le_cost binaryCost arity_le_one_add_binaryCost frontier
 
 /-- A De Morgan circuit with `m` outputs has at most `m + c.program.cost binaryCost` supporting
 inputs, since only binary AND and OR gates increase the number of reachable inputs. -/

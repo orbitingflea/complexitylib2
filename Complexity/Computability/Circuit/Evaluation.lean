@@ -35,6 +35,8 @@ This module does not certify a runtime bound.
 
 ## Main results
 
+* `Cslib.Circuits.Program.trace_eq_traceImpl`: compiler replacement of `Program.trace` by
+  `Program.traceImpl`.
 * `Cslib.Circuits.Program.get_evalVector`: the stored values agree with `Program.eval`.
 * `Cslib.Circuits.Circuit.get_evalVector`: the stored outputs agree with `Circuit.eval`.
 * `Cslib.Circuits.Circuit.eval_eq_evalImpl`: proved compiler replacement for circuit evaluation.

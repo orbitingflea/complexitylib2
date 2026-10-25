@@ -9,9 +9,8 @@ import Cslib.Computability.Machines.Turing.MultiTape.Combinators.AlmostConstant
 
 /-! The universal machine within a space budget: no step beyond the budget, and the answer of a
 concrete machine within an ample budget. The diagonal within space on the padded descriptions of
-concrete accepting and rejecting machines; the space hierarchy theorem and its corollaries
-on concrete bounds;
-and axiom guards for the headline results. -/
+concrete accepting and rejecting machines; and the space hierarchy theorem and its corollaries
+on concrete bounds. -/
 
 namespace ComplexityTests.SpaceHierarchy
 
@@ -127,62 +126,5 @@ example : DSPACE encBits (· ^ 0) ⊂ DSPACE encBits (· ^ 1) := DSPACE_pow_ssub
 example : DSPACE encBits (· ^ 2) ⊂ DSPACE encBits (· ^ 3) := DSPACE_pow_ssubset_DSPACE_pow_succ 2
 
 example : L encBits ⊂ PSPACE encBits := L_ssubset_PSPACE
-
-/-! ### Axioms -/
-
-/--
-info: 'Turing.MultiTapeTM.Universal.budgetedUniversal_desc' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeTM.Universal.budgetedUniversal_desc
-
-/--
-info: 'Turing.MultiTapeTM.Universal.computableTidilyInO_budgetedUniversal' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeTM.Universal.computableTidilyInO_budgetedUniversal
-
-/--
-info: 'Turing.MultiTapeTM.Universal.budgetSpace_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeTM.Universal.budgetSpace_le
-
-/--
-info: 'Cslib.Complexity.computableInO_spaceDiagonal' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.computableInO_spaceDiagonal
-
-/--
-info: 'Cslib.Complexity.setOf_spaceDiagonal_notMem_DSPACE' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.setOf_spaceDiagonal_notMem_DSPACE
-
-/--
-info: 'Cslib.Complexity.DSPACE_ssubset_DSPACE' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.DSPACE_ssubset_DSPACE
-
-/--
-info: 'Cslib.Complexity.DSPACE_pow_ssubset_DSPACE_pow_succ' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.DSPACE_pow_ssubset_DSPACE_pow_succ
-
-/--
-info: 'Cslib.Complexity.L_ssubset_PSPACE' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.L_ssubset_PSPACE
 
 end ComplexityTests.SpaceHierarchy

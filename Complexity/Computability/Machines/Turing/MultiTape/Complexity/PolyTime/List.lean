@@ -33,6 +33,7 @@ counting folds a counter directly instead of constructing the matching sublist.
 
 ## Main results
 
+* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.filter`: filtering by a polytime predicate.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.cons`, `.listAppend`, `.map`, `.flatten`:
   constructing lists.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.cons'`, `.listAppend'`: composition rules

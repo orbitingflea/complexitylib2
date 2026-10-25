@@ -49,19 +49,4 @@ theorem composed_generator : ComputableTidilyInPolyTime
       computableInPolyTime_csa3to2)).tidy
   simpa only [appendCode_code, compCode_code, twice3to2] using h
 
-/-- info: 'Cslib.Circuits.Boolean.csa3to2Code_eq_code' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Cslib.Circuits.Boolean.csa3to2Code_eq_code
-
-/-- info: 'Cslib.Circuits.Boolean.csa4to2Code_eq_code' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Cslib.Circuits.Boolean.csa4to2Code_eq_code
-
-/-- info: 'ComplexityTests.CarrySaveNative.composed_generator' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms composed_generator
-
 end ComplexityTests.CarrySaveNative

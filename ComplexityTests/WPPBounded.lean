@@ -103,17 +103,4 @@ example : {w : List Bool | ∀ i < 0, (w, i) ∈ bitLanguage} ∈ LWPP encBits :
 example : {w : List Bool | ∃ i < 0, (w, i) ∈ bitLanguage} ∈ LWPP encBits :=
   exists_lt_mem_LWPP joint_mem_LWPP (.of_tidy (.const 0))
 
-/-- info: 'Cslib.Complexity.forall_lt_mem_WPP' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Cslib.Complexity.forall_lt_mem_WPP
-/-- info: 'Cslib.Complexity.exists_lt_mem_WPP' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Cslib.Complexity.exists_lt_mem_WPP
-/-- info: 'Cslib.Complexity.forall_lt_mem_LWPP' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Cslib.Complexity.forall_lt_mem_LWPP
-/-- info: 'Cslib.Complexity.exists_lt_mem_LWPP' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Cslib.Complexity.exists_lt_mem_LWPP
-
 end WPPBoundedTests

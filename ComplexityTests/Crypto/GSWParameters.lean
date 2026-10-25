@@ -138,28 +138,4 @@ example {State : ℕ → Type}
     NNReal.coe_ofNat, Parameters.rows, Nat.mul_comm] using
       uniformPublicGame_advantage_le (choose n) (guess n)
 
-/-- info: 'Cslib.Crypto.negligible_mul_sqrt_pow_two_div_pow_two' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Cslib.Crypto.negligible_mul_sqrt_pow_two_div_pow_two
-
-/-- info: 'Cslib.Crypto.Homomorphic.GSW.Parameters.nand_margin' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Cslib.Crypto.Homomorphic.GSW.Parameters.nand_margin
-
-/--
-info: 'Cslib.Crypto.Homomorphic.GSW.Parameters.computableTidilyInPolyTime_modulus' depends on axioms: [propext,
- Classical.choice,
- Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Crypto.Homomorphic.GSW.Parameters.computableTidilyInPolyTime_modulus
-
-/--
-info: 'Cslib.Crypto.Homomorphic.GSW.Parameters.negligible_statistical_error' depends on axioms: [propext,
- Classical.choice,
- Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Crypto.Homomorphic.GSW.Parameters.negligible_statistical_error
-
 end ComplexityTests.GSWParameters

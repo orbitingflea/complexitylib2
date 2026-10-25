@@ -158,45 +158,10 @@ example : ∃ (A : Finset (Fin 5)) (B : Finset (Fin 7)) (p : List Bool),
     by simpa [biTree, DecisionTree.leafCount] using hBc, hp⟩
 
 /--
-info: 'Cslib.DecisionTree.leafCount_le_sum_choose_rank' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms DecisionTree.leafCount_le_sum_choose_rank
-
-/--
 info: 'Cslib.DecisionTree.IsDecisionList.rank_le_one' depends on axioms:
 [propext, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms DecisionTree.IsDecisionList.rank_le_one
-
-/--
-info: 'Cslib.DecisionTree.leafCount_le_sum_choose_energy' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms DecisionTree.leafCount_le_sum_choose_energy
-
-/--
-info: 'Cslib.BiMonotoneComparison.exists_rectangle' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms BiMonotoneComparison.exists_rectangle
-
-/--
-info: 'Cslib.DecisionTree.exists_leaf_rectangle_biMonotone' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms DecisionTree.exists_leaf_rectangle_biMonotone
-
-/--
-info: 'Cslib.DecisionTree.card_mul_le_mul_leafCount_sq_biMonotone' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms DecisionTree.card_mul_le_mul_leafCount_sq_biMonotone
 
 end ThresholdRectangles

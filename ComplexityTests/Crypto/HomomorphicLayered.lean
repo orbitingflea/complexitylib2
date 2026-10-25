@@ -149,39 +149,4 @@ example : IsPPTOn
   apply Scheme.isPPTOn_evaluateLayers decryptionCircuits encrypt_ppt evaluate_ppt circuits_poly
   all_goals fun_prop
 
-/--
-info: 'Cslib.Crypto.Homomorphic.Scheme.encryptedWires_evaluateLayers' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Scheme.encryptedWires_evaluateLayers
-
-/--
-info: 'Cslib.Crypto.Homomorphic.Scheme.mem_support_generateKeyChain_iff' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Scheme.mem_support_generateKeyChain_iff
-
-/--
-info: 'Cslib.Crypto.Homomorphic.Scheme.encryptedWires_evaluateLayers_of_generatedChain' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Scheme.encryptedWires_evaluateLayers_of_generatedChain
-
-/--
-info: 'Cslib.Crypto.Homomorphic.Scheme.isPPTOn_evaluateLayers' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Scheme.isPPTOn_evaluateLayers
-
-/--
-info: 'Cslib.Crypto.Homomorphic.Scheme.isPPTOn_generateKeyChain' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Scheme.isPPTOn_generateKeyChain
-
 end ComplexityTests.HomomorphicLayered

@@ -71,16 +71,17 @@
     },
     {
       "id": "immerman-szelepcsenyi",
-      "title": "Immerman–Szelepcsényi: NL equals coNL",
+      "title": "Immerman–Szelepcsényi: nondeterministic space is closed under complement",
       "module": "ComplexityAbstracts.ImmermanSzelepcsenyiAbstract",
       "headline_theorems": [
+        "ComplexityAbstracts.ImmermanSzelepcsenyiAbstract.nspace_eq_conspace",
         "ComplexityAbstracts.ImmermanSzelepcsenyiAbstract.nl_eq_conl"
       ],
       "supporting_theorems": [
         "ComplexityAbstracts.ImmermanSzelepcsenyiAbstract.stcon_compl_mem_nl"
       ],
-      "summary": "Nondeterministic logarithmic space is closed under complement.",
-      "scope": "One finite-state native machine per problem, every-prefix work space c(floor(log₂ n) + 1), every branch terminating, arbitrary injective encodings; directed non-reachability on unary-header adjacency matrices as the corollary."
+      "summary": "Nondeterministic space at least logarithmic is closed under complement; in particular NL equals coNL.",
+      "scope": "One finite-state native machine per problem, every-prefix work space c₁ s(n) + c₂ for any s with log₂ n ≤ s(n), no constructibility assumed, every branch terminating, arbitrary injective encodings; directed non-reachability on unary-header adjacency matrices as a corollary."
     },
     {
       "id": "shamir",
@@ -196,6 +197,20 @@
       ],
       "summary": "Bounded-error randomized polynomial time admits both existential–universal and universal–existential polynomial descriptions.",
       "scope": "Bit-string languages, fair independent random bits, correctness at least two thirds on every input, and total native polynomial-time tests; no derandomization assumption."
+    },
+    {
+      "id": "chor-goldreich",
+      "title": "Chor–Goldreich: the inner product extracts from two weak sources",
+      "module": "ComplexityAbstracts.ChorGoldreichAbstract",
+      "headline_theorems": [
+        "ComplexityAbstracts.ChorGoldreichAbstract.chor_goldreich",
+        "ComplexityAbstracts.ChorGoldreichAbstract.chor_goldreich_strong"
+      ],
+      "supporting_theorems": [
+        "ComplexityAbstracts.ChorGoldreichAbstract.orthogonal_sources"
+      ],
+      "summary": "Two independent weak random sources whose min-entropies add up to more than the string length give a nearly fair bit through the inner product modulo two.",
+      "scope": "Arbitrary sources with real min-entropy bounds, the exact bias bound 2^((n - k1 - k2)/2)/2 and its strong form, and sharpness at k1 + k2 = n; information-theoretic, with no running time asserted."
     }
   ]
 }

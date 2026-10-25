@@ -47,6 +47,8 @@ does not assert an algorithm for evaluating rationally encoded circuits.
 
 ## Main results
 
+* `Cslib.Circuits.Boolean.WeightedThreshold.preserves_ofThreshold`: threshold translation preserves
+  Boolean semantics.
 * `Cslib.Circuits.Boolean.WeightedThreshold.eval_gate_eq`: the dense gate equation, with repeated
   wire coefficients aggregated.
 * `Cslib.Circuits.Boolean.WeightedThreshold.eval_eq_of_transcript_eq`: the restricted transcript

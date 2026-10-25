@@ -59,8 +59,8 @@ exit code nonzero. Lines the rewrite pushes past 100 characters are listed for r
 `--diff` writes the plan as a patch instead of rewriting files. `report --partial` analyses a
 tree that does not build completely, listing the modules without outputs.
 
-Declarations, statements and references come from `scripts/quality_report.py` and
-`scripts/QualityReport.lean`, which read the build outputs of
+Declarations, statements and references come from `scripts/lean_outputs.py`,
+`scripts/audit_queries.py` and `scripts/LeanOutputs.lean`, which read the build outputs of
 `lake build Complexity ComplexityTests ComplexityAbstracts`.
 """
 
@@ -79,10 +79,44 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
-import quality_report as qr  # noqa: E402
+import audit_queries as aq  # noqa: E402
+import lean_outputs  # noqa: E402
 from proof_lengths import masks  # noqa: E402
 
 ALLOWLIST = ROOT / "scripts/tidy_allowlist.txt"
+# Documents outside the libraries whose mentions of renamed declarations are rewritten too.
+EXTERNAL_DOCS = ("README.md", "abstracts/README.md")
+# The areas of #587 that the report groups declarations by: its table, completed by its
+# assignment of the remaining paths
+# (https://github.com/cslib-community/complexitylib/issues/587#issuecomment-6376302681).
+AREAS = [
+    ("Foundations", "Foundations, Probability, Languages, Computability/BitString",
+     ("Foundations/", "Probability/", "Languages/", "Computability/BitString/")),
+    ("Machines", "Computability/Machines, Probabilistic, RAM, GenericRAM; Tactic",
+     ("Computability/Machines/", "Computability/Probabilistic/", "Computability/RAM/",
+      "Computability/GenericRAM/", "Tactic/")),
+    ("Classes", "Computability/Complexity, PCP, Communication, DecisionTree, QueryComplexity, "
+     "TreeEval, Kolmogorov, MCSP, USTCON, Languages; MachineLearning",
+     ("Computability/Complexity/", "Computability/PCP/", "Computability/Communication/",
+      "Computability/DecisionTree/", "Computability/QueryComplexity/", "Computability/TreeEval/",
+      "Computability/Kolmogorov/", "Computability/MCSP/", "Computability/USTCON/",
+      "Computability/Languages/", "MachineLearning/")),
+    ("Circuit", "Computability/Circuit, BranchingProgram",
+     ("Computability/Circuit/", "Computability/BranchingProgram/")),
+    ("Crypto", "Crypto", ("Crypto/",)),
+    ("Logics", "Logics", ("Logics/",)),
+    ("WordRAM", "Computability/WordRAM, Algorithms", ("Computability/WordRAM/", "Algorithms/")),
+]
+OTHER_AREA = "Other"  # `Init.lean` and unassigned paths
+
+
+def area_of(path: str) -> str:
+    """The #587 area of a library source path relative to `Complexity/`."""
+    for name, _, prefixes in AREAS:
+        if path.startswith(prefixes):
+            return name
+    return OTHER_AREA
+
 TM = "Turing.MultiTapeTM."
 
 
@@ -138,7 +172,7 @@ def plain_name(name: str) -> str:
 
 
 def is_tidy_constant(name: str) -> bool:
-    """Mirror of `isTidy` in `scripts/QualityReport.lean`."""
+    """Mirror of `isTidy` in `scripts/LeanOutputs.lean`."""
     last = name.rsplit(".", 1)[-1]
     return last.startswith(("ComputableTidily", "ComputesTidily", "IsTidy"))
 
@@ -355,7 +389,7 @@ def check_partial_outputs(modules: list[str], runner=subprocess.run) -> None:
                    text=True)
     if check.returncode:
         sys.exit("the outputs of some built modules are stale; rebuild them (for instance "
-                 "`lake build " + " ".join(qr.ROOTS) + "`) and retry")
+                 "`lake build " + " ".join(lean_outputs.ROOTS) + "`) and retry")
 
 
 class Model:
@@ -365,18 +399,20 @@ class Model:
                  check: bool = True):
         pairs = ",".join(f"{n.tidy}={n.plain}" for n in NOTIONS)
         self.missing: list[str] | None = [] if partial else None
-        self.lib = qr.Library(build_dir, pairs, self.missing)
+        self.lib = lean_outputs.Library(build_dir, pairs, self.missing)
         if partial and check:
             check_partial_outputs(sorted(self.lib.ileans))
         self.constants = self.lib.constants
-        self.decls, self.owners, _ = qr.collect_declarations(self.lib)
-        qr.annotate_headers(self.lib, self.decls)
-        qr.collect_references(self.lib, self.decls, self.owners)
-        qr.classify(self.decls)
+        self.decls, self.owners = lean_outputs.collect_declarations(self.lib)
+        for decl in self.decls.values():
+            decl["area"] = area_of(decl["path"].removesuffix(".lean") + "/")
+        aq.annotate_headers(self.lib, self.decls)
+        aq.collect_references(self.lib, self.decls, self.owners)
+        aq.classify(self.decls)
         self.allowlist = allowlist
-        roots = sorted(self.lib.ileans) if partial else qr.root_modules()
-        out = qr.run(["lake", "env", "lean", "--run", "scripts/QualityReport.lean", "--names",
-                      *roots], capture_output=True).stdout
+        roots = sorted(self.lib.ileans) if partial else lean_outputs.root_modules()
+        out = lean_outputs.run(["lake", "env", "lean", "--run", "scripts/LeanOutputs.lean",
+                                "--names", *roots], capture_output=True).stdout
         names, _, tokens = out.partition("\n--tokens--\n")
         self.names, self.tokens = set(names.split()), set(tokens.split("\n")) - {""}
         self._users: dict[str, list[tuple[str, list]]] | None = None
@@ -411,7 +447,7 @@ class Model:
 
 # --- Report -------------------------------------------------------------------------------------
 
-AREA_ORDER = [name for name, _, _ in qr.AREAS] + [qr.OTHER_AREA]
+AREA_ORDER = [name for name, _, _ in AREAS] + [OTHER_AREA]
 
 
 def summary(entries: list[Entry]) -> dict:
@@ -439,8 +475,8 @@ def markdown_report(report: dict, limit: int = 40) -> str:
            f"Allowlist: {report['allowlist_size']} modules. Plain twins of tidy theorems: "
            f"{twins}{registry}.", ""]
     if report.get("missing") is not None:
-        by_area = Counter(qr.area_of(m.removeprefix("Complexity.").replace(".", "/") + "/")
-                          if m.startswith("Complexity.") else qr.module_role(m)
+        by_area = Counter(area_of(m.removeprefix("Complexity.").replace(".", "/") + "/")
+                          if m.startswith("Complexity.") else lean_outputs.module_role(m)
                           for m in report["missing"])
         out += [f"**Partial build:** {len(report['missing'])} modules have no build outputs and "
                 "are not analysed (" + ", ".join(f"{a} {n}" for a, n in by_area.most_common())
@@ -481,7 +517,7 @@ def markdown_report(report: dict, limit: int = 40) -> str:
 # --- Lean source helpers (unit-tested in scripts/test_tidy_sweep.py) ----------------------------
 
 OPENERS, CLOSERS = "([{⦃⟨‹", ")]}⦄⟩›"
-IDENT = re.compile(qr.IDENT.pattern)
+IDENT = re.compile(lean_outputs.IDENT.pattern)
 KEYWORDS = {"by", "fun", "λ", "with", "at", "using", "from", "then", "else", "do", "in", "if",
             "match", "show", "have", "let", "calc", "only", "generalizing", "says", "where",
             "deriving", "termination_by", "decreasing_by", "obtain", "rcases", "refine", "exact"}
@@ -706,7 +742,7 @@ STRING_LITERAL = re.compile(r'"((?:[^"\\\n]|\\.)*)"')
 def notation_tokens(text: str, mask: str) -> set[str]:
     """The tokens the notation, syntax and macro commands of a source declare: the string
     literals of each whole command, across continuation lines."""
-    starts = [m.start() for m in qr.COMMAND_START.finditer(mask)] + [len(mask)]
+    starts = [m.start() for m in lean_outputs.COMMAND_START.finditer(mask)] + [len(mask)]
     tokens = set()
     for start, end in zip(starts, starts[1:]):
         if NOTATION_COMMAND.match(mask, start):
@@ -790,7 +826,7 @@ class Scopes:
         self.once: list[tuple[int, int, tuple[Open, ...], frozenset[str]]] = []
         # frames: [kind, name, opens, aliases, variables]
         stack: list[list] = [["file", "", [], set(), set()]]
-        starts = [m.start() for m in qr.COMMAND_START.finditer(mask)] + [len(mask)]
+        starts = [m.start() for m in lean_outputs.COMMAND_START.finditer(mask)] + [len(mask)]
         self.tokens = by_first(notation_tokens(text if text is not None else mask, mask))
 
         def namespace() -> str:
@@ -1158,7 +1194,7 @@ class SourceFile:
         self.starts = [0]
         for line in self.lines:
             self.starts.append(self.starts[-1] + len(line) + 1)
-        self.commands = [m.start() for m in qr.COMMAND_START.finditer(self.mask)]
+        self.commands = [m.start() for m in lean_outputs.COMMAND_START.finditer(self.mask)]
         self._namespaces = namespaces
         self._scopes: Scopes | None = None
 
@@ -1170,7 +1206,7 @@ class SourceFile:
 
     def at(self, line: int, column16: int) -> int:
         """The offset of a 0-based line and UTF-16 column (`.ilean` positions)."""
-        return self.starts[line] + qr.utf16_index(self.lines[line], column16)
+        return self.starts[line] + aq.utf16_index(self.lines[line], column16)
 
     def at_range(self, line: int, column: int) -> int:
         """The offset of a 1-based line and code-point column (declaration ranges)."""
@@ -1264,7 +1300,7 @@ class Planner:
 
     def refs(self, module: str) -> list[Ref]:
         if module not in self._refs:
-            src = self.source(qr.source_path(module))
+            src = self.source(lean_outputs.source_path(module))
             out = []
             for name, _, info in self.model.lib.references(module):
                 for u in info["usages"]:
@@ -1274,7 +1310,7 @@ class Planner:
         return self._refs[module]
 
     def ref_kind(self, name: str) -> str:
-        owner = qr.owner_of(name, self.model.owners) or name
+        owner = aq.owner_of(name, self.model.owners) or name
         if name in BY_TIDY:
             return "pred"
         if owner in self.renames:
@@ -1291,7 +1327,7 @@ class Planner:
     def new_name(self, name: str) -> str:
         if name in BY_TIDY:
             return BY_TIDY[name].plain
-        owner = qr.owner_of(name, self.model.owners) or name
+        owner = aq.owner_of(name, self.model.owners) or name
         if owner in self.renames and (name == owner or name.startswith(owner + ".")):
             return self.renames[owner] + name[len(owner):]
         return self.twins.get(name, name)
@@ -1478,7 +1514,7 @@ class Planner:
                 if name in self.deferred or a is None:
                     continue
                 reasons = [f"statement names deferred `{x.name}`" for x in a["sig_refs"]
-                           if (qr.owner_of(x.name, self.model.owners) or x.name)
+                           if (aq.owner_of(x.name, self.model.owners) or x.name)
                            in self.deferred]
                 if reasons:
                     self.deferred[name] = reasons
@@ -1487,7 +1523,7 @@ class Planner:
     def analyse_decl(self, entry: Entry) -> dict | None:
         """Parse a declaration and find what prevents restating it."""
         decl = self.model.decls[entry.name]
-        module, path = decl["module"], qr.source_path(decl["module"])
+        module, path = decl["module"], lean_outputs.source_path(decl["module"])
         if not decl["range"]:
             return None
         src = self.source(path)
@@ -1525,7 +1561,7 @@ class Planner:
             if other in (old, new):
                 continue
             for module, u in self.model.users(other):
-                path = qr.source_path(module)
+                path = lean_outputs.source_path(module)
                 src = self.source(path)
                 start, end = src.at(u[0], u[1]), src.at(u[2], u[3])
                 token = src.text[start:end].removeprefix("@")
@@ -1549,7 +1585,7 @@ class Planner:
         for module, name in sorted(self.bridge):
             if name in self.deferred:
                 continue
-            path = qr.source_path(module)
+            path = lean_outputs.source_path(module)
             src = self.source(path)
             ranges = self.model.lib.ileans.get(module, {}).get("decls", {})
             if name.startswith("line:"):
@@ -1576,7 +1612,7 @@ class Planner:
     def defer(self, name: str, a: dict | None) -> None:
         """A declaration left tidy in this batch; references to it stay unchanged."""
         decl = self.model.decls[name]
-        path = qr.source_path(decl["module"])
+        path = lean_outputs.source_path(decl["module"])
         self.decls[name] = {"name": name, "target": self.batch[name].target,
                             "path": str(path.relative_to(ROOT)),
                             "line": decl["range"][0] if decl["range"] else 0,
@@ -1732,7 +1768,7 @@ class Planner:
 
     def plan_clients(self, name: str) -> None:
         for module, u in self.model.users(name):
-            path = qr.source_path(module)
+            path = lean_outputs.source_path(module)
             src = self.source(path)
             start, end = src.at(u[0], u[1]), src.at(u[2], u[3])
             if self.in_batch_decl(module, start):
@@ -1841,8 +1877,8 @@ class Planner:
         for name in self.known:
             if name.rsplit(".", 1)[-1] in by_last:
                 known_by_last[name.rsplit(".", 1)[-1]].append(name)
-        paths = [qr.source_path(m) for m in self.model.lib.ileans] + \
-            [ROOT / doc for doc in qr.EXTERNAL_DOCS]
+        paths = [lean_outputs.source_path(m) for m in self.model.lib.ileans] + \
+            [ROOT / doc for doc in EXTERNAL_DOCS]
         for path in paths:
             if not path.exists() or not lasts.search(path.read_text(encoding="utf-8")):
                 continue
@@ -1874,7 +1910,7 @@ class Planner:
         """The constant a documentation token names: the only one it is a suffix of, or the one
         it resolves to from the comment's namespace and opened namespaces."""
         candidates = [n for n in known_by_last.get(token.rsplit(".", 1)[-1], ())
-                      if qr.matches(n, token)]
+                      if aq.matches(n, token)]
         if len(candidates) <= 1:
             return candidates[0] if candidates else None
         if src.path.suffix != ".lean":
@@ -1912,7 +1948,7 @@ class Planner:
             direct = ileans.get(module, {}).get("directImports", [])
             public = {module}.union(*(closure(d) for d, private, *_ in direct if not private))
             available = public.union(*(closure(d) for d, *_ in direct))
-            path = qr.source_path(module)
+            path = lean_outputs.source_path(module)
             src = self.source(path)
             is_module = re.search(r"(?m)^module\s*$", src.mask) is not None
             for dep, want_public in sorted(needed.items()):
@@ -2100,10 +2136,10 @@ def declaration_at(text: str, line: int) -> str:
     or attributes before a declaration belongs to it."""
     mask = masks(text)[1]
     offset = sum(len(x) + 1 for x in text.split("\n")[:line - 1])
-    after = next((m.start() for m in qr.COMMAND_START.finditer(mask, offset)), len(mask))
+    after = next((m.start() for m in lean_outputs.COMMAND_START.finditer(mask, offset)), len(mask))
     if not mask[offset:after].strip() or mask[offset:after].lstrip().startswith("@["):
         offset = after
-    starts = [m.start() for m in qr.COMMAND_START.finditer(mask) if m.start() <= offset]
+    starts = [m.start() for m in lean_outputs.COMMAND_START.finditer(mask) if m.start() <= offset]
     for start in reversed(starts):
         header = DECL_HEADER.search(mask, start, max(offset + 1, start + 400))
         if header:
@@ -2143,7 +2179,7 @@ def rewrite(model: Model, entries: list[Entry], twins: dict[str, str], area: str
             path.write_text(text, encoding="utf-8")
         if not verify:
             return planner, None
-        code, output = build(list(qr.ROOTS))
+        code, output = build(list(lean_outputs.ROOTS))
         result = check_build(planner, texts, output, code, round_)
         history.append({k: result[k] for k in ("round", "status", "failing", "forced_wrap",
                                                "failing_clients")})
@@ -2203,7 +2239,7 @@ def client_decl(planner: Planner, path: Path, text: str, texts: dict[Path, str],
         return None
     module = module_of(path)
     names = [n for n in planner.model.lib.ileans.get(module, {}).get("decls", {})
-             if header and qr.matches(n, header)]
+             if header and aq.matches(n, header)]
     if len(names) == 1:
         return module, names[0]
     at = command_line(text, line) - 1
@@ -2217,7 +2253,7 @@ def command_line(text: str, line: int) -> int:
     """The 1-based line where the command containing a 1-based line starts."""
     mask = masks(text)[1]
     offset = sum(len(x) + 1 for x in text.split("\n")[:line - 1])
-    starts = [m.start() for m in qr.COMMAND_START.finditer(mask) if m.start() <= offset]
+    starts = [m.start() for m in lean_outputs.COMMAND_START.finditer(mask) if m.start() <= offset]
     return text.count("\n", 0, starts[-1]) + 1 if starts else line
 
 
@@ -2250,7 +2286,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--registry", type=Path,
                         help="extra original → twin pairs from a migration script (JSON)")
     parser.add_argument("--allowlist", type=Path, default=ALLOWLIST)
-    parser.add_argument("--build-dir", type=Path, default=qr.DEFAULT_BUILD_DIR)
+    parser.add_argument("--build-dir", type=Path, default=lean_outputs.DEFAULT_BUILD_DIR)
     parser.add_argument("--no-build-check", action="store_true",
                         help="report only: do not check that the build outputs are current")
     parser.add_argument("--partial", action="store_true",
@@ -2288,8 +2324,8 @@ def main(argv: list[str] | None = None) -> int:
         parser.error(str(error))
     outputs = ("partial; every loaded module checked current by `lake build --no-build`"
                if args.partial and not args.no_build_check
-               else qr.check_outputs(args.build_dir, args.no_build_check or args.partial))
-    if args.partial and args.build_dir.resolve() != qr.DEFAULT_BUILD_DIR.resolve() \
+               else lean_outputs.check_outputs(args.build_dir, args.no_build_check or args.partial))
+    if args.partial and args.build_dir.resolve() != lean_outputs.DEFAULT_BUILD_DIR.resolve() \
             and not args.no_build_check:
         parser.error("--partial checks the default build directory; pass --no-build-check "
                      "to report on another one unchecked")
@@ -2298,9 +2334,10 @@ def main(argv: list[str] | None = None) -> int:
     twins = twin_map(model.constants, registry)
     entries = classify_all(model, twins)
     shown = [e for e in entries if not args.area or e.area in args.area]
-    revision = qr.run(["git", "rev-parse", "HEAD"], capture_output=True).stdout.strip()
-    dirty = bool(qr.run(["git", "status", "--porcelain", "--", "Complexity", "ComplexityTests",
-                         "abstracts"], capture_output=True).stdout.strip())
+    revision = lean_outputs.run(["git", "rev-parse", "HEAD"], capture_output=True).stdout.strip()
+    dirty = bool(lean_outputs.run(["git", "status", "--porcelain", "--", "Complexity",
+                                   "ComplexityTests", "abstracts"],
+                                  capture_output=True).stdout.strip())
     report = {"revision": revision, "dirty": dirty, "outputs": outputs,
               "allowlist_size": len(model.allowlist),
               "registry": str(args.registry) if args.registry else None,

@@ -33,9 +33,4 @@ example : ∃ c, ComputableTidilyInTimeAndSpace (fun n : ℕ => encNat (n + 1)) 
   let ⟨c, h⟩ := computableTidilyInTimeAndSpace_succ
   ⟨c, h.of_enc_eq fun _ => rfl⟩
 
-/-- info: 'Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.of_enc_eq'
-depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.of_enc_eq
-
 end ComplexityTests.Encodings

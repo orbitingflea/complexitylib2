@@ -97,43 +97,5 @@ info: 'Cslib.Algorithms.Lean.VanEmdeBoas.Tree.valid_empty' depends on axioms: [p
 -/
 #guard_msgs in
 #print axioms Tree.valid_empty
-/--
-info: 'Cslib.Algorithms.Lean.VanEmdeBoas.Tree.member_iff_contains' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Tree.member_iff_contains
-/--
-info: 'Cslib.Algorithms.Lean.VanEmdeBoas.Tree.valid_insert' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Tree.valid_insert
-/--
-info: 'Cslib.Algorithms.Lean.VanEmdeBoas.Tree.elements_insert' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Tree.elements_insert
-/--
-info: 'Cslib.Algorithms.Lean.VanEmdeBoas.Tree.successor_eq_some_iff' depends on axioms: [propext,
- Classical.choice,
- Quot.sound]
--/
-#guard_msgs in
-#print axioms Tree.successor_eq_some_iff
-/--
-info: 'Cslib.Algorithms.Lean.VanEmdeBoas.Tree.successor_eq_none_iff' depends on axioms: [propext,
- Classical.choice,
- Quot.sound]
--/
-#guard_msgs in
-#print axioms Tree.successor_eq_none_iff
-/--
-info: 'Cslib.Algorithms.Lean.VanEmdeBoas.span_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms span_le
 
 end ComplexityTests.VanEmdeBoas

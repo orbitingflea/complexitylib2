@@ -28,8 +28,3 @@ example : ComputableInPolyTime (fun p : List Bool × List Bool =>
       (ComputableTidilyInPolyTime.fst encBits encBits)).prod
       (computableInPolyTime_decodeIntBin.tidy.comp
         (ComputableTidilyInPolyTime.snd encBits encBits)))
-
-/-- info: 'Turing.MultiTapeTM.computableInPolyTime_decodeIntBin' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms computableInPolyTime_decodeIntBin

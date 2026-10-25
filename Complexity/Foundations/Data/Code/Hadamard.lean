@@ -51,6 +51,10 @@ returns the parity's value at `x` with probability at least `1 - 2ε`, whatever 
 * `Cslib.BitString.hadamardCode_injective`, `Cslib.BitString.two_mul_hammingDist_hadamardCode`,
   `Cslib.BitString.minDist_range_hadamardCode`: the Hadamard code is injective with relative
   distance one half and minimum distance `2 ^ (n - 1)`.
+* `Cslib.BitString.two_mul_card_dotProduct_eq_true_add`: a nonzero bit string has inner product
+  `true` with half of strings.
+* `Cslib.BitString.two_mul_card_dotProduct_eq_true_add_two_pow`: inner product `true` count over
+  all pairs.
 * `Cslib.BitString.eq_of_hammingDist_hadamardCode_le`: unique decoding below distance `1/4`.
 * `Cslib.BitString.one_sub_two_mul_le_expect_selfCorrect_eq_apply`: local decoding with two
   queries.
@@ -209,6 +213,32 @@ theorem two_mul_hammingDist_hadamardCode {x y : ι → Bool} (h : x ≠ y) :
   rw [hadamardCode_eq_parityOn, hadamardCode_eq_parityOn]
   exact two_mul_hammingDist_parityOn fun hS => h <| hadamardCode_injective <| by
     rw [hadamardCode_eq_parityOn, hadamardCode_eq_parityOn, hS]
+
+/-- A nonzero bit string has inner product `true` with exactly half of all bit strings, and the
+zero string with none. -/
+theorem two_mul_card_dotProduct_eq_true_add (x : ι → Bool) :
+    2 * #{y | x ⬝ᵥ y = true} + (if x = 0 then 2 ^ Fintype.card ι else 0) = 2 ^ Fintype.card ι := by
+  split_ifs with hx
+  · subst hx
+    simp [zero_dotProduct]
+  · have h := two_mul_hammingDist_hadamardCode hx
+    rw [hammingDist] at h
+    simpa [zero_dotProduct,
+      show ∀ b : Bool, ¬b = 0 ↔ b = true by decide] using h
+
+/-- The inner product is `true` on `2 ^ (k - 1) (2 ^ k - 1)` pairs of `k`-bit strings, in the form
+`2 c + 2 ^ k = 2 ^ k 2 ^ k`. -/
+theorem two_mul_card_dotProduct_eq_true_add_two_pow :
+    2 * #{q : (ι → Bool) × (ι → Bool) | q.1 ⬝ᵥ q.2 = true} + 2 ^ Fintype.card ι =
+      2 ^ Fintype.card ι * 2 ^ Fintype.card ι := by
+  have hrow : #{q : (ι → Bool) × (ι → Bool) | q.1 ⬝ᵥ q.2 = true} =
+      ∑ x : ι → Bool, #{y | x ⬝ᵥ y = true} := by
+    rw [card_filter, Fintype.sum_prod_type]
+    exact sum_congr rfl fun x _ => (card_filter _ _).symm
+  have hsum := sum_congr rfl fun x (_ : x ∈ (univ : Finset (ι → Bool))) =>
+    two_mul_card_dotProduct_eq_true_add x
+  rw [sum_add_distrib, ← mul_sum, sum_ite_eq', sum_const, card_univ] at hsum
+  simpa [hrow, Fintype.card_fun] using hsum
 
 /-- **Unique decoding**: a Boolean function within relative distance `δ < 1/4` of the encodings
 of `x` and of `y` forces `x = y`. -/

@@ -24,6 +24,7 @@ including duplicates and payload, are preserved; sorting need not be stable.
 
 ## Main results
 
+* `Cslib.Circuits.Boolean.eval_keyedSortCircuit`: output records match the sorted enriched bodies.
 * `Cslib.Circuits.Boolean.keyedSortCircuit_perm`: preservation of complete records.
 * `Cslib.Circuits.Boolean.monotone_keyedSortCircuit` and
   `Cslib.Circuits.Boolean.antitone_keyedSortCircuit`: recomputed output keys are sorted.

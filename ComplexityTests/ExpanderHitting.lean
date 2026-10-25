@@ -89,35 +89,4 @@ example (t : ℕ) :
   simpa [spectralExpansion_completeTwo] using completeTwo.sq_expect_mul_walk_pow_sub_le
     (t + 1) (fun v => if v = 0 then 1 else 0) (fun v => if v = 0 then 1 else 0)
 
-/--
-info: 'Cslib.RotationMap.expect_prod_walkAt' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.RotationMap.expect_prod_walkAt
-/--
-info: 'Cslib.RotationMap.expect_ite_mem_walk_sq_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.RotationMap.expect_ite_mem_walk_sq_le
-/--
-info: 'Cslib.RotationMap.dens_filter_forall_walkAt_mem_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.RotationMap.dens_filter_forall_walkAt_mem_le
-/--
-info: 'Cslib.RotationMap.dens_filter_forall_walkAt_mem_le_pow' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.RotationMap.dens_filter_forall_walkAt_mem_le_pow
-/--
-info: 'Cslib.RotationMap.dens_filter_forall_walkAt_notMem_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.RotationMap.dens_filter_forall_walkAt_notMem_le
-
 end ComplexityTests.ExpanderHitting

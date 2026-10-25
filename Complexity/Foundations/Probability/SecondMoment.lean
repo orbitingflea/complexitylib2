@@ -13,6 +13,7 @@ public import Mathlib.Logic.Function.DependsOn
 public import Mathlib.MeasureTheory.Constructions.Pi
 public import Mathlib.Probability.Independence.Basic
 public import Mathlib.Probability.Moments.Variance
+import Mathlib.Data.Set.Card
 import Mathlib.Probability.Moments.Covariance
 
 /-!
@@ -37,6 +38,9 @@ measures, functions of disjoint sets of coordinates are independent
 
 ## Main results
 
+* `ProbabilityTheory.ncard_eq_sum_indicator`: the number of events that occur is the sum of their
+  indicators.
+* `ProbabilityTheory.ncard_lt_of_not_le_abs`: deviation bound on the number of events that occur.
 * `ProbabilityTheory.variance_sum_indicator_le`: the variance of a count of events with a
   dependency relation.
 * `ProbabilityTheory.measureReal_le_abs_sum_indicator_sub_le`: the corresponding deviation bound.
@@ -54,7 +58,23 @@ namespace ProbabilityTheory
 
 section General
 
-variable {Ω κ : Type*} [MeasurableSpace Ω] {P : Measure Ω} [IsProbabilityMeasure P]
+variable {Ω κ : Type*}
+
+/-- The number of events that occur is the sum of their indicators. -/
+theorem ncard_eq_sum_indicator [Fintype κ] (A : κ → Set Ω) (ω : Ω) :
+    ({k | ω ∈ A k}.ncard : ℝ) = ∑ k, (A k).indicator (1 : Ω → ℝ) ω := by
+  classical
+  simp only [Set.indicator_apply, Pi.one_apply]
+  rw [Finset.sum_boole, ← Set.ncard_coe_finset, Finset.coe_filter_univ]
+
+/-- Outside the event that the number of events that occur deviates from `m` by at least `c`,
+this number is below `m + c`. -/
+theorem ncard_lt_of_not_le_abs [Fintype κ] {A : κ → Set Ω} {ω : Ω} {m c : ℝ}
+    (h : ¬c ≤ |∑ k, (A k).indicator (1 : Ω → ℝ) ω - m|) : ({k | ω ∈ A k}.ncard : ℝ) < m + c := by
+  rw [ncard_eq_sum_indicator]
+  linarith [le_abs_self (∑ k, (A k).indicator (1 : Ω → ℝ) ω - m), not_le.mp h]
+
+variable [MeasurableSpace Ω] {P : Measure Ω} [IsProbabilityMeasure P]
 
 /-- The unit indicator of a measurable set is square integrable under a finite measure. -/
 private theorem memLp_indicator_one {s : Set Ω} (hs : MeasurableSet s) :

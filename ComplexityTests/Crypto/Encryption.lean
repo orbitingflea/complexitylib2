@@ -70,18 +70,4 @@ theorem not_indCPA : ¬ INDCPA keyGen encrypt := by
   rw [hone] at hnegligible
   exact not_negligible_const one_ne_zero hnegligible
 
-/--
-info: 'Cslib.Crypto.Encryption.isPPTOn_game' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.Encryption.isPPTOn_game
-
-/--
-info: 'ComplexityTests.Crypto.Encryption.not_indCPA' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms ComplexityTests.Crypto.Encryption.not_indCPA
-
 end ComplexityTests.Crypto.Encryption

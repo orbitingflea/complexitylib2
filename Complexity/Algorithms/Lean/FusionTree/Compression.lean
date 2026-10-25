@@ -21,6 +21,8 @@ subsequent correction needed to recover full-key predecessor ranks.
 
 * `approximateSketch_lt_iff_projectBits`: approximate and perfect sketches give the
   same strict comparisons on every pair of inputs.
+* `exists_compression`: existence of collision-free compression parameters preserving
+  all comparisons.
 
 ## References
 

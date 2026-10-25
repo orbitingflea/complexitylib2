@@ -142,29 +142,4 @@ example : ∃ bound, ∀ input (cfg : Cfg 0 Bool Bool input), (mixed.actions cfg
 
 example : (mixed.branches 2 mixedInitial).Nonempty := mixed_halts.branches_nonempty
 
-/--
-info: 'Turing.MultiTapeCTM.mem_branches_iff' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeCTM.mem_branches_iff
-/--
-info: 'Turing.MultiTapeCTM.HaltsWithin.branches_eq' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeCTM.HaltsWithin.branches_eq
-/--
-info: 'Turing.MultiTapeCTM.padCertificate_bijOn' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeCTM.padCertificate_bijOn
-/--
-info: 'Turing.MultiTapeCTM.certificateCounts_eq' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeCTM.certificateCounts_eq
-
 end ComplexityTests.CountingBranches

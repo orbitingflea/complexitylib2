@@ -157,67 +157,11 @@ info: 'Cslib.Logic.PL.CNF.derives_iff_exists_isProof' depends on axioms: [propex
 #print axioms Cslib.Logic.PL.CNF.derives_iff_exists_isProof
 
 /--
-info: 'Cslib.Logic.PL.CNF.IsProof.restrict' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.PL.CNF.IsProof.restrict
-
-/--
-info: 'Cslib.Logic.PL.CNF.IsProof.lift' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.PL.CNF.IsProof.lift
-
-/--
-info: 'Cslib.Logic.PL.CNF.IsProof.restrictBy' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.PL.CNF.IsProof.restrictBy
-
-/--
-info: 'Cslib.Logic.PL.CNF.RefutableInWidth.of_restrict' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.PL.CNF.RefutableInWidth.of_restrict
-
-/--
-info: 'Cslib.Logic.PL.CNF.RefutableInWidth.of_refutableInSize' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.PL.CNF.RefutableInWidth.of_refutableInSize
-
-/--
-info: 'Cslib.Logic.PL.CNF.exists_refutableInWidth_le_of_refutableInSize' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.PL.CNF.exists_refutableInWidth_le_of_refutableInSize
-
-/--
-info: 'Cslib.Logic.PL.CNF.RefutableInWidth.of_derivation' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.PL.CNF.RefutableInWidth.of_derivation
-
-/--
 info: 'Cslib.Logic.PL.CNF.Derivation.findsFalsifiedClause_toDecisionTree' depends on axioms:
 [propext, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Logic.PL.CNF.Derivation.findsFalsifiedClause_toDecisionTree
-
-/--
-info: 'Cslib.DecisionTree.FindsFalsifiedClause.exists_derivation' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.DecisionTree.FindsFalsifiedClause.exists_derivation
 
 /--
 info: 'Cslib.Logic.PL.CNF.derives_iff_nonempty_derivation' does not depend on any axioms

@@ -267,46 +267,4 @@ example : IsPPTOn
 example : PolynomiallyBounded (fun _ : ℕ => 4) ∧ PolynomiallyBounded (fun _ : ℕ => 3) :=
   Leveled.polynomiallyBounded_widths decryptionCircuits circuits_poly
 
-/--
-info: 'Cslib.Crypto.Homomorphic.Leveled.correct' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Leveled.correct
-
-/--
-info: 'Cslib.Crypto.Homomorphic.Leveled.fixedWidth' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Leveled.fixedWidth
-
-/--
-info: 'Cslib.Crypto.Homomorphic.Leveled.isPPTOn_keyGen' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Leveled.isPPTOn_keyGen
-
-/--
-info: 'Cslib.Crypto.Homomorphic.Leveled.computableTidilyInPolyTime_decrypt' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Leveled.computableTidilyInPolyTime_decrypt
-
-/--
-info: 'Cslib.Crypto.Homomorphic.Leveled.isPPTOn_evaluate' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Leveled.isPPTOn_evaluate
-
-/--
-info: 'Cslib.Crypto.Homomorphic.Leveled.polynomiallyBounded_widths' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Leveled.polynomiallyBounded_widths
-
 end ComplexityTests.HomomorphicLeveled

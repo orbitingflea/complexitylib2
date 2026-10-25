@@ -6,8 +6,8 @@ Authors: Samuel Schlesinger
 
 import Complexity.Foundations.BooleanAnalysis.FriedgutJunta
 
-/-! Instances, non-vacuity witnesses and axiom guards for the Kahn–Kalai–Linial theorem,
-Talagrand's inequality and Friedgut's junta theorem. -/
+/-! Instances and non-vacuity witnesses for the Kahn–Kalai–Linial theorem, Talagrand's
+inequality and Friedgut's junta theorem. -/
 
 namespace ComplexityTests.KahnKalaiLinialFriedgut
 
@@ -94,59 +94,5 @@ example (f : (ι → Bool) → Bool) :
   refine ⟨g, hg, hfg.trans_eq ?_⟩
   rw [expect_sub_expect_sq_eq_sum_fourierCoeff_sq]
   simp only [subset_empty]
-
-/--
-info: 'Cslib.BitString.sum_filter_mem_one_third_pow_mul_fourierCoeff_sq_le' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.BitString.sum_filter_mem_one_third_pow_mul_fourierCoeff_sq_le
-
-/--
-info: 'Cslib.BitString.expect_sub_expect_sq_mul_log_inv_le_six_mul_totalInfluence' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.BitString.expect_sub_expect_sq_mul_log_inv_le_six_mul_totalInfluence
-
-/--
-info: 'Cslib.BitString.exists_expect_sub_expect_sq_mul_log_card_div_le_influence' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.BitString.exists_expect_sub_expect_sq_mul_log_card_div_le_influence
-
-/--
-info: 'Cslib.BitString.expect_sub_expect_sq_le_six_mul_sum_influence_div_log' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.BitString.expect_sub_expect_sq_le_six_mul_sum_influence_div_log
-
-/--
-info: 'Cslib.BitString.expect_sub_expect_sq_le_seven_mul_sum_influence_div_one_add_log' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.BitString.expect_sub_expect_sq_le_seven_mul_sum_influence_div_one_add_log
-
-/--
-info: 'Cslib.BitString.exists_dependsOn_hammingDist_div_le_sum_not_subset_fourierCoeff_sq' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.BitString.exists_dependsOn_hammingDist_div_le_sum_not_subset_fourierCoeff_sq
-
-/--
-info: 'Cslib.BitString.sum_filter_not_subset_fourierCoeff_sq_le' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.BitString.sum_filter_not_subset_fourierCoeff_sq_le
-
-/--
-info: 'Cslib.BitString.exists_dependsOn_hammingDist_div_le_of_totalInfluence_le' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.BitString.exists_dependsOn_hammingDist_div_le_of_totalInfluence_le
-
-/--
-info: 'Cslib.BitString.exists_card_le_three_mul_two_rpow_dependsOn_hammingDist_div_le' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.BitString.exists_card_le_three_mul_two_rpow_dependsOn_hammingDist_div_le
 
 end ComplexityTests.KahnKalaiLinialFriedgut

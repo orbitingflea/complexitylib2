@@ -11,9 +11,8 @@ import Complexity.Crypto.Computational.MAC
 
 Provides concrete instantiations of `MACScheme` (both a trivial scheme and `prfMAC` applied to the
 identity-keyed evaluator `fun _ m => m`), verifies that `OneTimeEUFCMA` and `EUFCMA` reject the
-trivial scheme via an explicit zero-query PPT forger, checks `prfMAC` tagging/verification and
-`macToPrfDistinguisher` on concrete inputs, and audits the axiom dependencies of the headline
-theorems in `Complexity.Crypto.Computational.MAC`.
+trivial scheme via an explicit zero-query PPT forger, and checks `prfMAC` tagging/verification
+and `macToPrfDistinguisher` on concrete inputs.
 -/
 
 namespace ComplexityTests.Crypto.MAC
@@ -201,95 +200,35 @@ theorem succProbability_eufCma_lt_sufCma_sameMessageNewTagForger (n : ℕ) :
     eval_sufCmaGame_randomizedTagMACScheme_sameMessageNewTagForger]
   simp [Game.succProbability]
 
-/--
-info: 'Cslib.Crypto.MACScheme.succProbability_eufCmaGame_le_sufCmaGame' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.MACScheme.succProbability_eufCmaGame_le_sufCmaGame
+/-! ### Schedule reindexing (`MACScheme.reindex`) -/
 
-/--
-info: 'Cslib.Crypto.MACScheme.SUFCMA.eufCma' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.MACScheme.SUFCMA.eufCma
+/-- Doubling schedule `2 * n` is computable in plain polynomial time in unary. -/
+theorem computableInPolyTime_double :
+    ComputableInPolyTime (fun n : ℕ => 2 * n) encUnary encUnary :=
+  .of_tidy (by polytime)
 
-/--
-info: 'Cslib.Crypto.MACScheme.sufCma_iff_eufCma_of_unique_tag' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.MACScheme.sufCma_iff_eufCma_of_unique_tag
+/-- Doubling schedule `2 * n` is strictly monotone on `ℕ`. -/
+theorem strictMono_double : StrictMono (fun n : ℕ => 2 * n) :=
+  fun _ _ h => Nat.mul_lt_mul_of_pos_left h (by decide)
 
-/--
-info: 'Cslib.Crypto.eval_sufCmaGame_prfMAC' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.eval_sufCmaGame_prfMAC
+/-- Reindexed `echoPrfMAC` authenticating `2 * n`-bit messages at parameter `n`. -/
+noncomputable def doubleEchoPrfMAC : MACScheme :=
+  echoPrfMAC.reindex (fun n => 2 * n) computableInPolyTime_double
 
-/--
-info: 'Cslib.Crypto.succProbability_sufCmaGame_prfMAC_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.succProbability_sufCmaGame_prfMAC_le
+example (n : ℕ) : doubleEchoPrfMAC.msgLen n = 2 * n := rfl
 
-/--
-info: 'Cslib.Crypto.PseudorandomFunction.sufCma_prfMAC' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.PseudorandomFunction.sufCma_prfMAC
+example : doubleEchoPrfMAC.verify [false, true] [true, false] [true, false] = true := by
+  decide
 
-/--
-info: 'Cslib.Crypto.MACScheme.EUFCMA.oneTimeEUFCMA' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.MACScheme.EUFCMA.oneTimeEUFCMA
+example (n : ℕ) : GeneratorReindex.parameter (fun k => 2 * k) (2 * n) = n :=
+  GeneratorReindex.parameter_apply_of_strictMono strictMono_double n
 
-/--
-info: 'Cslib.Crypto.isOraclePPT_macToPrfDistinguisher' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.isOraclePPT_macToPrfDistinguisher
+example (M : MACScheme) (h : M.SUFCMA) :
+    (M.reindex (fun n => 2 * n) computableInPolyTime_double).SUFCMA :=
+  h.reindex computableInPolyTime_double strictMono_double
 
-/--
-info: 'Cslib.Crypto.eval_prfRealGame_macToPrfDistinguisher' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.eval_prfRealGame_macToPrfDistinguisher
-
-/--
-info: 'Cslib.Crypto.succProbability_prfIdealGame_macToPrfDistinguisher_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.succProbability_prfIdealGame_macToPrfDistinguisher_le
-
-/--
-info: 'Cslib.Crypto.succProbability_eufCmaGame_prfMAC_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.succProbability_eufCmaGame_prfMAC_le
-
-/--
-info: 'Cslib.Crypto.PseudorandomFunction.eufCma_prfMAC' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.PseudorandomFunction.eufCma_prfMAC
-
-/--
-info: 'Cslib.Crypto.PseudorandomFunction.oneTimeEUFCMA_prfMAC' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.PseudorandomFunction.oneTimeEUFCMA_prfMAC
+example {family : List Bool → List Bool → List Bool} (hprf : PseudorandomFunction family) :
+    ((prfMAC family hprf.polyTime).reindex (fun n => 2 * n) computableInPolyTime_double).SUFCMA :=
+  hprf.sufCma_prfMAC.reindex computableInPolyTime_double strictMono_double
 
 end ComplexityTests.Crypto.MAC

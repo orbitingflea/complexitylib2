@@ -434,12 +434,6 @@ private theorem isAlternatingVerifier_verifier (k : ℕ) :
 /-! ### Polynomial time -/
 
 open ComputableTidilyInPolyTime in
-/-- The binary value of a word is polynomial-time, in binary. -/
-private theorem computableTidilyInPolyTime_binaryValue :
-    ComputableTidilyInPolyTime BitString.binaryValue encBits encNat :=
-  bitsBinaryValue
-
-open ComputableTidilyInPolyTime in
 /-- The verifier for Kannan's language is polynomial-time. -/
 private theorem computableTidilyInPolyTime_verifier (k : ℕ) :
     ComputableTidilyInPolyTime (verifier k) (encPair encBits encBits) encBool := by
@@ -480,16 +474,15 @@ private theorem computableTidilyInPolyTime_verifier (k : ℕ) :
     bitsDropWithInput (snd _ _) (by fun_prop)
   have hval : ComputableTidilyInPolyTime (fun p : List Bool × List Bool =>
       MCSP.tableValue (table k p.1.length p.2) (p.1.take (arity k p.1.length)))
-      (encPair encBits encBits) encBool := by
-    unfold MCSP.tableValue
-    exact bitsGetDWithInput hT (bitsBoundedBinaryValueWithInput (length_bits.comp hT)
-      (bitsReverse.comp (bitsTakeWithInput (fst _ _) hm))) false
+      (encPair encBits encBits) encBool :=
+    MCSP.computableInPolyTime_tableValue.tidy.comp
+      (hT.prod (bitsTakeWithInput (fst _ _) hm))
   unfold verifier
   have hnotVerifier := bool_not.comp (MCSP.computableInPolyTime_tableVerifier.tidy.comp
     ((hT.prod hs).prod hc))
   have hlt := bool_not.comp (binary_lt'
-    (computableTidilyInPolyTime_binaryValue.comp hT')
-    (computableTidilyInPolyTime_binaryValue.comp hT))
+    (bitsBinaryValue.comp hT')
+    (bitsBinaryValue.comp hT))
   have hverifier' := MCSP.computableInPolyTime_tableVerifier.tidy.comp ((hT'.prod hs).prod hc')
   have hor := bool_or.comp (hlt.prod hverifier')
   have h := bool_and' (bool_and' hnotVerifier hor) hval
@@ -507,14 +500,15 @@ end Kannan
 
 open Kannan in
 /-- **Kannan's theorem**: for every `k`, some language in `Σ₂` has no circuits of size
-`O(n ^ k)`, that is, lies in no class `SIZE (c (n + 1) ^ k)` [Kannan][Kannan1982]. If some
+`O(n ^ k)`, that is, lies in no class `SIZE (c (n + 1) ^ k)` [Kannan][Kannan1982],
+[Arora and Barak, Chapter 6][AroraBarak09]. If some
 language in `P/poly` has preimage `SAT` under `encCNF`, the Karp–Lipton theorem collapses the
 polynomial hierarchy to `Σ₂` and Kannan's language, in `Σ₃`, is in `Σ₂`; otherwise the encodings
 of the satisfiable formulas, in `NP ⊆ Σ₂`, have no circuits of polynomial size. -/
 theorem exists_mem_SigmaP_two_notMem_SIZE (k : ℕ) :
     ∃ L : Language Bool, (L : Set (List Bool)) ∈ SigmaP 2 encBits ∧
       ∀ c, L ∉ SIZE fun n => c * (n + 1) ^ k := by
-  by_cases hSAT : ∃ L ∈ PPoly, ∀ φ, φ ∈ SAT ↔ encCNF φ ∈ L
+  by_cases hSAT : SAT ∈ PPolyOn encCNF
   · refine ⟨language k, ?_, language_notMem_SIZE k⟩
     rw [← PH_eq_SigmaP_two_of_SAT hSAT]
     exact SigmaP_subset_PH 3 (language_mem_SigmaP_three k)

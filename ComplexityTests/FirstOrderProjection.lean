@@ -100,66 +100,10 @@ theorem not_twoBitConjunction :
       simp [InputLiteral.Realize, RelMap] at h₀ h₁ h₂
 
 /--
-info: 'Cslib.Logic.FO.ProjectionFormula.exists_literal' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms ProjectionFormula.exists_literal
-
-/--
-info: 'Cslib.Logic.FO.ProjectionFormula.existsUnique_case' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms ProjectionFormula.existsUnique_case
-
-/--
-info: 'Cslib.Logic.FO.ProjectionFormula.realize_iff_exists_case' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms ProjectionFormula.realize_iff_exists_case
-
-/--
-info: 'Cslib.Logic.FO.Projection.realize_onFormula' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Projection.realize_onFormula
-
-/--
 info: 'Cslib.Logic.FO.Projection.modelEquiv' depends on axioms:
 [propext, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Projection.modelEquiv
-
-/--
-info: 'Cslib.Logic.FO.Projection.compEquiv' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Projection.compEquiv
-
-/--
-info: 'Cslib.Logic.FO.Projection.IsQF.comp' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Projection.IsQF.comp
-
-/--
-info: 'Cslib.Logic.FO.Projection.realize_offDiagonalComplement' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Projection.realize_offDiagonalComplement
-
-/--
-info: 'ComplexityTests.FirstOrderProjection.not_twoBitConjunction' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms not_twoBitConjunction
 
 end ComplexityTests.FirstOrderProjection

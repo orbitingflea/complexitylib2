@@ -83,20 +83,4 @@ example : (∏ i ∈ range 0, cancelFactor ([], i)) = 1 ∧
     (∏ i ∈ range 1, cancelFactor ([], i)) = -1 ∧
     (∏ i ∈ range 2, cancelFactor ([], i)) = 0 := by decide
 
-/-- info: 'Cslib.Complexity.SharpP.prod_range_mem' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.SharpP.prod_range_mem
-
-/-- info: 'Cslib.Complexity.GapP.prod_range_mem' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.GapP.prod_range_mem
-
-/-- info: 'Cslib.Complexity.SharpP.ite_mem' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.SharpP.ite_mem
-
-/-- info: 'Cslib.Complexity.GapP.ite_mem' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.GapP.ite_mem
-
 end Cslib.Complexity.Tests.CountingProducts

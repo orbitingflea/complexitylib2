@@ -9,8 +9,7 @@ import Complexity.Computability.Complexity.Classes.Ladner
 /-! Words by index, padding and its inverse on boundary words, capped powers, decoding formulas,
 short satisfiability by certificates, concrete members and non-members of Ladner's language, a
 concrete machine agreeing and disagreeing with it, the padding reduction and the rounds of the
-self-reduction on concrete formulas, the unconditional form, and the axioms of the polynomial-time
-certificates, the two holes and Ladner's theorem. -/
+self-reduction on concrete formulas, and the unconditional form. -/
 
 namespace ComplexityTests.Ladner
 
@@ -175,70 +174,5 @@ example : SATH ∈ NP encBits ∧ (SATH ∈ P encBits → SAT ∈ P encCNF) ∧
 example (h : P encBits ≠ NP encBits) :
     ∃ L : Set (List Bool), L ∈ NP encBits ∧ L ∉ P encBits ∧ ¬NPComplete encBits L :=
   exists_NP_not_P_not_npComplete h
-
-/-! ### Axioms -/
-
-/--
-info: 'Cslib.Complexity.Ladner.computableInPolyTime_H' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.Ladner.computableInPolyTime_H
-
-/--
-info: 'Cslib.Complexity.Ladner.SATH_mem_NP' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.Ladner.SATH_mem_NP
-
-/--
-info: 'Cslib.Complexity.Ladner.exists_H_le_of_mem_P' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.Ladner.exists_H_le_of_mem_P
-
-/--
-info: 'Cslib.Complexity.Ladner.SAT_mem_P_of_SATH_mem_P' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.Ladner.SAT_mem_P_of_SATH_mem_P
-
-/--
-info: 'Cslib.Complexity.Ladner.SAT_mem_P_of_npHard_SATH' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.Ladner.SAT_mem_P_of_npHard_SATH
-
-/--
-info: 'Cslib.Complexity.Ladner.SAT_mem_P_of_reducible_of_tendsto' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.Ladner.SAT_mem_P_of_reducible_of_tendsto
-
-/--
-info: 'Cslib.Complexity.Ladner.P_eq_NP_of_SATH_mem_P' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.Ladner.P_eq_NP_of_SATH_mem_P
-
-/--
-info: 'Cslib.Complexity.Ladner.P_eq_NP_of_npComplete_SATH' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.Ladner.P_eq_NP_of_npComplete_SATH
-
-/--
-info: 'Cslib.Complexity.Ladner.exists_NP_not_P_not_npComplete' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.Ladner.exists_NP_not_P_not_npComplete
 
 end ComplexityTests.Ladner

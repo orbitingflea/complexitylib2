@@ -12,7 +12,7 @@ import Complexity.Logics.Propositional.Resolution.TseitinExpander
 
 Tseitin formulas on a triangle and on a multigraph with a self-loop and parallel edges: incidence,
 satisfiability by total charge, connectivity, and the width lower bound on the triangle;
-satisfiability of the hypotheses of the expander bounds; and the axioms of the headline theorems.
+and satisfiability of the hypotheses of the expander bounds.
 -/
 
 namespace ComplexityTests.ProofComplexity.Tseitin
@@ -83,70 +83,5 @@ example : Fintype.card (Fin 120) + 2 ≤
   simp only [Fintype.card_fin]
   push_cast
   linarith
-
-/-! ### Axioms -/
-
-/--
-info: 'Cslib.Logic.PL.CNF.not_satisfiable_tseitinFormula' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.PL.CNF.not_satisfiable_tseitinFormula
-
-/--
-info: 'Cslib.Logic.PL.CNF.satisfiable_tseitinFormula_iff' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.PL.CNF.satisfiable_tseitinFormula_iff
-
-/--
-info: 'Cslib.Logic.PL.Tseitin.exists_card_edgeCut_le_width' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.PL.Tseitin.exists_card_edgeCut_le_width
-
-/--
-info: 'Cslib.Logic.PL.Tseitin.minBalancedCut_le_of_refutableInWidth' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.PL.Tseitin.minBalancedCut_le_of_refutableInWidth
-
-/--
-info: 'Cslib.Logic.PL.Tseitin.exp_le_of_refutableInSize' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.PL.Tseitin.exp_le_of_refutableInSize
-
-/--
-info: 'Cslib.Logic.PL.CNF.exp_le_of_refutableInSize' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.PL.CNF.exp_le_of_refutableInSize
-
-/--
-info: 'Cslib.Logic.PL.Tseitin.edgeExpansion_mul_card_div_three_le_of_refutableInWidth' depends on
-axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.PL.Tseitin.edgeExpansion_mul_card_div_three_le_of_refutableInWidth
-
-/--
-info: 'Cslib.Logic.PL.Tseitin.exp_edgeExpansion_le_of_refutableInSize' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.PL.Tseitin.exp_edgeExpansion_le_of_refutableInSize
-
-/--
-info: 'Cslib.Logic.PL.CNF.exists_forall_refutableInSize_exp_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.PL.CNF.exists_forall_refutableInSize_exp_le
 
 end ComplexityTests.ProofComplexity.Tseitin

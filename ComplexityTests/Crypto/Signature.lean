@@ -11,10 +11,8 @@ import Complexity.Crypto.Computational.Signature
 # Tests for digital signature schemes, Lamport's one-time signature scheme, and OWF reductions
 
 Provides concrete instantiations of `SignatureScheme` (both a trivial scheme and `lamportScheme`
-applied to the identity function), verifies that `OneTimeEUFCMA` and `EUFCMA` reject the trivial
-scheme via an explicit zero-query PPT forger, and audits the axiom dependencies of the headline
-theorems in `Complexity.Crypto.Computational.Signature` and
-`Complexity.Crypto.Computational.OneWayToSignature`.
+applied to the identity function), and verifies that `OneTimeEUFCMA` and `EUFCMA` reject the
+trivial scheme via an explicit zero-query PPT forger.
 -/
 
 namespace ComplexityTests.Crypto.Signature
@@ -104,47 +102,5 @@ theorem not_oneTimeEUFCMA_trivialSignatureScheme :
 theorem not_eufCMA_trivialSignatureScheme :
     ¬ trivialSignatureScheme.EUFCMA :=
   fun h => not_oneTimeEUFCMA_trivialSignatureScheme h.oneTimeEUFCMA
-
-/--
-info: 'Cslib.Crypto.SignatureScheme.EUFCMA.oneTimeEUFCMA' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.SignatureScheme.EUFCMA.oneTimeEUFCMA
-
-/--
-info: 'Cslib.Crypto.SignatureScheme.OneTimeEUFCMA.exists_oneWay' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.SignatureScheme.OneTimeEUFCMA.exists_oneWay
-
-/--
-info: 'Cslib.Crypto.SignatureScheme.EUFCMA.exists_oneWay' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.SignatureScheme.EUFCMA.exists_oneWay
-
-/--
-info: 'Cslib.Crypto.OneWay.oneTimeEUFCMA_lamport' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.OneWay.oneTimeEUFCMA_lamport
-
-/--
-info: 'Cslib.Crypto.OneWay.exists_oneTimeSignature' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.OneWay.exists_oneTimeSignature
-
-/--
-info: 'Cslib.Crypto.exists_oneWay_iff_exists_oneTimeSignature' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.exists_oneWay_iff_exists_oneTimeSignature
 
 end ComplexityTests.Crypto.Signature

@@ -41,13 +41,11 @@ of `x ++ r` of the same size up to two gates.
 
 * `Cslib.Circuits.Boolean.PPoly.exists_of_polyTime`: the instances on which a Boolean function
   computable in polynomial time is true are the preimage of a language in `P/poly`.
-* `Cslib.Circuits.Boolean.PPoly.exists_of_mem_P`: a problem in `P`, with any encoding of its
-  instances, is the preimage of a language in `P/poly`.
-* `Cslib.Circuits.Boolean.PPoly.of_mem_P`: `P ⊆ P/poly` for languages over `Bool`.
-* `Cslib.Circuits.Boolean.PPoly.exists_of_mem_BPP`, `PPoly.exists_of_mem_RP`: the same for `BPP`
-  and `RP`, with any encoding.
-* `Cslib.Circuits.Boolean.PPoly.of_mem_BPP`, `PPoly.of_mem_RP`, `PPoly.of_mem_coRP`:
-  `BPP, RP, coRP ⊆ P/poly` for languages over `Bool`.
+* `Cslib.Circuits.Boolean.P_subset_PPolyOn`: `P ⊆ P/poly`, for problems with any encoding of their
+  instances.
+* `Cslib.Circuits.Boolean.BPP_subset_PPolyOn`, `Cslib.Circuits.Boolean.RP_subset_PPolyOn`,
+  `Cslib.Circuits.Boolean.coRP_subset_PPolyOn`: `BPP, RP, coRP ⊆ P/poly`, for problems with any
+  encoding of their instances.
 
 ## References
 
@@ -81,18 +79,11 @@ theorem PPoly.exists_of_polyTime {α : Type*} {enc : α ↪ List Bool} {f : α �
 
 /-- **P ⊆ P/poly.** A problem in `P`, with any encoding `enc` of its instances, is the preimage
 under `enc` of a language in `P/poly`. -/
-theorem PPoly.exists_of_mem_P {α : Type*} {enc : α ↪ List Bool} {A : Set α}
-    (hA : A ∈ Complexity.P enc) : ∃ L ∈ PPoly, ∀ a, a ∈ A ↔ enc a ∈ L := by
-  obtain ⟨f, hf, hA⟩ := hA
+theorem P_subset_PPolyOn {α : Type*} {enc : α ↪ List Bool} :
+    Complexity.P enc ⊆ PPolyOn enc := by
+  rintro A ⟨f, hf, hA⟩
   obtain ⟨L, hL, h⟩ := PPoly.exists_of_polyTime hf
   exact ⟨L, hL, fun a => (hA a).trans (h a)⟩
-
-/-- **P ⊆ P/poly** for languages over `Bool`, with words encoded as themselves. -/
-theorem PPoly.of_mem_P {L : Language Bool} (hL : (L : Set (List Bool)) ∈ Complexity.P encBits) :
-    L ∈ PPoly := by
-  obtain ⟨L', hL', h⟩ := PPoly.exists_of_mem_P hL
-  have : L = L' := Language.ext fun w => h w
-  exact this ▸ hL'
 
 /-! ### Randomised classes -/
 
@@ -181,9 +172,8 @@ theorem verifier_eq_true_iff (hVL : ∀ y, V y = true ↔ encPair enc encBits y 
 
 /-- **BPP ⊆ P/poly.** A problem in `BPP`, with any encoding `enc` of its instances, is the
 preimage under `enc` of a language in `P/poly`. -/
-theorem PPoly.exists_of_mem_BPP {A : Set α} (hA : A ∈ Complexity.BPP enc) :
-    ∃ L ∈ PPoly, ∀ a, a ∈ A ↔ enc a ∈ L := by
-  obtain ⟨p, V, hV, hdec⟩ := hA
+theorem BPP_subset_PPolyOn : Complexity.BPP enc ⊆ PPolyOn enc := by
+  rintro A ⟨p, V, hV, hdec⟩
   obtain ⟨L', hL', hVL⟩ := PPoly.exists_of_polyTime hV
   obtain ⟨L, hL, hLg⟩ := PPoly.exists_of_boundedError (fun n => framedSlice L' n (p.eval n))
     (polynomiallyBounded_complexity_framedSlice hL' (by fun_prop)) (encodes enc)
@@ -203,9 +193,8 @@ theorem PPoly.exists_of_mem_BPP {A : Set α} (hA : A ∈ Complexity.BPP enc) :
 
 /-- **RP ⊆ P/poly.** A problem in `RP`, with any encoding `enc` of its instances, is the preimage
 under `enc` of a language in `P/poly`. -/
-theorem PPoly.exists_of_mem_RP {A : Set α} (hA : A ∈ Complexity.RP enc) :
-    ∃ L ∈ PPoly, ∀ a, a ∈ A ↔ enc a ∈ L := by
-  obtain ⟨p, V, hV, hdec⟩ := hA
+theorem RP_subset_PPolyOn : Complexity.RP enc ⊆ PPolyOn enc := by
+  rintro A ⟨p, V, hV, hdec⟩
   obtain ⟨L', hL', hVL⟩ := PPoly.exists_of_polyTime hV
   obtain ⟨L, hL, hLg⟩ := PPoly.exists_of_oneSidedError (fun n => framedSlice L' n (p.eval n))
     (polynomiallyBounded_complexity_framedSlice hL' (by fun_prop)) (encodes enc)
@@ -223,24 +212,11 @@ theorem PPoly.exists_of_mem_RP {A : Set α} (hA : A ∈ Complexity.RP enc) :
       exact h r
   exact ⟨L, hL, mem_iff_of_slice_eq_encodesMember hLg⟩
 
+/-- **coRP ⊆ P/poly.** A problem in `coRP`, with any encoding `enc` of its instances, is the
+preimage under `enc` of a language in `P/poly`. -/
+theorem coRP_subset_PPolyOn : Complexity.coRP enc ⊆ PPolyOn enc :=
+  fun _ hA => by simpa using PPolyOn.compl (RP_subset_PPolyOn hA)
+
 end Encoded
-
-/-- **BPP ⊆ P/poly** for languages over `Bool`, with words encoded as themselves. -/
-theorem PPoly.of_mem_BPP {A : Language Bool}
-    (hA : (A : Set (List Bool)) ∈ Complexity.BPP encBits) : A ∈ PPoly := by
-  obtain ⟨L, hL, h⟩ := PPoly.exists_of_mem_BPP hA
-  exact (Language.ext fun w => h w : A = L) ▸ hL
-
-/-- **RP ⊆ P/poly** for languages over `Bool`, with words encoded as themselves. -/
-theorem PPoly.of_mem_RP {A : Language Bool}
-    (hA : (A : Set (List Bool)) ∈ Complexity.RP encBits) : A ∈ PPoly := by
-  obtain ⟨L, hL, h⟩ := PPoly.exists_of_mem_RP hA
-  exact (Language.ext fun w => h w : A = L) ▸ hL
-
-/-- **coRP ⊆ P/poly** for languages over `Bool`. -/
-theorem PPoly.of_mem_coRP {A : Language Bool}
-    (hA : (A : Set (List Bool)) ∈ Complexity.coRP encBits) : A ∈ PPoly := by
-  have h := PPoly.compl (PPoly.of_mem_RP (A := Aᶜ) hA)
-  rwa [compl_compl] at h
 
 end Cslib.Circuits.Boolean

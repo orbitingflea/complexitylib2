@@ -33,6 +33,8 @@ complete Boolean tables on the eight-symbol alphabet `Fin 3 → Bool`.
 ## Main results
 
 * `Cslib.PCP.Encoded.Graph.isPolyTime_ofCompactCNF`: charge renaming, enumeration, and truth tables.
+* `Cslib.PCP.Encoded.Graph.toGraph_ofCNF`, `Cslib.PCP.Encoded.Graph.unsatVal_ofCNF`: the graph
+  is the mathematical graph of the formula, with the same unsatisfied value.
 
 ## References
 
@@ -149,7 +151,7 @@ def cnfVertexNumber {m : ℕ} : ℕ ⊕ Fin m → ℕ
   | .inr j => 2 * j.val + 1
 
 /-- The numbering separates all variable vertices and clause vertices. -/
-theorem cnfVertexNumber_injective (m : ℕ) :
+private theorem cnfVertexNumber_injective (m : ℕ) :
     Function.Injective (cnfVertexNumber (m := m)) := by
   intro v w h
   cases v with

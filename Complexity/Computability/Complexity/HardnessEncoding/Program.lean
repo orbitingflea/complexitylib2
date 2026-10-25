@@ -13,7 +13,7 @@ public import Complexity.Computability.Complexity.AffineDisperser.Coordinates
 public import Complexity.Foundations.Data.BitString.Block
 public import Complexity.Foundations.Data.BitString.Enumeration
 import Mathlib.Algebra.CharP.Two
-import Mathlib.FieldTheory.Finite.Basic
+import Complexity.Foundations.FieldTheory.Finite.Basic
 
 /-!
 # The worst-case-to-average-case encoding as a program on bit lists
@@ -217,14 +217,7 @@ private theorem fieldOfBits_fieldInv (hw : 2 ≤ w) (a : List Bool) :
       calc 4 = 2 ^ 2 := by norm_num
         _ ≤ 2 ^ w := Nat.pow_le_pow_right (by norm_num) hw
     omega
-  · refine eq_inv_of_mul_eq_one_left ?_
-    rw [← pow_succ, show 2 ^ w - 2 + 1 = Fintype.card (BinaryField w) - 1 by
-      rw [hq]
-      have : 4 ≤ 2 ^ w := by
-        calc 4 = 2 ^ 2 := by norm_num
-          _ ≤ 2 ^ w := Nat.pow_le_pow_right (by norm_num) hw
-      omega]
-    exact FiniteField.pow_card_sub_one_eq_one x hx
+  · rw [← hq]; exact FiniteField.pow_card_sub_two_eq_inv x hx
 
 /-! ### Correctness -/
 

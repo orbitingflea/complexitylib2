@@ -57,7 +57,7 @@ private theorem card_agree_mul_two {n : ℕ} {x y : BitString n} (hxy : x ≠ y)
   have hv : x + y ≠ 0 := fun h => hxy (by
     have := congrArg (· + y) h
     simpa [add_assoc] using this)
-  have hcount := two_mul_card_dotProduct_eq_true_add (x + y)
+  have hcount := BitString.two_mul_card_dotProduct_eq_true_add (x + y)
   simp only [hv, ↓reduceIte, add_zero, Fintype.card_fin] at hcount
   have hagree : #{r : BitString n | x ⬝ᵥ r = y ⬝ᵥ r} =
       #{r : BitString n | ¬(x + y) ⬝ᵥ r = true} := by
@@ -278,100 +278,5 @@ example (n c : ℕ) {γ : ℝ} (hγ : 0 ≤ γ)
     (2 * γ) ^ 2 * 2 ^ n ≤ 4 ^ c := by
   obtain ⟨μ, hμ, hc⟩ := PublicCoin.ecomplexity_le_iff.mp h
   exact hμ.sq_mul_two_pow_le_four_pow_of_dotProduct hc hγ
-
-/-! ### Axiom guards -/
-
-/--
-info: 'Cslib.Communication.PublicCoin.Solves.exists_distributionalError_le' depends on axioms:
-[propext,
- Classical.choice,
- Quot.sound]
--/
-#guard_msgs in
-#print axioms PublicCoin.Solves.exists_distributionalError_le
-
-/-- info: 'Cslib.Communication.PublicCoin.ecomplexity_le_privateCoin' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms PublicCoin.ecomplexity_le_privateCoin
-
-/-- info: 'Cslib.Communication.PublicCoin.Solves.exists_privateCoin' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms PublicCoin.Solves.exists_privateCoin
-
-/-- info: 'Cslib.Communication.PrivateCoin.ecomplexity_le_add' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms PrivateCoin.ecomplexity_le_add
-
-/-- info: 'Cslib.Communication.PrivateCoin.ecomplexity_le_add_clog' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms PrivateCoin.ecomplexity_le_add_clog
-
-/-- info: 'Cslib.Communication.Protocol.sum_filter_le_mul' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Protocol.sum_filter_le_mul
-
-/--
-info: 'Cslib.Communication.Protocol.two_mul_le_two_pow_mul_discrepancy' depends on axioms:
-[propext,
- Classical.choice,
- Quot.sound]
--/
-#guard_msgs in
-#print axioms Protocol.two_mul_le_two_pow_mul_discrepancy
-
-/--
-info: 'Cslib.Communication.PublicCoin.two_mul_le_two_pow_mul_discrepancy' depends on axioms:
-[propext,
- Classical.choice,
- Quot.sound]
--/
-#guard_msgs in
-#print axioms PublicCoin.two_mul_le_two_pow_mul_discrepancy
-
-/--
-info: 'Cslib.Communication.discrepancy_dotProduct_sq_mul_two_pow_le' depends on axioms:
-[propext,
- Classical.choice,
- Quot.sound]
--/
-#guard_msgs in
-#print axioms discrepancy_dotProduct_sq_mul_two_pow_le
-
-/--
-info: 'Cslib.Communication.PublicCoin.le_two_mul_ecomplexityFun_dotProduct_add_three' depends on
-axioms: [propext,
- Classical.choice,
- Quot.sound]
--/
-#guard_msgs in
-#print axioms PublicCoin.le_two_mul_ecomplexityFun_dotProduct_add_three
-
-/--
-info: 'Cslib.Communication.PrivateCoin.le_two_mul_ecomplexityFun_dotProduct_add_three' depends
-on axioms: [propext,
- Classical.choice,
- Quot.sound]
--/
-#guard_msgs in
-#print axioms PrivateCoin.le_two_mul_ecomplexityFun_dotProduct_add_three
-
-/--
-info: 'Cslib.Communication.PublicCoin.Solves.amplify' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms PublicCoin.Solves.amplify
-
-/--
-info: 'Cslib.Communication.PublicCoin.depth_amplify_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms PublicCoin.depth_amplify_le
 
 end CommunicationComplexity2Tests

@@ -58,20 +58,4 @@ example : ([] : List Bool) ∉ bitGraph encBool count := by
   simp only [length_encPair, List.length_nil] at this
   lia
 
-/--
-info: 'Cslib.Complexity.exists_SharpP_testBit_of_mem_PP' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Complexity.exists_SharpP_testBit_of_mem_PP
-/--
-info: 'Cslib.Complexity.PWithPPOracle_subset_PWithSharpPOracle' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Complexity.PWithPPOracle_subset_PWithSharpPOracle
-/--
-info: 'Cslib.Complexity.PWithPPOracle_eq_PWithSharpPOracle' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Complexity.PWithPPOracle_eq_PWithSharpPOracle
-
 end ComplexityTests.CountingOracleEquivalence

@@ -7,6 +7,7 @@ Authors: Samuel Schlesinger
 -- upstream: local-only (formal abstract library)
 
 import Complexity.Computability.Complexity.Classes.LogSpace.USTCON
+import Complexity.Foundations.Data.Nat.Div
 import Mathlib.Data.List.OfFn
 
 /-! # Transfer of Reingold's theorem along the exact adjacency-matrix encoding -/
@@ -76,8 +77,7 @@ theorem encode_eq (I : Instance) : encode I = Cslib.Complexity.encUSTCON (toInte
     congr 1
     · apply Fin.ext
       change row.val = (row.val * I.vertexCount + col.val) / I.vertexCount
-      rw [Nat.add_comm, Nat.add_mul_div_right _ _ (Fin.pos row),
-        Nat.div_eq_of_lt col.isLt, Nat.zero_add]
+      rw [Nat.mul_add_div_of_lt row.val col.isLt]
     · apply Fin.ext
       change col.val = (row.val * I.vertexCount + col.val) % I.vertexCount
       rw [Nat.add_comm, Nat.add_mul_mod_self_right, Nat.mod_eq_of_lt col.isLt]

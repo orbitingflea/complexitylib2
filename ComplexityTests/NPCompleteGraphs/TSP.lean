@@ -10,7 +10,7 @@ import Complexity.Tactic.PolyTime
 /-!
 # Traveling salesman tests
 
-Concrete, boundary, `fun_prop`, and axiom checks for `TSP`, its verifier, and the reduction
+Concrete, boundary, and `fun_prop` checks for `TSP`, its verifier, and the reduction
 `HamCycle.toTSP` from `HamCycle`.
 -/
 
@@ -192,54 +192,5 @@ example : (([0, 1, 0], [(0, 1)]) : Graph) ∉ HamCycle :=
   fun h => notMem_TSP (by decide) ((HamCycle.toTSP_mem_iff _).2 h)
 example : (([], []) : Graph) ∉ HamCycle :=
   fun h => notMem_TSP (by decide) ((HamCycle.toTSP_mem_iff _).2 h)
-
-/-! ### Axiom checks for headline theorems -/
-
-/--
-info: 'Cslib.Complexity.TSP.computableInPolyTime_tourLength' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.TSP.computableInPolyTime_tourLength
-
-/--
-info: 'Cslib.Complexity.TSP.isVerifier' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.TSP.isVerifier
-
-/--
-info: 'Cslib.Complexity.TSP.computableInPolyTime_verifier' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.TSP.computableInPolyTime_verifier
-
-/--
-info: 'Cslib.Complexity.TSP.mem_NP' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.TSP.mem_NP
-
-/--
-info: 'Cslib.Complexity.HamCycle.toTSP_mem_iff' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.HamCycle.toTSP_mem_iff
-
-/--
-info: 'Cslib.Complexity.HamCycle.computableInPolyTime_toTSP' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.HamCycle.computableInPolyTime_toTSP
-
-/--
-info: 'Cslib.Complexity.polyTimeReducible_HamCycle_TSP' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.polyTimeReducible_HamCycle_TSP
 
 end ComplexityTests.NPCompleteGraphs.TSP

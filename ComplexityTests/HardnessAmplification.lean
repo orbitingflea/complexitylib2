@@ -8,8 +8,8 @@ import Complexity.Foundations.Data.BitString.Basic
 import Complexity.Computability.Circuit.Boolean.XorLemma
 
 /-! Impagliazzo's hard-core lemma and Yao's XOR lemma: a concrete hard-core measure, the
-parameters of the hard-core lemma, the `k`-fold XOR on concrete inputs, the combinatorial XOR
-lemma on a tight instance, and named axiom guards. -/
+parameters of the hard-core lemma, the `k`-fold XOR on concrete inputs, and the combinatorial XOR
+lemma on a tight instance. -/
 
 namespace ComplexityTests.HardnessAmplification
 
@@ -74,35 +74,5 @@ example : (#{t : Fin 2 → Bool | false = ∑ i, id (t i)} : ℝ) ≤
 
 /-- The bound above is attained: the constant `false` agrees with the XOR on two of four pairs. -/
 example : #{t : Fin 2 → Bool | false = ∑ i, id (t i)} = 2 := by decide
-
-/-! ### Axioms -/
-
-/--
-info: 'Cslib.Circuits.Boolean.exists_isHardCoreMeasure' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Boolean.exists_isHardCoreMeasure
-
-/--
-info: 'Cslib.Circuits.Boolean.card_eq_sum_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Boolean.card_eq_sum_le
-
-/--
-info: 'Cslib.Circuits.Boolean.IsHardCoreMeasure.card_eq_xorPower_div_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Boolean.IsHardCoreMeasure.card_eq_xorPower_div_le
-
-/--
-info: 'Cslib.Circuits.Boolean.card_eq_xorPower_div_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Boolean.card_eq_xorPower_div_le
 
 end ComplexityTests.HardnessAmplification

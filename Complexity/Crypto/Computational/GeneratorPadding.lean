@@ -32,6 +32,7 @@ before amplification and XOR combination.
 ## Main results
 
 * `isPolyTime_generate`, `isPPTOn_test`: certify the construction and its security reduction.
+* `ideal_distribution`: uniform raw output and independent padding give uniform output.
 * `length_generate`: exactly one bit of stretch for correctly sized inputs.
 * `advantage_eq`: the reduction preserves distinguishing advantage exactly.
 

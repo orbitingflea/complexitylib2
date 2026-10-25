@@ -14,26 +14,8 @@ open Cslib Cslib.Circuits Cslib.Circuits.Boolean.WeightedThreshold
 
 universe u
 
-private theorem changesAtMost_threshold {α : Type*} [LinearOrder α] (c : α) :
-    ChangesAtMost (fun t => decide (c ≤ t)) 1 := by
-  intro z hz S hS
-  have hcut (i) (hi : i ∈ S) : z i < c ∧ c ≤ z (i + 1) := by
-    have hn : ¬ c ≤ z i := by
-      intro hc
-      exact hS i hi (by simp [hc, hc.trans (hz (Nat.le_succ i))])
-    have hp : c ≤ z (i + 1) := by
-      by_contra hn'
-      exact hS i hi (by simp [hn, hn'])
-    exact ⟨lt_of_not_ge hn, hp⟩
-  apply Finset.card_le_one.mpr
-  intro i hi j hj
-  by_contra hne
-  rcases Nat.lt_or_gt_of_ne hne with h | h
-  · exact (not_lt_of_ge ((hcut i hi).2.trans (hz h))) (hcut j hj).1
-  · exact (not_lt_of_ge ((hcut j hj).2.trans (hz h))) (hcut i hi).1
-
 -- Exact one-change behavior, including a repeated endpoint at the threshold.
-example : ChangesAtMost (fun t : ℕ => decide (2 ≤ t)) 1 := changesAtMost_threshold 2
+example : ChangesAtMost (fun t : ℕ => decide (2 ≤ t)) 1 := ChangesAtMost.decide_le 2
 
 example : ¬ ChangesAtMost (fun t : ℕ => decide (2 ≤ t)) 0 := by
   intro h
@@ -63,7 +45,7 @@ example : ∃ P' ⊆ (Finset.univ : Finset (Fin 5)),
   simpa using ChangesAtMost.exists_sorted_group
     (Finset.univ : Finset (Fin 5)) (Finset.univ : Finset (Fin 4)) Fin.val
     (fun q t => decide (q.val ≤ t)) (G := 2) (by decide)
-    (fun q _ => changesAtMost_threshold q.val)
+    (fun q _ => ChangesAtMost.decide_le q.val)
 
 example {κ β : Type*} (Q : Finset κ) (Ψ : κ → ℕ → β) {T : ℕ}
     (hΨ : ∀ q ∈ Q, ChangesAtMost (Ψ q) T) :
@@ -147,7 +129,7 @@ private def coordinateScalar : BlockDecomposition (fun x : Fin 1 → Bool => x 0
     have hi0 : i = 0 := by omega
     subst i
     refine ⟨fun _ => 1, fun _ t => decide ((1 : ℝ) ≤ t),
-      fun _ => changesAtMost_threshold 1, ?_⟩
+      fun _ => ChangesAtMost.decide_le 1, ?_⟩
     intro x
     cases hx : x 0 <;> simp [hx]
   output_history := by simp

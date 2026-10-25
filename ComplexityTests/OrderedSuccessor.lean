@@ -96,19 +96,4 @@ example : (tupleSuccOf atomicSuccessor 2).Realize
   rw [realize_tupleSuccOf atomicSuccessor_correct]
   decide
 
-/-- info: 'Cslib.Logic.FO.Ordered.isCarrySuccessor_iff' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Cslib.Logic.FO.Ordered.isCarrySuccessor_iff
-
-/-- info: 'Cslib.Logic.FO.Ordered.realize_tupleSuccOf' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Cslib.Logic.FO.Ordered.realize_tupleSuccOf
-
-/-- info: 'Cslib.Logic.FO.Ordered.realize_tupleSucc' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Cslib.Logic.FO.Ordered.realize_tupleSucc
-
 end Cslib.Tests.OrderedSuccessor

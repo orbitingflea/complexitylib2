@@ -52,20 +52,4 @@ example {n : ℕ} (G : Set ((Fin n → Bool) × (Fin n → Bool))) :
       pairCoverComplexity G (fun i => {x | literals x i = true}) Semifilter.IsUltra :=
   pairCoverComplexity_le_literals G Semifilter.IsUltra
 
-/--
-info: 'Cslib.Circuits.Fusion.Graph.pairCoverComplexity_le_literals' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Circuits.Fusion.Graph.pairCoverComplexity_le_literals
-/--
-info: 'Cslib.Circuits.Fusion.Graph.inequality_complexities' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Circuits.Fusion.Graph.inequality_complexities
-/--
-info: 'Cslib.Circuits.Fusion.Graph.exists_inequality_circuit' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Circuits.Fusion.Graph.exists_inequality_circuit
-
 end ComplexityTests.FusionGraph

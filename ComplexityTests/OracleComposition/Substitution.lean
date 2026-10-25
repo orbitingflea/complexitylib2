@@ -189,41 +189,4 @@ example : ¬ IsOraclePPTOn encUnary (encPair encBits encBits) (fun n =>
   simp only [length_encPair, encBits_apply, encUnary_apply, List.length_replicate] at hlength
   lia
 
-/-! ### Axiom audit of the headline results -/
-
-/--
-info: 'Cslib.Probability.IsOraclePPTOn.run_interpret_preprocess_open' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms IsOraclePPTOn.run_interpret_preprocess_open
-
-/--
-info: 'Cslib.Probability.IsOraclePPT.run_interpret_preprocess_open' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms IsOraclePPT.run_interpret_preprocess_open
-
-/--
-info: 'Cslib.Probability.OpenOracleSimulation.isOraclePPTOn_run' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms OpenOracleSimulation.isOraclePPTOn_run
-
-/--
-info: 'Cslib.Probability.IsOraclePPTOn.memoize' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms IsOraclePPTOn.memoize
-
-/--
-info: 'Cslib.ProbOracleComp.run_interpret_run_interpret' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms ProbOracleComp.run_interpret_run_interpret
-
 end ComplexityTests.OracleSubstitution

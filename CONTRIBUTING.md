@@ -17,7 +17,7 @@ Small fixes and API improvements can go directly to a pull request.
 Keep a pull request small enough to review as one mathematical or engineering change. Include a
 checked client for a new API and instances showing that bundled hypotheses can be met. Preserve
 the original authors and licenses when porting code; cite mathematical sources in module
-docstrings through [references.bib](references.bib).
+docstrings through [references.bib](references.bib), whose entries stay sorted by key.
 
 Develop against representative clients and state the public contract: model or encodings,
 mathematical behavior, and resource or security claim. Test automation on ordinary expressions,
@@ -48,7 +48,9 @@ Mathlib's standard linter set already enforces the mechanical part; reviews enfo
 6. **Placement.** No duplicates; small topic modules; clients import what they use.
 7. **Documentation.** Definitions and theorems are documented, citing sources; module docstrings
    list the actual public API; each area has a chapter in the guide.
-8. **Tests.** Checked, nonvacuous examples of the area's main API.
+8. **Tests.** Checked, nonvacuous examples of the area's main API: each exercises a concrete
+   instance (a small input, a run, a counterexample). A one-line `example … := someTheorem` that
+   only restates a signature is not a test; keep such lines only where they pin a curated abstract.
 
 Improving an interface never weakens the mathematics: keep the models, encodings, independent
 resource bounds and nonvacuity of the results it touches.
@@ -72,15 +74,28 @@ each public declaration depends on. Editing docstrings, private declarations, pr
 non-exposed bodies leaves it unchanged, unless a proof edit changes that axiom set. `import all`
 also loads private information, so such edits do reach its clients.
 
-- Helpers are `private` by default. Keep `@[expose]` for bodies that downstream proofs unfold.
+- **What is a helper.** A helper is proof plumbing: a step meaningful only inside one proof, or a
+  fact about a module-local construction, encoding or intermediate quantity. Helpers are `private`
+  by default. Keep `@[expose]` for bodies that downstream proofs unfold.
+- **What stays public, even if nothing outside the module uses it yet.** Facts stated only in terms
+  of public definitions that a user of those definitions would expect: characterizations (`_iff`),
+  bounds, monotonicity and closure properties, simp and extensionality equations, invariance
+  lemmas, and named results from the literature. Move general mathematics (lists, finsets,
+  probability, bit strings) to `Complexity/Foundations` instead of making it private. Reference
+  counts are evidence about current use, not the criterion; privatize by intent.
+- **Reuse before re-proving.** If a fact you need already exists as a private declaration, make it
+  public, moving it to its natural home if needed, instead of proving it again. Reviewers treat a
+  re-proof of an existing private fact as a finding.
 - A private `@[fun_prop]` theorem still exports its rule, and `fun_prop` then fails in importers.
   Write `attribute [local fun_prop] helper` instead. Private `simp` lemmas, Aesop rules and
   instances stay local.
 - Ordinary imports cannot name private declarations. When privatizing, update the tests and
   abstracts that name them in the same PR, or give a companion module `import all`.
-- `scripts/quality_report.py` records where each declaration is referenced and where other modules
-  unfold a definition by name. Reduction by `rfl` or `decide` is not recorded, and its counts are
-  review signals, not rules.
+- For an audit, `python3 scripts/audit_queries.py references PREFIX` lists where each declaration
+  under a source path is referenced, and `duplicates` lists declarations with alpha-equivalent
+  statements in different modules. Uses through `rfl`, `decide`, simp sets or instances leave no
+  reference, and a declaration nobody references may still be wanted API: privatize by intent
+  (#926), not because the helper lists it. It is an on-demand helper, never run in CI.
 
 Tidy computability (`ComputableTidily…`, `ComputesTidily…`, `IsTidy…`) may appear anywhere inside
 proofs, through `.tidy`, `.of_tidy`, a proof-local `attribute [local fun_prop] … in` or a tidy
@@ -109,9 +124,10 @@ shared by all agent clients. See the [cache guide](scripts/cache/README.md#autom
 for retries and intentional opt-out.
 
 The test suite audits the axiom dependencies of every declaration stored in imported `Complexity`
-modules; the named headline checks remain readable regression tests. This trusts the compiled Lean
-artifacts and permits `Classical.choice`; it does not certify efficient computation or agreement
-with a textbook statement.
+modules. Named `#print axioms` checks are added only for results meant to depend on fewer axioms
+than the standard `propext`, `Classical.choice` and `Quot.sound`, such as choice-free results. The
+audit trusts the compiled Lean artifacts and permits `Classical.choice`; it does not certify
+efficient computation or agreement with a textbook statement.
 
 For concurrent local validation, choose a thread budget for the shared host, for example
 `LEAN_NUM_THREADS=2 scripts/check.sh`. Lean's
@@ -121,8 +137,12 @@ observed concurrency and memory use. Keep mutable build outputs separate between
 (for example with `scripts/worktree.sh create <branch> [dir_name]`, which seeds `.lake/build` from
 the root checkout and, when `<branch>` exists only on `origin`, checks it out tracking
 `origin/<branch>`). Run `python3 scripts/check_hygiene.py` to audit `-- upstream:` markers,
-forbidden proof tokens, and `set_option` justifications (pass `--check-simp` to also run the
-heuristic check for non-terminal bare `simp` calls in candidate modules).
+forbidden proof tokens, `set_option` justifications and the key order of `references.bib`
+(pass `--check-simp` to also run the heuristic check for non-terminal bare `simp` calls in
+candidate modules). After a build,
+`python3 scripts/check_changed_files.py` checks the files your branch adds or changes: each name
+listed in a module docstring's "Main …" sections must exist, and a new test file must do more
+than restate signatures with `example … := name`. CI runs both.
 
 The helper hard-links package sources by default, copies root and dependency build caches with
 independent files (including symlink targets), isolates dependency `.git` directories and pointer
@@ -141,14 +161,17 @@ the tested revision (or base revision and exact diff), commands and outcomes, re
 scope, findings and their resolution, and any remaining limitations. Preserve enough evidence
 there for another contributor to assess the change; a path into a local `.lake/` directory is not
 a durable review record. Recheck changes made after review and identify the final reviewed revision.
+Link the hosted CI run for the final revision rather than asserting which checks passed. Keep review
+verdicts short: the revision, the verdict and the findings, linking evidence rather than pasting it.
 
 ## Documentation
 
 Keep each fact in one maintained location. The README explains the purpose and points to useful
-entry points; module docstrings explain the mathematics and API; checked Lean examples show
-usage. ROADMAP records outstanding work; UPSTREAM records coordination and exceptional integration
-decisions, while source markers record module status. Batch measurements and validation/review
-evidence belong in commit or PR descriptions.
+entry points; module docstrings explain the mathematics and API; checked Lean examples show usage.
+ROADMAP lists open directions only; status and progress live on issues and PRs, so a PR does not
+edit ROADMAP unless it opens or closes a direction. UPSTREAM records coordination and exceptional
+integration decisions, while source markers record module status. Batch measurements and
+validation/review evidence belong in commit or PR descriptions.
 Link to these sources instead of repeating them in new guides. Add a separate document only when
 it provides useful explanation that does not already have a suitable home.
 

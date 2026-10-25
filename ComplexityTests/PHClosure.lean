@@ -11,8 +11,8 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Ba
 # Tests for Boolean closure of polynomial-hierarchy levels
 
 Unequal and zero-length blocks check the concrete splitter; alternating predicates check both
-quantifier polarities. Concrete polynomial-time languages instantiate closure at levels zero and
-two, and the headline theorems have named axiom guards.
+quantifier polarities. Concrete polynomial-time languages instantiate closure at levels zero
+and two.
 -/
 
 namespace ComplexityTests.PHClosure
@@ -53,28 +53,5 @@ example : ({true} ∩ {false} : Set Bool) ∈ PiP 2 encBool :=
     (SigmaP_subset_SigmaP_succ 0 (P_subset_SigmaP_zero true_in_P)))
     (SigmaP_subset_PiP_succ 1
       (SigmaP_subset_SigmaP_succ 0 (P_subset_SigmaP_zero false_in_P)))
-
-/-- info: 'Cslib.Complexity.alternation_splitAlternatingBlocks' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms alternation_splitAlternatingBlocks
-/--
-info: 'Cslib.Complexity.computableInPolyTime_splitAlternatingBlocks' depends on axioms: [propext,
- Classical.choice,
- Quot.sound]
--/
-#guard_msgs in
-#print axioms computableInPolyTime_splitAlternatingBlocks
-/-- info: 'Cslib.Complexity.inter_mem_SigmaP' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms inter_mem_SigmaP
-/-- info: 'Cslib.Complexity.union_mem_SigmaP' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms union_mem_SigmaP
-/-- info: 'Cslib.Complexity.inter_mem_PiP' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms inter_mem_PiP
-/-- info: 'Cslib.Complexity.union_mem_PiP' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms union_mem_PiP
 
 end ComplexityTests.PHClosure

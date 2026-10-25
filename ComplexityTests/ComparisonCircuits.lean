@@ -81,20 +81,4 @@ example : (packedTournamentCircuit 0 0 2).eval interpretation Fin.elim0 = Fin.el
 example : Circuit.balanced (keyedMinCircuit 1 1) (Circuit.id signature 2) [] =
     Circuit.id signature 2 := by simp [Circuit.balanced]
 
-/--
-info: 'Cslib.Circuits.Boolean.eval_leCircuit' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Circuits.Boolean.eval_leCircuit
-/--
-info: 'Cslib.Circuits.Boolean.exists_eval_packedTournamentCircuit' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Circuits.Boolean.exists_eval_packedTournamentCircuit
-/--
-info: 'Cslib.Circuits.Boolean.depth_packedTournamentCircuit_le' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Circuits.Boolean.depth_packedTournamentCircuit_le
-
 end ComplexityTests.ComparisonCircuits

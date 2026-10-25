@@ -45,6 +45,8 @@ the forward lower bound also allows restricted witness classes.
 
 ## Main results
 
+* `Cslib.Circuits.Fusion.PairClosureCompiler.eval_circuit`: the compiled circuit reconstructs
+  every listed pair value.
 * `Cslib.Circuits.Fusion.PairCover.eval_toCyclic`: the circuit's least solution is its target.
 * `Cslib.Circuits.Fusion.PairCover.cost_toCyclic`: its AND cost is exactly the pair-list length.
 * `Cslib.Circuits.Fusion.pairCoverComplexity_eq_cyclic_ecomplexityFrom`: unrestricted pair-cover

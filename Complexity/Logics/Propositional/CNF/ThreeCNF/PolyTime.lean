@@ -27,6 +27,7 @@ variables keep their supplied encoding; fresh variables use their unary clause a
 
 ## Main results
 
+* `Cslib.Logic.PL.Clause.isPolyTime_splitAux`: efficient splitting of clause tails.
 * `Cslib.Logic.PL.Clause.isPolyTime_split3`: efficient splitting with a certified fresh-variable
   routine, retaining its captured input.
 * `Cslib.Logic.PL.CNF.isPolyTime_to3CNF`: a uniform certificate for the existing 3CNF reduction.

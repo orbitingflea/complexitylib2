@@ -20,7 +20,7 @@ to raise an entry unless `--allow-increase` is given, for instance when a module
 statements is moved.
 
 Declarations written in source come from the `.ilean` files and statements from the `.olean`
-files, read by `scripts/quality_report.py` and `scripts/QualityReport.lean`. The check needs the
+files, read by `scripts/lean_outputs.py` and `scripts/LeanOutputs.lean`. The check needs the
 build outputs of `lake build Complexity ComplexityTests ComplexityAbstracts` (`lake build` and
 `lake test`), and refuses stale ones unless `--no-build-check` is given.
 """
@@ -35,7 +35,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
-import quality_report as qr  # noqa: E402
+import lean_outputs as lo  # noqa: E402
 
 ALLOWLIST = ROOT / "scripts/tidy_allowlist.txt"
 BASELINE = ROOT / "scripts/tidy_surface_baseline.json"
@@ -50,11 +50,11 @@ def load_allowlist(path: Path) -> set[str]:
     return {line.split("#", 1)[0].strip() for line in path.read_text().splitlines()} - {""}
 
 
-def tidy_statements(lib: qr.Library, allowlist: set[str]) -> dict[str, list[Statement]]:
+def tidy_statements(lib: lo.Library, allowlist: set[str]) -> dict[str, list[Statement]]:
     """The tidy statements of each module outside the allowlist, by source path. Declarations
     written in source count, structure fields included; constants generated from them (`simps`
     lemmas, equation lemmas, recursors) do not."""
-    decls, _, _ = qr.collect_declarations(lib)
+    decls, _ = lo.collect_declarations(lib)
     found: dict[str, list[Statement]] = defaultdict(list)
     for name, decl in decls.items():
         if decl["role"] == "generated":
@@ -118,8 +118,8 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     if args.allow_increase and not args.update:
         parser.error("--allow-increase needs --update")
-    qr.check_outputs(qr.DEFAULT_BUILD_DIR, args.no_build_check)
-    found = tidy_statements(qr.Library(qr.DEFAULT_BUILD_DIR), load_allowlist(args.allowlist))
+    lo.check_outputs(lo.DEFAULT_BUILD_DIR, args.no_build_check)
+    found = tidy_statements(lo.Library(lo.DEFAULT_BUILD_DIR), load_allowlist(args.allowlist))
     counts = {path: len(rows) for path, rows in found.items()}
     baseline = load_baseline(args.baseline) if args.baseline.exists() else {}
     over, under = compare(counts, baseline)

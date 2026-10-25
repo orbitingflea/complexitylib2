@@ -34,6 +34,9 @@ certificates apply to arbitrary captured inputs, so later reductions can enumera
 
 * `expands`: every candidate expands, including inaccurate guesses.
 * `exists_valid`: a sufficiently large prediction gap guarantees a valid grid entry.
+* `isPolyTime_scale`, `isPolyTime_observationBits`, `isPolyTime_labelBits`,
+  `isPolyTime_remainingBits`, `isPolyTime_numerator`: grid parameters and digest lengths are
+  computable in polynomial time.
 
 ## References
 

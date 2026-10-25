@@ -35,11 +35,15 @@ needed separately when transferring satisfiability.
 
 ## Main results
 
+* `Cslib.Logic.PL.Literal.computableInPolyTime_negate`: literal negation.
 * `Cslib.Logic.PL.Clause.computableInPolyTime_impLits`,
   `Cslib.Logic.PL.Clause.computableInPolyTime_imp`: implication clauses.
 * `Cslib.Logic.PL.Clause.computableInPolyTime_relabel`,
   `Cslib.Logic.PL.CNF.computableInPolyTime_relabel`: renaming variables.
-* `Cslib.Logic.PL.CNF.computableInPolyTime_exactlyOne`: exactly-one constraints.
+* `Cslib.Logic.PL.CNF.computableInPolyTime_atLeastOne`,
+  `Cslib.Logic.PL.CNF.computableInPolyTime_atMostOne`,
+  `Cslib.Logic.PL.CNF.computableInPolyTime_exactlyOne`: at-least-one, at-most-one and exactly-one
+  constraints.
 * `Cslib.Logic.PL.CNF.computableInPolyTime_vars`,
   `Cslib.Logic.PL.CNF.computableInPolyTime_distinctVars`,
   `Cslib.Logic.PL.computableInPolyTime_occurrences`: listing variable occurrences, distinct

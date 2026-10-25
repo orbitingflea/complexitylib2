@@ -43,6 +43,8 @@ Arora, Lund, Motwani, Sudan and Szegedy [AroraLundMotwaniSudanSzegedy1998].
 ## Main results
 
 * `Cslib.PCP.Encoded.Graph.div_le_unsatVal_toThreeSAT_toCNF`: the gap-preserving bound.
+* `Cslib.Complexity.polyTimeReducible_GapTwoCSP_GapThreeSAT`: MAX-2CSP reduces to MAX-3SAT in
+  polynomial time, preserving a gap.
 * `Cslib.Complexity.GapThreeSAT_npHard`: distinguishing satisfiable 3CNF formulas from those in
   which every assignment satisfies at most the proportion `1 - 1 / (3 * 2 ^ 77)` of the clauses is
   NP-hard.

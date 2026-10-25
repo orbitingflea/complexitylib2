@@ -72,36 +72,6 @@ namespace Cslib.Circuits.Boolean
 
 open Set Finset BitString Unbounded Cslib.Complexity Turing.MultiTapeTM
 
-/-- Folding `xor` over a Boolean word computes `parity` of its slice. -/
-theorem foldl_bne_eq_parity (w : List Bool) :
-    w.foldl bne false = parity w.length (fun i => w[i]) := by
-  have hcount : w.foldl bne false = decide (w.count true % 2 = 1) := by
-    have hgen (b : Bool) (l : List Bool) :
-        l.foldl bne b = (b != decide (l.count true % 2 = 1)) := by
-      induction l generalizing b with
-      | nil => cases b <;> simp
-      | cons a l ih =>
-        rw [List.foldl_cons, ih, List.count_cons]
-        cases a <;> cases b <;>
-        · by_cases h : l.count true % 2 = 1
-          · have h0 : (l.count true + 1) % 2 = 0 := by omega
-            simp [h, h0]
-          · have h1 : (l.count true + 1) % 2 = 1 := by omega
-            simp [h, h1]
-    simpa using hgen false w
-  rw [hcount, parity, parityOn, Bool.eq_iff_iff, decide_eq_true_eq, decide_eq_true_eq,
-    Finset.card_filter]
-  have hcard (l : List Bool) :
-      (∑ i : Fin l.length, if l[i] = true then 1 else 0) = l.count true := by
-    induction l with
-    | nil => rfl
-    | cons a l ih =>
-      rw [List.count_cons, ← ih]
-      refine (Fin.sum_univ_succ fun i : Fin (l.length + 1) =>
-        if (a :: l)[i] = true then (1 : ℕ) else 0).trans ?_
-      cases a <;> simp [Nat.add_comm]
-  rw [hcard w]
-
 /-- **Parity is in `P`** (`Language.ofSlices parity ∈ P encBits`). -/
 theorem parity_mem_P : (Language.ofSlices parity : Set (List Bool)) ∈ P encBits := by
   refine ⟨fun w => w.foldl bne false, ?_, fun w => ?_⟩

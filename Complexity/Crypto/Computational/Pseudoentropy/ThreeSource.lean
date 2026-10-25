@@ -31,6 +31,11 @@ only to the security argument; the efficient test handles all indices uniformly.
 
 ## Main results
 
+* `ThreeSource.isPolyTime_seedLength`, `ThreeSource.isPolyTime_outputLength`: extraction ledger
+  lengths are computable in polynomial time.
+* `ThreeSource.replace_remaining`, `ThreeSource.replace_observations`,
+  `ThreeSource.replace_indexed_labels`: hybrid reductions replacing each source component with
+  uniform bits.
 * `ThreeSource.isPPTOn_extract`: the composed program has a strict PPT certificate.
 * `SamplablePair.HasGap.extract_indexed_three`: uniform security for any valid candidate choice.
 * `SamplablePair.HasGap.extract_three`: the single-candidate computational interface.

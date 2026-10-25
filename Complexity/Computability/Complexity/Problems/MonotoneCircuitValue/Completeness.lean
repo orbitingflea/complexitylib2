@@ -42,6 +42,8 @@ its decider rather than by translating the given circuit directly.
 
 * `Cslib.Complexity.MonotoneCircuitValue.computableInLogSpace_dualTableauInstance`: the instances
   are computable in logarithmic space.
+* `Cslib.Complexity.MonotoneCircuitValue.logSpaceReducible_of_mem_P`: every problem in `P`
+  reduces to monotone circuit value in logarithmic space.
 * `Cslib.Complexity.MonotoneCircuitValue.logSpaceHard`,
   `Cslib.Complexity.MonotoneCircuitValue.logSpaceComplete`: the monotone circuit value problem is
   `P`-hard and `P`-complete under logarithmic-space reductions.
@@ -176,7 +178,7 @@ private theorem flatten_replicate_two_mul_add_one {β : Type*} (a : List β) (n 
     simp only [List.append_assoc]
 
 /-- **The encoded dual-rail instance** is the word written by the writer. -/
-theorem encMonotoneCircuitValue_dualTableauInstance (w : List Bool) :
+private theorem encMonotoneCircuitValue_dualTableauInstance (w : List Bool) :
     encMonotoneCircuitValue (dualTableauInstance tm C d w) = (dualSpec tm C d).output w := by
   rw [encMonotoneCircuitValue_apply, encCircuitValue_apply]
   simp only [toDeMorgan, dualTableauInstance, Circuit.code_mapOp, Monotone.code_dualRail,

@@ -150,20 +150,16 @@ attribute [local fun_prop] ComputableInPolyTime.tidy in
 theorem computableInPolyTime_verifier :
     ComputableInPolyTime verifier (encPair (encPair encGraph encGraph) encBits) encBool := by
   refine .of_tidy ?_
-  have hadj : ∀ {γ : Type} {enc : γ ↪ List Bool} {H : γ → Graph} {u v : γ → ℕ},
-      ComputableTidilyInPolyTime H enc encGraph →
-      ComputableTidilyInPolyTime u enc encNat →
-      ComputableTidilyInPolyTime v enc encNat →
-      ComputableTidilyInPolyTime (fun x => (H x).adjBool (u x) (v x)) enc encBool :=
-    fun hH hu hv => Graph.computableInPolyTime_adjBool.tidy.comp ((hH.prod hu).prod hv)
   refine (Graph.computableInPolyTime_verifyOrdering (.of_tidy (by unfold encGraph; fun_prop))
     (.of_tidy (bool_and'
       (((length_list encNat).comp (snd _ _)).decide_eq'
         ((length_list encNat).comp (by fun_prop))) ?_))).tidy
   refine allWithInput (by fun_prop) (allWithInput (by fun_prop) ?_)
-  exact bool_beq.comp ((hadj (by fun_prop) (by fun_prop) (by fun_prop)).prod
-    (Graph.computableInPolyTime_adjIndex (.of_tidy (by fun_prop)) (.of_tidy (by fun_prop))
-      (.of_tidy (by fun_prop))).tidy)
+  exact bool_beq.comp
+    (((Graph.computableInPolyTime_adjBool_comp (.of_tidy (by fun_prop)) (.of_tidy (by fun_prop))
+      (.of_tidy (by fun_prop))).tidy).prod
+      (Graph.computableInPolyTime_adjIndex (.of_tidy (by fun_prop)) (.of_tidy (by fun_prop))
+        (.of_tidy (by fun_prop))).tidy)
 
 /-- `verifier` is a verifier for `GraphIsomorphism` with certificates whose length is the square
 of the length of the encoded pair of graphs. -/

@@ -39,6 +39,8 @@ phases:
 
 ## Main results
 
+* `Turing.MultiTapeTM.computesInTimeAndSpace_ofTM0`: simulation of Mathlib TM0 machines in
+  linear time and space overhead.
 * `Turing.MultiTapeTM.computesInTimeAndSpace_ofSingleTapeTM`: if `tm.OutputsWithinTime x y t`, then
   `ofSingleTapeTM tm` computes `y` from `x` in `2 * x.length + 4 + (t + (y.length + 1))` steps
   (and in `3 * x.length + 2 * t + 6` steps).

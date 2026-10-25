@@ -19,7 +19,7 @@ import Complexity.Computability.Complexity.Problems.SAT.PolyTime
 
 By Adleman's theorem [Adleman][Adleman1978], [Arora and Barak, Theorem 7.14][AroraBarak09], a
 problem decided with bounded error has circuits of polynomial size
-(`Cslib.Circuits.Boolean.PPoly.exists_of_mem_BPP`). So `NP ⊆ BPP` gives `NP ⊆ P/poly`, and the
+(`Cslib.Circuits.Boolean.BPP_subset_PPolyOn`). So `NP ⊆ BPP` gives `NP ⊆ P/poly`, and the
 Karp–Lipton theorem [Karp and Lipton][KarpLipton1980], [Arora and Barak, Theorem
 6.19][AroraBarak09] collapses the polynomial hierarchy to `Σ₂`
 (`Cslib.Complexity.PH_eq_SigmaP_two_of_SAT`). It suffices that `SAT` itself is in `BPP`.
@@ -48,7 +48,7 @@ variable {α : Type} {enc : α ↪ List Bool}
 in conjunctive normal form is decided with bounded error, then the polynomial hierarchy collapses
 to its second level: `PH = Σ₂`, for every encoding of instances. -/
 theorem PH_eq_SigmaP_two_of_SAT_mem_BPP (h : SAT ∈ BPP encCNF) : PH enc = SigmaP 2 enc :=
-  PH_eq_SigmaP_two_of_SAT (Circuits.Boolean.PPoly.exists_of_mem_BPP h)
+  PH_eq_SigmaP_two_of_SAT (Circuits.Boolean.BPP_subset_PPolyOn h)
 
 /-- **`NP ⊆ BPP ⇒ PH = Σ₂`** (Karp–Lipton with Adleman's theorem). If every problem in `NP` is in
 `BPP`, for every encoding of its instances, then the polynomial hierarchy collapses to its second

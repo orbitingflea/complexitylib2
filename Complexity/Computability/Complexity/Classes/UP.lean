@@ -30,7 +30,7 @@ elementary consequences of the corresponding UP results and complement closure o
 
 * `Cslib.Complexity.mem_UP`: the at-most-one-witness characterization.
 * `Cslib.Complexity.P_subset_UP`, `Cslib.Complexity.UP_subset_NP`,
-  `Cslib.Complexity.UP_subset_ParityP`.
+  `Cslib.Complexity.UP_subset_ParityP`, `Cslib.Complexity.coUP_subset_coNP`.
 * `Cslib.Complexity.PolyTimeReducible.mem_UP`: closure under polynomial-time reductions.
 
 ## References

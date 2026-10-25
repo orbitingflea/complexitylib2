@@ -10,6 +10,7 @@ module
 public import Complexity.Init
 public import Complexity.Computability.Circuit.Rational.IntegralLift
 import Complexity.Foundations.Data.List.Counting
+import Complexity.Foundations.Data.Rat.Basic
 import Mathlib.Data.Nat.Digits.Lemmas
 import Mathlib.LinearAlgebra.Matrix.AbsoluteValue
 
@@ -67,26 +68,13 @@ private lemma encodeNat_le (a L : ℕ) (ha : a < 2 ^ L) : (encodeNat a).length �
   exact Nat.add_le_add_right (Nat.mul_le_mul_left 2 ((Nat.digits_length_le_iff (by omega) a).mpr
     ha)) 1
 
-lemma ratio_num_le (a b : ℤ) (hb : b ≠ 0) : (Rat.divInt a b).num.natAbs ≤ a.natAbs := by
-  by_cases ha : a = 0
-  · simp [ha]
-  · exact Int.natAbs_le_of_dvd_ne_zero (Rat.num_dvd a hb) ha
-
-lemma ratio_den_le (a b : ℤ) (hb : b ≠ 0) : (Rat.divInt a b).den ≤ b.natAbs := by
-  simpa only [Int.natAbs_natCast] using Int.natAbs_le_of_dvd_ne_zero (Rat.den_dvd a b) hb
-
 private lemma encodeRat_ratio_le (a b : ℤ) (hb : b ≠ 0) (L : ℕ)
     (ha : a.natAbs < 2 ^ L) (hb' : b.natAbs < 2 ^ L) :
     (encodeRat (Rat.divInt a b)).length ≤ 4 * L + 3 := by
-  have hn := encodeNat_le _ L (lt_of_le_of_lt (ratio_num_le a b hb) ha)
-  have hd := encodeNat_le _ L (lt_of_le_of_lt (ratio_den_le a b hb) hb')
+  have hn := encodeNat_le _ L (lt_of_le_of_lt (Rat.natAbs_num_divInt_le a b hb) ha)
+  have hd := encodeNat_le _ L (lt_of_le_of_lt (Rat.den_divInt_le a b hb) hb')
   simp only [encodeRat, List.length_append, List.length_singleton]
   omega
-
-lemma determinant_bound {d : ℕ} (A : Matrix (Fin d) (Fin d) ℤ) (B : ℕ)
-    (hA : ∀ i j, |A i j| ≤ B) : |A.det| ≤ (d.factorial : ℤ) * (B : ℤ) ^ d := by
-  have h := Matrix.det_le (abv := AbsoluteValue.abs) (x := (B : ℤ)) (A := A) (by simpa using hA)
-  simpa only [AbsoluteValue.abs_apply, nsmul_eq_mul, Fintype.card_fin] using h
 
 /-- Cramer's rule used by the generator, without any assumption on arithmetic algorithms. -/
 lemma normalized_entry_ratio {d : ℕ} (A B : Matrix (Fin d) (Fin d) ℤ) (hA : A.det ≠ 0)
@@ -120,12 +108,14 @@ lemma normalized_entry_ratio {d : ℕ} (A B : Matrix (Fin d) (Fin d) ℤ) (hA : 
 
 private lemma determinant_pow_bound {d b : ℕ} (A : Matrix (Fin d) (Fin d) ℤ)
     (hA : ∀ i j, |A i j| ≤ (2 : ℤ) ^ b) : |A.det| < (2 : ℤ) ^ (d * d + d * b + 1) := by
-  have hb := determinant_bound A (2 ^ b) (by simpa using hA)
+  have hb := Matrix.det_le (abv := AbsoluteValue.abs) (x := (2 : ℤ) ^ b) (A := A)
+    (by simpa using hA)
   have hf : d.factorial ≤ (2 ^ d) ^ d :=
     (Nat.factorial_le_pow d).trans (Nat.pow_le_pow_left Nat.lt_two_pow_self.le d)
   have hfc : (d.factorial : ℤ) ≤ ((2 : ℤ) ^ d) ^ d := by exact_mod_cast hf
   have hn : |A.det| ≤ (2 : ℤ) ^ (d * d + d * b) := by
-    calc |A.det| ≤ (d.factorial : ℤ) * ((2 : ℤ) ^ b) ^ d := by simpa using hb
+    calc |A.det| ≤ (d.factorial : ℤ) * ((2 : ℤ) ^ b) ^ d := by
+           simpa only [AbsoluteValue.abs_apply, nsmul_eq_mul, Fintype.card_fin] using hb
          _ ≤ ((2 : ℤ) ^ d) ^ d * ((2 : ℤ) ^ b) ^ d :=
            mul_le_mul_of_nonneg_right hfc (by positivity)
          _ = _ := by rw [← pow_mul, ← pow_mul, ← pow_add]; congr 1; ring

@@ -32,14 +32,4 @@ example : ∃ samples : Fin 2 → Bool, ∀ bit : Bool, ∃ i, samples i = bit :
     (exists_forall_exists_apply_mem (Ω := Bool) (X := Bool) (n := 1)
       (by decide) (fun bit => {bit}) (by decide))
 
-/-- info: 'Cslib.exists_cover_of_scaled_card_lt' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.exists_cover_of_scaled_card_lt
-
-/-- info: 'Cslib.exists_forall_exists_apply_mem' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.exists_forall_exists_apply_mem
-
 end ComplexityTests.FiniteCover

@@ -484,19 +484,9 @@ private theorem computableTidilyInPolyTime_adjBool_comp {γ : Type} {enc : γ �
     {G : γ → Graph} {u v : γ → ℕ} (hG : ComputableTidilyInPolyTime G enc encGraph)
     (hu : ComputableTidilyInPolyTime u enc encNat) (hv : ComputableTidilyInPolyTime v enc encNat) :
     ComputableTidilyInPolyTime (fun c => (G c).adjBool (u c) (v c)) enc encBool :=
-  Graph.computableInPolyTime_adjBool.tidy.comp ((hG.prod hu).prod hv)
+  (Graph.computableInPolyTime_adjBool_comp (.of_tidy hG) (.of_tidy hu) (.of_tidy hv)).tidy
 
 attribute [local fun_prop] computableTidilyInPolyTime_adjBool_comp
-
-/-- Testing adjacency between computed vertices of a computed graph is polynomial-time. This is
-`Cslib.Complexity.Graph.computableInPolyTime_adjBool` in the compositional form that
-`fun_prop` uses. -/
-@[fun_prop]
-theorem computableInPolyTime_adjBool_comp {γ : Type} {enc : γ ↪ List Bool}
-    {G : γ → Graph} {u v : γ → ℕ} (hG : ComputableInPolyTime G enc encGraph)
-    (hu : ComputableInPolyTime u enc encNat) (hv : ComputableInPolyTime v enc encNat) :
-    ComputableInPolyTime (fun c => (G c).adjBool (u c) (v c)) enc encBool :=
-  .of_tidy (computableTidilyInPolyTime_adjBool_comp hG.tidy hu.tidy hv.tidy)
 
 private theorem computableTidilyInPolyTime_degree :
     ComputableTidilyInPolyTime (fun p : Graph × ℕ => degree p.1 p.2)

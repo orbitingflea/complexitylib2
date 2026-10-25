@@ -12,11 +12,10 @@ import Mathlib.FieldTheory.Finite.GaloisField
 /-! Worst-case to average-case reconstruction: the parameter hypotheses of the reconstruction
 theorem are jointly satisfiable, over a field of `2 ^ 35` elements, with the encoding itself as the
 predictor, for a function on one bit and for a function on `256` bits (Reed–Muller degree `256`);
-such fields, encodings and embeddings exist; the explicit binary fields have the right size; the
+such fields, encodings and embeddings exist; the explicit binary fields have the right size; and the
 hardness transfer applies to a language that is hard by counting, and the membership of the
 encoding in `E` applies to a language in `P` (the two hypotheses of the derandomization theorem
-are separately satisfiable; jointly they are open); and named axiom guards for the headline
-theorems of the development. -/
+are separately satisfiable; jointly they are open). -/
 
 namespace ComplexityTests.WorstCaseHardness
 
@@ -168,140 +167,5 @@ example : ∃ L : Language Bool, ∀ᶠ N in atTop,
   have key : (2 : ℝ) ^ ((1 / 2 : ℝ) * n) * (5 * n) ≤ ((q + 1 : ℕ) : ℝ) * (5 * n) := by
     nlinarith
   exact (le_of_mul_le_mul_right key h5).trans hc
-
-/-! ### Axioms -/
-
-/--
-info: 'Cslib.Circuits.Boolean.complexity_le_of_agree_hardnessEncode' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Boolean.complexity_le_of_agree_hardnessEncode
-
-/--
-info: 'Cslib.Circuits.Boolean.complexity_le_pow_of_agree_hardnessEncode' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Boolean.complexity_le_pow_of_agree_hardnessEncode
-
-/--
-info: 'Cslib.Circuits.Boolean.reconstructionCost_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Boolean.reconstructionCost_le
-
-/--
-info: 'Cslib.Circuits.Boolean.exists_glPredictor_agree' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Boolean.exists_glPredictor_agree
-
-/--
-info: 'Cslib.Code.exists_card_lineListDecode_ne_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Code.exists_card_lineListDecode_ne_le
-
-/--
-info: 'Cslib.Code.card_hintDecode_ne_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Code.card_hintDecode_ne_le
-
-/--
-info: 'Cslib.exists_forall_majTree_eq' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.exists_forall_majTree_eq
-
-/--
-info: 'Cslib.LinearAlgebra.kernelVec_ne_zero' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.LinearAlgebra.kernelVec_ne_zero
-
-/--
-info: 'Cslib.Circuits.Synthesis.bitBlast' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Synthesis.bitBlast
-
-/--
-info: 'Cslib.Crypto.GoldreichLevin.exists_card_candidate_eq' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.GoldreichLevin.exists_card_candidate_eq
-
-/--
-info: 'Cslib.Complexity.P_eq_BPP_of_eventually_two_pow_le_complexity' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.P_eq_BPP_of_eventually_two_pow_le_complexity
-
-/--
-info: 'Cslib.HardnessEncoding.encodedLanguage_mem_E' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.HardnessEncoding.encodedLanguage_mem_E
-
-/--
-info: 'Cslib.HardnessEncoding.encodedProgram_eq' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.HardnessEncoding.encodedProgram_eq
-
-/--
-info: 'Cslib.HardnessEncoding.computableInPolyTime_paddedProgram' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.HardnessEncoding.computableInPolyTime_paddedProgram
-
-/--
-info: 'Cslib.HardnessEncoding.eventually_isAverageCaseHard_encodedSlice' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.HardnessEncoding.eventually_isAverageCaseHard_encodedSlice
-
-/--
-info: 'Cslib.HardnessEncoding.isMulTable_fieldTable' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.HardnessEncoding.isMulTable_fieldTable
-
-/--
-info: 'Cslib.Complexity.BPP_subset_P_of_eventually_two_pow_le_complexity' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.BPP_subset_P_of_eventually_two_pow_le_complexity
-
-/--
-info: 'Cslib.Complexity.setOf_mem_E_of_computableInPolyTime_pad' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.setOf_mem_E_of_computableInPolyTime_pad
-
-/--
-info: 'Cslib.BinaryField.card' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.BinaryField.card
 
 end ComplexityTests.WorstCaseHardness

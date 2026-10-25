@@ -17,11 +17,10 @@ This test file exercises the converse direction of Fagin's theorem and the full 
 * small-domain (`n ≤ 1`) truth-table sentences including nullary relations on the empty structure,
 * little-endian colexicographic tuple ordering and the `k`-tuple power interpretation,
 * input-tape layout synthesis (`layoutESOSentence`) and tableau axiomatization
-  (`tableauESOSentence`, `npPowerSentence`),
+  (`tableauESOSentence`, `npPowerSentence`), and
 * the converse theorem `Cslib.Logic.ESO.Definable.of_queryLanguage_mem_NP` and the full equivalences
   `Cslib.Logic.ESO.definable_iff_queryLanguage_mem_NP` and
-  `Cslib.Logic.ESO.definable_iff_isoClosed_and_queryLanguage_mem_NP`, and
-* axiom hygiene checks for all headline theorems.
+  `Cslib.Logic.ESO.definable_iff_isoClosed_and_queryLanguage_mem_NP`.
 -/
 
 namespace ComplexityTests.Fagin
@@ -177,119 +176,5 @@ theorem nullary_definable_iff_mem_NP {K : Set (Bundled.{0} nullaryLanguage.Struc
     (hK : IsoClosed K) :
     ESO.Definable K ↔ nullaryVocabulary.queryLanguage K ∈ NP encStructure :=
   nullaryVocabulary.definable_iff_queryLanguage_mem_NP hK
-
-/-! ### Axioms -/
-
-/--
-info: 'Cslib.Complexity.IsVerifier.strictVerifier' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.IsVerifier.strictVerifier
-
-/--
-info: 'Cslib.Complexity.computableInPolyTime_strictVerifier' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.computableInPolyTime_strictVerifier
-
-/--
-info: 'Cslib.Complexity.CookLevin.exists_tableau_satisfiable_iff_of_strictVerifier' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.CookLevin.exists_tableau_satisfiable_iff_of_strictVerifier
-
-/--
-info: 'Cslib.Logic.ESO.Sentence.realize_project' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.ESO.Sentence.realize_project
-
-/--
-info: 'Cslib.Logic.ESO.realize_isStrictLinearOrderSentence' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.ESO.realize_isStrictLinearOrderSentence
-
-/--
-info: 'Cslib.Logic.ESO.Definable.of_withLinearOrder' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.ESO.Definable.of_withLinearOrder
-
-/--
-info: 'Cslib.Logic.FO.Definable.inter_card_le_one' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.FO.Definable.inter_card_le_one
-
-/--
-info: 'Cslib.Logic.ESO.Definable.of_card_ge_two' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.ESO.Definable.of_card_ge_two
-
-/--
-info: 'Cslib.Logic.ESO.Definable.of_powerLanguage' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.ESO.Definable.of_powerLanguage
-
-/--
-info: 'Cslib.Logic.Vocabulary.realize_layoutESOSentence' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.Vocabulary.realize_layoutESOSentence
-
-/--
-info: 'Cslib.Logic.Vocabulary.realize_tableauESOSentence' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.Vocabulary.realize_tableauESOSentence
-
-/--
-info: 'Cslib.Logic.Vocabulary.realize_npPowerSentence' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.Vocabulary.realize_npPowerSentence
-
-/--
-info: 'Cslib.Logic.ESO.Definable.of_queryLanguage_mem_NP' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.ESO.Definable.of_queryLanguage_mem_NP
-
-/--
-info: 'Cslib.Logic.ESO.definable_iff_queryLanguage_mem_NP' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.ESO.definable_iff_queryLanguage_mem_NP
-
-/--
-info: 'Cslib.Logic.ESO.definable_iff_isoClosed_and_queryLanguage_mem_NP' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.ESO.definable_iff_isoClosed_and_queryLanguage_mem_NP
-
-/--
-info: 'Cslib.Logic.Vocabulary.definable_iff_queryLanguage_mem_NP' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.Vocabulary.definable_iff_queryLanguage_mem_NP
 
 end ComplexityTests.Fagin

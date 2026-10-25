@@ -10,6 +10,8 @@ module
 public import Complexity.Init
 public import Complexity.Computability.Circuit.Rational.Executable
 public import Complexity.Computability.Circuit.Rational.Runtime.Determinant
+public import Complexity.Foundations.Data.List.OfFn
+public import Complexity.Foundations.Data.ZMod.Basic
 import Mathlib.Data.List.GetD
 
 /-!
@@ -77,37 +79,6 @@ open Polynomial
 
 /-! ### Index bridges -/
 
-lemma val_finEquiv {m : ℕ} [NeZero m] (i : Fin m) : (ZMod.finEquiv m i).val = i.val := by
-  cases m with
-  | zero => exact (NeZero.ne 0 rfl).elim
-  | succ m => rfl
-
-/-- `(ZMod.finEquiv m).symm` preserves the underlying natural-number value. -/
-lemma val_finEquiv_symm {m : ℕ} [NeZero m] (z : ZMod m) :
-    ((ZMod.finEquiv m).symm z).val = z.val := by
-  rw [← val_finEquiv, RingEquiv.apply_symm_apply]
-
-/-- A sum over `List.range m` is a sum over `Fin m`. -/
-lemma sum_range_eq_sum_fin {A : Type*} [AddCommMonoid A] (m : ℕ) (f : ℕ → A) :
-    ((List.range m).map f).sum = ∑ i : Fin m, f i := by
-  rw [← List.map_coe_finRange_eq_range, List.map_map, ← List.ofFn_eq_map, List.sum_ofFn]
-  rfl
-
-/-- A sum over `List.range m` is a sum over the residues modulo `m`. -/
-lemma sum_range_eq_sum_zmod {A : Type*} [AddCommMonoid A] (m : ℕ) [NeZero m] (f : ℕ → A) :
-    ((List.range m).map f).sum = ∑ z : ZMod m, f z.val := by
-  rw [sum_range_eq_sum_fin]
-  exact Fintype.sum_equiv (ZMod.finEquiv m).toEquiv _ _ fun i => by
-    change f i.val = f (ZMod.finEquiv m i).val
-    rw [val_finEquiv]
-
-/-- Residue subtraction on values, without truncated subtraction below zero. -/
-lemma val_sub_eq_mod {m : ℕ} [NeZero m] (u v : ZMod m) :
-    (u - v).val = (u.val + m - v.val) % m := by
-  have hv := v.val_lt
-  rw [← ZMod.val_natCast, Nat.cast_sub (by omega), Nat.cast_add, ZMod.natCast_self,
-    ZMod.natCast_zmod_val, ZMod.natCast_zmod_val, add_zero]
-
 /-- The residue `-a * k + a * u` of the lift formula, on values. -/
 private lemma val_neg_mul_add_mul_eq_mod {m : ℕ} [NeZero m] (a u k : ZMod m) :
     (-a * k + a * u).val = a.val * (u.val + m - k.val) % m := by
@@ -121,7 +92,7 @@ private lemma val_neg_mul_add_mul_eq_mod {m : ℕ} [NeZero m] (a u k : ZMod m) :
 lemma val_coordinate_symm_fst (e : ℕ) (i : Fin (Generator.matrixDimension e)) :
     ((Generator.coordinate e).symm i).1.val = i.val / CyclotomicRing.degree e := by
   change (ZMod.finEquiv _ (finProdFinEquiv.symm i).1).val = _
-  rw [val_finEquiv]
+  rw [ZMod.val_finEquiv]
   rfl
 
 /-- The position inside the block of the row-major block coordinate is the remainder. -/
@@ -240,7 +211,7 @@ theorem testEntry_eq (M N : ℕ) (a t : ℤ) (u v : Fin M) :
     testEntry M N (coeffRows (-a) M) (coeffRows a M) t u v = IntegralTest.padded M N a t u v := by
   unfold testEntry IntegralTest.padded IntegralTest.full
   split_ifs
-  · rw [testTerms, sum_range_eq_sum_fin]
+  · rw [testTerms, List.sum_map_range]
     refine Finset.sum_congr rfl fun q _ => ?_
     have hq := q.isLt
     rw [testTerm, rowEntry_coeffRows, rowEntry_coeffRows, ite_eq_left (by omega),
@@ -262,7 +233,7 @@ private theorem rowEntry_testRows_integerTest (N e : ℕ) (a t : ℤ)
     (u v : ZMod (CyclotomicRing.dimension e)) :
     rowEntry (testRows (CyclotomicRing.dimension e) N a t) u.val v.val =
       Generator.integerTest N e a t u v := by
-  rw [← val_finEquiv_symm u, ← val_finEquiv_symm v, rowEntry_testRows]
+  rw [← ZMod.val_finEquiv_symm u, ← ZMod.val_finEquiv_symm v, rowEntry_testRows]
   rfl
 
 /-- `testRows M N a t` has `M` rows. -/
@@ -321,13 +292,13 @@ theorem liftEntry_eq (e : ℕ) {T : List (List ℤ)}
   have hβ (b : ZMod (CyclotomicRing.dimension e)) : u = v + b ↔ b = u - v := by
     constructor <;> intro h <;> subst h <;> ring
   unfold IntegralLift.entry liftEntry liftSums
-  rw [sum_range_eq_sum_zmod]
+  rw [ZMod.sum_range_eq_sum_zmod]
   refine Finset.sum_congr rfl fun α _ => ?_
   simp only [Finset.sum_ite_irrel, Finset.sum_const_zero, hβ, Finset.sum_ite_eq',
     Finset.mem_univ, ite_true]
-  rw [liftTerms, sum_range_eq_sum_zmod]
+  rw [liftTerms, ZMod.sum_range_eq_sum_zmod]
   refine Finset.sum_congr rfl fun κ _ => ?_
-  rw [liftTerm, ← val_sub_eq_mod u v, ← val_sub_eq_mod κ (u - v),
+  rw [liftTerm, ← ZMod.val_sub_eq_mod u v, ← ZMod.val_sub_eq_mod κ (u - v),
     ← val_neg_mul_add_mul_eq_mod α u κ, hT, signedCoeff_eq]
 
 /-- The integer lift entry of `Generator.integralLift`, on the residues of the test rows. -/

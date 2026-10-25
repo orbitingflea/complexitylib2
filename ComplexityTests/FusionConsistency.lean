@@ -87,20 +87,4 @@ example : ¬ nonemptySets.IsConsistentWith Subtype.val point.val := by
 -- Even a nonempty exact witness class need not contain every one-sided witness.
 example : Nonempty (SemifilterWitness target inputs) := ⟨exactWitness⟩
 
-/--
-info: 'Cslib.Circuits.Fusion.Semifilter.IsConsistentWith.unique' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Semifilter.IsConsistentWith.unique
-/--
-info: 'Cslib.Circuits.Fusion.SemifilterWitness.observe_input' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms SemifilterWitness.observe_input
-/--
-info: 'Cslib.Circuits.Fusion.SemifilterWitness.inter_error' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms SemifilterWitness.inter_error
-
 end ComplexityTests.FusionConsistency

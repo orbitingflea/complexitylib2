@@ -17,8 +17,7 @@ A bit-leaking commitment function is rejected by an explicit randomized stateful
 second stage, it XORs the leaked commitment bit with the saved state bit `m` to recover the
 experiment selector `bit` with certainty. Because the committed bit itself is `m ^^ bit` (uniformly
 distributed without `state`), this exercises both randomized stage-1 selection and state transfer to
-stage 2. We also exercise the plain `ComputableInPolyTime` and `IsPPT` certificates and record
-`#print axioms` guards for the headline stateful-receiver commitment hiding theorems.
+stage 2. We also exercise the plain `ComputableInPolyTime` and `IsPPT` certificates.
 -/
 
 namespace ComplexityTests.Crypto.Commitment
@@ -96,40 +95,5 @@ theorem not_statefulHiding_leakCommit : ¬ StatefulHiding leakCommit := by
     simp [Game.advantage, Game.succProbability]
   rw [hone] at hnegl
   exact not_negligible_const one_ne_zero hnegl
-
-/--
-info: 'Cslib.Crypto.PseudorandomGenerator.naorStatefulHiding' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.PseudorandomGenerator.naorStatefulHiding
-
-/--
-info: 'Cslib.Crypto.advantage_commitmentHidingGame_naorCommit_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.advantage_commitmentHidingGame_naorCommit_le
-
-/--
-info: 'Cslib.Crypto.StatefulHiding.computational_hiding' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.StatefulHiding.computational_hiding
-
-/--
-info: 'Cslib.Crypto.BitCommitmentScheme.computational_hiding' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.BitCommitmentScheme.computational_hiding
-
-/--
-info: 'ComplexityTests.Crypto.Commitment.not_statefulHiding_leakCommit' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms ComplexityTests.Crypto.Commitment.not_statefulHiding_leakCommit
 
 end ComplexityTests.Crypto.Commitment

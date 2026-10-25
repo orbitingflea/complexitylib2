@@ -156,23 +156,4 @@ example : ∃ (k : ℕ) (State : Type) (_ : Finite State) (machine : MultiTapeCT
     exists_verifier_counting_machine MultiTapeTM.encBits 0 (fun _ => false)
     (.of_tidy (MultiTapeTM.ComputableTidilyInPolyTime.const false))
 
-/--
-info: 'Turing.MultiTapeCTM.exists_verifier_machine' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeCTM.exists_verifier_machine
-/--
-info: 'Turing.MultiTapeCTM.exists_verifier_counting_machine' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeCTM.exists_verifier_counting_machine
-/--
-info: 'Cslib.Complexity.mem_SharpP_iff_exists_machine' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.mem_SharpP_iff_exists_machine
-
 end ComplexityTests.CountingVerifier

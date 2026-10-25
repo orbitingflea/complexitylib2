@@ -12,8 +12,7 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Pl
 
 Concrete parameter values for small `n` and `s`, computed by the kernel and by evaluation, the
 certifiable forms of the ambient dimension and the cyclotomic degree, the parameter and dimension
-certificates from unary `(n, s)`, their use by `fun_prop` on shifted inputs, and the axioms of the
-headline certificates.
+certificates from unary `(n, s)`, and their use by `fun_prop` on shifted inputs.
 -/
 
 namespace ComplexityTests.RationalHitting.Parameters
@@ -86,28 +85,5 @@ example : ComputableTidilyInPolyTime
     apply ComputableInPolyTime.tidy
     apply computableInPolyTime_degree <;> exact .of_tidy (by fun_prop)
   fun_prop
-
-/-! ### Axioms of the headline certificates -/
-
-/--
-info: 'Cslib.Circuits.Rational.computableInPolyTime_generatorParameters' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Rational.computableInPolyTime_generatorParameters
-
-/--
-info: 'Cslib.Circuits.Rational.computableInPolyTime_hittingList_dimension' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Rational.computableInPolyTime_hittingList_dimension
-
-/--
-info: 'Cslib.Circuits.Rational.computableInPolyTime_hittingList_dimension_binary' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Rational.computableInPolyTime_hittingList_dimension_binary
 
 end ComplexityTests.RationalHitting.Parameters

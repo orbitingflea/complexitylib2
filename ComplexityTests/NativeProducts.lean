@@ -117,23 +117,4 @@ example (empty : Empty ↪ List Bool) : ComputableTidilyInO
     (ComputableTidilyInDegree.id' (enc := encUnary)).inO_one hb
   convert h using 1 <;> funext n <;> simp only [Option.elim_none] <;> omega
 
-/-- info: 'Turing.MultiTapeTM.ComputableTidilyInO.pi' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Turing.MultiTapeTM.ComputableTidilyInO.pi
-/-- info: 'Turing.MultiTapeTM.ComputableTidilyInO.pi_apply' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Turing.MultiTapeTM.ComputableTidilyInO.pi_apply
-/-- info: 'Turing.MultiTapeTM.ComputableTidilyInO.pi_gather' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Turing.MultiTapeTM.ComputableTidilyInO.pi_gather
-/-- info: 'Turing.MultiTapeTM.ComputableTidilyInO.pi_update' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Turing.MultiTapeTM.ComputableTidilyInO.pi_update
-/-- info: 'Turing.MultiTapeTM.ComputableTidilyInO.optionElimWithInput' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Turing.MultiTapeTM.ComputableTidilyInO.optionElimWithInput
-/-- info: 'ComplexityTests.NativeProducts.retained_inO' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms retained_inO
-
 end ComplexityTests.NativeProducts

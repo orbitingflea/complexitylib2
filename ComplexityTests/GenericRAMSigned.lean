@@ -123,14 +123,4 @@ example : step (M := model) 0 [.jump 0] (state 0) = .next (state 0) := by rfl
 #guard_msgs (whitespace := lax) in
 #print axioms step_eq_reference
 
-/-- info: 'Cslib.GenericRAM.Signed.fits_zero' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.GenericRAM.Signed.fits_zero
-
-/-- info: 'Cslib.GenericRAM.Signed.fits_one' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.GenericRAM.Signed.fits_one
-
 end ComplexityTests.GenericRAMSigned

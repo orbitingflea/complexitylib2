@@ -64,14 +64,4 @@ example (tail : Program) :
   exact time_prepare_append_le (b := 3) (by decide) tail [3, 0, 4, 1, 5]
     (by decide) (by decide)
 
-/-- info: 'Cslib.RAM.Input.run_prepare_append' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Cslib.RAM.Input.run_prepare_append
-
-/--
-info: 'Cslib.RAM.Input.time_prepare_append_le' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.RAM.Input.time_prepare_append_le
-
 end ComplexityTests.RAMInput

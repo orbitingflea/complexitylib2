@@ -119,19 +119,4 @@ example (w : Fin 8 → ℕ) : ¬BitSum.EncodesNode 1 8 w 0 0 3 := by
   have := ((h 1).mp (by decide)).1
   lia
 
-/-- info: 'Cslib.Logic.FO.Ordered.realize_bitSum' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Cslib.Logic.FO.Ordered.realize_bitSum
-
-/-- info: 'Cslib.Logic.FO.Ordered.existsUnique_bitSum' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Cslib.Logic.FO.Ordered.existsUnique_bitSum
-
-/-- info: 'Cslib.Logic.FO.Ordered.realize_shiftLeft' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Cslib.Logic.FO.Ordered.realize_shiftLeft
-
 end Cslib.Tests.OrderedBitSum

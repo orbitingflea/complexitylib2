@@ -28,6 +28,8 @@ names, including its return label. Polynomial machine certificates are supplied 
 
 ## Main results
 
+* `Cslib.RotationMap.TowerTable.contract_eq`: contracted table rotations agree with
+  quotient/remainder contraction of the graph (`contractFin`).
 * `Cslib.RotationMap.TowerTable.rotateFamily_eq`: exact rotation and return-label agreement.
 * `Cslib.RotationMap.arithmeticExpanderRotate_eq`: the concrete instance realizes the same family.
 

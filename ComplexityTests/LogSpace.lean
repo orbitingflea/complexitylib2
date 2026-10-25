@@ -10,8 +10,8 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Streaming
 
 /-! Logarithmic space: a nontrivial problem in `L` decided in constant workspace, complements,
 reductions and composition, a nondeterministic machine with a branch running forever, the
-bounds at inputs of length zero and one, codes of views without their input, breadth-first search
-on small graphs, and axiom guards for the headline results. -/
+bounds at inputs of length zero and one, codes of views without their input, and breadth-first
+search on small graphs. -/
 
 namespace ComplexityTests.LogSpace
 
@@ -148,100 +148,5 @@ example : Reachability.search (fun n => [(n + 1) % 3]) 5 0 = [0, 1, 2] := by dec
 
 /-- No successors: only the start is found. -/
 example : Reachability.search (fun _ : ℕ => []) 4 7 = [7] := by decide
-
-/-! ### Axiom guards -/
-
-/-- info: 'Cslib.Complexity.NL_subset_P' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.NL_subset_P
-
-/--
-info: 'Cslib.Complexity.mem_P_of_recognizesInSpace' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.mem_P_of_recognizesInSpace
-
-/-- info: 'Cslib.Complexity.L_subset_NL' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.L_subset_NL
-
-/-- info: 'Cslib.Complexity.L_subset_P' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.L_subset_P
-
-/-- info: 'Cslib.Complexity.mem_L_iff' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.mem_L_iff
-
-/-- info: 'Cslib.Complexity.compl_mem_L' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.compl_mem_L
-
-/--
-info: 'Cslib.Complexity.LogSpaceReducible.mem_L' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.LogSpaceReducible.mem_L
-
-/--
-info: 'Cslib.Complexity.LogSpaceReducible.trans' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.LogSpaceReducible.trans
-
-/--
-info: 'Turing.MultiTapeTM.ComputableInLogSpace.comp' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeTM.ComputableInLogSpace.comp
-
-/--
-info: 'Turing.MultiTapeTM.ComputableInLogSpace.computableTidilyInPolyTime' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeTM.ComputableInLogSpace.computableTidilyInPolyTime
-
-/--
-info: 'Turing.MultiTapeTM.haltsAt_le_card' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeTM.haltsAt_le_card
-
-/--
-info: 'Turing.MultiTapeNTM.length_le_of_nodup_reachable' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeNTM.length_le_of_nodup_reachable
-
-/--
-info: 'Turing.MultiTapeNTM.searchAccepts_iff' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeNTM.searchAccepts_iff
-
-/--
-info: 'Turing.MultiTapeNTM.exists_computableTidilyInPolyTime_searchAccepts' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeNTM.exists_computableTidilyInPolyTime_searchAccepts
-
-/--
-info: 'Cslib.Reachability.mem_search_iff' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Reachability.mem_search_iff
 
 end ComplexityTests.LogSpace

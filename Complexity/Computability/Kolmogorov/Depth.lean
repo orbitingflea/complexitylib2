@@ -36,6 +36,8 @@ exactly the time-bounded complexity. The depth between two time bounds `t₁ ≤
   (`exists_forall_le_depth_eq_zero`).
 * `Cslib.Kolmogorov.DescriptionMethod.depthBetween_add`: depths between consecutive time bounds
   add up.
+* `Cslib.Kolmogorov.DescriptionMethod.depthBetween_add_depth`: depth between two bounds plus depth
+  at the upper bound equals depth at the lower bound.
 
 ## References
 

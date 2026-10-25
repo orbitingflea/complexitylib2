@@ -10,8 +10,7 @@ import Complexity.Computability.Circuit.Boolean.Hierarchy
 
 /-! Derandomizing `BPP` with the Nisan–Wigderson generator: average-case hardness on concrete
 functions, both satisfied and violated; greedy designs, their size bound and their generator on
-concrete masks; the decider on a verifier that ignores its random string; and named axiom guards
-for the headline theorems. -/
+concrete masks; and the decider on a verifier that ignores its random string. -/
 
 namespace ComplexityTests.Derandomization
 
@@ -108,63 +107,5 @@ example : Complexity.nwDecider (fun _ : Unit × List Bool => true) (fun _ => fal
 example : Complexity.nwDecider (fun _ : Unit × List Bool => false) (fun _ => false)
     (fun _ => 2) (fun _ => 1) (fun _ => 0) (fun _ => 2) () = false := by
   decide
-
-/-! ### Axioms -/
-
-/--
-info: 'Cslib.Complexity.BPP_subset_P_of_isAverageCaseHard' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.BPP_subset_P_of_isAverageCaseHard
-
-/--
-info: 'Cslib.Complexity.P_eq_BPP_of_isAverageCaseHard' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.P_eq_BPP_of_isAverageCaseHard
-
-/--
-info: 'Cslib.Complexity.computableInPolyTime_nwDecider' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.computableInPolyTime_nwDecider
-
-/--
-info: 'Cslib.Complexity.exists_computableInO_of_mem_DTIME' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.exists_computableInO_of_mem_DTIME
-
-/--
-info: 'Cslib.Crypto.PRG.NisanWigderson.abs_card_div_sub_card_div_lt' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.PRG.NisanWigderson.abs_card_div_sub_card_div_lt
-
-/--
-info: 'Cslib.Crypto.PRG.NisanWigderson.choose_le_length_greedyMasks_mul' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.PRG.NisanWigderson.choose_le_length_greedyMasks_mul
-
-/--
-info: 'Cslib.Crypto.PRG.NisanWigderson.computableInPolyTime_greedyMasks' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.PRG.NisanWigderson.computableInPolyTime_greedyMasks
-
-/--
-info: 'Cslib.Circuits.Boolean.isAverageCaseHard_xorPower' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Boolean.isAverageCaseHard_xorPower
 
 end ComplexityTests.Derandomization

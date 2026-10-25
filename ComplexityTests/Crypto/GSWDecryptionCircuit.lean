@@ -131,26 +131,4 @@ example (n w : ℕ) :
   by simpa only [one_mul] using
     Layered.length_encCompiled_compile_le (augmentNand (DecryptionCircuit.circuit n w))
 
-/-- info: 'Cslib.Crypto.Homomorphic.GSW.DecryptionCircuit.correct' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms DecryptionCircuit.correct
-
-/-- info: 'Cslib.Crypto.Homomorphic.GSW.DecryptionCircuit.computableInPolyTime_code' depends on axioms: [propext,
- Classical.choice,
- Quot.sound] -/
-#guard_msgs in
-#print axioms DecryptionCircuit.computableInPolyTime_code
-
-/-- info: 'Cslib.Circuits.Boolean.Modular.computableInPolyTime_innerProduct' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms Modular.computableInPolyTime_innerProduct
-
-/-- info: 'Cslib.Crypto.Homomorphic.GSW.DecryptionCircuit.layers_augment_le_depthBudget' depends on axioms: [propext,
- Classical.choice,
- Quot.sound] -/
-#guard_msgs in
-#print axioms DecryptionCircuit.layers_augment_le_depthBudget
-
 end ComplexityTests.Crypto.GSWDecryptionCircuit

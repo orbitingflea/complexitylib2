@@ -126,11 +126,5 @@ info: 'Cslib.Stateful.Amortized.client' depends on axioms:
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Stateful.Amortized.client
-/--
-info: 'Cslib.WordRAM.ArrayCopy.exec' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.WordRAM.ArrayCopy.exec
 
 end ComplexityTests.DataStructure

@@ -1,7 +1,7 @@
 """Unit tests for scripts/check_tidy_surface.py, on synthetic build outputs and, when Lean is
 available, on a compiled module (`CompiledFixtureTests`).
 
-The fixtures have the shape of what `scripts/QualityReport.lean` and the `.ilean` files record for
+The fixtures have the shape of what `scripts/LeanOutputs.lean` and the `.ilean` files record for
 a module like this one, where only `stated`, `exposed` and `Cert.cert` have tidy statements:
 
     theorem proved (h : ComputableInPolyTime f e e') : ComputableInPolyTime f e e' := by
@@ -30,7 +30,7 @@ from unittest import mock
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import check_tidy_surface as c  # noqa: E402
-import quality_report as q  # noqa: E402
+import lean_outputs as lo  # noqa: E402
 
 TIDY = "Turing.MultiTapeTM.ComputableTidilyInPolyTime"
 PLAIN = "Turing.MultiTapeTM.ComputableInPolyTime"
@@ -73,8 +73,8 @@ def module_fixture(module: str, short: str) -> list[tuple[str, dict, dict | None
     ]
 
 
-class FakeLibrary(q.Library):
-    """`quality_report.Library` over in-memory `.ilean` data and constant rows."""
+class FakeLibrary(lo.Library):
+    """`lean_outputs.Library` over in-memory `.ilean` data and constant rows."""
 
     def __init__(self, modules: dict[str, list[tuple[str, dict, dict | None]]]):
         self.ileans, self.constants, self.sources = {}, {}, {}
@@ -157,7 +157,7 @@ class MainTests(unittest.TestCase):
         if baseline is not None:
             self.baseline.write_text(json.dumps(baseline))
         out, err = io.StringIO(), io.StringIO()
-        with mock.patch.object(q, "Library", lambda _: FakeLibrary(self.modules)), \
+        with mock.patch.object(lo, "Library", lambda _: FakeLibrary(self.modules)), \
                 contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
             code = c.main(["--no-build-check", "--allowlist", str(self.allowlist),
                            "--baseline", str(self.baseline), *flags])
@@ -272,7 +272,7 @@ end
 @unittest.skipUnless(shutil.which("lake") and (c.ROOT / ".lake/packages").is_dir(),
                      "needs Lean and the repository's packages (CI runs this after the build)")
 class CompiledFixtureTests(unittest.TestCase):
-    """The whole count on a compiled module: what `scripts/QualityReport.lean` records as a
+    """The whole count on a compiled module: what `scripts/LeanOutputs.lean` records as a
     statement, and what it leaves to proofs."""
 
     @classmethod
@@ -288,7 +288,7 @@ class CompiledFixtureTests(unittest.TestCase):
                         str(root / "TidyFixture.lean")], cwd=c.ROOT, check=True,
                        capture_output=True)
         ilean = json.loads((build / "TidyFixture.ilean").read_text())
-        constants, _ = q.load_constants(build, ["TidyFixture"])
+        constants, _ = lo.load_constants(build, ["TidyFixture"])
         cls.constants = constants
         lib = FakeLibrary({})
         lib.ileans, lib.modules, lib.constants = {"TidyFixture": ilean}, ["TidyFixture"], constants

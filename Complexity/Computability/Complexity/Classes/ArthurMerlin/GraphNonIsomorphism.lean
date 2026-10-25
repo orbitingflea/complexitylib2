@@ -17,6 +17,7 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Na
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Binary
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Factorial
 import Complexity.Foundations.Data.BitString.Basic
+import Complexity.Foundations.Data.Matrix.Reindex
 import Mathlib.Data.List.GetD
 
 /-!
@@ -74,7 +75,7 @@ protocol in `Complexity.Computability.Complexity.Classes.IP.GraphNonIsomorphism`
 
 namespace Cslib.Complexity
 
-open Finset Turing.MultiTapeTM
+open Finset Turing.MultiTapeTM Matrix
 
 namespace GraphNonIsomorphism
 
@@ -83,25 +84,6 @@ namespace PublicCoin
 /-! ### Relabelling matrices -/
 
 variable {n : ℕ}
-
-/-- Relabelling by a product of permutations is relabelling twice. -/
-theorem reindex_mul (σ τ : Equiv.Perm (Fin n)) (M : Matrix (Fin n) (Fin n) Bool) :
-    Matrix.reindex (σ * τ) (σ * τ) M = Matrix.reindex σ σ (Matrix.reindex τ τ M) :=
-  (DFunLike.congr_fun (Matrix.reindex_trans τ τ σ σ) M).symm
-
-/-- Relabelling by the identity permutation does nothing. -/
-theorem reindex_one (M : Matrix (Fin n) (Fin n) Bool) : Matrix.reindex 1 1 M = M :=
-  Matrix.reindex_refl_refl M
-
-/-- `Matrix.reindex τ τ A = M` says that `τ` carries `A` to `M`. -/
-theorem reindex_eq_iff {τ : Equiv.Perm (Fin n)} {A M : Matrix (Fin n) (Fin n) Bool} :
-    Matrix.reindex τ τ A = M ↔ ∀ i j, M (τ i) (τ j) = A i j := by
-  constructor
-  · rintro rfl i j
-    simp
-  · intro h
-    ext i j
-    simpa using (h (τ.symm i) (τ.symm j)).symm
 
 /-- The relabellings of a matrix by permutations of its rows and columns. -/
 def orbit (A : Matrix (Fin n) (Fin n) Bool) : Finset (Matrix (Fin n) (Fin n) Bool) :=
@@ -115,12 +97,12 @@ theorem mem_orbit_trans {A B M : Matrix (Fin n) (Fin n) Bool} (hB : B ∈ orbit 
     (hM : M ∈ orbit B) : M ∈ orbit A := by
   obtain ⟨τ, rfl⟩ := mem_orbit.1 hB
   obtain ⟨σ, rfl⟩ := mem_orbit.1 hM
-  exact mem_orbit.2 ⟨σ * τ, reindex_mul σ τ A⟩
+  exact mem_orbit.2 ⟨σ * τ, reindex_perm_mul σ τ A⟩
 
 theorem mem_orbit_symm {A B : Matrix (Fin n) (Fin n) Bool} (hB : B ∈ orbit A) : A ∈ orbit B := by
   obtain ⟨τ, rfl⟩ := mem_orbit.1 hB
   refine mem_orbit.2 ⟨τ⁻¹, ?_⟩
-  rw [← reindex_mul, inv_mul_cancel, reindex_one]
+  rw [← reindex_perm_mul, inv_mul_cancel, reindex_perm_one]
 
 /-- The pairs of a relabelling of `A` and an automorphism of it. -/
 def pairs (A : Matrix (Fin n) (Fin n) Bool) :
@@ -134,7 +116,7 @@ private theorem card_filter_reindex_eq {A M : Matrix (Fin n) (Fin n) Bool} (hM :
       #{τ : Equiv.Perm (Fin n) | Matrix.reindex τ τ A = M} := by
   obtain ⟨τ₀, rfl⟩ := mem_orbit.1 hM
   refine card_equiv (Equiv.mulRight τ₀) fun σ => ?_
-  simp only [mem_filter, mem_univ, true_and, Equiv.coe_mulRight, reindex_mul]
+  simp only [mem_filter, mem_univ, true_and, Equiv.coe_mulRight, reindex_perm_mul]
 
 /-- **Orbit–stabilizer count**: the pairs of a relabelling of `A` and an automorphism of it are
 `n!` many. The automorphism groups along the orbit have the sizes of the fibers of

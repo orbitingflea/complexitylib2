@@ -11,8 +11,8 @@ import Complexity.Computability.Circuit.Rational.Runtime
 
 Concrete checks for `gridPointWords`, `outputWord`, `inputWord`, `parseInput`, and
 `hittingGenerator`, agreement with `ExecutableGenerator.output` and
-`encodeOutput (hittingList n s)`, polynomial-time certificates, end-to-end hitting specification,
-and axiom guards.
+`encodeOutput (hittingList n s)`, polynomial-time certificates, and the end-to-end hitting
+specification.
 -/
 
 namespace ComplexityTests.RationalHitting.Runtime
@@ -83,70 +83,5 @@ example :
             PolynomialBounds.outputConstant * (n + s + 1) ^ 104 ∧
           Hits s (hittingList n s) :=
   hittingGenerator_spec
-
-/-! ### Axioms -/
-
-/--
-info: 'Cslib.Circuits.Rational.gridPointWords_eq' depends on axioms: [propext, Classical.choice,
-Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms gridPointWords_eq
-
-/--
-info: 'Cslib.Circuits.Rational.outputWord_eq' depends on axioms: [propext, Classical.choice,
-Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms outputWord_eq
-
-/--
-info: 'Cslib.Circuits.Rational.hittingListWord_eq' depends on axioms: [propext, Classical.choice,
-Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms hittingListWord_eq
-
-/--
-info: 'Cslib.Circuits.Rational.parseInput_eq_some_iff' depends on axioms: [propext,
-Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms parseInput_eq_some_iff
-
-/--
-info: 'Cslib.Circuits.Rational.hittingGenerator_inputWord' depends on axioms: [propext,
-Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms hittingGenerator_inputWord
-
-/--
-info: 'Cslib.Circuits.Rational.hittingGenerator_eq_nil' depends on axioms: [propext,
-Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms hittingGenerator_eq_nil
-
-/--
-info: 'Cslib.Circuits.Rational.hittingList_polytime' depends on axioms: [propext, Classical.choice,
-Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms hittingList_polytime
-
-/--
-info: 'Cslib.Circuits.Rational.hittingGenerator_polytime' depends on axioms: [propext,
-Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms hittingGenerator_polytime
-
-/--
-info: 'Cslib.Circuits.Rational.hittingGenerator_spec' depends on axioms: [propext,
-Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms hittingGenerator_spec
 
 end ComplexityTests.RationalHitting.Runtime

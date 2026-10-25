@@ -82,18 +82,4 @@ example : pairCoverComplexity {x | forallGuess noGuess x = true}
       unfold Circuit.ComputesFrom
       decide)
 
-/--
-info: 'Cslib.Circuits.Fusion.exists_pairCover_forallGuess' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Circuits.Fusion.exists_pairCover_forallGuess
-
-/--
-info: 'Cslib.Circuits.Fusion.pairCoverComplexity_forallGuess_le_cost' depends on axioms: [propext,
- Classical.choice,
- Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Circuits.Fusion.pairCoverComplexity_forallGuess_le_cost
-
 end ComplexityTests.FusionConondeterministic

@@ -64,45 +64,4 @@ example : PWithOracle headTrue encBits ⊆ UP encBits ∩ coUP encBits :=
 example : PWithOracle headTrue encBits ⊆ NP encBits ∩ coNP encBits :=
   PWithOracle_subset_NP_inter_coNP headTrue_mem_NP headTrue_mem_coNP
 
-/--
-info: 'Cslib.Complexity.ComputableInPolyTimeWithOracle.encoded_mem_NP' depends on axioms: [propext,
- Classical.choice,
- Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Complexity.ComputableInPolyTimeWithOracle.encoded_mem_NP
-
-/--
-info: 'Cslib.Complexity.ComputableInPolyTimeWithOracle.encoded_mem_UP' depends on axioms: [propext,
- Classical.choice,
- Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Complexity.ComputableInPolyTimeWithOracle.encoded_mem_UP
-
-/-- info: 'Cslib.Complexity.PWithOracle_subset_NP_inter_coNP_iff' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Cslib.Complexity.PWithOracle_subset_NP_inter_coNP_iff
-
-/-- info: 'Cslib.Complexity.PWithOracle_subset_UP_inter_coUP_iff' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Cslib.Complexity.PWithOracle_subset_UP_inter_coUP_iff
-
-/-- info: 'Cslib.Complexity.NPWithOracle_eq_NP_of_mem_NP_of_mem_coNP' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Cslib.Complexity.NPWithOracle_eq_NP_of_mem_NP_of_mem_coNP
-
-/-- info: 'Cslib.Complexity.NPWithOracle_eq_NP_iff' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Cslib.Complexity.NPWithOracle_eq_NP_iff
-
-/-- info: 'Cslib.Complexity.NP_eq_coNP_iff_forall_NPWithOracle_eq_NP' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Cslib.Complexity.NP_eq_coNP_iff_forall_NPWithOracle_eq_NP
-
 end ComplexityTests.OracleLowness

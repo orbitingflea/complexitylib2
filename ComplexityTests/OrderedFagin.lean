@@ -95,25 +95,4 @@ example : (2, []) ∉ edgeZeroMaxQuery.encodedLanguage graphVocabulary :=
 example : (2, [ [true] ]) ∉ edgeZeroMaxQuery.encodedLanguage graphVocabulary :=
   Query.not_mem_encodedLanguage_of_not_wellFormed _ _ (by decide)
 
-/--
-info: 'Cslib.Logic.Vocabulary.exists_powerSentence_of_mem_NP' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.Vocabulary.exists_powerSentence_of_mem_NP
-
-/--
-info: 'Cslib.Logic.FO.Ordered.ESODefinable.of_powerLanguage' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.FO.Ordered.ESODefinable.of_powerLanguage
-
-/--
-info: 'Cslib.Logic.FO.Ordered.ESODefinable.of_queryLanguage_mem_NP' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.FO.Ordered.ESODefinable.of_queryLanguage_mem_NP
-
 end ComplexityTests.OrderedFagin

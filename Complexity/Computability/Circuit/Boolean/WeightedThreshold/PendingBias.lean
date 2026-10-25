@@ -56,6 +56,8 @@ forcing `(pendingBiasStates p k).card` to be at least the number of distinct row
 
 ## Main results
 
+* `Cslib.Circuits.Boolean.WeightedThreshold.eval_eq_of_inputSummary_eq`: equal input summaries
+  produce identical gate valuations.
 * `Cslib.Circuits.Boolean.WeightedThreshold.pendingBiasTrace_eq_pendingBias`,
   `Cslib.Circuits.Boolean.WeightedThreshold.eval_eq_decide_pendingBiasTrace`: Theorem 6.1, exact
   pending-bias state simulation.

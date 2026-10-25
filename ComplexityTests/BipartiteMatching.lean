@@ -84,42 +84,4 @@ example : (126 : ℕ∞) ≤ Monotone.eformulaDepth (bipartitePerfectMatching (2
     have : 2 ^ 20 ≤ 2 ^ 13 * d + 2 ^ 14 := by exact_mod_cast h
     exact_mod_cast (show 126 ≤ d by omega)
 
-/-! ### Axioms -/
-
-/--
-info: 'Cslib.Circuits.Monotone.le_mul_eformulaDepth_bipartitePerfectMatching_add' depends on
-axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Monotone.le_mul_eformulaDepth_bipartitePerfectMatching_add
-
-/--
-info: 'Cslib.Circuits.le_mul_ecomplexity_bipartitePerfectMatching_add' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.le_mul_ecomplexity_bipartitePerfectMatching_add
-
-/--
-info: 'Cslib.Circuits.ecomplexityFun_disjointness_le_mul_ecomplexity_bipartitePerfectMatching'
-depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.ecomplexityFun_disjointness_le_mul_ecomplexity_bipartitePerfectMatching
-
-/--
-info: 'Cslib.Circuits.BipartiteMatching.RazWigderson.two_mul_card_filter_run_oneRun_le' depends on
-axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.BipartiteMatching.RazWigderson.two_mul_card_filter_run_oneRun_le
-
-/--
-info: 'Cslib.Circuits.BipartiteMatching.RazWigderson.solves_reduction' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.BipartiteMatching.RazWigderson.solves_reduction
-
 end ComplexityTests.BipartiteMatching

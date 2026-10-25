@@ -1,6 +1,8 @@
 import ComplexityAbstracts.BarringtonAbstract
 import ComplexityAbstracts.BarringtonBridge
 import ComplexityAbstracts.Check
+import ComplexityAbstracts.ChorGoldreichAbstract
+import ComplexityAbstracts.ChorGoldreichBridge
 import ComplexityAbstracts.CommunicationAbstract
 import ComplexityAbstracts.CommunicationBridge
 import ComplexityAbstracts.Computation

@@ -75,15 +75,4 @@ example : PPolyOracle (0 : Language Bool) = PPoly :=
 example : (⊤ : Language Bool) ∈ PPolyOracle (0 : Language Bool) :=
   PPoly.subset_PPolyOracle _ PPoly.top_mem
 
-/--
-info: 'Cslib.Circuits.Boolean.eval_inlineOracle' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Circuits.Boolean.eval_inlineOracle
-/--
-info: 'Cslib.Circuits.Boolean.PPolyOracle_eq_PPoly' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Circuits.Boolean.PPolyOracle_eq_PPoly
-
 end ComplexityTests.OracleCircuits

@@ -73,14 +73,4 @@ example : ComputableTidilyInPolyTime
       machine.pendingRequest (machine.replayPrefix p.1.1 p.1.2 p.2))
     (encPair (encPair encBits encBits) encUnary) encBits := by fun_prop
 
-/-- info: 'Turing.MultiTapePTM.replayConfig_pt' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Turing.MultiTapePTM.replayConfig_pt
-
-/-- info: 'Turing.MultiTapePTM.replayOutput_oracleReplies' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Turing.MultiTapePTM.replayOutput_oracleReplies
-
 end ComplexityTests.OracleReplay

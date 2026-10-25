@@ -11,6 +11,7 @@ public import Complexity.Init
 public import Cslib.Computability.Circuit.Boolean.Basic
 public import Complexity.Computability.Machines.Turing.MultiTape.Feature
 public import Mathlib.Tactic.DeriveFintype
+import Complexity.Foundations.Data.Nat.Div
 
 /-!
 # Block and wire layout of the uniform tableau circuit
@@ -501,7 +502,7 @@ theorem GlobLoc.ofIdx_idx (l : GlobLoc k State) : GlobLoc.ofIdx l.idx = l := by
       omega
     simp only [GlobLoc.idx, GlobLoc.ofIdx, hlt, ↓reduceDIte, GlobLoc.sit.injEq]
     constructor <;> ext
-    · simp [Nat.add_comm, Nat.add_mul_div_right _ _ (Nat.succ_pos k), Nat.div_eq_of_lt i.isLt]
+    · simp [Nat.mul_add_div_fin]
     · simp [Nat.add_comm, Nat.mod_eq_of_lt i.isLt]
   · have hm : ¬ numSit k State * (k + 1) + attrIdx v * (numSit k State + 1) + j <
         numSit k State * (k + 1) := by omega
@@ -509,7 +510,7 @@ theorem GlobLoc.ofIdx_idx (l : GlobLoc k State) : GlobLoc.ofIdx l.idx = l := by
         numSit k State * (k + 1)) / (numSit k State + 1) = attrIdx v := by
       rw [show numSit k State * (k + 1) + attrIdx v * (numSit k State + 1) + j -
         numSit k State * (k + 1) = j + attrIdx v * (numSit k State + 1) by omega,
-        Nat.add_mul_div_right _ _ (Nat.succ_pos _), Nat.div_eq_of_lt j.isLt, Nat.zero_add]
+        Nat.add_mul_div_of_lt _ j.isLt]
     have h₂ : (numSit k State * (k + 1) + attrIdx v * (numSit k State + 1) + j -
         numSit k State * (k + 1)) % (numSit k State + 1) = j := by
       rw [show numSit k State * (k + 1) + attrIdx v * (numSit k State + 1) + j -
@@ -677,7 +678,7 @@ theorem div_mod_wire {n T t : ℕ} {l : Loc k State} {c : ℕ} (hl : l.ColOK T c
   have h := Loc.offset_lt hl
   rw [wire_sub, show 2 + t * blockSize k State T + l.offset T c - 2 =
     l.offset T c + t * blockSize k State T by omega]
-  exact ⟨by rw [Nat.add_mul_div_right _ _ (by omega), Nat.div_eq_of_lt h, Nat.zero_add],
+  exact ⟨Nat.add_mul_div_of_lt t h,
     by rw [Nat.add_mul_mod_self_right, Nat.mod_eq_of_lt h]⟩
 
 /-! ### Every gate sits at a position -/

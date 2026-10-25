@@ -23,10 +23,3 @@ example : 2 * (stepBound 0 0 1 + runBound 0 0 1 + 1) ≤ 100000 ∧
     (by decide) (by decide) (by decide) (by decide)
 
 example {D N : ℕ} : runBound D N 0 ≤ runBound D N 1 := runBound_mono (by decide)
-
-/--
-info: 'Turing.MultiTapeTM.Universal.universal_bounds_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeTM.Universal.universal_bounds_le

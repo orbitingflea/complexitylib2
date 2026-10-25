@@ -186,12 +186,6 @@ private theorem mkFrame_inSpace {j : β → ℕ} {g : β → Fin 4 × Bool × Fi
     ComputableTidilyInSpace (fun x => Frame.equiv.symm (j x, g x)) encIn encFrame Bs :=
   (budget_prod hj hg).of_enc_eq fun x => by rw [encFrame_apply, Equiv.apply_symm_apply]
 
-private theorem cons_inSpace {ε : Type} {enc : ε ↪ List Bool} {a : β → ε} {l : β → List ε}
-    (ha : ComputableTidilyInSpace a encIn enc Bs)
-    (hl : ComputableTidilyInSpace l encIn (encList enc) Bs) :
-    ComputableTidilyInSpace (fun x => a x :: l x) encIn (encList enc) Bs :=
-  budget_comp_linear (of_inO (ComputableTidilyInDegree.cons enc).inO_one) (budget_prod ha hl)
-
 private theorem mkTuple_inSpace {e h p : β → ℕ} {R : β → Regs} {st : β → List Frame} {m : β → Mode}
     {c : β → Fin 7 × ℕ × ℕ × List ℕ}
     (he : ComputableTidilyInSpace e encIn encNat Bs)
@@ -449,7 +443,7 @@ private theorem branch5_inSpace :
       (out_inSpace
         (withCtl_inSpace
           (mkCtl_inSpace (hConstTag 5) (succ_inSpace n₁_inSpace).tidy (hConstNat 0) hAcc))))
-    (out_inSpace (withRegsModeCtl_inSpace hsub (cons_inSpace (hFrPhase 2) rest_inSpace.tidy)
+    (out_inSpace (withRegsModeCtl_inSpace hsub (budget_cons (hFrPhase 2) rest_inSpace.tidy)
       (hTopFinite (encB := encMode) fun g => .call true (g.2.2 + 1))
       (mkCtl_inSpace (hConstTag 3) (hConstNat 0) (hConstNat 0) hNil))))).of_enc_eq fun y => ?_
   simp only [decide_eq_true_eq]
@@ -542,22 +536,22 @@ private theorem branch3_inSpace :
   refine (budget_ite hcall
     (budget_ite hlenEq
       (out_inSpace (withCtl_inSpace (mkCtl_inSpace (hConstTag 4) (hConstNat 0) (hConstNat 0) hNil)))
-      (out_inSpace (withRegsModeCtl_inSpace hR0 (cons_inSpace hFrame0 stack_inSpace.tidy)
+      (out_inSpace (withRegsModeCtl_inSpace hR0 (budget_cons hFrame0 stack_inSpace.tidy)
         (hModeFinite (encB := encMode) fun m => .call false (m.target + 1)) hRun)))
     (budget_ite hempty
       (budget_prod (withCtl_inSpace (mkCtl_inSpace (hConstTag 6) (hConstNat 0) (hConstNat 0) hNil))
         hout)
       (budget_ite (hph 0)
-        (out_inSpace (withRegsModeCtl_inSpace hRj (cons_inSpace (hFrPhase 1) rest_inSpace.tidy)
+        (out_inSpace (withRegsModeCtl_inSpace hRj (budget_cons (hFrPhase 1) rest_inSpace.tidy)
           (hTopFinite (encB := encMode) fun g => .call false (g.2.2 + 2)) hRun))
         (budget_ite (hph 1)
           (out_inSpace (withCtl_inSpace (mkCtl_inSpace (hConstTag 5) (hConstNat 0) (hConstNat 0)
             hReplicate)))
           (budget_ite (hph 2)
-            (out_inSpace (withRegsModeCtl_inSpace hR2 (cons_inSpace (hFrPhase 3) rest_inSpace.tidy)
+            (out_inSpace (withRegsModeCtl_inSpace hR2 (budget_cons (hFrPhase 3) rest_inSpace.tidy)
               (hTopFinite (encB := encMode) fun g => .call true (g.2.2 + 2)) hRun))
             (budget_ite hnext
-              (out_inSpace (withRegsModeCtl_inSpace hR3' (cons_inSpace hFrameNext rest_inSpace.tidy)
+              (out_inSpace (withRegsModeCtl_inSpace hR3' (budget_cons hFrameNext rest_inSpace.tidy)
                 (hTopFinite (encB := encMode) fun g => .call false (g.2.2 + 1)) hRun))
               (out_inSpace (withRegsModeCtl_inSpace hR3 rest_inSpace.tidy
                 (budget_const (encB := encMode) .ret len_le_stepBudget) hRun)))))))).of_enc_eq

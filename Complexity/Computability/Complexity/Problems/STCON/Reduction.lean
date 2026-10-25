@@ -65,7 +65,8 @@ variable {k : ℕ} {State : Type} [Fintype State] (ntm : MultiTapeNTM k Bool Sta
 
 /-- The start vertex is a vertex of the ambient graph. -/
 theorem startID_lt_vertexBound (n : ℕ) :
-    startID ntm (radixExponent State c) n < vertexBound (k := k) (radixExponent State c) n := by
+    startID ntm (radix (radixExponent State c) n) <
+      vertexBound (k := k) (radix (radixExponent State c) n) := by
   have hcard : Fintype.card (Option State) < radix (radixExponent State c) n :=
     calc Fintype.card (Option State) < 2 ^ Fintype.card (Option State) := Nat.lt_two_pow_self
       _ ≤ (n + 2) ^ Fintype.card (Option State) := Nat.pow_le_pow_left (by omega) _
@@ -87,19 +88,19 @@ theorem startID_lt_vertexBound (n : ℕ) :
 compact configuration graph between identifiers below `vertexBound`, and an arc from each
 accepting halted vertex to the sink. -/
 noncomputable def sinkAdj (D : ℕ) (w : List Bool) (u v : ℕ) : Bool :=
-  if v < vertexBound (k := k) D w.length then
-    edgeWithSymbol ntm D w.length u v w[queryIndex (k := k) D w.length u]?
-  else bad (k := k) (State := State) D w.length u
+  if v < vertexBound (k := k) (radix D w.length) then
+    edgeWithSymbol ntm (radix D w.length) w.length u v w[queryIndex (k := k) (radix D w.length) u]?
+  else bad (k := k) (State := State) (radix D w.length) w.length u
 
 /-- **The configuration graph of `ntm` on `w` as an instance of directed connectivity**: the
 `vertexBound` identifiers of the compact configuration graph and a sink, with source the start
 vertex and target the sink. -/
 noncomputable def configurationInstance (w : List Bool) : STCONInstance where
-  n := vertexBound (k := k) (radixExponent State c) w.length + 1
+  n := vertexBound (k := k) (radix (radixExponent State c) w.length) + 1
   adj u v := sinkAdj ntm (radixExponent State c) w u v
-  s := ⟨startID ntm (radixExponent State c) w.length,
+  s := ⟨startID ntm (radix (radixExponent State c) w.length),
     (startID_lt_vertexBound ntm c w.length).trans (Nat.lt_succ_self _)⟩
-  t := ⟨vertexBound (k := k) (radixExponent State c) w.length, Nat.lt_succ_self _⟩
+  t := ⟨vertexBound (k := k) (radix (radixExponent State c) w.length), Nat.lt_succ_self _⟩
 
 /-- **The instance is in `STCON` exactly when the machine accepts**, for a machine within space
 `c * (Nat.log2 n + 1)` on the input. -/
@@ -114,11 +115,12 @@ theorem configurationInstance_mem_iff {w : List Bool}
   · -- a path to the sink passes through an accepting vertex just before it
     intro h
     have key : ∀ x : Fin I.n, Relation.ReflTransGen I.Adj I.s x →
-        ((x : ℕ) < vertexBound (k := k) D w.length →
-          Relation.ReflTransGen (Edge ntm D w) (startID ntm D w.length) x) ∧
-        ((x : ℕ) = vertexBound (k := k) D w.length → ∃ u,
-          Relation.ReflTransGen (Edge ntm D w) (startID ntm D w.length) u ∧
-            bad (k := k) (State := State) D w.length u = true) := by
+        ((x : ℕ) < vertexBound (k := k) (radix D w.length) →
+          Relation.ReflTransGen (Edge ntm (radix D w.length) w)
+            (startID ntm (radix D w.length)) x) ∧
+        ((x : ℕ) = vertexBound (k := k) (radix D w.length) → ∃ u,
+          Relation.ReflTransGen (Edge ntm (radix D w.length) w) (startID ntm (radix D w.length)) u ∧
+            bad (k := k) (State := State) (radix D w.length) w.length u = true) := by
       intro x hx
       induction hx with
       | refl => exact ⟨fun _ => .refl, fun h => absurd h (Nat.ne_of_lt hstart)⟩
@@ -135,7 +137,8 @@ theorem configurationInstance_mem_iff {w : List Bool}
     exact (key I.t h).2 rfl
   · -- a path to an accepting vertex continues to the sink
     rintro ⟨u, hu, hbad⟩
-    have hlift : ∀ x, Relation.ReflTransGen (Edge ntm D w) (startID ntm D w.length) x →
+    have hlift : ∀ x, Relation.ReflTransGen (Edge ntm (radix D w.length) w)
+        (startID ntm (radix D w.length)) x →
         ∃ hx : x < I.n, Relation.ReflTransGen I.Adj I.s ⟨x, hx⟩ := by
       intro x hx
       induction hx with
@@ -149,7 +152,7 @@ theorem configurationInstance_mem_iff {w : List Bool}
         exact hyz
     obtain ⟨hu', hpath⟩ := hlift u hu
     refine hpath.tail ?_
-    change sinkAdj ntm D w u (vertexBound (k := k) D w.length) = true
+    change sinkAdj ntm D w u (vertexBound (k := k) (radix D w.length)) = true
     rw [sinkAdj, ite_eq_right (lt_irrefl _)]
     exact hbad
 
@@ -162,7 +165,8 @@ open CounterProgram Instr Expr _root_.Turing.MultiTapeTM
 variable (D : ℕ)
 
 /-- The number of vertices, from the input length in register `0`. -/
-noncomputable abbrev numVerticesExpr : Expr := add (vertexBoundExpr k D (reg 0)) (const 1)
+noncomputable abbrev numVerticesExpr : Expr :=
+  add (vertexBoundExpr k (radixExpr D (reg 0))) (const 1)
 
 /-- **The writer** of the encoded instance, on the framed input. Register `0` holds the input
 length, register `1` a counter or the row, register `2` the column and register `3` the code of
@@ -174,18 +178,18 @@ noncomputable def writer : CounterProgram where
     [read (mul (const 2) (reg 0)) 1 2 2,
      assign 0 (add (reg 0) (const 1)) 0] ++
     forCode 2 1 (numVerticesExpr (k := k) D) 5 6 ++ [emit true 4, emit false 7] ++
-    forCode 7 1 (startIDExpr ntm D (reg 0)) 10 11 ++ [emit true 9, emit false 12] ++
-    forCode 12 1 (vertexBoundExpr k D (reg 0)) 15 16 ++ [emit true 14, emit false 17] ++
+    forCode 7 1 (startIDExpr ntm (radixExpr D (reg 0))) 10 11 ++ [emit true 9, emit false 12] ++
+    forCode 12 1 (vertexBoundExpr k (radixExpr D (reg 0))) 15 16 ++ [emit true 14, emit false 17] ++
     forCode 17 1 (numVerticesExpr (k := k) D) 20 33 ++
     forCode 20 2 (numVerticesExpr (k := k) D) 23 19 ++
-    [lt (reg 2) (vertexBoundExpr k D (reg 0)) 24 30,
-     lt (queryIndexExpr k D (reg 0) (reg 1)) (reg 0) 25 28,
-     read (add (mul (const 2) (queryIndexExpr k D (reg 0) (reg 1))) (const 1)) 26 27 27,
+    [lt (reg 2) (vertexBoundExpr k (radixExpr D (reg 0))) 24 30,
+     lt (queryIndexExpr k (radixExpr D (reg 0)) (reg 1)) (reg 0) 25 28,
+     read (add (mul (const 2) (queryIndexExpr k (radixExpr D (reg 0)) (reg 1))) (const 1)) 26 27 27,
      assign 3 (const 2) 29,
      assign 3 (const 1) 29,
      assign 3 (const 0) 29,
-     lt (const 0) (edgeExpr ntm D (reg 0) (reg 1) (reg 2) (reg 3)) 31 32,
-     lt (const 0) (badExpr k State D (reg 0) (reg 1)) 31 32,
+     lt (const 0) (edgeExpr ntm (radixExpr D (reg 0)) (reg 0) (reg 1) (reg 2) (reg 3)) 31 32,
+     lt (const 0) (badExpr k State (radixExpr D (reg 0)) (reg 0) (reg 1)) 31 32,
      emit true 22,
      emit false 22,
      halt []]
@@ -277,15 +281,16 @@ private theorem bounded_regs {L u v y : ℕ} (hL : L ≤ B) (hu : u ≤ B) (hv :
 /-- **An entry of the matrix**: the code of the requested input symbol is stored in register `3`,
 and the entry is written. -/
 private theorem reachesOut_entry (hL : w.length ≤ B)
-    (hN : vertexBound (k := k) D w.length + 1 ≤ B) (h2 : 2 ≤ B) {u v y : ℕ}
-    (hu : u ≤ vertexBound (k := k) D w.length + 1) (hv : v < vertexBound (k := k) D w.length + 1)
+    (hN : vertexBound (k := k) (radix D w.length) + 1 ≤ B) (h2 : 2 ≤ B) {u v y : ℕ}
+    (hu : u ≤ vertexBound (k := k) (radix D w.length) + 1)
+    (hv : v < vertexBound (k := k) (radix D w.length) + 1)
     (hy : y ≤ 2) :
     ∃ y' ≤ 2, (writer ntm D).ReachesOut (frame w) ((writer ntm D).Active B)
       (23, [w.length, u, v, y]) (22, [w.length, u, v, y']) [sinkAdj ntm D w u v] := by
   have hB : ∀ {y'}, y' ≤ 2 → ∀ r ∈ [w.length, u, v, y'], r ≤ B := fun hy' =>
     bounded_regs hL (by omega) (by omega) (by omega)
-  by_cases hvb : v < vertexBound (k := k) D w.length
-  · set q := queryIndex (k := k) D w.length u with hq_def
+  by_cases hvb : v < vertexBound (k := k) (radix D w.length)
+  · set q := queryIndex (k := k) (radix D w.length) u with hq_def
     -- the code of the symbol requested by the row `u`
     have hsymbol : ∃ y' ≤ 2, y' = symbolCode w[q]? ∧
         (writer ntm D).ReachesOut (frame w) ((writer ntm D).Active B)
@@ -294,10 +299,11 @@ private theorem reachesOut_entry (hL : w.length ≤ B)
       · obtain ⟨b, hb⟩ : ∃ b, w[q]? = some b := ⟨w[q], List.getElem?_eq_getElem hq⟩
         refine ⟨symbolCode (some b), by cases b <;> decide, by rw [hb], ?_⟩
         refine ReachesOut.lt (show (writer ntm D).instr 24 = _ from rfl) (hB hy) ?_
-        simp only [eval_queryIndexExpr, eval_reg, List.getD_cons_zero, List.getD_cons_succ,
+        simp only [eval_queryIndexExpr, eval_radixExpr, eval_reg, List.getD_cons_zero,
+          List.getD_cons_succ,
           ← hq_def, hq, ↓reduceIte]
         refine ReachesOut.read (show (writer ntm D).instr 25 = _ from rfl) (hB hy) ?_
-        simp only [eval_add, eval_mul, eval_const, eval_queryIndexExpr, eval_reg,
+        simp only [eval_add, eval_mul, eval_const, eval_queryIndexExpr, eval_radixExpr, eval_reg,
           List.getD_cons_zero, List.getD_cons_succ, ← hq_def, getElem?_frame_two_mul_add_one hq,
           hb]
         cases b
@@ -307,21 +313,24 @@ private theorem reachesOut_entry (hL : w.length ≤ B)
           simpa [symbolCode] using ReachesOut.refl _
       · refine ⟨0, by omega, by rw [List.getElem?_eq_none (by omega)]; rfl, ?_⟩
         refine ReachesOut.lt (show (writer ntm D).instr 24 = _ from rfl) (hB hy) ?_
-        simp only [eval_queryIndexExpr, eval_reg, List.getD_cons_zero, List.getD_cons_succ,
+        simp only [eval_queryIndexExpr, eval_radixExpr, eval_reg, List.getD_cons_zero,
+          List.getD_cons_succ,
           ← hq_def, hq, ↓reduceIte]
         refine ReachesOut.assign (show (writer ntm D).instr 28 = _ from rfl) (hB hy) ?_
         simpa using ReachesOut.refl _
     obtain ⟨y', hy', hsym, hreach⟩ := hsymbol
     refine ⟨y', hy', ?_⟩
     refine ReachesOut.lt (show (writer ntm D).instr 23 = _ from rfl) (hB hy) ?_
-    simp only [eval_reg, eval_vertexBoundExpr, List.getD_cons_zero, List.getD_cons_succ, hvb,
+    simp only [eval_reg, eval_vertexBoundExpr, eval_radixExpr, List.getD_cons_zero,
+      List.getD_cons_succ, hvb,
       ↓reduceIte]
     refine (hreach.trans (reachesOut_bit w (show (writer ntm D).instr 29 = _ from rfl)
       (eval_edgeExpr ntm (symbol := w[q]?) (by simp [hsym])) (hB hy'))).of_eq ?_
     simp [sinkAdj, hvb, hq_def]
   · refine ⟨y, hy, ?_⟩
     refine ReachesOut.lt (show (writer ntm D).instr 23 = _ from rfl) (hB hy) ?_
-    simp only [eval_reg, eval_vertexBoundExpr, List.getD_cons_zero, List.getD_cons_succ, hvb,
+    simp only [eval_reg, eval_vertexBoundExpr, eval_radixExpr, List.getD_cons_zero,
+      List.getD_cons_succ, hvb,
       ↓reduceIte]
     refine (reachesOut_bit w (show (writer ntm D).instr 30 = _ from rfl) eval_badExpr
       (hB hy)).of_eq ?_
@@ -329,18 +338,20 @@ private theorem reachesOut_entry (hL : w.length ≤ B)
 
 /-- **A row of the matrix**, by the inner counting loop at label `20`. -/
 private theorem reachesOut_row (hL : w.length ≤ B)
-    (hN : vertexBound (k := k) D w.length + 1 ≤ B) (h2 : 2 ≤ B) {u x y : ℕ}
-    (hu : u < vertexBound (k := k) D w.length + 1) (hx : x ≤ vertexBound (k := k) D w.length + 1)
+    (hN : vertexBound (k := k) (radix D w.length) + 1 ≤ B) (h2 : 2 ≤ B) {u x y : ℕ}
+    (hu : u < vertexBound (k := k) (radix D w.length) + 1)
+    (hx : x ≤ vertexBound (k := k) (radix D w.length) + 1)
     (hy : y ≤ 2) :
     ∃ y' ≤ 2, (writer ntm D).ReachesOut (frame w) ((writer ntm D).Active B)
-      (20, [w.length, u, x, y]) (19, [w.length, u, vertexBound (k := k) D w.length + 1, y'])
-      ((List.range (vertexBound (k := k) D w.length + 1)).map (sinkAdj ntm D w u)) := by
+      (20, [w.length, u, x, y]) (19, [w.length, u, vertexBound (k := k) (radix D w.length) + 1, y'])
+      ((List.range (vertexBound (k := k) (radix D w.length) + 1)).map (sinkAdj ntm D w u)) := by
   have hcode : (writer ntm D).CodeAt 20 (forCode 20 2 (numVerticesExpr (k := k) D) 23 19) := by
     simp only [forCode, codeAt_cons, codeAt_nil, and_true]
     exact ⟨rfl, rfl, rfl⟩
   obtain ⟨regs', hreach, y', rfl, -, hy'⟩ := reachesOut_forCode (w := frame w)
-    (o := fun v => [sinkAdj ntm D w u v]) (N := vertexBound (k := k) D w.length + 1) hcode
-    (fun v regs => ∃ y, regs = [w.length, u, v, y] ∧ v ≤ vertexBound (k := k) D w.length + 1 ∧
+    (o := fun v => [sinkAdj ntm D w u v]) (N := vertexBound (k := k) (radix D w.length) + 1) hcode
+    (fun v regs => ∃ y, regs = [w.length, u, v, y] ∧
+      v ≤ vertexBound (k := k) (radix D w.length) + 1 ∧
       y ≤ 2) hN
     (by
       rintro v regs ⟨y, rfl, hv, hy⟩
@@ -357,20 +368,22 @@ private theorem reachesOut_row (hL : w.length ≤ B)
 
 /-- **The matrix**, by the outer counting loop at label `17`. -/
 private theorem reachesOut_matrix (hL : w.length ≤ B)
-    (hN : vertexBound (k := k) D w.length + 1 ≤ B) (h2 : 2 ≤ B) {i₀ : ℕ} (hi₀ : i₀ ≤ B) :
+    (hN : vertexBound (k := k) (radix D w.length) + 1 ≤ B) (h2 : 2 ≤ B) {i₀ : ℕ} (hi₀ : i₀ ≤ B) :
     ∃ regs, (writer ntm D).ReachesOut (frame w) ((writer ntm D).Active B)
       (17, [w.length, i₀, 0, 0]) (33, regs)
-      ((List.range (vertexBound (k := k) D w.length + 1)).flatMap fun u =>
-        (List.range (vertexBound (k := k) D w.length + 1)).map (sinkAdj ntm D w u)) ∧
+      ((List.range (vertexBound (k := k) (radix D w.length) + 1)).flatMap fun u =>
+        (List.range (vertexBound (k := k) (radix D w.length) + 1)).map (sinkAdj ntm D w u)) ∧
       ∀ r ∈ regs, r ≤ B := by
   have hcode : (writer ntm D).CodeAt 17 (forCode 17 1 (numVerticesExpr (k := k) D) 20 33) := by
     simp only [forCode, codeAt_cons, codeAt_nil, and_true]
     exact ⟨rfl, rfl, rfl⟩
   obtain ⟨regs', hreach, x, y, rfl, -, hx, hy⟩ := reachesOut_forCode (w := frame w)
-    (o := fun u => (List.range (vertexBound (k := k) D w.length + 1)).map (sinkAdj ntm D w u))
-    (N := vertexBound (k := k) D w.length + 1) hcode
+    (o := fun u =>
+      (List.range (vertexBound (k := k) (radix D w.length) + 1)).map (sinkAdj ntm D w u))
+    (N := vertexBound (k := k) (radix D w.length) + 1) hcode
     (fun u regs => ∃ x y, regs = [w.length, u, x, y] ∧
-      u ≤ vertexBound (k := k) D w.length + 1 ∧ x ≤ vertexBound (k := k) D w.length + 1 ∧
+      u ≤ vertexBound (k := k) (radix D w.length) + 1 ∧
+        x ≤ vertexBound (k := k) (radix D w.length) + 1 ∧
       y ≤ 2) hN
     (by
       rintro u regs ⟨x, y, rfl, hu, hx, hy⟩
@@ -394,8 +407,8 @@ theorem computableInLogSpace_configurationInstance :
   refine (writer ntm D).computableInLogSpace_of_reachesOut (E + 1) fun w => ?_
   simp only [encFramed_apply, encBits_apply]
   set L := w.length
-  set VB := vertexBound (k := k) D L
-  set S := startID ntm D L
+  set VB := vertexBound (k := k) (radix D L)
+  set S := startID ntm (radix D L)
   set B := ((frame w).length + 1) ^ (E + 1)
   have hVB : VB = (L + 2) ^ E := vertexBound_eq_pow D L
   have hS : S < VB := startID_lt_vertexBound ntm c L
@@ -424,11 +437,11 @@ theorem computableInLogSpace_configurationInstance :
     (show (writer ntm D).instr 5 = _ from rfl) (M := VB + 1) (fun i => by simp [VB, L]) hN hL
     (i₀ := 0) (by omega)
   have hones₂ := reachesOut_ones (ntm := ntm) (D := D) w
-    (hcode 7 1 10 11 (startIDExpr ntm D (reg 0)) rfl rfl rfl)
+    (hcode 7 1 10 11 (startIDExpr ntm (radixExpr D (reg 0))) rfl rfl rfl)
     (show (writer ntm D).instr 10 = _ from rfl) (M := S) (fun i => by simp [S, L]) (by omega) hL
     (i₀ := VB + 1) hN
   have hones₃ := reachesOut_ones (ntm := ntm) (D := D) w
-    (hcode 12 1 15 16 (vertexBoundExpr k D (reg 0)) rfl rfl rfl)
+    (hcode 12 1 15 16 (vertexBoundExpr k (radixExpr D (reg 0))) rfl rfl rfl)
     (show (writer ntm D).instr 15 = _ from rfl) (M := VB) (fun i => by simp [VB, L]) (by omega) hL
     (i₀ := S) (by omega)
   obtain ⟨regs, hmat, hregs⟩ := reachesOut_matrix (ntm := ntm) (D := D) w hL hN h2

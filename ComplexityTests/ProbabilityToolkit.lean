@@ -12,7 +12,7 @@ import Mathlib.Algebra.Field.ZMod
 import Mathlib.Analysis.Complex.ExponentialBounds
 
 /-! Multiplicative Chernoff bounds, `k`-wise independent hashing and the Lovász Local Lemma:
-concrete instances, satisfiable hypotheses, a boundary case and axiom guards. -/
+concrete instances, satisfiable hypotheses and a boundary case. -/
 
 namespace ComplexityTests.ProbabilityToolkit
 
@@ -153,105 +153,5 @@ example : 0 < ((PMF.pi fun _ : Fin 4 => PMF.uniformOfFintype Bool).toOuterMeasur
   · have := Real.exp_one_lt_d9
     norm_num at this ⊢
     linarith
-
-/-! ### Axiom guards -/
-
-/--
-info: 'Cslib.Probability.PMF.pi_sum_ge_one_add_mul' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Probability.PMF.pi_sum_ge_one_add_mul
-
-/--
-info: 'Cslib.Probability.PMF.pi_sum_le_one_sub_mul' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Probability.PMF.pi_sum_le_one_sub_mul
-
-/--
-info: 'Cslib.Probability.PMF.pi_sum_abs_sub_mean_ge_mul' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Probability.PMF.pi_sum_abs_sub_mean_ge_mul
-
-/--
-info: 'Cslib.Probability.PMF.pi_sum_ge_one_add_mul_le_exp_log' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Probability.PMF.pi_sum_ge_one_add_mul_le_exp_log
-
-/--
-info: 'Cslib.Probability.PMF.pi_sum_ge_one_add_mul_of_le_one' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Probability.PMF.pi_sum_ge_one_add_mul_of_le_one
-
-/--
-info: 'Cslib.Probability.isKWiseIndependentHash_two_iff' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Probability.isKWiseIndependentHash_two_iff
-
-/--
-info: 'Cslib.Probability.IsKWiseIndependentHash.expect_sum_pow_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Probability.IsKWiseIndependentHash.expect_sum_pow_le
-
-/--
-info: 'Cslib.Probability.pow_le_measureReal_iInter_compl' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Probability.pow_le_measureReal_iInter_compl
-
-/--
-info: 'Cslib.Probability.isKWiseIndependentHash_polynomialHash' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Probability.isKWiseIndependentHash_polynomialHash
-
-/--
-info: 'Cslib.Probability.IsKWiseIndependentHash.dens_filter_le_abs_sum_sub_expect' depends on
-axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Probability.IsKWiseIndependentHash.dens_filter_le_abs_sum_sub_expect
-
-/--
-info: 'Cslib.Probability.prod_one_sub_le_measureReal_iInter_compl' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Probability.prod_one_sub_le_measureReal_iInter_compl
-
-/--
-info: 'Cslib.Probability.measureReal_iInter_compl_pos' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Probability.measureReal_iInter_compl_pos
-
-/--
-info: 'Cslib.Probability.PMF.prod_one_sub_le_pi_iInter_compl' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Probability.PMF.prod_one_sub_le_pi_iInter_compl
-
-/--
-info: 'Cslib.Probability.PMF.pi_iInter_compl_pos' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Probability.PMF.pi_iInter_compl_pos
 
 end ComplexityTests.ProbabilityToolkit

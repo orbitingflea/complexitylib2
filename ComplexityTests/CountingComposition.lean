@@ -156,23 +156,4 @@ example : ∃ final ∈ chooseWord.runList 0
     ¬final.output.length ≤ 0 := by
   simp
 
-/--
-info: 'Turing.MultiTapeCTM.runList_comp' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeCTM.runList_comp
-/--
-info: 'Turing.MultiTapeCTM.HaltsWithin.comp' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeCTM.HaltsWithin.comp
-/--
-info: 'Turing.MultiTapeCTM.branchCount_comp' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeCTM.branchCount_comp
-
 end ComplexityTests.CountingComposition

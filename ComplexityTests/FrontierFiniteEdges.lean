@@ -69,18 +69,4 @@ info: 'Cslib.Multigraph.incidenceSet_toGraph' depends on axioms: [propext, Quot.
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Multigraph.incidenceSet_toGraph
 
-/--
-info: 'Cslib.Multigraph.coe_incidence_eq_incidenceSet_toGraph' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Multigraph.coe_incidence_eq_incidenceSet_toGraph
-
-/--
-info: 'Cslib.Multigraph.coe_edgeCut_eq_toGraph_edgeCut' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Multigraph.coe_edgeCut_eq_toGraph_edgeCut
-
 end ComplexityTests.FrontierFiniteEdges

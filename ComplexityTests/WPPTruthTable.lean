@@ -120,23 +120,3 @@ example : {w | (fun x : List Bool × List Bool => x.1.getD 0 false)
     joint_mem_LWPP (.of_tidy (.const 0)) (.of_tidy (by fun_prop))
 
 end ComplexityTests.WPPTruthTable
-
-/-- info: 'Cslib.Complexity.truthTable_mem_WPP' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Cslib.Complexity.truthTable_mem_WPP
-
-/-- info: 'Cslib.Complexity.truthTable_mem_LWPP' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Cslib.Complexity.truthTable_mem_LWPP
-
-/--
-info: 'Cslib.Complexity.PolyTimeTruthTableReducible.mem_WPP' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Complexity.PolyTimeTruthTableReducible.mem_WPP
-
-/--
-info: 'Cslib.Complexity.PolyTimeTruthTableReducible.mem_LWPP' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Complexity.PolyTimeTruthTableReducible.mem_LWPP

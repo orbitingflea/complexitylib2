@@ -23,6 +23,8 @@ with initial value zero reconstructs the original number.
 
 * `Nat.foldr_bit_bits`: folding `Nat.bit` over the binary representation of `n` gives `n`.
 * `Nat.foldr_bit_lt`, `Nat.foldr_bit_testBit`: fixed-width little-endian reconstruction.
+* `Nat.foldr_bit_one_ne_zero`, `Nat.bits_foldr_bit_one`, `Nat.foldr_bit_one_lt`: reconstruction
+  with base value `1`, producing a positive number whose binary digits end in `true`.
 * `Nat.foldr_bit_ofFn`: reconstruction is the sum of the digits' binary place values.
 * `Nat.size_div_two_add_one`: halving a positive number removes one binary digit.
 -/
@@ -56,6 +58,29 @@ theorem Nat.foldr_bit_lt (l : List Bool) : l.foldr Nat.bit 0 < 2 ^ l.length := b
   | cons b l ih =>
     simp only [List.foldr_cons, Nat.bit_val, List.length_cons, Nat.pow_succ]
     cases b <;> simp only [Bool.toNat_true, Bool.toNat_false] <;> lia
+
+/-- Folding `Nat.bit` with base `1` over any word gives a positive number. -/
+theorem Nat.foldr_bit_one_ne_zero (w : List Bool) : w.foldr Nat.bit 1 ≠ 0 := by
+  induction w with
+  | nil => simp
+  | cons b w ih => exact Nat.bit_ne_zero b ih
+
+/-- Folding `Nat.bit` with base `1` appends `true` to the binary representation. -/
+theorem Nat.bits_foldr_bit_one (w : List Bool) : (w.foldr Nat.bit 1).bits = w ++ [true] := by
+  induction w with
+  | nil => simp
+  | cons b w ih =>
+    rw [List.foldr_cons,
+      Nat.bits_append_bit _ _ fun h => absurd h (Nat.foldr_bit_one_ne_zero w), ih,
+      List.cons_append]
+
+/-- Folding `Nat.bit` with base `1` produces a number strictly below `2 ^ (|w| + 1)`. -/
+theorem Nat.foldr_bit_one_lt (w : List Bool) : w.foldr Nat.bit 1 < 2 ^ (w.length + 1) := by
+  induction w with
+  | nil => simp
+  | cons b w ih =>
+    rw [List.foldr_cons, Nat.bit_val, List.length_cons, pow_succ]
+    cases b <;> simp only [Bool.toNat_false, Bool.toNat_true] <;> omega
 
 /-- Reading enough low-order digits recovers the natural, including its leading zero digits. -/
 theorem Nat.foldr_bit_testBit {n K : ℕ} (h : n.size ≤ K) :

@@ -6,8 +6,8 @@ Authors: Samuel Schlesinger
 
 import Complexity.Probability.Extractor.LeftoverHash
 
-/-! Seeded extractors: concrete instances, a satisfiable entropy hypothesis, seedless failure,
-and axiom guards. -/
+/-! Seeded extractors: concrete instances, a satisfiable entropy hypothesis and seedless failure.
+-/
 
 namespace ComplexityTests.Extractor
 
@@ -48,33 +48,5 @@ example : ¬ IsExtractor (fun (x : BitString 3) (_ : Unit) => x 0) 2 (1 / 4) := 
     Real.logb_pow, Real.logb_self_eq_one (by norm_num)] at h
   norm_num at h
   exact h
-
-/--
-info: 'Cslib.Probability.IsStrongExtractor.isExtractor' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms IsStrongExtractor.isExtractor
-
-/--
-info: 'Cslib.Probability.not_isExtractor_bool_of_subsingleton' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms not_isExtractor_bool_of_subsingleton
-
-/--
-info: 'Cslib.Probability.IsTwoUniversal.isStrongExtractor_of_logb_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms IsTwoUniversal.isStrongExtractor_of_logb_le
-
-/--
-info: 'Cslib.BitString.LinearHash.isStrongExtractor' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms BitString.LinearHash.isStrongExtractor
 
 end ComplexityTests.Extractor

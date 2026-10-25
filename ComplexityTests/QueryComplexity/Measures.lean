@@ -10,8 +10,7 @@ import Complexity.Computability.QueryComplexity.Relations
 
 /-! Degree, Nisan's relations and Huang's sensitivity theorem on concrete functions: parity,
 disjunction and conjunction of `n` bits, majority of three bits and the address function with one
-address bit. Non-vacuity witnesses for the induced subgraph theorem, and axiom guards for the
-headline theorems. -/
+address bit. Non-vacuity witnesses for the induced subgraph theorem. -/
 
 namespace ComplexityTests.QueryComplexity.Measures
 
@@ -160,55 +159,5 @@ example : ∃ x ∈ ({![false, false], ![true, false], ![false, true]} : Finset 
 example {ι : Type*} [LinearOrder ι] (S : Finset ι) (v : (ι → Bool) → ℝ) :
     signedAdjacency S (signedAdjacency S v) = (#S : ℝ) • v :=
   signedAdjacency_signedAdjacency S v
-
-/-! ### Axiom checks for headline theorems -/
-
-/--
-info: 'Cslib.BitString.mem_lowDegree_iff_fourierCoeff_eq_zero' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.BitString.mem_lowDegree_iff_fourierCoeff_eq_zero
-
-/--
-info: 'Cslib.DecisionTree.degree_le_complexity' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.DecisionTree.degree_le_complexity
-
-/--
-info: 'Cslib.QueryComplexity.certificateComplexity_le_sensitivity_mul_blockSensitivity' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.QueryComplexity.certificateComplexity_le_sensitivity_mul_blockSensitivity
-
-/--
-info: 'Cslib.DecisionTree.complexity_le_blockSensitivityFor_mul_certificateComplexityFor' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.DecisionTree.complexity_le_blockSensitivityFor_mul_certificateComplexityFor
-
-/--
-info: 'Cslib.DecisionTree.complexity_le_blockSensitivity_pow_three' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.DecisionTree.complexity_le_blockSensitivity_pow_three
-
-/--
-info: 'Cslib.BitString.exists_mem_sqrt_card_le_card_update_mem' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.BitString.exists_mem_sqrt_card_le_card_update_mem
-
-/--
-info: 'Cslib.QueryComplexity.degree_le_sensitivity_sq' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.QueryComplexity.degree_le_sensitivity_sq
-
-/--
-info: 'Cslib.QueryComplexity.sqrt_degree_le_sensitivity' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.QueryComplexity.sqrt_degree_le_sensitivity
 
 end ComplexityTests.QueryComplexity.Measures

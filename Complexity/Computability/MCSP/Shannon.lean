@@ -10,7 +10,7 @@ module
 public import Complexity.Computability.MCSP.Basic
 public import Cslib.Computability.Circuit.Boolean.Lupanov
 public import Cslib.Computability.Circuit.Boolean.Shannon
-import Mathlib.Analysis.Complex.ExponentialBounds
+import Complexity.Foundations.Data.Nat.Factorial
 import Mathlib.Tactic.Linarith
 
 /-!
@@ -72,15 +72,6 @@ private theorem mul_sq_le_two_pow {n : ℕ} (hn : 16 ≤ n) : 64 * n ^ 2 ≤ 2 ^
   | succ n hn ih =>
     calc 64 * (n + 1) ^ 2 ≤ 2 * (64 * n ^ 2) := by nlinarith
       _ ≤ 2 ^ (n + 1) := by rw [pow_succ 2 n]; omega
-
-/-- `s ^ s ≤ 3 ^ s s!`, from `s ^ s / s! ≤ exp s` and `e < 3`. -/
-private theorem pow_self_le_three_pow_mul_factorial (s : ℕ) : s ^ s ≤ 3 ^ s * s.factorial := by
-  have h := Real.pow_div_factorial_le_exp (s : ℝ) (by positivity) s
-  rw [div_le_iff₀ (by positivity)] at h
-  have hexp : Real.exp s ≤ 3 ^ s := by
-    rw [← mul_one (s : ℝ), Real.exp_nat_mul]
-    exact pow_le_pow_left₀ (Real.exp_pos 1).le Real.exp_one_lt_three.le s
-  exact_mod_cast h.trans (mul_le_mul_of_nonneg_right hexp (by positivity))
 
 /-! ### Every function has a circuit with `12 · 2 ^ n / n` gates -/
 
@@ -186,7 +177,7 @@ private theorem card_computableFunctions_le {n : ℕ} (hn : 16 ≤ n) :
       _ = 4 * s ^ 2 * (20 * s ^ 2) ^ s := by ring
   have hc : c * s ^ s ≤ 4 * s ^ 2 * (60 * s) ^ s * s ^ s := by
     calc c * s ^ s ≤ c * (3 ^ s * s.factorial) :=
-          Nat.mul_le_mul_left _ (pow_self_le_three_pow_mul_factorial s)
+          Nat.mul_le_mul_left _ (Nat.pow_self_le_three_pow_mul_factorial s)
       _ = 3 ^ s * (c * s.factorial) := by ring
       _ ≤ 3 ^ s * (4 * s ^ 2 * (20 * s ^ 2) ^ s) := Nat.mul_le_mul_left _ hcount
       _ = 4 * s ^ 2 * (60 * s) ^ s * s ^ s := by

@@ -205,23 +205,4 @@ example : ComputableTidilyInSpace
     (encList encNat) encNat (fun regs => (encList encNat regs).length) :=
   Expr.eval_inSpace _
 
-/--
-info: 'Cslib.Logic.FO.Ordered.queryLanguage_mem_L' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.FO.Ordered.queryLanguage_mem_L
-/--
-info: 'Cslib.Logic.Vocabulary.queryLanguage_mem_L' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.Vocabulary.queryLanguage_mem_L
-/--
-info: 'Turing.MultiTapeTM.ComputableTidilyInSpace.natTestBit' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeTM.ComputableTidilyInSpace.natTestBit
-
 end Cslib.Tests.OrderedModelChecking

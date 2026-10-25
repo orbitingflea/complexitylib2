@@ -27,6 +27,10 @@ other keys may repeat. The key order need only be a partial order.
 * `List.Perm.card_filter_ofFn_eq`: preservation of predicate counts.
 * `List.countP_range_eq_card_filter`: counting the numbers below `n` that pass a test is counting
   the elements of `Fin n` that pass it.
+* `List.sum_map_range`: a sum over `List.range n` is a sum over `Fin n`.
+* `Fin.card_lt_of_monotone_of_unique`: a unique value in a monotone array has its index many
+  smaller entries.
+* `List.Perm.key_ofFn_eq_of_rank`: a unique key occurs at its rank after sorting.
 * `List.Perm.apply_ofFn_eq_of_rank`: identify an entire entry at its sorted position.
 
 ## References
@@ -59,6 +63,12 @@ theorem List.countP_ofFn {α : Type*} {n : ℕ} (f : Fin n → α) (p : α → B
 theorem List.countP_range_eq_card_filter (n : ℕ) (p : ℕ → Bool) :
     (List.range n).countP p = #{j : Fin n | p j = true} := by
   rw [← List.map_coe_finRange_eq_range, ← List.ofFn_eq_map, List.countP_ofFn, card_filter]
+
+/-- A sum over `List.range n` is a sum over `Fin n`. -/
+theorem List.sum_map_range {M : Type*} [AddCommMonoid M] (n : ℕ) (f : ℕ → M) :
+    ((List.range n).map f).sum = ∑ i : Fin n, f i := by
+  rw [← List.map_coe_finRange_eq_range, List.map_map, ← List.ofFn_eq_map, List.sum_ofFn]
+  rfl
 
 /-- Permuting a finite array preserves the number of entries satisfying a predicate. -/
 theorem List.Perm.card_filter_ofFn_eq {α : Type*} {n : ℕ} {f g : Fin n → α}

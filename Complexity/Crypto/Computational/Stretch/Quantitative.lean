@@ -44,6 +44,8 @@ workspace during the streaming loop, and then apply one linear-time zero-workspa
   promise on the generator.
 * `Cslib.Crypto.PRGStretch.forwardIterate_eq`: the forward representation emits each round's bit in
   generation order, then the reversed final seed.
+* `Cslib.Crypto.PRGStretch.reverse_forwardIterate_eq_iterate`: the reverse of forward iteration
+  matches `iterate` under the stated length hypothesis.
 * `Cslib.Crypto.PRGStretch.computableTidilyInTimeAndSpace_forwardIterate`,
   `Cslib.Crypto.PRGStretch.computableTidilyInTimeAndSpace_forwardIterate_captured`: streaming `k`
   expansions in forward order with cumulative time and `k`-independent workspace `O(Q + n + 1)`,

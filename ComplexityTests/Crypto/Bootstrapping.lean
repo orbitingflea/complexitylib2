@@ -162,32 +162,4 @@ example : ∃ circuits : ℕ → Circuit Boolean.signature 7 1,
     Leveled.exists_decrypt_circuits decryptionCircuits circuits_poly
   exact ⟨circuits, hsize, fun budget n => hcorrect budget n _ _ rfl rfl⟩
 
-/--
-info: 'Cslib.Crypto.Homomorphic.Leveled.exists_scheme_of_polynomiallyBounded' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Leveled.exists_scheme_of_polynomiallyBounded
-
-/--
-info: 'Cslib.Crypto.Homomorphic.Leveled.exists_decrypt_circuits' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Leveled.exists_decrypt_circuits
-
-/--
-info: 'Cslib.Crypto.Homomorphic.Leveled.exists_decrypt_parameter_bound' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Leveled.exists_decrypt_parameter_bound
-
-/--
-info: 'Cslib.Crypto.Homomorphic.FixedKey.fullyHomomorphic' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms FixedKey.fullyHomomorphic
-
 end ComplexityTests.Bootstrapping

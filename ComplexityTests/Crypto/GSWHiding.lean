@@ -221,16 +221,4 @@ example (bit : Bool) : uniformPublicGame emptyChoose emptyGuess bit = PMF.pure b
   cases bit <;> simp [uniformPublicGame, emptyChoose, emptyGuess, PMF.monad_bind_eq_bind,
     PMF.monad_pure_eq_pure, empty_ciphertext_bit, PMF.bind_const]
 
-/-- info: 'Cslib.BitString.SubsetSum.uniform_vecMul_sub' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Cslib.BitString.SubsetSum.uniform_vecMul_sub
-
-/-- info: 'Cslib.BitString.SubsetSum.dist_mul_le' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Cslib.BitString.SubsetSum.dist_mul_le
-
-/-- info: 'Cslib.Crypto.Homomorphic.GSW.uniformPublicGame_advantage_le' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Cslib.Crypto.Homomorphic.GSW.uniformPublicGame_advantage_le
-
 end ComplexityTests.GSWHiding

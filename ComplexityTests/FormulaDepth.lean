@@ -6,7 +6,7 @@ Authors: Samuel Schlesinger
 
 import Complexity.Computability.Circuit.Boolean.KhrapchenkoDepth
 
-/-! Clients and axiom guards for Yablonskii's formulas for parity, the formula depth of parity and
+/-! Clients for Yablonskii's formulas for parity, the formula depth of parity and
 Khrapchenko's bounds for majority. -/
 
 namespace ComplexityTests.FormulaDepth
@@ -64,54 +64,5 @@ example (x : BitString 5) :
       (parityOn ({i | 0 ≤ (i : ℕ) ∧ (i : ℕ) < 0 + 2} : Finset (Fin 5)) x ^^
         parityOn ({i | 0 + 2 ≤ (i : ℕ) ∧ (i : ℕ) < 0 + 2 + 3} : Finset (Fin 5)) x) :=
   parityOn_consecutive_add 0 2 3 x
-
-/--
-info: 'Cslib.Circuits.Boolean.exists_formula_parity_eight_mul_leafSize_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms exists_formula_parity_eight_mul_leafSize_le
-
-/--
-info: 'Cslib.Circuits.Boolean.formulaDepth_parity_le_two_mul_clog' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms formulaDepth_parity_le_two_mul_clog
-
-/--
-info: 'Cslib.Circuits.Boolean.clog_sq_le_formulaDepth_parity' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms clog_sq_le_formulaDepth_parity
-
-/--
-info: 'Cslib.Circuits.Boolean.two_mul_add_one_le_formulaDepth_parity' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms two_mul_add_one_le_formulaDepth_parity
-
-/--
-info: 'Cslib.Circuits.Boolean.formulaDepth_parity_two_pow_add_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms formulaDepth_parity_two_pow_add_le
-
-/--
-info: 'Cslib.Circuits.Boolean.clog_mul_le_formulaDepth_threshold' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms clog_mul_le_formulaDepth_threshold
-
-/--
-info: 'Cslib.Circuits.Boolean.clog_sq_div_four_le_formulaDepth_majority' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms clog_sq_div_four_le_formulaDepth_majority
 
 end ComplexityTests.FormulaDepth

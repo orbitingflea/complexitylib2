@@ -68,41 +68,4 @@ example (A : Finset (Fin 3 → Bool)) :
     (by simp) A
   rwa [Fintype.card_fin] at h
 
-/-! ### Axiom guards -/
-
-/--
-info: 'Cslib.RotationMap.div_le_sq_spectralExpansion' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms RotationMap.div_le_sq_spectralExpansion
-
-/--
-info: 'Cslib.RotationMap.spectralExpansion_complete' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms RotationMap.spectralExpansion_complete
-
-/--
-info: 'Cslib.Sunflower.not_containsSunflower_graphFamily' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Sunflower.not_containsSunflower_graphFamily
-
-/--
-info: 'Cslib.Sunflower.not_containsSunflower_twoTriangles' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Sunflower.not_containsSunflower_twoTriangles
-
-/--
-info: 'Cslib.containsSunflower_iff_le_card' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms containsSunflower_iff_le_card
-
 end ComplexityTests.CombinatorialBounds

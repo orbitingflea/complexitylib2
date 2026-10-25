@@ -173,11 +173,4 @@ example : ComputableTidilyInPolyTime (id : ℕ → ℕ)
   exact computer.computableTidilyInPolyTime
     Computability.encodingNatBool.encode_injective Computability.encodingNatBool.encode_injective
 
-/--
-info: 'Turing.TM2ComputableInPolyTime.computableTidilyInPolyTime' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.TM2ComputableInPolyTime.computableTidilyInPolyTime
-
 end ComplexityTests.MathlibTM2

@@ -206,39 +206,4 @@ example : ¬ forgetful.Correct := by
     (by simp [forgetful])
   simp [forgetful] at h
 
-/--
-info: 'Cslib.Crypto.Homomorphic.Leveled.eval_zeroLinkAdversary' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Leveled.eval_zeroLinkAdversary
-
-/--
-info: 'Cslib.Crypto.Homomorphic.Leveled.indCPA_keyGen' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Leveled.indCPA_keyGen
-
-/--
-info: 'Cslib.Crypto.Homomorphic.Leveled.indCPA_scheme' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Leveled.indCPA_scheme
-
-/--
-info: 'Cslib.Crypto.Homomorphic.Leveled.publicKey_indistinguishable_zero' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Leveled.publicKey_indistinguishable_zero
-
-/--
-info: 'Cslib.Crypto.Homomorphic.Leveled.correct_fixedWidth_indCPA' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Leveled.correct_fixedWidth_indCPA
-
 end ComplexityTests.Crypto.LeveledSecurity

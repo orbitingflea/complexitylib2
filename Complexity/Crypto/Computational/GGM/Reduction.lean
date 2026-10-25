@@ -27,6 +27,8 @@ challenge reduction. Cached replies ignore the extra draw, preserving repeated-q
 
 ## Main results
 
+* `Cslib.Crypto.GGM.sampleGame_replicate`: presampling independent expansions yields the online
+  game.
 * `Cslib.Crypto.GGM.isPPT_reduction`: strict PPT for the complete single-challenge reduction.
 * `Cslib.Crypto.GGM.reduction_advantage`: exact loss, including at zero width and query budget.
 

@@ -111,17 +111,4 @@ example : PPWithOracle {w : List Bool | w.isEmpty = true} encBits = PP encBits :
   apply PPWithOracle_eq_PP
   exact ⟨List.isEmpty, by fun_prop, fun _ => Iff.rfl⟩
 
-/-- info: 'Cslib.Complexity.mem_PPWithOracle_iff_exists_GapPWithOracle' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms mem_PPWithOracle_iff_exists_GapPWithOracle
-/-- info: 'Cslib.Complexity.SharpPWithOracle_eq_SharpP' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms SharpPWithOracle_eq_SharpP
-/-- info: 'Cslib.Complexity.GapPWithOracle_eq_GapP' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms GapPWithOracle_eq_GapP
-/-- info: 'Cslib.Complexity.PPWithOracle_eq_PP' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms PPWithOracle_eq_PP
-
 end Cslib.Complexity.Tests.RelativizedCounting

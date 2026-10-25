@@ -26,6 +26,7 @@ gate determines the gate.
 
 ## Main results
 
+* `Cslib.TreeEval.encode_injective`: encoding an instance into a bit string is injective.
 * `Cslib.TreeEval.ell_lt_length_encNat_length_encInstance`: for `1 ≤ I.height`, the value length
   `I.ell` is strictly below the binary length of `(encInstance I).length`.
 * `Cslib.TreeEval.height_lt_length_encNat_length_encInstance`: for `1 ≤ I.ell`, the height
@@ -81,6 +82,7 @@ theorem body_injective {ℓ : ℕ} : ∀ {h : ℕ} {T T' : Tree ℓ h}, T.body =
 
 end Tree
 
+/-- Encoding a Tree Evaluation instance into a bit string is injective. -/
 theorem encode_injective {I J : Instance} (h : I.tree.encode = J.tree.encode) : I = J := by
   obtain ⟨ℓ, H, T⟩ := I
   obtain ⟨ℓ', H', T'⟩ := J

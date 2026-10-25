@@ -11,7 +11,7 @@ import Complexity.Foundations.Data.Polynomial.SignQueries
 
 Check all three requested signs, a pattern involving two polynomials, an empty pattern,
 and the distinction between repeated roots and distinct roots. The zero-polynomial example
-shows why root existence needs the nonzero hypothesis. Named guards audit the main identities.
+shows why root existence needs the nonzero hypothesis.
 -/
 
 namespace ComplexityTests.SignQueries
@@ -76,26 +76,5 @@ example : scaledRootCount 0 (fun _ : Unit => (X : ℝ[X])) (fun _ => .zero) = 0 
     ∃ x : ℝ, (0 : ℝ[X]).eval x = 0 ∧
       ∀ _ : Unit, SignType.sign ((X : ℝ[X]).eval x) = .zero := by
   exact ⟨scaledRootCount_zero_left _ _, 0, by simp, by simp⟩
-
-/--
-info: 'Cslib.SignQueries.weighted_queries_eq_count' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.SignQueries.weighted_queries_eq_count
-
-/--
-info: 'Cslib.SignQueries.scaledRootCount_eq' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.SignQueries.scaledRootCount_eq
-
-/--
-info: 'Cslib.SignQueries.scaledRootCount_pos_iff' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.SignQueries.scaledRootCount_pos_iff
 
 end ComplexityTests.SignQueries

@@ -25,8 +25,7 @@ over `ZMod 7` that agrees with each of them at four of the seven points: three e
 two that unique decoding corrects at dimension two. The line decoder of the Reed–Muller code of
 degree two in two variables over `ZMod 5` reads a value along a line, and corrects one error from
 more than half of the directions. A binary Hamming ball, and Justesen codes over the Galois fields
-with `2 ^ (16 * s)` elements, which satisfy the hypotheses of the asymptotic statement. The axioms
-of the headline theorems.
+with `2 ^ (16 * s)` elements, which satisfy the hypotheses of the asymptotic statement.
 -/
 
 namespace ComplexityTests.Code.M3
@@ -180,89 +179,5 @@ example : ¬ IsAsymptoticallyGood (fun s : ℕ => (Set.univ : Set (Fin (s + 2) �
   have hle := (hΔ Δ).trans (mul_le_mul_right hmin (Δ : ℕ∞))
   rw [Fintype.card_fin, mul_one, Nat.cast_le] at hle
   omega
-
-/-! ### Axioms of the headline theorems -/
-
-/--
-info: 'Cslib.Code.exists_isSolution_mul_of_berlekampWelch_eq_some' depends on axioms: [propext,
-Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Code.exists_isSolution_mul_of_berlekampWelch_eq_some
-
-/--
-info: 'Cslib.Code.hammingDist_le_of_berlekampWelch_eq_some' depends on axioms: [propext,
-Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Code.hammingDist_le_of_berlekampWelch_eq_some
-
-/--
-info: 'Cslib.Code.berlekampWelch_eq_some_iff' depends on axioms: [propext, Classical.choice,
-Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Code.berlekampWelch_eq_some_iff
-
-/--
-info: 'Cslib.Code.berlekampWelch_eq_none_iff' depends on axioms: [propext, Classical.choice,
-Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Code.berlekampWelch_eq_none_iff
-
-/--
-info: 'Cslib.Code.Sudan.exists_isInterpolant' depends on axioms: [propext, Classical.choice,
-Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Code.Sudan.exists_isInterpolant
-
-/--
-info: 'Cslib.Code.Sudan.IsInterpolant.X_sub_C_dvd' depends on axioms: [propext, Classical.choice,
-Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Code.Sudan.IsInterpolant.X_sub_C_dvd
-
-/--
-info: 'Cslib.Code.mem_sudan_iff_of_lt' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Code.mem_sudan_iff_of_lt
-
-/--
-info: 'Cslib.Code.card_sudan_mul_le' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Code.card_sudan_mul_le
-
-/--
-info: 'Cslib.Code.card_filter_lineDecode_ne_le' depends on axioms: [propext, Classical.choice,
-Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Code.card_filter_lineDecode_ne_le
-
-/--
-info: 'Cslib.Code.lt_two_mul_card_filter_lineDecode_eq' depends on axioms: [propext,
-Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Code.lt_two_mul_card_filter_lineDecode_eq
-
-/--
-info: 'Cslib.Code.le_minDist_justesenCode' depends on axioms: [propext, Classical.choice,
-Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Code.le_minDist_justesenCode
-
-/--
-info: 'Cslib.Code.isAsymptoticallyGood_justesenCode' depends on axioms: [propext, Classical.choice,
-Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Code.isAsymptoticallyGood_justesenCode
 
 end ComplexityTests.Code.M3

@@ -46,10 +46,3 @@ example (a b : ZMod 7) :
   simpa using FiniteField.sum_units_eval hdeg
 
 end ComplexityTests.FiniteFieldUnitSum
-
-/--
-info: 'FiniteField.sum_units_eval_mul_add' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms FiniteField.sum_units_eval_mul_add

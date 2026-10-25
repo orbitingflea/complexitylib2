@@ -34,6 +34,8 @@ interprets the learner's orientation bit, and is also the evaluator used by subs
 
 * `isPPTOn_predict`: certify the complete adaptive reduction.
 * `exists_evaluator`: discharge the replay law from one sequence-test certificate.
+* `learn_goodPredictor_error`: a noticeable sequence gap satisfies the boosting loop contract.
+* `failureBound_negligible`: the total failure bound is negligible for polynomial parameters.
 * `predict_extracted_error`: turn a gap against every dense masked source into prediction bias.
 
 ## References

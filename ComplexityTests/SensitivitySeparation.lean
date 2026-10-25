@@ -7,7 +7,7 @@ Authors: Samuel Schlesinger
 import Complexity.Computability.QueryComplexity.SensitivitySeparation
 import Complexity.Computability.QueryComplexity.SensitivitySeparation.Internal.Bridge
 
-/-! Clients and axiom guards for the superquadratic sensitivity separation. -/
+/-! Clients for the superquadratic sensitivity separation. -/
 
 namespace ComplexityTests.SensitivitySeparation
 
@@ -32,61 +32,5 @@ example {n : ℕ} (f : BooleanFunction n) :
 -- `flipOn` agrees with CSLib's `flipBlock` on `BitString n`.
 example {n : ℕ} (S : Finset (Fin n)) (x : BitString n) : flipOn S x = flipBlock S x :=
   flipOn_eq_flipBlock S x
-
-/--
-info: 'Cslib.BitString.flipOn_eq_flipBlock' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.BitString.flipOn_eq_flipBlock
-
-/--
-info: 'Cslib.QueryComplexity.exists_two_pow_div_le_blockSensitivityAt_div_sensitivity_sq' depends on
-axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms exists_two_pow_div_le_blockSensitivityAt_div_sensitivity_sq
-
-/--
-info: 'Cslib.QueryComplexity.exists_mul_sensitivity_sq_lt_blockSensitivityAt' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms exists_mul_sensitivity_sq_lt_blockSensitivityAt
-
-/--
-info: 'Cslib.QueryComplexity.exists_mul_sensitivity_sq_lt_blockSensitivity' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms exists_mul_sensitivity_sq_lt_blockSensitivity
-
-/--
-info: 'Cslib.QueryComplexity.exists_sensitivity_rpow_le_blockSensitivityAt' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms exists_sensitivity_rpow_le_blockSensitivityAt
-
-/--
-info: 'Cslib.QueryComplexity.exists_mul_sensitivity_sq_lt_certificateComplexity' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms exists_mul_sensitivity_sq_lt_certificateComplexity
-
-/--
-info: 'Cslib.DecisionTree.exists_mul_sensitivity_sq_lt_complexity' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms DecisionTree.exists_mul_sensitivity_sq_lt_complexity
-
-/--
-info: 'Cslib.DecisionTree.exists_sensitivity_rpow_le_complexity' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms DecisionTree.exists_sensitivity_rpow_le_complexity
 
 end ComplexityTests.SensitivitySeparation

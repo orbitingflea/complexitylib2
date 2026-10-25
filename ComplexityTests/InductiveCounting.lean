@@ -106,41 +106,6 @@ example (edge : ℕ → ℕ → Bool) (bad : ℕ → Bool) :
     Accepts 1 0 0 edge bad ↔ Safe 1 0 edge bad := accepts_iff (by decide) (by decide)
 
 /--
-info: 'Cslib.InductiveCounting.accepts_sound' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.InductiveCounting.accepts_sound
-
-/--
-info: 'Cslib.InductiveCounting.accepts_complete' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.InductiveCounting.accepts_complete
-
-/--
-info: 'Cslib.InductiveCounting.accepts_iff' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.InductiveCounting.accepts_iff
-
-/--
-info: 'Cslib.InductiveCounting.accepts_iff_not_reachable' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.InductiveCounting.accepts_iff_not_reachable
-
-/--
-info: 'Cslib.InductiveCounting.accepts_complete_bounded' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.InductiveCounting.accepts_complete_bounded
-
-/--
 info: 'Cslib.InductiveCounting.halted_replay_budget' depends on axioms:
 [propext, Quot.sound]
 -/

@@ -15,7 +15,7 @@ import Complexity.Foundations.Data.List.Lex
 
 Exercise `checkpointHull`, `forestMarks`, `forestPath`, `exists_forest_intervals`, `IsForestEdge`,
 `ForestAnchor`, `ForestEdgeTable`, and `forest_navigation_spec` on concrete finite functional
-graphs, and guard the axioms of all headline declarations.
+graphs.
 -/
 
 namespace ComplexityTests.FunctionalGraph
@@ -232,112 +232,5 @@ example : (4 : Fin 5) ∉ checkpointHull branchGraph {3} ∧
   rintro (hshort | ⟨_, _, hverify, _⟩)
   · exact hno_prefix hshort
   · exact hno_prefix hverify
-
-/-! ### Axioms -/
-
-/--
-info: 'Cslib.FunctionalGraph.forestBranches_roots_le_leaves' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms forestBranches_roots_le_leaves
-
-/--
-info: 'Cslib.FunctionalGraph.forestMarks_card' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms forestMarks_card
-
-/--
-info: 'Cslib.FunctionalGraph.forestPredecessor_unique' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms forestPredecessor_unique
-
-/--
-info: 'Cslib.FunctionalGraph.forestPath_prefix' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms forestPath_prefix
-
-/--
-info: 'Cslib.FunctionalGraph.forest_interval_spec' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms forest_interval_spec
-
-/--
-info: 'Cslib.FunctionalGraph.exists_forest_intervals' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms exists_forest_intervals
-
-/--
-info: 'Cslib.FunctionalGraph.exists_short_forest_edge' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms exists_short_forest_edge
-
-/--
-info: 'Cslib.FunctionalGraph.forest_edge_interior_inj' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms forest_edge_interior_inj
-
-/--
-info: 'Cslib.FunctionalGraph.forest_edge_last_injective' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms forest_edge_last_injective
-
-/--
-info: 'Cslib.FunctionalGraph.forest_hull_partition' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms forest_hull_partition
-
-/--
-info: 'Cslib.FunctionalGraph.exists_forest_anchor' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms exists_forest_anchor
-
-/--
-info: 'Cslib.FunctionalGraph.forestAnchor_unique' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms forestAnchor_unique
-
-/--
-info: 'Cslib.FunctionalGraph.forest_navigation_spec' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms forest_navigation_spec
-
-/--
-info: 'Cslib.FunctionalGraph.exists_forest_edge_table' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms exists_forest_edge_table
-
-/--
-info: 'Cslib.FunctionalGraph.ForestEdgeTable.anchor_iff' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms ForestEdgeTable.anchor_iff
 
 end ComplexityTests.FunctionalGraph

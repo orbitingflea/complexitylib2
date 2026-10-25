@@ -111,35 +111,4 @@ example : (fun input : List Bool => (mixed.acceptCount 2 (Cfg.init mixed.initial
   simpa only [Polynomial.eval_C, encBits_apply] using
     mixed.gapCount_mem_GapP encBits (Polynomial.C 2)
 
-/--
-info: 'Turing.MultiTapeCTM.Checker.computableTidilyInPolyTime_checkBinary' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeCTM.Checker.computableTidilyInPolyTime_checkBinary
-/--
-info: 'Turing.MultiTapeCTM.Checker.acceptCount_checkBinary' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeCTM.Checker.acceptCount_checkBinary
-/--
-info: 'Turing.MultiTapeCTM.acceptCount_mem_SharpP' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeCTM.acceptCount_mem_SharpP
-/--
-info: 'Turing.MultiTapeCTM.rejectCount_mem_SharpP' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeCTM.rejectCount_mem_SharpP
-/--
-info: 'Turing.MultiTapeCTM.gapCount_mem_GapP' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeCTM.gapCount_mem_GapP
-
 end ComplexityTests.CountingMachine

@@ -10,6 +10,7 @@ module
 public import Complexity.Computability.TreeEval.Reader.Defs
 public import Mathlib.FieldTheory.Finite.Basic
 public import Mathlib.Algebra.BigOperators.Fin
+import Complexity.Foundations.FieldTheory.Finite.Basic
 
 /-!
 # Residues and registers of the Tree Evaluation read machine
@@ -83,12 +84,6 @@ variable [Fact p.Prime]
   · have := (Fact.out : p.Prime).one_lt
     simp [sgnVal, Iter.sgn, Nat.cast_sub this.le]
 
-/-- Fermat: a nonzero residue to the power `p - 2` is its inverse. -/
-theorem pow_sub_two_eq_inv {a : ZMod p} (ha : a ≠ 0) : a ^ (p - 2) = a⁻¹ := by
-  have hp := (Fact.out : p.Prime).two_le
-  refine eq_inv_of_mul_eq_one_left ?_
-  rw [← pow_succ, show p - 2 + 1 = p - 1 by omega, ZMod.pow_card_sub_one_eq_one ha]
-
 /-- The unit of round `j` casts to the unit `Iter.zmodUnit p j`, for `j < p - 1`. -/
 theorem cast_unitVal {j : ℕ} (hj : j < p - 1) :
     ((unitVal j : ℕ) : ZMod p) = (Iter.zmodUnit p j : ZMod p) := by
@@ -97,7 +92,7 @@ theorem cast_unitVal {j : ℕ} (hj : j < p - 1) :
 /-- The inverse of the unit of round `j` casts to the inverse of `Iter.zmodUnit p j`. -/
 theorem cast_unitInv_eq {j : ℕ} (hj : j < p - 1) :
     ((unitInv p j : ℕ) : ZMod p) = (((Iter.zmodUnit p j)⁻¹ : (ZMod p)ˣ) : ZMod p) := by
-  rw [Units.val_inv_eq_inv_val, ← pow_sub_two_eq_inv (Iter.zmodUnit p j).ne_zero,
+  rw [Units.val_inv_eq_inv_val, ← ZMod.pow_card_sub_two_eq_inv (Iter.zmodUnit p j).ne_zero,
     Iter.zmodUnit_val hj, unitInv, cast_powMod, Nat.cast_succ]
 
 /-! ### Registers -/

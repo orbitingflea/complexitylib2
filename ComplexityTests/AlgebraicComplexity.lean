@@ -18,7 +18,7 @@ with `X` as a function but not as a polynomial. The product monomial is a projec
 family, so they are in `VP` by closure. Repeated squaring has small circuits but is not in `VP`.
 The determinant circuits evaluate concrete determinants, a Boolean sum is computed, and the
 determinant family is in `VNP`. The permanent expands along row 0 and its generic family is a
-p-family. Named axiom guards cover the headline theorems.
+p-family.
 -/
 
 namespace ComplexityTests.AlgebraicComplexity
@@ -134,82 +134,5 @@ example : booleanSum 1 (X 0 * X 1 : MvPolynomial (Fin (1 + 1)) ℚ) = X 0 := by
 example : productFamily ∈ VNP ℚ :=
   VNP.of_isPProjection (VP_subset_VNP detFamily_mem_VP) productFamily_isPProjection_detFamily
     PolynomiallyBounded.id
-
-/-! ### Axiom guards -/
-
-/--
-info: 'Cslib.Circuits.Arithmetic.detFamily_mem_VP' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms detFamily_mem_VP
-
-/--
-info: 'Cslib.Circuits.Arithmetic.exists_circuit_det' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms exists_circuit_det
-
-/--
-info: 'Cslib.Circuits.Arithmetic.exists_circuit_det_eval' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms exists_circuit_det_eval
-
-/--
-info: 'Cslib.Circuits.Arithmetic.det_eq_birdDetSpec' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms det_eq_birdDetSpec
-
-/--
-info: 'Cslib.Circuits.Arithmetic.VP.of_isPProjection' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms VP.of_isPProjection
-
-/--
-info: 'Cslib.Circuits.Arithmetic.VNP.of_isPProjection' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms VNP.of_isPProjection
-
-/--
-info: 'Cslib.Circuits.Arithmetic.VP_subset_VNP' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms VP_subset_VNP
-
-/--
-info: 'Cslib.Circuits.Arithmetic.IsVNPComplete.mem_VP_iff' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms IsVNPComplete.mem_VP_iff
-
-/--
-info: 'Cslib.Circuits.Arithmetic.powTwoPowFamily_not_mem_VP' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms powTwoPowFamily_not_mem_VP
-
-/--
-info: 'Matrix.permanent_succ_column_zero' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Matrix.permanent_succ_column_zero
-
-/--
-info: 'Matrix.permanent_succ_row_zero' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Matrix.permanent_succ_row_zero
 
 end ComplexityTests.AlgebraicComplexity

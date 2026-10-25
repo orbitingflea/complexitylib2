@@ -90,29 +90,4 @@ example : (Multiword.LimbUpdate.program.eval 3 0
     ⟨![1, 1, 1, 1, 2, 0, 0], fun _ => 0⟩).map
     (fun p => (p.1.regs 6, p.1.regs 3, p.2)) = some (1, 1, 5) := by decide
 
-/-- info: 'Cslib.Algorithms.Lean.FusionTree.correctedRank_eq_upperRank' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Algorithms.Lean.FusionTree.correctedRank_eq_upperRank
-
-/-- info: 'Cslib.Algorithms.Lean.FusionTree.exists_compression' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Algorithms.Lean.FusionTree.exists_compression
-
-/-- info: 'Cslib.Algorithms.Lean.FusionTree.Tree.predecessor_build_eq_some_iff' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Algorithms.Lean.FusionTree.Tree.predecessor_build_eq_some_iff
-
-/-- info: 'Cslib.Algorithms.WordRAM.FusionTree.parallelCompare_exec' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Algorithms.WordRAM.FusionTree.parallelCompare_exec
-
-/-- info: 'Cslib.WordRAM.PackedCount.exec' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.WordRAM.PackedCount.exec
-
 end FusionTreeTests

@@ -107,17 +107,4 @@ example : (WordRAM.Queue.pairStep ([], []) .dequeue).2 = none := rfl
 example : (WordRAM.Queue.pairStep ([], [0]) .dequeue).2 = some 0 := rfl
 example : (WordRAM.Queue.footprint 3 2).card = 4 := WordRAM.Queue.footprint_card _ _
 
-/-- info: 'Cslib.WordRAM.Queue.execute' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms WordRAM.Queue.execute
-/-- info: 'Cslib.WordRAM.Queue.initialize_exec' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms WordRAM.Queue.initialize_exec
-/-- info: 'Cslib.WordRAM.Queue.amortized' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms WordRAM.Queue.amortized
-/-- info: 'Cslib.WordRAM.Queue.run_initialized' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms WordRAM.Queue.run_initialized
-
 end WordRAMQueueTest

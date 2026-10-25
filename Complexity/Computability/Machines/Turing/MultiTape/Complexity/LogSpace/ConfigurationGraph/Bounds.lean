@@ -12,15 +12,22 @@ import Complexity.Foundations.Data.Nat.Log
 import Complexity.Computability.Machines.Turing.MultiTape.Encodings.NatLength
 
 /-!
-# Polynomial vertex bounds for native logarithmic space
+# Radices accommodating a space bound
 
-A fixed exponent, depending only on the source machine and its logarithmic space constant,
-accommodates every source-reachable view. Thus the exact compact graph has polynomially many
-vertices; its local routines take only logarithmically many stored bits.
+A source machine that visits at most `S` work cells along every computation prefix has only
+views whose registers fit any radix `B` with `n + 2 ≤ B`, room for the finite control and
+`3 ^ (4 * S + 1) ≤ B` (`Turing.MultiTapeNTM.ConfigurationGraph.fits_of_runsInSpace_of_le`).
+For logarithmic space a fixed exponent, depending only on the source machine and its space
+constant, gives such a radix `(n + 2) ^ D`. Thus the exact compact graph then has polynomially
+many vertices, and its local routines take only logarithmically many stored bits.
 
 ## Main results
 
-* `Turing.MultiTapeNTM.ConfigurationGraph.fits_of_runsInSpace`: every reachable view fits.
+* `Turing.MultiTapeNTM.ConfigurationGraph.reachable_lt_pow_of_runsInSpace`: polynomial ambient bound
+  on reachable configuration vertices.
+* `Turing.MultiTapeNTM.ConfigurationGraph.fits_of_runsInSpace_of_le`: every reachable view fits a
+  large enough radix.
+* `Turing.MultiTapeNTM.ConfigurationGraph.fits_of_runsInSpace`: the logarithmic-space radix.
 * `Turing.MultiTapeNTM.ConfigurationGraph.accepts_iff_reachable_bad_of_runsInSpace`: exact graph.
 * `Turing.MultiTapeNTM.ConfigurationGraph.vertexBound_eq_pow`: natural-polynomial vertex bound.
 -/
@@ -34,13 +41,38 @@ namespace Turing.MultiTapeNTM.ConfigurationGraph
 variable {k : ℕ} {State : Type} [Fintype State] {ntm : MultiTapeNTM k Bool State}
   {w : List Bool}
 
+/-- **Every reachable view fits a large enough radix**: one above the input positions, the
+finite tags, and the ternary stack codes of `4 * S + 1` cells, for a source that visits at most
+`S` work cells along every computation prefix. -/
+theorem fits_of_runsInSpace_of_le {S B : ℕ} (hs : ntm.RunsInSpace w S)
+    (hn : w.length + 2 ≤ B) (hc : Fintype.card (Option State) < B) (h3 : 3 < B)
+    (hstack : 3 ^ (4 * S + 1) ≤ B) {v : FiniteCfg k Bool State}
+    (hv : Relation.ReflTransGen ntm.ViewStep (ntm.initView w) v) :
+    Fits B (registers v) := by
+  have hi := input_of_reachable hv
+  intro i
+  cases i with
+  | inputPos => exact v.inputPos.isLt.trans_le (hi ▸ hn)
+  | control => exact (Fintype.equivFin (Option State) v.state).isLt.trans hc
+  | output => exact (outputCode_lt _).trans h3
+  | head i => exact (symbolCode_lt _).trans h3
+  | left i | right i =>
+    have ht := spaceUsed_workTapes_le hs hv i
+    have hlen : (v.workTapes i).left.length ≤ 4 * S + 1 ∧
+        (v.workTapes i).right.length ≤ 4 * S + 1 := by
+      simp only [BiTape.spaceUsed] at ht
+      omega
+    first
+    | exact (stackCode_lt _).trans_le ((Nat.pow_le_pow_right (by omega) hlen.1).trans hstack)
+    | exact (stackCode_lt _).trans_le ((Nat.pow_le_pow_right (by omega) hlen.2).trans hstack)
+
 /-- A generous fixed radix exponent for a machine using `c * (log2 n + 1)` work cells. -/
 def radixExponent (State : Type) [Fintype State] (c : ℕ) : ℕ :=
   16 * c + Fintype.card (Option State) + 4
 
 /-- The ambient vertex count is exactly a fixed natural power of `n+2`. -/
 theorem vertexBound_eq_pow (D n : ℕ) :
-    vertexBound (k := k) D n = (n + 2) ^ (D * Fintype.card (Register k)) :=
+    vertexBound (k := k) (radix D n) = (n + 2) ^ (D * Fintype.card (Register k)) :=
   (pow_mul _ _ _).symm
 
 private theorem stack_bound (c n : ℕ) :
@@ -66,8 +98,7 @@ private theorem stack_bound (c n : ℕ) :
 theorem fits_of_runsInSpace (c : ℕ) (hs : ntm.RunsInSpace w (c * (Nat.log2 w.length + 1)))
     {v : FiniteCfg k Bool State}
     (hv : Relation.ReflTransGen ntm.ViewStep (ntm.initView w) v) :
-    Fits (radix (radixExponent State c) v.input.length) (registers v) := by
-  have hi := input_of_reachable hv
+    Fits (radix (radixExponent State c) w.length) (registers v) := by
   have hD : 2 ≤ radixExponent State c := by simp only [radixExponent]; omega
   have hbase : w.length + 2 ≤ radix (radixExponent State c) w.length := by
     calc
@@ -78,45 +109,29 @@ theorem fits_of_runsInSpace (c : ℕ) (hs : ntm.RunsInSpace w (c * (Nat.log2 w.l
     have he := Nat.pow_le_pow_right (show 1 ≤ w.length + 2 by omega) hD
     change 3 < (w.length + 2) ^ radixExponent State c
     omega
-  intro i
-  rw [hi]
-  cases i with
-  | inputPos => exact v.inputPos.isLt.trans_le (hi ▸ hbase)
-  | control =>
-    have hc := (Fintype.equivFin (Option State) v.state).isLt
-    have hp := (Nat.lt_two_pow_self : Fintype.card (Option State) < 2 ^ Fintype.card (Option State))
+  have hcard : Fintype.card (Option State) < radix (radixExponent State c) w.length := by
+    have hp := (Nat.lt_two_pow_self :
+      Fintype.card (Option State) < 2 ^ Fintype.card (Option State))
     have he : 2 ^ Fintype.card (Option State) ≤ radix (radixExponent State c) w.length :=
       (Nat.pow_le_pow_left (by omega : 2 ≤ w.length + 2) _).trans
         (Nat.pow_le_pow_right (by omega) (by simp only [radixExponent]; omega))
-    exact hc.trans_le (Nat.le_of_lt (hp.trans_le he))
-  | output => exact (outputCode_lt _).trans hthree
-  | head i => exact (symbolCode_lt _).trans hthree
-  | left i | right i =>
-    have ht := spaceUsed_workTapes_le hs hv i
-    have hlen : (v.workTapes i).left.length ≤ 4 * (c * (Nat.log2 w.length + 1)) + 1 ∧
-        (v.workTapes i).right.length ≤ 4 * (c * (Nat.log2 w.length + 1)) + 1 := by
-      simp only [BiTape.spaceUsed] at ht
-      omega
-    first
-    | exact (stackCode_lt _).trans_le
-        ((Nat.pow_le_pow_right (by omega) hlen.1).trans (stack_bound (State := State) c w.length))
-    | exact (stackCode_lt _).trans_le
-        ((Nat.pow_le_pow_right (by omega) hlen.2).trans (stack_bound (State := State) c w.length))
+    exact hp.trans_le he
+  exact fits_of_runsInSpace_of_le hs hbase hcard hthree (stack_bound c w.length) hv
 
 /-- Every reachable ID is strictly below a natural polynomial in input length. -/
 theorem vertexID_lt_pow_of_runsInSpace (c : ℕ)
     (hs : ntm.RunsInSpace w (c * (Nat.log2 w.length + 1))) {v : FiniteCfg k Bool State}
     (hv : Relation.ReflTransGen ntm.ViewStep (ntm.initView w) v) :
-    vertexID (radixExponent State c) v <
+    vertexID (radix (radixExponent State c) w.length) v <
       (w.length + 2) ^ (radixExponent State c * Fintype.card (Register k)) := by
   have h := vertexID_lt (fits_of_runsInSpace c hs hv)
-  rwa [vertexBound_eq_pow, input_of_reachable hv] at h
+  rwa [vertexBound_eq_pow] at h
 
 /-- Binary vertex IDs need only logarithmically many bits. -/
 theorem length_vertexID_le_of_runsInSpace (c : ℕ)
     (hs : ntm.RunsInSpace w (c * (Nat.log2 w.length + 1))) {v : FiniteCfg k Bool State}
     (hv : Relation.ReflTransGen ntm.ViewStep (ntm.initView w) v) :
-    (MultiTapeTM.encNat (vertexID (radixExponent State c) v)).length ≤
+    (MultiTapeTM.encNat (vertexID (radix (radixExponent State c) w.length) v)).length ≤
       (radixExponent State c * Fintype.card (Register k) + 1) *
         (Nat.log2 (w.length + 1) + 1) :=
   MultiTapeTM.length_encNat_le_of_le_pow (N := w.length + 1)
@@ -125,8 +140,8 @@ theorem length_vertexID_le_of_runsInSpace (c : ℕ)
 /-- Every vertex reachable in the compact graph satisfies the polynomial ambient bound. -/
 theorem reachable_lt_pow_of_runsInSpace (c : ℕ)
     (hs : ntm.RunsInSpace w (c * (Nat.log2 w.length + 1))) {u : ℕ}
-    (hu : Relation.ReflTransGen (Edge ntm (radixExponent State c) w)
-      (startID ntm (radixExponent State c) w.length) u) :
+    (hu : Relation.ReflTransGen (Edge ntm (radix (radixExponent State c) w.length) w)
+      (startID ntm (radix (radixExponent State c) w.length)) u) :
     u < (w.length + 2) ^ (radixExponent State c * Fintype.card (Register k)) := by
   obtain ⟨v, hv, rfl⟩ := (reachable_iff (fun _ h => fits_of_runsInSpace c hs h) u).mp hu
   exact vertexID_lt_pow_of_runsInSpace c hs hv
@@ -135,9 +150,10 @@ theorem reachable_lt_pow_of_runsInSpace (c : ℕ)
 theorem accepts_iff_reachable_bad_of_runsInSpace (c : ℕ)
     (hs : ntm.RunsInSpace w (c * (Nat.log2 w.length + 1))) :
     ntm.Accepts w ↔ ∃ u,
-      Relation.ReflTransGen (Edge ntm (radixExponent State c) w)
-        (startID ntm (radixExponent State c) w.length) u ∧
-      bad (k := k) (State := State) (radixExponent State c) w.length u = true :=
+      Relation.ReflTransGen (Edge ntm (radix (radixExponent State c) w.length) w)
+        (startID ntm (radix (radixExponent State c) w.length)) u ∧
+      bad (k := k) (State := State) (radix (radixExponent State c) w.length) w.length u =
+        true :=
   accepts_iff_reachable_bad fun _ h => fits_of_runsInSpace c hs h
 
 end Turing.MultiTapeNTM.ConfigurationGraph

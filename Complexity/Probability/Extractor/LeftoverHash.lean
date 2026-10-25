@@ -20,7 +20,8 @@ under the uniform seed, then `ext x s = hash s x` is a strong `(k, ε)`-extracto
 `log₂ |Output| + 2 log₂ (1 / δ) ≤ k`, the error is at most `δ / 2`
 (`IsTwoUniversal.isStrongExtractor_of_logb_le`), so universal hashing extracts all but
 `2 log₂ (1 / δ)` bits of the min-entropy [Vadhan, Chapter 6][Vadhan2012],
-[Håstad, Impagliazzo, Levin, Luby][HILL1999].
+[Håstad, Impagliazzo, Levin, Luby][HILL1999]. More generally, an `ε`-universal family gives error
+`√(|Output| · (2⁻ᵏ + ε) - 1) / 2` (`IsUniversalHash.isStrongExtractor`).
 
 A uniformly random Boolean `m × n` matrix is a two-universal family, so multiplying by it is a
 strong extractor from `n`-bit sources of min-entropy at least `m + 2 log₂ (1 / δ)` to `m` bits with
@@ -31,6 +32,7 @@ error `δ / 2` and an `m n`-bit seed (`BitString.LinearHash.isStrongExtractor`).
 * `Cslib.Probability.IsTwoUniversal.isStrongExtractor`: the leftover hash lemma as a strong
   extractor.
 * `Cslib.Probability.IsTwoUniversal.isStrongExtractor_of_logb_le`: its entropy-loss form.
+* `Cslib.Probability.IsUniversalHash.isStrongExtractor`: the same for `ε`-universal families.
 * `Cslib.BitString.LinearHash.isStrongExtractor`: Boolean matrix multiplication is a strong
   extractor.
 
@@ -46,6 +48,7 @@ error `δ / 2` and an `m n`-bit seed (`BitString.LinearHash.isStrongExtractor`).
 namespace Cslib.Probability
 
 open Cslib.Probability.PMF
+open scoped ENNReal
 
 variable {Seed Input Output : Type*} [Fintype Seed] [Nonempty Seed] [Finite Input]
   [Fintype Output] [Nonempty Output]
@@ -81,6 +84,20 @@ theorem IsTwoUniversal.isStrongExtractor_of_logb_le {hash : Seed → Input → O
     (isSource_of_le_minEntropy hsource 0) hδ hk
   rw [uniformOfFintype_prod, NNReal.coe_zero, zero_add] at h
   rwa [bind_map_eq_seededHash]
+
+/-- **`ε`-universal hashing as a strong extractor.** An `ε`-universal family under the uniform
+seed is a strong `(k, √(|Output| · (2⁻ᵏ + ε) - 1) / 2)`-extractor. For `ε = 1 / |Output|` this is
+the two-universal bound `IsTwoUniversal.isStrongExtractor`. -/
+theorem IsUniversalHash.isStrongExtractor {hash : Seed → Input → Output} {ε : ℝ≥0∞}
+    (hhash : IsUniversalHash (PMF.uniformOfFintype Seed) hash ε) (hε : ε ≠ ⊤) (k : ℝ) :
+    IsStrongExtractor (fun x s => hash s x) k
+      (Real.sqrt (Fintype.card Output * (2 ^ (-k) + ε.toReal) - 1) / 2) := by
+  intro source hsource
+  have := Fintype.ofFinite Input
+  rw [bind_map_eq_seededHash, ← uniformOfFintype_prod]
+  refine (hhash.leftover_hash hε source).trans ?_
+  gcongr
+  exact collisionProbability_le_of_mass_le source ((le_minEntropy_iff source).mp hsource)
 
 end Cslib.Probability
 

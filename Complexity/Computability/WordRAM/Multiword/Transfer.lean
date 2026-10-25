@@ -29,6 +29,7 @@ little endian in the half-word radix. Registers zero through three are reserved 
 * `Cslib.WordRAM.Multiword.Transfer.exec_copy`: exact copying and register preservation.
 * `Cslib.WordRAM.Multiword.Transfer.exec_constants`: exact installation of bounded constants.
 * `Cslib.WordRAM.Multiword.Transfer.exec_assemble`: reconstruction when the scalar fits.
+* `Cslib.WordRAM.Multiword.Transfer.exec_split`: exact conversion with sufficient capacity.
 * `Cslib.WordRAM.Multiword.Transfer.exec_split_eighteen`: exact eighteen-digit conversion.
 
 ## References

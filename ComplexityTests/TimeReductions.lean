@@ -40,10 +40,4 @@ example : (fun n : ℕ => List.replicate n true) ⁻¹' {x | diagonal x = true} 
         (Nat.le_add_right _ _)
   omega
 
-/--
-info: 'Cslib.Complexity.preimage_mem_DTIME' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.preimage_mem_DTIME
-
 end ComplexityTests.TimeReductions

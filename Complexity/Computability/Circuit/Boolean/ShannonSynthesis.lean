@@ -32,6 +32,7 @@ the resulting circuit's size; it does not certify the synthesizer's running time
 
 ## Main results
 
+* `Cslib.Circuits.Boolean.ShannonSynthesis.bound_le`: gate ledger bound for the finite split.
 * `Cslib.Circuits.Boolean.ShannonSynthesis.computes_synthesize`: correctness of synthesis.
 * `Cslib.Circuits.Boolean.ShannonSynthesis.size_synthesize_le`: the finite `27 * 2 ^ n / n` bound.
 * `Cslib.Circuits.Boolean.ShannonSynthesis.exists_circuit`: the corresponding existence theorem.

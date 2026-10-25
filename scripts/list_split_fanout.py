@@ -1,23 +1,40 @@
 #!/usr/bin/env python3
 """Compare #573's list-topic transitive importers over the base's fixed library universe.
 
-Uses the existing native Lean header parser and shared quality-report graph calculation.
-Counts source-import reach, not actual rebuilds, cache hits or elapsed build time.
+Uses the existing native Lean header parser. Counts source-import reach, not actual rebuilds,
+cache hits or elapsed build time.
 """
 
 import argparse
+from collections import defaultdict
 import io
 from pathlib import Path
 import subprocess
 import tarfile
 import tempfile
 
-from quality_report import transitive_importers
 from quick_check import imports_from_lean
 
 ROOT = Path(__file__).resolve().parents[1]
 PREFIX = "Complexity.Foundations.Data.List."
 TOPICS = ("Append", "Counting", "Fold", "Lookup")
+
+
+def transitive_importers(imports: dict[str, list[tuple[str, bool]]]) -> dict[str, set[str]]:
+    importers: dict[str, set[str]] = defaultdict(set)
+    for module, deps in imports.items():
+        for dep, _ in deps:
+            importers[dep].add(module)
+    result = {}
+    for module in imports:
+        seen, stack = set(), [module]
+        while stack:
+            for importer in importers[stack.pop()]:
+                if importer not in seen:
+                    seen.add(importer)
+                    stack.append(importer)
+        result[module] = seen
+    return result
 
 
 def snapshot(ref: str, destination: Path) -> dict[str, list[tuple[str, bool]]]:

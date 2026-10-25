@@ -10,8 +10,8 @@ import Complexity.Logics.Propositional.Resolution.Pigeonhole
 # Tests: pigeonhole formulas and Haken's resolution lower bound
 
 Satisfiability and unsatisfiability of small pigeonhole formulas; a concrete resolution refutation
-of `PHP^2_1` and its monotone translation pairs; instances of the recurrence and exponential lower
-bounds; and the axioms of the headline theorems.
+of `PHP^2_1` and its monotone translation pairs; and instances of the recurrence and exponential
+lower bounds.
 -/
 
 namespace ComplexityTests.ProofComplexity.Pigeonhole
@@ -83,63 +83,5 @@ example : ¬ (CNF.pigeonhole 25 24).RefutableInSize 1 :=
 /-- For `n = 48`, no resolution refutation of `PHP^{49}_{48}` has at most `3` lines. -/
 example : ¬ (CNF.pigeonhole 49 48).RefutableInSize 3 :=
   CNF.not_refutableInSize_pigeonhole (n := 48) (by decide)
-
-/-! ### Axioms -/
-
-/--
-info: 'Cslib.Logic.PL.CNF.satisfiable_pigeonhole_iff' depends on axioms: [propext, Classical.choice,
-Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.PL.CNF.satisfiable_pigeonhole_iff
-
-/--
-info: 'Cslib.Logic.PL.CNF.not_satisfiable_pigeonhole' depends on axioms: [propext, Classical.choice,
-Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.PL.CNF.not_satisfiable_pigeonhole
-
-/--
-info: 'Cslib.Logic.PL.Pigeonhole.exists_le_card_satPairs' depends on axioms: [propext,
-Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.PL.Pigeonhole.exists_le_card_satPairs
-
-/--
-info: 'Cslib.Logic.PL.CNF.exists_le_card_satPairs_pigeonhole' depends on axioms: [propext,
-Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.PL.CNF.exists_le_card_satPairs_pigeonhole
-
-/--
-info: 'Cslib.Logic.PL.CNF.pow_le_mul_of_refutableInSize_pigeonhole' depends on axioms: [propext,
-Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.PL.CNF.pow_le_mul_of_refutableInSize_pigeonhole
-
-/--
-info: 'Cslib.Logic.PL.CNF.two_pow_le_of_refutableInSize_pigeonhole' depends on axioms: [propext,
-Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.PL.CNF.two_pow_le_of_refutableInSize_pigeonhole
-
-/--
-info: 'Cslib.Logic.PL.CNF.not_refutableInSize_pigeonhole' depends on axioms: [propext,
-Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.PL.CNF.not_refutableInSize_pigeonhole
-
-/--
-info: 'Cslib.Logic.PL.CNF.Derivation.two_pow_le_size_pigeonhole' depends on axioms: [propext,
-Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.PL.CNF.Derivation.two_pow_le_size_pigeonhole
 
 end ComplexityTests.ProofComplexity.Pigeonhole

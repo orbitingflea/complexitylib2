@@ -50,11 +50,4 @@ example : boxReject (Fin 1) 0 0 0 none = 0 := by
   rw [boxReject_apply_none (by omega) (by simp)]
   norm_num
 
-/--
-info: 'Cslib.Probability.PMF.boxReject_apply_none_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms boxReject_apply_none_le
-
 end ComplexityTests.RejectionSampling

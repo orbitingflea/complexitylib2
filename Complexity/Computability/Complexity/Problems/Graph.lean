@@ -63,6 +63,8 @@ This module holds the tools these problems share:
 
 * `Cslib.Complexity.Graph.toSimpleGraph_adj`, `Cslib.Complexity.Graph.induced_adj`,
   `Cslib.Complexity.Graph.adjBool_eq_true_iff`: adjacency.
+* `Cslib.Complexity.Graph.computableInPolyTime_adjBool`,
+  `Cslib.Complexity.Graph.computableInPolyTime_adjBool_comp`: testing adjacency is polynomial-time.
 * `Cslib.Complexity.Graph.isVerifier_verifySubset`,
   `Cslib.Complexity.Graph.computableInPolyTime_verifySubset`: the subset verifier is a
   polynomial-time verifier.
@@ -195,6 +197,19 @@ theorem computableInPolyTime_adjBool :
       (encPair (encPair encGraph encNat) encNat) encBool := by
   unfold adjBool encGraph
   fun_prop
+
+/-- Testing adjacency between computed vertices of a computed graph is polynomial-time. This is
+`Cslib.Complexity.Graph.computableInPolyTime_adjBool` in the compositional form that `fun_prop`
+uses. -/
+@[fun_prop]
+theorem computableInPolyTime_adjBool_comp {γ : Type} {enc : γ ↪ List Bool}
+    {G : γ → Graph} {u v : γ → ℕ} (hG : ComputableInPolyTime G enc encGraph)
+    (hu : ComputableInPolyTime u enc encNat) (hv : ComputableInPolyTime v enc encNat) :
+    ComputableInPolyTime (fun c => (G c).adjBool (u c) (v c)) enc encBool := by
+  have hG := hG.tidy
+  have hu := hu.tidy
+  have hv := hv.tidy
+  exact .of_tidy (computableInPolyTime_adjBool.tidy.comp ((hG.prod hu).prod hv))
 
 /-- Verify a cardinality-`m` vertex subset problem with pairwise relation `rel`: select distinct
 declared vertices from `G.1` by the certificate mask, compare the selected count with `m` in

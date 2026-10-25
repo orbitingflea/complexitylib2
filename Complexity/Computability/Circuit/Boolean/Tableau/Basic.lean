@@ -10,6 +10,7 @@ module
 public import Complexity.Computability.Circuit.Boolean.Encoding
 public import Complexity.Computability.Circuit.Boolean.Tableau.Layout
 import Complexity.Foundations.Data.List.Lookup
+import Complexity.Foundations.Data.Nat.Div
 
 /-!
 # The uniform tableau circuit of a multi-tape machine
@@ -243,10 +244,8 @@ theorem gateCode_wire {n T t : ℕ} {l : Loc k State} {c : ℕ} (hl : l.ColOK T 
   rcases l with l | l | ⟨f, b, j⟩ | ⟨f, b, j⟩ <;> simp only [Loc.ColOK] at hl <;>
     simp only [Loc.offset]
   · have hi := l.idx_lt
-    have hw : 0 < scanWidth k := by simp only [scanWidth]; omega
     have h₁ : c * scanWidth k + l.idx < globStart k T := scan_offset_lt_globStart hl l
-    have h₂ : (c * scanWidth k + l.idx) / scanWidth k = c := by
-      rw [Nat.add_comm, Nat.add_mul_div_right _ _ hw, Nat.div_eq_of_lt hi, Nat.zero_add]
+    have h₂ : (c * scanWidth k + l.idx) / scanWidth k = c := Nat.mul_add_div_of_lt c hi
     have h₃ : (c * scanWidth k + l.idx) % scanWidth k = l.idx := by
       rw [Nat.add_comm, Nat.add_mul_mod_self_right, Nat.mod_eq_of_lt hi]
     simp only [h₁, ↓reduceIte, h₂, h₃, ScanLoc.ofIdx_idx]
@@ -264,7 +263,6 @@ theorem gateCode_wire {n T t : ℕ} {l : Loc k State} {c : ℕ} (hl : l.ColOK T 
   · have h₁ := gadgetIdx_lt f.idx b j
     have h₂ := f.idx_lt
     have hw : gadgetIdx f.idx b j < colWidth k := by simp only [colWidth]; omega
-    have hw0 : 0 < colWidth k := by simp only [colWidth]; omega
     have h₃ : ¬ colStart k State T + c * colWidth k + gadgetIdx f.idx b j < globStart k T := by
       omega
     have h₄ : ¬ colStart k State T + c * colWidth k + gadgetIdx f.idx b j < gfStart k State T := by
@@ -273,8 +271,8 @@ theorem gateCode_wire {n T t : ℕ} {l : Loc k State} {c : ℕ} (hl : l.ColOK T 
         colStart k State T := by omega
     have h₆ : colStart k State T + c * colWidth k + gadgetIdx f.idx b j - colStart k State T =
         gadgetIdx f.idx b j + c * colWidth k := by omega
-    have h₇ : (gadgetIdx f.idx b j + c * colWidth k) / colWidth k = c := by
-      rw [Nat.add_mul_div_right _ _ hw0, Nat.div_eq_of_lt hw, Nat.zero_add]
+    have h₇ : (gadgetIdx f.idx b j + c * colWidth k) / colWidth k = c :=
+      Nat.add_mul_div_of_lt c hw
     have h₈ : (gadgetIdx f.idx b j + c * colWidth k) % colWidth k = gadgetIdx f.idx b j := by
       rw [Nat.add_mul_mod_self_right, Nat.mod_eq_of_lt hw]
     simp only [h₃, h₄, h₅, ↓reduceIte, h₆, h₇, h₈, gadgetIdx_div, ColFeat.ofIdx_idx,

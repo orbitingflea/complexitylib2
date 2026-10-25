@@ -21,6 +21,7 @@ row extraction is ordinary dropping, padding and taking, including on short or e
 
 * `Cslib.BitString.ofList`: a fixed-width view of a list.
 * `Cslib.BitString.listRow`, `Cslib.BitString.listRows`: fixed-width rows of a flat list.
+* `Cslib.BitString.replaceRow`: replace one fixed-width row of a flat list.
 
 ## Main results
 
@@ -34,6 +35,7 @@ row extraction is ordinary dropping, padding and taking, including on short or e
   false padding on short words.
 * `Cslib.BitString.listRow_flatMap_append`, `Cslib.BitString.listRow_flatten`: recover
   equal-width rows from concatenated words.
+* `Cslib.BitString.listRow_replaceRow`: reading rows after replacing one row.
 * `Cslib.BitString.listRows_eq_ofFn`, `Cslib.BitString.listRows_ofFn`: agreement with the finite
   block representation.
 * `Cslib.BitString.listRows_succ_append`: the rows of a word whose first row is given.
@@ -239,5 +241,23 @@ theorem listRows_succ_append (count width : ℕ) {u : List Bool} (hu : u.length 
   · refine List.map_congr_left fun row _ => ?_
     simp only [Function.comp_apply, listRow, Nat.succ_mul, ← List.drop_drop, Nat.add_comm _ width]
     rw [← hu, List.drop_left]
+
+/-- Replace row `j` of a `count × width` bit string `word` with `x`. -/
+def replaceRow (width count j : ℕ) (x word : List Bool) : List Bool :=
+  (List.range count).flatMap (fun i => if i = j then x else listRow width i word)
+
+/-- Reading row `i < count` from `replaceRow width count j x word` returns `x` when `i = j` and
+`listRow width i word` otherwise. -/
+theorem listRow_replaceRow {width count j : ℕ} {x : List Bool} (hx : x.length = width)
+    (word : List Bool) {i : ℕ} (hi : i < count) :
+    listRow width i (replaceRow width count j x word) =
+      if i = j then x else listRow width i word := by
+  have h := listRow_flatMap_append
+    (width := width)
+    (fun r => if r = j then x else listRow width r word)
+    (List.range count)
+    (fun r _ => by split_ifs <;> simp [hx])
+    [] i (by simpa using hi)
+  simpa [replaceRow] using h
 
 end Cslib.BitString

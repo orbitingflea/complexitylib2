@@ -170,20 +170,6 @@ section Deviations
 
 variable {Ω κ : Type*} [Fintype κ]
 
-/-- The number of events that occur is the sum of their indicators. -/
-theorem ncard_eq_sum_indicator (A : κ → Set Ω) (ω : Ω) :
-    ({k | ω ∈ A k}.ncard : ℝ) = ∑ k, (A k).indicator (1 : Ω → ℝ) ω := by
-  classical
-  simp only [indicator_apply, Pi.one_apply]
-  rw [Finset.sum_boole, ← ncard_coe_finset, Finset.coe_filter_univ]
-
-/-- Outside the event that the number of events that occur deviates from `m` by at least `c`,
-this number is below `m + c`. -/
-theorem ncard_lt_of_not_le_abs {A : κ → Set Ω} {ω : Ω} {m c : ℝ}
-    (h : ¬c ≤ |∑ k, (A k).indicator (1 : Ω → ℝ) ω - m|) : ({k | ω ∈ A k}.ncard : ℝ) < m + c := by
-  rw [ncard_eq_sum_indicator]
-  linarith [le_abs_self (∑ k, (A k).indicator (1 : Ω → ℝ) ω - m), not_le.mp h]
-
 /-- Simultaneously avoid two families of grid events and both tail events when their
 probability bounds sum to less than one. -/
 theorem exists_sample_of_grid_bounds {Ω : Type*} [MeasurableSpace Ω] {P : Measure Ω}
@@ -246,13 +232,6 @@ section Projections
 
 variable {V : Type*} [Fintype V]
 
-/-- The product of standard Gaussians on `V → ℝ` carries an event about inner products to the
-same event under the standard Gaussian measure of `EuclideanSpace ℝ V`. -/
-theorem measureReal_pi_eq {s : Set (EuclideanSpace ℝ V)} (hs : MeasurableSet s) :
-    (Measure.pi fun _ : V => gaussianReal 0 1).real {ω | WithLp.toLp 2 ω ∈ s} =
-      (stdGaussian (EuclideanSpace ℝ V)).real s :=
-  (measurePreserving_toLp_pi_gaussianReal V).measureReal_preimage hs.nullMeasurableSet
-
 /-- **Window bound.** A unit projection of the sample lands in a window of width `δ ≥ 0` with
 probability at most `δ / √(2π)`. -/
 theorem measureReal_window_le {y : EuclideanSpace ℝ V} (hy : ‖y‖ = 1) (a : ℝ) {δ : ℝ}
@@ -262,7 +241,7 @@ theorem measureReal_window_le {y : EuclideanSpace ℝ V} (hy : ‖y‖ = 1) (a :
   have hy0 : y ≠ 0 := by
     rintro rfl
     simp at hy
-  refine (measureReal_pi_eq (s := {x | ⟪y, x⟫ ∈ Ico a (a + δ)})
+  refine (measureReal_pi_gaussianReal_eq (s := {x | ⟪y, x⟫ ∈ Ico a (a + δ)})
     ((by fun_prop : Measurable fun x : EuclideanSpace ℝ V => ⟪y, x⟫) measurableSet_Ico)).trans_le
     ?_
   rw [measureReal_def]
@@ -276,7 +255,7 @@ probability at most `1 / T ^ 2`. -/
 theorem measureReal_le_abs_le {y : EuclideanSpace ℝ V} (hy : ‖y‖ = 1) {T : ℝ} (hT : 0 < T) :
     (Measure.pi fun _ : V => gaussianReal 0 1).real {ω | T ≤ |⟪y, WithLp.toLp 2 ω⟫|} ≤
       1 / T ^ 2 := by
-  refine (measureReal_pi_eq (s := {x | T ≤ |⟪y, x⟫|})
+  refine (measureReal_pi_gaussianReal_eq (s := {x | T ≤ |⟪y, x⟫|})
     (measurableSet_le measurable_const (by fun_prop))).trans_le ?_
   rw [measureReal_def]
   refine ENNReal.toReal_le_of_le_ofReal (by positivity)
@@ -289,7 +268,7 @@ theorem measureReal_mem_uIoc_le {y y' : EuclideanSpace ℝ V} (h : ‖y‖ = ‖
     (Measure.pi fun _ : V => gaussianReal 0 1).real
         {ω | t ∈ Ι ⟪y, WithLp.toLp 2 ω⟫ ⟪y', WithLp.toLp 2 ω⟫} ≤
       InnerProductGeometry.angle y y' / π :=
-  (measureReal_pi_eq (s := {x | t ∈ Ι ⟪y, x⟫ ⟪y', x⟫})
+  (measureReal_pi_gaussianReal_eq (s := {x | t ∈ Ι ⟪y, x⟫ ⟪y', x⟫})
     (measurableSet_setOf_mem_uIoc (by fun_prop) (by fun_prop) t)).trans_le
     (measureReal_stdGaussian_mem_uIoc_le_angle h t)
 

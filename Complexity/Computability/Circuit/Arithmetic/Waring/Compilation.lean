@@ -38,6 +38,7 @@ the construction is asserted.
 
 ## Main results
 
+* `Cslib.Circuits.Waring.termMultiplicationCount_le`: binary powering multiplication bound.
 * `Cslib.Circuits.Waring.eval_compile`: all outputs agree under a semiring interpretation.
 * `Cslib.Circuits.Waring.polynomial_compile`: equality of formal polynomial outputs.
 * `Cslib.Circuits.Waring.cost_program_compile`: exact arbitrary weighted cost.

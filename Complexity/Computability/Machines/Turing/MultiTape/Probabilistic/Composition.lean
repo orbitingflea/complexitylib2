@@ -27,6 +27,8 @@ separate blank work tapes. Preparation costs the intermediate word length plus f
 
 ## Main results
 
+* `Turing.MultiTapePTM.eval_runClosedConfigFrom_comp`: configuration distribution preservation and
+  time bounds for composition.
 * `Turing.MultiTapePTM.eval_comp`: the compiled output distribution is monadic composition.
 
 ## References

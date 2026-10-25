@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Samuel Schlesinger
 -/
 
+import Complexity.Computability.Circuit.Boolean.Hierarchy
 import Complexity.Computability.Complexity.FineGrained.PermutationIndependentSet
 import Complexity.Computability.MCSP.PartialETH
 import Complexity.Computability.MCSP.PartialNP
@@ -85,6 +86,56 @@ example : (⟨1, fun _ => none, 0⟩ : PartialMCSP.Instance) ∈ PartialMCSP := 
   exact ⟨⟨.empty, fun _ => Wire.input 0⟩, le_rfl,
     fun _ _ h => by simp [PartialMCSP.Instance.partialFunction] at h⟩
 
+/-- The 1-variable negation circuit with one `NOT` gate. -/
+def notCircuit : Circuit signature 1 1 :=
+  ⟨Program.empty.gate ⟨Op.not, ![Wire.input 0]⟩, fun _ => Wire.gate 0⟩
+
+example : notCircuit.program.cost binaryCost ≤ 0 := by
+  decide
+
+/-- Coordinate 0 is essential for the single-variable negation table. -/
+example : (⟨1, ![some true, some false], 0⟩ : PartialMCSP.Instance).EssentialAt 0 := by
+  refine ⟨![false], ![true], true, false, fun k hk => ?_, rfl, rfl, by decide⟩
+  fin_cases k
+  contradiction
+
+/-- Under the binary-gate measure, unary gates (like `NOT`) carry zero cost, so single-variable
+negation has binary-gate complexity 0. -/
+example : (⟨1, ![some true, some false], 0⟩ : PartialMCSP.Instance) ∈ PartialMCSP.BinaryGate := by
+  refine ⟨notCircuit, by decide, ?_⟩
+  intro y b hy
+  have hy_cases : y = ![false] ∨ y = ![true] := by
+    cases h : y 0
+    · left; ext i; fin_cases i; exact h
+    · right; ext i; fin_cases i; exact h
+  rcases hy_cases with rfl | rfl <;> cases hy <;> rfl
+
+/-- Under the standard all-gates circuit size measure, single-variable negation requires at least 1
+gate, so it cannot be computed at threshold 0. -/
+example : (⟨1, ![some true, some false], 0⟩ : PartialMCSP.Instance) ∉ PartialMCSP := by
+  intro hx
+  obtain ⟨_ | ⟨b, _ | _⟩, hu, hV⟩ := PartialMCSP.exists_verifier_append hx
+  · revert hu; decide
+  · have := hV []; revert this; cases b <;> decide
+  · simp [certLength, MCSP.budget] at hu
+
+/-- The all-gates and binary-gate cost measures separate on single-variable negation at threshold
+zero: `BinaryGate` admits zero-cost unary negations, while `PartialMCSP` charges for every gate. -/
+example : ∃ x : PartialMCSP.Instance, x ∈ PartialMCSP.BinaryGate ∧ x ∉ PartialMCSP :=
+  ⟨⟨1, ![some true, some false], 0⟩, by
+    refine ⟨⟨notCircuit, by decide, ?_⟩, ?_⟩
+    · intro y b hy
+      have hy_cases : y = ![false] ∨ y = ![true] := by
+        cases h : y 0
+        · left; ext i; fin_cases i; exact h
+        · right; ext i; fin_cases i; exact h
+      rcases hy_cases with rfl | rfl <;> cases hy <;> rfl
+    · intro hx
+      obtain ⟨_ | ⟨b, _ | _⟩, hu, hV⟩ := PartialMCSP.exists_verifier_append hx
+      · revert hu; decide
+      · have := hV []; revert this; cases b <;> decide
+      · simp [certLength, MCSP.budget] at hu⟩
+
 /-! ### NP membership and reduction from MCSP -/
 
 example : PartialMCSP ∈ NP PartialMCSP.enc :=
@@ -103,6 +154,25 @@ example : ComputableInPolyTime PartialMCSP.verifier
 
 example : PolyTimeReducible MCSP.encInstance PartialMCSP.encBinary MCSP PartialMCSP :=
   PartialMCSP.polyTimeReducible_MCSP_PartialMCSP_encBinary
+
+-- The identity function on one input is verified by a 0-gate wire certificate.
+example : PartialMCSP.verifier (⟨1, ![some false, some true], 0⟩, certificate 1 0 [] 0) = true := by
+  decide
+
+-- Single-variable negation is verified by the 1-gate NOT certificate at threshold 1.
+example : PartialMCSP.verifier
+    (⟨1, ![some true, some false], 1⟩, certificate 1 1 [(.not, [0])] 1) = true := by
+  decide
+
+-- A corrupted certificate where a gate reads itself is rejected.
+example : PartialMCSP.verifier
+    (⟨1, ![some true, some false], 1⟩, certificate 1 1 [(.not, [1])] 1) = false := by
+  decide
+
+-- Single-variable negation is rejected at threshold 0 by the 0-gate certificate.
+example : PartialMCSP.verifier
+    (⟨1, ![some true, some false], 0⟩, certificate 1 0 [] 0) = false := by
+  decide
 
 /-! ### Bipartite Permutation Independent Set and the LMS ETH lower bound -/
 
@@ -128,6 +198,11 @@ example (H : Graph) :
         BipartitePermutationIndependentSet.bpisOfColoring (H, r) ∈
           BipartitePermutationIndependentSet :=
   BipartitePermutationIndependentSet.mem_ThreeColoring_iff_exists_bpisOfColoring H
+
+/-- On the empty graph on 0 vertices, `bpisOfColoring` produces a 1-block BPIS instance. -/
+example : (BipartitePermutationIndependentSet.bpisOfColoring (([], []), 0)).1 = 1 := by decide
+example : (BipartitePermutationIndependentSet.bpisOfColoring (([], []), 0)).2 =
+    [((0, 0), (0, 0))] := by decide
 
 example : ComputableInPolyTime BipartitePermutationIndependentSet.bpisOfColoring
     (encPair encGraph encNat) encBipartitePermutationGraph :=
@@ -216,6 +291,13 @@ example (G : BipartitePermutationGraph) :
     G ∈ BipartitePermutationIndependentSet ↔
       PartialMCSP.ilangoReduction G ∈ PartialMCSP :=
   PartialMCSP.mem_BipartitePermutationIndependentSet_iff_ilangoReduction_mem G
+
+-- Evaluates `ilangoGamma` clauses on a small bipartite permutation graph instance.
+example : PartialMCSP.ilangoGamma (1, []) (fun _ => false) = some false := by decide
+
+example : PartialMCSP.ilangoGamma (1, [])
+    (PartialMCSP.packXYZ PartialMCSP.ones2n (fun _ => false) (fun _ => true)) = some true := by
+  decide
 
 example :
     ∃ C D : ℕ, ComputableInO PartialMCSP.ilangoReduction

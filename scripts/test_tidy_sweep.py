@@ -32,6 +32,31 @@ def const(tidy=(POLY,), ph: str = "1", e: str = "axiom", tb=()) -> dict:
             "ph": ph}
 
 
+class AreaTests(unittest.TestCase):
+    def test_areas_follow_the_program_table(self) -> None:
+        self.assertEqual(t.area_of("Foundations/Data/List/Basic/"), "Foundations")
+        self.assertEqual(t.area_of("Probability/PMF/"), "Foundations")
+        self.assertEqual(t.area_of("Computability/BitString/Basic/"), "Foundations")
+        self.assertEqual(t.area_of("Computability/Probabilistic/PTM/"), "Machines")
+        self.assertEqual(t.area_of("Computability/PCP/Basic/"), "Classes")
+        self.assertEqual(t.area_of("Computability/Circuit/Defs/"), "Circuit")
+        self.assertEqual(t.area_of("Algorithms/Lean/Queue/"), "WordRAM")
+        self.assertEqual(t.area_of("Init/"), t.OTHER_AREA)
+
+    def test_areas_assigned_after_the_program_table(self) -> None:
+        # #587's assignment of the paths its table left out.
+        for path in ("Computability/GenericRAM/Defs/", "Computability/RAM/Basic/",
+                     "Tactic/PolyTime/"):
+            self.assertEqual(t.area_of(path), "Machines", path)
+        self.assertEqual(t.area_of("Computability/BranchingProgram/Defs/"), "Circuit")
+        for path in ("Computability/Kolmogorov/Basic/", "Computability/MCSP/Basic/",
+                     "Computability/USTCON/Reader/", "Computability/Languages/Regular/",
+                     "MachineLearning/UniformLearning/"):
+            self.assertEqual(t.area_of(path), "Classes", path)
+        # A module file named like an assigned directory belongs to it as well.
+        self.assertEqual(t.area_of("Tactic/"), "Machines")
+
+
 class NameTests(unittest.TestCase):
     def test_plain_name_replaces_supported_notions_only(self) -> None:
         self.assertEqual(t.plain_name("A.computableTidilyInPolyTime_foo"),
@@ -310,14 +335,14 @@ class WrapTests(unittest.TestCase):
 
 def fake_source(text: str, namespaces: set[str]) -> t.SourceFile:
     src = object.__new__(t.SourceFile)
-    src.path = t.qr.source_path("M")
+    src.path = t.lean_outputs.source_path("M")
     src.text = text
     src.code, src.mask = masks(text)
     src.lines = text.split("\n")
     src.starts = [0]
     for line in src.lines:
         src.starts.append(src.starts[-1] + len(line) + 1)
-    src.commands = [m.start() for m in t.qr.COMMAND_START.finditer(src.mask)]
+    src.commands = [m.start() for m in t.lean_outputs.COMMAND_START.finditer(src.mask)]
     src._namespaces, src._scopes = namespaces, None
     return src
 
@@ -738,22 +763,24 @@ class BuildOutputTests(unittest.TestCase):
 
 class PartialBuildTests(unittest.TestCase):
     def test_partial_outputs_are_listed(self) -> None:
-        self.assertEqual(t.qr.listed_modules("module\npublic import A.B\nimport C\n-- import D\n"),
-                         ["A.B", "C"])
+        self.assertEqual(
+            t.lean_outputs.listed_modules("module\npublic import A.B\nimport C\n-- import D\n"),
+            ["A.B", "C"])
         with tempfile.TemporaryDirectory() as tmp:
             build = pathlib.Path(tmp)
-            listed = t.qr.listed_modules(t.qr.source_path("Complexity").read_text())
+            listed = t.lean_outputs.listed_modules(
+                t.lean_outputs.source_path("Complexity").read_text())
             present = listed[0]
             path = build / (present.replace(".", "/") + ".ilean")
             path.parent.mkdir(parents=True)
             path.write_text(json.dumps({"module": present, "directImports": [],
                                         "references": {}, "decls": {}}))
             missing: list[str] = []
-            ileans = t.qr.load_ileans(build, missing)
+            ileans = t.lean_outputs.load_ileans(build, missing)
             self.assertEqual(list(ileans), [present])
             self.assertIn(listed[1], missing)
             with self.assertRaises(SystemExit):  # strict by default
-                t.qr.load_ileans(build)
+                t.lean_outputs.load_ileans(build)
 
     def test_partial_outputs_must_be_current(self) -> None:
         calls = []
@@ -780,17 +807,17 @@ class CommentTests(unittest.TestCase):
         p, src = fake_planner(text, {}, known={"A.computableTidilyInPolyTime_x'"})
         p.renames = {"A.computableTidilyInPolyTime_x": "A.computableInPolyTime_x"}
         p.model.lib = SimpleNamespace(ileans={"M": {}})
-        original = t.qr.source_path
+        original = t.lean_outputs.source_path
         with tempfile.TemporaryDirectory() as tmp:
             path = pathlib.Path(tmp) / "M.lean"
             path.write_text(text)
             src.path = path
             p.sources = {path: src}
-            t.qr.source_path = lambda module: path
+            t.lean_outputs.source_path = lambda module: path
             try:
                 p.plan_comments()
             finally:
-                t.qr.source_path = original
+                t.lean_outputs.source_path = original
         fe = p.files[path]
         self.assertEqual(t.render(text, fe.replaces, fe.wraps, 0, len(text)), text.replace(
             "info: 'A.computableTidilyInPolyTime_x'", "info: 'A.computableInPolyTime_x'").replace(

@@ -54,11 +54,3 @@ example :
   have h := SignedProduct.count_sub (fun _ : Unit => 0) (fun _ => 2)
     (fun _ => true) (fun _ => true) ()
   simpa using h
-
-/-- info: 'Cslib.Complexity.GapP.pow_mem_polyTime' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.GapP.pow_mem_polyTime
-
-/-- info: 'Cslib.Complexity.GapP.sum_bits_mem' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.GapP.sum_bits_mem

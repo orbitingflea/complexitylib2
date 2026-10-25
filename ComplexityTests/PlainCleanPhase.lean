@@ -40,18 +40,4 @@ example : IsTidyOraclePPTOn (Operation := Unit) encBits encBool
     (fun _ _ _ _ _ _ _ => trivial) (size := fun _ => 1) (.const 1)
     (fun _ _ _ _ _ => by simp)).1
 
-/--
-info: 'Cslib.Probability.IsTidyOraclePPTOn.of_computableInPolyTime' depends on axioms: [propext,
-Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms IsTidyOraclePPTOn.of_computableInPolyTime
-
-/--
-info: 'Cslib.Probability.IsTidyOraclePPTOn.iterate_spec' depends on axioms: [propext,
-Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms IsTidyOraclePPTOn.iterate_spec
-
 end ComplexityTests.PlainCleanPhase

@@ -450,6 +450,36 @@ class WorktreeSeedTests(unittest.TestCase):
                     before_head,
                 )
 
+    def test_reftable_dependency_refs_are_copied(self) -> None:
+        pkg = self.root / ".lake/packages/cslib"
+        shutil.rmtree(pkg)
+        pkg.mkdir()
+        init = subprocess.run(
+            ["git", "-C", str(pkg), "init", "--quiet", "--ref-format=reftable", "-b", "main"],
+            env=GIT_ENV, capture_output=True, text=True, check=False,
+        )
+        if init.returncode != 0:
+            self.skipTest("git does not support the reftable ref format")
+        (pkg / "Source.lean").write_text("tracked cslib\n", encoding="utf-8")
+        git(pkg, "add", "Source.lean")
+        git(pkg, "commit", "--quiet", "-m", "dep")
+        rev = git(pkg, "rev-parse", "HEAD")
+        self.assertTrue((pkg / ".git/reftable").is_dir())
+        wt = self.tmp / "reftable-wt"
+        res = self.seed(wt)
+        self.assertEqual(res.returncode, 0, res.stderr)
+        copied = wt / ".lake/packages/cslib"
+        self.assertEqual(git(copied, "rev-parse", "HEAD"), rev)
+        # updating a ref in the copy leaves the primary package untouched
+        git(copied, "update-ref", "refs/heads/copy-branch", rev)
+        self.assertNotEqual(
+            subprocess.run(
+                ["git", "-C", str(pkg), "rev-parse", "--verify", "--quiet", "refs/heads/copy-branch"],
+                env=GIT_ENV, capture_output=True, text=True, check=False,
+            ).returncode,
+            0,
+        )
+
     def test_core_worktree_in_dependency_git_config_is_unset_in_copied_package(self) -> None:
         origin = self.tmp / "dep-origin-worktree"
         origin.mkdir()

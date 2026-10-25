@@ -235,7 +235,7 @@ example : ∃ t : DecisionTree (Line signature 2 0) (Fin 1 → Bool),
       card_le_card (subset_univ (inputGates andCircuit.program))
   exact (card_le_card (subset_univ _)).trans (by
     simpa only [card_univ, Fintype.card_fun, Fintype.card_bool, pow_one] using
-      (Nat.pow_le_pow_right (by decide : 0 < 2) hcard))
+      (Nat.pow_le_pow_right two_pos hcard))
 
 -- The native-query endpoint also keeps the attained-pattern bound of two, below 2^2.
 example : ∃ t : DecisionTree (Line signature 1 0) Bool,

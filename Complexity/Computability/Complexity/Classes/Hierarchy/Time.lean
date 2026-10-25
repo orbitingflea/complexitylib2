@@ -65,6 +65,8 @@ logarithmic overhead and is not claimed here.
 
 ## Main results
 
+* `Cslib.Complexity.computableInO_timeDiagonal`: the clocked diagonal is computable within the
+  time of the universal machine.
 * `Cslib.Complexity.setOf_timeDiagonal_mem_DTIME`,
   `Cslib.Complexity.setOf_timeDiagonal_notMem_DTIME`: the clocked diagonal is decidable within
   the time of the universal machine, and not within time `O(f)` for clocks beyond every `O(f)`.

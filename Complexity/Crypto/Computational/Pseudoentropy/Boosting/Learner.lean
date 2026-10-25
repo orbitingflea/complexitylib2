@@ -29,6 +29,7 @@ ordinary probabilistic programs with separately synthesized strict PPT certifica
 
 ## Main results
 
+* `randomSign_good_probability`: lower bound on drawing a positively biased signed candidate.
 * `learn_goodPredictor_error_pow`: the concrete learner meets the boosting correlation contract.
 * `learn_length_le`: every returned description has the charged size, even on failed trials.
 * `isPPTOn_learn`: certify the complete learner through shared program combinators.

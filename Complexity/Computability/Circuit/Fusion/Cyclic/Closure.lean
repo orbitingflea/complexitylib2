@@ -33,6 +33,8 @@ Restriction to an arbitrary admissible class of semifilters does not supply the 
 
 ## Main results
 
+* `Cslib.Circuits.Fusion.PairDerivation.mem_of_outside`: an outside point belongs to every set
+  derivable at its ambient value.
 * `Cslib.Circuits.Fusion.PairDerivation.le`: leastness among predicates closed under the rules.
 * `Cslib.Circuits.Fusion.PairCover.derives_empty_iff`: derivability characterizes the target.
 * `Cslib.Circuits.Fusion.PairCover.ofDerivesEmpty`: recover a cover from target-point derivations.

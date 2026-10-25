@@ -60,14 +60,4 @@ example : (∀ x : BitString 1,
       ¬∃ r : BitString 1, ∀ x : BitString 1, r 0 = x 0 := by
   decide
 
-/-- info: 'Cslib.Circuits.Circuit.exists_seed_forall' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Cslib.Circuits.Circuit.exists_seed_forall
-/-- info: 'Cslib.Circuits.Boolean.exists_circuit_of_card_bad_lt' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Cslib.Circuits.Boolean.exists_circuit_of_card_bad_lt
-/-- info: 'Cslib.Circuits.Boolean.exists_computes_of_card_bad_lt' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Cslib.Circuits.Boolean.exists_computes_of_card_bad_lt
-
 end ComplexityTests.SeedFixing

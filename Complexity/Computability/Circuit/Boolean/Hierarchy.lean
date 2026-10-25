@@ -9,6 +9,7 @@ module
 
 public import Complexity.Computability.Circuit.Boolean.PPoly
 public import Cslib.Computability.Circuit.Boolean.Shannon
+import Complexity.Foundations.Data.Nat.IntermediateValue
 import Cslib.Foundations.Data.Nat.Asymptotics
 
 /-!
@@ -27,9 +28,10 @@ Walking from a constant function to any function `f` shows that `f` costs at mos
 
 * `Cslib.Circuits.Boolean.complexity_const`: a constant costs exactly one gate.
 * `Cslib.Circuits.Boolean.complexity_update_le`: changing one value costs `2 n + 3` gates.
-* `Cslib.Circuits.Boolean.complexity_le_two_pow_mul_add_one`,
-  `Cslib.Circuits.Boolean.complexity_le_of_dependsOn`: the truth-table bound, for all functions
-  and for functions depending on few inputs.
+* `Cslib.Circuits.Boolean.complexity_mask_le`,
+  `Cslib.Circuits.Boolean.complexity_le_two_pow_mul_add_one`,
+  `Cslib.Circuits.Boolean.complexity_le_of_dependsOn`: the sparse and truth-table bounds, for
+  finite supports, all functions, and functions depending on few inputs.
 * `Cslib.Circuits.Boolean.exists_complexity_mem_Ioc`: complexities below that of a given function
   are attained, up to `2 n + 3`.
 * `Cslib.Circuits.Boolean.SIZE_ssubset`: the size hierarchy.
@@ -75,16 +77,13 @@ theorem complexity_update_le (f : BooleanFunction n) (a : Fin n → Bool) (b : B
           complexity_or_le _ _
       _ ≤ complexity interpretation (single f) + (2 * n + 3) := by omega
 
-/-- **The truth-table bound.** A Boolean function on `n` inputs costs at most
-`2 ^ n * (2 * n + 3) + 1` gates: start from a constant and change one value at a time. -/
-theorem complexity_le_two_pow_mul_add_one (f : BooleanFunction n) :
-    complexity interpretation (single f) ≤ 2 ^ n * (2 * n + 3) + 1 := by
+/-- Restricting a Boolean function `f` to `S` and returning `false` outside `S` costs at most
+`#S * (2 * n + 3) + 1` gates: start from the constant `false` and change one value in `S` at a
+time. -/
+theorem complexity_mask_le (f : BooleanFunction n) (S : Finset (Fin n → Bool)) :
+    complexity interpretation (single fun x => decide (x ∈ S) && f x) ≤
+      #S * (2 * n + 3) + 1 := by
   classical
-  suffices h : ∀ S : Finset (Fin n → Bool),
-      complexity interpretation (single fun x => decide (x ∈ S) && f x) ≤
-        #S * (2 * n + 3) + 1 by
-    simpa using h Finset.univ
-  intro S
   induction S using Finset.induction_on with
   | empty => simpa using (Synthesis.const false).complexity_le
   | @insert a S ha ih =>
@@ -97,6 +96,13 @@ theorem complexity_le_two_pow_mul_add_one (f : BooleanFunction n) :
     rw [e, Finset.card_insert_of_notMem ha, add_one_mul]
     calc _ ≤ _ := complexity_update_le _ a (f a)
       _ ≤ _ := by omega
+
+/-- **The truth-table bound.** A Boolean function on `n` inputs costs at most
+`2 ^ n * (2 * n + 3) + 1` gates: start from a constant and change one value at a time. -/
+theorem complexity_le_two_pow_mul_add_one (f : BooleanFunction n) :
+    complexity interpretation (single f) ≤ 2 ^ n * (2 * n + 3) + 1 := by
+  classical
+  simpa using complexity_mask_le f Finset.univ
 
 /-- A Boolean function that depends only on the inputs in `s` costs at most
 `2 ^ #s * (2 * #s + 3) + 1` gates. -/
@@ -130,35 +136,6 @@ theorem complexity_const (b : Bool) :
     exact Bool.not_ne_self b this
   | gate k => exact (Fin.cast hsize k).elim0
 
-/-- **Discrete intermediate values.** If changing one coordinate raises a measure by at most `B`,
-and the measure is at most `t` at `u` and above `t` at `v`, then it lies in `(t, t + B]`
-somewhere. -/
-theorem exists_lt_le_add_of_update_le {ι α : Type*} [Finite ι] [DecidableEq ι]
-    (μ : (ι → α) → ℕ) {B t : ℕ} (hμ : ∀ w i a, μ (Function.update w i a) ≤ μ w + B)
-    {u v : ι → α} (hu : μ u ≤ t) (hv : t < μ v) : ∃ w, t < μ w ∧ μ w ≤ t + B := by
-  have := Fintype.ofFinite ι
-  let w : Finset ι → ι → α := fun S i => if i ∈ S then v i else u i
-  suffices h : ∀ S : Finset ι, μ (w S) ≤ t ∨ ∃ w, t < μ w ∧ μ w ≤ t + B by
-    refine (h Finset.univ).resolve_left fun hle => ?_
-    have : w Finset.univ = v := funext fun i => by simp [w]
-    exact absurd (this ▸ hle) (not_le.2 hv)
-  intro S
-  induction S using Finset.induction_on with
-  | empty => exact Or.inl (by simpa [w] using hu)
-  | @insert i S hi ih =>
-    have e : w (insert i S) = Function.update (w S) i (v i) := funext fun j => by
-      by_cases hj : j = i
-      · subst hj
-        simp [w]
-      · simp [w, hj]
-    rcases ih with hle | found
-    · by_cases hnext : μ (w (insert i S)) ≤ t
-      · exact Or.inl hnext
-      · refine Or.inr ⟨_, not_le.1 hnext, ?_⟩
-        rw [e]
-        exact (hμ _ _ _).trans (Nat.add_le_add_right hle B)
-    · exact Or.inr found
-
 /-- Every complexity below that of a given function is exceeded by at most `2 n + 3` by the
 complexity of some function. -/
 theorem exists_complexity_mem_Ioc {t : ℕ} (g : BooleanFunction n)
@@ -168,7 +145,7 @@ theorem exists_complexity_mem_Ioc {t : ℕ} (g : BooleanFunction n)
   classical
   rcases Nat.eq_zero_or_pos t with rfl | ht
   · exact ⟨fun _ => false, by rw [complexity_const]; omega, by rw [complexity_const]; omega⟩
-  · exact exists_lt_le_add_of_update_le (fun f => complexity interpretation (single f))
+  · exact Nat.exists_lt_le_add_of_update_le (fun f => complexity interpretation (single f))
       complexity_update_le (u := fun _ => false) ((complexity_const false).trans_le ht) hg
 
 /-- **The circuit size hierarchy.** If `s ≤ t`, `t` is positive, eventually

@@ -16,11 +16,22 @@ import Mathlib.Tactic.Linarith
 Ghost assertions describe honest scans and the as-yet unguessed suffix of a vertex identifier.
 They are used only to construct a successful binary-choice replay.
 
+Honest choices reach the final count check even when a bad vertex is reachable
+(`Cslib.InductiveCounting.exists_replay_done_final`); a machine that inspects the count there
+learns whether some reachable vertex is bad.
+
 ## Main definitions
 
 * `Cslib.InductiveCounting.BinaryExtension`: a vertex extends a partial binary guess.
 * `Cslib.InductiveCounting.FullPrefix`: the selected count equals the reachable prefix count.
 * `Cslib.InductiveCounting.Honest`: the assertion maintained by honest choices.
+
+## Main results
+
+* `Cslib.InductiveCounting.accepts_iff`: correctness of the executable, binary-choice
+  small-register controller.
+* `Cslib.InductiveCounting.accepts_iff_not_reachable`: the controller nondeterministically decides
+  nonreachability.
 
 ## References
 
@@ -135,7 +146,8 @@ private def ChoiceFits (N : ℕ) (s : State) (choice : Bool) : Prop :=
 
 /-- Every honest, semantically valid nonrejecting state has an honest next choice. -/
 private theorem exists_honest_instruction (hsource : source < N) (hwidth : N ≤ 2 ^ width)
-    (hsafe : Safe N source edge bad) (hi : Invariant N edge bad source s)
+    (hsafe : s.phase = .done → s.finalScan = true → Safe N source edge bad)
+    (hi : Invariant N edge bad source s)
     (hh : Honest N width edge source s) :
     ∃ choice, Honest N width edge source
       (instruction N width source s (answer edge bad s) choice) ∧ ChoiceFits N s choice := by
@@ -236,7 +248,7 @@ private theorem exists_honest_instruction (hsource : source < N) (hwidth : N ≤
         intro hb
         obtain ⟨u, hu, hbad⟩ := (scan_exhaustive hc.1 hs he).mp hb
         have hbad' : bad u = true := by simpa only [Observed, hf, ↓reduceIte] using hbad
-        have := hsafe u ((mem_roundSet hsource).mp hu).reflTransGen
+        have := hsafe hp hf u ((mem_roundSet hsource).mp hu).reflTransGen
         simp_all
       simp [instruction, hp, he, hf, hb, Honest, accept]
     · simp [instruction, hp, he, hf, Honest]
@@ -317,7 +329,8 @@ private theorem bounded_instruction (hsource : source < N) (hi : Invariant N edg
 
 /-- Honest next instructions pass both executable checks. -/
 private theorem exists_honest_step (hsource : source < N) (hwidth : N ≤ 2 ^ width)
-    (hsafe : Safe N source edge bad) (hi : Invariant N edge bad source s)
+    (hsafe : s.phase = .done → s.finalScan = true → Safe N source edge bad)
+    (hi : Invariant N edge bad source s)
     (hb : Bounded N width s) (hh : Honest N width edge source s) :
     ∃ choice, Honest N width edge source (step N width source edge bad s choice) := by
   by_cases hs : halted s = true
@@ -349,12 +362,61 @@ theorem accepts_complete (hsource : source < N) (hwidth : N ≤ 2 ^ width)
     by_cases hs : halted s = true
     · refine ⟨[], ?_⟩
       cases hp : s.phase <;> simp_all [halted, Honest, replay]
-    · obtain ⟨b, hh'⟩ := exists_honest_step hsource hwidth hsafe hi hb hh
+    · obtain ⟨b, hh'⟩ := exists_honest_step hsource hwidth (fun _ _ => hsafe) hi hb hh
       have hr' := rank_advance_lt (N := N) (width := width) (source := source)
         (answer edge bad s) b (Bool.eq_false_iff.mpr hs)
       obtain ⟨bs, hbs⟩ := ih _ (by simpa only [step, hr] using hr')
         (step N width source edge bad s b) rfl (invariant_advance hsource hi b)
         (bounded_advance _ _ hb) hh'
+      exact ⟨b :: bs, hbs⟩
+
+/-- Only the final count check can accept. -/
+private theorem advance_ne_accept {ans choice : Bool} (hs : s.phase ≠ .accept)
+    (hd : ¬ (s.phase = .done ∧ s.finalScan = true)) :
+    (advance N width source s ans choice).phase ≠ .accept := by
+  unfold advance
+  by_cases hh : halted s = true
+  · simp only [hh, ↓reduceIte]
+    exact hs
+  · simp only [hh, Bool.false_eq_true, ↓reduceIte]
+    split_ifs
+    · cases hp : s.phase <;> simp only [instruction, hp] <;> (try split_ifs) <;> simp_all [reject]
+    · simp [reject]
+
+/-- **Honest choices reach the final count check**, whether or not a bad vertex is reachable:
+some replay ends in the final scan's `done` instruction with every reachable vertex selected. -/
+theorem exists_replay_done_final (hsource : source < N) (hwidth : N ≤ 2 ^ width) :
+    ∃ bs, (replay N width source edge bad (initial N source) bs).phase = .done ∧
+      (replay N width source edge bad (initial N source) bs).finalScan = true ∧
+      (replay N width source edge bad (initial N source) bs).selected =
+        (replay N width source edge bad (initial N source) bs).count := by
+  suffices h : ∀ n s, rank N width s = n → Invariant N edge bad source s →
+      Bounded N width s → Honest N width edge source s → s.phase ≠ .accept →
+      ∃ bs, (replay N width source edge bad s bs).phase = .done ∧
+        (replay N width source edge bad s bs).finalScan = true ∧
+        (replay N width source edge bad s bs).selected =
+          (replay N width source edge bad s bs).count by
+    exact h _ _ rfl (invariant_initial hsource) bounded_initial (honest_initial hsource)
+      (by simp [initial, hsource])
+  intro n
+  induction n using Nat.strong_induction_on with
+  | h n ih =>
+    intro s hr hi hb hh hna
+    by_cases hdone : s.phase = .done ∧ s.finalScan = true
+    · refine ⟨[], hdone.1, hdone.2, ?_⟩
+      simp only [Honest, hdone.1] at hh
+      simp only [Invariant, hdone.1] at hi
+      exact fullPrefix_end hh hi.1.1 hi.2.2
+    by_cases hs : halted s = true
+    · exfalso
+      cases hp : s.phase <;> simp_all [halted, Honest]
+    · obtain ⟨b, hh'⟩ := exists_honest_step hsource hwidth
+        (fun hp hf => absurd ⟨hp, hf⟩ hdone) hi hb hh
+      have hr' := rank_advance_lt (N := N) (width := width) (source := source)
+        (answer edge bad s) b (Bool.eq_false_iff.mpr hs)
+      obtain ⟨bs, hbs⟩ := ih _ (by simpa only [step, hr] using hr')
+        (step N width source edge bad s b) rfl (invariant_advance hsource hi b)
+        (bounded_advance _ _ hb) hh' (advance_ne_accept hna hdone)
       exact ⟨b :: bs, hbs⟩
 
 /-- Correctness of the executable, binary-choice small-register controller. -/

@@ -46,6 +46,8 @@ product measure `Measure.pi fun _ : ι => gaussianReal 0 1` on `ι → ℝ`.
   window and tail bounds for a projection.
 * `ProbabilityTheory.measurePreserving_toLp_pi_gaussianReal`: independent standard Gaussian
   coordinates form a standard Gaussian vector of `EuclideanSpace ℝ ι`.
+* `ProbabilityTheory.measureReal_pi_gaussianReal_eq`: the product measure of standard Gaussians
+  carries events to the standard Gaussian measure on `EuclideanSpace ℝ ι`.
 -/
 
 @[expose] public section
@@ -114,5 +116,13 @@ theorem measurePreserving_toLp_pi_gaussianReal (ι : Type*) [Fintype ι] :
     MeasurePreserving (WithLp.toLp 2) (Measure.pi fun _ : ι => gaussianReal 0 1)
       (stdGaussian (EuclideanSpace ℝ ι)) :=
   ⟨by fun_prop, map_pi_eq_stdGaussian⟩
+
+/-- The product of standard Gaussians on `ι → ℝ` carries an event to the same event under the
+standard Gaussian measure of `EuclideanSpace ℝ ι`. -/
+theorem measureReal_pi_gaussianReal_eq {ι : Type*} [Fintype ι]
+    {s : Set (EuclideanSpace ℝ ι)} (hs : MeasurableSet s) :
+    (Measure.pi fun _ : ι => gaussianReal 0 1).real {ω | WithLp.toLp 2 ω ∈ s} =
+      (stdGaussian (EuclideanSpace ℝ ι)).real s :=
+  (measurePreserving_toLp_pi_gaussianReal ι).measureReal_preimage hs.nullMeasurableSet
 
 end ProbabilityTheory

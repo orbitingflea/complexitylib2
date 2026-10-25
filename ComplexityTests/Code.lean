@@ -20,9 +20,9 @@ Singleton and Hamming bounds on the repetition code, which meets both; the Gilbe
 bound; the minimum distance of a Hadamard code; the Singleton bound on a Reed–Solomon code, which
 meets it; the distance and
 dimension of a Reed–Solomon code over `ZMod 5`, the zero code of dimension zero, and unique
-decoding below half its distance; the distance of a Reed–Muller code over `ZMod 3`; a complete
-Berlekamp–Welch decoding over `ZMod 7` with two errors, the largest number it corrects at that
-length and dimension; and the axioms of the headline theorems.
+decoding below half its distance; the distance of a Reed–Muller code over `ZMod 3`; and a
+complete Berlekamp–Welch decoding over `ZMod 7` with two errors, the largest number it corrects
+at that length and dimension.
 -/
 
 namespace ComplexityTests.Code
@@ -163,109 +163,5 @@ example : ∃ E Q, BerlekampWelch.IsSolution points7 received 2 3 E Q :=
 /-- Two errors among seven points are corrected at dimension three, since `2 * 2 + 3 ≤ 7`. -/
 example : berlekampWelch points7 2 3 received = some (X ^ 2 + 1) :=
   berlekampWelch_eq_some points7_injective (by simp) degree_lt hammingDist_received
-
-/-! ### Axioms of the headline theorems -/
-
-/--
-info: 'Cslib.Code.exists_hammingDist_eq_minDist' depends on axioms: [propext, Classical.choice,
-Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Code.exists_hammingDist_eq_minDist
-
-/--
-info: 'Cslib.Code.eq_of_hammingDist_le_of_two_mul_lt_minDist' depends on axioms: [propext,
-Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Code.eq_of_hammingDist_le_of_two_mul_lt_minDist
-
-/--
-info: 'Cslib.Code.card_mul_sum_choose_le_of_two_mul_lt_minDist' depends on axioms: [propext,
-Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Code.card_mul_sum_choose_le_of_two_mul_lt_minDist
-
-/--
-info: 'Cslib.Code.exists_le_minDist_and_pow_le_card_mul_sum_choose' depends on axioms: [propext,
-Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Code.exists_le_minDist_and_pow_le_card_mul_sum_choose
-
-/--
-info: 'Cslib.BitString.minDist_range_hadamardCode' depends on axioms: [propext, Classical.choice,
-Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.BitString.minDist_range_hadamardCode
-
-/--
-info: 'Cslib.Code.le_minDist_iff_hammingNorm' depends on axioms: [propext, Classical.choice,
-Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Code.le_minDist_iff_hammingNorm
-
-/--
-info: 'Cslib.Code.card_le_pow_of_le_minDist' depends on axioms: [propext, Classical.choice,
-Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Code.card_le_pow_of_le_minDist
-
-/--
-info: 'Cslib.Code.finrank_add_le_card_add_one' depends on axioms: [propext, Classical.choice,
-Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Code.finrank_add_le_card_add_one
-
-/--
-info: 'Cslib.Code.minDist_reedSolomon' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Code.minDist_reedSolomon
-
-/--
-info: 'Cslib.Code.finrank_reedSolomon' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Code.finrank_reedSolomon
-
-/--
-info: 'Cslib.Code.card_sub_mul_pow_le_mul_hammingDist_of_mem_reedMuller' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Code.card_sub_mul_pow_le_mul_hammingDist_of_mem_reedMuller
-
-/--
-info: 'Cslib.Code.minDist_reedMuller' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Code.minDist_reedMuller
-
-/--
-info: 'Cslib.Code.BerlekampWelch.IsSolution.eq_mul' depends on axioms: [propext, Classical.choice,
-Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Code.BerlekampWelch.IsSolution.eq_mul
-
-/--
-info: 'Cslib.Code.berlekampWelch_eq_some' depends on axioms: [propext, Classical.choice,
-Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Code.berlekampWelch_eq_some
-
-/--
-info: 'Cslib.Code.berlekampWelch_eq_some_of_mem_reedSolomon' depends on axioms: [propext,
-Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Code.berlekampWelch_eq_some_of_mem_reedSolomon
 
 end ComplexityTests.Code

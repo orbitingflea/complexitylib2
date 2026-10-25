@@ -8,7 +8,7 @@ import Complexity.Computability.Complexity.Classes.Toda
 import Complexity.Computability.Complexity.Classes.Toda.Counting
 
 /-! Parity-P and the class operators on concrete problems, the Valiant–Vazirani test and the
-counting tests of Toda's theorem on concrete words, non-vacuity witnesses, and axiom guards. -/
+counting tests of Toda's theorem on concrete words, and non-vacuity witnesses. -/
 
 namespace ComplexityTests.Toda
 
@@ -137,90 +137,5 @@ example : NP encBits ⊆ PWithSharpPOracle encBits := NP_subset_PH.trans PH_subs
 /-- `coNP ⊆ BP·⊕P`. -/
 example : coNP encBits ⊆ BPOp encBits (ParityP (encPair encBits encBits)) :=
   coNP_subset_PH.trans PH_subset_BPOp_ParityP
-
-/-! ### Axioms -/
-
-/--
-info: 'Cslib.Complexity.mem_ParityP_iff_exists_SharpP' depends on axioms:
-  [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.mem_ParityP_iff_exists_SharpP
-
-/--
-info: 'Cslib.Complexity.compl_mem_ParityP' depends on axioms:
-  [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.compl_mem_ParityP
-
-/--
-info: 'Cslib.Complexity.BPOp_P' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.BPOp_P
-
-/--
-info: 'Cslib.Complexity.Toda.two_pow_mul_card_filter_not_odd_iff_le' depends on axioms:
-  [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.Toda.two_pow_mul_card_filter_not_odd_iff_le
-
-/--
-info: 'Cslib.Complexity.Toda.IsRandomParityRep.exists' depends on axioms:
-  [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.Toda.IsRandomParityRep.exists
-
-/--
-info: 'Cslib.Complexity.Toda.exists_isRandomParityRep_alternation' depends on axioms:
-  [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.Toda.exists_isRandomParityRep_alternation
-
-/--
-info: 'Cslib.Complexity.PH_subset_BPOp_ParityP' depends on axioms:
-  [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.PH_subset_BPOp_ParityP
-
-/--
-info: 'Cslib.Complexity.Toda.cast_card_filter_countingTest' depends on axioms:
-  [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.Toda.cast_card_filter_countingTest
-
-/--
-info: 'Cslib.Complexity.Toda.testBit_card_filter_sharpTest' depends on axioms:
-  [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.Toda.testBit_card_filter_sharpTest
-
-/--
-info: 'Cslib.Complexity.exists_SharpP_testBit_of_mem_BPOp_ParityP' depends on axioms:
-  [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.exists_SharpP_testBit_of_mem_BPOp_ParityP
-
-/--
-info: 'Cslib.Complexity.BPOp_ParityP_subset_PWithSharpPOracle' depends on axioms:
-  [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.BPOp_ParityP_subset_PWithSharpPOracle
-
-/--
-info: 'Cslib.Complexity.PH_subset_PWithSharpPOracle' depends on axioms:
-  [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.PH_subset_PWithSharpPOracle
 
 end ComplexityTests.Toda

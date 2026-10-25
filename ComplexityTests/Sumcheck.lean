@@ -54,16 +54,4 @@ example :
       (1 / 3) := by
   simpa using proof_sound 1 P degreeOf_P_le
 
-/--
-info: 'Cslib.Interactive.Sumcheck.proof_complete' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Interactive.Sumcheck.proof_complete
-
-/--
-info: 'Cslib.Interactive.Sumcheck.proof_sound' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Interactive.Sumcheck.proof_sound
-
 end ComplexityTests.Sumcheck

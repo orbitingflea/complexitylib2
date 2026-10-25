@@ -110,6 +110,12 @@ for dirname in ("refs", "info"):
     else:
         (dst / dirname).mkdir(parents=True, exist_ok=True)
 
+# A repository using the reftable ref format (`extensions.refstorage = reftable`) keeps HEAD and
+# its refs in `reftable/`; without it the copy has no resolvable HEAD.
+reftable_src = gitdir / "reftable" if (gitdir / "reftable").is_dir() else commondir / "reftable"
+if reftable_src.is_dir():
+    shutil.copytree(reftable_src, dst / "reftable", symlinks=False, dirs_exist_ok=True)
+
 def link_or_copy(s: str, d: str) -> None:
     try:
         os.link(s, d)

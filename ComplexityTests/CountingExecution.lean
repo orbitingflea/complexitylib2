@@ -142,29 +142,4 @@ example : ¬stuck.HaltsWithin 1 (Cfg.init stuck.initial []) := by
 example : stuck.acceptCount 1 (Cfg.init stuck.initial []) = 0 := rfl
 example : stuck.rejectCount 1 (Cfg.init stuck.initial []) = 0 := rfl
 
-/--
-info: 'Turing.MultiTapeCTM.countP_runList' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeCTM.countP_runList
-/--
-info: 'Turing.MultiTapeCTM.haltsWithin_ofDeterministic_iff' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeCTM.haltsWithin_ofDeterministic_iff
-/--
-info: 'Turing.MultiTapeCTM.runList_seq' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeCTM.runList_seq
-/--
-info: 'Turing.MultiTapeCTM.HaltsWithin.seq' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeCTM.HaltsWithin.seq
-
 end ComplexityTests.CountingExecution

@@ -11,6 +11,7 @@ public import Complexity.Init
 public import Complexity.Computability.Circuit.Rational.Runtime.Lift.Defs
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Iteration
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Div
+import Complexity.Foundations.Data.Int.Order
 import Mathlib.Data.List.GetD
 
 /-!
@@ -63,14 +64,6 @@ multi-tape Turing machines.
 namespace Cslib.Circuits
 
 namespace Rational
-
-/-! ### Magnitude bounds -/
-
-lemma natAbs_pow_le {z : ℤ} {H : ℕ} (hH : 1 ≤ H) (hz : z.natAbs ≤ H) {q M : ℕ}
-    (hq : q ≤ M) :
-    (z ^ q).natAbs ≤ H ^ M := by
-  rw [Int.natAbs_pow]
-  exact (Nat.pow_le_pow_left hz q).trans (Nat.pow_le_pow_right hH hq)
 
 section CoeffBounds
 
@@ -133,13 +126,13 @@ private theorem natAbs_testTerm_le {q : ℕ} (hq : q ≤ M) (u v : ℕ) :
     (testTerm M (coeffRows (-a) M) (coeffRows a M) t u v q).natAbs ≤
       (2 * w) ^ (2 * M) * H ^ M := by
   rw [testTerm, Int.natAbs_mul]
-  exact Nat.mul_le_mul (natAbs_coeffProduct_le hw ha ..) (natAbs_pow_le hH ht hq)
+  exact Nat.mul_le_mul (natAbs_coeffProduct_le hw ha ..) (Int.natAbs_pow_le hH ht hq)
 
 /-- Every prefix sum of the summands of a Taylor entry. -/
 private theorem natAbs_testTerms_take_sum_le (u v m : ℕ) :
     ((testTerms M (coeffRows (-a) M) (coeffRows a M) t u v).take m).sum.natAbs ≤
       M * ((2 * w) ^ (2 * M) * H ^ M) := by
-  refine natAbs_take_sum_le_of_length (by simp [testTerms]) (fun z hz => ?_) m
+  refine List.natAbs_sum_take_le_of_length_le (by simp [testTerms]) (fun z hz => ?_) m
   obtain ⟨q, hq, rfl⟩ := List.mem_map.mp hz
   exact natAbs_testTerm_le hw ha hH ht (List.mem_range.mp hq).le u v
 
@@ -177,7 +170,7 @@ include hH hp
 private theorem natAbs_liftPartial_pow_le (k l z i j : ℕ) {α : ℕ} (hα : α ≤ M) :
     (rowEntry T k l * signedCoeff Dg z i j * p ^ α).natAbs ≤ A * H ^ M := by
   rw [Int.natAbs_mul]
-  exact Nat.mul_le_mul (natAbs_liftPartial_le hT ..) (natAbs_pow_le hH hp hα)
+  exact Nat.mul_le_mul (natAbs_liftPartial_le hT ..) (Int.natAbs_pow_le hH hp hα)
 
 include hr
 
@@ -185,19 +178,19 @@ private theorem natAbs_liftTerm_le {α : ℕ} (hα : α < M) (u v i j κ : ℕ) 
     (liftTerm M Dg T p r u v i j α κ).natAbs ≤ A * H ^ (2 * M) := by
   rw [liftTerm, Int.natAbs_mul, show 2 * M = M + M by omega, pow_add, ← Nat.mul_assoc]
   exact Nat.mul_le_mul (natAbs_liftPartial_pow_le hT hH hp _ _ _ _ _ hα.le)
-    (natAbs_pow_le hH hr (Nat.mod_lt _ (by omega)).le)
+    (Int.natAbs_pow_le hH hr (Nat.mod_lt _ (by omega)).le)
 
 /-- Every prefix sum of an inner sum of a lift entry. -/
 private theorem natAbs_liftTerms_take_sum_le {α : ℕ} (hα : α < M) (u v i j m : ℕ) :
     ((liftTerms M Dg T p r u v i j α).take m).sum.natAbs ≤ M * (A * H ^ (2 * M)) := by
-  refine natAbs_take_sum_le_of_length (by simp [liftTerms]) (fun z hz => ?_) m
+  refine List.natAbs_sum_take_le_of_length_le (by simp [liftTerms]) (fun z hz => ?_) m
   obtain ⟨κ, -, rfl⟩ := List.mem_map.mp hz
   exact natAbs_liftTerm_le hT hH hp hr hα u v i j κ
 
 /-- Every prefix sum of the outer sum of a lift entry. -/
 private theorem natAbs_liftSums_take_sum_le (u v i j m : ℕ) :
     ((liftSums M Dg T p r u v i j).take m).sum.natAbs ≤ M * (M * (A * H ^ (2 * M))) := by
-  refine natAbs_take_sum_le_of_length (by simp [liftSums]) (fun z hz => ?_) m
+  refine List.natAbs_sum_take_le_of_length_le (by simp [liftSums]) (fun z hz => ?_) m
   obtain ⟨α, hα, rfl⟩ := List.mem_map.mp hz
   have h := natAbs_liftTerms_take_sum_le (Dg := Dg) hT hH hp hr (List.mem_range.mp hα) u v i j M
   rwa [List.take_of_length_le (by simp [liftTerms])] at h
@@ -295,7 +288,7 @@ theorem intBits_coeffRow_le {c : ℤ} (hc : c.natAbs ≤ n) {k : ℕ} (hk : k < 
 multiplication passes only through smaller powers. -/
 theorem intBits_pow_le {z : ℤ} (hz : z.natAbs ≤ H) {q : ℕ} (hq : q ≤ M) :
     intBits (z ^ q) ≤ liftBits n M H := by
-  refine intBits_le_liftBits ((natAbs_pow_le hH hz hq).trans ?_)
+  refine intBits_le_liftBits ((Int.natAbs_pow_le hH hz hq).trans ?_)
   calc H ^ M = M ^ 0 * (2 * (n + 1)) ^ 0 * H ^ M := by simp
     _ ≤ _ := le_liftMagnitude hM (by omega) hH (by omega) (by omega) (by omega)
 

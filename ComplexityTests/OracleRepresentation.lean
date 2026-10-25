@@ -65,14 +65,4 @@ example :
   ProbOracleComp.run_interpret_map_response_state (fun _ => Prod.fst) source target Prod.fst
     step randomized (false, true)
 
-/-- info: 'Cslib.OracleComp.run_interpret_map_response_state' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Cslib.OracleComp.run_interpret_map_response_state
-
-/-- info: 'Cslib.ProbOracleComp.run_interpret_map_response_state' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Cslib.ProbOracleComp.run_interpret_map_response_state
-
 end ComplexityTests.OracleRepresentation

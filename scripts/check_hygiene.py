@@ -8,11 +8,13 @@ Checks enforced by default (see AGENTS.md):
 3. Every `set_option maxHeartbeats` or `set_option maxRecDepth` has an explanatory comment
    on the same line, within the preceding 3 lines, or (for `set_option ... in`) on the next
    line, where Mathlib's `linter.style.maxHeartbeats` expects it.
+4. (Default selection only.) `references.bib` keys are unique and its entries are sorted by key,
+   both compared case-insensitively as BibTeX does, so that PRs adding entries rarely conflict.
 
 Opt-in heuristic checks:
-4. (`--check-simp`) Flag non-terminal bare `simp` tactics in `-- upstream: candidate` modules
+5. (`--check-simp`) Flag non-terminal bare `simp` tactics in `-- upstream: candidate` modules
    under Complexity/.
-5. (`--max-lines N`) Flag Lean files exceeding N lines.
+6. (`--max-lines N`) Flag Lean files exceeding N lines.
 """
 
 from __future__ import annotations
@@ -43,6 +45,8 @@ CUSTOM_AXIOM_RE = re.compile(
     re.M,
 )
 SET_OPTION_RE = re.compile(r"^\s*set_option\s+(maxHeartbeats|maxRecDepth)\b")
+# cslib pads some keys with spaces.
+BIB_KEY_RE = re.compile(r"^@\w+\s*\{\s*([^,\s]+)\s*,", re.M)
 
 
 def is_candidate_module(text: str) -> bool:
@@ -150,6 +154,23 @@ def check_file(
     return errors
 
 
+def check_bibliography(text: str, rel: str = "references.bib") -> list[str]:
+    """Keys are unique and entries sorted by key, compared case-insensitively."""
+    errors: list[str] = []
+    entries = [(m.group(1), m.group(1).casefold(), text.count("\n", 0, m.start()) + 1)
+               for m in BIB_KEY_RE.finditer(text)]
+    seen: dict[str, int] = {}
+    for key, folded, line in entries:
+        if folded in seen:
+            errors.append(f"{rel}:{line}: duplicate key `{key}` (first at line {seen[folded]})")
+        seen.setdefault(folded, line)
+    for (before, folded_before, _), (key, folded, line) in zip(entries, entries[1:]):
+        if folded < folded_before:
+            errors.append(f"{rel}:{line}: entry `{key}` comes after `{before}`; keep entries "
+                          "sorted by key")
+    return errors
+
+
 def check_paths(
     paths: list[pathlib.Path],
     root: pathlib.Path = ROOT,
@@ -206,6 +227,8 @@ def main() -> int:
         check_simp=args.check_simp,
         max_lines=args.max_lines,
     )
+    if not args.paths:
+        errors += check_bibliography((ROOT / "references.bib").read_text(encoding="utf-8"))
     if errors:
         for err in errors:
             print(f"ERROR: {err}", file=sys.stderr)

@@ -262,41 +262,4 @@ example : ∃ g, ComputableInFPTTime g encCNF encBool Logic.PL.CNF.numVars ∧
   obtain ⟨g, hg, hA⟩ := mem_FPT_iff_computableInFPTTime.mp SAT_mem_FPT
   exact ⟨g, hg, hA⟩
 
-/-! ### Axioms -/
-
-/--
-info: 'Turing.MultiTapeTM.ComputableInTimeAndSpace.computableTidilyInO' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms ComputableInTimeAndSpace.computableTidilyInO
-
-/--
-info: 'Turing.MultiTapeTM.computableInO_iff_computableTidilyInO' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms computableInO_iff_computableTidilyInO
-
-/--
-info: 'Turing.MultiTapeTM.computableInSpace_iff_computableTidilyInSpace' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms computableInSpace_iff_computableTidilyInSpace
-
-/--
-info: 'Turing.MultiTapeTM.computableInPolySpace_iff_computableTidilyInPolySpace' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms computableInPolySpace_iff_computableTidilyInPolySpace
-
-/--
-info: 'Turing.MultiTapeTM.ComputableInTimeAndSpace.computableInFPTTime' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms ComputableInTimeAndSpace.computableInFPTTime
-
 end ComplexityTests.ResourceBoundsPlain

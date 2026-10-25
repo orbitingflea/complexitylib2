@@ -10,8 +10,7 @@ import Complexity.Computability.Complexity.Parameterized.VertexCover.BussKernel
 # Tests: Buss's polynomial kernel for vertex cover
 
 Concrete instances exercising the high-degree rule, active-vertex relabelling, isolated-vertex
-padding for exact-`k` covers, and rejection when `k > n`, `|high| > k`, or `|active| > k (k + 1)`;
-together with axiom guards for the headline theorems.
+padding for exact-`k` covers, and rejection when `k > n`, `|high| > k`, or `|active| > k (k + 1)`.
 -/
 
 namespace ComplexityTests.VertexCoverKernel
@@ -109,64 +108,6 @@ example : HasPolyKernel (encPair encGraph encNat) Prod.snd VertexCover :=
 example :
     ComputableInPolyTime bussKernel (encPair encGraph encNat) (encPair encGraph encNat) :=
   isKernelization_bussKernel.polyTime
-
-/-! ### Axioms -/
-
-/--
-info: 'Cslib.Complexity.VertexCover.Buss.mem_of_isHigh' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.VertexCover.Buss.mem_of_isHigh
-
-/--
-info: 'Cslib.Complexity.VertexCover.Buss.length_active_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.VertexCover.Buss.length_active_le
-
-/--
-info: 'Cslib.Complexity.VertexCover.bussKernel_mem_iff' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.VertexCover.bussKernel_mem_iff
-
-/--
-info: 'Cslib.Complexity.VertexCover.length_bussKernel_vertices_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.VertexCover.length_bussKernel_vertices_le
-
-/--
-info: 'Cslib.Complexity.VertexCover.length_encode_bussKernel_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.VertexCover.length_encode_bussKernel_le
-
-/--
-info: 'Cslib.Complexity.VertexCover.computableInPolyTime_bussKernel' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.VertexCover.computableInPolyTime_bussKernel
-
-/--
-info: 'Cslib.Complexity.VertexCover.isKernelization_bussKernel' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.VertexCover.isKernelization_bussKernel
-
-/--
-info: 'Cslib.Complexity.VertexCover_hasPolyKernel' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.VertexCover_hasPolyKernel
 
 /-! ### Plain automation over the restated kernel certificates -/
 

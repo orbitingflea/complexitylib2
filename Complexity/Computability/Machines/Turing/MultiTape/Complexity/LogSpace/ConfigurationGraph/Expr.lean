@@ -21,6 +21,7 @@ is an expression of a counter program (`Turing.CounterProgram.Expr`), with Boole
 represented by `0` and `1` and the input symbol by its ternary code `symbolCode`. This is how a
 counter program computes the configuration graph of a fixed machine on its input, as the
 logarithmic-space reduction to directed connectivity requires [Sipser, Theorem 8.25][Sipser2013].
+The radix is itself an expression, such as `Turing.MultiTapeNTM.ConfigurationGraph.radixExpr`.
 
 ## Main definitions
 
@@ -49,7 +50,7 @@ namespace Turing.MultiTapeNTM.ConfigurationGraph
 
 open CounterProgram Expr
 
-variable {k : ℕ} {State : Type} [Fintype State] {regs : List ℕ} {D : ℕ} {n u v sym : Expr}
+variable {k : ℕ} {State : Type} [Fintype State] {regs : List ℕ} {D : ℕ} {B n u v sym : Expr}
 
 /-- The radix `(n + 2) ^ D`. -/
 def radixExpr (D : ℕ) (n : Expr) : Expr := pow (add n (const 2)) D
@@ -60,22 +61,22 @@ theorem eval_radixExpr : (radixExpr D n).eval regs = radix D (n.eval regs) := by
 
 variable (k) in
 /-- The number of vertices of the ambient graph. -/
-noncomputable def vertexBoundExpr (D : ℕ) (n : Expr) : Expr :=
-  pow (radixExpr D n) (Fintype.card (Register k))
+noncomputable def vertexBoundExpr (B : Expr) : Expr :=
+  pow B (Fintype.card (Register k))
 
 @[simp]
 theorem eval_vertexBoundExpr :
-    (vertexBoundExpr k D n).eval regs = vertexBound (k := k) D (n.eval regs) := by
+    (vertexBoundExpr k B).eval regs = vertexBound (k := k) (B.eval regs) := by
   simp [vertexBoundExpr, vertexBound]
 
 /-- A register of a vertex. -/
-noncomputable def readRegistersExpr (D : ℕ) (n u : Expr) (i : Register k) : Expr :=
-  mod (div u (pow (radixExpr D n) (Fintype.equivFin (Register k) i))) (radixExpr D n)
+noncomputable def readRegistersExpr (B u : Expr) (i : Register k) : Expr :=
+  mod (div u (pow B (Fintype.equivFin (Register k) i))) B
 
 @[simp]
 theorem eval_readRegistersExpr (i : Register k) :
-    (readRegistersExpr D n u i).eval regs =
-      readRegisters (k := k) D (n.eval regs) (u.eval regs) i := by
+    (readRegistersExpr B u i).eval regs =
+      readRegisters (k := k) (B.eval regs) (u.eval regs) i := by
   simp [readRegistersExpr, readRegisters, Cslib.Radix.component, Cslib.Radix.digit_eq_div_pow_mod]
 
 /-- Pack registers in the radix `B`. -/
@@ -89,17 +90,17 @@ theorem eval_packExpr {B : Expr} {f : Register k → Expr} {g : Register k → �
 
 variable (k State) in
 /-- Syntactic validity of a vertex. -/
-noncomputable def validExpr (D : ℕ) (n u : Expr) : Expr :=
-  andB (andB (andB (andB (ltB u (vertexBoundExpr k D n))
-    (ltB (readRegistersExpr (k := k) D n u .inputPos) (add n (const 2))))
-    (ltB (readRegistersExpr (k := k) D n u .control) (const (Fintype.card (Option State)))))
-    (ltB (readRegistersExpr (k := k) D n u .output) (const 3)))
-    (allB (List.ofFn fun i : Fin k => ltB (readRegistersExpr (k := k) D n u (.head i)) (const 3)))
+noncomputable def validExpr (B n u : Expr) : Expr :=
+  andB (andB (andB (andB (ltB u (vertexBoundExpr k B))
+    (ltB (readRegistersExpr (k := k) B u .inputPos) (add n (const 2))))
+    (ltB (readRegistersExpr (k := k) B u .control) (const (Fintype.card (Option State)))))
+    (ltB (readRegistersExpr (k := k) B u .output) (const 3)))
+    (allB (List.ofFn fun i : Fin k => ltB (readRegistersExpr (k := k) B u (.head i)) (const 3)))
 
 @[simp]
 theorem eval_validExpr :
-    (validExpr k State D n u).eval regs =
-      (valid (k := k) (State := State) D (n.eval regs) (u.eval regs)).toNat := by
+    (validExpr k State B n u).eval regs =
+      (valid (k := k) (State := State) (B.eval regs) (n.eval regs) (u.eval regs)).toNat := by
   rw [validExpr, eval_andB (eval_andB (eval_andB (eval_andB eval_ltB eval_ltB) eval_ltB) eval_ltB)
     (eval_allB_ofFn _ _ fun i => eval_ltB)]
   simp [valid]
@@ -205,73 +206,74 @@ theorem eval_fitsExpr {B : Expr} {r : Register k → Expr} {g : Register k → �
   rfl
 
 /-- The guarded local edge test, with the input symbol given by its code. -/
-noncomputable def edgeExpr (ntm : MultiTapeNTM k Bool State) (D : ℕ) (n u v sym : Expr) : Expr :=
-  andB (andB (validExpr k State D n u) (validExpr k State D n v))
-    (orB (andB (eqB (readRegistersExpr (k := k) D n u .control)
+noncomputable def edgeExpr (ntm : MultiTapeNTM k Bool State) (B n u v sym : Expr) : Expr :=
+  andB (andB (validExpr k State B n u) (validExpr k State B n v))
+    (orB (andB (eqB (readRegistersExpr (k := k) B u .control)
         (const (stateCode (none : Option State)))) (eqB v u))
       (anyB ((instructions ntm).map fun t =>
-        andB (andB (matchesExpr n (readRegistersExpr D n u) sym t)
-          (fitsExpr (radixExpr D n) (nextExpr n (readRegistersExpr D n u) t.2.2.2)))
-          (eqB v (packExpr (radixExpr D n) (nextExpr n (readRegistersExpr D n u) t.2.2.2))))))
+        andB (andB (matchesExpr n (readRegistersExpr B u) sym t)
+          (fitsExpr B (nextExpr n (readRegistersExpr B u) t.2.2.2)))
+          (eqB v (packExpr B (nextExpr n (readRegistersExpr B u) t.2.2.2))))))
 
 /-- **The edge expression computes the local edge test.** -/
 theorem eval_edgeExpr (ntm : MultiTapeNTM k Bool State) {symbol : Option Bool}
     (hs : sym.eval regs = symbolCode symbol) :
-    (edgeExpr ntm D n u v sym).eval regs =
-      (edgeWithSymbol ntm D (n.eval regs) (u.eval regs) (v.eval regs) symbol).toNat := by
-  have hr : ∀ i, (readRegistersExpr (k := k) D n u i).eval regs =
-      readRegisters (k := k) D (n.eval regs) (u.eval regs) i := fun i =>
+    (edgeExpr ntm B n u v sym).eval regs =
+      (edgeWithSymbol ntm (B.eval regs) (n.eval regs) (u.eval regs) (v.eval regs)
+        symbol).toNat := by
+  have hr : ∀ i, (readRegistersExpr (k := k) B u i).eval regs =
+      readRegisters (k := k) (B.eval regs) (u.eval regs) i := fun i =>
     eval_readRegistersExpr i
   rw [edgeExpr, eval_andB (eval_andB eval_validExpr eval_validExpr)
     (eval_orB (eval_andB eval_eqB eval_eqB) (eval_anyB_map _ _
-      (fun t => matchesEntry (n.eval regs) (readRegisters D (n.eval regs) (u.eval regs)) symbol t
-        && fitsB (radix D (n.eval regs))
-          (nextRegisters (n.eval regs) (readRegisters D (n.eval regs) (u.eval regs)) t.2.2.2)
-        && decide (v.eval regs = Cslib.Radix.pack (radix D (n.eval regs))
-          (nextRegisters (n.eval regs) (readRegisters D (n.eval regs) (u.eval regs)) t.2.2.2)))
+      (fun t => matchesEntry (n.eval regs) (readRegisters (B.eval regs) (u.eval regs)) symbol t
+        && fitsB (B.eval regs)
+          (nextRegisters (n.eval regs) (readRegisters (B.eval regs) (u.eval regs)) t.2.2.2)
+        && decide (v.eval regs = Cslib.Radix.pack (B.eval regs)
+          (nextRegisters (n.eval regs) (readRegisters (B.eval regs) (u.eval regs)) t.2.2.2)))
       fun t _ => ?_))]
   · simp [edgeWithSymbol, hr]
   · rw [eval_andB (eval_andB (eval_matchesExpr hr hs t) (eval_fitsExpr (eval_nextExpr hr _)))
-      eval_eqB, eval_packExpr (eval_nextExpr hr _), eval_radixExpr]
+      eval_eqB, eval_packExpr (eval_nextExpr hr _)]
 
 variable (k State) in
 /-- The test for accepting halted vertices. -/
-noncomputable def badExpr (D : ℕ) (n u : Expr) : Expr :=
-  andB (andB (validExpr k State D n u)
-    (eqB (readRegistersExpr (k := k) D n u .control) (const (stateCode (none : Option State)))))
-    (eqB (readRegistersExpr (k := k) D n u .output) (const 1))
+noncomputable def badExpr (B n u : Expr) : Expr :=
+  andB (andB (validExpr k State B n u)
+    (eqB (readRegistersExpr (k := k) B u .control) (const (stateCode (none : Option State)))))
+    (eqB (readRegistersExpr (k := k) B u .output) (const 1))
 
 @[simp]
 theorem eval_badExpr :
-    (badExpr k State D n u).eval regs =
-      (bad (k := k) (State := State) D (n.eval regs) (u.eval regs)).toNat := by
+    (badExpr k State B n u).eval regs =
+      (bad (k := k) (State := State) (B.eval regs) (n.eval regs) (u.eval regs)).toNat := by
   rw [badExpr, eval_andB (eval_andB eval_validExpr eval_eqB) eval_eqB]
   simp [bad]
 
 /-- The start vertex. -/
-noncomputable def startIDExpr (ntm : MultiTapeNTM k Bool State) (D : ℕ) (n : Expr) : Expr :=
-  packExpr (radixExpr D n) fun i : Register k => match i with
+noncomputable def startIDExpr (ntm : MultiTapeNTM k Bool State) (B : Expr) : Expr :=
+  packExpr B fun i : Register k => match i with
     | .inputPos => const 1
     | .control => const (stateCode (some ntm.q₀))
     | _ => const 0
 
 @[simp]
 theorem eval_startIDExpr (ntm : MultiTapeNTM k Bool State) :
-    (startIDExpr ntm D n).eval regs = startID ntm D (n.eval regs) := by
+    (startIDExpr ntm B).eval regs = startID ntm (B.eval regs) := by
   rw [startIDExpr, eval_packExpr (g := fun i : Register k => match i with
     | .inputPos => 1
     | .control => stateCode (some ntm.q₀)
-    | _ => 0) fun i => by cases i <;> rfl, eval_radixExpr]
+    | _ => 0) fun i => by cases i <;> rfl]
   rfl
 
 variable (k) in
 /-- The requested input position. -/
-noncomputable def queryIndexExpr (D : ℕ) (n u : Expr) : Expr :=
-  sub (readRegistersExpr (k := k) D n u .inputPos) (const 1)
+noncomputable def queryIndexExpr (B u : Expr) : Expr :=
+  sub (readRegistersExpr (k := k) B u .inputPos) (const 1)
 
 @[simp]
 theorem eval_queryIndexExpr :
-    (queryIndexExpr k D n u).eval regs = queryIndex (k := k) D (n.eval regs) (u.eval regs) := by
+    (queryIndexExpr k B u).eval regs = queryIndex (k := k) (B.eval regs) (u.eval regs) := by
   simp [queryIndexExpr, queryIndex]
 
 end Turing.MultiTapeNTM.ConfigurationGraph

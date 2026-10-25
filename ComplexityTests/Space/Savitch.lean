@@ -14,9 +14,8 @@ import Complexity.Computability.Machines.Turing.MultiTape.Universal.Complexity
 The binary counter, in the order of `Cslib.BitString.enumList`; the midpoint recursion and the
 stack machine on a directed path through the words of width two, on a graph whose target is
 unreachable, and on the trivial walk at depth zero; walks of the path through
-`Cslib.Reachability.savitch_iff`; instances of the quantitative certificate and of its
-polynomial-space form for a family of depths, so that their hypotheses are satisfiable; and the
-axioms of the headline theorems of both modules.
+`Cslib.Reachability.savitch_iff`; and instances of the quantitative certificate and of its
+polynomial-space form for a family of depths, so that their hypotheses are satisfiable.
 -/
 
 namespace ComplexityTests.Savitch
@@ -138,63 +137,5 @@ example : ∃ t s, PolyBounded (fun n : ℕ => (encUnary n).length) s ∧
     fun_prop
   exact exists_polyBounded_space_savitch (edge := fun _ u v => decide (u = v)) hedge hin
     (fun _ => rfl) fun _ => rfl
-
-/-! ### Axioms of the algorithm -/
-
-/--
-info: 'Cslib.Reachability.reach_iff' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Reachability.reach_iff
-
-/--
-info: 'Cslib.Reachability.savitch_eq' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Reachability.savitch_eq
-
-/--
-info: 'Cslib.Reachability.savitch_iff' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Reachability.savitch_iff
-
-/--
-info: 'Cslib.Reachability.Savitch.next_getElem_enumList' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Reachability.Savitch.next_getElem_enumList
-
-/--
-info: 'Cslib.Reachability.Savitch.exists_iterate_step_call' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Reachability.Savitch.exists_iterate_step_call
-
-/-! ### Axioms of the certificates
-(`Cslib.Computability.Machines.Turing.MultiTape.Complexity.Space.Reachability`) -/
-
-/--
-info: 'Cslib.Reachability.Savitch.computableTidilyInO_roundStep' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Reachability.Savitch.computableTidilyInO_roundStep
-
-/--
-info: 'Cslib.Reachability.computableTidilyInO_savitch' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Reachability.computableTidilyInO_savitch
-
-/--
-info: 'Cslib.Reachability.exists_polyBounded_space_savitch' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Reachability.exists_polyBounded_space_savitch
 
 end ComplexityTests.Savitch

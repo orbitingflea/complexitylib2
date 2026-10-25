@@ -63,8 +63,8 @@ subexponential time $2^{o(m \log m)} = N^{o(\log \log N)}$ (`¬DecidableInSubexp
    $(x, y, z) \mapsto \bigvee_{i \in [2n]} ((x_{\pi(i)} \vee y_i) \wedge z_i)$ for some permutation
    $\pi \in S_{2n}$.
 
-4. **Equivalence across circuit and formula models** (Issue #798 Decision D5,
-   [ECCC TR20-183, Section 3, Theorem 11, p. 20, construction and proof pp. 21–24]):
+4. **Equivalence across circuit and formula models**
+   ([ECCC TR20-183, Section 3, Theorem 11, p. 20, construction and proof pp. 21–24]):
    For $n \ge 2$, the instance `ilangoInstance G` of arity $6n$ and threshold $s = 6n - 1$ has all
    $6n$ variables positively essential (`ilangoInstance_posEssential`). By
    `Circuit.exists_posFormula_of_cost_binaryCost_le`, any circuit $c$ with at most $6n - 1$ binary
@@ -1918,7 +1918,7 @@ private theorem computableTidilyInO_twoPow :
       (ComputableTidilyInO.fst encUnary encBool)
       (fun _ => by simp only [encUnary_apply, List.replicate_add])
   have hpow_le (m i : ℕ) : 2 ^ min i m ≤ 2 ^ m :=
-    Nat.pow_le_pow_right (by decide : 0 < 2) (Nat.min_le_right i m)
+    Nat.pow_le_pow_right two_pos (Nat.min_le_right i m)
   have hfold := ComputableTidilyInO.foldl (encA := encBool) (encL := encBits) (encB := encUnary)
     (step := fun n _ => n + n) hlist hinit hstep
     (R := fun m => 4 * 2 ^ m + 4) (Q := fun m => 4 * 2 ^ m + 4) (B := fun m => 2 ^ m)
@@ -1949,7 +1949,7 @@ private theorem computableTidilyInO_twoPow :
     nlinarith
   · simp only [encUnary_apply, encBits_apply, List.length_replicate]
     have hm : m < 2 ^ m := Nat.lt_two_pow_self
-    have hle : 2 ^ m ≤ 2 ^ (2 * m) := Nat.pow_le_pow_right (by decide : 0 < 2) (by omega)
+    have hle : 2 ^ m ≤ 2 ^ (2 * m) := Nat.pow_le_pow_right two_pos (by omega)
     omega
   · simp [foldl_double_replicate]
 
@@ -2005,7 +2005,7 @@ private theorem exists_computableInO_ilangoReduction_of_raw
     have hd₂_le : (L + 1) ^ d₂ ≤ (L + 1) ^ D :=
       Nat.pow_le_pow_right hL1 (by omega)
     have h12_le : 2 ^ (2 * (6 * G.1)) ≤ 2 ^ (C * G.1) :=
-      Nat.pow_le_pow_right (by decide : 0 < 2) (by simp only [C]; nlinarith)
+      Nat.pow_le_pow_right two_pos (by simp only [C]; nlinarith)
     have hpair_len : (encPair encBipartitePermutationGraph encUnary (G, M)).length + 1 ≤
         3 * M * (L + 1) := by
       simp only [length_encPair, encUnary_apply, List.length_replicate, L]
@@ -2014,7 +2014,7 @@ private theorem exists_computableInO_ilangoReduction_of_raw
         3 ^ d₂ * (2 ^ (C * G.1) * (L + 1) ^ D) := by
       have hMd₂ : M ^ d₂ ≤ 2 ^ (C * G.1) := by
         rw [show M ^ d₂ = 2 ^ (6 * G.1 * d₂) by simp [M, ← pow_mul]]
-        exact Nat.pow_le_pow_right (by decide : 0 < 2) (by simp only [C]; nlinarith)
+        exact Nat.pow_le_pow_right two_pos (by simp only [C]; nlinarith)
       calc ((encPair encBipartitePermutationGraph encUnary (G, M)).length + 1) ^ d₂
           ≤ (3 * M * (L + 1)) ^ d₂ := Nat.pow_le_pow_left hpair_len d₂
         _ = 3 ^ d₂ * (M ^ d₂ * (L + 1) ^ d₂) := by simp only [mul_pow, mul_assoc]
@@ -2064,7 +2064,7 @@ def Instance.tableSize (x : Instance) : ℕ :=
 
 @[simp] theorem Instance.log_tableSize (x : Instance) :
     Nat.log 2 x.tableSize = x.arity :=
-  Nat.log_pow (by decide : 1 < 2) x.arity
+  Nat.log_pow Nat.one_lt_two x.arity
 
 /-- The arity measure $m \log_2 m$ on `ilangoReduction G` is at most $24 n \log_2 n + 2$. -/
 theorem arity_mul_log_ilangoReduction_le (G : BipartitePermutationGraph) :
@@ -2082,10 +2082,10 @@ theorem arity_mul_log_ilangoReduction_le (G : BipartitePermutationGraph) :
       Nat.log_mono_right (by omega)
     have h8 : 8 * G.1 = G.1 * 2 * 2 * 2 := by ring
     have hlog_eq : Nat.log 2 (8 * G.1) = Nat.log 2 G.1 + 3 := by
-      rw [h8, Nat.log_mul_base (by decide : 1 < 2) (by omega),
-        Nat.log_mul_base (by decide : 1 < 2) (by omega),
-        Nat.log_mul_base (by decide : 1 < 2) (by omega)]
-    have hlog1 : 1 ≤ Nat.log 2 G.1 := Nat.log_pos (by decide : 1 < 2) (by omega)
+      rw [h8, Nat.log_mul_base Nat.one_lt_two (by omega),
+        Nat.log_mul_base Nat.one_lt_two (by omega),
+        Nat.log_mul_base Nat.one_lt_two (by omega)]
+    have hlog1 : 1 ≤ Nat.log 2 G.1 := Nat.log_pos Nat.one_lt_two (by omega)
     have hlog_le : Nat.log 2 (6 * G.1) ≤ 4 * Nat.log 2 G.1 := by omega
     calc 6 * G.1 * Nat.log 2 (6 * G.1)
         ≤ 6 * G.1 * (4 * Nat.log 2 G.1) := Nat.mul_le_mul_left _ hlog_le
@@ -2103,7 +2103,7 @@ private theorem mul_le_pow_add_mul_log (C : ℕ) {ε : ℝ} (hε : 0 < ε) (n : 
       mul_le_mul_of_nonneg_left hn_le (Nat.cast_nonneg C)
     linarith
   · have hn' : 2 ^ M ≤ n := not_lt.mp hn
-    have hlog : M ≤ Nat.log 2 n := Nat.le_log_of_pow_le (by decide : 1 < 2) hn'
+    have hlog : M ≤ Nat.log 2 n := Nat.le_log_of_pow_le Nat.one_lt_two hn'
     have hM_ge : (2 * C : ℝ) / ε ≤ M :=
       (Nat.le_ceil ((2 * C : ℝ) / ε)).trans (by simp [M])
     have hlog_ge : (2 * C : ℝ) / ε ≤ (Nat.log 2 n : ℝ) :=

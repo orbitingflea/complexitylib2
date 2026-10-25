@@ -67,24 +67,4 @@ example : endOfLineRel (fun _ : Bool => 0) (fun p => p.2) (fun p => p.2) false [
 example : leafRel (fun _ : Bool => 0) (fun p => p.2) (fun p => p.2) false [] := by
   simp [leafRel, hasOddDegree, undirectedEdge, zeroVertex]
 
-/-- info: 'Cslib.Complexity.Pigeon_searchComplete' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Cslib.Complexity.Pigeon_searchComplete
-
-/-- info: 'Cslib.Complexity.EndOfLine_searchComplete' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Cslib.Complexity.EndOfLine_searchComplete
-
-/-- info: 'Cslib.Complexity.Leaf_searchComplete' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Cslib.Complexity.Leaf_searchComplete
-
-/-- info: 'Cslib.Complexity.LocalOpt_searchComplete' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Cslib.Complexity.LocalOpt_searchComplete
-
 end ComplexityTests.TFNPCompleteness

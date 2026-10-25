@@ -32,6 +32,7 @@ unrestricted arithmetic circuits. All computation premises are formal polynomial
 
 ## Main results
 
+* `Cslib.Circuits.Waring.four_pow_lt_mul_cost`: exponential lower bound on Waring term count.
 * `Cslib.Circuits.Waring.choose_le_card`, `Cslib.Circuits.Waring.centralBinom_le_card`:
   lower bounds for ordinary finite sums.
 * `Cslib.Circuits.Waring.choose_le_cost`, `Cslib.Circuits.Waring.centralBinom_le_cost`:

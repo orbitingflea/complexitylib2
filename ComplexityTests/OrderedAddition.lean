@@ -79,14 +79,4 @@ example (v : Fin 4 → Fin 5) :
   rw [Formula.realize_relabel, realize_addition]
   rfl
 
-/-- info: 'Cslib.Logic.FO.Ordered.realize_addition' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Cslib.Logic.FO.Ordered.realize_addition
-
-/-- info: 'Cslib.Logic.FO.Ordered.not_realize_addition_of_le' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Cslib.Logic.FO.Ordered.not_realize_addition_of_le
-
 end Cslib.Tests.OrderedAddition

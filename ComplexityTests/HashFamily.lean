@@ -129,25 +129,4 @@ example : IsUniversalHash (PMF.uniformOfFintype (Fin (2 ^ (4 - 1)))) (multiplySh
     (2 / 2 ^ 2) :=
   isUniversalHash_multiplyShift (by norm_num) (by norm_num)
 
-/--
-info: 'Cslib.Probability.IsPairwiseIndependentHash.isTwoUniversal' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms IsPairwiseIndependentHash.isTwoUniversal
-
-/--
-info: 'Cslib.Probability.IsPairwiseIndependentHash.isDeltaUniversalHash' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms IsPairwiseIndependentHash.isDeltaUniversalHash
-
-/--
-info: 'Cslib.Probability.isUniversalHash_multiplyShift' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms isUniversalHash_multiplyShift
-
 end ComplexityTests.HashFamily

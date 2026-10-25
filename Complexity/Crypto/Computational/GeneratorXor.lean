@@ -32,6 +32,8 @@ uniform bits makes the combined output uniform, with no assumption on the other 
 ## Main results
 
 * `isPolyTime_generate`, `isPPTOn_test`: uniform certificates with captured programs.
+* `generate_eq_sum`, `generate_distribution`: the combiner output and its law as a sum of
+  candidate outputs on independent seed blocks.
 * `real_distribution`, `ideal_distribution`: exact laws of the complete combined output.
 * `advantage_eq`, `indistinguishable`: one secure indexed candidate secures the combination.
 

@@ -87,7 +87,7 @@ private theorem phaseDistance_of_contains (hf : Function.Injective f) (j : Fin R
     rw [← hpath, cycleLength_iterate]; rfl
   have hp := chart_ofNat_toNat ((phase_lt f y).le.trans (cycleLength_le_words f y))
   rw [chart.phaseDistance_toNat j _ (by rw [hp]; simpa only [← hl] using phase_lt f y), hp]
-  apply add_sub_mod_mod_eq_of_modEq (cycleLength_pos f _) hd
+  apply Nat.add_sub_mod_mod_eq_of_modEq (cycleLength_pos f _) hd
   have hphase := phase_iterate f (chart.first j) (y.toNat - chart.start j)
   change phase f (f^[y.toNat - chart.start j] (BitVec.ofNat n (chart.start j))) = _ at hphase
   rw [hpath] at hphase

@@ -55,6 +55,7 @@ solutions isolated in every direction (`CNF.card_isolatedInputs_mul_two_rpow_le`
 
 * `Cslib.Logic.PL.CNF.sum_two_pow_card_forced_le`: the coding bound for one order.
 * `Cslib.Logic.PL.CNF.sum_two_rpow_average_card_forced_le`: the coding lemma.
+* `Cslib.Logic.PL.CNF.sum_two_rpow_sum_inv_critWidth_le`: the weighted coding lemma.
 * `Cslib.Logic.PL.CNF.sum_two_rpow_card_isolated_div_le`: the coding lemma for `k`-CNFs.
 * `Cslib.Logic.PL.CNF.card_isolatedInputs_mul_two_rpow_le`: few isolated solutions.
 

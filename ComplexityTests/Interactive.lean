@@ -88,34 +88,4 @@ example (k : ℕ) :
   simpa using Reduction.Complete.iterate (rel := fun _ => rel) (ε := fun _ => 0) k
     fun _ _ => coinStep_complete
 
-/--
-info: 'Cslib.Interactive.Reduction.Complete.append' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Interactive.Reduction.Complete.append
-
-/--
-info: 'Cslib.Interactive.Verifier.Sound.append' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Interactive.Verifier.Sound.append
-
-/--
-info: 'Cslib.Interactive.Verifier.KnowledgeSound.append' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Interactive.Verifier.KnowledgeSound.append
-
-/--
-info: 'Cslib.Interactive.Verifier.RbrSound.append' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Interactive.Verifier.RbrSound.append
-
-/--
-info: 'Cslib.Interactive.Verifier.RbrSound.sound' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Interactive.Verifier.RbrSound.sound
-
 end ComplexityTests.Interactive

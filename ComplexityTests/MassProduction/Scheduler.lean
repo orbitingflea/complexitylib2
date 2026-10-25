@@ -15,8 +15,7 @@ scheduler, and the scheduler theorem on a concrete field: over `ZMod 2` in dimen
 unit directions form a universal menu for one request and one occupied line, so the hypothesis of
 `exists_isScheduler` holds and the theorem yields a concrete scheduler for one request. Repeated
 targets are allowed: two requests at one point are served by disjoint lines through it, which
-the scheduler specification and the clean flags of a phase accept. Axiom checks record the
-headline dependencies.
+the scheduler specification and the clean flags of a phase accept.
 -/
 
 namespace ComplexityTests.MassProduction.Scheduler
@@ -142,35 +141,5 @@ example {K : Type*} [Field K] [Fintype K] [DecidableEq K] {ℓ b s D p a r : ℕ
           (fun i => T (Scheduler.pending hk i)) (menu e) i) := by
   obtain ⟨π, dirs, -, htarget, hline, -⟩ := hx
   exact ⟨_, dirs, Scheduler.clean_iff bits scalar menu htarget hline hmenu e i⟩
-
-/-! ### Axioms -/
-
-/--
-info: 'Cslib.Circuits.Boolean.MassProduction.exists_isScheduler' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms exists_isScheduler
-
-/--
-info: 'Cslib.Circuits.Boolean.MassProduction.Scheduler.good_next' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Scheduler.good_next
-
-/--
-info: 'Cslib.Circuits.Boolean.MassProduction.Scheduler.exists_next_circuit' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Scheduler.exists_next_circuit
-
-/--
-info: 'Cslib.Circuits.Boolean.MassProduction.Scheduler.phaseCost_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Scheduler.phaseCost_le
 
 end ComplexityTests.MassProduction.Scheduler

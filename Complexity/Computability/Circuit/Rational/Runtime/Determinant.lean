@@ -13,6 +13,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Poly
 public import Mathlib.Data.Nat.Size
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Iteration
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
+import Complexity.Foundations.Data.Int.Order
 import Mathlib.Data.List.GetD
 
 /-!
@@ -46,6 +47,7 @@ encoding, and, following the original development, for the stages of the dense t
 
 ## Main results
 
+* `Rational.intBits_step_le`: bit-length bound on values computed in one stage.
 * `Rational.detRows_eq`: `detRows (rowsOf A) = A.det`.
 * `Rational.detRows_eq_det_ofRows`: on any list of rows, `detRows` is the determinant of the
   square matrix it denotes, of dimension the number of rows.
@@ -300,29 +302,6 @@ theorem detRows_rowsOf_denote {d : ℕ} (A : DeterminantAlgorithm.Table d) :
 
 /-! ### Size bounds -/
 
-lemma natAbs_sum_le {l : List ℤ} {C : ℕ} (h : ∀ x ∈ l, x.natAbs ≤ C) :
-    l.sum.natAbs ≤ l.length * C := by
-  induction l with
-  | nil => simp
-  | cons x l ih =>
-    rw [List.sum_cons, List.length_cons]
-    calc (x + l.sum).natAbs ≤ x.natAbs + l.sum.natAbs := Int.natAbs_add_le _ _
-      _ ≤ C + l.length * C :=
-          Nat.add_le_add (h x List.mem_cons_self) (ih fun y hy => h y (List.mem_cons_of_mem x hy))
-      _ = (l.length + 1) * C := by ring
-
-/-- Every prefix sum of a list is bounded by its length times a bound on its entries. -/
-lemma natAbs_take_sum_le {l : List ℤ} {C : ℕ} (h : ∀ x ∈ l, x.natAbs ≤ C) (m : ℕ) :
-    (l.take m).sum.natAbs ≤ l.length * C :=
-  (natAbs_sum_le fun x hx => h x (List.mem_of_mem_take hx)).trans
-    (Nat.mul_le_mul_right _ (List.length_take_le' _ _))
-
-/-- Every prefix sum and the sum of a list of terms bounded by `C` are bounded by
-`m * C`, where `m` bounds the length. -/
-lemma natAbs_take_sum_le_of_length {l : List ℤ} {C m : ℕ} (hl : l.length ≤ m)
-    (h : ∀ x ∈ l, x.natAbs ≤ C) (k : ℕ) : (l.take k).sum.natAbs ≤ m * C :=
-  (natAbs_take_sum_le h k).trans (Nat.mul_le_mul_right C hl)
-
 /-- Entry bounds hold for every entry index once they hold for every stored entry. -/
 lemma natAbs_rowEntry_lt {rows : List (List ℤ)} {b : ℕ}
     (h : ∀ row ∈ rows, ∀ z ∈ row, z.natAbs < 2 ^ b) (i j : ℕ) :
@@ -371,7 +350,7 @@ private lemma half_le_bound (A : List (List ℤ)) (b e : ℕ) :
 
 private lemma traceTerms_take_le (hF : ∀ i j, (rowEntry F i j).natAbs < 2 ^ e) (i m : ℕ) :
     ((traceTerms A F i).take m).sum.natAbs ≤ A.length * (2 ^ e * 2 ^ b) := by
-  refine (natAbs_take_sum_le (C := 2 ^ e) ?_ m).trans ?_
+  refine (List.natAbs_sum_take_le_length_mul (C := 2 ^ e) ?_ m).trans ?_
   · intro x hx
     obtain ⟨k, -, rfl⟩ := List.mem_map.mp hx
     exact (hF k k).le
@@ -380,7 +359,7 @@ private lemma traceTerms_take_le (hF : ∀ i j, (rowEntry F i j).natAbs < 2 ^ e)
 private lemma productTerms_take_le (hA : ∀ i j, (rowEntry A i j).natAbs < 2 ^ b)
     (hF : ∀ i j, (rowEntry F i j).natAbs < 2 ^ e) (i j m : ℕ) :
     ((productTerms A F i j).take m).sum.natAbs ≤ A.length * (2 ^ e * 2 ^ b) := by
-  refine (natAbs_take_sum_le (C := 2 ^ e * 2 ^ b) ?_ m).trans
+  refine (List.natAbs_sum_take_le_length_mul (C := 2 ^ e * 2 ^ b) ?_ m).trans
     (Nat.mul_le_mul_right _ (length_productTerms_le A F i j))
   intro x hx
   obtain ⟨k, -, rfl⟩ := List.mem_map.mp hx
@@ -403,7 +382,7 @@ theorem natAbs_productTerms_take_sum_lt (hA : ∀ i j, (rowEntry A i j).natAbs <
 private lemma trace_mul_le (hA : ∀ i j, (rowEntry A i j).natAbs < 2 ^ b)
     (hF : ∀ i j, (rowEntry F i j).natAbs < 2 ^ e) (i j : ℕ) :
     ((traceTerms A F i).sum * rowEntry A i j).natAbs ≤ A.length * (2 ^ e * 2 ^ b) := by
-  have h := natAbs_take_sum_le (l := traceTerms A F i) (C := 2 ^ e)
+  have h := List.natAbs_sum_take_le_length_mul (l := traceTerms A F i) (C := 2 ^ e)
     (fun x hx => by
       obtain ⟨k, -, rfl⟩ := List.mem_map.mp hx
       exact (hF k k).le) (traceTerms A F i).length

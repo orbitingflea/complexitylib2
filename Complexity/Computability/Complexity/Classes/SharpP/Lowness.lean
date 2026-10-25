@@ -18,6 +18,7 @@ import Complexity.Computability.Complexity.Classes.SharpP.Products
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Replay.Oracle
+import Mathlib.Data.List.OfFn
 
 /-!
 # Oracle lowness of `#P`, `UP ∩ coUP`, `SPP`, and modular counting classes
@@ -137,14 +138,6 @@ variable {α β : Type} {enc : α ↪ List Bool} {output : β ↪ List Bool} {A 
 section Replay
 
 variable {tapes : ℕ} {Control Operation : Type} [DecidableEq Operation]
-
-private theorem ofFn_getElem_of_length_eq {n : ℕ} (L : List Bool) (h : L.length = n) :
-    List.ofFn (fun i : Fin n => L[i.val]'(by omega)) = L :=
-  List.ext_getElem (by simp [h]) fun i _ _ => by simp
-
-private theorem nat_prod_pos_iff {ι : Type*} (s : Finset ι) (f : ι → ℕ) :
-    0 < ∏ i ∈ s, f i ↔ ∀ i ∈ s, 0 < f i := by
-  simp only [Nat.pos_iff_ne_zero, ne_eq, Finset.prod_eq_zero_iff, not_exists, not_and]
 
 /-- The `#P` factor certifying instruction `x.2` of transcript `x.1.2` on instance `x.1.1`. -/
 private def replayStepFactor (machine : MultiTapePTM tapes Bool Control Operation)
@@ -284,7 +277,7 @@ private theorem replayPathCount_pos_iff (machine : MultiTapePTM tapes Bool Contr
     0 < replayPathCount machine input fYes fNo (a, answers) ↔
       answers = machine.oracleReplies g answers.length (input a) := by
   unfold replayPathCount
-  rw [nat_prod_pos_iff]
+  rw [CanonicallyOrderedAdd.prod_pos]
   simp only [mem_range,
     replayStepFactor_pos_iff machine input hYes hNo a answers]
   constructor
@@ -328,7 +321,7 @@ private theorem replayWeightedSum_eq_of_le_one
   let w₀ : Fin (T a) → Bool :=
     fun i => (machine.oracleReplies g (T a) (input a))[i.val]'(by omega)
   have hw₀ : List.ofFn w₀ = machine.oracleReplies g (T a) (input a) :=
-    ofFn_getElem_of_length_eq (machine.oracleReplies g (T a) (input a)) hlen
+    (List.ofFn_congr hlen.symm _).trans List.ofFn_getElem
   unfold replayWeightedSum
   rw [Finset.sum_eq_single w₀]
   · have hpos : 0 < replayPathCount machine input fYes fNo (a, List.ofFn w₀) := by

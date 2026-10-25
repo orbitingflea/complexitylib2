@@ -93,34 +93,4 @@ example (A : Impersonator (ZMod 11 × (Fin 2 → ZMod 11 × ZMod 11 × ZMod 11))
         (linearSimulate (fun _ => LinearMap.toSpanSingleton (ZMod 11) (ZMod 11) 2) id ι)) :=
   schnorr_eavesdropAttack_eq_directAttack A
 
-/-! ### Axioms -/
-
-/--
-info: 'Cslib.Probability.Rewinding.sq_sub_le_twice' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Rewinding.sq_sub_le_twice
-
-/--
-info: 'Cslib.Crypto.Protocols.SigmaProtocol.succProbability_directAttack_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms succProbability_directAttack_le
-
-/--
-info: 'Cslib.Crypto.Protocols.SigmaProtocol.eavesdropAttack_eq_directAttack' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms eavesdropAttack_eq_directAttack
-
-/--
-info: 'Cslib.Crypto.Protocols.SigmaProtocol.schnorr_succProbability_directAttack_le' depends on
-axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms schnorr_succProbability_directAttack_le
-
 end ComplexityTests.Crypto.SigmaIdentification

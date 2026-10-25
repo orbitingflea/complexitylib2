@@ -15,8 +15,7 @@ no-instances of the gap problems of MAX-E3SAT, maximum independent set, maximum 
 vertex cover at the constants of the hardness theorems, so that their NP-hardness statements are not
 vacuous. Small instances of Generalized Geography won and lost by the first player, including
 undeclared targets and revisits; members and non-members of `TQBFCNF`, including a formula with a
-free variable, and their images under the reduction to Generalized Geography. The axioms of the
-headline theorems.
+free variable, and their images under the reduction to Generalized Geography.
 -/
 
 namespace ComplexityTests.GapGraphsGeography
@@ -161,63 +160,5 @@ example : GeneralizedGeography.reduce ([(0, 1)], [[(1, true)]]) ∉ GeneralizedG
 
 example : GeneralizedGeography.reduce ([(0, 1)], [[(2, false)]]) ∉ GeneralizedGeography :=
   fun h => notMem_TQBFCNF_free ((GeneralizedGeography.reduce_mem_iff _).1 h)
-
-/-! ### Axioms -/
-
-/--
-info: 'Cslib.Complexity.GapExactThreeSAT_npHard' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.GapExactThreeSAT_npHard
-
-/--
-info: 'Cslib.Complexity.GapIndependentSet_npHard' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.GapIndependentSet_npHard
-
-/--
-info: 'Cslib.Complexity.GapClique_npHard' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.GapClique_npHard
-
-/--
-info: 'Cslib.Complexity.GapVertexCover_npHard' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.GapVertexCover_npHard
-
-/--
-info: 'Cslib.Complexity.TQBFCNF_pspaceComplete' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.TQBFCNF_pspaceComplete
-
-/--
-info: 'Cslib.Complexity.GeneralizedGeography_mem_PSPACE' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.GeneralizedGeography_mem_PSPACE
-
-/--
-info: 'Cslib.Complexity.GeneralizedGeography_pspaceHard' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.GeneralizedGeography_pspaceHard
-
-/--
-info: 'Cslib.Complexity.GeneralizedGeography_pspaceComplete' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.GeneralizedGeography_pspaceComplete
 
 end ComplexityTests.GapGraphsGeography

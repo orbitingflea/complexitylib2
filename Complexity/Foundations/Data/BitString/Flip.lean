@@ -44,6 +44,10 @@ each isolated true input, and parity has only isolated inputs.
   into the other.
 * `Cslib.BitString.flipOn_prod_same`, `Cslib.BitString.flipOn_prod_of_ne`: row projections of a
   single-coordinate flip on a product index type.
+* `Cslib.BitString.flipOn_reindex`, `Cslib.BitString.flipOn_reindex_singleton`: reindexing a flip
+  along an equivalence.
+* `Cslib.BitString.eq_of_singleton_invariant`: a function invariant under all single-coordinate
+  flips is constant.
 
 ## References
 
@@ -163,6 +167,34 @@ theorem flipOn_prod_of_ne {κ : Type*} [DecidableEq (κ × ι)] (x : κ × ι �
     (fun a => flipOn {(j, i)} x (k, a)) = fun a => x (k, a) := by
   funext a
   simp [flipOn, hk]
+
+open scoped Classical in
+/-- Pulling back along `e` the input `x` with the image block `B.map e.toEmbedding` flipped gives
+the pullback `fun i => x (e i)` with `B` flipped. -/
+theorem flipOn_reindex {ι' : Type*} (e : ι ≃ ι') (x : ι' → Bool) (B : Finset ι) :
+    (fun i => flipOn (B.map e.toEmbedding) x (e i)) =
+      flipOn B (fun i => x (e i)) := by
+  funext i
+  simp [flipOn_apply]
+
+open scoped Classical in
+/-- Singleton case of `flipOn_reindex`: pulling back `flipOn {e i} x` along `e` gives the
+pullback of `x` with `i` flipped. -/
+theorem flipOn_reindex_singleton {ι' : Type*} (e : ι ≃ ι') (x : ι' → Bool) (i : ι) :
+    (fun a => flipOn {e i} x (e a)) = flipOn {i} (fun a => x (e a)) := by
+  simpa using flipOn_reindex e x {i}
+
+open scoped Classical in
+/-- Over a finite index type, a function invariant under every single-coordinate flip
+is constant. -/
+theorem eq_of_singleton_invariant [Finite ι] (f : (ι → Bool) → Bool)
+    (h : ∀ x i, f (flipOn {i} x) = f x) (x y : ι → Bool) : f x = f y := by
+  have := Fintype.ofFinite ι
+  have hflip (B : Finset ι) : f (flipOn B x) = f x := by
+    induction B using Finset.induction with
+    | empty => simp
+    | @insert i B hi ih => rw [flipOn_insert hi, h, ih]
+  rw [← flipOn_filter_ne x y, hflip]
 
 section Isolated
 

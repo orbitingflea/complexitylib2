@@ -13,8 +13,8 @@ import Complexity.Computability.PCP.Approximation.MaxExactThreeSAT
 Concrete evaluations and non-vacuity checks for exact 3-clauses (`Clause.IsExactThreeDistinct`,
 `CNF.IsExactThreeDistinct`), the `7 / 8` random-assignment bound (`unsatVal_le_one_eighth`), the
 Long Code and table folding (`longCode`, `foldTable`), mod-2 subset projection (`projectSet`),
-Håstad's 3-bit linear test on concrete Label Cover graphs, including genuine no-instances with
-proved optimum value, and `#print axioms` guards for the headline theorems.
+and Håstad's 3-bit linear test on concrete Label Cover graphs, including genuine no-instances
+with proved optimum value.
 -/
 
 namespace ComplexityTests.Hastad
@@ -170,98 +170,5 @@ theorem exists_soundness_noInstance : ∃ η : ℝ, 0 < η ∧ η < 1 ∧ ∃ n 
   have hB : ∀ w : ℕ, IsOdd (longCode (0 : Fin (n + 1))) := fun _ => isOdd_longCode _
   exact ⟨η, hη, hη1, n, parallelGraph_nonempty n, parallelGraph_wellFormed n, hval, hno, hB,
     (h (parallelGraph_nonempty n)).2 hno _ _ hB⟩
-
-/-! ### Axioms -/
-
-/--
-info: 'ComplexityTests.Hastad.exists_soundness_noInstance' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms ComplexityTests.Hastad.exists_soundness_noInstance
-
-/--
-info: 'Cslib.PCP.Hastad.gapLabelCover_dichotomy_lt_one' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.PCP.Hastad.gapLabelCover_dichotomy_lt_one
-
-/--
-info: 'Cslib.Logic.PL.Clause.IsExactThreeDistinct.expect_eval_eq_false' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.PL.Clause.IsExactThreeDistinct.expect_eval_eq_false
-
-/--
-info: 'Cslib.Logic.PL.Clause.IsExactThreeDistinct.expect_eval_eq_true' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.PL.Clause.IsExactThreeDistinct.expect_eval_eq_true
-
-/--
-info: 'Cslib.Logic.PL.CNF.IsExactThreeDistinct.unsatVal_le_one_eighth' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.PL.CNF.IsExactThreeDistinct.unsatVal_le_one_eighth
-
-/--
-info: 'Cslib.Logic.PL.CNF.IsExactThreeDistinct.exists_countUnsat_le_div_eight' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.PL.CNF.IsExactThreeDistinct.exists_countUnsat_le_div_eight
-
-/--
-info: 'Cslib.BitString.IsOdd.fourierCoeff_empty' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.BitString.IsOdd.fourierCoeff_empty
-
-/--
-info: 'Cslib.BitString.chi_comp_eq_chi_projectSet' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.BitString.chi_comp_eq_chi_projectSet
-
-/--
-info: 'Cslib.PCP.Hastad.linearCorr_eq_sum' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.PCP.Hastad.linearCorr_eq_sum
-
-/--
-info: 'Cslib.PCP.Hastad.sum_spectralWeight_le_one' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.PCP.Hastad.sum_spectralWeight_le_one
-
-/--
-info: 'Cslib.PCP.Hastad.linearCorr_sq_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.PCP.Hastad.linearCorr_sq_le
-
-/--
-info: 'Cslib.PCP.Hastad.graphLinearCorr_sq_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.PCP.Hastad.graphLinearCorr_sq_le
-
-/--
-info: 'Cslib.PCP.Hastad.gapLabelCover_dichotomy' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.PCP.Hastad.gapLabelCover_dichotomy
 
 end ComplexityTests.Hastad

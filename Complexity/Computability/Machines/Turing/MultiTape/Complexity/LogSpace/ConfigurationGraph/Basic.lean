@@ -15,7 +15,9 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.LogS
 # Compact configuration graph: local arithmetic
 
 The graph stores no input word. A vertex is a fixed tuple of natural registers packed in a radix
-`(n+2)^D`: the input position, control, output summary, and three registers per work tape.
+`B`: the input position, control, output summary, and three registers per work tape. Logarithmic
+space uses the radix `(n+2)^D` (`Turing.MultiTapeNTM.ConfigurationGraph.radix`); larger space
+bounds use larger radices.
 An edge consults at most the input bit at `queryIndex`; the supplied symbol is ignored at the
 blank boundaries. The transition table is fixed independently of `n`.
 
@@ -29,6 +31,7 @@ emission after either nonempty output tag gives the rejecting tag.
 * `Turing.MultiTapeNTM.ConfigurationGraph.queryIndex`: the only requested input-bit position.
 * `Turing.MultiTapeNTM.ConfigurationGraph.edgeWithSymbol`: guarded local edge query.
 * `Turing.MultiTapeNTM.ConfigurationGraph.bad`: accepting halted vertices.
+* `Turing.MultiTapeNTM.ConfigurationGraph.overflow`: vertices whose source step leaves the radix.
 
 ## References
 
@@ -71,27 +74,28 @@ noncomputable def registers (v : FiniteCfg k Bool State) : Register k → ℕ
   | .left i => stackCode (v.workTapes i).left
   | .right i => stackCode (v.workTapes i).right
 
-/-- The runtime radix; the exponent is fixed with the source machine and its space constant. -/
+/-- The radix `(n+2)^D` used in logarithmic space, with an exponent fixed with the source machine
+and its space constant. -/
 def radix (D n : ℕ) : ℕ := (n + 2) ^ D
 
-/-- Number of vertices in the ambient graph, including invalid IDs. -/
-def vertexBound (D n : ℕ) : ℕ := radix D n ^ Fintype.card (Register k)
+/-- Number of vertices in the ambient graph of radix `B`, including invalid IDs. -/
+def vertexBound (B : ℕ) : ℕ := B ^ Fintype.card (Register k)
 
 /-- All components fit below the radix. -/
 def Fits (B : ℕ) (r : Register k → ℕ) : Prop := ∀ i, r i < B
 
 /-- Packed input-free configuration ID. -/
-noncomputable def vertexID (D : ℕ) (v : FiniteCfg k Bool State) : ℕ :=
-  Cslib.Radix.pack (radix D v.input.length) (registers v)
+noncomputable def vertexID (B : ℕ) (v : FiniteCfg k Bool State) : ℕ :=
+  Cslib.Radix.pack B (registers v)
 
 /-- Read the registers of an arbitrary ID. -/
-noncomputable def readRegisters (D n u : ℕ) : Register k → ℕ :=
-  Cslib.Radix.component (radix D n) u
+noncomputable def readRegisters (B u : ℕ) : Register k → ℕ :=
+  Cslib.Radix.component B u
 
 /-- The input bit to request, in the native zero-based word indexing. Boundary requests are
 ignored by `inputSymbol`; the right boundary may request the absent bit at `n`. -/
-noncomputable def queryIndex (D n u : ℕ) : ℕ :=
-  readRegisters (k := k) D n u .inputPos - 1
+noncomputable def queryIndex (B u : ℕ) : ℕ :=
+  readRegisters (k := k) B u .inputPos - 1
 
 /-- Force blank at both boundaries; otherwise use the one externally supplied input symbol. -/
 def inputSymbol (n p : ℕ) (symbol : Option Bool) : Option Bool :=
@@ -142,9 +146,9 @@ theorem mem_instructions (ntm : MultiTapeNTM k Bool State) (t : Instruction k St
 
 /-- Syntactic validity of an ID. All ternary stack naturals are canonical; only finite tags,
 input geometry, and the overall bound require guards. -/
-noncomputable def valid (D n u : ℕ) : Bool :=
-  let r := readRegisters (k := k) D n u
-  decide (u < vertexBound (k := k) D n) && decide (r .inputPos < n + 2) &&
+noncomputable def valid (B n u : ℕ) : Bool :=
+  let r := readRegisters (k := k) B u
+  decide (u < vertexBound (k := k) B) && decide (r .inputPos < n + 2) &&
     decide (r .control < Fintype.card (Option State)) && decide (r .output < 3) &&
     (List.ofFn fun i : Fin k => decide (r (.head i) < 3)).all id
 
@@ -161,32 +165,44 @@ noncomputable def fitsB (B : ℕ) (r : Register k → ℕ) : Bool :=
 
 /-- One actual input read suffices for this edge predicate. The work is arithmetic on the short
 stored arguments and a fixed finite transition table. -/
-noncomputable def edgeWithSymbol (ntm : MultiTapeNTM k Bool State) (D n u v : ℕ)
+noncomputable def edgeWithSymbol (ntm : MultiTapeNTM k Bool State) (B n u v : ℕ)
     (symbol : Option Bool) : Bool :=
-  let B := radix D n
-  let r := readRegisters (k := k) D n u
-  valid (k := k) (State := State) D n u && valid (k := k) (State := State) D n v &&
+  let r := readRegisters (k := k) B u
+  valid (k := k) (State := State) B n u && valid (k := k) (State := State) B n v &&
     ((decide (r .control = stateCode (none : Option State)) && decide (v = u)) ||
       (instructions ntm).any fun t =>
         matchesEntry n r symbol t && fitsB B (nextRegisters n r t.2.2.2) &&
           decide (v = Cslib.Radix.pack B (nextRegisters n r t.2.2.2)))
 
 /-- Accepting halted vertices, the bad set for complement reachability. -/
-noncomputable def bad (D n u : ℕ) : Bool :=
-  let r := readRegisters (k := k) D n u
-  valid (k := k) (State := State) D n u && decide (r .control = stateCode (none : Option State)) &&
+noncomputable def bad (B n u : ℕ) : Bool :=
+  let r := readRegisters (k := k) B u
+  valid (k := k) (State := State) B n u && decide (r .control = stateCode (none : Option State)) &&
     decide (r .output = 1)
 
-/-- The start vertex depends only on input length, since initial storage is blank. -/
-noncomputable def startID (ntm : MultiTapeNTM k Bool State) (D n : ℕ) : ℕ :=
-  Cslib.Radix.pack (radix D n) fun i : Register k => match i with
+/-- Vertices with a matching transition whose successor overflows the radix. These are the
+represented views from which the source leaves the graph of radix `B`. -/
+noncomputable def overflow (ntm : MultiTapeNTM k Bool State) (B n u : ℕ)
+    (symbol : Option Bool) : Bool :=
+  let r := readRegisters (k := k) B u
+  valid (k := k) (State := State) B n u &&
+    (instructions ntm).any fun t =>
+      matchesEntry n r symbol t && !fitsB B (nextRegisters n r t.2.2.2)
+
+/-- The start vertex depends only on the radix, since initial storage is blank. -/
+noncomputable def startID (ntm : MultiTapeNTM k Bool State) (B : ℕ) : ℕ :=
+  Cslib.Radix.pack B fun i : Register k => match i with
     | .inputPos => 1
     | .control => stateCode (some ntm.q₀)
     | _ => 0
 
 /-- The graph on an actual input; it reads no other bit than `queryIndex`. -/
-def Edge (ntm : MultiTapeNTM k Bool State) (D : ℕ) (w : List Bool)
+def Edge (ntm : MultiTapeNTM k Bool State) (B : ℕ) (w : List Bool)
     (u v : ℕ) : Prop :=
-  edgeWithSymbol ntm D w.length u v w[queryIndex (k := k) D w.length u]? = true
+  edgeWithSymbol ntm B w.length u v w[queryIndex (k := k) B u]? = true
+
+/-- The overflow test on an actual input, reading the bit at `queryIndex`. -/
+def Overflow (ntm : MultiTapeNTM k Bool State) (B : ℕ) (w : List Bool) (u : ℕ) : Prop :=
+  overflow ntm B w.length u w[queryIndex (k := k) B u]? = true
 
 end Turing.MultiTapeNTM.ConfigurationGraph

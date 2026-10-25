@@ -7,8 +7,10 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
+public import Complexity.Foundations.Data.BitString.Flip
 public import Complexity.Foundations.Data.BitString.Threshold
 public import Complexity.Foundations.Data.BitString.Parity
+import Complexity.Foundations.Data.Hamming
 
 /-!
 # The Hamming geometry of the Boolean cube
@@ -61,6 +63,9 @@ is.
 * `Cslib.BitString.two_mul_hammingDist_proj`, `Cslib.BitString.hammingDist_proj_div`,
   `Cslib.BitString.two_mul_hammingDist_add_proj`: projections and their shifts are half the cube
   apart.
+* `Cslib.BitString.hammingDist_flip_self`, `Cslib.BitString.hammingDist_le_flip_add_one`,
+  `Cslib.BitString.hammingDist_flip_le_add_one`, `Cslib.BitString.hammingDist_flip_eq_add_one`:
+  effect of flipping one coordinate on Hamming distance.
 
 ## References
 
@@ -283,6 +288,45 @@ theorem two_mul_hammingDist_add_proj (f : (ι → Bool) → Bool) {i j : ι} (hi
     2 * hammingDist (f + fun x => x i) (f + fun x => x j) = 2 ^ Fintype.card ι := by
   rw [hammingDist_add_left]
   exact two_mul_hammingDist_proj hij
+
+/-! ### Coordinate flips -/
+
+/-- Flipping one coordinate yields an input at Hamming distance `1` from the original. -/
+theorem hammingDist_flip_self (x : ι → Bool) (i : ι) :
+    hammingDist x (flipOn {i} x) = 1 := by
+  rw [flipOn_singleton, hammingDist_update_of_ne (by simp)]
+
+/-- A one-bit flip decreases the Hamming distance to any `z` by at most one:
+`hammingDist x z ≤ hammingDist (flipOn {i} x) z + 1`. -/
+theorem hammingDist_le_flip_add_one (x z : ι → Bool) (i : ι) :
+    hammingDist x z ≤ hammingDist (flipOn {i} x) z + 1 := by
+  have h := hammingDist_triangle x (flipOn {i} x) z
+  rw [hammingDist_flip_self] at h
+  omega
+
+/-- A one-bit flip increases the Hamming distance to any `z` by at most one:
+`hammingDist (flipOn {i} x) z ≤ hammingDist x z + 1`. -/
+theorem hammingDist_flip_le_add_one (x z : ι → Bool) (i : ι) :
+    hammingDist (flipOn {i} x) z ≤ hammingDist x z + 1 := by
+  have h := hammingDist_triangle (flipOn {i} x) x z
+  rw [hammingDist_comm (flipOn {i} x) x, hammingDist_flip_self] at h
+  omega
+
+/-- If `x i = z i`, flipping coordinate `i` of `x` increases the Hamming distance to `z`
+by exactly one. -/
+theorem hammingDist_flip_eq_add_one (x z : ι → Bool) (i : ι)
+    (hi : x i = z i) :
+    hammingDist (flipOn {i} x) z = hammingDist x z + 1 := by
+  have h : (Finset.univ.filter fun j => flipOn {i} x j ≠ z j) =
+      insert i (Finset.univ.filter fun j => x j ≠ z j) := by
+    ext j
+    by_cases hj : j = i
+    · subst j
+      cases hx : x i <;> simp_all [flipOn_apply]
+    · simp [flipOn_apply, hj]
+  rw [hammingDist, h, Finset.card_insert_of_notMem]
+  · rfl
+  · simp [hi]
 
 end Fintype
 

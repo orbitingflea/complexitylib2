@@ -63,19 +63,4 @@ example : ([] : List Bool).countP (· == true) = 0 := rfl
 example : ([] : List Bool).any (· == true) = false := rfl
 example : ([] : List Bool).all (· == true) = true := rfl
 
-/-- info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.countPWith' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.countPWith
-
-/-- info: 'ComplexityTests.PolyTimeScans.raw_count' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms raw_count
-
-/-- info: 'ComplexityTests.PolyTimeScans.framed_count' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms framed_count
-
 end ComplexityTests.PolyTimeScans

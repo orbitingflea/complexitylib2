@@ -127,22 +127,4 @@ example : P.acceptedTranscript S (A, T) ![true] (some (![2], ![1, 0])) = 25⁻¹
   rw [← h]
   exact simulate_apply
 
-/-! ### Axioms -/
-
-/--
-info: 'Cslib.Crypto.Protocols.SigmaProtocol.lyubashevsky_specialSoundness' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms lyubashevsky_specialSoundness
-
-/--
-info: 'Cslib.Crypto.Protocols.SigmaProtocol.lyubashevsky_nonAbortSpecialHVZK' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms lyubashevsky_nonAbortSpecialHVZK
-
-
-
 end ComplexityTests.Crypto.Lyubashevsky

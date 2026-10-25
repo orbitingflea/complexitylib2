@@ -12,8 +12,7 @@ import Complexity.Computability.MCSP.Basic
 # Tests for Kannan's theorem
 
 The parameters of Kannan's language on concrete lengths, truth tables read as functions, the `Σ₃`
-verifier on concrete certificates, non-vacuity of the circuit classes the theorem escapes, and axiom
-checks for the headline results.
+verifier on concrete certificates, and non-vacuity of the circuit classes the theorem escapes.
 -/
 
 namespace Cslib.Complexity.Tests.Kannan
@@ -38,9 +37,30 @@ example : MCSP.tableFunction 2 [false, true, true, false] ![true, false] = true 
 example : MCSP.tableFunction 2 [false, true, true, false] ![true, true] = false := by decide
 example : Kannan.table 0 0 (List.replicate 10 true) = List.replicate 8 true := by decide
 
--- GapMCSP bundles `GapMCSP.yes`, `GapMCSP.no`, and `GapMCSP.disjoint_yes_no` as a `PromiseProblem`.
-example (s : ℕ → ℕ) (n : ℕ) :
-    GapMCSP s s n le_rfl = PromiseProblem.ofSet (GapMCSP.yes s n) := by simp
+-- Words whose length is not a power of two belong to neither side of GapMCSP.
+example (s : ℕ → ℕ) : [true, false, true] ∉ (GapMCSP s s fun _ => le_rfl).yes := by
+  rintro ⟨n, hn, -⟩
+  match n with
+  | 0 => revert hn; decide
+  | 1 => revert hn; decide
+  | k + 2 =>
+    have h : 3 < 2 ^ (k + 2) :=
+      calc 3 < 2 ^ 2 := by decide
+      _ ≤ 2 ^ (k + 2) := Nat.pow_le_pow_right (by omega) (by omega)
+    revert hn
+    exact ne_of_lt (by simpa using h)
+
+example (s : ℕ → ℕ) : [true, false, true] ∉ (GapMCSP s s fun _ => le_rfl).no := by
+  rintro ⟨n, hn, -⟩
+  match n with
+  | 0 => revert hn; decide
+  | 1 => revert hn; decide
+  | k + 2 =>
+    have h : 3 < 2 ^ (k + 2) :=
+      calc 3 < 2 ^ 2 := by decide
+      _ ≤ 2 ^ (k + 2) := Nat.pow_le_pow_right (by omega) (by omega)
+    revert hn
+    exact ne_of_lt (by simpa using h)
 
 example : BitString.binaryValue [true, false, true] = 5 := by decide
 example {u v : List Bool} (hlen : u.length = v.length)
@@ -96,74 +116,5 @@ example (k c : ℕ) : ¬∀ L : Language Bool, (L : Set (List Bool)) ∈ SigmaP 
     L ∈ SIZE fun n => c * (n + 1) ^ k := fun h =>
   let ⟨L, hL, hS⟩ := exists_mem_SigmaP_two_notMem_SIZE k
   hS c (h L hL)
-
-/-! ### Axioms -/
-
-/--
-info: 'Cslib.Complexity.mem_NP_image' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Complexity.mem_NP_image
-
-/--
-info: 'Cslib.Complexity.image_SAT_mem_NP' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Complexity.image_SAT_mem_NP
-
-/--
-info: 'Cslib.MCSP.mem_of_verifier_eq_true' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.MCSP.mem_of_verifier_eq_true
-
-/--
-info: 'Cslib.MCSP.exists_verifier_append' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.MCSP.exists_verifier_append
-
-/--
-info: 'Cslib.MCSP.computableInPolyTime_tableVerifier' depends on axioms:
-  [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.MCSP.computableInPolyTime_tableVerifier
-
-/--
-info: 'Cslib.MCSP.complexity_le_of_tableVerifier' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.MCSP.complexity_le_of_tableVerifier
-
-/--
-info: 'Cslib.MCSP.exists_tableVerifier_append' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.MCSP.exists_tableVerifier_append
-
-/--
-info: 'Cslib.GapMCSP' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.GapMCSP
-
-/--
-info: 'Cslib.Complexity.Kannan.language_notMem_SIZE' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Complexity.Kannan.language_notMem_SIZE
-
-/--
-info: 'Cslib.Complexity.Kannan.language_mem_SigmaP_three' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Complexity.Kannan.language_mem_SigmaP_three
-
-/--
-info: 'Cslib.Complexity.exists_mem_SigmaP_two_notMem_SIZE' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Complexity.exists_mem_SigmaP_two_notMem_SIZE
 
 end Cslib.Complexity.Tests.Kannan

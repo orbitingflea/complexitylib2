@@ -318,25 +318,4 @@ example : {xs : List Bool | xs = []} ∈ Cslib.Complexity.PSPACE (encList (encFi
   intro xs i k
   simpa only [Equiv.refl_symm, Equiv.coe_refl, id_eq, List.map_id] using empty_bound xs i k
 
-/--
-info: 'Turing.TM2.exists_exponential_clock' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.TM2.exists_exponential_clock
-
-/--
-info: 'Turing.TM2Computable.computableTidilyInPolySpace' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.TM2Computable.computableTidilyInPolySpace
-
-/--
-info: 'Cslib.Complexity.mem_PSPACE_of_tm2' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.mem_PSPACE_of_tm2
-
 end ComplexityTests.MathlibTM2Space

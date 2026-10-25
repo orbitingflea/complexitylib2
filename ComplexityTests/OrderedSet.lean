@@ -101,20 +101,4 @@ example : (bounded 4).valid ∅ (.contains 99) := trivial
 example : (bounded 4).valid ∅ (.successor 99) := trivial
 example : (spec Nat).valid ∅ (.insert 99) := trivial
 
-/--
-info: 'Cslib.OrderedSet.least_spec' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.OrderedSet.least_spec
-/--
-info: 'Cslib.OrderedSet.LeastResult.eq_least' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.OrderedSet.LeastResult.eq_least
-/--
-info: 'Cslib.OrderedSet.insertAll_run' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.OrderedSet.insertAll_run
-
 end ComplexityTests.OrderedSet

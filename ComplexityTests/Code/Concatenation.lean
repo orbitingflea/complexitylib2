@@ -15,8 +15,7 @@ import Mathlib.FieldTheory.Finite.Basic
 The Reed–Solomon code of dimension two over `ZMod 5`, of minimum distance four, concatenated with
 an inner binary code of length four that encodes the five letters as words of even weight, at
 pairwise distance two: a binary code of length twenty and minimum distance at least eight. The
-distance of two concatenated words is the sum over their blocks. The axioms of the headline
-theorems.
+distance of two concatenated words is the sum over their blocks.
 -/
 
 namespace ComplexityTests.Code.Concatenation
@@ -55,20 +54,5 @@ example (c c' : Fin 5 → ZMod 5) :
     hammingDist (concat inner c) (concat inner c') =
       ∑ i, hammingDist (inner (c i)) (inner (c' i)) :=
   hammingDist_concat inner c c'
-
-/-! ### Axioms of the headline theorems -/
-
-/--
-info: 'Cslib.Code.hammingDist_concat' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Code.hammingDist_concat
-
-/--
-info: 'Cslib.Code.le_minDist_image_concat' depends on axioms: [propext, Classical.choice,
-Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Code.le_minDist_image_concat
 
 end ComplexityTests.Code.Concatenation

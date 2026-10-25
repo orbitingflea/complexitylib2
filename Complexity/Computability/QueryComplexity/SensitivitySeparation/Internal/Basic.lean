@@ -153,19 +153,6 @@ theorem le_blockSensitivityAt_of_family [Fintype K]
       exact ⟨hne k, hb k⟩)
   simpa only [Finset.card_image_of_injective _ hinj, Finset.card_univ] using hcard
 
-omit [Fintype I] in
-open scoped Classical in
-/-- Over a finite index type, a function invariant under every single-coordinate flip
-is constant. -/
-theorem eq_of_singleton_invariant [Finite I] (f : (I → Bool) → Bool)
-    (h : ∀ x i, f (BitString.flipOn {i} x) = f x) (x y : I → Bool) : f x = f y := by
-  have := Fintype.ofFinite I
-  have hflip (B : Finset I) : f (BitString.flipOn B x) = f x := by
-    induction B using Finset.induction with
-    | empty => simp
-    | @insert i B hi ih => rw [BitString.flipOn_insert hi, h, ih]
-  rw [← BitString.flipOn_filter_ne x y, hflip]
-
 /-- A function taking two different values has positive sensitivity. -/
 theorem sensitivity_pos_of_nonconstant (f : (I → Bool) → Bool)
     (h : ∃ x y, f x ≠ f y) : 0 < sensitivity f := by
@@ -176,7 +163,7 @@ theorem sensitivity_pos_of_nonconstant (f : (I → Bool) → Bool)
     apply (sensitivityAt_eq_zero_iff f x).mp _ i
     exact Nat.eq_zero_of_le_zero ((sensitivityAt_le_sensitivity f x).trans_eq hz)
   obtain ⟨x, y, hxy⟩ := h
-  exact hxy (eq_of_singleton_invariant f hi x y)
+  exact hxy (BitString.eq_of_singleton_invariant f hi x y)
 
 end Finite
 end Internal

@@ -13,7 +13,7 @@ Concrete values of `detRows`, checked by the kernel and compiled: nonsingular an
 dimension zero and a ragged input. The correctness theorem is instantiated, and used to compute a
 `Matrix.det`; the stage bounds are instantiated on a concrete input, so their hypotheses are
 satisfiable; and the polynomial-time certificate `detRows_polytime` is checked directly and under
-`fun_prop` composition. Axiom guards cover the headline theorems.
+`fun_prop` composition.
 -/
 
 namespace ComplexityTests.RationalHitting.Determinant
@@ -98,63 +98,5 @@ example {i k : ℕ} (hik : i ≤ k) :
       stageTableBound
         (encList (encList encIntBin) [[2, -1, 0], [1, 3, 2], [0, 1, 4]]).length k :=
   length_encList_stagesRows_le _ hik
-
-/-! ### Axioms -/
-
-/--
-info: 'Cslib.Circuits.Rational.detRows_polytime' depends on axioms: [propext, Classical.choice,
-Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms detRows_polytime
-
-/--
-info: 'Cslib.Circuits.Rational.length_encList_stagesRows_le' depends on axioms: [propext,
-Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms length_encList_stagesRows_le
-
-/--
-info: 'Cslib.Circuits.Rational.detRows_eq' depends on axioms: [propext, Classical.choice,
-Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms detRows_eq
-
-/--
-info: 'Cslib.Circuits.Rational.detRows_eq_det_ofRows' depends on axioms: [propext, Classical.choice,
-Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms detRows_eq_det_ofRows
-
-/--
-info: 'Cslib.Circuits.Rational.natAbs_rowEntry_stagesRows_lt' depends on axioms: [propext,
-Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms natAbs_rowEntry_stagesRows_lt
-
-/--
-info: 'Cslib.Circuits.Rational.intBits_le_of_mem_stagesRows' depends on axioms: [propext,
-Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms intBits_le_of_mem_stagesRows
-
-/--
-info: 'Cslib.Circuits.Rational.intBits_step_le' depends on axioms: [propext, Classical.choice,
-Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms intBits_step_le
-
-/--
-info: 'Cslib.Circuits.Rational.DeterminantAlgorithm.stages_power_bound' depends on axioms: [propext,
-Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms DeterminantAlgorithm.stages_power_bound
 
 end ComplexityTests.RationalHitting.Determinant

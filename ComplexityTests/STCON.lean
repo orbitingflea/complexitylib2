@@ -17,8 +17,7 @@ the path `0 → 1 → 2` connects `0` to `2`, while the single arc `1 → 0` doe
 first instance and rejects the second (`Cslib.Complexity.STCON.accepts_searchProgram_iff`).
 
 The hardness hypothesis is satisfiable: undirected connectivity, which is in `L`, reduces to
-`STCON` through the configuration graph of its logarithmic-space decider. The headline theorems
-are guarded by `#print axioms`.
+`STCON` through the configuration graph of its logarithmic-space decider.
 -/
 
 namespace ComplexityTests.STCON
@@ -90,32 +89,5 @@ example : LogSpaceReducible encUSTCON encSTCON USTCON STCON :=
 
 example : STCON ∈ L encSTCON ↔ ∀ {α : Type} (enc : α ↪ List Bool), NL enc = L enc :=
   STCON.mem_L_iff_forall_NL_eq_L
-
-/--
-info: 'Cslib.Complexity.STCON.mem_NL' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.STCON.mem_NL
-
-/--
-info: 'Cslib.Complexity.STCON.logSpaceComplete' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.STCON.logSpaceComplete
-
-/--
-info: 'Cslib.Complexity.STCON.compl_logSpaceComplete' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.STCON.compl_logSpaceComplete
-
-/--
-info: 'Cslib.Complexity.STCON.mem_L_iff_forall_NL_eq_L' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.STCON.mem_L_iff_forall_NL_eq_L
 
 end ComplexityTests.STCON

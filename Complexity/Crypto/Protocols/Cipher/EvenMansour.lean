@@ -95,10 +95,11 @@ We formalize four aspects of the Even–Mansour construction:
   `Cslib.Crypto.EvenMansour.advantage_postWhitenKeyRecoveryGame_eq`: 2-query attacks achieve
   key-recovery game advantage `1 - |G|⁻¹` when either whitening key is omitted.
 * `Cslib.Crypto.EvenMansour.evenMansourIdealGame_eq_lazy`,
+  `Cslib.Crypto.EvenMansour.run_idealLazyHandler_good_le_realLazyHandler`,
   `Cslib.Crypto.EvenMansour.advantage_evenMansourRealGame_liftLeft_eq_zero`,
   `Cslib.Crypto.EvenMansour.advantage_evenMansourRealGame_liftRight_eq_zero`: lazy two-permutation
-  equivalence for `evenMansourIdealGame` and zero advantage when queries are restricted to one
-  oracle.
+  equivalence for `evenMansourIdealGame`, lazy coupling inequality, and zero advantage when
+  queries are restricted to one oracle.
 * `Cslib.Crypto.EvenMansour.toOuterMeasure_isBadEvenMansourKey_toReal_le`,
   `Cslib.Crypto.EvenMansour.toOuterMeasure_isBadSingleKeyEvenMansour_toReal_le`,
   `Cslib.Crypto.EvenMansour.IsCallBounded.badEvenMansourKey_toReal_le`,

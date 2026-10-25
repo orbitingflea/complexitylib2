@@ -199,25 +199,4 @@ example : IsPPTOn (encPair encUnary (encPair encBits encBits)) encBool
     (fun p => fixture.guessLink observe p.1 p.2.1 p.2.2) :=
   Scheme.isPPTOn_guessLink encrypt_ppt observe_ppt (by fun_prop) (by fun_prop) (by fun_prop)
 
-/--
-info: 'Cslib.Crypto.Homomorphic.Scheme.eval_linkAdversaryAt' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Scheme.eval_linkAdversaryAt
-
-/--
-info: 'Cslib.Crypto.Homomorphic.Scheme.publicKeyChainHybrid_gap_linkAdversary' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Scheme.publicKeyChainHybrid_gap_linkAdversary
-
-/--
-info: 'Cslib.Crypto.Homomorphic.Scheme.isPPT_linkAdversary' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Scheme.isPPT_linkAdversary
-
 end ComplexityTests.Crypto.KeyChainSecurity

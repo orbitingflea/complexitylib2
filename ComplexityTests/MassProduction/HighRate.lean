@@ -17,7 +17,7 @@ These clients build actual high-rate line codes over the fields with `2`, `4` an
 elements, including the boundary `ℓ = 2 ^ h` and a code of rate above nine tenths, and exercise
 the rate bound at its equality case and where its hypotheses fail. A monomial without a common
 zero digit breaks line parity, and the packing bounds are checked at exact multiples and where
-their positivity hypotheses fail. Axiom checks record the headline dependencies.
+their positivity hypotheses fail.
 -/
 
 namespace ComplexityTests.MassProduction.HighRate
@@ -124,77 +124,5 @@ example : Nonempty (GaloisField 2 3 ≃+ BitString 3) :=
 
 example : ∃ (K : Type) (_ : Field K) (_ : Fintype K), CharP K 2 ∧ Fintype.card K = 2 ^ 5 :=
   exists_field_card_eq_two_pow (by norm_num)
-
-/-! ### Axioms -/
-
-/--
-info: 'Cslib.LineCode.HighRate.exists_lineCode' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms exists_lineCode
-
-/--
-info: 'Cslib.LineCode.HighRate.sum_prod_digits_eq_zero' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms sum_prod_digits_eq_zero
-
-/--
-info: 'Cslib.LineCode.HighRate.sum_prod_add_mul_pow_eq_zero' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms sum_prod_add_mul_pow_eq_zero
-
-/--
-info: 'FiniteField.linearIndependent_prod_pow' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms FiniteField.linearIndependent_prod_pow
-
-/--
-info: 'Cslib.LineCode.exists_card_info_eq_of_linearIndependent' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms exists_card_info_eq_of_linearIndependent
-
-/--
-info: 'Cslib.LineCode.HighRate.retainedDimension_rate' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms retainedDimension_rate
-
-/--
-info: 'Cslib.LineCode.HighRate.mul_packingCopies_mul_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms mul_packingCopies_mul_le
-
-/--
-info: 'Cslib.LineCode.HighRate.nonempty_embedding_packingCopies' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms nonempty_embedding_packingCopies
-
-/--
-info: 'Cslib.nonempty_addEquiv_bitString' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms nonempty_addEquiv_bitString
-
-/--
-info: 'Cslib.exists_field_card_eq_two_pow' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms exists_field_card_eq_two_pow
 
 end ComplexityTests.MassProduction.HighRate

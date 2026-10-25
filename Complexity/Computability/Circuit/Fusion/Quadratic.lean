@@ -38,6 +38,8 @@ through a union tree.
 
 ## Main results
 
+* `Cslib.Circuits.Fusion.PairClosureCompiler.stages_stable`: point pair state stabilizes within
+  the listed pair count.
 * `Cslib.Circuits.Fusion.PairClosureCompiler.readState_stages`: `t` rounds recover the closure.
 * `Cslib.Circuits.Fusion.PairCover.cost_toCircuit`: exactly `t²` AND gates.
 * `Cslib.Circuits.Fusion.PairCover.size_toCircuit_le`: at most `4 (t + 1)² (n + t + 1)` gates.

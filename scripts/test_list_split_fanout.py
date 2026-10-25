@@ -2,7 +2,7 @@
 
 import unittest
 
-from list_split_fanout import PREFIX, TOPICS, fixed_scope_counts
+from list_split_fanout import PREFIX, TOPICS, fixed_scope_counts, transitive_importers
 
 
 class FixedScopeTests(unittest.TestCase):
@@ -18,6 +18,13 @@ class FixedScopeTests(unittest.TestCase):
         self.assertEqual(after["Fold"], 2)  # Original Basic and Client, not NewBridge.
         self.assertEqual(after["Lookup"], 1)
         self.assertEqual(after["Basic"], 0)
+
+    def test_transitive_importers(self):
+        imports = {"A": [], "B": [("A", False)], "C": [("A", True)], "D": [("C", True)],
+                   "E": [("B", True)], "F": [("D", False)]}
+        importers = transitive_importers(imports)
+        self.assertEqual(importers["A"], {"B", "C", "D", "E", "F"})
+        self.assertEqual(importers["D"], {"F"})
 
 
 if __name__ == "__main__":

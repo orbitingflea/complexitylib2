@@ -35,7 +35,11 @@ lengths. No nonuniform choice of a bad length is supplied to the reduction.
 
 ## Main results
 
+* `Cslib.Crypto.GeneratorReindex.parameter_apply_of_strictMono`: exact parameter recovery on the
+  range of a strictly monotone schedule.
 * `Cslib.Crypto.GeneratorReindex.isPolyTime_generate`: uniform machine-backed efficiency.
+* `Cslib.Crypto.GeneratorReindex.indistinguishable`: extending a secure family preserves
+  computational indistinguishability at every seed length.
 * `Cslib.Crypto.GeneratorReindex.pseudorandomGenerator`: one-bit stretch at every seed length.
 
 ## References
@@ -76,6 +80,17 @@ theorem parameter_le (length : ℕ → ℕ) (size : ℕ) : parameter length size
 theorem parameter_fits {length : ℕ → ℕ} {size : ℕ} (hsize : length 0 ≤ size) :
     length (parameter length size) ≤ size :=
   Nat.findGreatest_spec (P := fun n => length n ≤ size) (Nat.zero_le _) hsize
+
+/-- For a strictly monotone schedule `length`, `parameter length (length n) = n`. -/
+@[simp]
+theorem parameter_apply_of_strictMono {length : ℕ → ℕ} (hmono : StrictMono length) (n : ℕ) :
+    parameter length (length n) = n := by
+  apply le_antisymm
+  · by_contra! hlt
+    have hspec : length (parameter length (length n)) ≤ length n :=
+      parameter_fits (hmono.monotone (Nat.zero_le n))
+    exact (hmono hlt).not_ge hspec
+  · exact Nat.le_findGreatest (hmono.id_le n) le_rfl
 
 /-- The next parameter's seed is too large, even when the schedule is not monotone. -/
 theorem lt_length_succ_parameter {length : ℕ → ℕ} (hge : ∀ n, n + 1 ≤ length n) (size : ℕ) :

@@ -5,6 +5,7 @@ Authors: Samuel Schlesinger
 -/
 
 import Complexity.Computability.Complexity.Classes.NP.Witness
+import Complexity.Computability.Complexity.Classes.PH.Kannan
 import Complexity.Computability.Complexity.Problems.Clique
 import Complexity.Computability.Complexity.Problems.SAT.PolyTime
 import Complexity.Computability.Complexity.Problems.ThreeSAT
@@ -17,7 +18,7 @@ import Complexity.Tactic.PolyTime
 A toy witness relation through the builder with a total decoder (even numbers, witnessed by their
 halves), a toy subset problem through the subset builder (lists with `k` distinct entries),
 malformed and boundary certificates, the verifier of `VertexCover` as a subset verifier, unary
-blocks, closure under reductions, and axiom guards.
+blocks, and closure under reductions.
 -/
 
 namespace ComplexityTests.NPWitness
@@ -46,6 +47,11 @@ example : {n | ∃ m, m + m = n} ∈ NP encUnary :=
   mem_NP_of_witness Decoder.unary (p := Polynomial.X) (.of_tidy computableTidilyInPolyTime_isHalf)
     isHalf_iff
     fun _ m h => ⟨m, h, by simp; omega⟩
+
+example : encUnary '' {n | ∃ m, m + m = n} ∈ NP encBits :=
+  mem_NP_image Decoder.unary
+    (mem_NP_of_witness Decoder.unary (p := Polynomial.X)
+      (.of_tidy computableTidilyInPolyTime_isHalf) isHalf_iff fun _ m h => ⟨m, h, by simp; omega⟩)
 
 -- In: the framed witness `2` for `4`, padded to the certificate length `2 * 4 + 1`.
 example : (frame (encUnary 2) ++ List.replicate 4 false).length = 2 * 4 + 1 := rfl
@@ -182,90 +188,5 @@ example : SAT ∈ NP encCNF := polyTimeReducible_SAT_ThreeSAT.mem_NP ThreeSAT.me
 
 example : IndependentSet ∈ NP (encPair encGraph encNat) :=
   polyTimeReducible_IndependentSet_Clique.mem_NP Clique.mem_NP
-
-/-! ### Axioms -/
-
-/--
-info: 'Cslib.Complexity.IsVerifier.of_padding' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.IsVerifier.of_padding
-
-/--
-info: 'Cslib.Complexity.IsVerifier.guard' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.IsVerifier.guard
-
-/--
-info: 'Cslib.Complexity.witnessVerifier_eq_true_iff' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.witnessVerifier_eq_true_iff
-
-/--
-info: 'Cslib.Complexity.isVerifier_witnessVerifier' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.isVerifier_witnessVerifier
-
-/--
-info: 'Cslib.Complexity.mem_NP_of_witness' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.mem_NP_of_witness
-
-/--
-info: 'Cslib.Complexity.isVerifier_subsetVerifier' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.isVerifier_subsetVerifier
-
-/--
-info: 'Cslib.Complexity.mem_NP_of_subsetWitness' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.mem_NP_of_subsetWitness
-
-/--
-info: 'Cslib.Complexity.PolyTimeReducible.mem_NP' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.PolyTimeReducible.mem_NP
-
-/-! ### Migrated problems -/
-
-/--
-info: 'Cslib.Complexity.SAT.isVerifier' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.SAT.isVerifier
-
-/--
-info: 'Cslib.Complexity.SAT.mem_NP' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.SAT.mem_NP
-
-/--
-info: 'Cslib.Complexity.Graph.isVerifier_verifySubset' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.Graph.isVerifier_verifySubset
-
-/--
-info: 'Cslib.Complexity.VertexCover.isVerifier' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.VertexCover.isVerifier
 
 end ComplexityTests.NPWitness

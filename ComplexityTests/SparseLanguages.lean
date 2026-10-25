@@ -62,20 +62,4 @@ example : (0 : Language Bool) ∈ PPoly := by
   simp only [mem_filter, mem_univ, true_and]
   exact fun hx => Language.slice_eq_true_iff.mp hx
 
-/--
-info: 'Cslib.Circuits.Boolean.complexity_slice_le_of_card_le' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Circuits.Boolean.complexity_slice_le_of_card_le
-/--
-info: 'Cslib.Circuits.Boolean.mem_SIZE_of_unary' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Circuits.Boolean.mem_SIZE_of_unary
-/--
-info: 'Cslib.Circuits.Boolean.PPoly.of_sparse' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Circuits.Boolean.PPoly.of_sparse
-
 end ComplexityTests.SparseLanguages

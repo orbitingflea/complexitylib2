@@ -393,7 +393,8 @@ theorem invariant_advance (hsource : source < N) (h : Invariant N edge bad sourc
     · exact invariant_instruction hsource h choice
     · trivial
 
-private theorem invariant_replay (hsource : source < N) (h : Invariant N edge bad source s)
+/-- Every replay of the checked controller preserves the semantic invariant. -/
+theorem invariant_replay (hsource : source < N) (h : Invariant N edge bad source s)
     (bs : List Bool) : Invariant N edge bad source (replay N width source edge bad s bs) := by
   induction bs generalizing s with
   | nil => exact h

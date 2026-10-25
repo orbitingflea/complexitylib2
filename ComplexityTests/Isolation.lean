@@ -162,86 +162,9 @@ example : 1 / 2 ≤ Finset.dens (Finset.univ.filter fun w : Fin 2 → Fin 4 =>
 /-! ### Axioms -/
 
 /--
-info: 'Cslib.Complexity.ValiantVazirani.computableInPolyTime_reduce' depends on axioms:
-  [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.ValiantVazirani.computableInPolyTime_reduce
-
-/--
 info: 'Cslib.Complexity.ValiantVazirani.reduce_mem_UNSAT' depends on axioms: [propext]
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Complexity.ValiantVazirani.reduce_mem_UNSAT
-
-/--
-info: 'Cslib.Complexity.ValiantVazirani.three_mul_two_pow_le_card_reduce_mem_USAT' depends on
-  axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.ValiantVazirani.three_mul_two_pow_le_card_reduce_mem_USAT
-
-/--
-info: 'Cslib.Complexity.NP_subset_RPWithPromiseOracle_PromiseUSAT' depends on axioms:
-  [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.NP_subset_RPWithPromiseOracle_PromiseUSAT
-
-/--
-info: 'Cslib.Complexity.NP_subset_RPWithOracle_USAT' depends on axioms:
-  [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.NP_subset_RPWithOracle_USAT
-
-/--
-info: 'Cslib.Complexity.computableInPolyTimeWithOracle_any_mem' depends on axioms:
-  [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.computableInPolyTimeWithOracle_any_mem
-
-/--
-info: 'Cslib.Complexity.PromiseUSAT_mem_PromiseNP' depends on axioms:
-  [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.PromiseUSAT_mem_PromiseNP
-
-/--
-info: 'Cslib.Probability.dens_minWeightSets_card_ne_one_le' depends on axioms:
-  [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Probability.dens_minWeightSets_card_ne_one_le
-
-/--
-info: 'Cslib.Probability.one_sub_le_dens_minWeightSets_card_eq_one' depends on axioms:
-  [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Probability.one_sub_le_dens_minWeightSets_card_eq_one
-
-/--
-info: 'Cslib.Complexity.RPWithPromiseOracle_subset_RPWithOracle' depends on axioms:
-  [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.RPWithPromiseOracle_subset_RPWithOracle
-
-/--
-info: 'Cslib.Complexity.ValiantVazirani.three_div_le_dens_reduce_mem_USAT' depends on axioms:
-  [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.ValiantVazirani.three_div_le_dens_reduce_mem_USAT
-
-/--
-info: 'Cslib.Probability.half_le_dens_minWeightSets_card_eq_one' depends on axioms:
-  [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Probability.half_le_dens_minWeightSets_card_eq_one
 
 end ComplexityTests.Isolation

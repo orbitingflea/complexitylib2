@@ -71,6 +71,7 @@ Let `P ⊆ Fin m` and `H ⊆ Fin n` be sets of remaining pigeons and holes with 
 
 * `Cslib.Logic.PL.Pigeonhole.exists_le_card_satPairs`: every refutation of `pigeonholeOn P H`
   (with `#P = #H + 1`) has a line `c` with `2 (#H)² ≤ 9 #(satPairs P H c)`.
+* `Cslib.Logic.PL.CNF.exists_le_card_satPairs_pigeonhole`: the same bound on `PHP^{n+1}_n`.
 * `Cslib.Logic.PL.CNF.pow_le_mul_of_refutableInSize_pigeonhole`: for `n ≥ 8`, every resolution
   refutation of `PHP^{n+1}_n` of `s` lines satisfies `12 ^ (n / 3) ≤ 11 ^ (n / 3) · s`.
 * `Cslib.Logic.PL.CNF.two_pow_le_of_refutableInSize_pigeonhole`,

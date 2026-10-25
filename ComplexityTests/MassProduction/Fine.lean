@@ -11,8 +11,8 @@ import Complexity.Computability.Circuit.Boolean.MassProduction.FineParameters
 # Fine mass-production clients
 
 These clients evaluate the parameter choices at concrete lengths, exercise the boundary of the
-floor budget and the copy depth, check the slack and suffix-fraction inequalities at concrete
-values, and record the axioms of the headline statements.
+floor budget and the copy depth, and check the slack and suffix-fraction inequalities at concrete
+values.
 -/
 
 namespace ComplexityTests.MassProduction.Fine
@@ -87,77 +87,5 @@ example : ∃ cutoff : ℕ, ∀ n, cutoff ≤ n → ∀ (f : (Fin n → Bool) �
     (k : ℝ) ≤ (2 : ℝ) ^ ((99 / 100 : ℝ) * n) → ∃ bound : ℕ, massComplexity f k ≤ bound ∧
       (bound : ℝ) ≤ (1 / (1 - 99 / 100) + 1) * ((2 : ℝ) ^ n / n) :=
   realFineMassProduction _ (by norm_num) (by norm_num) 1 (by norm_num)
-
-/-! ### Axioms -/
-
-/--
-info: 'Cslib.Circuits.Boolean.MassProduction.fineMassProducesThrough' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms fineMassProducesThrough
-
-/--
-info: 'Cslib.Circuits.Boolean.MassProduction.exponentialMassProduction' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms exponentialMassProduction
-
-/--
-info: 'Cslib.Circuits.Boolean.MassProduction.realFineMassProduction' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms realFineMassProduction
-
-/--
-info: 'Cslib.Circuits.Boolean.MassProduction.schedulerSizeBound' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms schedulerSizeBound
-
-/--
-info: 'Cslib.Circuits.Boolean.MassProduction.fineMassProducesThrough_of_bounds' depends on
-axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms fineMassProducesThrough_of_bounds
-
-/--
-info: 'Cslib.Circuits.Boolean.MassProduction.exists_complexity_le_of_bounds' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms exists_complexity_le_of_bounds
-
-/--
-info: 'Cslib.Circuits.Boolean.MassProduction.pipelineSizeBound' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms pipelineSizeBound
-
-/--
-info: 'Cslib.Circuits.Boolean.MassProduction.realFineMassProduction_of_fine' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms realFineMassProduction_of_fine
-
-/--
-info: 'Cslib.Circuits.Boolean.MassProduction.exponentialMassProduction_of_fine' depends on
-axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms exponentialMassProduction_of_fine
-
-/--
-info: 'Cslib.Circuits.Boolean.MassProduction.Fine.eventually_overhead_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Fine.eventually_overhead_le
 
 end ComplexityTests.MassProduction.Fine

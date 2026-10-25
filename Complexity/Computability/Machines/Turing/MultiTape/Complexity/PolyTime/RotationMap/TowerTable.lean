@@ -30,6 +30,9 @@ in `Computability/Machines/Turing/MultiTape/Complexity/PolyTime/RotationMap/Towe
 
 ## Main results
 
+* `Cslib.RotationMap.TowerTable.Valid.lookup_lt`,
+  `Cslib.RotationMap.TowerTable.lookup_iterate_numbered`: neighbor range preservation and numbered
+  tower agreement.
 * `Cslib.RotationMap.TowerTable.valid_iterate`: every stored neighbor remains in range.
 * `Cslib.RotationMap.TowerTable.lookup_build`: exact agreement with the numbered tower.
 

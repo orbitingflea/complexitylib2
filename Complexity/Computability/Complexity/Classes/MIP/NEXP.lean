@@ -84,6 +84,9 @@ and the arithmetization of `NEXP` verification tableaux) is not formalized here 
 
 ## Main results
 
+* `Cslib.Complexity.MIP.exists_checkCert_of_detProver`,
+  `Cslib.Complexity.MIP.exists_detProver_of_checkCert`: completeness and soundness of `checkCert`
+  against families of deterministic provers.
 * `Cslib.Complexity.MIP_subset_NEXP`: `MIP ⊆ NEXP`.
 * `Cslib.Complexity.MIP₂_subset_NEXP`: `MIP₂ ⊆ NEXP`.
 
@@ -783,9 +786,10 @@ theorem exists_detProver_of_checkCert {c d : ℕ} {x : List Bool} {cert : Cert}
         Finset.sum_le_univ_sum_of_nonneg fun _ => zero_le
 
 omit [Finite Control] in
-/-- Upper bound on the encoded length of the canonical certificate built from
-`D : Fin p → DetProver` for `M` on `x` with `t` coins:
-`(encCert cert).length ≤ 32 * (p + x.length + t + 1) ^ 2 * 2 ^ t`. -/
+/-- **Completeness of `checkCert`**: if a family `D : Fin p → DetProver` of deterministic provers
+makes `M` accept `x` on more than half of the `t = c * (x.length + 1) ^ d` coin strings, then
+the canonical certificate built from `D` passes `checkCert`, and its encoded length is at most
+`32 * (p + x.length + t + 1) ^ 2 * 2 ^ t`. -/
 theorem exists_checkCert_of_detProver {c d : ℕ} (x : List Bool) (D : Fin p → DetProver)
     (hlt : 2 ^ (c * (x.length + 1) ^ d) <
       2 * ((Finset.univ : Finset (Fin (c * (x.length + 1) ^ d) → Bool)).filter fun f =>

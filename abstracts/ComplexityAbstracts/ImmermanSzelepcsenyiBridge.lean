@@ -7,6 +7,7 @@ Authors: Samuel Schlesinger
 -- upstream: local-only (formal abstract library)
 
 import Complexity.Computability.Complexity.Classes.LogSpace.Complement
+import Complexity.Computability.Complexity.Classes.Space.Nondeterministic
 import Complexity.Computability.Complexity.Problems.STCON.Completeness
 import Mathlib.Data.List.OfFn
 
@@ -33,6 +34,19 @@ def NL {α : Type} (enc : α ↪ List Bool) : Set (Set α) :=
 
 /-- The complements of the problems in `NL`, with the same encoding. -/
 def coNL {α : Type} (enc : α ↪ List Bool) : Set (Set α) := {A | Aᶜ ∈ NL enc}
+
+/-- Nondeterministic space `O(s n)`, with one fixed finite-state machine. -/
+def NSPACE {α : Type} (enc : α ↪ List Bool) (s : ℕ → ℕ) : Set (Set α) :=
+  {A | ∃ (k : ℕ) (State : Type) (_ : Finite State) (M : Turing.MultiTapeNTM k Bool State)
+    (c₁ c₂ : ℕ), DecidesInSpace M enc A fun a => c₁ * s (enc a).length + c₂}
+
+/-- The complements of the problems in `NSPACE enc s`, with the same encoding. -/
+def coNSPACE {α : Type} (enc : α ↪ List Bool) (s : ℕ → ℕ) : Set (Set α) :=
+  {A | Aᶜ ∈ NSPACE enc s}
+
+theorem nspace_eq_conspace {α : Type} (enc : α ↪ List Bool) (s : ℕ → ℕ)
+    (hs : ∀ n, Nat.log2 n ≤ s n) : NSPACE enc s = coNSPACE enc s :=
+  Cslib.Complexity.NSPACE_eq_coNSPACE hs
 
 theorem nl_eq {α : Type} (enc : α ↪ List Bool) : NL enc = Cslib.Complexity.NL enc := rfl
 

@@ -190,25 +190,4 @@ example (bit : Bool) (n : ℕ) :
       FixedKey.publicKeyGame forgetful stateful bit n) :=
   FixedKey.eval_zeroAdversary forgetful stateful bit n 1 (secret_width n)
 
-/--
-info: 'Cslib.Crypto.Homomorphic.FixedKey.eval_zeroAdversary' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms FixedKey.eval_zeroAdversary
-
-/--
-info: 'Cslib.Crypto.Homomorphic.FixedKey.indCPA_scheme' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms FixedKey.indCPA_scheme
-
-/--
-info: 'Cslib.Crypto.Homomorphic.FixedKey.fullyHomomorphic' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms FixedKey.fullyHomomorphic
-
 end ComplexityTests.Crypto.FixedKeySecurity

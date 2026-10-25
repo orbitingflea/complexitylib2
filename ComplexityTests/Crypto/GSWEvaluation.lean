@@ -144,36 +144,3 @@ example : IsPPTOn
   ppt
 
 end ComplexityTests.GSWEvaluation
-
-open Cslib.Crypto.Homomorphic.GSW
-
-/--
-info: 'Cslib.Crypto.Homomorphic.GSW.decryptSerialized_eq' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms decryptSerialized_eq
-/--
-info: 'Cslib.Crypto.Homomorphic.GSW.nandSerialized_eq' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms nandSerialized_eq
-/--
-info: 'Cslib.Crypto.Homomorphic.GSW.keyGenSerialized_nand_correct' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms keyGenSerialized_nand_correct
-/--
-info: 'Cslib.Crypto.Homomorphic.GSW.computableInPolyTime_decryptSerialized' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms computableInPolyTime_decryptSerialized
-/--
-info: 'Cslib.Crypto.Homomorphic.GSW.computableInPolyTime_nandSerialized' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms computableInPolyTime_nandSerialized

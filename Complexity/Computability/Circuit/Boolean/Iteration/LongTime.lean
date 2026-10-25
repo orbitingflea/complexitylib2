@@ -89,7 +89,7 @@ theorem toNat_compressedTime (f : BitString n → BitString n) (x : BitString n)
         ((word bits).toNat - 2 ^ n) % cycleLength f x := by
       rw [toNat_subMod _ _ _ (by omega) hw, hr, hell, BitVec.toNat_ofNat,
         Nat.mod_eq_of_lt (by omega : 2 ^ n < 2 ^ (n + 3))]
-      apply add_sub_mod_mod_eq_of_modEq hp (Nat.mod_lt _ hp)
+      apply Nat.add_sub_mod_mod_eq_of_modEq hp (Nat.mod_lt _ hp)
       calc ((word bits).toNat - 2 ^ n) % cycleLength f x + 2 ^ n
           ≡ ((word bits).toNat - 2 ^ n) + 2 ^ n [MOD cycleLength f x] :=
             (Nat.mod_modEq _ _).add_right _

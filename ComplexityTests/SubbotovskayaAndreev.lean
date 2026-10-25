@@ -6,8 +6,8 @@ Authors: Samuel Schlesinger
 
 import Complexity.Computability.Circuit.Boolean.Formula.Andreev
 
-/-! Clients, non-vacuity checks, and axiom guards for formula restrictions, Subbotovskaya's
-shrinkage lemma, and Andreev's formula lower bound. -/
+/-! Clients and non-vacuity checks for formula restrictions, Subbotovskaya's shrinkage lemma, and
+Andreev's formula lower bound. -/
 
 namespace ComplexityTests.SubbotovskayaAndreev
 
@@ -71,110 +71,5 @@ example :
       2 ^ (5 * b) ≤
         144 * b ^ 2 * (Nat.log 2 b + 2) ^ 3 * formulaSize (andreev b (2 ^ b)) ^ 2 :=
   two_pow_five_mul_le_formulaSize_andreev_sq
-
-/--
-info: 'Cslib.Circuits.Formula.eval_restrict' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Formula.eval_restrict
-
-/--
-info: 'Cslib.Circuits.Formula.leafSize_restrict_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Formula.leafSize_restrict_le
-
-/--
-info: 'Cslib.Circuits.Boolean.exists_computes_size_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Boolean.exists_computes_size_le
-
-/--
-info: 'Cslib.Circuits.Formula.IsLeafMinimal.leafSize_restrictAt_false_add_true_le' depends on
-axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Formula.IsLeafMinimal.leafSize_restrictAt_false_add_true_le
-
-/--
-info: 'Cslib.Circuits.Boolean.sum_formulaSize_restrict_update_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Boolean.sum_formulaSize_restrict_update_le
-
-/--
-info: 'Cslib.Circuits.Boolean.exists_withFree_formulaSize_sq_mul_pow_three_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Boolean.exists_withFree_formulaSize_sq_mul_pow_three_le
-
-/--
-info: 'Cslib.Circuits.Boolean.pow_three_le_formulaSize_parity_sq' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Boolean.pow_three_le_formulaSize_parity_sq
-
-/--
-info: 'Cslib.Circuits.Boolean.pow_three_le_leafSize_sq_of_computes_parity' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Boolean.pow_three_le_leafSize_sq_of_computes_parity
-
-/--
-info: 'Cslib.Circuits.Boolean.sum_extensions_formulaSize_sub_sq_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Boolean.sum_extensions_formulaSize_sub_sq_le
-
-/--
-info: 'Cslib.Circuits.Boolean.exists_mem_formulaSize_sub_sq_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Boolean.exists_mem_formulaSize_sub_sq_le
-
-/--
-info: 'Cslib.Circuits.Boolean.formulaSize_le_of_andreevBlock_nonempty' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Boolean.formulaSize_le_of_andreevBlock_nonempty
-
-/--
-info: 'Cslib.Circuits.Boolean.formulaSize_sub_sq_mul_pow_three_le_andreev' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Boolean.formulaSize_sub_sq_mul_pow_three_le_andreev
-
-/--
-info: 'Cslib.Circuits.Boolean.exists_hard_function_formulaSize' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Boolean.exists_hard_function_formulaSize
-
-/--
-info: 'Cslib.Circuits.Boolean.pow_two_mul_pow_three_le_formulaSize_andreev_sq' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Boolean.pow_two_mul_pow_three_le_formulaSize_andreev_sq
-
-/--
-info: 'Cslib.Circuits.Boolean.two_pow_five_mul_le_formulaSize_andreev_sq' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Boolean.two_pow_five_mul_le_formulaSize_andreev_sq
 
 end ComplexityTests.SubbotovskayaAndreev

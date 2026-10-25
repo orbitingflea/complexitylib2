@@ -96,23 +96,5 @@ info: 'Cslib.GenericRAM.SparseMemory.read_insert' depends on axioms:
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.GenericRAM.SparseMemory.read_insert
-/--
-info: 'Cslib.GenericRAM.SparseMemory.read_inO' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.GenericRAM.SparseMemory.read_inO
-/--
-info: 'Cslib.GenericRAM.SparseMemory.insert_inO' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.GenericRAM.SparseMemory.insert_inO
-/--
-info: 'Cslib.GenericRAM.SparseMemory.read_polytime' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.GenericRAM.SparseMemory.read_polytime
 
 end ComplexityTests.SparseMemory

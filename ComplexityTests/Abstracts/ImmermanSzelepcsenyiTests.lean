@@ -10,10 +10,11 @@ import ComplexityAbstracts.ImmermanSzelepcsenyiAbstract
 
 /-! # Concrete clients of the public Immerman–Szelepcsényi abstract
 
-The public classes are definitionally the library's native `NL` and `coNL`. Directed
-non-reachability has both yes- and no-instances: the single arc `1 → 0` does not lead from `0` to
-`1`, while the path `0 → 1 → 2` leads from `0` to `2`. The encoding of the path is pinned bit by
-bit. Combining the two public theorems puts directed reachability itself in `NL`.
+The public classes are definitionally the library's native `NL`, `coNL`, `NSPACE` and `coNSPACE`,
+and the general theorem applies at linear space. Directed non-reachability has both yes- and
+no-instances: the single arc `1 → 0` does not lead from `0` to `1`, while the path `0 → 1 → 2`
+leads from `0` to `2`. The encoding of the path is pinned bit by bit. Combining the public
+theorems puts directed reachability itself in `NL`.
 -/
 
 namespace ComplexityTests.Abstracts.ImmermanSzelepcsenyiTests
@@ -24,6 +25,16 @@ open ComplexityAbstracts.ImmermanSzelepcsenyiAbstract
 example {α : Type} (enc : α ↪ List Bool) : NL enc = Cslib.Complexity.NL enc := rfl
 
 example {α : Type} (enc : α ↪ List Bool) : coNL enc = Cslib.Complexity.coNL enc := rfl
+
+example {α : Type} (enc : α ↪ List Bool) (s : ℕ → ℕ) :
+    NSPACE enc s = Cslib.Complexity.NSPACE enc s := rfl
+
+example {α : Type} (enc : α ↪ List Bool) (s : ℕ → ℕ) :
+    coNSPACE enc s = Cslib.Complexity.coNSPACE enc s := rfl
+
+-- The general theorem at linear space, a bound that is never logarithmic.
+example {α : Type} (enc : α ↪ List Bool) : NSPACE enc id = coNSPACE enc id :=
+  nspace_eq_conspace enc id Nat.log2_le_self
 
 /-- The path `0 → 1 → 2`, from `0` to `2`. -/
 def pathInstance : Instance := ⟨3, fun a b => decide ((a : ℕ) + 1 = b), 0, 2⟩

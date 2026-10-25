@@ -114,30 +114,4 @@ example : ¬ Ordered malformed := by simp [malformed, Ordered, elements]
 -- A finite-set/cardinality bound must not be mistaken for a logarithmic-height assertion.
 example : ¬ sortedFirst.height ≤ 3 := by decide
 
-/--
-info: 'Cslib.Algorithms.Lean.SearchTree.ordered_insert' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Algorithms.Lean.SearchTree.ordered_insert
-/--
-info: 'Cslib.Algorithms.Lean.SearchTree.minimum_spec' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Algorithms.Lean.SearchTree.minimum_spec
-/--
-info: 'Cslib.Algorithms.Lean.SearchTree.successor_spec' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Algorithms.Lean.SearchTree.successor_spec
-/--
-info: 'Cslib.Algorithms.Lean.SearchTree.exec_visits_le_height' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Algorithms.Lean.SearchTree.exec_visits_le_height
-/--
-info: 'Cslib.Algorithms.Lean.SearchTree.run_correct' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Algorithms.Lean.SearchTree.run_correct
-
 end ComplexityTests.SearchTree

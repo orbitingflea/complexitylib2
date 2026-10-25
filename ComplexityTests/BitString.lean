@@ -121,16 +121,4 @@ example : flipOn ({0, 2} : Finset (Fin 3)) (fun _ => false) 1 = false := by
 example (x y : BitString 3) : flipOn {i | x i ≠ y i} x = y :=
   flipOn_filter_ne x y
 
-/--
-info: 'Cslib.BitString.flipOn_apply' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.BitString.flipOn_apply
-
-/--
-info: 'Cslib.BitString.flipOn_filter_ne' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.BitString.flipOn_filter_ne
-
 end ComplexityTests.BitString

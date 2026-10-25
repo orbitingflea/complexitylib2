@@ -7,7 +7,7 @@ Authors: Samuel Schlesinger
 import Complexity.Crypto.Computational.ZeroKnowledge
 import Complexity.Tactic.PPT
 
-/-! Tests and axiom guards for Naor's bit commitment scheme and the Goldreich–Micali–Wigderson
+/-! Tests for Naor's bit commitment scheme and the Goldreich–Micali–Wigderson
 computational zero-knowledge interactive proof system for `NP`. -/
 
 namespace ComplexityTests.Crypto.ZeroKnowledge
@@ -189,68 +189,5 @@ example {generator : List Bool → List Bool} {length : ℕ → ℕ}
     (hAdv : GMW.AdvicePRG encCNF generator length) :
     ∃ zk : ZeroKnowledgeProof encCNF ThreeSAT, zk.AuxiliaryInputZeroKnowledge :=
   hG.exists_auxiliaryInputZeroKnowledge_of_mem_NP hstretch hAdv ThreeSAT.mem_NP
-
-/--
-info: 'Cslib.Crypto.AuxiliaryInputZeroKnowledge.generableZeroKnowledge' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.AuxiliaryInputZeroKnowledge.generableZeroKnowledge
-
-/--
-info: 'Cslib.Crypto.PseudorandomGenerator.auxiliaryInputZeroKnowledge_zeroKnowledgeProofThreeSAT' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms PseudorandomGenerator.auxiliaryInputZeroKnowledge_zeroKnowledgeProofThreeSAT
-
-/--
-info: 'Cslib.Crypto.PseudorandomGenerator.exists_auxiliaryInputZeroKnowledge_of_mem_NP' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.PseudorandomGenerator.exists_auxiliaryInputZeroKnowledge_of_mem_NP
-
-/--
-info: 'Cslib.Crypto.PseudorandomGenerator.naorBitCommitment' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.PseudorandomGenerator.naorBitCommitment
-
-/--
-info: 'Cslib.Crypto.OneWay.exists_bitCommitmentScheme' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.OneWay.exists_bitCommitmentScheme
-
-/--
-info: 'Cslib.Crypto.PseudorandomGenerator.naorCommit_hiding' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.PseudorandomGenerator.naorCommit_hiding
-
-/--
-info: 'Cslib.Crypto.PseudorandomGenerator.zeroKnowledgeProofThreeSAT' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.PseudorandomGenerator.zeroKnowledgeProofThreeSAT
-
-/--
-info: 'Cslib.Crypto.PseudorandomGenerator.exists_zeroKnowledgeProof_of_mem_NP' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.PseudorandomGenerator.exists_zeroKnowledgeProof_of_mem_NP
-
-/--
-info: 'Cslib.Crypto.OneWay.exists_zeroKnowledgeProof_of_mem_NP' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.OneWay.exists_zeroKnowledgeProof_of_mem_NP
 
 end ComplexityTests.Crypto.ZeroKnowledge

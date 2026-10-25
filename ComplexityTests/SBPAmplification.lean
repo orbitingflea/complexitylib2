@@ -79,12 +79,4 @@ example (S : Set (List Bool)) : ∃ f ∈ SharpP encBits, ∃ k : List Bool → 
     simp only [encBits_apply]
     split_ifs <;> lia
 
-/-- info: 'Cslib.Complexity.SharpP.pow_mem_polyTime' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.SharpP.pow_mem_polyTime
-
-/-- info: 'Cslib.Complexity.exists_SBP_gap_pow_polyBounded' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.exists_SBP_gap_pow_polyBounded
-
 end Cslib.Complexity.Tests.UniformSBP

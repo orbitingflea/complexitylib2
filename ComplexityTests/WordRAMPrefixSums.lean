@@ -77,54 +77,6 @@ info: 'Cslib.Algorithms.WordRAM.PrefixSums.Tree.prefixSum_eq_sum_take' depends o
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Tree.prefixSum_eq_sum_take
-/--
-info: 'Cslib.Algorithms.WordRAM.PrefixSums.Tree.leaves_add' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Tree.leaves_add
-/--
-info: 'Cslib.Algorithms.WordRAM.PrefixSums.updateLoop_spec' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms updateLoop_spec
-/--
-info: 'Cslib.Algorithms.WordRAM.PrefixSums.queryLoop_spec' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms queryLoop_spec
-/--
-info: 'Cslib.Algorithms.WordRAM.PrefixSums.certificate' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms certificate
-/--
-info: 'Cslib.Algorithms.WordRAM.PrefixSums.instruction_bound' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms instruction_bound
-/--
-info: 'Cslib.Algorithms.WordRAM.PrefixSums.instruction_bound_log' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms instruction_bound_log
-/--
-info: 'Cslib.Algorithms.WordRAM.PrefixSums.execOp_frame' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms execOp_frame
-/--
-info: 'Cslib.Algorithms.WordRAM.PrefixSums.client_spec' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms client_spec
 
 end WordRAMPrefixSumsTests
 

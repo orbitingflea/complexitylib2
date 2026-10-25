@@ -28,6 +28,7 @@ truncated or padded with false before hashing.
 ## Main results
 
 * `isPPTOn_extractWordLabels`: certify sampling, normalization, hashing and copying.
+* `isPPTOn_extractedWordTest`: the extracted word test is strict PPT.
 * `SamplablePair.HasGap.extract_indexed_word_labels`: computational extraction for one
   uniformly efficient family of tests and arbitrary valid index choices.
 * `SamplablePair.HasGap.extract_word_labels`: the ordinary single-test interface.

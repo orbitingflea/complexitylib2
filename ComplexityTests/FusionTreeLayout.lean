@@ -74,21 +74,6 @@ example : (ReadHeaderProgram.code.eval 7 0 input).map
 example : Exec 7 ReadHeaderProgram.code input (ReadHeaderProgram.result input) 54 :=
   ReadHeaderProgram.exec input (by decide)
 
-/-- info: 'Cslib.Algorithms.WordRAM.FusionTree.NodeParameters.exists_parameters'
-depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms NodeParameters.exists_parameters
-
-/-- info: 'Cslib.Algorithms.WordRAM.FusionTree.NodeParameters.words_fit' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms NodeParameters.words_fit
-
-/-- info: 'Cslib.Algorithms.WordRAM.FusionTree.encoding_exists' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms encoding_exists
-
 /-- info: 'Cslib.Algorithms.WordRAM.FusionTree.ReadHeaderProgram.exec' depends on axioms:
 [propext, Quot.sound] -/
 #guard_msgs (whitespace := lax) in

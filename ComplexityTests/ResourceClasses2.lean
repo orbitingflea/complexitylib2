@@ -88,48 +88,4 @@ example {α : Type} (enc : α ↪ List Bool)
   PH_eq_SigmaP_of_SigmaP_succ_subset_SigmaP fun encB => by
     simpa only [zero_add, SigmaP_one, SigmaP_zero] using h encB
 
-/-! ### Axioms -/
-
-/--
-info: 'Cslib.Complexity.exists_mem_PiP_of_mem_SigmaP_succ' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.exists_mem_PiP_of_mem_SigmaP_succ
-
-/--
-info: 'Cslib.Complexity.SigmaP_succ_subset_SigmaP' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.SigmaP_succ_subset_SigmaP
-
-/--
-info: 'Cslib.Complexity.PH_eq_SigmaP_of_PiP_subset_SigmaP' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.PH_eq_SigmaP_of_PiP_subset_SigmaP
-
-/--
-info: 'Cslib.Complexity.PH_eq_NP_of_coNP_subset_NP' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.PH_eq_NP_of_coNP_subset_NP
-
-/--
-info: 'Cslib.Complexity.PH_eq_P_of_NP_subset_P' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.PH_eq_P_of_NP_subset_P
-
-/--
-info: 'Cslib.Complexity.PH_eq_SigmaP_of_SigmaP_succ_subset_SigmaP' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.PH_eq_SigmaP_of_SigmaP_succ_subset_SigmaP
-
 end ComplexityTests.ResourceClasses2

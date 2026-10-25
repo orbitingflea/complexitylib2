@@ -50,14 +50,4 @@ example : ∃ x y : Data 76, x.Bounded 2 ∧ y.Bounded 2 ∧
     Multiword.value (radix 2) y (outputRegs 18 18) = 4095 * 4095 :=
   six_word_product (by decide) (by decide) (by decide)
 
-/-- info: 'Cslib.WordRAM.Multiword.Schoolbook.exec_fixedProgram' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.WordRAM.Multiword.Schoolbook.exec_fixedProgram
-
-/-- info: 'Cslib.WordRAM.Multiword.Schoolbook.six_word_product' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.WordRAM.Multiword.Schoolbook.six_word_product
-
 end WordRAMMultiwordTests

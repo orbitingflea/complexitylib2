@@ -31,6 +31,7 @@ This construction does not assert a finite iteration bound.
 
 ## Main results
 
+* `Cslib.Circuits.Program.evalGates_feedback`: solved internal gates match ordinary evaluation.
 * `Cslib.Circuits.Program.cost_feedback`: feedback preserves every operation weight.
 * `Cslib.Circuits.Program.eval_feedback_fixed`: the outputs satisfy the update equations.
 * `Cslib.Circuits.Program.eval_feedback_le`: leastness among pre-fixed states.

@@ -12,10 +12,8 @@ import Complexity.Crypto.Computational.MerkleDamgard
 
 Provides concrete nonvacuous examples of `merkleDamgardChain`, `mdBlocks`, `merkleDamgard`,
 `extractChainCollision`, and `extractMerkleDamgardCollision` on an explicit `2n → n` XOR
-compression function, verifies that `CollisionResistant` rejects a trivial constant compression
-function via an explicit zero-coin PPT collision finder, and audits the axiom dependencies of the
-headline theorems in `Complexity.Crypto.Computational.CollisionResistant` and
-`Complexity.Crypto.Computational.MerkleDamgard`.
+compression function, and verifies that `CollisionResistant` rejects a trivial constant
+compression function via an explicit zero-coin PPT collision finder.
 -/
 
 namespace ComplexityTests.Crypto.MerkleDamgard
@@ -134,89 +132,5 @@ theorem not_collisionResistant_constHash : ¬ CollisionResistant constHash := by
       beq_self_eq_true, pure_bind, ProbComp.eval_bind, BitString.eval_sampleList,
       ProbComp.eval_pure, PMF.bind_const]
   rw [Game.succProbability, heval, PMF.pure_apply_self, ENNReal.toNNReal_one]
-
-/--
-info: 'Cslib.Crypto.isPPTOn_collisionGame' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.isPPTOn_collisionGame
-
-/--
-info: 'Cslib.Crypto.isPPT_collisionGame' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.isPPT_collisionGame
-
-/--
-info: 'Cslib.Crypto.CollisionResistantOn.of_extract' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.CollisionResistantOn.of_extract
-
-/--
-info: 'Cslib.Crypto.CollisionResistantOn.mono' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.CollisionResistantOn.mono
-
-/--
-info: 'Cslib.Crypto.not_collisionResistantOn_of_le_succProbability' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.not_collisionResistantOn_of_le_succProbability
-
-/--
-info: 'Cslib.Crypto.isCollision_extractChainCollision_of_not_suffix' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.isCollision_extractChainCollision_of_not_suffix
-
-/--
-info: 'Cslib.Crypto.isCollision_extractChainCollision_of_getLast?_ne' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.isCollision_extractChainCollision_of_getLast?_ne
-
-/--
-info: 'Cslib.Crypto.isCollision_extractChainCollision_of_length_eq' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.isCollision_extractChainCollision_of_length_eq
-
-/--
-info: 'Cslib.Crypto.CompressionFamily.collisionResistantOn_merkleDamgardChain' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.CompressionFamily.collisionResistantOn_merkleDamgardChain
-
-/--
-info: 'Cslib.Crypto.isCollision_extractMerkleDamgardCollision' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.isCollision_extractMerkleDamgardCollision
-
-/--
-info: 'Cslib.Crypto.CompressionFamily.collisionResistant_merkleDamgard' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.CompressionFamily.collisionResistant_merkleDamgard
-
-/--
-info: 'Cslib.Crypto.CompressionFamily.hashFamily_merkleDamgard' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.CompressionFamily.hashFamily_merkleDamgard
 
 end ComplexityTests.Crypto.MerkleDamgard

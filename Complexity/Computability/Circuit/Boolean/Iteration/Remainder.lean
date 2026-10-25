@@ -9,6 +9,7 @@ module
 
 public import Complexity.Init
 public import Complexity.Computability.Circuit.Boolean.Word
+public import Complexity.Foundations.Data.Nat.Div
 public import Mathlib.Data.Nat.ModEq
 import Complexity.Tactic.Synthesis
 import Mathlib.Tactic.Linarith
@@ -218,30 +219,6 @@ def subMod (a b d : BitVec w) : BitVec w :=
   let rb := streamRemainder d fun i : Fin w => b.getLsbD i.val
   if ra.ult rb then ra + d - rb else ra - rb
 
-theorem add_sub_mod_mod_eq_ite (a b d : ℕ) (hd : 0 < d) :
-    (a + d - b % d) % d = if a % d < b % d then a % d + d - b % d else a % d - b % d := by
-  have ha := Nat.mod_lt a hd
-  have hb := Nat.mod_lt b hd
-  have hdiv := Nat.div_add_mod a d
-  have he : a + d - b % d = (a % d + d - b % d) + d * (a / d) := by omega
-  rw [he, Nat.add_mul_mod_self_left]
-  split_ifs with h
-  · exact Nat.mod_eq_of_lt (by omega)
-  · rw [show a % d + d - b % d = (a % d - b % d) + d by omega, Nat.add_mod_right,
-      Nat.mod_eq_of_lt (by omega)]
-
-/-- A modular difference is determined by the congruence it satisfies. -/
-theorem add_sub_mod_mod_eq_of_modEq {a b c d : ℕ} (hd : 0 < d) (hc : c < d)
-    (he : c + b ≡ a [MOD d]) : (a + d - b % d) % d = c := by
-  have hb := Nat.mod_lt b hd
-  have h1 : (a + d - b % d) + b ≡ c + b [MOD d] :=
-    calc (a + d - b % d) + b ≡ (a + d - b % d) + b % d [MOD d] :=
-          (Nat.mod_modEq b d).symm.add_left _
-      _ = a + d := Nat.sub_add_cancel (by omega)
-      _ ≡ a [MOD d] := Nat.add_modEq_right
-      _ ≡ c + b [MOD d] := he.symm
-  rw [Nat.ModEq.add_right_cancel' b h1, Nat.mod_eq_of_lt hc]
-
 /-- **Modular differences.** If `0 < d` and `2 * d` fits in the word width, `subMod a b d` is
 `a - b` modulo `d`, in the form `(a + d - b % d) % d`. -/
 theorem toNat_subMod (a b d : BitVec w) (hd : 0 < d.toNat) (hw : 2 * d.toNat ≤ 2 ^ w) :
@@ -249,7 +226,7 @@ theorem toNat_subMod (a b d : BitVec w) (hd : 0 < d.toNat) (hw : 2 * d.toNat ≤
   have hra := toNat_streamRemainder d (fun i : Fin w => a.getLsbD i.val) hd hw
   have hrb := toNat_streamRemainder d (fun i : Fin w => b.getLsbD i.val) hd hw
   rw [word_getLsbD] at hra hrb
-  rw [add_sub_mod_mod_eq_ite _ _ _ hd, subMod]
+  rw [Nat.add_sub_mod_mod_eq_ite _ _ _ hd, subMod]
   have hal := Nat.mod_lt a.toNat hd
   have hbl := Nat.mod_lt b.toNat hd
   simp only [BitVec.ult, decide_eq_true_eq, hra, hrb]

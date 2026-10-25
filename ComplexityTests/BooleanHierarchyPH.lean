@@ -39,13 +39,4 @@ example : BooleanHierarchy encBits ⊆ PH encBits :=
 example : {w : List Bool | w.headD false = true} ∈ BooleanHierarchy encBits :=
   NP_subset_BooleanHierarchy head_mem_NP
 
-/-- info: 'Cslib.Complexity.BooleanHierarchy_subset_SigmaP_two_inter_PiP_two' depends on axioms: [propext,
- Classical.choice,
- Quot.sound] -/
-#guard_msgs in
-#print axioms BooleanHierarchy_subset_SigmaP_two_inter_PiP_two
-/-- info: 'Cslib.Complexity.DP_subset_SigmaP_two_inter_PiP_two' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms DP_subset_SigmaP_two_inter_PiP_two
-
 end ComplexityTests.BooleanHierarchyPH

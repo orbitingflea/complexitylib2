@@ -12,6 +12,7 @@ public import Complexity.Computability.Circuit.Rational.Runtime.Parameters
 public import Complexity.Computability.Circuit.Rational.Runtime.Point
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Option
+import Complexity.Foundations.Data.List.Append
 
 /-!
 # Polynomial-time rational hitting-list generator
@@ -144,12 +145,8 @@ def inputWord (n s : ℕ) : List Bool :=
   omega
 
 /-- The first `false` bit of `inputWord n s` occurs at index `n`. -/
-@[simp] theorem idxOf_false_inputWord (n s : ℕ) : (inputWord n s).idxOf false = n := by
-  induction n with
-  | zero => rfl
-  | succ n ih =>
-    simp only [inputWord, List.replicate_succ, List.cons_append] at ih ⊢
-    rw [List.idxOf_cons_ne _ (by decide), ih]
+@[simp] theorem idxOf_false_inputWord (n s : ℕ) : (inputWord n s).idxOf false = n :=
+  List.idxOf_false_replicate_append n _
 
 /-- Parse a valid unary input word `inputWord n s` with `1 ≤ n` and `1 ≤ s`, returning `none`
 on malformed inputs. -/

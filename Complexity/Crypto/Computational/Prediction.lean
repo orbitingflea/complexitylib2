@@ -33,6 +33,7 @@ returns `true`, so gaps and biases are signed differences.
 
 * `Cslib.Crypto.trialPredictor_gap`: the gap is the average of two signed prediction biases.
 * `Cslib.Crypto.bitPredictor_bias`: a randomized trial realizes that average.
+* `Cslib.Crypto.probability_calibratedTest`: exact acceptance probability of `calibratedTest`.
 * `Cslib.Crypto.calibratedTest_gap`: calibration squares the distinguishing advantage.
 
 ## References

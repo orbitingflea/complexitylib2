@@ -7,7 +7,7 @@ Authors: Samuel Schlesinger
 import Complexity.Computability.Complexity.Classes.BooleanHierarchy.Kadin
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 
-/-! Clients and axiom audits for Kadin's polynomial-hierarchy collapse theorem. -/
+/-! Clients for Kadin's polynomial-hierarchy collapse theorem. -/
 
 namespace ComplexityTests.Kadin
 
@@ -89,27 +89,5 @@ example (h : DP encBits = coDP encBits) :
 example (h : SATUNSAT ∈ coDP (encPair encCNF encCNF)) :
     PH encBits = SigmaP 3 encBits :=
   PH_eq_SigmaP_three_of_SATUNSAT_mem_coDP h
-
-/-- info: 'Cslib.Complexity.PiP_three_subset_SigmaP_three_of_coBH_subset_BH' depends on axioms: [propext,
- Classical.choice,
- Quot.sound] -/
-#guard_msgs in
-#print axioms PiP_three_subset_SigmaP_three_of_coBH_subset_BH
-
-/-- info: 'Cslib.Complexity.PH_eq_SigmaP_three_of_coBH_subset_BH' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms PH_eq_SigmaP_three_of_coBH_subset_BH
-
-/-- info: 'Cslib.Complexity.PH_eq_SigmaP_three_of_BH_succ_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms PH_eq_SigmaP_three_of_BH_succ_eq
-
-/-- info: 'Cslib.Complexity.PH_eq_SigmaP_three_of_DP_eq_coDP' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms PH_eq_SigmaP_three_of_DP_eq_coDP
-
-/-- info: 'Cslib.Complexity.PH_eq_SigmaP_three_of_SATUNSAT_mem_coDP' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms PH_eq_SigmaP_three_of_SATUNSAT_mem_coDP
 
 end ComplexityTests.Kadin

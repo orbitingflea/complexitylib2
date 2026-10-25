@@ -35,6 +35,7 @@ strict PPT sampler's fair-bit tape as a uniform seed, including unused randomnes
 
 ## Main results
 
+* `Cslib.Crypto.Pseudoentropy.isPPTOn_predictionGame`: the prediction experiment is strict PPT.
 * `Cslib.Crypto.Pseudoentropy.SamplablePair.eval_latentSample`: recover the exact latent joint law.
 * `Cslib.Crypto.Pseudoentropy.SamplablePair.HasGap.eventually_error_ge`: prediction error bound.
 * `Cslib.Crypto.Pseudoentropy.SamplablePair.HasGap.eventually_entropy_add_gap_le_one`:

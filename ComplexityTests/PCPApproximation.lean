@@ -14,7 +14,7 @@ Gap problems on concrete objectives, including instance-dependent thresholds and
 the promise; the agreement of promise reductions and NP-hardness with the decision notions; yes- and
 no-instances of the headline gap problems for MAX-2CSP, MAX-3SAT and Unique Games, so that their
 NP-hardness statements are not vacuous; the translation of a small constraint graph into a formula;
-Label Cover satisfiability; and the axioms of the headline theorems.
+and Label Cover satisfiability.
 -/
 
 namespace ComplexityTests.PCPApproximation
@@ -178,41 +178,5 @@ example : UniqueGamesConjecture → ∃ L : ℕ, PromiseProblem.NPHard
   fun h => (h (1 / 2) (1 / 4) (by norm_num) (by norm_num) (by norm_num)).imp fun _ hL => by
     norm_num at hL ⊢
     exact hL
-
-/-! ### Axioms -/
-
-/--
-info: 'Cslib.Complexity.PromiseProblem.NPHard.P_eq_NP_of_mem_PromiseP' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.PromiseProblem.NPHard.P_eq_NP_of_mem_PromiseP
-
-/--
-info: 'Cslib.Complexity.GapTwoCSP_npHard' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.GapTwoCSP_npHard
-
-/--
-info: 'Cslib.Complexity.polyTimeReducible_GapTwoCSP_GapThreeSAT' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.polyTimeReducible_GapTwoCSP_GapThreeSAT
-
-/--
-info: 'Cslib.Complexity.GapThreeSAT_npHard' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.GapThreeSAT_npHard
-
-/--
-info: 'Cslib.Complexity.UniqueGamesConjecture.npHard_of_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.UniqueGamesConjecture.npHard_of_le
 
 end ComplexityTests.PCPApproximation

@@ -30,8 +30,11 @@ them into one generator.
 
 ## Main results
 
-* `isPolyTime_generate_of_realization`: one efficient evaluator for the whole indexed family.
+* `isPolyTime_outputLength`: output size is uniformly computable in unary.
+* `isPolyTime_generate`, `isPolyTime_generate_of_realization`: candidate evaluation is uniformly
+  polynomial time.
 * `seedLength_lt_outputLength`, `length_generate`: strict expansion and exact output length.
+* `exists_valid_choice`: every sufficiently fine grid eventually contains a valid entry.
 * `exists_secure_choice`: a single proof-only choice works for every uniform indexed test.
 
 ## References

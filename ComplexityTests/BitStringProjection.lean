@@ -46,9 +46,4 @@ example : lowerBoundary 13 2 = 11 ∧ upperBoundary 13 2 = 12 := by decide
 example (q p : ℕ) : lowerBoundary q p >>> (p + 1) = q >>> (p + 1) ∧
     upperBoundary q p >>> (p + 1) = q >>> (p + 1) := boundary_prefix q p
 
-/-- info: 'Cslib.BitString.highestDiff_spec' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.BitString.highestDiff_spec
-
 end BitStringProjectionTests

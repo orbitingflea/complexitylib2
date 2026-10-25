@@ -26,6 +26,7 @@ second samples (`bind_sigma_apply`).
 * `Cslib.Probability.PMF.bind_apply_of_forall`, `Cslib.Probability.PMF.exists_bind_apply_le`:
   outcome probabilities of two-stage experiments.
 * `Cslib.Probability.PMF.le_bind_apply_on_support`,
+  `Cslib.Probability.PMF.bind_apply_le_on_support`,
   `Cslib.Probability.PMF.bind_apply_mono_on_support`: comparing continuations at one outcome.
 * `Cslib.Probability.PMF.tsum_mul_le_of_forall_le`,
   `Cslib.Probability.PMF.tsum_mul_le_card_mul_add`: averages of bounded values.
@@ -79,6 +80,18 @@ theorem le_bind_apply_on_support (μ : PMF α) {f : α → PMF β} {b : β} {c :
         by_cases ha : a ∈ μ.support
         · exact mul_le_mul_right (h a ha) _
         · simp [(PMF.apply_eq_zero_iff μ a).2 ha]
+
+/-- An upper bound on an outcome's probability for every possible first-stage result bounds its
+probability in the whole experiment. -/
+theorem bind_apply_le_on_support (μ : PMF α) {f : α → PMF β} {b : β} {c : ℝ≥0∞}
+    (h : ∀ a ∈ μ.support, f a b ≤ c) : μ.bind f b ≤ c := by
+  rw [PMF.bind_apply]
+  calc ∑' a, μ a * f a b
+    _ ≤ ∑' a, μ a * c := ENNReal.tsum_le_tsum fun a => by
+        by_cases ha : a ∈ μ.support
+        · exact mul_le_mul_right (h a ha) _
+        · simp [(PMF.apply_eq_zero_iff μ a).2 ha]
+    _ = c := by rw [ENNReal.tsum_mul_right, μ.tsum_coe, one_mul]
 
 /-- Increasing an outcome's probability on every possible first-stage result increases its
 probability in the whole experiment. The sample spaces may be infinite. -/

@@ -12,8 +12,8 @@ import Complexity.Computability.QueryComplexity.Threshold
 
 /-! Sensitivity, block sensitivity, certificate and decision tree complexity of threshold,
 majority, monotone and symmetric functions, one-sided bounds and polynomial bounds in sensitivity:
-concrete values checked against the general formulas, witnesses that the monotonicity and symmetry
-hypotheses are satisfiable, and axiom guards for the headline theorems. -/
+concrete values checked against the general formulas, and witnesses that the monotonicity and
+symmetry hypotheses are satisfiable. -/
 
 namespace ComplexityTests.QueryComplexity.Sensitivity
 
@@ -128,43 +128,5 @@ example {n : ℕ} (f : BooleanFunction n) :
   ⟨certificateComplexity_le_two_mul_sensitivity_pow_five f,
     DecisionTree.complexity_le_sensitivity_mul_blockSensitivity_sq f,
     DecisionTree.complexity_le_four_mul_sensitivity_pow_nine f⟩
-
-/-! ### Axiom checks for headline theorems -/
-
-/--
-info: 'Cslib.BitString.sensitivity_threshold' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.BitString.sensitivity_threshold
-
-/--
-info: 'Cslib.QueryComplexity.certificateComplexity_threshold' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.QueryComplexity.certificateComplexity_threshold
-
-/--
-info: 'Cslib.DecisionTree.complexity_eq_card_of_isSymmetric' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.DecisionTree.complexity_eq_card_of_isSymmetric
-
-/--
-info: 'Cslib.QueryComplexity.certificateComplexityFor_le_sensitivityFor_mul_blockSensitivityFor' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms certificateComplexityFor_le_sensitivityFor_mul_blockSensitivityFor
-
-/--
-info: 'Cslib.QueryComplexity.certificateComplexity_eq_sensitivity_of_monotone' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.QueryComplexity.certificateComplexity_eq_sensitivity_of_monotone
-
-/--
-info: 'Cslib.DecisionTree.complexity_le_four_mul_sensitivity_pow_nine' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.DecisionTree.complexity_le_four_mul_sensitivity_pow_nine
 
 end ComplexityTests.QueryComplexity.Sensitivity

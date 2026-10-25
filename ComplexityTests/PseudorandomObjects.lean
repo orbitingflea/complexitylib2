@@ -12,7 +12,7 @@ import Complexity.Probability.SmallBias.Powering
 Concrete instances of small-bias spaces: the uniform distribution is unbiased, a point mass is not,
 and the powering construction over the two-element field attains its bias bound. Linear
 composition applies to independent parities, and the stretching corollary yields small-bias spaces
-for every output length. The axioms of the headline theorems are pinned.
+for every output length.
 -/
 
 namespace ComplexityTests.PseudorandomObjects
@@ -85,61 +85,5 @@ example {X : PMF (Fin 3 → Bool)} (hX : IsKWiseSmallBias 1 0 X) (i : Fin 3) :
     dist (X.map ({i} : Finset (Fin 3)).restrict) (PMF.uniformOfFintype _) = 0 := by
   refine le_antisymm ?_ dist_nonneg
   simpa using hX.dist_map_restrict_le (T := {i}) (by simp)
-
-/--
-info: 'Cslib.BitString.four_mul_dist_uniform_sq_le_sum_bias_sq' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.BitString.four_mul_dist_uniform_sq_le_sum_bias_sq
-
-/--
-info: 'Cslib.BitString.dist_uniform_le_sqrt_sum_bias_sq' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.BitString.dist_uniform_le_sqrt_sum_bias_sq
-
-/--
-info: 'Cslib.BitString.IsSmallBias.dist_uniform_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.BitString.IsSmallBias.dist_uniform_le
-
-/--
-info: 'Cslib.BitString.IsKWiseSmallBias.dist_map_restrict_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.BitString.IsKWiseSmallBias.dist_map_restrict_le
-
-/--
-info: 'Cslib.BitString.IsSmallBias.isKWiseSmallBias_map_dotProduct' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.BitString.IsSmallBias.isKWiseSmallBias_map_dotProduct
-
-/--
-info: 'Cslib.BitString.bias_powering' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.BitString.bias_powering
-
-/--
-info: 'Cslib.BitString.isSmallBias_powering' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.BitString.isSmallBias_powering
-
-/--
-info: 'Cslib.BitString.exists_isSmallBias_uniformOfFintype_map' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.BitString.exists_isSmallBias_uniformOfFintype_map
 
 end ComplexityTests.PseudorandomObjects

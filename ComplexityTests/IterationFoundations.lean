@@ -120,44 +120,9 @@ example (t : ℕ) : Synthesis succInterpretation (inputs 1)
 /-! ### Axioms -/
 
 /--
-info: 'Cslib.FunctionalGraph.exists_checkpoints' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms exists_checkpoints
-
-/--
-info: 'Cslib.FunctionalGraph.card_range_iterate' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms card_range_iterate
-
-/--
-info: 'Cslib.FunctionalGraph.orbit_prefix_injective' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms orbit_prefix_injective
-
-/--
-info: 'Cslib.FunctionalGraph.exists_iterate_eq_iff_canonicalCycle_eq' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms exists_iterate_eq_iff_canonicalCycle_eq
-
-/--
 info: 'Cslib.Circuits.Circuit.cost_program_iterate' does not depend on any axioms
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Circuit.cost_program_iterate
-
-/--
-info: 'Cslib.Circuits.Synthesis.orbit' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Synthesis.orbit
 
 end ComplexityTests.IterationFoundations

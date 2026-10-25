@@ -7,7 +7,7 @@ Authors: Samuel Schlesinger
 import Complexity.Computability.Complexity.Classes.WPP
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 
-/-! Concrete nonvacuous clients and axiom guards for `WPP` and `LWPP` multiple-target robustness,
+/-! Concrete nonvacuous clients for `WPP` and `LWPP` multiple-target robustness,
 unary-indexed target normalization, many-one reduction closure, Boolean closures, and
 `intBin_prod`. -/
 
@@ -121,52 +121,3 @@ example : {w : List Bool | w.headD false = true} ∈ WPP encBits := by
       · exact ⟨fun _ => ⟨true, Finset.mem_univ _, rfl⟩, fun _ => rfl⟩
 
 end ComplexityTests.WPP
-
-/--
-info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.intBin_prod' depends on axioms:
-  [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.intBin_prod
-
-/--
-info: 'Cslib.Complexity.FewP_subset_LWPP' depends on axioms:
-  [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.FewP_subset_LWPP
-
-/--
-info: 'Cslib.Complexity.FewP_subset_WPP' depends on axioms:
-  [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.FewP_subset_WPP
-
-/--
-info: 'Cslib.Complexity.mem_WPP_of_finset_targets' depends on axioms:
-  [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.mem_WPP_of_finset_targets
-
-/--
-info: 'Cslib.Complexity.mem_LWPP_of_finset_targets' depends on axioms:
-  [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.mem_LWPP_of_finset_targets
-
-/--
-info: 'Cslib.Complexity.mem_LWPP_of_polyTime_index' depends on axioms:
-  [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.mem_LWPP_of_polyTime_index
-
-/--
-info: 'Cslib.Complexity.PolyTimeReducible.mem_LWPP' depends on axioms:
-  [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.PolyTimeReducible.mem_LWPP

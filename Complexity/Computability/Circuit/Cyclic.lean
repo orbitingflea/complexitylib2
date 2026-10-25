@@ -39,6 +39,7 @@ Native acyclic circuits embed with exactly the same gate values, outputs and wei
 
 ## Main results
 
+* `Cslib.Circuits.CyclicCircuit.ecomplexityFrom_ne_top_iff`: finite cyclic complexity equivalence.
 * `Cslib.Circuits.Circuit.eval_toCyclic`, `Cslib.Circuits.Circuit.cost_toCyclic`: the native
   acyclic embedding preserves semantics and costs.
 * `Cslib.Circuits.CyclicCircuit.evalGates_le`: leastness among pre-fixed states.

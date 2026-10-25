@@ -154,7 +154,7 @@ theorem correctLabel_canonicalLabel (f : BitString n → BitString n) (x : BitSt
       (by rw [toNat_ofNat_cycleLength, Nat.pow_succ, Nat.pow_succ, Nat.pow_succ]; omega),
     toNat_ofNat_cycleLength, toNat_ofNat_phase, toNat_ofNat_phase, BitVec.toNat_ofNat,
     Nat.mod_eq_of_lt hj, phase_iterate]
-  exact add_sub_mod_mod_eq_of_modEq hpos (phase_lt f x) (Nat.mod_modEq _ _).symm
+  exact Nat.add_sub_mod_mod_eq_of_modEq hpos (phase_lt f x) (Nat.mod_modEq _ _).symm
 
 /-- The bits of a label of available parts are available. -/
 theorem labelBits_wires_subset (s : Set (BooleanFunction a)) (c : BitString a → BitString n)

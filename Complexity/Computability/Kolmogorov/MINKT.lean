@@ -49,8 +49,8 @@ and bridged:
 * `Cslib.Kolmogorov.MINKT.check`: polynomial-time witness check for `MINKT`.
 * `Cslib.Kolmogorov.MINKTAt`, `Cslib.Kolmogorov.MINKTAt.toInstance`: fixed-threshold language
   `{x | timeBounded t x ≤ s x.length}` and its canonical embedding into `MINKT.Instance`.
-* `Cslib.Kolmogorov.GapMINKT`, `Cslib.Kolmogorov.GapMINKT.yes`, `Cslib.Kolmogorov.GapMINKT.no`:
-  Hirahara's promise problem `GapMINKT[σ, τ]` and its yes/no sets
+* `Cslib.Kolmogorov.GapMINKT`, `Cslib.Kolmogorov.GapMINKT.yesSet`,
+  `Cslib.Kolmogorov.GapMINKT.noSet`: Hirahara's promise problem `GapMINKT[σ, τ]` and its yes/no sets
   ([Hirahara, Definition II.6][Hirahara2018]).
 
 ## Main results
@@ -69,7 +69,7 @@ and bridged:
 * `Cslib.Kolmogorov.MINKTAt.mem_NP`, `Cslib.Kolmogorov.MINKTAt.mem_NP_polynomial`,
   `Cslib.Kolmogorov.MINKTAt.mem_NP_polynomial₂`: `MINKTAt t s ∈ NP encBits` for polynomial-time
   unary thresholds and for polynomial time bounds `t = p.eval`.
-* `Cslib.Kolmogorov.GapMINKT.disjoint_yes_no`, `Cslib.Kolmogorov.GapMINKT.no_eq`,
+* `Cslib.Kolmogorov.GapMINKT.disjoint_yesSet_noSet`, `Cslib.Kolmogorov.GapMINKT.no_eq`,
   `Cslib.Kolmogorov.GapMINKT.id_eq`: consistency and specialization of `GapMINKT`.
 
 ## References
@@ -351,32 +351,33 @@ namespace GapMINKT
 
 /-- The yes-instances of `GapMINKT`: instances `(x, t, s)` with $K^t(x) \le s$
 ([Hirahara, Definition II.6][Hirahara2018]). -/
-def yes : Set MINKT.Instance :=
+def yesSet : Set MINKT.Instance :=
   MINKT
 
 /-- The raw no-instances of `GapMINKT[σ, τ]`: instances `(x, t, s)` with
 $K^{\tau(|x|, t)}(x) > \sigma(|x|, s)$ ([Hirahara, Definition II.6][Hirahara2018]). -/
-def no (σ τ : ℕ → ℕ → ℕ) : Set MINKT.Instance :=
+def noSet (σ τ : ℕ → ℕ → ℕ) : Set MINKT.Instance :=
   {i | (σ i.string.length i.size : ℕ∞) <
     timeBoundedAt (τ i.string.length i.time) i.string}
 
-/-- `i ∈ GapMINKT.yes` iff `i ∈ MINKT`. -/
-theorem mem_yes_iff {i : MINKT.Instance} : i ∈ yes ↔ i ∈ MINKT :=
+/-- `i ∈ GapMINKT.yesSet` iff `i ∈ MINKT`. -/
+theorem mem_yesSet_iff {i : MINKT.Instance} : i ∈ yesSet ↔ i ∈ MINKT :=
   Iff.rfl
 
-/-- `i ∈ GapMINKT.no σ τ` iff
+/-- `i ∈ GapMINKT.noSet σ τ` iff
 `σ |i.string| i.size < timeBoundedAt (τ |i.string| i.time) i.string`. -/
-theorem mem_no_iff {σ τ : ℕ → ℕ → ℕ} {i : MINKT.Instance} :
-    i ∈ no σ τ ↔
+theorem mem_noSet_iff {σ τ : ℕ → ℕ → ℕ} {i : MINKT.Instance} :
+    i ∈ noSet σ τ ↔
       (σ i.string.length i.size : ℕ∞) <
         timeBoundedAt (τ i.string.length i.time) i.string :=
   Iff.rfl
 
 /-- When $\sigma(n, s) \ge s$ and $\tau(n, t) \ge t$ (as required in
-[Hirahara, Definition II.6][Hirahara2018]), `GapMINKT.yes` and `GapMINKT.no σ τ` are disjoint. -/
-theorem disjoint_yes_no {σ τ : ℕ → ℕ → ℕ}
+[Hirahara, Definition II.6][Hirahara2018]), `GapMINKT.yesSet` and `GapMINKT.noSet σ τ`
+are disjoint. -/
+theorem disjoint_yesSet_noSet {σ τ : ℕ → ℕ → ℕ}
     (hσ : ∀ n s, s ≤ σ n s) (hτ : ∀ n t, t ≤ τ n t) :
-    Disjoint yes (no σ τ) := by
+    Disjoint yesSet (noSet σ τ) := by
   refine Set.disjoint_left.mpr fun i hyes hno => ?_
   have h1 : timeBoundedAt (τ i.string.length i.time) i.string ≤
       timeBoundedAt i.time i.string :=
@@ -386,42 +387,49 @@ theorem disjoint_yes_no {σ τ : ℕ → ℕ → ℕ}
     (h1.trans hyes).trans (Nat.cast_le.mpr (hσ i.string.length i.size))
   exact not_lt_of_ge h2 hno
 
-/-- With trivial gap functions `σ n s = s` and `τ n t = t`, `GapMINKT.no` is the complement of
+/-- With trivial gap functions `σ n s = s` and `τ n t = t`, `GapMINKT.noSet` is the complement of
 `MINKT`. -/
-theorem no_id_eq_compl : no (fun _ s => s) (fun _ t => t) = MINKTᶜ := by
+theorem noSet_id_eq_compl : noSet (fun _ s => s) (fun _ t => t) = MINKTᶜ := by
   ext i
-  simp [no, MINKT]
+  simp [noSet, MINKT]
 
 end GapMINKT
 
 /-- **Hirahara's `GapMINKT` promise problem** ([Hirahara, Definition II.6][Hirahara2018]):
-yes-instances are `MINKT`, and no-instances are those in `GapMINKT.no σ τ \ MINKT` (which equals
-`GapMINKT.no σ τ` whenever `s ≤ σ n s` and `t ≤ τ n t`, see `GapMINKT.no_eq`). -/
-def GapMINKT (σ τ : ℕ → ℕ → ℕ) : PromiseProblem MINKT.Instance where
-  yes := GapMINKT.yes
-  no := GapMINKT.no σ τ \ GapMINKT.yes
-  disjoint := disjoint_sdiff_self_right
+the promise problem whose yes-instances are `MINKT`, and whose no-instances are
+`GapMINKT.noSet σ τ`, when `s ≤ σ n s` and `t ≤ τ n t`. Following Hirahara, the gap hypotheses
+`hσ` and `hτ` are bundled to ensure disjointness of yes- and no-instances by construction. -/
+def GapMINKT (σ τ : ℕ → ℕ → ℕ)
+    (hσ : ∀ n s, s ≤ σ n s) (hτ : ∀ n t, t ≤ τ n t) :
+    PromiseProblem MINKT.Instance where
+  yes := GapMINKT.yesSet
+  no := GapMINKT.noSet σ τ
+  disjoint := GapMINKT.disjoint_yesSet_noSet hσ hτ
 
 namespace GapMINKT
 
-/-- The yes-set of `GapMINKT σ τ` is `MINKT`. -/
+variable {σ τ : ℕ → ℕ → ℕ}
+variable (hσ : ∀ n s, s ≤ σ n s) (hτ : ∀ n t, t ≤ τ n t)
+
+/-- The yes-set of `GapMINKT σ τ hσ hτ` is `MINKT`. -/
 @[simp]
-theorem yes_eq (σ τ : ℕ → ℕ → ℕ) : (GapMINKT σ τ).yes = MINKT :=
+theorem yes_eq : (GapMINKT σ τ hσ hτ).yes = MINKT :=
   rfl
 
-/-- Whenever $\sigma(n, s) \ge s$ and $\tau(n, t) \ge t$, `(GapMINKT σ τ).no = GapMINKT.no σ τ`. -/
-theorem no_eq {σ τ : ℕ → ℕ → ℕ}
-    (hσ : ∀ n s, s ≤ σ n s) (hτ : ∀ n t, t ≤ τ n t) :
-    (GapMINKT σ τ).no = no σ τ :=
-  sdiff_eq_left.mpr (disjoint_yes_no hσ hτ).symm
+/-- The no-instances of `GapMINKT σ τ hσ hτ` are `GapMINKT.noSet σ τ`. -/
+@[simp]
+theorem no_eq : (GapMINKT σ τ hσ hτ).no = noSet σ τ :=
+  rfl
 
 /-- With no gap (`σ n s = s` and `τ n t = t`), `GapMINKT` is the decision problem `MINKT` viewed as
 a promise problem (`PromiseProblem.ofSet MINKT`). -/
 @[simp]
-theorem id_eq : GapMINKT (fun _ s => s) (fun _ t => t) = PromiseProblem.ofSet MINKT := by
+theorem id_eq :
+    GapMINKT (fun _ s => s) (fun _ t => t) (fun _ _ => le_rfl) (fun _ _ => le_rfl) =
+      PromiseProblem.ofSet MINKT := by
   ext i
   · rfl
-  · rw [no_eq (fun _ _ => le_rfl) (fun _ _ => le_rfl), no_id_eq_compl]
+  · rw [no_eq, noSet_id_eq_compl]
     rfl
 
 end GapMINKT

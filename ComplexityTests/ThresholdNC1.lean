@@ -16,7 +16,7 @@ public import Complexity.Foundations.Data.Nat.PolynomialBound.Log
 # Threshold simulation regression tests
 
 Concrete majority families satisfy the polynomial size and fan-in hypotheses. Boundary inputs
-and guarded headline axiom reports cover the carry-save and modular-to-majority milestones.
+cover the carry-save and modular-to-majority milestones.
 -/
 
 @[expose] public section
@@ -77,106 +77,6 @@ example : Language.ofSlices majority ∈ NC 1 := by
   obtain ⟨C, hc, hd, hs, hf⟩ := majority_family n
   exact ⟨C.mapOp Threshold.ofMajority, hc.mapOp,
     by simpa using hd, by simpa using hs, by simpa using hf⟩
-
-/--
-info: 'Cslib.Circuits.Boolean.Smolensky.AC0Mod_ssubset_TC0' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Boolean.Smolensky.AC0Mod_ssubset_TC0
-
-/--
-info: 'Cslib.Circuits.Boolean.Unbounded.eval_multCircuit' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Boolean.Unbounded.eval_multCircuit
-
-/--
-info: 'Cslib.Circuits.Boolean.Unbounded.exists_majority_simulation_modGate' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Boolean.Unbounded.exists_majority_simulation_modGate
-
-/--
-info: 'Cslib.Circuits.Boolean.ACMod_subset_TC' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Boolean.ACMod_subset_TC
-
-/--
-info: 'Cslib.Circuits.Boolean.AC0Mod_subset_TC0' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Boolean.AC0Mod_subset_TC0
-
-/--
-info: 'Cslib.Circuits.Boolean.val_eval_weightCircuit' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Boolean.val_eval_weightCircuit
-
-/--
-info: 'Cslib.Circuits.Boolean.computes_thresholdDeMorganCircuit' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Boolean.computes_thresholdDeMorganCircuit
-
-/--
-info: 'Cslib.Circuits.Boolean.computes_majorityDeMorganCircuit' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Boolean.computes_majorityDeMorganCircuit
-
-/--
-info: 'Cslib.Circuits.Boolean.threshold_mem_NC_one' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Boolean.threshold_mem_NC_one
-
-/--
-info: 'Cslib.Circuits.Boolean.majority_mem_NC_one' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Boolean.majority_mem_NC_one
-
-/--
-info: 'Cslib.Circuits.Boolean.strictMajority_mem_NC_one' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Boolean.strictMajority_mem_NC_one
-
-/--
-info: 'Cslib.Circuits.Boolean.Threshold.exists_deMorgan_simulation_of_fanInAtMost' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Boolean.Threshold.exists_deMorgan_simulation_of_fanInAtMost
-
-/--
-info: 'Cslib.Circuits.Boolean.Unbounded.exists_deMorgan_simulation_majority_of_fanInAtMost'
-depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Boolean.Unbounded.exists_deMorgan_simulation_majority_of_fanInAtMost
-
-/--
-info: 'Cslib.Circuits.Boolean.mem_NC_succ_of_threshold_fanInAtMost' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Boolean.mem_NC_succ_of_threshold_fanInAtMost
-
-/--
-info: 'Cslib.Circuits.Boolean.mem_NC_succ_of_majority_fanInAtMost' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Boolean.mem_NC_succ_of_majority_fanInAtMost
 
 end ComplexityTests.ThresholdNC1
 

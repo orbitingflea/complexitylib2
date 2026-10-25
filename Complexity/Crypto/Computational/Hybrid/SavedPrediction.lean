@@ -32,6 +32,7 @@ This avoids requiring an efficient inverse for an arbitrary observation or param
 
 ## Main results
 
+* `isPolyTime_evaluate`: evaluation is deterministic polynomial time on every code.
 * `eval_sample`, `exists_evaluator`: exact replay from one fixed efficient evaluator.
 * `length_sample_le`, `isPPTOn_sample`: all-execution size and strict PPT certificates.
 

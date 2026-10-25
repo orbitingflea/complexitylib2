@@ -144,21 +144,4 @@ example (v : Unit → (Interpretation.id markedLanguage).Model (Fin 3)) :
   · intro h x hx
     exact hx.trans h.symm
 
-/-- info: 'Cslib.Logic.FO.Interpretation.WithConstants.realize_onFormula' depends on axioms: [propext,
- Classical.choice,
- Quot.sound] -/
-#guard_msgs in
-#print axioms Cslib.Logic.FO.Interpretation.WithConstants.realize_onFormula
-
-/-- info: 'Cslib.Logic.FO.Interpretation.WithConstants.realize_onSentence' depends on axioms: [propext,
- Classical.choice,
- Quot.sound] -/
-#guard_msgs in
-#print axioms Cslib.Logic.FO.Interpretation.WithConstants.realize_onSentence
-
-/-- info: 'Cslib.Logic.FO.Ordered.constants_valid' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Cslib.Logic.FO.Ordered.constants_valid
-
 end Cslib.Tests.FirstOrderConstants

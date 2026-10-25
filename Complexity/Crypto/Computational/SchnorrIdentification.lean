@@ -16,7 +16,7 @@ import Complexity.Crypto.Protocols.SigmaProtocol.Identification
 import Complexity.Foundations.Data.BitString.Counter
 import Complexity.Foundations.Data.Nat.Bits
 import Complexity.Probability.PMF
-import Mathlib.FieldTheory.Finite.Basic
+import Complexity.Foundations.FieldTheory.Finite.Basic
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.BinaryDiv
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.PowMod
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
@@ -151,10 +151,8 @@ private theorem extractNat_cast {q : ℕ} [Fact q.Prime] {c z c' z' : ℕ}
       (Nat.le_add_left _ _)), Nat.cast_add, ZMod.natCast_mod, ZMod.natCast_mod, ZMod.natCast_self,
       add_zero]
   have hne : (c : ZMod q) - c' ≠ 0 := sub_ne_zero.mpr hc
-  have hinv : ((c : ZMod q) - c') ^ (q - 2) = ((c : ZMod q) - c')⁻¹ := by
-    refine eq_inv_of_mul_eq_one_left ?_
-    rw [← pow_succ, show q - 2 + 1 = q - 1 by have := (Fact.out : q.Prime).two_le; lia,
-      ZMod.pow_card_sub_one_eq_one hne]
+  have hinv : ((c : ZMod q) - c') ^ (q - 2) = ((c : ZMod q) - c')⁻¹ :=
+    ZMod.pow_card_sub_two_eq_inv hne
   simp only [extractNat, Nat.cast_mul, ZMod.natCast_mod, Nat.cast_pow, hsub, hinv]
 
 /-- Schnorr's protocol on encoded commitments and binary responses, with statements carrying their

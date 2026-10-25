@@ -65,18 +65,4 @@ example : ComputableTidilyInPolyTime
     (fun p : (List Bool × ℕ) × (List (Op × List ℕ) × List ℕ) => prefixCode p.1.1 p.1.2 p.2)
     (encPair (encPair encBits encNat) encCode) encCode := by fun_prop
 
-/--
-info: 'Cslib.Circuits.Boolean.eval_prefixCircuit' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Circuits.Boolean.eval_prefixCircuit
-
-/--
-info: 'Cslib.Circuits.Boolean.computableInPolyTime_prefixCode' depends on axioms: [propext,
- Classical.choice,
- Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Boolean.computableInPolyTime_prefixCode
-
 end ComplexityTests.CodeSubstitution

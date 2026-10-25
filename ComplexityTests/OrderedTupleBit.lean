@@ -48,7 +48,7 @@ example (z : Fin 3 → Fin 9) :
   rintro ⟨_, _, _, hz, he⟩
   change ∀ i, (z i).val < 2 at hz
   change 8 = Nat.ofDigits 2 (List.ofFn fun i => (z i).val) at he
-  have := Nat.ofDigits_ofFn_lt (by decide : 1 < 2) (fun i => (z i).val) hz
+  have := Nat.ofDigits_ofFn_lt Nat.one_lt_two (fun i => (z i).val) hz
   lia
 
 /-- A scalar decoder cannot silently discard its final nonzero quotient. -/
@@ -132,15 +132,5 @@ example (v : Fin 3 × Fin 2 → Fin 9) :
       (lexRank (fun i => v (1, i))).testBit (lexRank (fun i => v (2, i))) = true := by
   rw [Formula.realize_relabel, realize_tupleBit]
   rfl
-
-/-- info: 'Cslib.Logic.FO.Ordered.realize_tupleBit' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Cslib.Logic.FO.Ordered.realize_tupleBit
-
-/-- info: 'Cslib.Logic.FO.Ordered.Radix.realize_affine' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Cslib.Logic.FO.Ordered.Radix.realize_affine
 
 end Cslib.Tests.OrderedTupleBit

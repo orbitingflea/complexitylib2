@@ -56,6 +56,8 @@ internal weights (`two_pow_lt_of_directionMenus_intWeight`, `two_pow_lt_of_direc
 
 ## Main results
 
+* `Cslib.Circuits.Boolean.WeightedThreshold.cost_menuBlockDecomposition`: capacity cost factors
+  across directions.
 * `Cslib.Circuits.Boolean.WeightedThreshold.card_biasMenu_le_two_pow_gateSupport`: bounded internal
   fan-in `k` bounds `|biasMenu p gate|` by `2 ^ k`.
 * `Cslib.Circuits.Boolean.WeightedThreshold.card_biasMenu_le_one_add_sum_natAbs`,
@@ -251,25 +253,10 @@ theorem directionMenuSum_pos_of_nonempty (p : Program signature n g) (dir : Fin 
 /-- A linear threshold predicate `decide (θ ≤ c * t + β)` changes at most once along `ℝ`. -/
 theorem changesAtMost_linear_threshold (θ c β : ℝ) :
     ChangesAtMost (fun t : ℝ => decide (θ ≤ c * t + β)) 1 := by
-  have hbase : ChangesAtMost (fun u : ℝ => decide (θ ≤ u)) 1 := by
-    intro z hz S hS
-    have hcut (i) (hi : i ∈ S) : z i < θ ∧ θ ≤ z (i + 1) := by
-      have hn : ¬ θ ≤ z i := by
-        intro hc
-        exact hS i hi (by simp [hc, hc.trans (hz (Nat.le_succ i))])
-      have hp : θ ≤ z (i + 1) := by
-        by_contra hn'
-        exact hS i hi (by simp [hn, hn'])
-      exact ⟨lt_of_not_ge hn, hp⟩
-    apply Finset.card_le_one.mpr
-    intro i hi j hj
-    by_contra hne
-    rcases Nat.lt_or_gt_of_ne hne with h | h
-    · exact (not_lt_of_ge ((hcut i hi).2.trans (hz h))) (hcut j hj).1
-    · exact (not_lt_of_ge ((hcut j hj).2.trans (hz h))) (hcut i hi).1
   rcases le_or_gt 0 c with hc | hc
-  · exact hbase.comp_monotone ((monotone_id.const_mul hc).add_const β)
-  · exact hbase.comp_antitone ((monotone_id.const_mul_of_nonpos hc.le).add_const β)
+  · exact (ChangesAtMost.decide_le θ).comp_monotone ((monotone_id.const_mul hc).add_const β)
+  · exact (ChangesAtMost.decide_le θ).comp_antitone
+      ((monotone_id.const_mul_of_nonpos hc.le).add_const β)
 
 /-- Type of the precomputed comparison table for direction `a`. -/
 abbrev MenuTable (p : Program signature n g) (dir : Fin g → Fin d) (a : Fin d) : Type :=

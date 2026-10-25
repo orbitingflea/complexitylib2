@@ -15,7 +15,7 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Na
 
 Concrete instances in and out of `SubsetSum`, `Partition`, `Knapsack` and `ZeroOneIP`, boundary
 cases (empty lists, target zero, repeated numbers, large binary numbers), the reductions on small
-inputs, compositional `fun_prop` synthesis and axiom checks for the headline theorems.
+inputs and compositional `fun_prop` synthesis.
 -/
 
 namespace ComplexityTests.NPCompleteNumbers
@@ -215,49 +215,5 @@ example : SubsetSum.toZeroOneIP ([3, 5], 8) ∈ ZeroOneIP :=
   (SubsetSum.toZeroOneIP_mem_iff _).2 (mem_SubsetSum_iff_sublists.2 (by decide))
 example : SubsetSum.toZeroOneIP ([3, 5], 4) ∉ ZeroOneIP := fun h =>
   absurd (mem_SubsetSum_iff_sublists.1 ((SubsetSum.toZeroOneIP_mem_iff _).1 h)) (by decide)
-
-/-! ### Axiom checks for headline theorems -/
-
-/--
-info: 'Cslib.Complexity.SubsetSum_npComplete' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.SubsetSum_npComplete
-
-/--
-info: 'Cslib.Complexity.ThreeSAT.toSubsetSum_mem_iff' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.ThreeSAT.toSubsetSum_mem_iff
-
-/--
-info: 'Cslib.Complexity.Partition_npComplete' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.Partition_npComplete
-
-/--
-info: 'Cslib.Complexity.Knapsack_npComplete' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.Knapsack_npComplete
-
-/--
-info: 'Cslib.Complexity.ZeroOneIP_npComplete' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.ZeroOneIP_npComplete
-
-/--
-info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.binary_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.binary_le
 
 end ComplexityTests.NPCompleteNumbers

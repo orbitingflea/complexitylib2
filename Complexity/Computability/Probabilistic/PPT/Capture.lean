@@ -24,6 +24,8 @@ efficient deterministic concatenation.
 
 ## Main results
 
+* `Cslib.Probability.IsPPTOn.prefix`: write efficiently computed input data before
+  probabilistic output.
 * `Cslib.Probability.IsPPTOn.pair`: retain efficiently computed data alongside a sampled result.
 * `Cslib.Probability.IsPPTOn.bind_with`: a monadic continuation may capture the original input.
 * `Cslib.Probability.IsPPTOn.map_with`: a deterministic callback may capture the original input.

@@ -60,29 +60,4 @@ example {U : Type*} : (fullCover (U := U)).toCircuit.program.cost Monotone.andCo
 example {U : Type*} : (fullCover (U := U)).toCircuit.eval (Monotone.setInterpretation U)
     Fin.elim0 = fun _ => Set.univ := PairCover.eval_toCircuit _
 
-/--
-info: 'Cslib.Circuits.Fusion.PairClosureCompiler.stages_stable' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Fusion.PairClosureCompiler.stages_stable
-/--
-info: 'Cslib.Circuits.Fusion.PairCover.cost_toCircuit' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Fusion.PairCover.cost_toCircuit
-/--
-info: 'Cslib.Circuits.Fusion.PairCover.eval_toCircuit' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Fusion.PairCover.eval_toCircuit
-/--
-info: 'Cslib.Circuits.Fusion.ecomplexityFrom_le_pairCoverComplexity_sq' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Fusion.ecomplexityFrom_le_pairCoverComplexity_sq
-
 end ComplexityTests.FusionQuadratic

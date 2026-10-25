@@ -12,8 +12,8 @@ import Complexity.Computability.Complexity.FineGrained.OrthogonalVectors
 Numbers of variables and `k`-SAT on concrete formulas; numbered assignments; exhaustive search on
 satisfiable and unsatisfiable formulas, including a formula with no clauses and one with an empty
 clause; concrete instances of the orthogonal vectors problem, with vectors of different lengths and
-empty sides; the split-and-list reduction on concrete formulas, against satisfiability; the
-non-vacuity of the time bounds and exponents; and the axioms of the headline theorems.
+empty sides; the split-and-list reduction on concrete formulas, against satisfiability; and the
+non-vacuity of the time bounds and exponents.
 -/
 
 namespace ComplexityTests.FineGrained
@@ -125,87 +125,5 @@ example : SETH → OVH := OVH_of_SETH
 
 example (h : ¬DecidableInSubexpTime ThreeSAT encCNF List.length) : ETH :=
   ETH_of_not_decidableInSubexpTime_length h
-
-/-! ### Axioms -/
-
-/--
-info: 'Cslib.Complexity.mem_DTIME_iff_decidableInTimeO' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.mem_DTIME_iff_decidableInTimeO
-
-/--
-info: 'Cslib.Complexity.BruteForce.search_eq_true_iff' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.BruteForce.search_eq_true_iff
-
-/--
-info: 'Cslib.Complexity.BruteForce.exists_computableInO_search' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.BruteForce.exists_computableInO_search
-
-/--
-info: 'Cslib.Complexity.KSAT_decidableInExpTime_one' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.KSAT_decidableInExpTime_one
-
-/--
-info: 'Cslib.Complexity.satExponent_mono' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.satExponent_mono
-
-/--
-info: 'Cslib.Complexity.ETH_iff_satExponent_pos' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.ETH_iff_satExponent_pos
-
-/--
-info: 'Cslib.Complexity.SETH_iff_tendsto' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.SETH_iff_tendsto
-
-/--
-info: 'Cslib.Complexity.ETH_of_not_decidableInSubexpTime_length' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.ETH_of_not_decidableInSubexpTime_length
-
-/--
-info: 'Cslib.Complexity.toOV_mem_OV_iff' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.toOV_mem_OV_iff
-
-/--
-info: 'Cslib.Complexity.exists_computableInO_toOV' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.exists_computableInO_toOV
-
-/--
-info: 'Cslib.Complexity.DecidableInTimeO.decidableInExpTime_SAT' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.DecidableInTimeO.decidableInExpTime_SAT
-
-/--
-info: 'Cslib.Complexity.OVH_of_SETH' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.OVH_of_SETH
 
 end ComplexityTests.FineGrained

@@ -110,16 +110,15 @@ example (t s : ℕ) :
 -- exhibits both a concrete yes-instance and a no-instance of length `2 * s + 2`.
 example :
     let P := GapMINKT (fun _ s => 2 * s + 1) (fun _ t => 2 * t + 2)
+      (fun _ s => by omega) (fun _ t => by omega)
     (⟨[true, false], 3, 2 + copyOverhead⟩ : MINKT.Instance) ∈ P.yes ∧
       ∀ t s : ℕ, ∃ x : List Bool, x.length = 2 * s + 2 ∧
         (⟨x, t, s⟩ : MINKT.Instance) ∈ P.no := by
   intro P
-  have hno_eq : P.no = GapMINKT.no (fun _ s => 2 * s + 1) (fun _ t => 2 * t + 2) :=
-    GapMINKT.no_eq (fun _ s => by omega) (fun _ t => by omega)
   refine ⟨MINKT.mk_mem_iff.mpr (timeBoundedAt_le_length_add le_rfl), fun t s => ?_⟩
   obtain ⟨x, hx, hall⟩ := exists_length_eq_forall_le_timeBounded (2 * s + 2)
   refine ⟨x, hx, ?_⟩
-  rw [hno_eq, GapMINKT.mem_no_iff]
+  rw [GapMINKT.no_eq, GapMINKT.mem_noSet_iff]
   dsimp only
   have hle : ((2 * s + 2 : ℕ) : ℕ∞) ≤ timeBoundedAt (2 * t + 2) x :=
     hall (fun _ => 2 * t + 2)
@@ -131,42 +130,8 @@ example : MINKT ∈ NP MINKT.enc :=
 example (p q : Polynomial ℕ) : MINKTAt p.eval q.eval ∈ NP encBits :=
   MINKTAt.mem_NP_polynomial₂ p q
 
-example : GapMINKT (fun _ s => s) (fun _ t => t) = PromiseProblem.ofSet MINKT :=
+example : GapMINKT (fun _ s => s) (fun _ t => t) (fun _ _ => le_rfl) (fun _ _ => le_rfl) =
+    PromiseProblem.ofSet MINKT :=
   GapMINKT.id_eq
-
-/-! ### Axiom guards -/
-
-/--
-info: 'Cslib.Kolmogorov.DescriptionMethod.exists_simulation_ofMultiTapeTM' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms exists_simulation_ofMultiTapeTM
-
-/--
-info: 'Cslib.Kolmogorov.timeBounded_le' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms timeBounded_le
-
-/--
-info: 'Cslib.Kolmogorov.exists_ecomplexity_universal_le_timeBounded' depends on axioms: [propext,
-Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms exists_ecomplexity_universal_le_timeBounded
-
-/--
-info: 'Cslib.Kolmogorov.MINKT.mem_NP' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms MINKT.mem_NP
-
-/--
-info: 'Cslib.Kolmogorov.MINKTAt.mem_NP_polynomial₂' depends on axioms: [propext, Classical.choice,
-Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms MINKTAt.mem_NP_polynomial₂
 
 end ComplexityTests.KolmogorovTimeBounded

@@ -13,6 +13,7 @@ public import Complexity.Computability.Complexity.Classes.Promise.Basic
 public import Complexity.Foundations.Data.BitString.Basic
 public import Cslib.Computability.Circuit.Boolean.Complexity
 public import Cslib.Computability.Circuit.Boolean.Counting
+public import Mathlib.Computability.Language
 public import Mathlib.Data.Set.Card
 
 /-!
@@ -37,18 +38,23 @@ cslib's `computableFunctions n s`, so there are as many of them as such function
 ## Main definitions
 
 * `Cslib.MCSP.truthTable`: truth tables of Boolean functions.
+* `Cslib.Circuits.Boolean.truthTableLanguage`: the truth tables of a property, as a language.
 * `Cslib.MCSP.Instance`, `Cslib.MCSP`: the instances and the yes-instances of MCSP.
-* `Cslib.GapMCSP`: `GapMCSP[s₁, s₂]` as a `PromiseProblem`, with sides `Cslib.GapMCSP.yes` and
-  `Cslib.GapMCSP.no`.
+* `Cslib.GapMCSP`: `GapMCSP[s₁, s₂]` as a `PromiseProblem (List Bool)`, with sides
+  `Cslib.GapMCSP.yesSet` and `Cslib.GapMCSP.noSet`.
 
 ## Main results
 
+* `Cslib.Circuits.Boolean.ofFn_mem_truthTableLanguage`: membership of an `ofFn`-vector in
+  `truthTableLanguage`.
 * `Cslib.MCSP.mem_iff_exists_circuit`, `Cslib.MCSP.mem_iff_mem_computableFunctions`: the yes-
   instances of MCSP, as circuits and as computable functions.
 * `Cslib.MCSP.ncard_setOf_mem`: the number of yes-instances of a given arity and threshold.
-* `Cslib.GapMCSP.disjoint_yes_no`: the promise of `GapMCSP[s₁, s₂]` is consistent when
-  `s₁ ≤ s₂`, and `Cslib.GapMCSP.no_eq_compl_yes`, `Cslib.GapMCSP.eq_ofSet`: `GapMCSP[s, s]` is
-  MCSP at threshold `s`.
+* `Cslib.GapMCSP.ofFn_mem_yesSet_iff_mem_MCSP`,
+  `Cslib.GapMCSP.ofFn_mem_noSet_iff_notMem_MCSP`: characterization of truth tables of length `2^n`
+  in the yes and no sets.
+* `Cslib.GapMCSP.disjoint_yesSet_noSet`: the promise of `GapMCSP[s₁, s₂]` is consistent when
+  `s₁ n ≤ s₂ n` for all `n`.
 
 ## References
 
@@ -158,70 +164,114 @@ theorem ncard_setOf_mem (n s : ℕ) :
 
 end MCSP
 
+namespace Circuits.Boolean
+
+/-- The truth tables of a property, as a language [RazborovRudich1997]: a word of length `2 ^ n`
+belongs to it when it is the truth table of a function in `C n`. Words whose length is not a power
+of two do not belong to it. -/
+def truthTableLanguage (C : ∀ n, Set (BooleanFunction n)) : Language Bool :=
+  {w | ∃ n, ∃ h : w.length = 2 ^ n,
+    (MCSP.truthTable n).symm (fun i => w[(i : ℕ)]'(i.isLt.trans_eq h.symm)) ∈ C n}
+
+/-- A `2 ^ n`-bit string `T`, viewed as a list via `List.ofFn`, belongs to `truthTableLanguage C`
+if and only if its corresponding Boolean function lies in `C n`. -/
+theorem ofFn_mem_truthTableLanguage {C : ∀ n, Set (BooleanFunction n)} {n : ℕ}
+    {T : BitString (2 ^ n)} :
+    List.ofFn T ∈ truthTableLanguage C ↔ (MCSP.truthTable n).symm T ∈ C n := by
+  constructor
+  · rintro ⟨m, h, hm⟩
+    obtain rfl : m = n :=
+      Nat.pow_right_injective le_rfl (h.symm.trans (List.length_ofFn (f := T)))
+    simpa only [List.getElem_ofFn] using hm
+  · intro h
+    exact ⟨n, List.length_ofFn, by simpa only [List.getElem_ofFn] using h⟩
+
+end Circuits.Boolean
+
 namespace GapMCSP
 
-open MCSP
+open MCSP Circuits.Boolean
 
-variable {s₁ s₂ : ℕ → ℕ} {n : ℕ}
+variable {s₁ s₂ : ℕ → ℕ}
 
-/-- The yes-instances of `GapMCSP[s₁, s₂]` on functions of `n` inputs: the truth tables of
-functions with circuits of at most `s₁ n` gates [OliveiraPichSanthanam2019, Definition 2.4]. -/
-def yes (s₁ : ℕ → ℕ) (n : ℕ) : Set (BitString (2 ^ n)) :=
-  {T | complexity interpretation (single ((truthTable n).symm T)) ≤ s₁ n}
+/-- The yes-instances of `GapMCSP[s₁, s₂]` across all lengths [OliveiraPichSanthanam2019,
+Definition 2.4]: the truth tables of Boolean functions with circuit complexity at most
+`s₁ n`. -/
+def yesSet (s₁ : ℕ → ℕ) : Language Bool :=
+  truthTableLanguage fun n => {f | complexity interpretation (single f) ≤ s₁ n}
 
-/-- The no-instances of `GapMCSP[s₁, s₂]` on functions of `n` inputs: the truth tables of
-functions that need more than `s₂ n` gates [OliveiraPichSanthanam2019, Definition 2.4]. -/
-def no (s₂ : ℕ → ℕ) (n : ℕ) : Set (BitString (2 ^ n)) :=
-  {T | s₂ n < complexity interpretation (single ((truthTable n).symm T))}
+/-- The no-instances of `GapMCSP[s₁, s₂]` across all lengths [OliveiraPichSanthanam2019,
+Definition 2.4]: the truth tables of Boolean functions with circuit complexity greater than
+`s₂ n`. -/
+def noSet (s₂ : ℕ → ℕ) : Language Bool :=
+  truthTableLanguage fun n => {f | s₂ n < complexity interpretation (single f)}
 
-/-- The yes-instances of `GapMCSP[s₁, s₂]` are those of MCSP at threshold `s₁ n`. -/
-theorem mem_yes_iff {T : BitString (2 ^ n)} : T ∈ yes s₁ n ↔ ⟨n, T, s₁ n⟩ ∈ MCSP :=
-  Iff.rfl
+/-- A `2 ^ n`-bit string `T`, viewed as a list via `List.ofFn`, belongs to `yesSet s₁`
+if and only if its circuit complexity is at most `s₁ n`. -/
+@[simp] theorem ofFn_mem_yesSet_iff {n : ℕ} {T : BitString (2 ^ n)} :
+    List.ofFn T ∈ yesSet s₁ ↔ complexity interpretation (single ((truthTable n).symm T)) ≤ s₁ n :=
+  ofFn_mem_truthTableLanguage
 
-/-- The no-instances of `GapMCSP[s₁, s₂]` are the truth tables that are not yes-instances of
-MCSP at threshold `s₂ n`. -/
-theorem no_eq_compl_yes (s₂ : ℕ → ℕ) (n : ℕ) : no s₂ n = (yes s₂ n)ᶜ := by
-  ext T
-  simp [yes, no]
+/-- A `2 ^ n`-bit string `T`, viewed as a list via `List.ofFn`, belongs to `yesSet s₁`
+if and only if `⟨n, T, s₁ n⟩ ∈ MCSP`. -/
+theorem ofFn_mem_yesSet_iff_mem_MCSP {n : ℕ} {T : BitString (2 ^ n)} :
+    List.ofFn T ∈ yesSet s₁ ↔ (⟨n, T, s₁ n⟩ : MCSP.Instance) ∈ MCSP :=
+  ofFn_mem_yesSet_iff
 
-/-- The promise of `GapMCSP[s₁, s₂]` is consistent: when `s₁ n ≤ s₂ n`, no truth table is both a
-yes-instance and a no-instance. -/
-theorem disjoint_yes_no (h : s₁ n ≤ s₂ n) : Disjoint (yes s₁ n) (no s₂ n) :=
-  Set.disjoint_left.mpr fun _ hyes hno => (lt_irrefl _) ((hyes.trans h).trans_lt hno)
+/-- A `2 ^ n`-bit string `T`, viewed as a list via `List.ofFn`, belongs to `noSet s₂`
+if and only if its circuit complexity is strictly greater than `s₂ n`. -/
+@[simp] theorem ofFn_mem_noSet_iff {n : ℕ} {T : BitString (2 ^ n)} :
+    List.ofFn T ∈ noSet s₂ ↔ s₂ n < complexity interpretation (single ((truthTable n).symm T)) :=
+  ofFn_mem_truthTableLanguage
+
+/-- A `2 ^ n`-bit string `T`, viewed as a list via `List.ofFn`, belongs to `noSet s₂`
+if and only if `⟨n, T, s₂ n⟩ ∉ MCSP`. -/
+theorem ofFn_mem_noSet_iff_notMem_MCSP {n : ℕ} {T : BitString (2 ^ n)} :
+    List.ofFn T ∈ noSet s₂ ↔ (⟨n, T, s₂ n⟩ : MCSP.Instance) ∉ MCSP := by
+  rw [ofFn_mem_noSet_iff]
+  exact not_le.symm
+
+/-- When `s₁ n ≤ s₂ n` for all `n`, no truth table is both a yes-instance and a no-instance. -/
+theorem disjoint_yesSet_noSet (h : ∀ n, s₁ n ≤ s₂ n) : Disjoint (yesSet s₁) (noSet s₂) := by
+  refine Set.disjoint_left.mpr fun w hyes hno => ?_
+  obtain ⟨n₁, hn₁, hf₁⟩ := hyes
+  obtain ⟨n₂, hn₂, hf₂⟩ := hno
+  obtain rfl : n₁ = n₂ :=
+    Nat.pow_right_injective le_rfl (hn₁.symm.trans hn₂)
+  have h_eq : (truthTable n₁).symm (fun i => w[(i : ℕ)]'(i.isLt.trans_eq hn₁.symm)) =
+      (truthTable n₁).symm (fun i => w[(i : ℕ)]'(i.isLt.trans_eq hn₂.symm)) := rfl
+  rw [h_eq] at hf₁
+  exact (lt_irrefl _) ((hf₁.trans (h n₁)).trans_lt hf₂)
 
 /-- Raising the yes-threshold adds yes-instances. -/
-theorem yes_mono {s₁' : ℕ → ℕ} (h : s₁ n ≤ s₁' n) : yes s₁ n ⊆ yes s₁' n :=
-  fun _ hT => le_trans hT h
+theorem yesSet_mono {s₁' : ℕ → ℕ} (h : ∀ n, s₁ n ≤ s₁' n) : yesSet s₁ ≤ yesSet s₁' :=
+  fun _ ⟨n, hn, hf⟩ => ⟨n, hn, le_trans hf (h n)⟩
 
 /-- Raising the no-threshold removes no-instances. -/
-theorem no_anti {s₂' : ℕ → ℕ} (h : s₂ n ≤ s₂' n) : no s₂' n ⊆ no s₂ n :=
-  fun _ hT => lt_of_le_of_lt h hT
+theorem noSet_anti {s₂' : ℕ → ℕ} (h : ∀ n, s₂ n ≤ s₂' n) : noSet s₂' ≤ noSet s₂ :=
+  fun _ ⟨n, hn, hf⟩ => ⟨n, hn, lt_of_le_of_lt (h n) hf⟩
 
 end GapMCSP
 
-/-- **`GapMCSP[s₁, s₂]` on functions of `n` inputs** [OliveiraPichSanthanam2019, Definition 2.4]:
-the promise problem whose yes-instances are the truth tables of functions with circuits of at most
-`s₁ n` gates and whose no-instances are those of functions that need more than `s₂ n` gates, when
-`s₁ n ≤ s₂ n`. -/
-def GapMCSP (s₁ s₂ : ℕ → ℕ) (n : ℕ) (h : s₁ n ≤ s₂ n) :
-    Complexity.PromiseProblem (BitString (2 ^ n)) where
-  yes := GapMCSP.yes s₁ n
-  no := GapMCSP.no s₂ n
-  disjoint := GapMCSP.disjoint_yes_no h
+/-- **`GapMCSP[s₁, s₂]`** [OliveiraPichSanthanam2019, Definition 2.4]: the promise problem whose
+yes-instances are truth tables of functions with circuits of at most `s₁ n` gates and whose
+no-instances are truth tables of functions that need more than `s₂ n` gates, when `s₁ n ≤ s₂ n`
+for all `n`. Following OPS19, the hypothesis `∀ n, s₁ n ≤ s₂ n` is bundled to guarantee
+disjointness of the promise problem by construction. -/
+def GapMCSP (s₁ s₂ : ℕ → ℕ) (h : ∀ n, s₁ n ≤ s₂ n) :
+    Complexity.PromiseProblem (List Bool) where
+  yes := GapMCSP.yesSet s₁
+  no := GapMCSP.noSet s₂
+  disjoint := GapMCSP.disjoint_yesSet_noSet h
 
 namespace GapMCSP
 
-variable {s₁ s₂ : ℕ → ℕ} {n : ℕ}
+variable {s₁ s₂ : ℕ → ℕ}
+variable (h : ∀ n, s₁ n ≤ s₂ n)
 
-@[simp] theorem yes_eq (h : s₁ n ≤ s₂ n) : (GapMCSP s₁ s₂ n h).yes = yes s₁ n := rfl
+@[simp] theorem yes_eq : (GapMCSP s₁ s₂ h).yes = yesSet s₁ := rfl
 
-@[simp] theorem no_eq (h : s₁ n ≤ s₂ n) : (GapMCSP s₁ s₂ n h).no = no s₂ n := rfl
-
-/-- At equal thresholds `s`, `GapMCSP[s, s]` is the decision problem `GapMCSP.yes s n`, MCSP on
-`n` inputs at threshold `s`. -/
-@[simp] theorem eq_ofSet (s : ℕ → ℕ) (n : ℕ) :
-    GapMCSP s s n le_rfl = Complexity.PromiseProblem.ofSet (yes s n) :=
-  Complexity.PromiseProblem.ext rfl (no_eq_compl_yes s n)
+@[simp] theorem no_eq : (GapMCSP s₁ s₂ h).no = noSet s₂ := rfl
 
 end GapMCSP
 

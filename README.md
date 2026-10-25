@@ -49,7 +49,7 @@ the selection is not an exhaustive API reference.
 * [Fagin: logic captures NP](abstracts/ComplexityAbstracts/FaginAbstract.lean): Existential second-order logic captures precisely the isomorphism-invariant NP properties of finite relational structures.
 * [Savitch: NPSPACE equals PSPACE](abstracts/ComplexityAbstracts/SavitchAbstract.lean): Nondeterminism does not enlarge polynomial space.
 * [Reingold: undirected reachability is in L](abstracts/ComplexityAbstracts/USTCONAbstract.lean): Undirected graph connectivity can be decided with logarithmic work space.
-* [Immerman–Szelepcsényi: NL equals coNL](abstracts/ComplexityAbstracts/ImmermanSzelepcsenyiAbstract.lean): Nondeterministic logarithmic space is closed under complement.
+* [Immerman–Szelepcsényi: nondeterministic space is closed under complement](abstracts/ComplexityAbstracts/ImmermanSzelepcsenyiAbstract.lean): Nondeterministic space at least logarithmic is closed under complement; in particular NL equals coNL.
 * [Shamir: IP equals PSPACE](abstracts/ComplexityAbstracts/ShamirAbstract.lean): Interaction and randomness give a polynomial-time verifier the power of polynomial space.
 * [Toda: a counting oracle decides the polynomial hierarchy](abstracts/ComplexityAbstracts/TodaAbstract.lean): Every problem in the polynomial hierarchy is decidable in polynomial time with an exact counting oracle.
 * [Barrington: five states capture NC¹](abstracts/ComplexityAbstracts/BarringtonAbstract.lean): Polynomial-length permutation programs on five states capture logarithmic-depth polynomial-size Boolean circuits.

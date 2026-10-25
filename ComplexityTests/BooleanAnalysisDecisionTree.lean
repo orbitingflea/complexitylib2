@@ -109,55 +109,6 @@ example (F : Finset (Fin 3) → ℝ) : ∑ S, F (symmDiff {0} S) = ∑ S, F S :=
 
 /-! ### Axiom guards -/
 
-/-- info: 'Fintype.sum_symmDiff' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms Fintype.sum_symmDiff
-
-/-- info: 'Cslib.BitString.fourierCoeff_cond' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms BitString.fourierCoeff_cond
-
-/-- info: 'Cslib.BitString.eq_add_chi_mul_derivative' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms BitString.eq_add_chi_mul_derivative
-
-/-- info: 'Cslib.BitString.fourierCoeff_singleton_eq_expect_derivative' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms BitString.fourierCoeff_singleton_eq_expect_derivative
-
-/-- info: 'Cslib.BitString.influence_signVal_ne_zero_iff' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms BitString.influence_signVal_ne_zero_iff
-
-/-- info: 'Cslib.BitString.totalInfluence_le_sqrt_card_mul_of_monotone' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms BitString.totalInfluence_le_sqrt_card_mul_of_monotone
-
-/-- info: 'Cslib.BitString.totalInfluence_le_sqrt_card_of_antitone' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms BitString.totalInfluence_le_sqrt_card_of_antitone
-
-/-- info: 'Cslib.BitString.one_le_two_pow_mul_dens_ne_zero' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms BitString.one_le_two_pow_mul_dens_ne_zero
-
-/-- info: 'Cslib.BitString.card_filter_exists_update_ne_le' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms BitString.card_filter_exists_update_ne_le
-
-/-- info: 'Cslib.DecisionTree.card_filter_fourierCoeff_signVal_ne_zero_le' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms DecisionTree.card_filter_fourierCoeff_signVal_ne_zero_le
-
 /-- info: 'Cslib.DecisionTree.leafCount_le_two_pow_depth' depends on axioms: [propext] -/
 #guard_msgs (whitespace := lax) in
 #print axioms DecisionTree.leafCount_le_two_pow_depth

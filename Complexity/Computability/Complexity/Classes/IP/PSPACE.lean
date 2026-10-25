@@ -18,6 +18,7 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Na
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Option
 import Complexity.Computability.Machines.Turing.MultiTape.Encodings.NatPower
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolySpace.Plain
+import Complexity.Foundations.Data.List.Append
 
 /-!
 # `IP ⊆ PSPACE`
@@ -98,17 +99,10 @@ zeros, a one, then `w`. -/
 def encodeWord (L : ℕ) (w : List Bool) : List Bool :=
   List.replicate (L - w.length) false ++ true :: w
 
-theorem idxOf_true_replicate_false_append (n : ℕ) (w : List Bool) :
-    (List.replicate n false ++ true :: w).idxOf true = n := by
-  induction n with
-  | zero => simp
-  | succ n ih =>
-    rw [List.replicate_succ, List.cons_append, List.idxOf_cons_ne _ (by simp), ih]
-
 /-- Decoding inverts coding. -/
 private theorem decodeWord_encodeWord (L : ℕ) (w : List Bool) : decodeWord
     (encodeWord L w) = w := by
-  rw [decodeWord, encodeWord, idxOf_true_replicate_false_append, List.drop_append]
+  rw [decodeWord, encodeWord, List.idxOf_true_replicate_false_append, List.drop_append]
   simp
 
 private theorem length_encodeWord {L : ℕ} {w : List Bool} (hw : w.length ≤ L) :
@@ -125,17 +119,9 @@ private theorem length_decodeWord_le {L : ℕ} {u : List Bool} (hu : u.length = 
   lia
 
 /-- A word with a `true` is its first `true` preceded by zeros and followed by its decoding. -/
-private theorem eq_replicate_append_decodeWord : ∀ {u : List Bool}, true ∈ u →
-    u = List.replicate (u.idxOf true) false ++ true :: decodeWord u
-  | b :: u, h => by
-    cases b
-    · have hu : true ∈ u := by simpa using h
-      rw [decodeWord, List.idxOf_cons_ne _ (by simp)]
-      have := eq_replicate_append_decodeWord hu
-      rw [decodeWord] at this
-      simp only [List.replicate_succ, List.cons_append, List.drop_succ_cons]
-      exact congrArg _ this
-    · simp [decodeWord]
+private theorem eq_replicate_append_decodeWord {u : List Bool} (ht : true ∈ u) :
+    u = List.replicate (u.idxOf true) false ++ true :: decodeWord u :=
+  List.eq_replicate_idxOf_true ht
 
 /-- Coding inverts decoding on the words of length `L + 1` with a `true`. -/
 private theorem encodeWord_decodeWord {L : ℕ} {u : List Bool} (hu : u.length = L + 1)

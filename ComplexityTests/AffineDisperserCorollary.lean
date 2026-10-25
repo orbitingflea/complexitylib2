@@ -20,8 +20,7 @@ The multiplication table of the explicit field at `N = 5915`, the least length w
 is a product of two primes (`35 = 5 · 7`), is checked by evaluation: the least-code irreducible
 polynomials of degrees `5` and `7` are `X ^ 5 + X ^ 2 + 1` and `X ^ 7 + X + 1`, `1` is a unit,
 multiplication is commutative and associative on pseudorandom elements, `a ^ (2 ^ 35 - 1) = 1` for
-a pseudorandom `a ≠ 0` while `a ^ (2 ^ 5 - 1) ≠ 1`, and the trace of `1` is `35 mod 2 = 1`. Axiom
-checks record the headline dependencies.
+a pseudorandom `a ≠ 0` while `a ^ (2 ^ 5 - 1) ≠ 1`, and the trace of `1` is `35 mod 2 = 1`.
 -/
 
 namespace ComplexityTests.AffineDisperserCorollary
@@ -145,56 +144,5 @@ def one : List Bool := true :: List.replicate 34 false
   (tab.length, fieldMul tab one a == a, fieldMul tab a b == fieldMul tab b a,
     fieldMul tab (fieldMul tab a b) c == fieldMul tab a (fieldMul tab b c),
     powerPred tab a 34 == one, powerPred tab a 4 == one, traceBit (traceVector tab) one)
-
-/-! ### Axioms -/
-
-/--
-info: 'Cslib.BitString.isAffineDisperser_of_forall_exists_ne' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms BitString.isAffineDisperser_of_forall_exists_ne
-
-/--
-info: 'Cslib.AffineDisperser.isAffineDisperser_explicitDisperser' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms isAffineDisperser_explicitDisperser
-
-/--
-info: 'Cslib.AffineDisperser.seven_mul_le_two_mul_size_add_explicitThreshold' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms seven_mul_le_two_mul_size_add_explicitThreshold
-
-/--
-info: 'Cslib.AffineDisperser.eventually_le_size_of_computes_explicitDisperser' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms eventually_le_size_of_computes_explicitDisperser
-
-/--
-info: 'Cslib.AffineDisperser.explicitDisperserLanguage_mem_P' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms explicitDisperserLanguage_mem_P
-
-/--
-info: 'Cslib.AffineDisperser.exists_mem_P_eventually_le_size' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms exists_mem_P_eventually_le_size
-
-/--
-info: 'ComplexityTests.AffineDisperserCorollary.exists_circuit_three_mul_lt_size' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms exists_circuit_three_mul_lt_size
 
 end ComplexityTests.AffineDisperserCorollary

@@ -14,8 +14,6 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Pl
 import Complexity.Crypto.Negligible.Basic
 import Complexity.Probability.PMF
 import Complexity.Tactic.PPT
-import Mathlib.Data.Fintype.Card
-import Mathlib.SetTheory.Cardinal.Finite
 
 /-!
 # ElGamal encryption and IND-CPA security under DDH
@@ -62,12 +60,10 @@ assumptions are hypotheses, not theorems.
 ## Main results
 
 * `Cslib.Crypto.PrimeOrderGroupFamily.elGamalDecrypt_elGamalEncrypt`,
-  `Cslib.Crypto.PrimeOrderGroupFamily.decodeElGamal_encode`: decryption correctness.
+  `Cslib.Crypto.PrimeOrderGroupFamily.decodeElGamal_encode`,
+  `Cslib.Crypto.PrimeOrderGroupFamily.decodeElGamal_elGamalEncrypt`: decryption correctness.
 * `Cslib.Crypto.PrimeOrderGroupFamily.computableInPolyTime_decodeElGamal`: encoded decryption is
   computable in polynomial time.
-* `Cslib.Crypto.PrimeOrderGroupFamily.smul_generator_surjective`,
-  `Cslib.Crypto.PrimeOrderGroupFamily.uniform_smul_generator_add`: `α ↦ α • g` is surjective and
-  `γ • g + m` is uniformly distributed over `F.Carrier d`.
 * `Cslib.Crypto.PrimeOrderGroupFamily.advantage_elGamalCPAGame_le`,
   `Cslib.Crypto.PrimeOrderGroupFamily.isPPTOn_elGamalToDDHDistinguisher`,
   `Cslib.Crypto.PrimeOrderGroupFamily.DDH.elGamalINDCPA`: ElGamal IND-CPA security for bit
@@ -168,30 +164,6 @@ theorem computableInPolyTime_decodeElGamal :
   have hsmul := F.computableInPolyTime_smul.tidy.comp (hd.prod (hexp.prod hv))
   exact ComputableInPolyTime.of_tidy
     (F.computableInPolyTime_add.tidy.comp (hd.prod (he.prod hsmul)))
-
-/-! ### Surjectivity of the generator map and the one-time group mask -/
-
-/-- Every element of `F.Carrier d` is a scalar multiple of the generator: `α ↦ α • g` is
-surjective. -/
-theorem smul_generator_surjective (d : F.Desc) :
-    Function.Surjective fun α : ZMod (F.order d) => α • F.generator d := by
-  have : Finite (F.Carrier d) :=
-    Nat.finite_of_card_ne_zero (by rw [F.card_carrier d]; exact (F.prime_order d).ne_zero)
-  exact ((F.smul_generator_injective d).bijective_of_nat_card_le
-    (by rw [F.card_carrier, Nat.card_zmod])).2
-
-/-- **One-time group mask**: for any group element `m : F.Carrier d`, masking `m` by `γ • g` for a
-uniform `γ : ZMod (F.order d)` has the same distribution as `γ • g` itself. -/
-theorem uniform_smul_generator_add {α : Type*} (d : F.Desc) (m : F.Carrier d)
-    (f : F.Carrier d → PMF α) :
-    ((PMF.uniformOfFintype (ZMod (F.order d))).bind fun γ => f (γ • F.generator d + m)) =
-      (PMF.uniformOfFintype (ZMod (F.order d))).bind fun γ => f (γ • F.generator d) := by
-  obtain ⟨μ, rfl⟩ := F.smul_generator_surjective d m
-  simp only [← add_smul]
-  change (PMF.uniformOfFintype (ZMod (F.order d))).bind
-      ((fun γ => f (γ • F.generator d)) ∘ Equiv.addRight μ) =
-    (PMF.uniformOfFintype (ZMod (F.order d))).bind (fun γ => f (γ • F.generator d))
-  rw [← PMF.bind_map, PMF.uniformOfFintype_map_equiv]
 
 /-! ### Bit encryption and IND-CPA security under DDH -/
 

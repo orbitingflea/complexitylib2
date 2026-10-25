@@ -39,6 +39,7 @@ the Goldreich–Levin construction is a separate step in the OWP-to-PRG reductio
 
 ## Main results
 
+* `Cslib.Crypto.isPPT_hardCorePredictor`: the distinguishing-to-prediction reduction is strict PPT.
 * `Cslib.Crypto.hardCore_advantage_le`: a concrete average-prediction-bias bound.
 * `Cslib.Crypto.HardCore.indistinguishable`: replace a hidden predicate by an independent bit.
 * `Cslib.Crypto.OneWayPermutation.pseudorandomGenerator_of_hardCore`: conditional one-bit PRG.

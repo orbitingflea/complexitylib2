@@ -171,32 +171,8 @@ example : ¬(DynamicArray.spec 4).valid [10, 20] (.append 5) := by decide
 #guard_msgs in
 #print axioms DynamicArray.Rep.space
 
-/-- info: 'Cslib.Algorithms.WordRAM.DynamicArray.grow_exec' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms DynamicArray.grow_exec
-
-/-- info: 'Cslib.Algorithms.WordRAM.DynamicArray.append_exec' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms DynamicArray.append_exec
-
 /-- info: 'Cslib.Algorithms.WordRAM.DynamicArray.get_exec' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs in
 #print axioms DynamicArray.get_exec
-
-/-- info: 'Cslib.Algorithms.WordRAM.DynamicArray.init_exec' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms DynamicArray.init_exec
-
-/-- info: 'Cslib.Algorithms.WordRAM.DynamicArray.amortized' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms DynamicArray.amortized
-
-/-- info: 'Cslib.Algorithms.WordRAM.DynamicArray.run_initialized' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms DynamicArray.run_initialized
-
-/-- info: 'Cslib.Algorithms.WordRAM.DynamicArray.run_appendAll' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms DynamicArray.run_appendAll
 
 end DynamicArrayTest

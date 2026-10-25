@@ -9,6 +9,7 @@ module
 
 public import Complexity.Init
 public import Mathlib.Data.Finset.Card
+public import Mathlib.Data.List.Chain
 public import Mathlib.Order.Monotone.Basic
 import Mathlib.Combinatorics.Enumerative.DoubleCounting
 public import Mathlib.Algebra.Order.BigOperators.Group.Finset
@@ -33,12 +34,16 @@ family are constant. The key may have ties, and the size bound uses natural-numb
 ## Main results
 
 * `Cslib.ChangesAtMost.comp_antitone`: antitone precomposition preserves a change bound.
+* `Cslib.ChangesAtMost.decide_le`, `Cslib.ChangesAtMost.decide_ge`: threshold predicates on a linear
+  order change at most once.
 * `Cslib.ChangesAtMost.pi`, `Cslib.ChangesAtMost.finset_pi`: a finite tuple of functions changes at
   most the sum of the coordinate change bounds.
 * `Cslib.PiecesAtMost.changesAtMost`: a function with at most `M` pieces changes at most `M - 1`
   times.
 * `Cslib.ChangesAtMost.exists_sorted_group`: a group of at least `|P| / G` points,
   with at most `T |Q| / G` exceptional functions.
+* `Cslib.ChangesAtMost.length_le_succ_of_isChain`: an alternating sequence along an ordered list has
+  bounded length.
 
 ## References
 
@@ -112,6 +117,50 @@ theorem ChangesAtMost.const [Preorder α] (b : β) :
   intro z hz S hS
   have : S = ∅ := Finset.eq_empty_iff_forall_notMem.mpr fun i hi => hS i hi rfl
   simp [this]
+
+/-- A threshold predicate `decide (θ ≤ ·)` on a linear order changes at most once. -/
+theorem ChangesAtMost.decide_le [LinearOrder α] (θ : α) [DecidableRel (· ≤ · : α → α → Prop)] :
+    ChangesAtMost (fun u : α => decide (θ ≤ u)) 1 := by
+  intro z hz S hS
+  have hcut (i : ℕ) (hi : i ∈ S) : z i < θ ∧ θ ≤ z (i + 1) := by
+    have hn : ¬ θ ≤ z i := by
+      intro hc
+      exact hS i hi (by simp [hc, hc.trans (hz (Nat.le_succ i))])
+    have hp : θ ≤ z (i + 1) := by
+      by_contra hn'
+      exact hS i hi (by simp [hn, hn'])
+    exact ⟨lt_of_not_ge hn, hp⟩
+  apply Finset.card_le_one.mpr
+  intro i hi j hj
+  by_contra hne
+  rcases Nat.lt_or_gt_of_ne hne with h | h
+  · have hle : θ ≤ z j := (hcut i hi).2.trans (hz (Nat.succ_le_of_lt h))
+    exact not_lt_of_ge hle (hcut j hj).1
+  · have hle : θ ≤ z i := (hcut j hj).2.trans (hz (Nat.succ_le_of_lt h))
+    exact not_lt_of_ge hle (hcut i hi).1
+
+/-- A threshold predicate `decide (· ≤ θ)` on a linear order changes at most once. -/
+theorem ChangesAtMost.decide_ge [LinearOrder α] (θ : α) [DecidableRel (· ≤ · : α → α → Prop)] :
+    ChangesAtMost (fun u : α => decide (u ≤ θ)) 1 := by
+  intro z hz S hS
+  have hcut (i : ℕ) (hi : i ∈ S) : z i ≤ θ ∧ θ < z (i + 1) := by
+    have hp : z i ≤ θ := by
+      by_contra hn'
+      have hgt : θ < z i := not_le.mp hn'
+      have hsucc : ¬ z (i + 1) ≤ θ := not_le.mpr (hgt.trans_le (hz (Nat.le_succ i)))
+      exact hS i hi (by simp [hn', hsucc])
+    have hn : ¬ z (i + 1) ≤ θ := by
+      intro hc
+      exact hS i hi (by simp [hp, hc])
+    exact ⟨hp, not_le.mp hn⟩
+  apply Finset.card_le_one.mpr
+  intro i hi j hj
+  by_contra hne
+  rcases Nat.lt_or_gt_of_ne hne with h | h
+  · have hlt : θ < z j := (hcut i hi).2.trans_le (hz (Nat.succ_le_of_lt h))
+    exact not_le_of_gt hlt (hcut j hj).1
+  · have hlt : θ < z i := (hcut j hj).2.trans_le (hz (Nat.succ_le_of_lt h))
+    exact not_le_of_gt hlt (hcut i hi).1
 
 /-- A tuple of functions indexed by a finite type changes at most the sum of the individual
 change bounds. -/
@@ -339,5 +388,31 @@ theorem ChangesAtMost.exists_sorted_group {ι κ : Type*} (P : Finset ι) (Q : F
   rw [hpj, hpj']
   by_contra hne
   exact hnot ⟨j, hj, j', hj', hne⟩
+
+/-! ### Alternating sequences along ordered lists -/
+
+/-- Any ordered list along which `f` alternates between consecutive elements has length at
+most `T + 1` whenever `ChangesAtMost f T`. -/
+theorem ChangesAtMost.length_le_succ_of_isChain {α β : Type*} [Preorder α] {f : α → β} {T : ℕ}
+    (hf : ChangesAtMost f T) {ts : List α} (hmono : ts.IsChain (· ≤ ·))
+    (halt : (ts.map f).IsChain (· ≠ ·)) :
+    ts.length ≤ T + 1 := by
+  rcases Nat.eq_zero_or_pos ts.length with h0 | hpos
+  · omega
+  · let z : ℕ → α := fun i => ts[min i (ts.length - 1)]'(by omega)
+    have hz : Monotone z := fun i j hij =>
+      hmono.sortedLE.getElem_le_getElem_of_le (min_le_min_right _ hij)
+    have hchg : ∀ i ∈ Finset.range (ts.length - 1), f (z i) ≠ f (z (i + 1)) := by
+      intro i hi
+      have hi' : i + 1 < ts.length := by
+        rw [Finset.mem_range] at hi
+        omega
+      have h1 : min i (ts.length - 1) = i := by omega
+      have h2 : min (i + 1) (ts.length - 1) = i + 1 := by omega
+      have hne := List.isChain_iff_getElem.mp halt i (by simpa using hi')
+      simpa [z, h1, h2] using hne
+    have hcard := hf z hz (Finset.range (ts.length - 1)) hchg
+    rw [Finset.card_range] at hcard
+    omega
 
 end Cslib

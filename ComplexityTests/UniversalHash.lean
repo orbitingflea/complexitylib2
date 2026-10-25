@@ -115,46 +115,4 @@ example (source : PMF (ZMod 5 × ZMod 5)) :
   have hne : (2 / 5 : ℝ≥0∞) ≠ ⊤ := ENNReal.div_ne_top (by norm_num) (by norm_num)
   simpa [ENNReal.toReal_div] using hpoly.leftover_hash hne source
 
-/--
-info: 'Cslib.Probability.IsDeltaUniversalHash.isTwoUniversal' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms IsDeltaUniversalHash.isTwoUniversal
-
-/--
-info: 'Cslib.Probability.isTwoUniversal_uniformOfFintype_iff' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms isTwoUniversal_uniformOfFintype_iff
-
-/--
-info: 'Cslib.Probability.IsTwoUniversal.expect_boole_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms IsTwoUniversal.expect_boole_le
-
-/--
-info: 'Cslib.Probability.IsUniversalHash.collision_with_set_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms IsUniversalHash.collision_with_set_le
-
-/--
-info: 'Cslib.Probability.IsUniversalHash.leftover_hash_sq' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms IsUniversalHash.leftover_hash_sq
-
-/--
-info: 'Cslib.Probability.IsUniversalHash.leftover_hash' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms IsUniversalHash.leftover_hash
-
 end ComplexityTests.UniversalHash

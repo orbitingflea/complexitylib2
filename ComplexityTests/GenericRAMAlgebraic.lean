@@ -117,17 +117,4 @@ example : step 0 ([.jump 1] : Program (Algebraic.primeField 5) 0)
 example : step 3 ([.halt 0] : Program (Algebraic.primeField 5) 1)
     ⟨0, Data.init (.inl 8) (fun _ => .inl 0)⟩ = .fault := by rfl
 
-/-- info: 'GenericRAMAlgebraicTests.sumStore_run' depends on axioms:
-    [propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms sumStore_run
-/-- info: 'GenericRAMAlgebraicTests.sumStore_executes' depends on axioms:
-    [propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms sumStore_executes
-/-- info: 'GenericRAMAlgebraicTests.real_sumStore_executes' depends on axioms:
-    [propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms real_sumStore_executes
-
 end GenericRAMAlgebraicTests

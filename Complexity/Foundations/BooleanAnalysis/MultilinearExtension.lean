@@ -28,6 +28,8 @@ Its total degree is at most the dimension.
 ## Main results
 
 * `Cslib.BitString.eval_multilinearExtension`: the extension agrees with the function on the cube.
+* `Cslib.BitString.eval_multilinearExtension_eq_sum`: the extension at any point, in the indicator
+  basis.
 * `Cslib.BitString.totalDegree_multilinearExtension_le`: its total degree is at most the
   dimension.
 * `Cslib.BitString.rename_multilinearExtension`: renaming the coordinates along an equivalence
@@ -73,6 +75,15 @@ theorem eval_indicatorPoly [Fintype ι] (a x : ι → Bool) :
   · obtain ⟨i, hi⟩ := Function.ne_iff.mp h
     exact Finset.prod_eq_zero (Finset.mem_univ i)
       (by cases ha : a i <;> cases hx : x i <;> simp_all)
+
+/-- The point of `R^ι` with the coordinates of the bit string `x`. -/
+abbrev bitPoint (x : ι → Bool) : ι → R := fun i => bitVal R (x i)
+
+/-- The multilinear extension at any point is the sum of the values of the function weighted by the
+indicator polynomials. -/
+theorem eval_multilinearExtension_eq_sum [Fintype ι] [DecidableEq ι] (g : (ι → Bool) → R)
+    (z : ι → R) : eval z (multilinearExtension g) = ∑ a, g a * eval z (indicatorPoly a) := by
+  simp [multilinearExtension]
 
 /-- The multilinear extension agrees with the function on the cube. -/
 theorem eval_multilinearExtension [Fintype ι] [DecidableEq ι] (g : (ι → Bool) → R)

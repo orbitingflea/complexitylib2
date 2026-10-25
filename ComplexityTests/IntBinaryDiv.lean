@@ -32,17 +32,3 @@ example : ComputableTidilyInPolyTime
     (fun p : (ℤ × ℤ) × ℕ => ((p.1.1 - p.1.2) % (p.2 : ℤ)).toNat)
     (encPair (encPair encIntBin encIntBin) encNat) encNat := by
   fun_prop
-
-/--
-info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.intBin_emodNat' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.intBin_emodNat
-
-/--
-info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.intBin_emodNat'' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.intBin_emodNat'

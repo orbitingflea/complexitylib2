@@ -320,10 +320,6 @@ theorem modBits_all_false_iff (l f : List Bool) :
     ← length_modBits l f]
   exact degree_polyOfBits_lt _
 
-/-- Every nonzero binary polynomial is monic. -/
-theorem monic_of_ne_zero {q : (ZMod 2)[X]} (hq : q ≠ 0) : q.Monic :=
-  (by decide : ∀ c : ZMod 2, c ≠ 0 → c = 1) _ (leadingCoeff_ne_zero.2 hq)
-
 private theorem natDegree_polyOfCode_eq_log (m : ℕ) : (polyOfCode m).natDegree = Nat.log 2 m := by
   rcases eq_or_ne m 0 with rfl | hm
   · simp

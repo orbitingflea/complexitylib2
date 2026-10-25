@@ -119,7 +119,7 @@ theorem card_lt_two_pow_of_run_eq_equality [Fintype X] [DecidableEq X] (hX : 1 <
 /-- **Greater-than on a finite linear order needs more than `log₂` of its size bits**: a protocol
 computing greater-than on a linear order of at least two elements sends `d` bits with
 `|X| < 2 ^ d`. -/
-theorem card_lt_two_pow_of_run_eq_greaterThan [Fintype X] [LinearOrder X]
+private theorem card_lt_two_pow_of_run_eq_greaterThan [Fintype X] [LinearOrder X]
     (hX : 1 < Fintype.card X) {p : Protocol X X Bool} (hp : p.run = greaterThan) :
     Fintype.card X < 2 ^ p.depth := by
   obtain ⟨x, y, hxy⟩ := Fintype.one_lt_card_iff.mp hX
@@ -193,32 +193,6 @@ theorem ecomplexity_disjointness (hn : 0 < n) :
 
 /-! ### Inner product -/
 
-/-- A nonzero bit string has inner product `true` with exactly half of all bit strings, and the
-zero string with none. -/
-theorem two_mul_card_dotProduct_eq_true_add [DecidableEq ι] (x : ι → Bool) :
-    2 * #{y | x ⬝ᵥ y = true} + (if x = 0 then 2 ^ Fintype.card ι else 0) = 2 ^ Fintype.card ι := by
-  split_ifs with hx
-  · subst hx
-    simp [zero_dotProduct]
-  · have h := BitString.two_mul_hammingDist_hadamardCode hx
-    rw [hammingDist] at h
-    simpa [zero_dotProduct,
-      show ∀ b : Bool, ¬b = 0 ↔ b = true by decide] using h
-
-/-- The inner product is `true` on `2 ^ (k - 1) (2 ^ k - 1)` pairs of `k`-bit strings, in the form
-`2 c + 2 ^ k = 2 ^ k 2 ^ k`. -/
-theorem two_mul_card_dotProduct_eq_true_add_two_pow [DecidableEq ι] :
-    2 * #{q : (ι → Bool) × (ι → Bool) | q.1 ⬝ᵥ q.2 = true} + 2 ^ Fintype.card ι =
-      2 ^ Fintype.card ι * 2 ^ Fintype.card ι := by
-  have hrow : #{q : (ι → Bool) × (ι → Bool) | q.1 ⬝ᵥ q.2 = true} =
-      ∑ x : ι → Bool, #{y | x ⬝ᵥ y = true} := by
-    rw [card_filter, Fintype.sum_prod_type]
-    exact sum_congr rfl fun x _ => (card_filter _ _).symm
-  have hsum := sum_congr rfl fun x (_ : x ∈ (univ : Finset (ι → Bool))) =>
-    two_mul_card_dotProduct_eq_true_add x
-  rw [sum_add_distrib, ← mul_sum, sum_ite_eq', sum_const, card_univ] at hsum
-  simpa [hrow, Fintype.card_fun] using hsum
-
 /-- **The inner product needs more than `2 ^ k` leaves**: a protocol computing the inner product
 modulo two of two `k`-bit strings, for `0 < k`, has more than `2 ^ k` leaves. -/
 theorem two_pow_lt_leafCount_of_run_eq_dotProduct [Nonempty ι]
@@ -243,7 +217,7 @@ theorem two_pow_lt_leafCount_of_run_eq_dotProduct [Nonempty ι]
     have := card_filter_add_card_filter_not (s := univ)
       fun q : (ι → Bool) × (ι → Bool) => q.1 ⬝ᵥ q.2 = true
     simpa [Fintype.card_fun, hN] using this
-  have hcount := two_mul_card_dotProduct_eq_true_add_two_pow (ι := ι)
+  have hcount := BitString.two_mul_card_dotProduct_eq_true_add_two_pow (ι := ι)
   rw [← hN] at hcount
   have hNpos : 0 < N := Nat.two_pow_pos _
   have hT' : N ≤ 2 * T + 1 := Nat.le_of_mul_le_mul_right (by nlinarith) hNpos

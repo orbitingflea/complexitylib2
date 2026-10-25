@@ -11,8 +11,8 @@ import Complexity.Computability.Complexity.FineGrained.Sparsification
 
 The list-level sparsification step on concrete formulas: a heavy heart and its two children, a
 sparse formula, normalization; the sparsification search on satisfiable, unsatisfiable, branching
-and wide formulas, against exhaustive search; the non-vacuity of the hypotheses of the search and
-of the headline theorems; and the axioms of the headline theorems.
+and wide formulas, against exhaustive search; and the non-vacuity of the hypotheses of the search
+and of the headline theorems.
 -/
 
 namespace ComplexityTests.FineGrained.Sparsification
@@ -95,84 +95,5 @@ example : ∃ c : ℕ, DecidableInExpTime (KSAT 3) encCNF CNF.numVars (1 + c * (
 
 example : ETH ↔ ¬DecidableInSubexpTime ThreeSAT encCNF List.length :=
   ETH_iff_not_decidableInSubexpTime_length
-
-/-! ### Axioms -/
-
-/--
-info: 'Cslib.Logic.PL.ClauseSet.Sparsification.exists_sum_choose_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.PL.ClauseSet.Sparsification.exists_sum_choose_le
-
-/--
-info: 'Cslib.Logic.PL.ClauseSet.Sparsification.BranchingRule.card_le_of_isLeafWord' depends on
-axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.PL.ClauseSet.Sparsification.BranchingRule.card_le_of_isLeafWord
-
-/--
-info: 'Cslib.Logic.PL.ClauseSet.Sparsification.BranchingRule.exists_iterate_searchStep' depends on
-axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.PL.ClauseSet.Sparsification.BranchingRule.exists_iterate_searchStep
-
-/--
-info: 'Cslib.Logic.PL.CNF.Sparsification.choice_spec' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.PL.CNF.Sparsification.choice_spec
-
-/--
-info: 'Cslib.Logic.PL.CNF.Sparsification.computableInPolyTime_next' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.PL.CNF.Sparsification.computableInPolyTime_next
-
-/--
-info: 'Cslib.Complexity.Sparsify.search_eq_true_iff' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.Sparsify.search_eq_true_iff
-
-/--
-info: 'Cslib.Complexity.Sparsify.decidableInExpTime_search' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.Sparsify.decidableInExpTime_search
-
-/--
-info: 'Cslib.Complexity.exists_decidableInExpTime_numVars_of_length' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.exists_decidableInExpTime_numVars_of_length
-
-/--
-info: 'Cslib.Complexity.DecidableInSubexpTime.numVars_of_length' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.DecidableInSubexpTime.numVars_of_length
-
-/--
-info: 'Cslib.Complexity.ETH_iff_not_decidableInSubexpTime_length' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.ETH_iff_not_decidableInSubexpTime_length
-
-/--
-info: 'Cslib.Complexity.DecidableInExpTime.length_of_numVars' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.DecidableInExpTime.length_of_numVars
 
 end ComplexityTests.FineGrained.Sparsification

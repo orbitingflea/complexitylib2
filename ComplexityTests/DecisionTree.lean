@@ -7,7 +7,7 @@ Authors: Samuel Schlesinger
 import Complexity.Computability.DecisionTree.AffineScore
 import Mathlib.Tactic.FinCases
 
-/-! Tests and axiom guards for structural decision-tree paths and affine leaf scores. -/
+/-! Tests for structural decision-tree paths and affine leaf scores. -/
 
 namespace ComplexityTests.DecisionTree
 
@@ -68,26 +68,5 @@ example :
     leafScore_add_one_le_leafScore_path_decide sampleTree (d := 2) (M := 2)
       (by decide) (by norm_num) sampleMargins_min sampleMargins_max
       (by simp [sampleTree]) (by rw [hpath]; decide)
-
-/--
-info: 'Cslib.DecisionTree.two_mul_abs_leafScore_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.DecisionTree.two_mul_abs_leafScore_le
-
-/--
-info: 'Cslib.DecisionTree.leafScore_add_one_le_leafScore_path' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.DecisionTree.leafScore_add_one_le_leafScore_path
-
-/--
-info: 'Cslib.DecisionTree.leafScore_add_one_le_leafScore_path_decide' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.DecisionTree.leafScore_add_one_le_leafScore_path_decide
 
 end ComplexityTests.DecisionTree

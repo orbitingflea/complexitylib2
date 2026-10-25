@@ -54,18 +54,4 @@ example : RAM.HaltsWithResultInTime RAM.logCost ramProgram (RAM.Input.encode 5 [
     0 (2735 * 3 * 2) := by
   simpa [show Nat.log 2 3 = 1 by decide] using haltsWithResultInTime_nodup ⟨[1, 1], by simp⟩
 
-/--
-info: 'Cslib.Algorithms.WordRAM.ElementDistinctness.haltsWithResultInTime_nodup_padded'
-depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Algorithms.WordRAM.ElementDistinctness.haltsWithResultInTime_nodup_padded
-
-/--
-info: 'Cslib.Algorithms.WordRAM.ElementDistinctness.haltsWithResultInTime_nodup'
-depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Algorithms.WordRAM.ElementDistinctness.haltsWithResultInTime_nodup
-
 end ComplexityTests.ElementDistinctnessRAM

@@ -29,6 +29,8 @@ Consequently input relations need not be invariant under permutations of the uni
 * `Cslib.Logic.FO.Ordered.ESODefinable.of_queryLanguage_mem_NP`: every ordered query whose
   source-only encoding language is in NP is ESO-definable, without assuming invariance under
   permutations of the input relations.
+* `Cslib.Logic.FO.Ordered.ESODefinable.of_powerLanguage`: the ordered version of the Fagin
+  power-structure bridge.
 
 ## References
 

@@ -47,18 +47,4 @@ example (n : ℕ) (b : Bool) : copyFlag (n + 1, b) = b := by
 
 example (n : ℕ) : n.fold (fun _ _ a => a + 1) 0 = n := count_spec.2 n
 
-/--
-info: 'Turing.MultiTapeTM.ComputableTidilyInPolySpace.natFold' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeTM.ComputableTidilyInPolySpace.natFold
-
-/--
-info: 'Turing.MultiTapeTM.ComputableTidilyInPolySpace.natFold_spec' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeTM.ComputableTidilyInPolySpace.natFold_spec
-
 end ComplexityTests.PolySpaceFold

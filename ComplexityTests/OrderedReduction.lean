@@ -366,34 +366,6 @@ example : ¬graphVocabulary.WellFormed
   rw [advInterp.wellFormed_encodedMap_iff]
   decide
 
-/--
-info: 'Cslib.Logic.FO.Ordered.FullTupleInterpretation.encodedModelEquiv' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.FO.Ordered.FullTupleInterpretation.encodedModelEquiv
-
-/--
-info: 'Cslib.Logic.FO.Ordered.FullTupleInterpretation.computableInLogSpace_encodedMap' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.FO.Ordered.FullTupleInterpretation.computableInLogSpace_encodedMap
-
-/--
-info: 'Cslib.Logic.FO.Ordered.FullTupleInterpretation.mem_queryLanguage_encodedMap_iff' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.FO.Ordered.FullTupleInterpretation.mem_queryLanguage_encodedMap_iff
-
-/--
-info: 'Cslib.Logic.FO.Ordered.FullTupleInterpretation.logSpaceReducible_onSentence' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.FO.Ordered.FullTupleInterpretation.logSpaceReducible_onSentence
-
 /-- One-dimensional restriction to the marked elements, keeping `mark`. On `input3P` its domain
 has a single tuple, below the ordered size proviso; the encoded map is still defined and well
 formed. -/
@@ -414,20 +386,6 @@ example :
   rw [markedInterp.wellFormed_encodedMap_iff]
   decide
 
-/--
-info: 'Cslib.Logic.FO.Ordered.DomainInterpretation.computableInLogSpace_encodedMap' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.FO.Ordered.DomainInterpretation.computableInLogSpace_encodedMap
-
-/--
-info: 'Cslib.Logic.FO.Interpretation.computableInLogSpace_encodedMapWith' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.FO.Interpretation.computableInLogSpace_encodedMapWith
-
 /-- Level-1 reduction through an admissible interpretation: the two-dimensional full-tuple
 interpretation `advInterp`, as a domain interpretation, reduces every pulled-back ordered query. -/
 example (K' : Query Language.graph) :
@@ -437,12 +395,5 @@ example (K' : Query Language.graph) :
       (K'.encodedLanguage graphVocabulary) :=
   advInterp.toDomainInterpretation.logSpaceReducible vocabulary graphVocabulary
     (advInterp.admissible_toDomainInterpretation (by decide)) fun _ => Iff.rfl
-
-/--
-info: 'Cslib.Logic.FO.Ordered.DomainInterpretation.logSpaceReducible' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.FO.Ordered.DomainInterpretation.logSpaceReducible
 
 end Cslib.Tests.OrderedReduction

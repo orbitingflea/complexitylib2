@@ -42,11 +42,6 @@ example (input : LyubashevskyExtractInput) :
 example : ComputableInPolyTime lyubashevskyExtractWord encBits encBits :=
   computableInPolyTime_lyubashevskyExtractWord
 
-/-- info: 'Cslib.Crypto.Protocols.SigmaProtocol.computableInPolyTime_lyubashevskyExtractWord'
-depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms computableInPolyTime_lyubashevskyExtractWord
-
 -- The actual typed protocol extractor has the same negative response / positive challenge tail.
 example : List.ofFn (fun i : Fin 3 =>
     lyubashevskyExtract 1 2 1 7 (0, 0) 0 (fun _ => false)
@@ -63,8 +58,3 @@ example (q : ℕ) :
           (fun _ => false) none (finSumFinEquiv.symm i))) := by
   simpa using lyubashevskyExtractWord_eq_extract 0 0 0 q (0, 0) 0
     (fun _ => false) none (fun _ => false) none
-
-/-- info: 'Cslib.Crypto.Protocols.SigmaProtocol.lyubashevskyExtractWord_eq_extract'
-depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms lyubashevskyExtractWord_eq_extract

@@ -12,7 +12,7 @@ import Complexity.Computability.QueryComplexity.Yao
 /-! Randomized decision trees, Nisan's bounds and Yao's minimax principle on concrete instances:
 majority of three bits has bounded-error randomized complexity `1` but deterministic complexity
 `3`, a hard distribution for it, the disjunction of `n` bits, and matching pennies for the minimax
-theorem. Non-vacuity witnesses for the hypotheses, and axiom guards for the headline theorems. -/
+theorem. Non-vacuity witnesses for the hypotheses. -/
 
 namespace ComplexityTests.QueryComplexity.Randomized
 
@@ -168,91 +168,5 @@ example : ∃ p : StdSimplex ℝ (Fin 2), ∀ j, ∑ i, p.weights i * (if i = j 
     by_cases h₀ : q.weights 0 ≤ 1 / 2
     · exact ⟨0, h₀⟩
     · exact ⟨1, by linarith⟩
-
-/-! ### Axiom checks for headline theorems -/
-
-/--
-info: 'Convexity.StdSimplex.exists_forall_sum_le_of_forall_exists_sum_le' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Convexity.StdSimplex.exists_forall_sum_le_of_forall_exists_sum_le
-
-/--
-info: 'Cslib.RandomizedDecisionTree.Computes.exists_distributionalError_le' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.RandomizedDecisionTree.Computes.exists_distributionalError_le
-
-/--
-info: 'Cslib.QueryComplexity.randomizedComplexity_zero' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.QueryComplexity.randomizedComplexity_zero
-
-/--
-info: 'Cslib.QueryComplexity.randomizedComplexity_eq_zero_of_le' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.QueryComplexity.randomizedComplexity_eq_zero_of_le
-
-/--
-info: 'Cslib.DecisionTree.randomizedComplexity_le_complexity' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.DecisionTree.randomizedComplexity_le_complexity
-
-/--
-info: 'Cslib.QueryComplexity.one_sub_two_mul_mul_blockSensitivity_le_randomizedComplexity' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.QueryComplexity.one_sub_two_mul_mul_blockSensitivity_le_randomizedComplexity
-
-/--
-info: 'Cslib.QueryComplexity.blockSensitivity_le_three_mul_randomizedComplexity' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.QueryComplexity.blockSensitivity_le_three_mul_randomizedComplexity
-
-/--
-info: 'Cslib.QueryComplexity.approxDegree_le_randomizedComplexity' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.QueryComplexity.approxDegree_le_randomizedComplexity
-
-/--
-info: 'Cslib.DecisionTree.one_sub_two_mul_pow_three_mul_complexity_le' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.DecisionTree.one_sub_two_mul_pow_three_mul_complexity_le
-
-/--
-info: 'Cslib.DecisionTree.complexity_le_mul_randomizedComplexity_pow_three' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.DecisionTree.complexity_le_mul_randomizedComplexity_pow_three
-
-/--
-info: 'Cslib.QueryComplexity.distributionalComplexity_le_randomizedComplexity' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.QueryComplexity.distributionalComplexity_le_randomizedComplexity
-
-/--
-info: 'Cslib.QueryComplexity.exists_computes_of_forall_exists_distributionalError_le' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.QueryComplexity.exists_computes_of_forall_exists_distributionalError_le
-
-/--
-info: 'Cslib.QueryComplexity.randomizedComplexity_eq_iSup_distributionalComplexity' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.QueryComplexity.randomizedComplexity_eq_iSup_distributionalComplexity
-
-/--
-info: 'Cslib.QueryComplexity.exists_distributionalComplexity_eq_randomizedComplexity' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.QueryComplexity.exists_distributionalComplexity_eq_randomizedComplexity
 
 end ComplexityTests.QueryComplexity.Randomized

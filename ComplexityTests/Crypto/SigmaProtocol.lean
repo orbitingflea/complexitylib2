@@ -190,34 +190,4 @@ example : (andProof (schnorr ι (2 : ZMod 11)) (chaumPedersen ι (2 : ZMod 11)))
       (x.2 • (2 : ZMod 11) = y.2.2.1 ∧ x.2 • y.2.1 = y.2.2.2) :=
   andProof_complete schnorr_complete chaumPedersen_complete
 
-/-! ### Axioms -/
-
-/--
-info: 'Cslib.Crypto.Protocols.SigmaProtocol.linear_specialSoundness' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms linear_specialSoundness
-
-/--
-info: 'Cslib.Crypto.Protocols.SigmaProtocol.linear_specialHVZK' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms linear_specialHVZK
-
-/--
-info: 'Cslib.Crypto.Protocols.SigmaProtocol.orProof_specialHVZK' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms orProof_specialHVZK
-
-/--
-info: 'Cslib.Crypto.Protocols.SigmaProtocol.orProof_specialSoundness' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms orProof_specialSoundness
-
 end ComplexityTests.Crypto.SigmaProtocol

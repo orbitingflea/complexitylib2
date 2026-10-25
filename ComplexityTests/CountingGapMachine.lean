@@ -204,23 +204,4 @@ example : ∃ (k : ℕ) (State : Type) (_ : Finite State) (machine : MultiTapeCT
       (.of_tidy (ComputableTidilyInPolyTime.const false))
         (.of_tidy (ComputableTidilyInPolyTime.const false))
 
-/--
-info: 'Turing.MultiTapeCTM.exists_signed_verifier_machine' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeCTM.exists_signed_verifier_machine
-/--
-info: 'Turing.MultiTapeCTM.exists_verifier_difference_machine' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeCTM.exists_verifier_difference_machine
-/--
-info: 'Cslib.Complexity.mem_GapP_iff_exists_machine' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.mem_GapP_iff_exists_machine
-
 end ComplexityTests.CountingGapMachine

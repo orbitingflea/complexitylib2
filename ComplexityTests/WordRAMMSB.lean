@@ -59,24 +59,4 @@ example : ∃ y, ExecWithin 3 (Program.scalarCode 3) (input 3 0) y 200000 ∧
 example : Bank.capacity 44 + 4 = 836 := by decide
 example (w : ℕ) : (Program.scalarCode w).size ≤ 200000 := Program.size_scalarCode w
 
-/-- info: 'Cslib.Algorithms.WordRAM.FusionTree.MSB.Program.exec_scalarCode' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms Program.exec_scalarCode
-
-/-- info: 'Cslib.Algorithms.WordRAM.FusionTree.MSB.Program.executes_program' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms Program.executes_program
-
-/-- info: 'Cslib.WordRAM.Multiword.Shift.exec' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms Shift.exec
-
-/-- info: 'Cslib.WordRAM.Multiword.Transfer.exec_split' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms Transfer.exec_split
-
 end WordRAMMSBTests

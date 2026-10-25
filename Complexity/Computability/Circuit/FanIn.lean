@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 public import Complexity.Computability.Circuit.Support
 public import Cslib.Computability.Circuit.Depth
+public import Cslib.Computability.Circuit.Simulation
 public import Mathlib.Algebra.Order.BigOperators.Group.Finset
 
 /-!
@@ -19,6 +20,8 @@ lower bound on circuit size.
 
 ## Main results
 
+* `Cslib.Circuits.Program.card_biUnion_wireSupport_le_cost`: supporting inputs are bounded by the
+  frontier size plus the program cost under any weight bounding arities by `1 + w op`.
 * `Cslib.Circuits.Circuit.card_inputSupport_le_size`: a circuit of fan-in `r` with `m` outputs has
   at most `m + (r - 1) size` supporting inputs.
 * `Cslib.Circuits.Circuit.essential_le_size`: the same bound for essential inputs of the computed
@@ -33,6 +36,7 @@ namespace Cslib.Circuits
 
 variable {σ : Signature} {U V : Type*} {n m g : ℕ}
 
+/-- The original circuit inputs reachable backwards from a frontier of wires in a program. -/
 private def Program.reachableInputs :
     ∀ {g : ℕ}, Program σ n g → Finset (Wire n g) → Finset (Fin n)
   | _, .empty, frontier => Finset.univ.filter fun input => Wire.input input ∈ frontier
@@ -45,7 +49,8 @@ private def Program.reachableInputs :
           prior
       program.reachableInputs opened
 
-private theorem wire_castSucc_injective :
+/-- Embedding a wire into a widened program by `Wire.castSucc` is injective. -/
+theorem Wire.castSucc_injective :
     Function.Injective (Wire.castSucc : Wire n g → Wire n (g + 1)) := by
   intro a b h
   cases a <;> cases b <;> simp_all [Wire.castSucc]
@@ -65,6 +70,7 @@ private def Circuit.reachableInputs (c : Circuit σ n m) :
     Finset (Fin n) :=
   c.program.reachableInputs c.frontier
 
+/-- Every input supporting a wire in the frontier is reachable from the frontier. -/
 private theorem Program.support_subset_reachableInputs
     (program : Program σ n g) :
     ∀ frontier : Finset (Wire n g),
@@ -118,16 +124,19 @@ private theorem Circuit.inputSupport_subset_reachableInputs
   obtain ⟨output, supported⟩ := present
   exact ⟨c.outputs output, ⟨output, rfl⟩, supported⟩
 
-private theorem Program.card_reachableInputs_le
+/-- In any circuit program, the number of reachable inputs from a frontier of wires is bounded
+by the size of the frontier plus the cost of the program, for any weight function that bounds gate
+arities by `1 + w op`. -/
+private theorem Program.card_reachableInputs_le_cost
     (program : Program σ n g)
-    (r : Nat) :
-    ∀ (_bounded : program.FanInAtMost r) (frontier : Finset (Wire n g)),
-      (program.reachableInputs frontier).card ≤
-        frontier.card + (r - 1) * g := by
+    (w : σ.Op → ℕ)
+    (hw : ∀ op, σ.Arity op ≤ 1 + w op)
+    (frontier : Finset (Wire n g)) :
+    (program.reachableInputs frontier).card ≤
+      frontier.card + program.cost w := by
   induction program with
   | empty =>
-      intro _ frontier
-      simp only [Cslib.Circuits.Program.reachableInputs, Nat.mul_zero, Nat.add_zero]
+      simp only [Program.reachableInputs, Program.cost_empty, Nat.add_zero]
       apply Finset.card_le_card_of_injOn Wire.input
       · intro input present
         simpa using present
@@ -135,8 +144,6 @@ private theorem Program.card_reachableInputs_le
         cases h
         rfl
   | @gate g program line ih =>
-      intro bounded frontier
-      obtain ⟨programBounded, lineBounded⟩ := bounded
       let prior := Finset.univ.filter fun wire : Wire n g => wire.castSucc ∈ frontier
       let lineInputs := Finset.univ.image line.wires
       let opened :=
@@ -145,14 +152,14 @@ private theorem Program.card_reachableInputs_le
         apply Finset.card_le_card_of_injOn Wire.castSucc
         · intro wire present
           simpa [prior] using present
-        · exact wire_castSucc_injective.injOn
-      have lineBound : lineInputs.card ≤ r := by
+        · exact Wire.castSucc_injective.injOn
+      have lineBound : lineInputs.card ≤ 1 + w line.op := by
         calc
           lineInputs.card ≤ (Finset.univ : Finset (Fin (σ.Arity line.op))).card :=
             Finset.card_image_le
           _ = σ.Arity line.op := by simp
-          _ ≤ r := lineBounded
-      have openedBound : opened.card ≤ frontier.card + (r - 1) := by
+          _ ≤ 1 + w line.op := hw line.op
+      have openedBound : opened.card ≤ frontier.card + w line.op := by
         by_cases lastSelected : Wire.gate (Fin.last g) ∈ frontier
         · have priorEraseBound : prior.card ≤
               (frontier.erase (Wire.gate (Fin.last g))).card := by
@@ -164,7 +171,7 @@ private theorem Program.card_reachableInputs_le
               cases wire with
               | input i => simp
               | gate j => simp [Fin.castSucc_ne_last]
-            · exact wire_castSucc_injective.injOn
+            · exact Wire.castSucc_injective.injOn
           have erased := Finset.card_erase_of_mem lastSelected
           have openedEq : opened = prior ∪ lineInputs := by
             simp [opened, lastSelected]
@@ -172,10 +179,10 @@ private theorem Program.card_reachableInputs_le
           calc
             (prior ∪ lineInputs).card ≤ prior.card + lineInputs.card :=
               Finset.card_union_le _ _
-            _ ≤ (frontier.erase (Wire.gate (Fin.last g))).card + r :=
+            _ ≤ (frontier.erase (Wire.gate (Fin.last g))).card + (1 + w line.op) :=
               Nat.add_le_add priorEraseBound lineBound
-            _ = frontier.card - 1 + r := by rw [erased]
-            _ ≤ frontier.card + (r - 1) := by
+            _ = frontier.card - 1 + (1 + w line.op) := by rw [erased]
+            _ = frontier.card + w line.op := by
               have frontierPositive : 1 ≤ frontier.card :=
                 Finset.one_le_card.mpr ⟨_, lastSelected⟩
               omega
@@ -185,11 +192,47 @@ private theorem Program.card_reachableInputs_le
           omega
       change (program.reachableInputs opened).card ≤ _
       calc
-        (program.reachableInputs opened).card ≤ opened.card + (r - 1) * g :=
-          ih programBounded opened
-        _ ≤ frontier.card + (r - 1) * (g + 1) := by
-          rw [Nat.mul_succ]
+        (program.reachableInputs opened).card ≤ opened.card + program.cost w :=
+          ih opened
+        _ ≤ frontier.card + w line.op + program.cost w :=
+          Nat.add_le_add_right openedBound _
+        _ = frontier.card + (program.gate line).cost w := by
+          rw [Program.cost_gate]
           omega
+
+/-- The inputs supporting a frontier of wires in a program are bounded by the size of the frontier
+plus the cost of the program, for any weight function that bounds gate arities by `1 + w op`. -/
+theorem Program.card_biUnion_wireSupport_le_cost
+    (program : Program σ n g)
+    (w : σ.Op → ℕ)
+    (hw : ∀ op, σ.Arity op ≤ 1 + w op)
+    (frontier : Finset (Wire n g)) :
+    (frontier.biUnion program.wireSupport).card ≤
+      frontier.card + program.cost w :=
+  (Finset.card_le_card (program.support_subset_reachableInputs frontier)).trans
+    (program.card_reachableInputs_le_cost w hw frontier)
+
+private theorem Program.cost_le_of_fanInAtMost (p : Program σ n g) {r : ℕ} (h : p.FanInAtMost r) :
+    p.cost (fun op => max (r - 1) (σ.Arity op - 1)) ≤ (r - 1) * g := by
+  induction p with
+  | empty => simp
+  | gate p line ih =>
+    obtain ⟨hp, hline⟩ := h
+    rw [Program.cost_gate, Nat.mul_succ]
+    have hw : max (r - 1) (σ.Arity line.op - 1) = r - 1 := by omega
+    rw [hw]
+    exact Nat.add_le_add (ih hp) le_rfl
+
+private theorem Program.card_reachableInputs_le
+    (program : Program σ n g)
+    (r : Nat) :
+    ∀ (_bounded : program.FanInAtMost r) (frontier : Finset (Wire n g)),
+      (program.reachableInputs frontier).card ≤
+        frontier.card + (r - 1) * g := by
+  intro bounded frontier
+  have hw : ∀ op, σ.Arity op ≤ 1 + max (r - 1) (σ.Arity op - 1) := fun op => by omega
+  exact (program.card_reachableInputs_le_cost _ hw frontier).trans
+    (Nat.add_le_add_left (program.cost_le_of_fanInAtMost bounded) _)
 
 private theorem Circuit.card_reachableInputs_le_size
     (c : Circuit σ n m)

@@ -55,15 +55,17 @@ example : (⊤ : Language Bool) ∈ PPoly :=
   PPoly.of_advice PPoly.top_mem (fun _ => [])
     (by change PolynomiallyBounded fun _ : ℕ => 0; fun_prop) (fun _ => Iff.rfl)
 
-/--
-info: 'Cslib.Circuits.Boolean.PPoly.of_advice' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Circuits.Boolean.PPoly.of_advice
-/--
-info: 'Cslib.Circuits.Boolean.PAdvice_subset_PPoly' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Circuits.Boolean.PAdvice_subset_PPoly
+example : (⊤ : Language Bool) ∈ PAdvice := PPoly_subset_PAdvice PPoly.top_mem
+example : (0 : Language Bool) ∈ PAdvice := PPoly_subset_PAdvice PPoly.zero_mem
+
+example : PPoly = (PAdvice : Set (Language Bool)) := PPoly_eq_PAdvice
+
+example (N : Polynomial ℕ) :
+    ∃ (S W P : Polynomial ℕ) (α : ℕ → List Bool),
+      (∀ n, (α n).length = P.eval n) ∧
+      PolynomiallyBounded (fun n => (α n).length) ∧
+      ∀ n (x : List Bool), x.length ≤ N.eval n →
+        (evalAdvice (S.eval n) (W.eval n) (α n) x = true ↔ x ∈ (⊤ : Language Bool)) :=
+  PPoly.exists_evalAdvice PPoly.top_mem N
 
 end ComplexityTests.Advice

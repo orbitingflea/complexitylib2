@@ -107,10 +107,6 @@ def PipelineSizeBound (A E : ℕ) : Prop :=
           A * (2 ^ p + t * (s + 1) + copies * (s + 1) ^ ℓ) *
             (p + w + ℓ * b + Nat.log 2 (t + copies) + 2) ^ E
 
-theorem pow_le_pow_add {B E E' : ℕ} {x : ℕ} (hx : x ≤ B) (hB : 1 ≤ B) :
-    x ^ E ≤ B ^ (E + E') :=
-  (Nat.pow_le_pow_left hx E).trans (Nat.pow_le_pow_right hB (Nat.le_add_right E E'))
-
 /-- **The finite fine bound** at one input length. With a field of `2 ^ (h * m)` elements,
 `ℓ ≤ 2 ^ h`, enough blocks for the rate precision `X`, the direction budget, a negligible last
 code copy and single copies of size at most `L` on `w` inputs, the `2 ^ D` copies of every
@@ -230,7 +226,7 @@ theorem exists_complexity_le_of_bounds {A₁ E₁ A₂ E₂ : ℕ} (hS : Schedul
         _ = A₁ * 2 ^ (D + b) * (D + ℓ * b + 2) ^ E₁ := by rw [hs1, ← hDb]; ring
         _ ≤ A₁ * (2 ^ p + 2 ^ (D + b)) * B ^ (E₁ + E₂) :=
           Nat.mul_le_mul (Nat.mul_le_mul_left _ (Nat.le_add_left _ _))
-            (pow_le_pow_add (by omega) hB1)
+            (pow_le_pow (by omega) hB1 (Nat.le_add_right _ _))
     have hpipe_le : A₂ * (2 ^ p + 2 ^ D * 2 ^ b + copies * N) *
         (p + w + ℓ * b + Nat.log 2 (2 ^ D + copies) + 2) ^ E₂ ≤
         4 * A₂ * (2 ^ p + 2 ^ (D + b)) * B ^ (E₁ + E₂) := by
@@ -240,7 +236,7 @@ theorem exists_complexity_le_of_bounds {A₁ E₁ A₂ E₂ : ℕ} (hS : Schedul
             (p + w + ℓ * b + Nat.log 2 (2 ^ D + copies) + 2) ^ E₂
           ≤ A₂ * (4 * (2 ^ p + 2 ^ (D + b))) * B ^ (E₁ + E₂) :=
             Nat.mul_le_mul (Nat.mul_le_mul_left _ hmid)
-              ((pow_le_pow_add (E' := E₁) (by omega) hB1).trans_eq (by rw [add_comm]))
+              (pow_le_pow (by omega) hB1 (Nat.le_add_left _ _))
         _ = 4 * A₂ * (2 ^ p + 2 ^ (D + b)) * B ^ (E₁ + E₂) := by ring
     calc sched.size + A₂ * (2 ^ p + 2 ^ D * 2 ^ b + copies * N) *
           (p + w + ℓ * b + Nat.log 2 (2 ^ D + copies) + 2) ^ E₂

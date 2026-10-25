@@ -125,24 +125,4 @@ example (φ : (language L).Formula (Fin 2)) (v : Fin 2 → Fin 3 → Fin 2 → F
       (inner.onFormula (outer.onFormula φ)).Realize (fun p => v p.1.1 p.1.2 p.2) :=
   outer.realize_comp_onFormula inner (by decide) (by decide) φ v
 
-/-- info: 'Cslib.Logic.FO.Ordered.lexRank_flattenTuple' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Cslib.Logic.FO.Ordered.lexRank_flattenTuple
-
-/-- info: 'Cslib.Logic.FO.Ordered.FullTupleInterpretation.modelEquiv' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Cslib.Logic.FO.Ordered.FullTupleInterpretation.modelEquiv
-
-/-- info: 'Cslib.Logic.FO.Ordered.FullTupleInterpretation.realize_onFormula' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.FO.Ordered.FullTupleInterpretation.realize_onFormula
-
-/-- info: 'Cslib.Logic.FO.Ordered.FullTupleInterpretation.realize_comp_onFormula' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.FO.Ordered.FullTupleInterpretation.realize_comp_onFormula
-
 end Cslib.Tests.OrderedComposition

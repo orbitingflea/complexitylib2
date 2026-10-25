@@ -58,6 +58,10 @@ its gate transcript (`StrictMarginProgram.eval`):
 
 ## Main results
 
+* `Cslib.Circuits.Boolean.WeightedThreshold.StrictMarginProgram.existsUnique_ilpValid`:
+  unique valid ILP transcript.
+* `Cslib.Circuits.Boolean.WeightedThreshold.StrictMarginProgram.sum_inTranscriptCell_ite`:
+  disjoint-support indicator expansion recovering the output bit.
 * `Cslib.Circuits.Boolean.WeightedThreshold.StrictMarginProgram.inTranscriptCell_iff_eq_eval`,
   `.existsUnique_inTranscriptCell`: unambiguous transcript cell characterization and partition.
 * `Cslib.Circuits.Boolean.WeightedThreshold.StrictMarginProgram.inTranscriptCell_iff_dominance`,

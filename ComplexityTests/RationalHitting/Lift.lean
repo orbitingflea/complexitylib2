@@ -13,7 +13,7 @@ Concrete coefficient rows, Taylor test matrices and lift tables, checked by the 
 compiled, agreeing with the landed definitions `IntegralTest.padded` and
 `ExecutableGenerator.inputTables`. The correctness theorems are instantiated on concrete
 parameters, and the bit-length bounds on concrete inputs and at the generator's parameters for
-`n = s = 0`, so their hypotheses are satisfiable. Axiom guards cover the headline theorems.
+`n = s = 0`, so their hypotheses are satisfiable.
 -/
 
 namespace ComplexityTests.RationalHitting.Lift
@@ -169,91 +169,5 @@ example : ComputableTidilyInPolyTime
       (encPair encUnary (encPair encUnary encUnary))))))
     (encList (encList (encList encIntBin))) :=
   liftRows_polytime.tidy
-
-/-! ### Axioms -/
-
-/--
-info: 'Cslib.Circuits.Rational.getD_coeffRow' depends on axioms: [propext, Classical.choice,
-Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms getD_coeffRow
-
-/--
-info: 'Cslib.Circuits.Rational.testRows_eq' depends on axioms: [propext, Classical.choice,
-Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms testRows_eq
-
-/--
-info: 'Cslib.Circuits.Rational.liftEntry_eq' depends on axioms: [propext, Classical.choice,
-Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms liftEntry_eq
-
-/--
-info: 'Cslib.Circuits.Rational.liftTable_eq' depends on axioms: [propext, Classical.choice,
-Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms liftTable_eq
-
-/--
-info: 'Cslib.Circuits.Rational.liftRows_eq_inputTables' depends on axioms: [propext,
-Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms liftRows_eq_inputTables
-
-/--
-info: 'Cslib.Circuits.Rational.intBits_coeffRow_le' depends on axioms: [propext,
-Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms intBits_coeffRow_le
-
-/--
-info: 'Cslib.Circuits.Rational.intBits_test_le' depends on axioms: [propext, Classical.choice,
-Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms intBits_test_le
-
-/--
-info: 'Cslib.Circuits.Rational.intBits_lift_le' depends on axioms: [propext, Classical.choice,
-Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms intBits_lift_le
-
-/--
-info: 'Cslib.Circuits.Rational.intBits_le_of_mem_liftRows_parameters' depends on axioms: [propext,
-Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms intBits_le_of_mem_liftRows_parameters
-
-/--
-info: 'Cslib.Circuits.Rational.length_encList_coeffRow_le' depends on axioms: [propext,
-Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms length_encList_coeffRow_le
-
-/--
-info: 'Cslib.Circuits.Rational.computableInPolyTime_liftRows' depends on axioms: [propext,
-Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms computableInPolyTime_liftRows
-
-/--
-info: 'Cslib.Circuits.Rational.liftRows_polytime' depends on axioms: [propext, Classical.choice,
-Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms liftRows_polytime
 
 end ComplexityTests.RationalHitting.Lift

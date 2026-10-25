@@ -36,6 +36,7 @@ one-way functions or permutations exist.
 
 ## Main results
 
+* `Cslib.Crypto.isPPT_inversionGame`: the inversion experiment is uniformly strict PPT.
 * `Cslib.Crypto.OneWay.inversion_negligible`: negligible success for each efficient inverter.
 * `Cslib.Crypto.OneWayPermutation.uniformList_append_bit`: the ideal one-bit extension is uniform.
 * `Cslib.Crypto.not_oneWay_of_le_succProbability`: inverting with probability bounded away from

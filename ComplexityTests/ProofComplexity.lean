@@ -11,8 +11,8 @@ import Complexity.Computability.Complexity.Problems.SAT.PolyTime
 # Tests: proof systems
 
 A concrete proof system on all words and its simulations; the proof system of the `SAT` verifier
-on accepted and rejected certificates; total decoding of a malformed word; the existence of a
-polynomially bounded proof system for `SAT`; and the axioms of the headline theorems.
+on accepted and rejected certificates; total decoding of a malformed word; and the existence of a
+polynomially bounded proof system for `SAT`.
 -/
 
 namespace ComplexityTests.ProofComplexity
@@ -114,42 +114,5 @@ private theorem decodedWordsProofSystem_nil : decodedWordsProofSystem [] = [] :=
 example : decodedWordsProofSystem [] ≠ [true] := by
   rw [decodedWordsProofSystem_nil]
   decide
-
-/-! ### Axioms -/
-
-/--
-info: 'Cslib.Complexity.ProofSystem.NP_eq_coNP_iff_exists_polynomiallyBounded' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.ProofSystem.NP_eq_coNP_iff_exists_polynomiallyBounded
-
-/--
-info: 'Cslib.Complexity.ProofSystem.coNP_subset_NP_iff_exists_polynomiallyBounded' depends on
-axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.ProofSystem.coNP_subset_NP_iff_exists_polynomiallyBounded
-
-/--
-info: 'Cslib.Complexity.ProofSystem.exists_polynomiallyBounded_iff_mem_NP' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.ProofSystem.exists_polynomiallyBounded_iff_mem_NP
-
-/--
-info: 'Cslib.Complexity.ProofSystem.PolynomiallyBounded.of_simulates' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.ProofSystem.PolynomiallyBounded.of_simulates
-
-/--
-info: 'Cslib.Complexity.ProofSystem.PSimulates.simulates' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.ProofSystem.PSimulates.simulates
 
 end ComplexityTests.ProofComplexity

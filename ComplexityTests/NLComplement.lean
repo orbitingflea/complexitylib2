@@ -1,7 +1,7 @@
 /-
-Copyright (c) 2026 Erik Demaine. All rights reserved.
+Copyright (c) 2026 Erik Demaine, Samuel Schlesinger. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Erik Demaine
+Authors: Erik Demaine, Samuel Schlesinger
 -/
 
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.LogSpace.InductiveCounting.Bounds
@@ -109,75 +109,53 @@ private theorem not_accepts_loopSource (input : List Bool) : ¬ loopSource.Accep
   rw [only_initial hv] at hhalt
   contradiction
 
+/-- The first radix is closed for the looping source: it uses no work tape. -/
+private theorem closed_loopSource (input : List Bool) :
+    Closed loopSource (roundRadix Unit input.length 0) input := by
+  rw [roundRadix_zero]
+  have := card_lt_startRadix (State := Unit) input.length
+  exact closed_of_runsInSpace (S := 0) (MultiTapeNTM.runsInSpace_zero_tapes _ _ _)
+    (le_startRadix input.length) this (by norm_num; omega)
+
 /-- Complement correctness applies even though the source has no halting computation. -/
-example (input : List Bool) :
-    (queryMachine loopSource (MultiTapeNTM.ConfigurationGraph.radixExponent Unit 0)).Accepts
-      input :=
-  (queryMachine_accepts_iff_not_accepts loopSource input 0
-    (MultiTapeNTM.runsInSpace_zero_tapes _ _ _)).mpr (not_accepts_loopSource input)
+example (input : List Bool) : (queryMachine loopSource).Accepts input :=
+  (queryMachine_accepts_iff_not_accepts ⟨0, closed_loopSource input⟩).mpr
+    (not_accepts_loopSource input)
 
 /-- Startup counts exactly all input bits and one end marker, for arbitrary choices. -/
 example (choices : List Bool) (hlen : choices.length = 4) :
-    (queryMachine loopSource 5).run [true, false, true] choices =
-      ⟨3, some (Cslib.InductiveCounting.initial
-        (MultiTapeNTM.ConfigurationGraph.vertexBound (k := 0) 5 3)
-        (MultiTapeNTM.ConfigurationGraph.startID loopSource 5 3))⟩ :=
-  run_bootstrap loopSource 5 [true, false, true] choices hlen
+    (queryMachine loopSource).run [true, false, true] choices =
+      ⟨3, startRadix Unit 3, false, some (Cslib.InductiveCounting.initial
+        (MultiTapeNTM.ConfigurationGraph.vertexBound (k := 0) (startRadix Unit 3))
+        (MultiTapeNTM.ConfigurationGraph.startID loopSource (startRadix Unit 3)))⟩ :=
+  run_bootstrap loopSource [true, false, true] choices hlen
 
 /-- The empty input still executes its end-marker bootstrap step. -/
-example : (queryMachine loopSource 5).run [] [false] =
-    ⟨0, some (Cslib.InductiveCounting.initial
-      (MultiTapeNTM.ConfigurationGraph.vertexBound (k := 0) 5 0)
-      (MultiTapeNTM.ConfigurationGraph.startID loopSource 5 0))⟩ :=
-  run_bootstrap loopSource 5 [] [false] rfl
+example : (queryMachine loopSource).run [] [false] =
+    ⟨0, startRadix Unit 0, false, some (Cslib.InductiveCounting.initial
+      (MultiTapeNTM.ConfigurationGraph.vertexBound (k := 0) (startRadix Unit 0))
+      (MultiTapeNTM.ConfigurationGraph.startID loopSource (startRadix Unit 0)))⟩ :=
+  run_bootstrap loopSource [] [false] rfl
 
 /-- All branches, including dishonest choices, have bounded storage and a common clock. -/
 example (input choices : List Bool) :
-    (encRuntime ((queryMachine loopSource 5).run input choices)).length ≤
-      storageConstant 0 5 * (Nat.log2 input.length + 1) :=
-  length_run_le loopSource 5 input choices
+    (encRuntime ((queryMachine loopSource).run input choices)).length ≤
+      storageBound 0 Unit 0 input.length :=
+  length_run_le (closed_loopSource input) choices
 
 example (input : List Bool) :
-    (queryMachine loopSource 5).HaltsWithin input (abstractTime loopSource 5 input.length) :=
-  queryMachine_haltsWithin loopSource 5 input
+    (queryMachine loopSource).HaltsWithin input (abstractTime 0 Unit 0 input.length) :=
+  queryMachine_haltsWithin (closed_loopSource input)
 
 /-- A genuinely looping recognizer supplies the source hypotheses of the native theorem. -/
 private theorem recognizes_loopSource : loopSource.RecognizesInSpace encBits ∅
-    (fun input => 0 * (Nat.log2 input.length + 1)) := fun input =>
+    (fun input => 0 * Nat.log2 input.length + 0) := fun input =>
   ⟨MultiTapeNTM.runsInSpace_zero_tapes _ _ _, by simp [not_accepts_loopSource input]⟩
 
 /-- The output of the actual native construction is an all-branches-halting decider. -/
 example : ∃ (k : ℕ) (State : Type) (_ : Finite State) (ntm : MultiTapeNTM k Bool State) (c : ℕ),
     ntm.DecidesInSpace encBits (∅ : Set (List Bool))ᶜ
       fun input => c * (Nat.log2 input.length + 1) :=
-  MultiTapeNTM.exists_decidesInLogSpace_compl recognizes_loopSource
-
-/--
-info: 'Cslib.Complexity.NL_eq_coNL' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.NL_eq_coNL
-
-/--
-info: 'Cslib.Complexity.compl_mem_NL' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.compl_mem_NL
-
-/--
-info: 'Turing.MultiTapeNTM.exists_decidesInLogSpace_compl' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeNTM.exists_decidesInLogSpace_compl
-
-/--
-info: 'Turing.NondeterministicQueryMachine.exists_decidesInSpace' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.NondeterministicQueryMachine.exists_decidesInSpace
+  MultiTapeNTM.exists_decidesInSpace_compl recognizes_loopSource fun _ => le_rfl
 
 end ComplexityTests.NLComplement

@@ -17,8 +17,7 @@ import Mathlib.FieldTheory.Finite.GaloisField
 These clients compute small punctured lines over `ZMod 2` and `ZMod 3`, instantiate the budget of
 the collision tail and of the universal-menu theorem with concrete fields and dimensions (`q = 2`
 with `ℓ = 11`, and the four-element field `GaloisField 2 2` with `ℓ = 8`), and exercise the
-boundary cases of universality: a single request, repeated targets and an occupied target. Axiom
-checks record the headline dependencies.
+boundary cases of universality: a single request, repeated targets and an occupied target.
 -/
 
 namespace ComplexityTests.MassProduction.Menu
@@ -157,49 +156,5 @@ example {K : Type*} [Field K] [Fintype K] [DecidableEq K] {ℓ g k r : ℕ}
       ∀ i ∈ clean, ∀ j, j ≠ i → ∀ c : K, c ≠ 0 → menu e i ≠ c • menu e j := by
   obtain ⟨e, clean, hcard, hclean⟩ := h.2 lines fun _ => u
   exact ⟨e, clean, hcard, fun i hi j hji => disjoint_puncturedLine_iff.mp ((hclean i hi).2 j hji)⟩
-
-/-! ### Axioms -/
-
-/--
-info: 'Cslib.LineCode.exists_isUniversalMenu' depends on axioms: [propext, Classical.choice,
-Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms exists_isUniversalMenu
-
-/--
-info: 'Cslib.LineCode.card_filter_two_mul_card_isClean_lt_mul_two_pow_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms card_filter_two_mul_card_isClean_lt_mul_two_pow_le
-
-/--
-info: 'Cslib.LineCode.exists_coveringMenu' depends on axioms: [propext, Classical.choice,
-Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms exists_coveringMenu
-
-/--
-info: 'Cslib.LineCode.card_filter_forall_mem_le' depends on axioms: [propext, Classical.choice,
-Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms card_filter_forall_mem_le
-
-/--
-info: 'Cslib.LineCode.exists_collisionCut' depends on axioms: [propext, Classical.choice,
-Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms exists_collisionCut
-
-/--
-info: 'Cslib.LineCode.card_filter_not_disjoint_puncturedLine_le' depends on axioms: [propext,
-Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms card_filter_not_disjoint_puncturedLine_le
 
 end ComplexityTests.MassProduction.Menu

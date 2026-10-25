@@ -48,13 +48,13 @@ example (c : Circuit (signature ℕ) 0 1)
     (hc : {0, 1, 2, 3} ⊆ c.eval (supportInterpretation pairs) Fin.elim0 0) :
     2 ≤ c.program.cost termCost := by
   have h := ceilDiv_card_le_termCost c pairs Fin.elim0 {0, 1, 2, 3}
-    (fun i => i.elim0) 0 hc (by decide : 0 < 2) (pair_bound _)
+    (fun i => i.elim0) 0 hc two_pos (pair_bound _)
   change 2 ≤ _ at h
   exact h
 
 example : 2 ≤ shared.program.cost termCost := by
   have h := ceilDiv_card_le_termCost shared pairs ![{99}] {0, 1, 2, 3}
-    (by decide) 0 (by decide) (by decide : 0 < 2) (pair_bound _)
+    (by decide) 0 (by decide) two_pos (pair_bound _)
   change 2 ≤ _ at h
   exact h
 

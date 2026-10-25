@@ -106,19 +106,4 @@ example (w : Fin 8 → Fin 257) :
   rw [← he] at hb
   contradiction
 
-/-- info: 'Cslib.Logic.FO.Ordered.realize_multiplication' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Cslib.Logic.FO.Ordered.realize_multiplication
-
-/-- info: 'Cslib.Logic.FO.Ordered.not_realize_multiplication_of_le' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Cslib.Logic.FO.Ordered.not_realize_multiplication_of_le
-
-/-- info: 'Cslib.Logic.FO.Ordered.existsUnique_multiplication' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Cslib.Logic.FO.Ordered.existsUnique_multiplication
-
 end Cslib.Tests.OrderedMultiplication

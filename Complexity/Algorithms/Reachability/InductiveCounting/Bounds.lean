@@ -24,7 +24,10 @@ vertex identifiers.
 
 ## Main results
 
+* `Cslib.InductiveCounting.rank_initial_le_budget`: the initial progress measure.
 * `Cslib.InductiveCounting.halted_replay_budget`: a uniform all-branch time bound.
+* `Cslib.InductiveCounting.accepts_complete_bounded`: honest acceptance needs no more choices than
+  the instruction budget.
 * `Cslib.InductiveCounting.query_bounds`: legitimate queries use valid vertex identifiers.
 
 ## References
@@ -45,7 +48,8 @@ private theorem rank_initial (hsource : source < N) :
     rank N width (initial N source) = N * roundCost N width + 1 := by
   simp [initial, hsource, rank]
 
-private theorem rank_initial_le_budget : rank N width (initial N source) ≤ budget N width := by
+/-- The initial progress measure is within the instruction budget. -/
+theorem rank_initial_le_budget : rank N width (initial N source) ≤ budget N width := by
   by_cases hs : source < N
   · rw [rank_initial hs]
     calc

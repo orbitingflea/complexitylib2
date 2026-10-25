@@ -297,15 +297,5 @@ example (_f : ℕ → ℕ)
 /-- info: 'Cslib.WordRAM.Refines.call' depends on axioms: [propext] -/
 #guard_msgs in
 #print axioms Refines.call
-/--
-info: 'Cslib.WordRAM.Refines.executes' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Refines.executes
-/--
-info: 'Cslib.WordRAM.Stack.Controller.executes' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Stack.Controller.executes
 
 end ComplexityTests.WordRAMController

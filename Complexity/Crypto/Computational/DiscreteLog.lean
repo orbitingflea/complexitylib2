@@ -15,6 +15,7 @@ public import Complexity.Crypto.Game
 public import Mathlib.Algebra.Field.ZMod
 public import Mathlib.Algebra.Module.Defs
 import Complexity.Probability.PMF
+import Mathlib.SetTheory.Cardinal.Finite
 
 /-!
 # The discrete-logarithm assumption
@@ -47,6 +48,9 @@ public, and an adversary's running time may depend on their length.
 
 * `Cslib.Crypto.PrimeOrderGroupFamily.smul_generator_injective`: a discrete logarithm modulo `q`
   is unique.
+* `Cslib.Crypto.PrimeOrderGroupFamily.smul_generator_surjective`,
+  `Cslib.Crypto.PrimeOrderGroupFamily.smul_generator_bijective`: the generator map is bijective.
+* `Cslib.Crypto.PrimeOrderGroupFamily.uniform_smul_generator_add`: the one-time group mask.
 
 ## References
 
@@ -121,6 +125,33 @@ instance (d : F.Desc) : NeZero (F.order d) := ⟨(F.prime_order d).ne_zero⟩
 theorem smul_generator_injective (d : F.Desc) :
     Function.Injective fun α : ZMod (F.order d) => α • F.generator d :=
   smul_left_injective (ZMod (F.order d)) (F.generator_ne_zero d)
+
+/-- Every element of `F.Carrier d` is a scalar multiple of the generator: `α ↦ α • g` is
+surjective. -/
+theorem smul_generator_surjective (d : F.Desc) :
+    Function.Surjective fun α : ZMod (F.order d) => α • F.generator d := by
+  have : Finite (F.Carrier d) :=
+    Nat.finite_of_card_ne_zero (by rw [F.card_carrier d]; exact (F.prime_order d).ne_zero)
+  exact ((F.smul_generator_injective d).bijective_of_nat_card_le
+    (by rw [F.card_carrier, Nat.card_zmod])).2
+
+/-- The scalar map `α ↦ α • g` is a bijection between `ZMod (F.order d)` and `F.Carrier d`. -/
+theorem smul_generator_bijective (d : F.Desc) :
+    Function.Bijective fun α : ZMod (F.order d) => α • F.generator d :=
+  ⟨F.smul_generator_injective d, F.smul_generator_surjective d⟩
+
+/-- **One-time group mask**: for any group element `m : F.Carrier d`, masking `m` by `γ • g` for a
+uniform `γ : ZMod (F.order d)` has the same distribution as `γ • g` itself. -/
+theorem uniform_smul_generator_add {α : Type*} (d : F.Desc) (m : F.Carrier d)
+    (f : F.Carrier d → PMF α) :
+    ((PMF.uniformOfFintype (ZMod (F.order d))).bind fun γ => f (γ • F.generator d + m)) =
+      (PMF.uniformOfFintype (ZMod (F.order d))).bind fun γ => f (γ • F.generator d) := by
+  obtain ⟨μ, rfl⟩ := F.smul_generator_surjective d m
+  simp only [← add_smul]
+  change (PMF.uniformOfFintype (ZMod (F.order d))).bind
+      ((fun γ => f (γ • F.generator d)) ∘ Equiv.addRight μ) =
+    (PMF.uniformOfFintype (ZMod (F.order d))).bind (fun γ => f (γ • F.generator d))
+  rw [← PMF.bind_map, PMF.uniformOfFintype_map_equiv]
 
 /-- The discrete-logarithm experiment ([BonehShoup2023], Attack Game 10.4): draw a description
 and a uniform `α`, give the adversary the description and the encoding of `α • g`, and accept

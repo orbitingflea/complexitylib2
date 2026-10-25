@@ -40,6 +40,8 @@ concentration bound for independent repetitions of the pair.
 
 * `Cslib.Crypto.Pseudoentropy.SamplablePair.exists_seedRealization`: the sampler's existing strict
   PPT certificate supplies its deterministic evaluator.
+* `Cslib.Crypto.Pseudoentropy.SamplablePair.SeedRealization.isPPTOn_sampleWithSeed`: sampling with
+  retained seed bits is strict PPT.
 * `Cslib.Crypto.Pseudoentropy.SamplablePair.SeedRealization.entropy_chain_rule`: account for the
   entire seed's entropy.
 

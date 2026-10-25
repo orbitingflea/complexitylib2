@@ -50,7 +50,7 @@ import Cslib.Computability.Machines.Turing.MultiTape.Combinators.Id
 A machine without work tapes that writes a constant answer in one step computes a constant
 function in polynomial time, whatever the input encoding. So the empty and the full problem are in
 `P`, `NP`, `BPP` and `RP`, and the hypotheses of the theorems about these classes (such as
-`Cslib.Circuits.Boolean.PPoly.of_mem_P` and `PPoly.of_mem_BPP`) can be met.
+`Cslib.Circuits.Boolean.P_subset_PPolyOn` and `BPP_subset_PPolyOn`) can be met.
 
 Constant functions will come from the composition machinery upstream; this file only guards
 against definitions that are accidentally unsatisfiable.
@@ -102,16 +102,17 @@ example : (∅ : Set (List Bool)) ∈ RP encBits :=
 
 /-- `P ⊆ P/poly` applies to a language in `P`. -/
 example : (⊤ : Language Bool) ∈ PPoly :=
-  PPoly.of_mem_P ⟨fun _ => true, .const true, fun _ => ⟨fun _ => rfl, fun _ => trivial⟩⟩
+  mem_PPolyOn_encBits_iff.1
+    (P_subset_PPolyOn ⟨fun _ => true, .const true, fun _ => ⟨fun _ => rfl, fun _ => trivial⟩⟩)
 
 /-- `BPP ⊆ P/poly` applies to a language in `BPP`. -/
 example : (⊥ : Language Bool) ∈ PPoly :=
-  PPoly.of_mem_BPP ⟨0, fun _ => false, .const false,
+  mem_PPolyOn_encBits_iff.1 (BPP_subset_PPolyOn ⟨0, fun _ => false, .const false,
     fun _ => ⟨fun h => h.elim, fun _ => by
       simp only [Polynomial.eval_zero, pow_zero, mul_one]
       exact le_trans (by norm_num : 2 ≤ 3 * 1)
         (Nat.mul_le_mul_left 3 (Finset.card_pos.2
-          ⟨fun _ => false, Finset.mem_filter.2 ⟨Finset.mem_univ _, trivial⟩⟩))⟩⟩
+          ⟨fun _ => false, Finset.mem_filter.2 ⟨Finset.mem_univ _, trivial⟩⟩))⟩⟩)
 
 /-- The monotone lower bound for cliques is about a finite complexity. -/
 example : Cslib.Circuits.ecomplexity Cslib.Circuits.Monotone.interpretation

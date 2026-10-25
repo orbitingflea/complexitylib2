@@ -10,7 +10,7 @@ import Complexity.Tactic.PolyTime
 /-!
 # Hamiltonian path and cycle tests
 
-Concrete, boundary, `fun_prop`, and axiom checks for the verifiers of `DirHamPath`,
+Concrete, boundary, and `fun_prop` checks for the verifiers of `DirHamPath`,
 `DirHamCycle`, `HamPath` and `HamCycle`.
 -/
 
@@ -260,61 +260,5 @@ example : ([], []) ∉ HamCycle := by
 -- Duplicate vertex entries count once.
 example : HamCycle.verifier (([0, 1, 2, 0], [(0, 1), (1, 2), (2, 0)]),
     certificate [0, 1, 2, 0] [0, 1, 2]) = true := rfl
-
-/-! ### Axiom checks for headline theorems -/
-
-/--
-info: 'Cslib.Complexity.DirHamPath.isVerifier' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.DirHamPath.isVerifier
-
-/--
-info: 'Cslib.Complexity.DirHamPath.mem_NP' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.DirHamPath.mem_NP
-
-/--
-info: 'Cslib.Complexity.DirHamCycle.isVerifier' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.DirHamCycle.isVerifier
-
-/--
-info: 'Cslib.Complexity.DirHamCycle.mem_NP' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.DirHamCycle.mem_NP
-
-/--
-info: 'Cslib.Complexity.HamPath.isVerifier' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.HamPath.isVerifier
-
-/--
-info: 'Cslib.Complexity.HamPath.mem_NP' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.HamPath.mem_NP
-
-/--
-info: 'Cslib.Complexity.HamCycle.isVerifier' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.HamCycle.isVerifier
-
-/--
-info: 'Cslib.Complexity.HamCycle.mem_NP' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.HamCycle.mem_NP
 
 end ComplexityTests.NPCompleteGraphs.Hamiltonian

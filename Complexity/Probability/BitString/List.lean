@@ -9,6 +9,7 @@ module
 
 public import Complexity.Foundations.Data.BitString.List.Operations
 public import Complexity.Probability.BitString
+import Complexity.Probability.Product
 
 /-!
 # Independent blocks of uniform bit lists
@@ -21,6 +22,8 @@ independent uniform bit strings. This includes zero-width rows and zero rows.
 * `Cslib.BitString.uniformList_ofList`: a uniform list gives a uniform finite bit string.
 * `Cslib.BitString.uniformList_blocks`: fixed-width blocks are jointly uniform.
 * `Cslib.BitString.uniformList_listRows`: the same law for the ordinary list-of-lists program.
+* `Cslib.BitString.uniformList_replaceRow`: replacing one row with an independent uniform row
+  preserves uniformity.
 * `Cslib.BitString.uniformList_map_listXor`: XOR with a fixed word preserves uniformity.
 
 ## References
@@ -69,5 +72,47 @@ theorem uniformList_map_listXor (m : ℕ) (r : List Bool) :
     funext x
     simp [listXor_pair]
   rw [hfun, ← PMF.map_comp, Probability.PMF.uniformOfFintype_map_equiv]
+
+/-- Replacing row `j < count` of a uniform `count * width`-bit string with an independent uniform
+`width`-bit string preserves the uniform distribution `uniformList (count * width)`. -/
+theorem uniformList_replaceRow (width count : ℕ) (j : Fin count) :
+    (uniformList width).bind (fun x =>
+      (uniformList (count * width)).map (replaceRow width count j.val x)) =
+      uniformList (count * width) := by
+  classical
+  have hrep (x : BitString width) (Z : List Bool) :
+      replaceRow width count j.val (List.ofFn x) Z =
+        List.ofFn (blocksEquiv.symm
+          (Function.update (block (ofList (count * width) Z)) j x)) := by
+    rw [ofFn_blocksEquiv_symm, replaceRow, List.flatMap_def]
+    congr 1
+    apply List.ext_getElem (by simp)
+    intro i hi hi'
+    simp only [List.getElem_map, List.getElem_range, List.getElem_ofFn]
+    by_cases hij : (⟨i, by simpa using hi⟩ : Fin count) = j
+    · have hval : i = j.val := congrArg Fin.val hij
+      simp [hval]
+    · have hval : i ≠ j.val := fun h => hij (Fin.ext h)
+      simp [hij, hval, listRow_eq_ofFn width ⟨i, by simpa using hi⟩ Z]
+  have hblocks :
+      (PMF.uniformOfFintype (Fin count → BitString width)).map
+        (fun rows => List.ofFn (blocksEquiv.symm rows)) =
+      uniformList (count * width) := by
+    have h := congrArg (PMF.map List.ofFn)
+      (PMF.uniformOfFintype_map_equiv
+        (blocksEquiv : BitString (count * width) ≃ (Fin count → BitString width)).symm)
+    simpa only [PMF.map_comp, Function.comp_def, uniformList] using h
+  have hupd := congrArg
+    (PMF.map (fun rows : Fin count → BitString width => List.ofFn (blocksEquiv.symm rows)))
+    (PMF.uniformOfFintype_update (γ := BitString width) j)
+  conv_rhs => rw [← hblocks, ← hupd]
+  simp only [uniformList, PMF.bind_map, PMF.map_bind, PMF.map_comp, Function.comp_def]
+  congr 1
+  funext x
+  have hZ := congrArg
+    (PMF.map (fun rows : Fin count → BitString width =>
+      List.ofFn (blocksEquiv.symm (Function.update rows j x))))
+    (uniformList_blocks count width)
+  simpa only [uniformList, PMF.map_comp, Function.comp_def, hrep] using hZ
 
 end Cslib.BitString

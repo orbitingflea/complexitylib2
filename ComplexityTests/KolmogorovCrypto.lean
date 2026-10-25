@@ -129,40 +129,4 @@ example :
       ∃ (G : List Bool → List Bool) (ℓ : ℕ → ℕ), PseudorandomGenerator G ℓ :=
   exists_oneWay_iff_exists_pseudorandomGenerator
 
-/-! ### Axiom guards -/
-
-/--
-info: 'Cslib.Kolmogorov.DescriptionMethod.frequently_complexity_universal_lt_of_computable' depends
-on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms frequently_complexity_universal_lt_of_computable
-
-/--
-info: 'Cslib.Kolmogorov.DescriptionMethod.exists_complexity_universal_le_size_add' depends on
-axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms exists_complexity_universal_le_size_add
-
-/--
-info: 'Cslib.BitString.card_shortWords' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms BitString.card_shortWords
-
-/--
-info: 'Cslib.Crypto.PseudorandomGenerator.oneWay_of_card_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms PseudorandomGenerator.oneWay_of_card_le
-
-/--
-info: 'Cslib.Crypto.PseudorandomGenerator.oneWay_of_injective' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms PseudorandomGenerator.oneWay_of_injective
-
 end ComplexityTests.KolmogorovCrypto

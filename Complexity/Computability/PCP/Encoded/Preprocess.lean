@@ -37,6 +37,8 @@ proofs reuse the existing degree-reduction argument and exact laws for appending
 * `Cslib.PCP.Encoded.Graph.unsatVal_preprocess`: adding family edges and loops halves the
   degree-reduced graph's value.
 * `Cslib.PCP.Encoded.Graph.le_unsatVal_preprocess`: the existing Dinur gap bound for the program.
+* `Cslib.PCP.Encoded.Graph.spectralExpansion_regularPreprocess_le`: the spectral bound of
+  preprocessing, for the program's own vertex numbering.
 
 ## References
 

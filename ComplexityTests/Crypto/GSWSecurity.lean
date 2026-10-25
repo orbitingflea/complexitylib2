@@ -125,32 +125,4 @@ example
       (fun k => encryptSerialized (Parameters.dimension k) (Parameters.samples k)
         (Parameters.width k)) := Parameters.indCPA hLWE
 
-/--
-info: 'Cslib.Crypto.Encryption.advantage_publicKeyGame_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Encryption.advantage_publicKeyGame_le
-
-/--
-info: 'Cslib.Crypto.Homomorphic.GSW.eval_keyGenSerialized_publicWord' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms eval_keyGenSerialized_publicWord
-
-/--
-info: 'Cslib.Crypto.Homomorphic.GSW.advantage_game_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms advantage_game_le
-
-/--
-info: 'Cslib.Crypto.Homomorphic.GSW.Parameters.indCPA' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Parameters.indCPA
-
 end ComplexityTests.GSWSecurity

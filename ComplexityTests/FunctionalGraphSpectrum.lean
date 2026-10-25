@@ -111,73 +111,10 @@ example (f : Fin 4 → Fin 4) (H : Fin 4 → Prop) [DecidablePred H] (K T : ℕ)
 /-! ### Axioms -/
 
 /--
-info: 'Cslib.FunctionalGraph.iterate_eq_card_add_mod' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms iterate_eq_card_add_mod
-
-/--
-info: 'Cslib.FunctionalGraph.spectrum_test' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms spectrum_test
-
-/--
-info: 'Cslib.FunctionalGraph.cycleSpectrum_test' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms cycleSpectrum_test
-
-/--
-info: 'Cslib.FunctionalGraph.perm_symm_eq_iterate' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms perm_symm_eq_iterate
-
-/--
-info: 'Cslib.FunctionalGraph.canonicalTime_apply' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms canonicalTime_apply
-
-/--
-info: 'Cslib.FunctionalGraph.iterate_eq_canonical_iff' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms iterate_eq_canonical_iff
-
-/--
-info: 'Cslib.FunctionalGraph.ForestDuality.forest_duality' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms forest_duality
-
-/--
-info: 'Cslib.FunctionalGraph.ForestDuality.exists_cover_packing' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms exists_cover_packing
-
-/--
 info: 'Cslib.FunctionalGraph.shifted_payload' depends on axioms: [propext, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms shifted_payload
-
-/--
-info: 'Cslib.FunctionalGraph.scan_spec' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms scan_spec
 
 /--
 info: 'Cslib.FunctionalGraph.correction_run' depends on axioms: [propext, Quot.sound]
@@ -196,12 +133,5 @@ info: 'Cslib.FunctionalGraph.walk_run' depends on axioms: [propext, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms walk_run
-
-/--
-info: 'Cslib.FunctionalGraph.distinguishedPower_correct' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms distinguishedPower_correct
 
 end ComplexityTests.FunctionalGraphSpectrum

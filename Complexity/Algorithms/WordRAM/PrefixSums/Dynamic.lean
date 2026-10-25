@@ -36,6 +36,8 @@ increments must fit the chosen word width. This is a segment tree, not a Fenwick
 
 * `dispatch_spec`: per-operation correctness and instruction estimate.
 * `instruction_bound`: a separate cost certificate, at `13 (h + 1) + 12` instructions per call.
+* `instruction_bound_log`: instruction certificate in terms of the abstract array length.
+* `execOp_frame`: every actual operation preserves memory outside the fixed tree region.
 
 ## References
 

@@ -110,20 +110,4 @@ example : balancedCode 0 (csa4to2 0).code (zeroPairCircuit 0 0).code [] =
     (zeroPairCircuit 0 0).code := by decide
 example : (balancedCode 0 (csa4to2 0).code (zeroPairCircuit 0 0).code []).1.length = 1 := by decide
 
-/-- info: 'Cslib.Circuits.Boolean.computableInPolyTime_balancedCode' depends on axioms: [propext,
- Classical.choice,
- Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Boolean.computableInPolyTime_balancedCode
-
-/-- info: 'Cslib.Circuits.Boolean.balancedCode_eq_code' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Cslib.Circuits.Boolean.balancedCode_eq_code
-
-/-- info: 'ComplexityTests.BalancedCode.growing_generator' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms growing_generator
-
 end ComplexityTests.BalancedCode

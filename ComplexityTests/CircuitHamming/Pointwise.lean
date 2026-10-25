@@ -109,34 +109,4 @@ example (a : Fin 2 → Empty → Bool) :
     nand.eval (interpretation.pointwise Empty) a 0 = Empty.elim :=
   funext fun e => e.elim
 
-/-! ### Axioms -/
-
-/--
-info: 'Cslib.Circuits.Program.trace_pointwise_proj' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Program.trace_pointwise_proj
-
-/--
-info: 'Cslib.Circuits.available_eq_range_trace_pointwise' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms available_eq_range_trace_pointwise
-
-/--
-info: 'Cslib.Circuits.Circuit.eval_pointwise_proj' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Circuit.eval_pointwise_proj
-
-/--
-info: 'Cslib.Circuits.Circuit.computes_iff_eval_pointwise_proj' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Circuit.computes_iff_eval_pointwise_proj
-
 end ComplexityTests.CircuitHamming.Pointwise

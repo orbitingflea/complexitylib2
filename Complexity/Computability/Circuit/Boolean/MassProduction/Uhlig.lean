@@ -13,6 +13,7 @@ public import Mathlib.Data.Nat.Log
 public import Mathlib.Order.Filter.AtTopBot.Basic
 import Cslib.Computability.Circuit.Boolean.Lupanov
 import Cslib.Foundations.Data.Nat.Asymptotics
+import Complexity.Foundations.Data.Nat.Power
 import Mathlib.Tactic.GCongr
 import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.Ring
@@ -143,46 +144,6 @@ theorem complexity_directProduct_two_pow_le {p m L H : ℕ}
       _ = K * A * (L + (d + 1) * T * H) := by ring
       _ ≤ K * A * (L + (d + 1) * (2 * T) * H) := by gcongr; omega
 
-/-! ### Arithmetic estimates -/
-
-/-- `(1 + 1 / M) ^ d ≤ 1 + 1 / R` when `(R + 1) d ≤ M`, without denominators. -/
-theorem mul_add_one_pow_le {R M d : ℕ} (h : (R + 1) * d ≤ M) :
-    R * (M + 1) ^ d ≤ (R + 1) * M ^ d := by
-  -- `(M + 1) ^ d * (M - d) ≤ M ^ (d + 1)` by induction.
-  have key : ∀ e : ℕ, e ≤ M → (M + 1) ^ e * (M - e) ≤ M ^ (e + 1) := by
-    intro e
-    induction e with
-    | zero => intro _; simp
-    | succ e ih =>
-      intro he
-      have ih := ih (by omega)
-      have hstep : (M + 1) * (M - (e + 1)) ≤ M * (M - e) := by
-        obtain ⟨r, rfl⟩ : ∃ r, M = e + 1 + r := ⟨M - (e + 1), by omega⟩
-        rw [show e + 1 + r - (e + 1) = r by omega, show e + 1 + r - e = r + 1 by omega]
-        nlinarith
-      calc (M + 1) ^ (e + 1) * (M - (e + 1)) = (M + 1) ^ e * ((M + 1) * (M - (e + 1))) := by
-            ring
-        _ ≤ (M + 1) ^ e * (M * (M - e)) := Nat.mul_le_mul_left _ hstep
-        _ = M * ((M + 1) ^ e * (M - e)) := by ring
-        _ ≤ M * M ^ (e + 1) := Nat.mul_le_mul_left _ ih
-        _ = M ^ (e + 1 + 1) := by ring
-  rcases Nat.eq_zero_or_pos R with rfl | hR
-  · simp
-  rcases Nat.eq_zero_or_pos d with rfl | hd
-  · simp
-  have hdM : d < M := by nlinarith
-  have hpos : 0 < M - d := by omega
-  refine Nat.le_of_mul_le_mul_right ?_ hpos
-  calc R * (M + 1) ^ d * (M - d) = R * ((M + 1) ^ d * (M - d)) := by ring
-    _ ≤ R * M ^ (d + 1) := Nat.mul_le_mul_left _ (key d hdM.le)
-    _ = M ^ d * (R * M) := by ring
-    _ ≤ M ^ d * ((R + 1) * (M - d)) := by
-        refine Nat.mul_le_mul_left _ ?_
-        obtain ⟨r, rfl⟩ : ∃ r, M = d + r := ⟨M - d, by omega⟩
-        rw [show d + r - d = r by omega]
-        nlinarith
-    _ = (R + 1) * M ^ d * (M - d) := by ring
-
 /-! ### Asymptotics -/
 
 /-- Lupanov's bound for single copies, without denominators: for every precision `Q`,
@@ -277,10 +238,10 @@ theorem mul_complexity_directProduct_le {P X n d p m : ℕ}
   set K := 2 ^ p + 1 with hKdef
   have h2n : 2 ^ n = 2 ^ (p * d) * 2 ^ m := by rw [← pow_add, hnm, mul_comm d p]
   have hKX : X * K ^ d ≤ (X + 1) * 2 ^ (p * d) := by
-    have := mul_add_one_pow_le (R := X) (M := 2 ^ p) (d := d) hd
+    have := Nat.mul_add_one_pow_le (R := X) (M := 2 ^ p) (d := d) hd
     rwa [← pow_mul] at this
   have hK1 : K ^ d ≤ 2 * 2 ^ (p * d) := by
-    have := mul_add_one_pow_le (R := 1) (M := 2 ^ p) (d := d)
+    have := Nat.mul_add_one_pow_le (R := 1) (M := 2 ^ p) (d := d)
       (le_trans (Nat.mul_le_mul_right d (by omega : 1 + 1 ≤ X + 1)) hd)
     rw [← pow_mul, ← hKdef] at this
     omega

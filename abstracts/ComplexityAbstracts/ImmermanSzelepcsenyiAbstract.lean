@@ -9,37 +9,40 @@ Authors: Samuel Schlesinger
 import ComplexityAbstracts.Check
 import ComplexityAbstracts.ImmermanSzelepcsenyiBridge
 
-/-! # Immerman–Szelepcsényi: NL equals coNL
+/-! # Immerman–Szelepcsényi: nondeterministic space is closed under complement
 
 A nondeterministic machine accepts when some computation path accepts, so certifying that no path
-accepts seems to require looking at all of them. Immerman and Szelepcsényi showed that with
-logarithmic space this asymmetry disappears. A nondeterministic machine can count the
+accepts seems to require looking at all of them. Immerman and Szelepcsényi showed that with at
+least logarithmic space this asymmetry disappears. A nondeterministic machine can count the
 configurations reachable from the start, one distance at a time, by guessing each reachable
 configuration again together with a path to it and checking the count. With the final count it
-certifies that no accepting configuration is reachable. Hence nondeterministic logarithmic space
-is closed under complement: `NL = coNL`. The central example is directed non-reachability, the
-complement of the `NL`-complete problem of directed reachability.
+certifies that no accepting configuration is reachable. Hence nondeterministic space `s` is closed
+under complement whenever `s n ≥ log₂ n`, and in particular `NL = coNL`. The central example is
+directed non-reachability, the complement of the `NL`-complete problem of directed reachability.
 
 Each problem has one fixed finite-state binary multi-tape nondeterministic machine. The machine
 runs on the binary encoding `enc a` of an instance `a`, for an arbitrary injective encoding
 `enc`. Along every computation prefix, including rejecting branches, it visits at most
-`c * (floor(log₂ n) + 1)` work-tape cells, where `n` is the input length. Read-only input and
-write-only output are not charged. Every branch terminates: on each input, some finite time
-bounds all computation paths. A stuck branch rejects. `coNL` consists of the complements of the
-problems in `NL` under the same encoding. Lean checks the transfer through the bridge, and
-`#check_abstract` audits the public dependencies. The library proof is Erik Demaine's streaming
-inductive-counting construction.
+`c₁ * s n + c₂` work-tape cells, where `n` is the input length; for `NL` the bound is
+`c * (floor(log₂ n) + 1)`. Read-only input and write-only output are not charged. Every branch
+terminates: on each input, some finite time bounds all computation paths. A stuck branch rejects.
+The complement classes consist of the complements of the problems in the classes, under the same
+encoding. The bound `s` need not be constructible: since every sequence of choices respects the
+space bound, the complement machine lets the space increase as needed, as Immerman remarks after
+his Theorem 1. Lean checks the transfer through the bridge, and `#check_abstract` audits the
+public dependencies. The library proof generalizes Erik Demaine's streaming inductive-counting
+construction.
 
 ## References
 
-* [M. Sipser, *Introduction to the Theory of Computation*, Section 8.6][Sipser2013]
-* [N. Immerman, *Nondeterministic Space Is Closed under Complementation*][Immerman1988]
+* [N. Immerman, *Nondeterministic Space Is Closed under Complementation*, Theorem 1][Immerman1988]
 * [R. Szelepcsényi, *The Method of Forcing for Nondeterministic Automata*][Szelepcsenyi1987]
+* [M. Sipser, *Introduction to the Theory of Computation*, Section 8.6][Sipser2013]
 -/
 
 namespace ComplexityAbstracts.ImmermanSzelepcsenyiAbstract
 
-/-! ## Nondeterministic logarithmic space -/
+/-! ## Nondeterministic space -/
 
 /-- A nondeterministic machine accepts if an actual computation path ends halted with output 1. -/
 def Accepts {k : ℕ} {State : Type} (M : Turing.MultiTapeNTM k Bool State)
@@ -52,6 +55,17 @@ def DecidesInSpace {α : Type} {k : ℕ} {State : Type}
     (M : Turing.MultiTapeNTM k Bool State) (enc : α ↪ List Bool) (A : Set α) (s : α → ℕ) : Prop :=
   (∀ a, M.RunsInSpace (enc a) (s a) ∧ (a ∈ A ↔ Accepts M (enc a))) ∧
     ∀ a, ∃ t, M.RunsInTime (enc a) t
+
+/-- Nondeterministic space `O(s n)`: one fixed finite-state machine decides the problem with at
+most `c₁ * s n + c₂` work-tape cells on inputs of length `n`, along every computation prefix,
+every branch terminating. -/
+def NSPACE {α : Type} (enc : α ↪ List Bool) (s : ℕ → ℕ) : Set (Set α) :=
+  {A | ∃ (k : ℕ) (State : Type) (_ : Finite State) (M : Turing.MultiTapeNTM k Bool State)
+    (c₁ c₂ : ℕ), DecidesInSpace M enc A fun a => c₁ * s (enc a).length + c₂}
+
+/-- The complements of the problems in `NSPACE enc s`, with the same encoding. -/
+def coNSPACE {α : Type} (enc : α ↪ List Bool) (s : ℕ → ℕ) : Set (Set α) :=
+  {A | Aᶜ ∈ NSPACE enc s}
 
 /-- Nondeterministic logarithmic space: one fixed finite-state machine decides the problem with
 at most `c * (floor(log₂ n) + 1)` work-tape cells on inputs of length `n`, along every computation
@@ -108,8 +122,14 @@ def encInstance : Instance ↪ List Bool := ⟨encode, encode_injective⟩
 
 /-! ## Main results -/
 
-/-- **Theorem (Immerman–Szelepcsényi):** nondeterministic logarithmic space is closed under
-complement, for every injective binary encoding of instances. -/
+/-- **Theorem (Immerman–Szelepcsényi):** nondeterministic space `s` is closed under complement
+whenever `log₂ n ≤ s n`, for every injective binary encoding of instances. No constructibility
+of `s` is assumed. -/
+theorem nspace_eq_conspace {α : Type} (enc : α ↪ List Bool) (s : ℕ → ℕ)
+    (hs : ∀ n, Nat.log2 n ≤ s n) : NSPACE enc s = coNSPACE enc s :=
+  ImmermanSzelepcsenyiBridge.nspace_eq_conspace enc s hs
+
+/-- **Corollary:** nondeterministic logarithmic space is closed under complement. -/
 theorem nl_eq_conl {α : Type} (enc : α ↪ List Bool) : NL enc = coNL enc :=
   ImmermanSzelepcsenyiBridge.nl_eq_conl enc
 
@@ -119,7 +139,7 @@ theorem stcon_compl_mem_nl : STCONᶜ ∈ NL encInstance :=
 
 /--
 info: abstract audit passed for `ComplexityAbstracts.ImmermanSzelepcsenyiAbstract`:
-15 root declarations, 71 dependencies checked
+18 root declarations, 75 dependencies checked
 -/
 #guard_msgs (whitespace := lax) in
 #check_abstract ComplexityAbstracts.ImmermanSzelepcsenyiAbstract

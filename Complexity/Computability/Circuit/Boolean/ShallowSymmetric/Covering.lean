@@ -9,8 +9,7 @@ module
 
 public import Complexity.Computability.Circuit.Boolean.ShallowSymmetric.ShiftTest
 public import Complexity.Foundations.Combinatorics.FiniteCover
-import Mathlib.Analysis.SpecialFunctions.Exponential
-import Mathlib.Analysis.Complex.ExponentialBounds
+import Complexity.Foundations.Data.Nat.Factorial
 
 /-!
 # Small covers by shifted distinctness tests
@@ -38,19 +37,6 @@ as in the paper. The resulting density `k! / k^k` still gives the required expon
 
 namespace Cslib.Circuits.Boolean.ShallowSymmetric
 
-/-- A convenient elementary form of the factorial estimate; no asymptotics. -/
-theorem pow_self_le_three_pow_mul_factorial (k : ℕ) :
-    k ^ k ≤ 3 ^ k * k.factorial := by
-  have h := Real.pow_div_factorial_le_exp (x := (k : ℝ)) (by positivity) k
-  have he : Real.exp (k : ℝ) ≤ (3 : ℝ) ^ k := by
-    calc
-      Real.exp (k : ℝ) = Real.exp 1 ^ k := by
-        rw [← Real.exp_nat_mul, mul_one]
-      _ ≤ _ := pow_le_pow_left₀ (Real.exp_pos 1).le Real.exp_one_lt_three.le k
-  have hf : (0 : ℝ) < k.factorial := by exact_mod_cast Nat.factorial_pos k
-  have hn := (div_le_iff₀ hf).mp (h.trans he)
-  exact_mod_cast hn
-
 /-- The shifted tests cover any `2^n` valid weight vectors using at most
 `3^|G| * (n+1)` tests. -/
 theorem exists_shiftTest_cover {G W : Type*} [Fintype G] [AddCommGroup G]
@@ -63,7 +49,7 @@ theorem exists_shiftTest_cover {G W : Type*} [Fintype G] [AddCommGroup G]
   intro x
   rw [← Nat.card_eq_fintype_card (α := {s : G → G // ShiftTest t (w x) s}),
     card_acceptingShifts _ (hw x), Fintype.card_fun]
-  exact pow_self_le_three_pow_mul_factorial _
+  exact Nat.pow_self_le_three_pow_mul_factorial _
 
 /-- Independent residue tests can be covered simultaneously, with an exponent
 equal to the sum of the group sizes. -/
@@ -90,6 +76,6 @@ theorem exists_simultaneous_shiftTest_cover {ι W : Type*} [Fintype ι] [Fintype
   rw [hc, Fintype.card_pi, ← Finset.prod_pow_eq_pow_sum, ← Finset.prod_mul_distrib]
   apply Finset.prod_le_prod
   intro i _
-  simpa using pow_self_le_three_pow_mul_factorial (Fintype.card (G i))
+  simpa using Nat.pow_self_le_three_pow_mul_factorial (Fintype.card (G i))
 
 end Cslib.Circuits.Boolean.ShallowSymmetric

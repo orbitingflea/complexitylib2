@@ -24,6 +24,7 @@ are enormous, so the certificate makes no claim of practical execution.
 
 ## Main results
 
+* `Cslib.RotationMap.TowerTable.polytime_contract`: slot contraction runs in polynomial time.
 * `Cslib.RotationMap.TowerTable.polytime_rotateFamily`: the generic numbered-base family.
 * `Cslib.RotationMap.polytime_arithmeticExpanderRotate`: the concrete arithmetic family.
 

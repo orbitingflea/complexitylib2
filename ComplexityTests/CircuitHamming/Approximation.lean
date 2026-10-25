@@ -126,41 +126,4 @@ example : hammingDist (fun s : BitString 2 => s 0 && s 1)
   Nat.le_zero.1 <| (exactScheme.hammingDist_le_sum_errorCost id andCircuit fun _ => rfl).trans_eq
     (by simp [exactScheme, andCircuit])
 
-/-! ### Axioms -/
-
-/--
-info: 'Cslib.Circuits.Approximation.Scheme.hammingDist_le_sum_errorCost' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Scheme.hammingDist_le_sum_errorCost
-
-/--
-info: 'Cslib.Circuits.Approximation.Scheme.le_mul_complexity' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Scheme.le_mul_complexity
-
-/--
-info: 'Cslib.Circuits.Approximation.Scheme.le_mul_complexity_of_le_hammingDist' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Scheme.le_mul_complexity_of_le_hammingDist
-
-/--
-info: 'Cslib.Circuits.Approximation.Scheme.sum_failures_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Scheme.sum_failures_le
-
-/--
-info: 'Cslib.Circuits.Approximation.Scheme.le_mul_complexity_of_le_sum_failures' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Scheme.le_mul_complexity_of_le_sum_failures
-
 end ComplexityTests.CircuitHamming.Approximation

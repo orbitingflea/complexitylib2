@@ -15,7 +15,7 @@ field: its bits and nonzero scalar, the constant line code, a placement of the p
 scheduler for one request, a scheduler for two requests that may share a target, and a size
 bound for all functions of the suffix. The bound then applies, including to inputs whose two
 requests share their prefix. The zero-request case and the closed-form overhead estimate are
-checked, and axiom checks record the headline dependencies.
+checked.
 -/
 
 namespace ComplexityTests.MassProduction.Pipeline
@@ -165,29 +165,5 @@ example (f : BooleanFunction (1 + 1))
 example : pipelineOverhead 2 1 1 2 1 1 2 ≤
     1444 * (2 ^ 1 + 2 * (1 + 1) + 2 * (1 + 1) ^ 2) * (1 + 1 + 2 * 1 + Nat.log 2 (2 + 2) + 2) ^ 4 :=
   pipelineOverhead_le rfl (by decide)
-
-/-! ### Axioms -/
-
-/--
-info: 'Cslib.Circuits.Boolean.MassProduction.complexity_directProduct_le_of_isScheduler' depends
-on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms complexity_directProduct_le_of_isScheduler
-
-/--
-info: 'Cslib.Circuits.Boolean.MassProduction.pipelineOverhead_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms pipelineOverhead_le
-
-/--
-info:
-'Cslib.Circuits.Boolean.MassProduction.complexity_directProduct_le_explicit_of_isScheduler'
-depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms complexity_directProduct_le_explicit_of_isScheduler
 
 end ComplexityTests.MassProduction.Pipeline

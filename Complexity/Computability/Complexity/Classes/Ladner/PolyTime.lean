@@ -15,6 +15,7 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Bi
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Iteration
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Log
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Option
+import Complexity.Foundations.Data.List.Lookup
 
 /-!
 # Ladner's language in polynomial time and in NP
@@ -345,35 +346,9 @@ def hstepB (T : List ℕ) : ℕ :=
   ((List.range (Nat.log 2 (Nat.log 2 T.length))).find? fun i =>
     (List.range T.length).all fun j => agreesB T i j).getD (Nat.log 2 (Nat.log 2 T.length))
 
-/-- The least index below `m` passing a test, or `m`, as a search over `List.range m`. -/
-theorem find?_range_getD_eq_sInf (m : ℕ) (p : ℕ → Bool) :
-    ((List.range m).find? p).getD m = sInf {i | i = m ∨ p i = true} := by
-  set v := ((List.range m).find? p).getD m with hv
-  have hmem : v ∈ {i | i = m ∨ p i = true} ∧ ∀ i < v, i ∉ {i | i = m ∨ p i = true} := by
-    cases hf : (List.range m).find? p with
-    | none =>
-      rw [hv, hf, Option.getD_none]
-      rw [List.find?_eq_none] at hf
-      refine ⟨Or.inl rfl, fun i hi hmem => ?_⟩
-      rcases hmem with rfl | h
-      · exact lt_irrefl _ hi
-      · exact hf i (List.mem_range.mpr hi) h
-    | some i₀ =>
-      rw [hv, hf, Option.getD_some]
-      obtain ⟨hp, k, hk, hki, hmin⟩ := List.find?_eq_some_iff_getElem.mp hf
-      rw [List.getElem_range] at hki
-      subst hki
-      rw [List.length_range] at hk
-      refine ⟨Or.inr hp, fun i hi hmem => ?_⟩
-      rcases hmem with rfl | h
-      · omega
-      · have := hmin i hi
-        simp_all
-  exact le_antisymm (not_lt.mp fun h => hmem.2 _ h (Nat.sInf_mem ⟨v, hmem.1⟩)) (Nat.sInf_le hmem.1)
-
 /-- **The search computes the step.** -/
 theorem hstepB_eq (T : List ℕ) : hstepB T = Hstep T := by
-  rw [hstepB, find?_range_getD_eq_sInf, Hstep]
+  rw [hstepB, List.find?_range_getD_eq_sInf, Hstep]
   congr 1
   ext i
   simp only [Set.mem_ofPred_eq, List.all_eq_true, List.mem_range]

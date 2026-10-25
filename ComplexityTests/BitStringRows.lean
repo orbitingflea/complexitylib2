@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Samuel Schlesinger
 -/
 
+import Complexity.Foundations.Analysis.BernoulliInequality
 import Complexity.Foundations.Data.BitString.List.Operations
+import Complexity.Probability.BitString.List
+import Complexity.Probability.PMF.Bind
+import Complexity.Probability.PMF.Event
 
 /-! # Clients of the padded-row API
 
@@ -41,5 +45,23 @@ example (suffix : List Bool) : BitString.listRow 0 1 ([[], []].flatten ++ suffix
 example (word : List Bool) : BitString.listRow 0 0 word = [] := by
   rw [BitString.listRow_zero]
   rfl
+
+example : BitString.replaceRow 2 3 1 [true, false] [false, false, false, false, true, true] =
+    [false, false, true, false, true, true] := by
+  decide
+
+example (Z : List Bool) :
+    BitString.listRow 2 1 (BitString.replaceRow 2 3 1 [true, false] Z) = [true, false] := by
+  simpa using BitString.listRow_replaceRow (j := 1) (x := [true, false]) rfl Z (i := 1) (by decide)
+
+example (width count : ℕ) (j : Fin count) :
+    (BitString.uniformList width).bind (fun x =>
+      (BitString.uniformList (count * width)).map (BitString.replaceRow width count j.val x)) =
+      BitString.uniformList (count * width) :=
+  BitString.uniformList_replaceRow width count j
+
+example {p : ℝ} (hp₀ : 0 ≤ p) (hp₁ : p ≤ 1) (n : ℕ) :
+    (1 - p) ^ n ≤ 1 / (1 + (n : ℝ) * p) :=
+  Real.one_sub_pow_le_one_div_one_add_mul hp₀ hp₁ n
 
 end ComplexityTests.BitStringRows

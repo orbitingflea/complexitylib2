@@ -103,16 +103,4 @@ example : language ∈ LWPP encBits := by
     have ht : w.headD false = false := Bool.eq_false_iff.mpr hw
     simp only [gap, ht, Bool.false_eq_true, ite_false]
 
-/--
-info: 'Cslib.Complexity.mem_WPP_iff_exists_disjoint_targets' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Complexity.mem_WPP_iff_exists_disjoint_targets
-
-/--
-info: 'Cslib.Complexity.mem_LWPP_iff_exists_disjoint_targets' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Complexity.mem_LWPP_iff_exists_disjoint_targets
-
 end WPPTwoSidedTests

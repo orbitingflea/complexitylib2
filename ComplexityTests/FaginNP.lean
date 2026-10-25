@@ -15,7 +15,7 @@ A concrete sentence, `∃ U, ∀ x, U x` over graphs with a unary relation varia
 computable verifier once a layout is fixed: the tests run it on the edge with an accepting
 certificate of exactly the prescribed length, a rejecting certificate, and a malformed input.
 Colorability, through `Cslib.Logic.ESO.Definable.colorable`, gives the headline membership in
-`NP` a nonvacuous client, and the axiom checks record the dependencies of the main results.
+`NP` a nonvacuous client.
 -/
 
 namespace ComplexityTests.FaginNP
@@ -95,42 +95,5 @@ example {V : Type} (G : SimpleGraph V) (hG : G.Colorable 3) {m : ℕ} (e : V ≃
   rw [Vocabulary.mem_queryLanguage_encode (Definable.colorable_simpleGraph 3).isoClosed]
   obtain ⟨C⟩ := hG
   exact ⟨inferInstance, C, fun x y h => C.valid h⟩
-
-/-! ### Axioms -/
-
-/--
-info: 'Cslib.Logic.ESO.Definable.queryLanguage_mem_NP' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.ESO.Definable.queryLanguage_mem_NP
-
-/--
-info: 'Cslib.Logic.ESO.Sentence.queryLanguage_mem_NP' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.ESO.Sentence.queryLanguage_mem_NP
-
-/--
-info: 'Cslib.Logic.ESO.Sentence.Layout.computableInPolyTime_verifier' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.ESO.Sentence.Layout.computableInPolyTime_verifier
-
-/--
-info: 'Cslib.Logic.Vocabulary.mem_queryLanguage_encode' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.Vocabulary.mem_queryLanguage_encode
-
-/--
-info: 'Cslib.Logic.Vocabulary.wellFormed_iff' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.Vocabulary.wellFormed_iff
 
 end ComplexityTests.FaginNP

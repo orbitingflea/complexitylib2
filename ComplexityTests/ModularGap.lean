@@ -38,14 +38,4 @@ example : (Set.univ : Set (List Bool)) ∈ coModP 1 encBits :=
 example : ∃ f ∈ SharpP encBits, ∀ w : List Bool, (f w : ℤ) % 6 = (-1 : ℤ) % 6 :=
   GapP.exists_SharpP_emod (GapP.neg_mem GapP.one_mem) (by decide)
 
-/-- info: 'Cslib.Complexity.GapP.exists_SharpP_emod' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms GapP.exists_SharpP_emod
-/-- info: 'Cslib.Complexity.SPP_subset_ModP' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms SPP_subset_ModP
-/-- info: 'Cslib.Complexity.SPP_subset_coModP' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms SPP_subset_coModP
-
 end ComplexityTests.ModularGap

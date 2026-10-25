@@ -12,7 +12,7 @@ import Complexity.Computability.Circuit.Boolean.MassProduction.Uhlig
 These clients exercise the recovery code at equal and reversed requests, the vanishing boundary
 position, a concrete instance of the layer recursion, families of different circuits on disjoint
 blocks, and copy depths on both sides of the `d(n) log₂ n = o(n)` boundary. The theorem then
-applies to a superpolynomial number of copies. Axiom checks record the headline dependencies.
+applies to a superpolynomial number of copies.
 -/
 
 namespace ComplexityTests.MassProduction.Uhlig
@@ -132,49 +132,5 @@ example (P : ℕ) : ∀ᶠ n in atTop, ∀ (f : BooleanFunction n) (k : ℕ),
 
 -- Zero copies are included and cost nothing.
 example (f : BooleanFunction 5) : massComplexity f 0 = 0 := massComplexity_zero
-
-/-! ### Axioms -/
-
-/--
-info: 'Cslib.Circuits.Boolean.MassProduction.eventually_mul_massComplexity_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms eventually_mul_massComplexity_le
-
-/--
-info: 'Cslib.Circuits.Boolean.MassProduction.eventually_mul_complexity_directProduct_le'
-depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms eventually_mul_complexity_directProduct_le
-
-/--
-info: 'Cslib.Circuits.Boolean.MassProduction.mul_complexity_directProduct_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms mul_complexity_directProduct_le
-
-/--
-info: 'Cslib.Circuits.Boolean.MassProduction.complexity_directProduct_two_pow_le' depends on
-axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms complexity_directProduct_two_pow_le
-
-/--
-info: 'Cslib.Circuits.Boolean.MassProduction.Uhlig.complexity_directProduct_two_mul_le' depends
-on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms complexity_directProduct_two_mul_le
-
-/--
-info: 'Cslib.Circuits.Circuit.eval_parallelFamily_apply' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Circuit.eval_parallelFamily_apply
 
 end ComplexityTests.MassProduction.Uhlig

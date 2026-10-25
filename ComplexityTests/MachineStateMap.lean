@@ -91,11 +91,4 @@ example (fuel : ℕ) :
   rw [map_run, MultiTapeMachine.runConfigFrom_halted source choose query fuel halted rfl]
   rfl
 
-/--
-info: 'Turing.MultiTapeMachine.runConfigFrom_mapState' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeMachine.runConfigFrom_mapState
-
 end ComplexityTests.MachineStateMap

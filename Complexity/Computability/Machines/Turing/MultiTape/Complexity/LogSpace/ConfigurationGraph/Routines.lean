@@ -17,12 +17,17 @@ algorithms below use finitely many linear-workspace arithmetic routines. These c
 charge no copy of the original input word: the edge routine receives only its length, two IDs,
 and the single supplied symbol. The time bound is unrestricted.
 
+The routines take the radix as a computed argument, so they serve every radix, such as one stored
+by the caller.
+
 ## Main results
 
-* `Turing.MultiTapeNTM.ConfigurationGraph.queryIndex_inSpace`: compute the only input query.
-* `Turing.MultiTapeNTM.ConfigurationGraph.edgeWithSymbol_inSpace`: evaluate an edge locally.
-* `Turing.MultiTapeNTM.ConfigurationGraph.bad_inSpace`: recognize an accepting halted vertex.
-* `Turing.MultiTapeNTM.ConfigurationGraph.startID_inSpace`: initialize the compact graph.
+* `Turing.MultiTapeNTM.ConfigurationGraph.queryIndex_budget`: compute the only input query.
+* `Turing.MultiTapeNTM.ConfigurationGraph.edgeWithSymbol_budget`: evaluate an edge locally.
+* `Turing.MultiTapeNTM.ConfigurationGraph.bad_budget`: recognize an accepting halted vertex.
+* `Turing.MultiTapeNTM.ConfigurationGraph.overflow_budget`: recognize a step leaving the radix.
+* `Turing.MultiTapeNTM.ConfigurationGraph.vertexBound_budget`,
+  `Turing.MultiTapeNTM.ConfigurationGraph.startID_budget`: the size and the start of the graph.
 -/
 
 @[expose] public section
@@ -59,30 +64,29 @@ private theorem any_inSpace {ι : Type} (l : List ι) {f : ι → α → Bool}
   | nil => exact budget_const false hin
   | cons i l ih => exact or_inSpace (hf i) ih
 
-variable {k : ℕ} {State : Type} [Fintype State] {D : ℕ}
-  {n u v : α → ℕ} {symbol : α → Option Bool}
-
-/-- The fixed radix power is computable in space linear in the binary length parameter. -/
-theorem radix_budget (hn : ComputableTidilyInSpace n enc encNat S)
-    (hin : (fun a => (enc a).length) ≼ S) :
-    ComputableTidilyInSpace (fun a => radix D (n a)) enc encNat S :=
-  budget_natPow (budget_natAdd hn (budget_const 2 hin)) hin D
+variable {k : ℕ} {State : Type} [Fintype State]
+  {B n u v : α → ℕ} {symbol : α → Option Bool}
 
 /-- Reading any fixed register preserves a common space budget. -/
-theorem readRegisters_budget (hn : ComputableTidilyInSpace n enc encNat S)
-    (hu : ComputableTidilyInSpace u enc encNat S)
-    (hin : (fun a => (enc a).length) ≼ S) (i : Register k) :
-    ComputableTidilyInSpace (fun a => readRegisters D (n a) (u a) i) enc encNat S :=
-  budget_comp_linear (component_inSpace i) (budget_prod (radix_budget hn hin) hu)
+private theorem readRegisters_budget (hB : ComputableTidilyInSpace B enc encNat S)
+    (hu : ComputableTidilyInSpace u enc encNat S) (i : Register k) :
+    ComputableTidilyInSpace (fun a => readRegisters (B a) (u a) i) enc encNat S :=
+  budget_comp_linear (component_inSpace i) (budget_prod hB hu)
 
-private theorem valid_budget (hn : ComputableTidilyInSpace n enc encNat S)
+/-- The ambient graph size is computable from the radix. -/
+theorem vertexBound_budget (hB : ComputableTidilyInSpace B enc encNat S)
+    (hin : (fun a => (enc a).length) ≼ S) :
+    ComputableTidilyInSpace (fun a => vertexBound (k := k) (B a)) enc encNat S :=
+  budget_natPow hB hin (Fintype.card (Register k))
+
+private theorem valid_budget (hB : ComputableTidilyInSpace B enc encNat S)
+    (hn : ComputableTidilyInSpace n enc encNat S)
     (hu : ComputableTidilyInSpace u enc encNat S)
     (hin : (fun a => (enc a).length) ≼ S) :
-    ComputableTidilyInSpace (fun a => valid (k := k) (State := State) D (n a) (u a))
+    ComputableTidilyInSpace (fun a => valid (k := k) (State := State) (B a) (n a) (u a))
       enc encBool S := by
-  have hr := readRegisters_budget (D := D) (k := k) hn hu hin
-  have hB := radix_budget (D := D) hn hin
-  have hb := budget_natPow hB hin (Fintype.card (Register k))
+  have hr := readRegisters_budget (k := k) hB hu
+  have hb := vertexBound_budget (k := k) hB hin
   have hi := budget_natLt (hr .inputPos) (budget_natAdd hn (budget_const 2 hin))
   have hc := budget_natLt (hr .control) (budget_const (Fintype.card (Option State)) hin)
   have ho := budget_natLt (hr .output) (budget_const 3 hin)
@@ -92,7 +96,7 @@ private theorem valid_budget (hn : ComputableTidilyInSpace n enc encNat S)
     (and_inSpace (budget_natLt hu hb) hi) hc) ho) hh).of_enc_eq
   intro a
   congr 1
-  dsimp only [valid, vertexBound]
+  dsimp only [valid]
   rw [List.map_ofFn]
   rfl
 
@@ -166,7 +170,7 @@ private theorem matchesEntry_budget {r : α → Register k → ℕ}
   rw [List.map_ofFn]
   rfl
 
-private theorem fitsB_budget {B : α → ℕ} {r : α → Register k → ℕ}
+private theorem fitsB_budget {r : α → Register k → ℕ}
     (hB : ComputableTidilyInSpace B enc encNat S)
     (hr : ∀ i, ComputableTidilyInSpace (fun a => r a i) enc encNat S)
     (hin : (fun a => (enc a).length) ≼ S) :
@@ -176,15 +180,15 @@ private theorem fitsB_budget {B : α → ℕ} {r : α → Register k → ℕ}
 
 /-- Local edge evaluation preserves any budget covering the short arguments. -/
 theorem edgeWithSymbol_budget (ntm : MultiTapeNTM k Bool State)
+    (hB : ComputableTidilyInSpace B enc encNat S)
     (hn : ComputableTidilyInSpace n enc encNat S)
     (hu : ComputableTidilyInSpace u enc encNat S)
     (hv : ComputableTidilyInSpace v enc encNat S)
     (hs : ComputableTidilyInSpace symbol enc (encOption encBool) S)
     (hin : (fun a => (enc a).length) ≼ S) :
-    ComputableTidilyInSpace (fun a => edgeWithSymbol ntm D (n a) (u a) (v a) (symbol a))
+    ComputableTidilyInSpace (fun a => edgeWithSymbol ntm (B a) (n a) (u a) (v a) (symbol a))
       enc encBool S := by
-  have hr := readRegisters_budget (D := D) (k := k) hn hu hin
-  have hB := radix_budget (D := D) hn hin
+  have hr := readRegisters_budget (k := k) hB hu
   have hh := and_inSpace
     (budget_natEq (hr .control) (budget_const (stateCode (none : Option State)) hin))
     (budget_natEq hv hu)
@@ -192,63 +196,48 @@ theorem edgeWithSymbol_budget (ntm : MultiTapeNTM k Bool State)
     let hnxt := nextRegisters_budget hn hr hin t.2.2.2
     and_inSpace (and_inSpace (matchesEntry_budget hn hr hs hin t) (fitsB_budget hB hnxt hin))
       (budget_natEq hv (pack_inSpace hB hnxt hin))
-  exact and_inSpace (and_inSpace (valid_budget hn hu hin) (valid_budget hn hv hin))
+  exact and_inSpace (and_inSpace (valid_budget hB hn hu hin) (valid_budget hB hn hv hin))
     (or_inSpace hh (any_inSpace (instructions ntm) hentry hin))
 
-/-- Encoded length and one ID. -/
-abbrev encVertex : ℕ × ℕ ↪ List Bool := encPair encNat encNat
-
-/-- Encoded length, source, target, and the one supplied input symbol. -/
-abbrev encEdge : ℕ × ℕ × ℕ × Option Bool ↪ List Bool :=
-  encPair encNat (encPair encNat (encPair encNat (encOption encBool)))
+/-- The overflow test preserves any budget covering the short arguments. -/
+theorem overflow_budget (ntm : MultiTapeNTM k Bool State)
+    (hB : ComputableTidilyInSpace B enc encNat S)
+    (hn : ComputableTidilyInSpace n enc encNat S)
+    (hu : ComputableTidilyInSpace u enc encNat S)
+    (hs : ComputableTidilyInSpace symbol enc (encOption encBool) S)
+    (hin : (fun a => (enc a).length) ≼ S) :
+    ComputableTidilyInSpace (fun a => overflow ntm (B a) (n a) (u a) (symbol a))
+      enc encBool S := by
+  have hr := readRegisters_budget (k := k) hB hu
+  have hentry (t : Instruction k State) :=
+    and_inSpace (matchesEntry_budget hn hr hs hin t)
+      (budget_finite (encC := encBool) not
+        (fitsB_budget hB (nextRegisters_budget hn hr hin t.2.2.2) hin))
+  exact and_inSpace (valid_budget hB hn hu hin) (any_inSpace (instructions ntm) hentry hin)
 
 /-- Compute the only input query in native deterministic linear workspace. -/
-theorem queryIndex_inSpace (D : ℕ) :
-    ComputableTidilyInSpace (fun a : ℕ × ℕ => queryIndex (k := k) D a.1 a.2)
-      encVertex encNat fun a => (encVertex a).length :=
-  budget_natPred (readRegisters_budget (fst _ _) (snd _ _) (.refl _) .inputPos)
-
-/-- Evaluate an edge using native deterministic linear workspace in binary short arguments. -/
-theorem edgeWithSymbol_inSpace (ntm : MultiTapeNTM k Bool State) (D : ℕ) :
-    ComputableTidilyInSpace
-      (fun a : ℕ × ℕ × ℕ × Option Bool => edgeWithSymbol ntm D a.1 a.2.1 a.2.2.1 a.2.2.2)
-      encEdge encBool fun a => (encEdge a).length := by
-  have hn : ComputableTidilyInSpace (fun a : ℕ × ℕ × ℕ × Option Bool => a.1)
-      encEdge encNat fun a => (encEdge a).length := fst _ _
-  have hrest : ComputableTidilyInSpace (fun a : ℕ × ℕ × ℕ × Option Bool => a.2)
-      encEdge (encPair encNat (encPair encNat (encOption encBool)))
-      (fun a => (encEdge a).length) := snd _ _
-  have hu := budget_comp_linear (fst _ _) hrest
-  have hvs := budget_comp_linear (snd _ _) hrest
-  exact edgeWithSymbol_budget ntm hn hu (budget_comp_linear (fst _ _) hvs)
-    (budget_comp_linear (snd _ _) hvs) (.refl _)
+theorem queryIndex_budget (hB : ComputableTidilyInSpace B enc encNat S)
+    (hu : ComputableTidilyInSpace u enc encNat S) :
+    ComputableTidilyInSpace (fun a => queryIndex (k := k) (B a) (u a)) enc encNat S :=
+  budget_natPred (readRegisters_budget hB hu .inputPos)
 
 /-- Recognize the accepting halted vertices in native deterministic linear workspace. -/
-theorem bad_inSpace (D : ℕ) :
-    ComputableTidilyInSpace (fun a : ℕ × ℕ => bad (State := State) (k := k) D a.1 a.2)
-      encVertex encBool fun a => (encVertex a).length := by
-  have hn : ComputableTidilyInSpace (fun a : ℕ × ℕ => a.1) encVertex encNat
-      (fun a => (encVertex a).length) := fst _ _
-  have hu : ComputableTidilyInSpace (fun a : ℕ × ℕ => a.2) encVertex encNat
-      (fun a => (encVertex a).length) := snd _ _
-  have hr := readRegisters_budget (D := D) (k := k) hn hu (.refl _)
-  exact and_inSpace (and_inSpace (valid_budget hn hu (.refl _))
-    (budget_natEq (hr .control) (budget_const (stateCode (none : Option State)) (.refl _))))
-    (budget_natEq (hr .output) (budget_const 1 (.refl _)))
+theorem bad_budget (hB : ComputableTidilyInSpace B enc encNat S)
+    (hn : ComputableTidilyInSpace n enc encNat S)
+    (hu : ComputableTidilyInSpace u enc encNat S)
+    (hin : (fun a => (enc a).length) ≼ S) :
+    ComputableTidilyInSpace (fun a => bad (State := State) (k := k) (B a) (n a) (u a))
+      enc encBool S := by
+  have hr := readRegisters_budget (k := k) hB hu
+  exact and_inSpace (and_inSpace (valid_budget hB hn hu hin)
+    (budget_natEq (hr .control) (budget_const (stateCode (none : Option State)) hin)))
+    (budget_natEq (hr .output) (budget_const 1 hin))
 
-/-- The polynomial ambient graph size is computable from the binary input length. -/
-theorem vertexBound_inSpace (D : ℕ) :
-    ComputableTidilyInSpace (vertexBound (k := k) D) encNat encNat
-      (fun n => (encNat n).length) := by
-  have hn : ComputableTidilyInSpace (fun n : ℕ => n) encNat encNat
-      (fun n => (encNat n).length) := of_inO (.of_linear (.of_eq fun _ => rfl))
-  exact budget_natPow (radix_budget hn (.refl _)) (.refl _) (Fintype.card (Register k))
-
-/-- Compute the input-independent start ID from the binary input length. -/
-theorem startID_inSpace (ntm : MultiTapeNTM k Bool State) (D : ℕ) :
-    ComputableTidilyInSpace (startID ntm D) encNat encNat fun n => (encNat n).length := by
-  have hn : ComputableTidilyInSpace (fun n : ℕ => n) encNat encNat
-      (fun n => (encNat n).length) := of_inO (.of_linear (.of_eq fun _ => rfl))
-  exact pack_inSpace (radix_budget hn (.refl _)) (fun _ => budget_const _ (.refl _)) (.refl _)
+/-- Compute the input-independent start ID from the radix. -/
+theorem startID_budget (ntm : MultiTapeNTM k Bool State)
+    (hB : ComputableTidilyInSpace B enc encNat S)
+    (hin : (fun a => (enc a).length) ≼ S) :
+    ComputableTidilyInSpace (fun a => startID ntm (B a)) enc encNat S :=
+  pack_inSpace hB (fun _ => budget_const _ hin) hin
 
 end Turing.MultiTapeNTM.ConfigurationGraph

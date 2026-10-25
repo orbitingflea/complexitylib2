@@ -114,37 +114,4 @@ theorem arbitraryDistance_polynomialTime :
   (Cslib.Circuits.Boolean.CarryLookahead.computableInPolyTime_stepCode
     (.of_tidy (fst _ _)) (.of_tidy (snd _ _))).tidy
 
-/-- info: 'Cslib.Circuits.Boolean.val_eval_carryLookahead' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Cslib.Circuits.Boolean.val_eval_carryLookahead
-/-- info: 'Cslib.Circuits.Boolean.depth_carryLookahead_le_log' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Cslib.Circuits.Boolean.depth_carryLookahead_le_log
-/-- info: 'Cslib.Circuits.Boolean.size_carryLookahead_le' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Cslib.Circuits.Boolean.size_carryLookahead_le
-/-- info: 'Cslib.Circuits.Boolean.pairVal_eval_carryLookaheadFinish_csa4to2_mod' depends on axioms: [propext,
- Classical.choice,
- Quot.sound] -/
-#guard_msgs in
-#print axioms Cslib.Circuits.Boolean.pairVal_eval_carryLookaheadFinish_csa4to2_mod
-/-- info: 'Cslib.Circuits.Boolean.computableInPolyTime_carryLookahead' depends on axioms: [propext,
- Classical.choice,
- Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Boolean.computableInPolyTime_carryLookahead
-/-- info: 'Cslib.Circuits.Boolean.computableInPolyTime_carryLookaheadAdd' depends on axioms: [propext,
- Classical.choice,
- Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Boolean.computableInPolyTime_carryLookaheadAdd
-/-- info: 'Cslib.Circuits.Boolean.computableInPolyTime_carryLookaheadFinish' depends on axioms: [propext,
- Classical.choice,
- Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Boolean.computableInPolyTime_carryLookaheadFinish
-
 end ComplexityTests.CarryLookahead

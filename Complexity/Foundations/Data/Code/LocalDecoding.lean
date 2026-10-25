@@ -74,34 +74,18 @@ open Finset LineCode
 variable {F : Type*} [Field F] [Fintype F] {m d : ℕ}
 
 omit [Fintype F] in
-/-- The restriction of a polynomial `P` in `m` variables to the line `c ↦ x + c • v`: a polynomial
-in `c` of degree at most the total degree of `P`. -/
-private theorem exists_natDegree_le_and_eval_eq (P : MvPolynomial (Fin m) F) (x v : Fin m → F) :
-    ∃ g : Polynomial F, g.natDegree ≤ P.totalDegree ∧
-      ∀ c : F, g.eval c = MvPolynomial.eval (x + c • v) P := by
-  refine ⟨MvPolynomial.eval₂ Polynomial.C
-    (fun i => Polynomial.C (v i) * Polynomial.X + Polynomial.C (x i)) P,
-    FiniteField.natDegree_eval₂_line_le P v x, fun c => ?_⟩
-  have hC : (Polynomial.evalRingHom c).comp Polynomial.C = RingHom.id F :=
-    RingHom.ext fun a => Polynomial.eval_C
-  rw [← Polynomial.coe_evalRingHom, MvPolynomial.eval₂_comp_left, hC]
-  change MvPolynomial.eval₂ _ _ P = MvPolynomial.eval₂ (RingHom.id F) _ P
-  congr 1
-  funext i
-  simp only [Function.comp_apply, Polynomial.coe_evalRingHom, Polynomial.eval_add,
-    Polynomial.eval_C, Polynomial.eval_mul, Polynomial.eval_X, Pi.add_apply, Pi.smul_apply,
-    smul_eq_mul]
-  rw [add_comm, mul_comm]
-
-omit [Fintype F] in
 /-- **Restriction to a line.** The restriction `t ↦ f (x + t • v)` of a codeword `f` of the
 Reed–Muller code of degree `d` is a polynomial of degree at most `d`. -/
 theorem exists_natDegree_le_eval_eq_of_mem_reedMuller {f : (Fin m → F) → F}
     (hf : f ∈ reedMuller F m d) (x v : Fin m → F) :
     ∃ g : Polynomial F, g.natDegree ≤ d ∧ ∀ t, g.eval t = f (x + t • v) := by
   obtain ⟨P, hP, rfl⟩ := mem_reedMuller.1 hf
-  obtain ⟨g, hg, hgeval⟩ := exists_natDegree_le_and_eval_eq P x v
-  exact ⟨g, hg.trans hP, hgeval⟩
+  refine ⟨P.eval₂ Polynomial.C fun i => Polynomial.C (v i) * Polynomial.X + Polynomial.C (x i),
+    (FiniteField.natDegree_eval₂_line_le P v x).trans hP, fun t => ?_⟩
+  rw [FiniteField.eval_eval₂_line]
+  congr 2
+  funext i
+  exact add_comm _ _
 
 /-- **Line sums of Reed–Muller codewords.** For `d + 1 < q`, the values of a codeword of the
 Reed–Muller code of degree `d` over a field with `q` elements sum to zero on every affine line

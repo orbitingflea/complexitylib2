@@ -14,6 +14,7 @@ public import Mathlib.Data.List.GetD
 public import Mathlib.Data.Nat.Size
 public import Mathlib.Data.List.Range
 import Complexity.Foundations.Data.List.Append
+import Complexity.Foundations.Data.Nat.Div
 
 /-!
 # Directed s–t connectivity
@@ -110,11 +111,10 @@ theorem mul_add_lt (a b : Fin I.n) : (a : ℕ) * I.n + b < I.n * I.n := by
 theorem getD_matrix (a b : Fin I.n) : I.matrix.getD (a * I.n + b) false = I.adj a b := by
   unfold matrix
   rw [List.getD_eq_getElem (hn := by simpa using I.mul_add_lt a b), List.getElem_ofFn]
-  have hpos : 0 < I.n := Fin.pos a
   congr 1
   · ext
     simp only
-    rw [Nat.add_comm, Nat.add_mul_div_right _ _ hpos, Nat.div_eq_of_lt b.isLt, Nat.zero_add]
+    rw [Nat.mul_add_div_fin]
   · ext
     simp only
     rw [Nat.add_comm, Nat.add_mul_mod_self_right, Nat.mod_eq_of_lt b.isLt]
@@ -130,11 +130,10 @@ private theorem ofFn_mul_eq_flatMap {N : ℕ} (g : ℕ → ℕ → Bool) : ∀ m
     congr 1
     refine List.ext_getElem (by simp) fun i h₁ h₂ => ?_
     have hi : i < N := by simpa using h₂
-    have hN : 0 < N := by omega
     simp only [List.getElem_ofFn, Fin.val_cast, Fin.val_natAdd, List.getElem_map,
       List.getElem_range]
-    rw [Nat.add_comm, Nat.add_mul_div_right _ _ hN, Nat.div_eq_of_lt hi, Nat.zero_add,
-      Nat.add_mul_mod_self_right, Nat.mod_eq_of_lt hi]
+    rw [Nat.mul_add_div_of_lt m hi, Nat.add_comm, Nat.add_mul_mod_self_right,
+      Nat.mod_eq_of_lt hi]
 
 /-- **The matrix row by row**: the rows `0, …, n - 1`, each listing its entries in the columns
 `0, …, n - 1`, for any function `g` on natural numbers giving the entries. -/

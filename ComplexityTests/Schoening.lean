@@ -6,8 +6,8 @@ Authors: Samuel Schlesinger
 
 import Complexity.Computability.Complexity.FineGrained.Schoening
 
-/-! Schöning's random walk: a concrete satisfiable instance, the biased walk and the binomial bound,
-and axiom guards. -/
+/-! Schöning's random walk: a concrete satisfiable instance, the biased walk and the binomial
+bound. -/
 
 namespace ComplexityTests.Schoening
 
@@ -48,26 +48,5 @@ example : (3 / 4 : ℝ) * (2 / 3) ^ 4 / 13 ≤ succeedProb ψ (trial ψ) := by
     ⟨fun _ => true, by decide⟩ (by decide)
   norm_num at h ⊢
   linarith
-
-/--
-info: 'Cslib.Complexity.Schoening.hit_le_succeedProb' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms hit_le_succeedProb
-
-/--
-info: 'Cslib.Complexity.Schoening.trial_success_of_length_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms trial_success_of_length_le
-
-/--
-info: 'Cslib.Complexity.Schoening.trial_success' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms trial_success
 
 end ComplexityTests.Schoening

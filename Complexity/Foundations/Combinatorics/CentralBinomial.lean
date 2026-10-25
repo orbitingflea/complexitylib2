@@ -30,6 +30,7 @@ binomial coefficients), are at most `6 / 10` of all sets when `100 (t + 1)² ≤
 ## Main results
 
 * `Cslib.centralBinom_sq_mul_le`: `C(2m, m)² (2m + 1) ≤ 16 ^ m`.
+* `Cslib.two_pow_succ_le_centralBinom`: `2 ^ (B + 1) ≤ B.centralBinom` for `B ≥ 3`.
 * `Cslib.choose_half_sq_mul_le`: `C(n, ⌊n/2⌋)² (n + 1) ≤ 4 ^ n`.
 * `Cslib.ten_mul_card_filter_card_le_le`: few sets are much larger than half.
 
@@ -67,6 +68,21 @@ theorem centralBinom_sq_mul_le (m : ℕ) :
           omega
         _ = (m + 1) ^ 2 * 16 ^ (m + 1) := by ring
     exact Nat.le_of_mul_le_mul_left key (by positivity)
+
+/-- `2 ^ (B + 1) ≤ B.centralBinom` for `B ≥ 3`. -/
+theorem two_pow_succ_le_centralBinom {B : ℕ} (hB : 3 ≤ B) : 2 ^ (B + 1) ≤ B.centralBinom := by
+  induction B, hB using Nat.le_induction with
+  | base => decide
+  | succ B hB ih =>
+    have hrec := Nat.succ_mul_centralBinom_succ B
+    have : (B + 1) * (2 * 2 ^ (B + 1)) ≤ (B + 1) * (B + 1).centralBinom := by
+      rw [hrec]
+      calc
+        (B + 1) * (2 * 2 ^ (B + 1)) = ((B + 1) * 2) * 2 ^ (B + 1) := by ring
+        _ ≤ (2 * (2 * B + 1)) * 2 ^ (B + 1) := Nat.mul_le_mul_right _ (by omega)
+        _ ≤ 2 * (2 * B + 1) * B.centralBinom := Nat.mul_le_mul_left _ ih
+    rw [pow_succ, mul_comm (2 ^ (B + 1))]
+    exact Nat.le_of_mul_le_mul_left this (Nat.succ_pos B)
 
 /-- The middle binomial coefficient satisfies `C(n, ⌊n/2⌋)² (n + 1) ≤ 4^n`. -/
 theorem choose_half_sq_mul_le (n : ℕ) :

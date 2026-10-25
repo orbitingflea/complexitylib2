@@ -24,6 +24,7 @@ and stuck configurations; there is no clock rescaling or simulation overhead.
 * `Turing.MultiTapeMachine.Config.emptyOracleEquiv`: remove empty communication state.
 * `Turing.MultiTapeTM.toMachine`, `Turing.MultiTapeNTM.toMachine`: embed upstream machines.
 * `Turing.MultiTapeMachine.toTM`, `Turing.MultiTapeMachine.toNTM`: recover upstream machines.
+* `Turing.MultiTapeMachine.tmEquiv`: equivalence with upstream's deterministic machine type.
 
 ## Main results
 

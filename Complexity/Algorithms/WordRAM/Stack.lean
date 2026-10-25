@@ -39,6 +39,7 @@ execution of the client's pure controller.
 
 * `execute`: actual per-operation execution, representation, and frame guarantee.
 * `instruction_bound`: at most twelve instructions per admissible operation.
+* `frame`: every operation preserves any disjoint heap representation.
 * `initial_rep`: a concrete empty represented stack.
 
 ## References

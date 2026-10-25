@@ -68,22 +68,4 @@ example {d : ℝ} (hd : ∀ p : Set ↥(targetᶜ) × Set ↥(targetᶜ),
     (by simp) (by simpa [show (8 : ℝ) * 2 + 8 = 24 by norm_num] using
     hd)
 
-/--
-info: 'Cslib.Circuits.Fusion.le_booleanPairSample_expect' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms le_booleanPairSample_expect
-
-/--
-info: 'Cslib.Circuits.Fusion.exists_pair_weight_ge' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms exists_pair_weight_ge
-
-/--
-info: 'Cslib.Circuits.Fusion.fixedDistribution_counting_bound' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms fixedDistribution_counting_bound
-
 end ComplexityTests.FusionSampling

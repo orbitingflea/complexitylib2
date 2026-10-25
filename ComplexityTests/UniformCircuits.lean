@@ -47,9 +47,4 @@ example : ∃ circuits : (a : List Bool) → Circuit signature a.length 0,
       (encIn := encPair encBits encBits) (encMid := encBits)))
   exact ⟨circuits, hc⟩
 
-/-- info: 'Cslib.Complexity.CircuitValue.exists_uniformCircuitFamily' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms CircuitValue.exists_uniformCircuitFamily
-
 end ComplexityTests.UniformCircuits

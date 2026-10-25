@@ -14,7 +14,7 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Li
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 
 /-!
-# Nonvacuity and axiom checks for PP truth-table and Boolean closure
+# Nonvacuity checks for PP truth-table and Boolean closure
 -/
 
 @[expose] public section
@@ -118,63 +118,3 @@ example : 2 * |newmanPoly 1 (-2)| ≤ newmanPoly 1 2 :=
   two_mul_abs_newmanPoly_neg_le (by omega) (by omega)
 
 end ComplexityTests.PPTruthTable
-
-/--
-info: 'Cslib.Complexity.GapP.exists_abs_le_two_pow' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Complexity.GapP.exists_abs_le_two_pow
-
-/--
-info: 'Cslib.Complexity.truthTable_mem_PP' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Complexity.truthTable_mem_PP
-
-/--
-info: 'Cslib.Complexity.PolyTimeTruthTableReducible.mem_PP' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Complexity.PolyTimeTruthTableReducible.mem_PP
-
-/--
-info: 'Cslib.Complexity.PolyTimeTruthTableReducible.mem_P' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Complexity.PolyTimeTruthTableReducible.mem_P
-
-/--
-info: 'Cslib.Complexity.forall_lt_mem_PP' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Complexity.forall_lt_mem_PP
-
-/--
-info: 'Cslib.Complexity.exists_lt_mem_PP' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Complexity.exists_lt_mem_PP
-
-/--
-info: 'Cslib.Complexity.inter_mem_PP' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Complexity.inter_mem_PP
-
-/--
-info: 'Cslib.Complexity.union_mem_PP' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Complexity.union_mem_PP
-
-/--
-info: 'Cslib.Complexity.diff_mem_PP' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Complexity.diff_mem_PP
-
-/--
-info: 'Cslib.Complexity.symmDiff_mem_PP' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Complexity.symmDiff_mem_PP

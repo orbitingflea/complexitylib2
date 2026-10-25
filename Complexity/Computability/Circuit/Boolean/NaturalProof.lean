@@ -62,7 +62,6 @@ in `P/poly` (`truthTableLanguage_setOf_lt_complexity_notMem_PPoly`) [KabanetsCai
 ## Main definitions
 
 * `Cslib.Circuits.Boolean.truthTableTest`: the test deciding a property from truth tables.
-* `Cslib.Circuits.Boolean.truthTableLanguage`: the truth tables of a property, as a language.
 * `Cslib.Circuits.Boolean.NaturalProof.IsLarge`, `Cslib.Circuits.Boolean.NaturalProof.IsNatural`,
   `Cslib.Circuits.Boolean.NaturalProof.IsUseful`: large, natural and useful properties.
 
@@ -131,25 +130,6 @@ theorem card_filter_truthTableTest (C : Set (BooleanFunction n)) :
     simp only [Finset.coe_filter, Finset.mem_univ, true_and, Set.mem_ofPred_eq,
       truthTableTest_truthTable_eq_true_iff, (truthTable n).injective.mem_set_image]
   rw [← Set.ncard_coe_finset, h, Set.ncard_image_of_injective _ (truthTable n).injective]
-
-/-- The truth tables of a property, as a language [RazborovRudich1997]: a word of length `2 ^ n`
-belongs to it when it is the truth table of a function in `C n`. Words whose length is not a power
-of two do not belong to it. -/
-def truthTableLanguage (C : ∀ n, Set (BooleanFunction n)) : Language Bool :=
-  {w | ∃ n, ∃ h : w.length = 2 ^ n,
-    (truthTable n).symm (fun i => w[(i : ℕ)]'(i.isLt.trans_eq h.symm)) ∈ C n}
-
-/-- A `2 ^ n`-bit string `T`, viewed as a list via `List.ofFn`, belongs to `truthTableLanguage C`
-if and only if its corresponding Boolean function lies in `C n`. -/
-theorem ofFn_mem_truthTableLanguage {C : ∀ n, Set (BooleanFunction n)} {T : BitString (2 ^ n)} :
-    List.ofFn T ∈ truthTableLanguage C ↔ (truthTable n).symm T ∈ C n := by
-  constructor
-  · rintro ⟨m, h, hm⟩
-    obtain rfl : m = n :=
-      Nat.pow_right_injective le_rfl (h.symm.trans (List.length_ofFn (f := T)))
-    simpa only [List.getElem_ofFn] using hm
-  · intro h
-    exact ⟨n, List.length_ofFn, by simpa only [List.getElem_ofFn] using h⟩
 
 /-- At length `2 ^ n`, the truth-table language of `C` is decided by the test for `C n`. -/
 @[simp] theorem slice_truthTableLanguage (C : ∀ n, Set (BooleanFunction n)) (n : ℕ) :
@@ -257,11 +237,11 @@ theorem exists_complexity_truthTableTest_le (hC : truthTableLanguage C ∈ PPoly
 
 /-- A property that is natural for the class `P`, applied to truth tables, is `P/poly`-natural:
 a problem decided in time polynomial in the length of the truth table has circuits of polynomial
-size (`PPoly.of_mem_P`). -/
+size (`P_subset_PPolyOn`). -/
 theorem NaturalProof.IsNatural.PPoly_of_P
     (hC : IsNatural {L : Language Bool | (L : Set (List Bool)) ∈ Complexity.P
       Turing.MultiTapeTM.encBits} C) : IsNatural PPoly C :=
-  hC.mono (fun _ hL => PPoly.of_mem_P hL) fun _ => le_rfl
+  hC.mono (fun _ hL => mem_PPolyOn_encBits_iff.1 (P_subset_PPolyOn hL)) fun _ => le_rfl
 
 /-! ### The Razborov–Rudich distinguisher -/
 
@@ -398,7 +378,7 @@ theorem isUseful_PPoly_setOf_lt_complexity :
 
 /-- Under the hypothesis of `not_isUseful_PPoly_of_isNatural`, the truth tables of the functions
 on `n` inputs that need more than `2 ^ n / (5 n)` gates, that is the no-instances
-`GapMCSP.no (fun n => 2 ^ n / (5 * n)) n`, do not form a language in `P/poly`
+`GapMCSP.noSet (fun n => 2 ^ n / (5 * n))`, do not form a language in `P/poly`
 [RazborovRudich1997], [KabanetsCai2000]. The property is large and useful against `P/poly`, so
 it is not `P/poly`-constructive. -/
 theorem truthTableLanguage_setOf_lt_complexity_notMem_PPoly {F : ∀ n, Key n → BooleanFunction n}

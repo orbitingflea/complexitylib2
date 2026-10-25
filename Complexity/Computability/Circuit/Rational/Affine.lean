@@ -10,7 +10,9 @@ module
 public import Complexity.Init
 public import Complexity.Computability.Circuit.Rational.Eval
 public import Mathlib.Algebra.Algebra.Rat
+public import Mathlib.Data.Matrix.ColumnRowPartitioned
 public import Mathlib.LinearAlgebra.Matrix.Unique
+import Complexity.Foundations.LinearAlgebra.Matrix.SchurComplement
 
 /-!
 # Rational hitting lists: affine realizations
@@ -297,14 +299,48 @@ private theorem leaf_realization (a : R) :
     ∃ M : Matrix (Unit ⊕ Unit) (Unit ⊕ Unit) R,
       fromBlocks 1 (-scalar a) 0 1 * M = 1 ∧
       M * fromBlocks 1 (-scalar a) 0 1 = 1 ∧
-      NoncommBlocks.matMul (NoncommBlocks.matMul (fromCols (1 : Matrix Unit Unit R) 0) M)
-        (fromRows (0 : Matrix Unit Unit R) (1 : Matrix Unit Unit R)) = scalar a := by
+      fromCols (1 : Matrix Unit Unit R) 0 * M *
+        fromRows (0 : Matrix Unit Unit R) (1 : Matrix Unit Unit R) = scalar a := by
   refine ⟨fromBlocks 1 (scalar a) 0 1, ?_, ?_, ?_⟩
   · simp [fromBlocks_multiply]
   · simp [fromBlocks_multiply]
-  · dsimp only [NoncommBlocks.matMul]
-    rw [fromCols_mul_fromBlocks, fromCols_mul_fromRows]
+  · rw [fromCols_mul_fromBlocks, fromCols_mul_fromRows]
     simp
+
+private theorem fromBlocks_zero₂₂_inverse {ι κ : Type*} [Fintype ι] [Fintype κ]
+    [DecidableEq ι] [DecidableEq κ]
+    (A A' : Matrix ι ι R) (B : Matrix ι κ R) (C : Matrix κ ι R)
+    (a b : Matrix κ κ R) (hAA' : A * A' = 1) (hA'A : A' * A = 1)
+    (ha : C * A' * B = a) (hab : a * b = 1) (hba : b * a = 1) :
+    ∃ M : Matrix (ι ⊕ κ) (ι ⊕ κ) R,
+      fromBlocks A B C 0 * M = 1 ∧ M * fromBlocks A B C 0 = 1 ∧
+      fromCols (0 : Matrix κ ι R) (-1) * M *
+        fromRows (0 : Matrix ι κ R) (1 : Matrix κ κ R) = b := by
+  let U : (Matrix (ι ⊕ κ) (ι ⊕ κ) R)ˣ :=
+    ⟨fromBlocks 1 0 (C * A') 1, fromBlocks 1 0 (-(C * A')) 1,
+      by simp [fromBlocks_multiply, Matrix.mul_zero, Matrix.zero_mul],
+      by simp [fromBlocks_multiply, Matrix.mul_zero, Matrix.zero_mul]⟩
+  let V : (Matrix (ι ⊕ κ) (ι ⊕ κ) R)ˣ :=
+    ⟨fromBlocks 1 (A' * B) 0 1, fromBlocks 1 (-(A' * B)) 0 1,
+      by simp [fromBlocks_multiply, Matrix.mul_zero, Matrix.zero_mul],
+      by simp [fromBlocks_multiply, Matrix.mul_zero, Matrix.zero_mul]⟩
+  let D : (Matrix (ι ⊕ κ) (ι ⊕ κ) R)ˣ :=
+    ⟨fromBlocks A 0 0 (-a), fromBlocks A' 0 0 (-b),
+      by simp [fromBlocks_multiply, Matrix.mul_zero, Matrix.zero_mul, hAA', hab],
+      by simp [fromBlocks_multiply, Matrix.mul_zero, Matrix.zero_mul, hA'A, hba]⟩
+  have hS : (↑(U * D * V) : Matrix (ι ⊕ κ) (ι ⊕ κ) R) = fromBlocks A B C 0 := by
+    change fromBlocks 1 0 (C * A') 1 * fromBlocks A 0 0 (-a) *
+      fromBlocks 1 (A' * B) 0 1 = _
+    rw [← ha]
+    simpa [Matrix.neg_mul] using (Matrix.fromBlocks_zero₂₂_schur_factor A A' B C hAA' hA'A).symm
+  refine ⟨↑(U * D * V)⁻¹, ?_, ?_, ?_⟩
+  · rw [← hS]; exact (U * D * V).mul_inv
+  · rw [← hS]; exact (U * D * V).inv_mul
+  · change fromCols (0 : Matrix κ ι R) (-1) *
+      (V.inv * (D.inv * U.inv)) * fromRows (0 : Matrix ι κ R) (1 : Matrix κ κ R) = b
+    simp [V, D, U, fromBlocks_multiply, Matrix.mul_zero, Matrix.zero_mul,
+      Matrix.fromCols_mul_fromBlocks, fromCols_mul_fromRows,
+      Matrix.mul_assoc, Matrix.neg_mul, Matrix.mul_neg]
 
 /-- Exact affine realization of every defined formula: the evaluated pencil is invertible, and
 the row, its inverse and the column multiply to the value. -/
@@ -362,7 +398,7 @@ theorem Eval.realization {f : Formula n} {v : R} (hv : f.Eval c X v) :
       obtain ⟨a, ha, hab, hba⟩ := hv
       obtain ⟨Mf, hf1, hf2, hfr⟩ := ih 0 ha
       rw [realized_inv, rowR_inv, colR_inv]
-      exact NoncommBlocks.schur_inverse _ _ _ _ (scalar a) (scalar v)
+      exact fromBlocks_zero₂₂_inverse _ _ _ _ (scalar a) (scalar v)
         hf1 hf2 hfr (by rw [← map_mul, hab, map_one]) (by rw [← map_mul, hba, map_one])
 
 end
@@ -413,7 +449,7 @@ private theorem Eval.pencil_isUnit {f : Formula n} {a : R} (ha : f.Eval c X a) :
 theorem Eval.augmented_isUnit_iff {f : Formula n} {a : R} (ha : f.Eval c X a) :
     IsUnit (realized c X (Formula.inv f)) ↔ IsUnit a := by
   obtain ⟨M, hM, hM', hr⟩ := ha.realization
-  have key := NoncommBlocks.schur_unit_iff _ _ (colR c f) (rowR c f) hM hM'
+  have key := Matrix.isUnit_fromBlocks_zero₂₂_iff _ _ (colR c f) (rowR c f) hM hM'
   rw [hr] at key
   rw [realized_inv]
   refine key.trans ⟨fun h => ?_, fun h => h.map (Matrix.uniqueRingEquiv (m := Unit)).symm⟩

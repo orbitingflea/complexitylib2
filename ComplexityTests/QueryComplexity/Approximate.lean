@@ -12,7 +12,7 @@ import Mathlib.Analysis.SpecialFunctions.Trigonometric.Chebyshev.RootsExtrema
 /-! Markov's inequality and its discrete forms, Minsky–Papert symmetrization, approximate degree
 and the Nisan–Szegedy bounds on concrete instances: Chebyshev polynomials attain Markov's bound,
 layer averages of monomials, the disjunction of `n` bits, parity and majority. Non-vacuity
-witnesses for the hypotheses, and axiom guards for the headline theorems. -/
+witnesses for the hypotheses. -/
 
 namespace ComplexityTests.QueryComplexity.Approximate
 
@@ -144,85 +144,5 @@ example {n : ℕ} (f : BooleanFunction n) :
 /-- Majority of three bits: `bs = 2 ≤ 2 deg² = 18`. -/
 example : blockSensitivity (majority 3) ≤ 2 * degree (majority 3) ^ 2 :=
   blockSensitivity_le_two_mul_degree_sq _
-
-/-! ### Axiom checks for headline theorems -/
-
-/--
-info: 'Polynomial.abs_eval_le_mul_of_sqrt_mul_abs_eval_le' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Polynomial.abs_eval_le_mul_of_sqrt_mul_abs_eval_le
-
-/--
-info: 'Polynomial.sqrt_mul_abs_eval_derivative_le' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Polynomial.sqrt_mul_abs_eval_derivative_le
-
-/--
-info: 'Polynomial.abs_eval_derivative_le_sq_mul' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Polynomial.abs_eval_derivative_le_sq_mul
-
-/--
-info: 'Polynomial.sub_mul_abs_eval_le_of_forall_nat' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Polynomial.sub_mul_abs_eval_le_of_forall_nat
-
-/--
-info: 'Polynomial.mul_le_sq_mul_of_le_abs_eval_derivative' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Polynomial.mul_le_sq_mul_of_le_abs_eval_derivative
-
-/--
-info: 'Cslib.BitString.exists_natDegree_le_eval_eq_layerAverage' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.BitString.exists_natDegree_le_eval_eq_layerAverage
-
-/--
-info: 'Cslib.QueryComplexity.blockSensitivity_le_two_mul_degree_sq' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.QueryComplexity.blockSensitivity_le_two_mul_degree_sq
-
-/--
-info: 'Cslib.QueryComplexity.one_sub_two_mul_mul_blockSensitivity_le' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.QueryComplexity.one_sub_two_mul_mul_blockSensitivity_le
-
-/--
-info: 'Cslib.QueryComplexity.blockSensitivity_le_six_mul_approxDegree_sq' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.QueryComplexity.blockSensitivity_le_six_mul_approxDegree_sq
-
-/--
-info: 'Cslib.QueryComplexity.blockSensitivity_le_two_mul_sensitivity_pow_four' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.QueryComplexity.blockSensitivity_le_two_mul_sensitivity_pow_four
-
-/--
-info: 'Cslib.DecisionTree.complexity_le_mul_approxDegree_pow_six' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.DecisionTree.complexity_le_mul_approxDegree_pow_six
-
-/--
-info: 'Cslib.QueryComplexity.card_le_six_mul_approxDegree_threshold_one_right_sq' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.QueryComplexity.card_le_six_mul_approxDegree_threshold_one_right_sq
-
-/--
-info: 'Cslib.QueryComplexity.approxDegree_threshold_one_right_le_sqrt' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.QueryComplexity.approxDegree_threshold_one_right_le_sqrt
 
 end ComplexityTests.QueryComplexity.Approximate

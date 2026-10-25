@@ -123,17 +123,4 @@ example : (∅ : Set (List Bool)) ∈ Complexity.FewP encBits := by
   simp only [Polynomial.eval_one, Polynomial.eval_zero, encBits_apply]
   refine ⟨haltsWithin_one 0 input, ?_, ?_⟩ <;> rw [accepting_count] <;> simp
 
-/--
-info: 'Cslib.Complexity.mem_UP_iff_exists_machine' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.mem_UP_iff_exists_machine
-/--
-info: 'Cslib.Complexity.mem_FewP_iff_exists_machine' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.mem_FewP_iff_exists_machine
-
 end ComplexityTests.CountingAmbiguity

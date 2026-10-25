@@ -30,6 +30,8 @@ consistent labelling. Random strings of arbitrary length remain covered by the c
 
 ## Main results
 
+* `Cslib.PCP.Encoded.Graph.polyTime_reductionVerifier`: the verifier is polynomial-time when the
+  graph construction and the constraint evaluation are.
 * `Cslib.PCP.Encoded.Graph.mem_PCP_of_gapReduction`: a positive-gap reduction gives membership in
   `PCP(log n, 1)`.
 

@@ -60,18 +60,4 @@ example : encDPi (fun i : Empty => i.elim) (Empty.elim : Empty → Empty) = [] :
   rw [length_encDPi]
   simp
 
-/--
-info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.dpi' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.dpi
-
-/--
-info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.dpi_update' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.dpi_update
-
 end ComplexityTests.DependentTable

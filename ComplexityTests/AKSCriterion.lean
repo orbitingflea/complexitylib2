@@ -6,8 +6,8 @@ Authors: Samuel Schlesinger
 
 import Complexity.Foundations.NumberTheory.AKS.Criterion
 
-/-! The AKS identity on a prime and a composite, the binomial divisibility, the AKS tests on a
-prime, and axiom guards. -/
+/-! The AKS identity on a prime and a composite, the binomial divisibility, and the AKS tests on
+a prime. -/
 
 namespace ComplexityTests.AKSCriterion
 
@@ -29,17 +29,5 @@ example (r : ℕ) : Passes 7 r := passes_of_prime (by decide) r
 
 -- `8 = 2³` is a perfect power, so it fails step 1.
 example : ¬ Passes 8 3 := fun h => h.1 ⟨2, 3, by norm_num, by norm_num⟩
-
-/--
-info: 'Cslib.AKS.prime_iff_add_pow_eq' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms prime_iff_add_pow_eq
-
-/--
-info: 'Cslib.AKS.passes_of_prime' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms passes_of_prime
 
 end ComplexityTests.AKSCriterion

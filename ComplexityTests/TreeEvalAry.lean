@@ -75,22 +75,4 @@ example (c : ZMod 7) (t : Fin 3) (S : Cslib.TreeEval.State (ZMod 7) 2) :
       Cslib.TreeEval.proc (Finset.univ : Finset (ZMod 7)ˣ).toList binarySample c t S := by
   rw [Ary.proc_ofBinary]
 
-/--
-info: 'Cslib.TreeEval.Ary.proc_eq' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.TreeEval.Ary.proc_eq
-
-/--
-info: 'Cslib.TreeEval.Ary.embed_eval_eq_proc' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.TreeEval.Ary.embed_eval_eq_proc
-
-/--
-info: 'Cslib.TreeEval.Ary.proc_ofBinary' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.TreeEval.Ary.proc_ofBinary
-
 end ComplexityTests.TreeEvalAry

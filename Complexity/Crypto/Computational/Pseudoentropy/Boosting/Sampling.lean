@@ -37,6 +37,8 @@ to repeated membership queries; this program alone is not such a stateful oracle
 
 * `Cslib.Crypto.Pseudoentropy.Boosting.eval_sampleWeight_true`: exact agreement with the weight.
 * `Cslib.Crypto.Pseudoentropy.Boosting.sampleWeight_density_deviation`: density concentration.
+* `Cslib.Crypto.Pseudoentropy.Boosting.isPolyTime_weightNumerator`: the weight numerator is
+  computable in polynomial time.
 * `Cslib.Crypto.Pseudoentropy.Boosting.isPPTOn_sampleWeight`: the uniform strict PPT certificate.
 
 ## References

@@ -79,12 +79,4 @@ example (e : ℕ) : (2 : ℤ) ^ e *
   simpa using (AWPPAmplification.majorityPolynomial_bounds
     (g := 1) (m := 0) (e := e) (by norm_num) (by norm_num)).2.1 (by norm_num)
 
-/-- info: 'Cslib.Complexity.AWPPAmplification.amplify' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.AWPPAmplification.amplify
-
-/-- info: 'Cslib.Complexity.exists_AWPP_gap_errorExponent' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.exists_AWPP_gap_errorExponent
-
 end Cslib.Complexity.Tests.UniformAWPP

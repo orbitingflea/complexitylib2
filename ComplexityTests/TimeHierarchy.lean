@@ -108,46 +108,4 @@ example (c d : ℕ) (s : List Bool → ℕ) :
     ¬ComputableInTimeAndSpace diagonal encBits encBool (fun x => c * (x.length + 1) ^ d) s :=
   not_computableInTimeAndSpace_diagonal (.of_forall_le c d fun _ => le_rfl)
 
-/-! ### Axioms -/
-
-/--
-info: 'Cslib.Complexity.diagonal_notMem_P' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.diagonal_notMem_P
-
-/--
-info: 'Cslib.Complexity.not_computableInTimeAndSpace_diagonal' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.not_computableInTimeAndSpace_diagonal
-
-/--
-info: 'Cslib.Complexity.computableInO_diagonal' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.computableInO_diagonal
-
-/--
-info: 'Turing.MultiTapeTM.Universal.exists_computableTidilyInDegree_decodeDesc' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeTM.Universal.exists_computableTidilyInDegree_decodeDesc
-
-/--
-info: 'Turing.MultiTapeTM.Universal.decodeDesc_unframe_frame_append' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeTM.Universal.decodeDesc_unframe_frame_append
-
-/--
-info: 'Turing.MultiTapeTM.frames_encList' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeTM.frames_encList
-
 end ComplexityTests.TimeHierarchy

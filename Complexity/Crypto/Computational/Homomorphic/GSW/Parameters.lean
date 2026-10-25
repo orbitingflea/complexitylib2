@@ -30,7 +30,10 @@ decision-LWE hardness for the finite centered-binomial error nor prove bootstrap
 * `entropy_margin`: twice the security parameter in surplus source bits.
 * `fresh_margin`, `nand_margin`: strict decoding margins with positive noise.
 * `negligible_statistical_error`: the shared-public-matrix error is negligible.
-* `computableTidilyInPolyTime_*`: uniform unary native computation of each parameter.
+* `computableTidilyInPolyTime_dimension`, `computableTidilyInPolyTime_noise`,
+  `computableTidilyInPolyTime_width`, `computableTidilyInPolyTime_rows`,
+  `computableTidilyInPolyTime_samples`, `computableTidilyInPolyTime_modulus`: uniform unary
+  native computation of each parameter.
 
 ## References
 

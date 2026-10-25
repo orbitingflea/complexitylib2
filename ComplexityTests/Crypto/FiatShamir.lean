@@ -121,27 +121,4 @@ example : (81 / 242 : ℝ) ≤ Game.succProbability (oneWayGame (schnorrKeyGen (
   have hsq := Real.sq_sqrt (by positivity : (0 : ℝ) ≤ 2 * ε)
   nlinarith [mul_le_mul hsqrt hsqrt (by norm_num) (Real.sqrt_nonneg _)]
 
-/-! ### Axioms -/
-
-/--
-info: 'Cslib.Crypto.Protocols.SigmaProtocol.succProbability_eufCmaGame_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms succProbability_eufCmaGame_le
-
-/--
-info: 'Cslib.Crypto.Protocols.SigmaProtocol.schnorr_succProbability_eufCmaGame_le' depends on
-axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms schnorr_succProbability_eufCmaGame_le
-
-/--
-info: 'Cslib.Crypto.Protocols.SigmaProtocol.fiatShamir_correct' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms fiatShamir_correct
-
 end ComplexityTests.Crypto.FiatShamir

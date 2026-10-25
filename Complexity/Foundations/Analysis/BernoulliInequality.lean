@@ -23,6 +23,7 @@ this bounds `(1 - p) ^ n` from above by `1 / (1 + n * p)`.
 ## Main results
 
 * `Real.one_sub_pow_mul_one_add_mul_le_one`: `(1 - p) ^ n * (1 + n * p) ≤ 1` for `p ≤ 1`.
+* `Real.one_sub_pow_le_one_div_one_add_mul`: `(1 - p) ^ n ≤ 1 / (1 + n * p)` for `0 ≤ p ≤ 1`.
 -/
 
 @[expose] public section
@@ -39,5 +40,10 @@ theorem one_sub_pow_mul_one_add_mul_le_one {p : ℝ} (hp : p ≤ 1) (n : ℕ) :
     have hnon := mul_nonneg (pow_nonneg (sub_nonneg.mpr hp) n)
       (mul_nonneg (show (0 : ℝ) ≤ n + 1 by positivity) (sq_nonneg p))
     nlinarith
+
+/-- For `0 ≤ p ≤ 1`, `(1 - p) ^ n ≤ 1 / (1 + n p)`. -/
+theorem one_sub_pow_le_one_div_one_add_mul {p : ℝ} (hp₀ : 0 ≤ p) (hp₁ : p ≤ 1) (n : ℕ) :
+    (1 - p) ^ n ≤ 1 / (1 + (n : ℝ) * p) :=
+  (le_div_iff₀ (by positivity)).mpr (one_sub_pow_mul_one_add_mul_le_one hp₁ n)
 
 end Real

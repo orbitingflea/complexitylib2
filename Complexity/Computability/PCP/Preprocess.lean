@@ -65,6 +65,11 @@ not require the executable numberings to equal a choice made on arbitrary finite
 * `Cslib.PCP.ConstraintGraph.spectralExpansion_preprocess_expanderFamily_le`,
   `Cslib.PCP.ConstraintGraph.le_unsatVal_preprocess_expanderFamily`: the constants for the
   non-explicit family of expanders.
+* `Cslib.PCP.ConstraintGraph.unsatVal_preprocessWith`,
+  `Cslib.PCP.ConstraintGraph.unsatVal_preprocessWith_le`: for any specified rotations, the value
+  is exactly half that of the degree-reduced graph, and at most that of `G`.
+* `Cslib.PCP.ConstraintGraph.preprocessWith_ofFamily`: rotations from a family recover
+  `preprocess`.
 
 ## References
 

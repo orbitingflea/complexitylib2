@@ -72,11 +72,4 @@ info: 'Cslib.Circuits.Boolean.Layered.WellFormed.padTo' depends on axioms: [prop
 #guard_msgs (whitespace := lax) in
 #print axioms WellFormed.padTo
 
-/--
-info: 'Cslib.Circuits.Boolean.Layered.computableInPolyTime_padTo' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms computableInPolyTime_padTo
-
 end ComplexityTests.CircuitLayerPadding

@@ -25,9 +25,9 @@ In `PartialMCSP.Instance`, the truth table has $2^n$ entries in `Option Bool`, w
 requires the circuit to output `b` and `none` represents the "don't care" symbol `*` (also written
 `?` in [Hirahara2022, ECCC TR22-119, Definition 8.4]).
 
-Following Decision D5 on issue #798, `Cslib.PartialMCSP` uses the standard De Morgan all-gates size
-measure `Circuit.size` (`complexityOn interpretation x.definedInputs (single x.completion)`),
-matching `Cslib.MCSP` and `Cslib.SuccinctMCSP`. We also define `Cslib.PartialMCSP.BinaryGate` using
+`Cslib.PartialMCSP` uses the standard De Morgan all-gates size measure `Circuit.size`
+(`complexityOn interpretation x.definedInputs (single x.completion)`), matching `Cslib.MCSP` and
+`Cslib.SuccinctMCSP` (see #798). We also define `Cslib.PartialMCSP.BinaryGate` using
 the AND/OR-only gate count `c.program.cost binaryCost` from [Ilango2020FOCS, Section II.B and
 Section III.B, p. 427; ECCC TR20-183, Section 2.2] (where NOT and constant gates are free), and
 prove the threshold-$n-1$ bridge theorems relating the two measures using the binary-cost support
@@ -174,7 +174,7 @@ open PartialMCSP
 /-- **The Partial Minimum Circuit Size Problem (`MCSP*`)** [Ilango2020FOCS, Section II.B;
 ECCC TR20-183, Section 2.2; Hirahara2022, ECCC TR22-119, Definition 8.4, p. 30]: the
 partial-function instances that can be computed on their defined inputs by a De Morgan circuit with
-at most `threshold` gates (Decision D5). -/
+at most `threshold` gates. -/
 def PartialMCSP : Set PartialMCSP.Instance :=
   {x | complexityOn interpretation x.definedInputs (single x.completion) ≤ x.threshold}
 
@@ -324,7 +324,7 @@ theorem not_mem_of_threshold_lt {x : Instance}
     x ∉ PartialMCSP :=
   fun h => not_mem_binaryGate_of_threshold_lt hess ht (mem_binaryGate_of_mem h)
 
-/-- **Threshold-`n - 1` rigidity (Issue #798 Risk R3).** When all `x.arity` coordinates are
+/-- **Threshold-`n - 1` rigidity.** When all `x.arity` coordinates are
 essential for `x` and `x.threshold + 1 ≤ x.arity`, any all-gates circuit `c` of size at most
 `x.threshold` agreeing with `x` has `c.program.cost binaryCost = x.arity - 1`,
 `c.size = x.arity - 1`, and consists exclusively of binary AND and OR gates (no NOT or constant

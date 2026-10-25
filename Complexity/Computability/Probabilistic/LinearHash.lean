@@ -25,7 +25,9 @@ The full extractor charges sampling, hashing and copying its complete public see
 
 ## Main results
 
-* `Cslib.BitString.LinearHash.computableInPolyTime_wordHash`: deterministic hashing.
+* `Cslib.BitString.LinearHash.computableInPolyTime_wordHash`,
+  `Cslib.BitString.LinearHash.computableTidilyInPolyTime_wordHash`: deterministic hashing and its
+  tidy `fun_prop` variant.
 * `Cslib.BitString.LinearHash.isPPTOn_extract`: the complete seeded sampler.
 
 ## References

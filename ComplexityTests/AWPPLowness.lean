@@ -54,14 +54,4 @@ example : ∃ H ∈ GapP (encPair encBits encBits), ∃ R : List Bool → ℕ,
   refine ⟨H, hH, R, hR.tidy, fun a w => ⟨(hb a w).1, ?_⟩⟩
   simpa only [pow_zero, one_mul] using (hb a w).2.1 (Set.mem_univ _)
 
-/-- info: 'Cslib.Complexity.exists_AWPP_queryWeights' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.exists_AWPP_queryWeights
-
-/-- info: 'Cslib.Complexity.PPWithOracle_eq_PP_of_mem_AWPP' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.PPWithOracle_eq_PP_of_mem_AWPP
-
 end ComplexityTests.AWPPLowness

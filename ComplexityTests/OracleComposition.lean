@@ -139,36 +139,4 @@ example : ¬ IsOraclePPTOn (Operation := Unit) encUnary encBits
     at hlength
   lia
 
-/-! ### Axiom audit of the headline results -/
-
-/-- info: 'Cslib.Probability.isOraclePPTOn_iff_isTidyOraclePPTOn' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms isOraclePPTOn_iff_isTidyOraclePPTOn
-
-/-- info: 'Cslib.Probability.IsOraclePPTOn.bind' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms IsOraclePPTOn.bind
-
-/-- info: 'Cslib.Probability.IsOraclePPTOn.iterate_spec' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms IsOraclePPTOn.iterate_spec
-
-/-- info: 'Cslib.Probability.IsOraclePPTOn.query_take' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms IsOraclePPTOn.query_take
-
-/-- info: 'Cslib.Probability.IsPPTOn.isOraclePPTOn' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms IsPPTOn.isOraclePPTOn
-
-/-- info: 'Turing.MultiTapePTM.ComputesTidily.iterateWhile' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms MultiTapePTM.ComputesTidily.iterateWhile
-
 end ComplexityTests.OracleComposition

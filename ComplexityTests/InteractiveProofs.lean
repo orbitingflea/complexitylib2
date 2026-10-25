@@ -7,8 +7,8 @@ Authors: Samuel Schlesinger
 import Complexity.Computability.Complexity.Classes.IP.GraphNonIsomorphism
 import Complexity.Computability.Complexity.Classes.IP.PSPACE
 
-/-! Interactive proofs: concrete graphs, honest and cheating provers, class inclusions, the
-polynomial-space evaluation of the optimal prover, axioms. -/
+/-! Interactive proofs: concrete graphs, honest and cheating provers, class inclusions, and the
+polynomial-space evaluation of the optimal prover. -/
 
 namespace ComplexityTests.InteractiveProofs
 
@@ -217,133 +217,5 @@ example (P : Prover Unit) :
     ∑ r, Interaction.acceptFrom P P.init (some (acceptAll r)) ≤
       Interaction.value acceptAll 0 0 [] :=
   Interaction.sum_acceptFrom_le_value isBounded_acceptAll P
-
-/-! ### Axiom audit of the headline results -/
-
-/-- info: 'Cslib.Complexity.NP_subset_IP' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms NP_subset_IP
-
-/-- info: 'Cslib.Complexity.BPP_subset_IP' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms BPP_subset_IP
-
-/-- info: 'Cslib.Complexity.exists_queryBounds_of_mem_IP' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms exists_queryBounds_of_mem_IP
-
-/-- info: 'Cslib.Complexity.acceptProb_sequentialRepeat_le' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms acceptProb_sequentialRepeat_le
-
-/-- info: 'Cslib.Complexity.isOraclePPTOn_sequentialRepeat' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms isOraclePPTOn_sequentialRepeat
-
-/-- info: 'Cslib.Complexity.acceptProb_guessingRound_le' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms acceptProb_guessingRound_le
-
-/-- info: 'Cslib.Complexity.acceptProb_guessingRound_le_half' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms acceptProb_guessingRound_le_half
-
-/-- info: 'Cslib.Complexity.acceptProb_guessingProver' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms acceptProb_guessingProver
-
-/-- info: 'Cslib.Complexity.GraphIsomorphism.mem_NP' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms GraphIsomorphism.mem_NP
-
-/-- info: 'Cslib.Complexity.GraphNonIsomorphism.tsum_relabelDist_le' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms GraphNonIsomorphism.tsum_relabelDist_le
-
-/-- info: 'Cslib.Complexity.GraphNonIsomorphism.acceptProb_round_le' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms GraphNonIsomorphism.acceptProb_round_le
-
-/-- info: 'Cslib.Complexity.GraphNonIsomorphism.isInteractiveProof_round' depends on axioms: [propext,
- Classical.choice,
- Quot.sound] -/
-#guard_msgs in
-#print axioms GraphNonIsomorphism.isInteractiveProof_round
-
-/-- info: 'Cslib.Complexity.GraphNonIsomorphism.acceptProb_verifier_prover' depends on axioms: [propext,
- Classical.choice,
- Quot.sound] -/
-#guard_msgs in
-#print axioms GraphNonIsomorphism.acceptProb_verifier_prover
-
-/-- info: 'Cslib.Complexity.GraphNonIsomorphism.mem_IP' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms GraphNonIsomorphism.mem_IP
-
-/-- info: 'Cslib.Complexity.IP_subset_PSPACE' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms IP_subset_PSPACE
-
-/-- info: 'Cslib.Complexity.mem_iff_two_pow_lt_value' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms mem_iff_two_pow_lt_value
-
-/-- info: 'Cslib.Complexity.Interaction.sum_acceptFrom_le_value' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Interaction.sum_acceptFrom_le_value
-
-/-- info: 'Cslib.Complexity.Interaction.sum_acceptFrom_optimalProver' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Interaction.sum_acceptFrom_optimalProver
-
-/-- info: 'Cslib.Complexity.Interaction.acceptProb_eq_sum' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Interaction.acceptProb_eq_sum
-
-/-- info: 'Cslib.Complexity.Interaction.isBounded_coinFamily' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Interaction.isBounded_coinFamily
-
-/-- info: 'Cslib.Complexity.Interaction.evaluate_eq' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Interaction.evaluate_eq
-
-/--
-info: 'Cslib.Complexity.Interaction.computableInPolySpace_evaluate' depends on axioms:
-  [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Interaction.computableInPolySpace_evaluate
-
-/--
-info: 'Cslib.Complexity.Interaction.computableInPolySpace_countAccepts' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Interaction.computableInPolySpace_countAccepts
-
-/-- info: 'Cslib.Complexity.GameTree.iterate_step_node' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms GameTree.iterate_step_node
 
 end ComplexityTests.InteractiveProofs

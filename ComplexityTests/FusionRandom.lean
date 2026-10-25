@@ -46,25 +46,4 @@ example : Graph.smallCoverProbability 16 1 ≤ (1 / 65536 : ℝ) := by
   norm_num at h ⊢
   exact h
 
-/--
-info: 'Cslib.Circuits.Fusion.PairCover.exists_code' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Fusion.PairCover.exists_code
-
-/--
-info: 'Cslib.Circuits.Fusion.card_small_covers_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Fusion.card_small_covers_le
-
-/--
-info: 'Cslib.Circuits.Fusion.Graph.random_cover_complexity' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Fusion.Graph.random_cover_complexity
-
 end ComplexityTests.FusionRandom

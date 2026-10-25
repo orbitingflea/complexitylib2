@@ -39,6 +39,9 @@ This construction is semantic and noncomputable; no efficient compiler is assert
 
 ## Main results
 
+* `Cslib.Circuits.Boolean.WeightedThreshold.gateComparison_eval_eq`,
+  `Cslib.Circuits.Boolean.WeightedThreshold.gateQuery_eval_eq`: earlier gate values suffice to
+  evaluate comparisons and queries.
 * `Cslib.Circuits.Boolean.WeightedThreshold.exists_linear_transcript_tree`: a transcript
   determines a tree of native linear threshold queries, independent of any coordinate split.
 * `Cslib.Circuits.Boolean.WeightedThreshold.exists_transcript_tree`: the corresponding

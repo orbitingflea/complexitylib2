@@ -42,6 +42,8 @@ of resolution refutations of Tseitin formulas.
 
 * `Cslib.Multigraph.incidenceSet_toGraph`, `Cslib.Multigraph.coe_edgeCut_eq_toGraph_edgeCut`:
   incidence sets and edge cuts match those of Mathlib's `Graph`.
+* `Cslib.Multigraph.coe_incidence_eq_incidenceSet_toGraph`: the edges at a vertex other than
+  self-loops are the non-loop incident edges of `toGraph ends`.
 * `Cslib.Multigraph.edgeSet_toSimpleGraph`: the edges of the underlying simple graph.
 * `Cslib.Multigraph.connected_toSimpleGraph_iff`: connectivity as a cut condition.
 * `Cslib.Multigraph.le_minBalancedCut_iff`: the characterization of `e(G)`.

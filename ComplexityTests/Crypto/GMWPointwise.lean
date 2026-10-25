@@ -153,39 +153,4 @@ theorem empty_viewAdvantage_le (n : ℕ) (z : List Bool) :
     exact PMF.bind_const _ _
   simpa only [viewAdvantage, id_eq, hreduce, Game.advantage_self, mul_zero, add_zero] using hbound
 
-/--
-info: 'ComplexityTests.Crypto.GMWPointwise.adaptiveVerifier_isOraclePPTOn' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms adaptiveVerifier_isOraclePPTOn
-
-/--
-info: 'ComplexityTests.Crypto.GMWPointwise.runTwoRound_adaptiveVerifier' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms runTwoRound_adaptiveVerifier
-
-/--
-info: 'Cslib.Crypto.GMW.gmwView_advantage_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms GMW.gmwView_advantage_le
-
-/--
-info: 'Cslib.Crypto.GMW.isPPTOn_gmwViewReduction' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms GMW.isPPTOn_gmwViewReduction
-
-/--
-info: 'Cslib.Crypto.GMW.gmwView_negligible_of_advice_prg' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms GMW.gmwView_negligible_of_advice_prg
-
 end ComplexityTests.Crypto.GMWPointwise

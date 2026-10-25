@@ -53,6 +53,7 @@ linear-size prefix network. All gates, including constants and negations, count.
 
 ## Main results
 
+* `Cslib.Circuits.Boolean.depth_carryLookahead_le_log`: logarithmic circuit depth bound.
 * `Cslib.Circuits.Boolean.val_eval_carryLookahead`: exact unsigned addition at every width.
 * `Cslib.Circuits.Boolean.depth_carryLookahead_le`, `size_carryLookahead`: depth at most
   `7 + 2 * clog 2 (w + 1)` and exactly `15*w + 2*(w+1) + 3*(w+1)*clog 2 (w+1)` gates.

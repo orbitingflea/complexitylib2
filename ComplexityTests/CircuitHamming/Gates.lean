@@ -235,20 +235,6 @@ example (f g h : Fin 0 → Bool) :
 /-! ### Axioms -/
 
 /--
-info: 'Cslib.BitString.hammingDist_and_add_hammingDist_or' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms hammingDist_and_add_hammingDist_or
-
-/--
-info: 'Cslib.BitString.hammingDist_add_hammingDist_and' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms hammingDist_add_hammingDist_and
-
-/--
 info: 'Cslib.BitString.median_assoc' depends on axioms:
 [Quot.sound]
 -/
@@ -261,68 +247,5 @@ info: 'Cslib.BitString.median_median_distrib' depends on axioms:
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms median_median_distrib
-
-/--
-info: 'Cslib.BitString.hammingDist_add_hammingDist_median' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms hammingDist_add_hammingDist_median
-
-/--
-info: 'Cslib.BitString.hammingDist_median_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms hammingDist_median_le
-
-/--
-info: 'Cslib.BitString.two_mul_hammingDist_parityOn' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms two_mul_hammingDist_parityOn
-
-/--
-info: 'Cslib.BitString.two_mul_hammingDist_proj' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms two_mul_hammingDist_proj
-
-/--
-info: 'Cslib.BitString.hammingDist_proj_div' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms hammingDist_proj_div
-
-/--
-info: 'Cslib.BitString.two_mul_hammingDist_add_proj' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms two_mul_hammingDist_add_proj
-
-/--
-info: 'Cslib.Circuits.Boolean.complexity_add_projs_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms complexity_add_projs_le
-
-/--
-info: 'Cslib.Circuits.Boolean.circuitDist_proj_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms circuitDist_proj_le
-
-/--
-info: 'Cslib.Circuits.Boolean.five_le_circuitDist_proj' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms five_le_circuitDist_proj
 
 end ComplexityTests.CircuitHamming.Gates

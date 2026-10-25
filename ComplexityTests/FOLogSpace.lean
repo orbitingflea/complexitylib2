@@ -16,8 +16,7 @@ Concrete sentences over the vocabulary of graphs and over a nullary vocabulary h
 languages in `L`; the problems are nontrivial (an encoded structure in, one out, including the
 empty structure), malformed inputs are out, the definable-class corollary applies, and the usual
 closure properties of `L` carry over. A counter program copying its input exercises the emitting
-path: it computes the identity in logarithmic space. Axiom guards cover the headline results and
-the logarithmic-space machinery: query machines and counter programs.
+path: it computes the identity in logarithmic space.
 -/
 
 namespace ComplexityTests.FOLogSpace
@@ -292,77 +291,5 @@ example : (graphVocabulary.encStructurePrefix edge 1).length = tableStart edge 1
 example : tableStart edge 1 = 14 := by decide
 
 end Pieces
-
-/-! ### Axioms -/
-
-/--
-info: 'Cslib.Logic.Vocabulary.queryLanguage_mem_L' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.Vocabulary.queryLanguage_mem_L
-
-/--
-info: 'Cslib.Logic.FO.Definable.queryLanguage_mem_L' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.FO.Definable.queryLanguage_mem_L
-
-/--
-info: 'Cslib.Logic.Vocabulary.ModelChecker.reaches_shapeCode' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.Vocabulary.ModelChecker.reaches_shapeCode
-
-/--
-info: 'Cslib.Logic.Vocabulary.ModelChecker.reaches_formulaCode' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.Vocabulary.ModelChecker.reaches_formulaCode
-
-/--
-info: 'Turing.QueryMachine.computableInLogSpace' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.QueryMachine.computableInLogSpace
-
-/--
-info: 'Turing.QueryMachine.computableInSpace' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.QueryMachine.computableInSpace
-
-/--
-info: 'Turing.CounterProgram.computableInLogSpace' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.CounterProgram.computableInLogSpace
-
-/--
-info: 'Turing.CounterProgram.computableInLogSpace_of_reaches' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.CounterProgram.computableInLogSpace_of_reaches
-
-/--
-info: 'Turing.CounterProgram.computableInLogSpace_of_reachesOut' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.CounterProgram.computableInLogSpace_of_reachesOut
-
-/--
-info: 'Turing.CounterProgram.reachesOut_blocksCode' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.CounterProgram.reachesOut_blocksCode
 
 end ComplexityTests.FOLogSpace

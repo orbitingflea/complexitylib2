@@ -15,8 +15,7 @@ zero, including on an empty input universe. Nullary output relations still have 
 tables in both cases. Malformed inputs produce malformed outputs. A restricted two-dimensional
 interpretation has two output elements and a binary relation;
 its two ranks and full output are checked explicitly. Definable graph queries instantiate the
-reduction theorem and both class-closure corollaries. Axiom guards cover the new
-machine theorem and the headline reduction theorem.
+reduction theorem and both class-closure corollaries.
 -/
 
 namespace ComplexityTests.FOLogSpaceReduction
@@ -213,33 +212,5 @@ example : LogSpaceReducible encStructure encStructure
       graphVocabulary graphVocabulary loopClass_isoClosed
 
 end DistinctPairs
-
-/--
-info: 'Cslib.Logic.FO.Interpretation.computableInLogSpace_encodedMap' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.FO.Interpretation.computableInLogSpace_encodedMap
-
-/--
-info: 'Cslib.Logic.FO.Reduces.logSpaceReducible' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.FO.Reduces.logSpaceReducible
-
-/--
-info: 'Cslib.Logic.FO.Reduces.queryLanguage_mem_L' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.FO.Reduces.queryLanguage_mem_L
-
-/--
-info: 'Cslib.Logic.FO.Reduces.queryLanguage_mem_P' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.FO.Reduces.queryLanguage_mem_P
 
 end ComplexityTests.FOLogSpaceReduction

@@ -35,6 +35,10 @@ large unary indices. The alphabet decoder and block width are fixed before the r
   binary query indices, and verdict on arbitrary inputs.
 * `Cslib.PCP.Encoded.Graph.edgeVerifier_accepts`: the exact constraint checked for every proof.
 * `Cslib.PCP.Encoded.Graph.accepts_proofOfLabels`: a satisfying labelling gives a finite proof.
+* `Cslib.PCP.Encoded.Edge.proofVerdict_answers`: the verdict on the answers to `proofQueries` is
+  the constraint evaluated on the two decoded endpoint blocks.
+* `Cslib.PCP.Encoded.Graph.proofLabels_proofOfLabels`: every declared vertex recovers its label from
+  the packed proof.
 
 ## References
 

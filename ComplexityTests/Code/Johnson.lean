@@ -16,7 +16,7 @@ import Mathlib.Tactic.ComputeDegree
 The Reed–Solomon code of dimension two over `ZMod 5`, of length five and minimum distance four,
 uniquely decodes one error. The Johnson bound applies at radius two, beyond half the minimum
 distance: a Hamming ball of radius two contains at most ten codewords, and listing them list
-decodes the code up to radius `2 / 5`. The axioms of the headline theorems.
+decodes the code up to radius `2 / 5`.
 -/
 
 namespace ComplexityTests.Code.Johnson
@@ -71,28 +71,5 @@ example : ∃ C : ListCode (Fin 2 → ZMod 5) (Fin 5) (ZMod 5) 10,
   simp only [Fintype.card_fin] at h
   norm_num at h
   exact h
-
-/-! ### Axioms of the headline theorems -/
-
-/--
-info: 'Cslib.Code.card_filter_hammingDist_le_mul_le' depends on axioms: [propext,
-Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Code.card_filter_hammingDist_le_mul_le
-
-/--
-info: 'Cslib.Code.card_filter_hammingDist_le_le' depends on axioms: [propext, Classical.choice,
-Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Code.card_filter_hammingDist_le_le
-
-/--
-info: 'Cslib.Code.exists_listCode_listDecodes' depends on axioms: [propext, Classical.choice,
-Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Code.exists_listCode_listDecodes
 
 end ComplexityTests.Code.Johnson

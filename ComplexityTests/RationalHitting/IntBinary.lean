@@ -10,8 +10,8 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.In
 # Binary sign-magnitude integers and binary subtraction
 
 Concrete codes of binary sign-magnitude integers and their lengths, the schoolbook subtraction
-program on concrete operands, instances of the binary length bounds, composed clients of the
-integer certificates under `fun_prop`, and the axioms of the headline certificates.
+program on concrete operands, instances of the binary length bounds, and composed clients of the
+integer certificates under `fun_prop`.
 -/
 
 namespace ComplexityTests.IntBinary
@@ -95,56 +95,5 @@ example : ComputableTidilyInPolyTime (fun p : List ℤ × ℤ => p.1.sum - p.2)
 example : ComputableTidilyInPolyTime (fun p : ℕ × ℕ => (p.1 - p.2) * p.1 ^ 3)
     (encPair encNat encNat) encNat := by
   fun_prop
-
-/-! ### Axioms of the headline certificates -/
-
-/--
-info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.binary_sub' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms binary_sub
-
-/--
-info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.binary_pow' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms binary_pow
-
-/--
-info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.intBin_add' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms intBin_add
-
-/--
-info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.intBin_sub' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms intBin_sub
-
-/--
-info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.intBin_mul' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms intBin_mul
-
-/--
-info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.intBin_pow' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms intBin_pow
-
-/--
-info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.intBin_sum' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms intBin_sum
 
 end ComplexityTests.IntBinary

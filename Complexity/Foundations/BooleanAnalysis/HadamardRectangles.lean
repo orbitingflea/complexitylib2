@@ -10,6 +10,7 @@ module
 public import Complexity.Foundations.Data.BitString.Basic
 public import Complexity.Foundations.Data.BitString.Sign
 public import Mathlib.Data.Matrix.Mul
+import Complexity.Foundations.BooleanAnalysis.Fourier
 import Complexity.Foundations.LinearAlgebra.Matrix.Lindsey
 import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.Positivity
@@ -27,16 +28,28 @@ constant values are included.
 The proof specializes Lindsey's bilinear bound to the identity matrix after the standard ring
 equivalence between Boolean values and `ZMod 2`; it introduces no alternative inner product.
 
+With real weights in place of sets, the sign matrix `(-1)^{x ⬝ᵥ y}` multiplies squared norms by
+exactly `2 ^ |ι|` (`BitString.sum_sq_sum_mul_signVal_dotProduct`), so weighted bilinear sums obey
+`(∑ₓ ∑ᵧ a(x) b(y) (-1)^{x ⬝ᵥ y})² ≤ 2 ^ |ι| ‖a‖² ‖b‖²`
+(`BitString.sq_sum_mul_signVal_dotProduct_le`), by Cauchy–Schwarz and character orthogonality.
+For probability weights this is the bias bound behind the Chor–Goldreich two-source extractor
+[Chor and Goldreich][ChorGoldreich1988].
+
 ## Main results
 
 * `Cslib.BitString.sq_sum_signVal_dotProduct_le`: Lindsey's lemma for signed sums of the inner
   product over rectangles.
 * `Cslib.BitString.card_mul_le_two_pow_of_dotProduct_eq`: the monochromatic inner-product rectangle
   bound.
+* `Cslib.BitString.sum_sq_sum_mul_signVal_dotProduct`: Parseval's identity for the Hadamard
+  transform.
+* `Cslib.BitString.sq_sum_mul_signVal_dotProduct_le`: Lindsey's lemma with real weights.
 
 ## References
 
 * [S. Jukna, *Extremal Combinatorics*, Ch. 14][Jukna2011]
+* [B. Chor and O. Goldreich, *Unbiased bits from sources of weak randomness and probabilistic
+  communication complexity*][ChorGoldreich1988]
 * [*Threshold Circuits as Decision Trees and Finite-State Programs*, Lemma 2.4]
   [ThresholdCircuitRepresentations2026]
 -/
@@ -92,5 +105,63 @@ theorem card_mul_le_two_pow_of_dotProduct_eq (A B : Finset (ι → Bool)) (b : B
     · rw [Nat.cast_mul] at h0
       exact le_of_mul_le_mul_left hL h0
   exact_mod_cast this
+
+/-! ### Weighted sums: the Hadamard transform in `ℓ²` -/
+
+variable [DecidableEq ι]
+
+/-- **Parseval's identity for the Hadamard transform.** For real weights `a` on the bit strings
+indexed by `ι`, the transform `y ↦ ∑ₓ a(x) (-1)^{x ⬝ᵥ y}` has squared norm `2 ^ |ι|` times that of
+`a`: the sign matrix `(-1)^{x ⬝ᵥ y}` has orthogonal rows of squared length `2 ^ |ι|`. -/
+theorem sum_sq_sum_mul_signVal_dotProduct (a : (ι → Bool) → ℝ) :
+    ∑ y : ι → Bool, (∑ x, a x * signVal (x ⬝ᵥ y)) ^ 2 = 2 ^ Fintype.card ι * ∑ x, a x ^ 2 := by
+  classical
+  have horth (x x' : ι → Bool) :
+      ∑ y : ι → Bool, signVal (x ⬝ᵥ y) * signVal (x' ⬝ᵥ y) =
+        if x = x' then 2 ^ Fintype.card ι else 0 := by
+    have hsign (y : ι → Bool) : signVal (x ⬝ᵥ y) * signVal (x' ⬝ᵥ y) =
+        if (x + x') ⬝ᵥ y then -1 else 1 := by
+      rw [← signVal_xor, add_dotProduct]
+      rfl
+    by_cases hxx : x = x'
+    · subst hxx
+      simp [signVal_mul_self]
+    · have hne : x + x' ≠ 0 := fun h => hxx (funext fun i => by
+        have hi := congrFun h i
+        simp only [Pi.add_apply, Pi.zero_apply] at hi
+        revert hi
+        cases x i <;> cases x' i <;> decide)
+      simp only [hsign, sum_ite_dotProduct, hne, hxx, ite_false]
+  calc
+    ∑ y : ι → Bool, (∑ x, a x * signVal (x ⬝ᵥ y)) ^ 2 =
+        ∑ y : ι → Bool, ∑ x, ∑ x', a x * a x' * (signVal (x ⬝ᵥ y) * signVal (x' ⬝ᵥ y)) := by
+      refine sum_congr rfl fun y _ => ?_
+      rw [sq, sum_mul_sum]
+      exact sum_congr rfl fun x _ => sum_congr rfl fun x' _ => by ring
+    _ = ∑ x, ∑ x', ∑ y : ι → Bool, a x * a x' * (signVal (x ⬝ᵥ y) * signVal (x' ⬝ᵥ y)) := by
+      rw [sum_comm]
+      exact sum_congr rfl fun x _ => sum_comm
+    _ = ∑ x, ∑ x', a x * a x' * ∑ y : ι → Bool, signVal (x ⬝ᵥ y) * signVal (x' ⬝ᵥ y) := by
+      simp only [mul_sum]
+    _ = 2 ^ Fintype.card ι * ∑ x, a x ^ 2 := by
+      simp only [horth, mul_ite, mul_zero, sum_ite_eq, mem_univ, ite_true, mul_sum]
+      exact sum_congr rfl fun x _ => by ring
+
+/-- **Lindsey's lemma with weights.** For real weights `a` and `b` on the bit strings indexed by
+`ι`, `(∑ₓ ∑ᵧ a(x) b(y) (-1)^{x ⬝ᵥ y})² ≤ 2 ^ |ι| ‖a‖² ‖b‖²`. Indicators of `A` and `B` recover
+`sq_sum_signVal_dotProduct_le`. -/
+theorem sq_sum_mul_signVal_dotProduct_le (a b : (ι → Bool) → ℝ) :
+    (∑ x, ∑ y, a x * b y * signVal (x ⬝ᵥ y)) ^ 2 ≤
+      2 ^ Fintype.card ι * (∑ x, a x ^ 2) * ∑ y, b y ^ 2 := by
+  have hswap : ∑ x, ∑ y, a x * b y * signVal (x ⬝ᵥ y) =
+      ∑ y, b y * ∑ x, a x * signVal (x ⬝ᵥ y) := by
+    rw [sum_comm]
+    exact sum_congr rfl fun y _ => by rw [mul_sum]; exact sum_congr rfl fun x _ => by ring
+  rw [hswap]
+  calc
+    (∑ y, b y * ∑ x, a x * signVal (x ⬝ᵥ y)) ^ 2 ≤
+        (∑ y, b y ^ 2) * ∑ y : ι → Bool, (∑ x, a x * signVal (x ⬝ᵥ y)) ^ 2 :=
+      sum_mul_sq_le_sq_mul_sq _ _ _
+    _ = _ := by rw [sum_sq_sum_mul_signVal_dotProduct]; ring
 
 end Cslib.BitString

@@ -99,46 +99,4 @@ example : (State.init [] : State 1) ≠ State.init [0] := by
   have := congrArg (fun s : State 1 => s.data.mem 0) h
   simp [State.init] at this
 
-/--
-info: 'Cslib.WordRAM.ToRAM.executes_compile' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.WordRAM.ToRAM.executes_compile
-
-/--
-info: 'Cslib.WordRAM.ToRAM.haltsWithResultInTime_padded' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.WordRAM.ToRAM.haltsWithResultInTime_padded
-
-/--
-info: 'Cslib.WordRAM.ToRAM.haltsWithResultInTime_prepared' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.WordRAM.ToRAM.haltsWithResultInTime_prepared
-
-/--
-info: 'Cslib.WordRAM.ToRAM.executes_compileAdditive' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.WordRAM.ToRAM.executes_compileAdditive
-
-/--
-info: 'Cslib.WordRAM.ToRAM.haltsWithResultInTime_padded_additive' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.WordRAM.ToRAM.haltsWithResultInTime_padded_additive
-
-/--
-info: 'Cslib.WordRAM.ToRAM.haltsWithResultInTime_prepared_additive' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.WordRAM.ToRAM.haltsWithResultInTime_prepared_additive
-
 end ComplexityTests.WordRAMRAM

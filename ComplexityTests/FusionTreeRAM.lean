@@ -137,44 +137,4 @@ example : (BinaryNodeProgram.code.eval 6 0 (binaryInput 9)).map
 #guard_msgs (whitespace := lax) in
 #print axioms BinaryNodeProgram.exec
 
-/-- info: 'Cslib.Algorithms.WordRAM.FusionTree.RankProgram.exec' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms RankProgram.exec
-
-/-- info: 'Cslib.Algorithms.WordRAM.FusionTree.LowerRankProgram.exec' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms LowerRankProgram.exec
-
-/-- info: 'Cslib.Algorithms.WordRAM.FusionTree.MSB.widthMSB_eq_log2' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms MSB.widthMSB_eq_log2
-
-/-- info: 'Cslib.Algorithms.WordRAM.FusionTree.MSB.widthMSB_virtual_bounds' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms MSB.widthMSB_virtual_bounds
-
-/-- info: 'Cslib.Algorithms.WordRAM.FusionTree.CompressProgram.exec_approximateSketch'
-depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms CompressProgram.exec_approximateSketch
-
-/-- info: 'Cslib.Algorithms.WordRAM.FusionTree.BoundaryProgram.exec' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms BoundaryProgram.exec
-
-/-- info: 'Cslib.Algorithms.WordRAM.FusionTree.NeighborProgram.exec' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms NeighborProgram.exec
-
-/-- info: 'Cslib.Algorithms.Lean.FusionTree.xorCorrectedRank_eq_upperRank' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Algorithms.Lean.FusionTree.xorCorrectedRank_eq_upperRank
-
 end FusionTreeRAMTests

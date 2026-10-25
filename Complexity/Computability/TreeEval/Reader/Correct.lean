@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.TreeEval.Reader.Arith
+import Complexity.Foundations.Data.Nat.Div
 
 /-!
 # Correctness of the Tree Evaluation read machine
@@ -187,16 +188,12 @@ private theorem runFrom_scan_loop {p : ℕ} [Fact p.Prime] {fr : Frame} {st : Li
         · simp [hb, hi, modifyAt, List.getD_eq_getElem?_getD]
       · simp [hb, BitString.bitVal]
 
-theorem mul_add_div_self (k : ℕ) (i : Fin ℓ) : (k * ℓ + i) / ℓ = k := by
-  rw [Nat.add_comm, Nat.add_mul_div_right _ _ (Nat.zero_lt_of_lt i.isLt), Nat.div_eq_of_lt i.isLt,
-    zero_add]
-
 /-- The bit of a table at position `k * ℓ + i`. -/
 theorem tableBit_mul_add (f : Gate ℓ) (k : ℕ) (i : Fin ℓ) :
     tableBit f (k * ℓ + i) = f (lowBits ℓ k) (highBits ℓ k) i := by
   have hmod : (k * ℓ + i) % ℓ = i := by
     rw [Nat.add_comm, Nat.add_mul_mod_self_right, Nat.mod_eq_of_lt i.isLt]
-  simp only [tableBit, mul_add_div_self, hmod, i.isLt, dite_true]
+  simp only [tableBit, Nat.mul_add_div_fin, hmod, i.isLt, dite_true]
 
 /-- **The update of a round**: from phase `1`, the pass over the table of the gate subtracts `±`
 the multilinear extensions of its output bits at the masked registers, in `4^ℓ * ℓ + 2` steps,
@@ -229,7 +226,7 @@ private theorem runFrom_update {p : ℕ} [Fact p.Prime] {fr : Frame} {st : List 
     congr 2
     rw [hsum i, tableLength, sum_range_mul_ite_mod _ i.isLt, eval_gatePoly_eq_sum]
     refine Finset.sum_congr rfl fun k _ => ?_
-    rw [tableBit_mul_add, cast_weight, mul_add_div_self]
+    rw [tableBit_mul_add, cast_weight, Nat.mul_add_div_fin]
     rfl
 
 private theorem next_push {p : ℕ} (R : Regs) {st : List Frame} (hst : st.length ≠ H) (neg : Bool)

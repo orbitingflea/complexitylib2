@@ -26,6 +26,8 @@ security reduction is separate work.
 
 ## Main results
 
+* `State.Invariant.shift_add`: one valid shift decision and correlated predictor preserve the
+  analytic invariant.
 * `round_sound`, `run_invariant`: local test and learner errors accumulate additively.
 * `run_sound`: a majority-or-dense-margin guarantee under the learner contract.
 

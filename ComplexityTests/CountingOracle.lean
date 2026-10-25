@@ -238,23 +238,4 @@ example {S : Type} (handler : (n : ℕ) → StateT S PMF (MultiTapeCTM.occurrenc
   obtain ⟨result, _⟩ := (handler 0 s).support_nonempty
   exact result.1.elim0
 
-/--
-info: 'Turing.MultiTapeMachine.filterMap_replayResult' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeMachine.filterMap_replayResult
-/--
-info: 'Turing.MultiTapeMachine.runOccurrenceTrace_erase' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeMachine.runOccurrenceTrace_erase
-/--
-info: 'Turing.MultiTapeMachine.replayTerminal_empty' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeMachine.replayTerminal_empty
-
 end ComplexityTests.CountingOracle

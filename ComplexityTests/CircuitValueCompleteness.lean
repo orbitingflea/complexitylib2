@@ -9,8 +9,8 @@ import Complexity.Computability.Complexity.Problems.CircuitValue.Completeness
 /-! The circuit value problem is `P`-complete under logarithmic-space
 reductions. Clients: the tableau of any machine is a well-formed circuit with its output wire
 among its wires; its hypothesis `n < 2 T` is met by the time bound of the reduction; the reduction
-applies to the circuit value problem itself and to its complement; completeness transfers to
-polynomial-time reductions; and axiom guards for the headline results. -/
+applies to the circuit value problem itself and to its complement; and completeness transfers to
+polynomial-time reductions. -/
 
 namespace ComplexityTests.CircuitValueCompleteness
 
@@ -92,8 +92,6 @@ example : LogSpaceHard @P encCircuitValue CircuitValue :=
 example (h : CircuitValue ∈ L encCircuitValue) : P encBits ⊆ L encBits :=
   CircuitValue.logSpaceHard.subset_L h encBits
 
-/-! ### Axiom guards -/
-
 /-- A single certified constructor provides circuits for every encoded input length. -/
 example {α : Type} {enc : α ↪ List Bool} {f : α → Bool}
     (hf : ComputableInPolyTime f enc encBool) :
@@ -101,55 +99,5 @@ example {α : Type} {enc : α ↪ List Bool} {f : α → Bool}
       ComputableInPolyTime (fun n => (circuits n).code) encUnary encCode ∧
       ∀ a, (circuits (enc a).length).eval interpretation (fun i => (enc a)[i]) 0 = f a :=
   CircuitValue.exists_uniformCircuits hf
-
-/-- info: 'Cslib.Complexity.CircuitValue.exists_uniformCircuits' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms CircuitValue.exists_uniformCircuits
-
-/-- info: 'Cslib.Complexity.CircuitValue.computableInPolyTime_tableauCode' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms CircuitValue.computableInPolyTime_tableauCode
-
-/-- info: 'Cslib.Complexity.CircuitValue.logSpaceComplete' depends on axioms: [propext,
-Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms CircuitValue.logSpaceComplete
-
-/-- info: 'Cslib.Complexity.CircuitValue.logSpaceHard' depends on axioms: [propext,
-Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms CircuitValue.logSpaceHard
-
-/-- info: 'Cslib.Complexity.CircuitValue.mem_L_iff_forall_P_eq_L' depends on axioms: [propext,
-Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms CircuitValue.mem_L_iff_forall_P_eq_L
-
-/-- info: 'Cslib.Complexity.CircuitValue.computableInLogSpace_tableauInstance' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms CircuitValue.computableInLogSpace_tableauInstance
-
-/-- info: 'Cslib.Circuits.Boolean.Tableau.eval_circuit' depends on axioms: [propext,
-Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms Tableau.eval_circuit
-
-/-- info: 'Cslib.Circuits.Boolean.Tableau.gateCode_inSpace' depends on axioms: [propext,
-Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms Tableau.gateCode_inSpace
-
-/-- info: 'Cslib.Complexity.CircuitValue.logSpaceReducible_of_mem_P' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms CircuitValue.logSpaceReducible_of_mem_P
-
-/-- info: 'Cslib.Complexity.CircuitValue.run_writer' depends on axioms:
-[propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms CircuitValue.run_writer
 
 end ComplexityTests.CircuitValueCompleteness

@@ -10,7 +10,7 @@ import Complexity.Tactic.PolyTime
 /-!
 # Vertex-splitting reduction tests
 
-Concrete, boundary, `fun_prop`, and axiom checks for `Graph.split` and the reductions from
+Concrete, boundary, and `fun_prop` checks for `Graph.split` and the reductions from
 directed to undirected Hamiltonian paths and cycles.
 -/
 
@@ -148,35 +148,5 @@ example : Graph.split ([], []) ∉ HamCycle := by
   rintro ⟨p, -, hcov, hne, -⟩
   obtain ⟨v, hv⟩ := List.exists_mem_of_ne_nil p hne
   simpa using (hcov v).1 hv
-
-/-! ### Axiom checks for headline theorems -/
-
-/--
-info: 'Cslib.Complexity.Graph.split_mem_HamPath_iff' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.Graph.split_mem_HamPath_iff
-
-/--
-info: 'Cslib.Complexity.Graph.split_mem_HamCycle_iff' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.Graph.split_mem_HamCycle_iff
-
-/--
-info: 'Cslib.Complexity.polyTimeReducible_DirHamPath_HamPath' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.polyTimeReducible_DirHamPath_HamPath
-
-/--
-info: 'Cslib.Complexity.polyTimeReducible_DirHamCycle_HamCycle' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.polyTimeReducible_DirHamCycle_HamCycle
 
 end ComplexityTests.NPCompleteGraphs.Undirected

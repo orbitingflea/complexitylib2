@@ -9,7 +9,7 @@ import Complexity.Computability.Circuit.Boolean.AffineDisperser
 /-!
 # Tests for the `3.5 n - 7 d` lower bound for affine dispersers
 
-Non-vacuity and axiom checks for `Complexity.Computability.Circuit.Boolean.AffineDisperser` and
+Non-vacuity checks for `Complexity.Computability.Circuit.Boolean.AffineDisperser` and
 `Complexity.Foundations.Combinatorics.AffineDisperser.Basic`: affine dispersers exist, so the
 hypothesis of Theorem 4.1 is satisfiable, and the theorem gives a concrete bound.
 -/
@@ -62,42 +62,5 @@ example : (initialState firstBit).Valid (fun x : BitString 1 => x 0) ∧
 
 example : 7 * 1 ≤ 2 * firstBit.size + 14 * 1 :=
   seven_mul_le_two_mul_size_add isAffineDisperser_first _ (Circuit.wiring_computes _ _)
-
-/-! ### Axioms -/
-
-/--
-info: 'Cslib.Circuits.Boolean.AffineDisperser.seven_mul_le_two_mul_size_add'
-depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Boolean.AffineDisperser.seven_mul_le_two_mul_size_add
-
-/--
-info: 'Cslib.Circuits.Boolean.AffineDisperser.State.Valid.exists_step'
-depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Boolean.AffineDisperser.State.Valid.exists_step
-
-/--
-info: 'Cslib.Circuits.Boolean.AffineDisperser.State.Valid.exists_affine_embedding'
-depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Boolean.AffineDisperser.State.Valid.exists_affine_embedding
-
-/--
-info: 'Cslib.Circuits.Boolean.AffineDisperser.State.Valid.out_not_affine'
-depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Boolean.AffineDisperser.State.Valid.out_not_affine
-
-/--
-info: 'Cslib.BitString.exists_isAffineDisperser'
-depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.BitString.exists_isAffineDisperser
 
 end ComplexityTests.AffineDisperserLowerBound

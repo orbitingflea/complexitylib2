@@ -19,6 +19,7 @@ public import Mathlib.Data.Fintype.Basic
 public import Mathlib.Data.Fintype.Pi
 public import Mathlib.Logic.Function.Const
 public import Mathlib.Logic.Function.DependsOn
+import Mathlib.Algebra.BigOperators.Fin
 import Mathlib.Algebra.BigOperators.Ring.Finset
 import Mathlib.Data.Fintype.BigOperators
 import Mathlib.GroupTheory.Index
@@ -58,6 +59,7 @@ it then takes each value on exactly half of the inputs (`card_filter_parityOn_eq
 * `Cslib.card_filter_parityOn_eq`, `Cslib.dens_filter_parityOn_eq`: the parity on a nonempty set
   takes each value on half of the inputs.
 * `Cslib.card_filter_parity_eq_true`: parity of `n ≥ 1` bits is true on `2 ^ (n - 1)` inputs.
+* `Cslib.foldl_bne_eq_parity`: folding `xor` (`bne`) over a list of bits computes `parity`.
 
 ## References
 
@@ -293,5 +295,35 @@ theorem BitString.exists_eq_parityOn_iff [Finite ι] {f : (ι → Bool) → Bool
   calc f x = f fun j => decide (j ∈ ({j | x j = true} : Finset ι)) := by simp
     _ = parityOn {j | x j = true} a := hT _
     _ = parityOn {i | a i = true} x := by simp only [parityOn, filter_filter, and_comm]
+
+/-- Folding `xor` over a Boolean word computes `parity` of its slice. -/
+theorem foldl_bne_eq_parity (w : List Bool) :
+    w.foldl bne false = parity w.length (fun i => w[i]) := by
+  have hcount : w.foldl bne false = decide (w.count true % 2 = 1) := by
+    have hgen (b : Bool) (l : List Bool) :
+        l.foldl bne b = (b != decide (l.count true % 2 = 1)) := by
+      induction l generalizing b with
+      | nil => cases b <;> simp
+      | cons a l ih =>
+        rw [List.foldl_cons, ih, List.count_cons]
+        cases a <;> cases b <;>
+        · by_cases h : l.count true % 2 = 1
+          · have h0 : (l.count true + 1) % 2 = 0 := by omega
+            simp [h, h0]
+          · have h1 : (l.count true + 1) % 2 = 1 := by omega
+            simp [h, h1]
+    simpa using hgen false w
+  rw [hcount, parity, parityOn, Bool.eq_iff_iff, decide_eq_true_eq, decide_eq_true_eq,
+    Finset.card_filter]
+  have hcard (l : List Bool) :
+      (∑ i : Fin l.length, if l[i] = true then 1 else 0) = l.count true := by
+    induction l with
+    | nil => rfl
+    | cons a l ih =>
+      rw [List.count_cons, ← ih]
+      refine (Fin.sum_univ_succ fun i : Fin (l.length + 1) =>
+        if (a :: l)[i] = true then (1 : ℕ) else 0).trans ?_
+      cases a <;> simp [Nat.add_comm]
+  rw [hcard w]
 
 end Cslib

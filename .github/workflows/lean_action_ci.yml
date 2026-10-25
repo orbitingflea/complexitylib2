@@ -95,6 +95,18 @@ jobs:
           test -d .lake/packages
           python3 -B -m unittest scripts/test_check_tidy_surface.py
           python3 -B scripts/check_tidy_surface.py
+      # Lints for the files a pull request adds or changes: names in module docstrings' "Main …"
+      # lists exist, and a new test file does more than restate signatures. See
+      # scripts/check_changed_files.py. The checkout is shallow, so the base commit is fetched
+      # and compared directly.
+      - name: "Changed-file lints"
+        if: github.event_name == 'pull_request' || github.event_name == 'merge_group'
+        env:
+          BASE: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha }}
+        run: |
+          set -e
+          git fetch --no-tags --depth=1 origin "$BASE"
+          python3 -B scripts/check_changed_files.py --base "$BASE"
       - name: "lake exe mk_all --check"
         run: |
           set -e

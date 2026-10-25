@@ -156,18 +156,6 @@ theorem computableInPolyTime_powerTable :
 
 /-! ### Lists of unary naturals -/
 
-/-- Take a unary number of elements of a framed list, by reversing and dropping. -/
-private theorem computableTidilyInPolyTime_take {α : Type} (enc : α ↪ List Bool) :
-    ComputableTidilyInPolyTime (fun p : List α × ℕ => p.1.take p.2)
-      (encPair (encList enc) encUnary) (encList enc) := by
-  have hrev := (listReverse enc).comp (fst (encList enc) encUnary)
-  have hcount : ComputableTidilyInPolyTime (fun p : List α × ℕ => p.1.length - p.2)
-      (encPair (encList enc) encUnary) encUnary :=
-    unary_sub.comp (((length_list enc).comp (fst _ _)).prod (snd _ _))
-  have h := (listReverse enc).comp ((dropUnary (encA := enc) (encL := encList enc)).comp
-    (hrev.prod hcount))
-  simpa only [Function.comp_def, ← List.reverse_take, List.reverse_reverse] using h
-
 /-- The product of a computed list of positive unary naturals, when the product is polynomially
 bounded: every partial product is at most the whole product. -/
 private theorem computableTidilyInPolyTime_prod_of_le {α : Type} {input : α ↪ List Bool}
@@ -348,7 +336,7 @@ private theorem computableTidilyInPolyTime_mixedDigit_degreePrimes :
       (encPair (encPair encUnary encUnary) encUnary) encUnary := by
   have htake : ComputableTidilyInPolyTime (fun q : (ℕ × ℕ) × ℕ => (degreePrimes q.1.1).take q.2)
       (encPair (encPair encUnary encUnary) encUnary) (encList encUnary) :=
-    (computableTidilyInPolyTime_take encUnary).comp ((computableInPolyTime_degreePrimes.tidy.comp
+    (takeUnary encUnary).comp ((computableInPolyTime_degreePrimes.tidy.comp
       ((fst encUnary encUnary).comp (fst _ _))).prod (snd _ _))
   have hprod := computableTidilyInPolyTime_prod_of_le htake
     (fun q p hp => (prime_of_mem_degreePrimes (List.mem_of_mem_take hp)).2.2.pos)

@@ -10,7 +10,7 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolySpace.P
 /-!
 # Tests for the Sipser–Lautemann theorem
 
-Non-vacuity, boundary, runtime-automation and axiom checks for
+Non-vacuity, boundary and runtime-automation checks for
 `Complexity.Computability.Complexity.Classes.PH.SipserLautemann` and the complement closure of
 `Cslib.Complexity.BPP`.
 -/
@@ -145,74 +145,6 @@ example : verifier encBits (Polynomial.C 2) noisyHeadVerifier ([true], []) = tru
   simp only [shifts, runs, halfRuns, List.countP_true, List.length_range, List.any_eq_true,
     List.mem_range]
   exact ⟨0, by decide, by decide⟩
-
-/-! ### Axiom checks -/
-
-/--
-info: 'Cslib.Complexity.compl_mem_BPP' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Complexity.compl_mem_BPP
-
-/--
-info: 'Cslib.Complexity.BPP_eq_preimage_compl_BPP' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Complexity.BPP_eq_preimage_compl_BPP
-
-/--
-info: 'Cslib.Complexity.SipserLautemann.exists_shifts_majorityAccepts' depends on axioms: [propext,
- Classical.choice,
- Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Complexity.SipserLautemann.exists_shifts_majorityAccepts
-
-/--
-info: 'Cslib.Complexity.SipserLautemann.exists_seed_not_majorityAccepts' depends on axioms: [propext,
- Classical.choice,
- Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Complexity.SipserLautemann.exists_seed_not_majorityAccepts
-
-/--
-info: 'Cslib.Complexity.SipserLautemann.verifier_polyTime' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Complexity.SipserLautemann.verifier_polyTime
-
-/--
-info: 'Cslib.Complexity.SipserLautemann.isAlternatingVerifier_verifier' depends on axioms: [propext,
- Classical.choice,
- Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Complexity.SipserLautemann.isAlternatingVerifier_verifier
-
-/--
-info: 'Cslib.Complexity.BPP_subset_SigmaP_two' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Complexity.BPP_subset_SigmaP_two
-
-/--
-info: 'Cslib.Complexity.BPP_subset_PiP_two' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Complexity.BPP_subset_PiP_two
-
-/--
-info: 'Cslib.Complexity.BPP_subset_SigmaP_two_inter_PiP_two' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Complexity.BPP_subset_SigmaP_two_inter_PiP_two
-
-/--
-info: 'Cslib.Complexity.BPP_subset_PH' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Complexity.BPP_subset_PH
 
 /-- Plain `fun_prop` uses the plain matrix-verifier certificate from a plain hypothesis. -/
 example {α : Type} {enc : α ↪ List Bool} {p : Polynomial ℕ} {V : α × List Bool → Bool}

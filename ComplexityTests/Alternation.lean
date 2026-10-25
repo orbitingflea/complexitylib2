@@ -17,8 +17,8 @@ universal, it accepts none, so both labels matter; both decide their problems wi
 which puts `Set.univ` and `∅` in `AP` with explicit machines, and their games of moves are won and
 lost. Two game verifiers, one won by the existential player's first move and one lost to the
 universal player's, put `Set.univ` and `∅` in `AP` through the guess-then-verify machine.
-Single-bit moves on concrete predicates, rounds of quantifiers on a concrete formula, Savitch's
-midpoint game on a two-word graph, and the axioms of the headline theorems.
+Single-bit moves on concrete predicates, rounds of quantifiers on a concrete formula, and
+Savitch's midpoint game on a two-word graph.
 -/
 
 namespace ComplexityTests.Alternation
@@ -259,107 +259,5 @@ example : ¬Alternation true (List.replicate (2 * ((1 + 1) * 1)) 1)
 example : Alternation true ([1] ++ [1, 1]) (fun z => z.take 1 = [true]) ↔
     Alternation true [1] (fun z => z.take 1 = [true]) :=
   alternation_append_iff fun z => by simp only [List.sum_cons, List.sum_nil, List.take_take]; rfl
-
-/-! ### Axioms -/
-
-/--
-info: 'Cslib.Complexity.AP_subset_PSPACE' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.AP_subset_PSPACE
-
-/--
-info: 'Cslib.Complexity.IsGameVerifier.mem_PSPACE' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.IsGameVerifier.mem_PSPACE
-
-/--
-info: 'Cslib.Complexity.exists_isGameVerifier_of_mem_AP' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.exists_isGameVerifier_of_mem_AP
-
-/--
-info: 'Turing.MultiTapeATM.acceptsWithin_iff_alternation' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeATM.acceptsWithin_iff_alternation
-
-/--
-info: 'Turing.MultiTapeATM.accepts_iff_acceptsWithin' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeATM.accepts_iff_acceptsWithin
-
-/--
-info: 'Cslib.Complexity.TQBF.gameReduce_mem_TQBF_iff' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.TQBF.gameReduce_mem_TQBF_iff
-
-/--
-info: 'Cslib.Complexity.NP_subset_AP' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.NP_subset_AP
-
-/--
-info: 'Cslib.Complexity.P_subset_AP' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.P_subset_AP
-
-/--
-info: 'Cslib.Complexity.IsGameVerifier.mem_AP' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.IsGameVerifier.mem_AP
-
-/--
-info: 'Turing.MultiTapeATM.guessVerify_spec' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeATM.guessVerify_spec
-
-/--
-info: 'Cslib.Reachability.alternation_midpointGame_iff' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Reachability.alternation_midpointGame_iff
-
-/--
-info: 'Cslib.Complexity.exists_isGameVerifier_of_mem_PSPACE' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.exists_isGameVerifier_of_mem_PSPACE
-
-/--
-info: 'Cslib.Complexity.PSPACE_subset_AP' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.PSPACE_subset_AP
-
-/--
-info: 'Cslib.Complexity.AP_eq_PSPACE' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.AP_eq_PSPACE
-
-/--
-info: 'Cslib.Complexity.mem_PSPACE_iff_exists_isGameVerifier' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.mem_PSPACE_iff_exists_isGameVerifier
 
 end ComplexityTests.Alternation

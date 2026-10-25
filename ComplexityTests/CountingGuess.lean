@@ -69,36 +69,6 @@ example : (OracleComp.interpret (fun n => List.ofFn (id : Fin n → Fin n))
   simpa [initial] using count_interpret_output [false] []
 
 /--
-info: 'Turing.MultiTapeCTM.GuessMachine.haltsWithin' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeCTM.GuessMachine.haltsWithin
-/--
-info: 'Turing.MultiTapeCTM.GuessMachine.runBranch_halted_iff' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeCTM.GuessMachine.runBranch_halted_iff
-/--
-info: 'Turing.MultiTapeCTM.GuessMachine.trace_bijOn' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeCTM.GuessMachine.trace_bijOn
-/--
-info: 'Turing.MultiTapeCTM.GuessMachine.branchCount_eq' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeCTM.GuessMachine.branchCount_eq
-/--
-info: 'Turing.MultiTapeCTM.GuessMachine.count_interpret_output' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeCTM.GuessMachine.count_interpret_output
-/--
 info: 'Turing.MultiTapeCTM.interpret_chooseOccurrence' depends on axioms: [propext, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in

@@ -13,7 +13,7 @@ import Complexity.Foundations.Data.BitString.Weight
 /-!
 # Tests for Håstad's sharp bound and the first-order undefinability of parity
 
-Non-vacuity and axiom checks for `Complexity.Computability.Circuit.Boolean.Hastad.Sharp` and
+Non-vacuity checks for `Complexity.Computability.Circuit.Boolean.Hastad.Sharp` and
 `Complexity.Computability.Circuit.Boolean.FirstOrder.Parity`. Parity has circuits of every AND/OR
 depth `d ≥ 2` (Lecomte–Ramakrishnan), so the hypotheses of the lower bound are satisfiable, and
 together they pin the size at `2 ^ Θ(n ^ (1 / (d - 1)))`. The first-order statements are
@@ -145,98 +145,5 @@ example (φ : ordLang.Sentence) : ¬ ∀ (M : Type) [ordLang.Structure M] [Finit
       (M ⊨ φ ↔ Even (Nat.card {m : M //
         FirstOrder.Language.Structure.RelMap (L := ordLang) Rel.P ![m]})) :=
   ModelChecking.not_forall_realize_iff_even_card Rel.P φ 0
-
-/-! ### Axioms -/
-
-/--
-info: 'Cslib.Circuits.Boolean.Unbounded.two_pow_le_card_andOr_of_computes_parity' depends on
-axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Unbounded.two_pow_le_card_andOr_of_computes_parity
-
-/--
-info: 'Cslib.Circuits.Boolean.Unbounded.two_pow_le_size_of_computes_parity_of_depthWith_le'
-depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Unbounded.two_pow_le_size_of_computes_parity_of_depthWith_le
-
-/--
-info: 'Cslib.Circuits.Boolean.Unbounded.two_pow_le_size_of_computes_parity_of_pow_le' depends on
-axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Unbounded.two_pow_le_size_of_computes_parity_of_pow_le
-
-/--
-info: 'Cslib.Circuits.Boolean.Unbounded.two_rpow_le_two_mul_size_of_computes_parity' depends on
-axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Unbounded.two_rpow_le_two_mul_size_of_computes_parity
-
-/--
-info: 'Cslib.Circuits.Boolean.Unbounded.two_pow_le_size_of_computes_parity_of_depth_le' depends on
-axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Unbounded.two_pow_le_size_of_computes_parity_of_depth_le
-
-/--
-info: 'Cslib.Circuits.Boolean.Unbounded.two_pow_le_size_of_formula_computes_parity_of_depthWith_le'
-depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Unbounded.two_pow_le_size_of_formula_computes_parity_of_depthWith_le
-
-/--
-info: 'Cslib.Circuits.Boolean.Unbounded.two_pow_le_size_of_computes_parity_of_depth_le_of_pow_le'
-depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Unbounded.two_pow_le_size_of_computes_parity_of_depth_le_of_pow_le
-
-/--
-info: 'Cslib.Circuits.Boolean.Unbounded.two_rpow_le_two_mul_size_of_computes_parity_of_depth_le'
-depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Unbounded.two_rpow_le_two_mul_size_of_computes_parity_of_depth_le
-
-/--
-info: 'Cslib.Circuits.Boolean.Unbounded.two_pow_le_size_of_formula_computes_parity_of_pow_le'
-depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Unbounded.two_pow_le_size_of_formula_computes_parity_of_pow_le
-
-/--
-info: 'Cslib.Circuits.Boolean.Unbounded.two_rpow_le_two_mul_size_of_formula_computes_parity'
-depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Unbounded.two_rpow_le_two_mul_size_of_formula_computes_parity
-
-/--
-info: 'Cslib.Logic.PL.DNF.not_forall_eval_eq_parity_fill_bne'
-depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Logic.PL.DNF.not_forall_eval_eq_parity_fill_bne
-
-/--
-info: 'Cslib.Circuits.Boolean.ModelChecking.not_eventually_forall_realize_expansion_iff_even'
-depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms ModelChecking.not_eventually_forall_realize_expansion_iff_even
-
-/--
-info: 'Cslib.Circuits.Boolean.ModelChecking.not_forall_realize_iff_even_card' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms ModelChecking.not_forall_realize_iff_even_card
 
 end ComplexityTests.HastadSharp

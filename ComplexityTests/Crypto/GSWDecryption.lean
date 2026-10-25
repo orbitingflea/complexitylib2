@@ -57,25 +57,4 @@ example : ((2 : ZMod (2 ^ 3)).val.testBit 2 ^^ (2 : ZMod (2 ^ 3)).val.testBit 1)
     ((6 : ZMod (2 ^ 3)).val.testBit 2 ^^ (6 : ZMod (2 ^ 3)).val.testBit 1) = false := by
   decide +kernel
 
-/--
-info: 'Cslib.Crypto.Homomorphic.GSW.decode_eq_xor_highBits' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms decode_eq_xor_highBits
-
-/--
-info: 'Cslib.Crypto.Homomorphic.GSW.decryptionPhase_eq_mulVec' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms decryptionPhase_eq_mulVec
-
-/--
-info: 'Cslib.Crypto.Homomorphic.GSW.decrypt_eq_xor_highBits' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms decrypt_eq_xor_highBits
-
 end ComplexityTests.GSWDecryption

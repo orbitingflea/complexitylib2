@@ -5,6 +5,8 @@ Authors: Samuel Schlesinger
 -/
 
 import Complexity.Crypto.Protocols.MAC.CarterWegman
+import Complexity.Tactic.PPT
+import Complexity.Tactic.PolyTime
 import Mathlib.Algebra.Field.ZMod
 
 /-!
@@ -12,9 +14,8 @@ import Mathlib.Algebra.Field.ZMod
 
 Checks concrete tag generation and verification for `xpolyHash` over `ZMod 7` and Boolean-matrix
 linear hashing over `BitString 2`, instantiates `OneTimeForger` and a two-query adaptive
-`CounterForger`, exercises the one-time, multi-query counter, and pseudorandom-pad security bounds,
-and audits the axiom dependencies of the headline theorems in
-`Complexity.Crypto.Protocols.MAC.CarterWegman`.
+`CounterForger`, and exercises the one-time, multi-query counter, and pseudorandom-pad security
+bounds of `Complexity.Crypto.Protocols.MAC.CarterWegman`.
 -/
 
 namespace ComplexityTests.Crypto.CarterWegman
@@ -198,158 +199,61 @@ example :
     sign, verify, PMF.monad_bind_eq_bind, PMF.monad_pure_eq_pure, PMF.pure_bind, ProbComp.eval_pure]
   congr 1
 
-/--
-info: 'Cslib.Crypto.Protocols.CarterWegman.maskedOneTimeGame_toReal_le_add_advantage' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.Protocols.CarterWegman.maskedOneTimeGame_toReal_le_add_advantage
+-- Concrete `IsOraclePPT` admissibility check for `wordProbPadTest` and `prfPadDistinguisher`.
+example :
+    IsOraclePPT Turing.MultiTapeTM.encBool
+      (prfPadDistinguisher
+        (wordProbPadTest
+          (fun n => BitString.sampleList n)
+          (fun _ k _ => k)
+          (fun _ => pure [])
+          (fun _ _ t => pure ([true], t)))) :=
+  isOraclePPT_prfPadDistinguisher_wordProbPadTest (by ppt) (by polytime) (by ppt) (by ppt)
 
-/--
-info: 'Cslib.Crypto.Protocols.CarterWegman.eval_prfRealGame_prfPadDistinguisher' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.Protocols.CarterWegman.eval_prfRealGame_prfPadDistinguisher
+/-- Two-slot `n`-bit nonce schedule: slot `0` has leading bit `false` and slot `1` has leading bit
+`true`, padded with `n - 1` `false` bits. For every `n ≥ 1`, both nonces have length `n` and are
+distinct on `{0, 1}`. -/
+def twoSlotNonce (n i : ℕ) : List Bool :=
+  decide (i = 1) :: List.replicate (n - 1) false
 
-/--
-info: 'Cslib.Crypto.Protocols.CarterWegman.eval_prfIdealGame_prfPadDistinguisher' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.Protocols.CarterWegman.eval_prfIdealGame_prfPadDistinguisher
+/-- Trivial counter forger that makes `0 ≤ 2` signing queries and outputs `(0, (0, 0))`. -/
+noncomputable def zeroQueryCounterForger (n : ℕ) :
+    CounterForger (BitString n) (BitString n) where
+  Coins := Unit
+  coins := PMF.pure ()
+  forge _ := pure (0, (0, 0))
 
-/--
-info: 'Cslib.Crypto.Protocols.CarterWegman.prfOneTimeGame_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.Protocols.CarterWegman.prfOneTimeGame_le
+-- Concrete `IsOraclePPT` admissibility check for `prfMultiPadDistinguisher` with `twoSlotNonce`.
+example :
+    IsOraclePPT Turing.MultiTapeTM.encBool
+      (prfMultiPadDistinguisher (fun _ => 2) twoSlotNonce (fun _ _ => pure false)) :=
+  isOraclePPT_prfMultiPadDistinguisher (by polytime) (by unfold twoSlotNonce; polytime) (by ppt)
 
-/--
-info: 'Cslib.Crypto.Protocols.CarterWegman.prfOneTimeStrongGame_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.Protocols.CarterWegman.prfOneTimeStrongGame_le
-
-/--
-info: 'Cslib.Crypto.Protocols.CarterWegman.prfOneTimeGame_ofProbComp_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.Protocols.CarterWegman.prfOneTimeGame_ofProbComp_le
-
-/--
-info: 'Cslib.Crypto.Protocols.CarterWegman.prfOneTimeGame_linearHash_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.Protocols.CarterWegman.prfOneTimeGame_linearHash_le
-
-/--
-info: 'Cslib.Crypto.Protocols.CarterWegman.bind_uniform_sign' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.Protocols.CarterWegman.bind_uniform_sign
-
-/--
-info: 'Cslib.Crypto.Protocols.CarterWegman.zeroQueryGame_apply_true' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.Protocols.CarterWegman.zeroQueryGame_apply_true
-
-/--
-info: 'Cslib.Crypto.Protocols.CarterWegman.oneTimeGame_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.Protocols.CarterWegman.oneTimeGame_le
-
-/--
-info: 'Cslib.Crypto.Protocols.CarterWegman.oneTimeStrongGame_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.Protocols.CarterWegman.oneTimeStrongGame_le
-
-/--
-info: 'Cslib.Crypto.Protocols.CarterWegman.run_interpret_counterRealHandler' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.Protocols.CarterWegman.run_interpret_counterRealHandler
-
-/--
-info: 'Cslib.Crypto.Protocols.CarterWegman.counterSlotGame_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.Protocols.CarterWegman.counterSlotGame_le
-
-/--
-info: 'Cslib.Crypto.Protocols.CarterWegman.counterGame_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.Protocols.CarterWegman.counterGame_le
-
-/--
-info: 'Cslib.Crypto.Protocols.CarterWegman.counterStrongGame_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.Protocols.CarterWegman.counterStrongGame_le
-
-/--
-info: 'Cslib.Crypto.Protocols.CarterWegman.maskedOneTimeGame_toReal_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.Protocols.CarterWegman.maskedOneTimeGame_toReal_le
-
-/--
-info: 'Cslib.Crypto.Protocols.CarterWegman.oneTimeGame_xpolyHash_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.Protocols.CarterWegman.oneTimeGame_xpolyHash_le
-
-/--
-info: 'Cslib.Crypto.Protocols.CarterWegman.counterGame_xpolyHash_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.Protocols.CarterWegman.counterGame_xpolyHash_le
-
-/--
-info: 'Cslib.Crypto.Protocols.CarterWegman.oneTimeGame_linearHash_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.Protocols.CarterWegman.oneTimeGame_linearHash_le
-
-/--
-info: 'Cslib.Crypto.Protocols.CarterWegman.counterGame_linearHash_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.Protocols.CarterWegman.counterGame_linearHash_le
-
-/--
-info: 'Cslib.Crypto.Protocols.CarterWegman.oneTimeGame_subsetSum_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.Protocols.CarterWegman.oneTimeGame_subsetSum_le
-
-/--
-info: 'Cslib.Crypto.Protocols.CarterWegman.counterGame_subsetSum_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.Protocols.CarterWegman.counterGame_subsetSum_le
+-- End-to-end check of `PseudorandomFunction.negligible_prfCounterGame` with `twoSlotNonce`,
+-- exercising `hforger`, `hnonce_len`, `hnonce_inj`, `htest_eval`, `hQ`, `hnonce`, and `htest_ppt`.
+example {family : List Bool → List Bool → List Bool} (hprf : PseudorandomFunction family)
+    {ε : ℕ → NNReal}
+    (hh : ∀ n, IsDeltaUniversalHash
+      (PMF.uniformOfFintype (Fin n → BitString n)) (BitString.LinearHash.hash (n := n) (m := n))
+      (ε n))
+    (hε : Negligible ε) :
+    Negligible (fun n =>
+      Game.succProbability
+        (prfCounterGame (PMF.uniformOfFintype (Fin n → BitString n)) family n (twoSlotNonce n)
+          BitString.LinearHash.hash (zeroQueryCounterForger n))) := by
+  refine hprf.negligible_prfCounterGame hh hε (Q := fun _ => 2) (nonce := twoSlotNonce)
+    zeroQueryCounterForger
+    (Filter.Eventually.of_forall fun _ _ => .pure _ _)
+    ?_ ?_ (fun _ _ => pure false) ?_
+    (by polytime) (by unfold twoSlotNonce; polytime) (by ppt)
+  · filter_upwards [Filter.eventually_ge_atTop 1] with n hn i _
+    simp [twoSlotNonce]
+    omega
+  · filter_upwards [Filter.eventually_ge_atTop 1] with n _ i hi j hj heq
+    have hhead : decide (i = 1) = decide (j = 1) := List.cons.inj heq |>.1
+    by_cases hi1 : i = 1 <;> by_cases hj1 : j = 1 <;> simp_all
+    omega
+  · intro n padSeq
+    simp [counterPadSeqDistinguisher, zeroQueryCounterForger, checkCounterSlot]
 
 end ComplexityTests.Crypto.CarterWegman

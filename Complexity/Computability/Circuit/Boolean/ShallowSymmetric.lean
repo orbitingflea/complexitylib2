@@ -13,6 +13,7 @@ public import Mathlib.Analysis.SpecialFunctions.Pow.Real
 public import Mathlib.Analysis.SpecialFunctions.Sqrt
 import Complexity.Computability.Circuit.Boolean.ShallowSymmetric.Bounds
 import Complexity.Computability.Circuit.Boolean.ShallowSymmetric.Moduli
+import Complexity.Foundations.Data.Nat.Power
 import Mathlib.Analysis.SpecialFunctions.Pow.NthRootLemmas
 
 /-!
@@ -82,7 +83,7 @@ theorem exists_symmetric_altFormula (d : ℕ) :
     obtain ⟨f, hs, he⟩ := AltFormula.exists_depth_two (fun x => a (weight x)) op
     refine ⟨f, hs.trans ?_, he⟩
     have h : 2 ^ n ≤ 2 ^ (1 * k) := Nat.pow_le_pow_right (by omega) (by simpa using hn)
-    simpa using add_le_two_pow_add_add_one_mul hk h (show 1 ≤ 2 ^ (0 * k) by simp)
+    simpa using Nat.add_le_two_pow_add_add_one_mul hk h (show 1 ≤ 2 ^ (0 * k) by simp)
   | succ d ih =>
     obtain ⟨A, hA⟩ := ih
     obtain ⟨C, hC, hmod⟩ := exists_moduli (d + 2)

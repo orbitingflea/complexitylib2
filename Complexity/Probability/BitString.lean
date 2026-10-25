@@ -11,6 +11,7 @@ public import Complexity.Probability.PMF
 public import Mathlib.Data.Fintype.Pi
 public import Mathlib.Data.List.OfFn
 import Complexity.Probability.PMF.Bind
+import Complexity.Probability.PMF.Uniform
 import Mathlib.Data.Vector.Basic
 
 /-!
@@ -29,8 +30,9 @@ this finite uniform distribution to a program drawing one independent fair bit a
 * `Cslib.BitString.mem_support_uniformList_iff`: support is exactly the requested length.
 * `Cslib.BitString.uniformList_map_of_bijective`: length-preserving permutations preserve
   uniformity.
-* `Cslib.BitString.uniformList_map_apply`: the probability of a value under a map of a uniform
-  word is the fraction of words of that length mapping to it.
+* `Cslib.BitString.uniformList_map_apply`,
+  `Cslib.BitString.toOuterMeasure_map_uniformList_toReal`: the probability of a value or event
+  under a map of a uniform word is the fraction of words of that length mapping into it.
 
 ## References
 
@@ -152,5 +154,16 @@ theorem uniformList_map_apply {β : Type*} [DecidableEq β] (f : List Bool → �
   rw [Finset.sum_ite, Finset.sum_const_zero, add_zero, Finset.sum_const, nsmul_eq_mul,
     div_eq_mul_inv]
   simp [eq_comm]
+
+open Classical in
+/-- The real probability that a function of a uniform word of length `n` lands in `S` is the
+fraction of words of that length mapping into `S`. -/
+theorem toOuterMeasure_map_uniformList_toReal {β : Type*} (f : List Bool → β) (n : ℕ)
+    (S : Set β) :
+    (((uniformList n).map f).toOuterMeasure S).toReal =
+      ((Finset.univ.filter fun r : Fin n → Bool => f (List.ofFn r) ∈ S).card : ℝ) / 2 ^ n := by
+  rw [uniformList, PMF.map_comp, PMF.toOuterMeasure_map_apply,
+    PMF.toOuterMeasure_uniformOfFintype_toReal]
+  simp [Function.comp_def, Set.mem_preimage]
 
 end Cslib.BitString

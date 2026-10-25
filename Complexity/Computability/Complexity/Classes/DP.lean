@@ -33,6 +33,7 @@ union and reduction closure are immediate duals of the DP results.
 ## Main results
 
 * `Cslib.Complexity.mem_DP_iff_diff`: differences of NP languages.
+* `Cslib.Complexity.mem_coDP_iff_union`: coDP consists of unions of an NP and a coNP language.
 * `Cslib.Complexity.inter_mem_DP`, `Cslib.Complexity.PolyTimeReducible.mem_DP`.
 * `Cslib.Complexity.NPComplete.dpComplete_prod`: the product of any NP-complete language and
   any coNP-complete language is DP-complete.

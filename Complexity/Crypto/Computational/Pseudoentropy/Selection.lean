@@ -29,6 +29,7 @@ security parameter; that choice is never supplied to the algorithm.
 ## Main results
 
 * `selectPredictor_error_le`: compare with every candidate, charging validation error.
+* `isPPTOn_selectPredictor`: empirical selection is strict PPT.
 * `SamplablePair.HasGap.eventually_indexed_error_ge`: one threshold for all candidate indices.
 
 ## References

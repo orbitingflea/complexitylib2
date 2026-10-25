@@ -87,28 +87,4 @@ example : ∀ x : BitString 2, (Monotone.literalsRailCircuit 2).eval Monotone.in
 example : (Monotone.literalsRailCircuit 3).program.cost Monotone.andCost = 0 :=
   Monotone.cost_literalsRailCircuit
 
-/--
-info: 'Cslib.Circuits.Fusion.ecomplexityFrom_literals_bounds' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Circuits.Fusion.ecomplexityFrom_literals_bounds
-
-/--
-info: 'Cslib.Circuits.Fusion.pairCoverComplexity_le_two_mul_size' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Circuits.Fusion.pairCoverComplexity_le_two_mul_size
-
-/--
-info: 'Cslib.Circuits.Fusion.PairCover.exists_computes_size_le' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Circuits.Fusion.PairCover.exists_computes_size_le
-
-/--
-info: 'Cslib.Circuits.Fusion.pairCoverComplexity_complexity_bounds' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Circuits.Fusion.pairCoverComplexity_complexity_bounds
-
 end ComplexityTests.FusionDeMorgan

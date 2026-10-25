@@ -30,6 +30,7 @@ identifies `ZMod 2` with `Bool`; it equals Mathlib's `ZMod.ringEquivOfPrime`
 * `Cslib.BitString.bitEquiv_eq_ringEquivOfPrime`: `bitEquiv` is `ZMod.ringEquivOfPrime Bool`.
 * `Cslib.BitString.bitEquiv_symm_apply`, `Cslib.BitString.bitEquiv_symm_false`,
   `Cslib.BitString.bitEquiv_symm_true`: `bitEquiv.symm` reads `false` as `0` and `true` as `1`.
+* `Cslib.BitString.bitEquiv_symm_foldl_xor`: `bitEquiv.symm` turns a fold over `xor` into a sum.
 
 ## References
 
@@ -66,5 +67,12 @@ theorem bitEquiv_symm_false : bitEquiv.symm false = 0 := rfl
 /-- `bitEquiv.symm` reads the bit `true` as `1`. -/
 @[simp]
 theorem bitEquiv_symm_true : bitEquiv.symm true = 1 := rfl
+
+/-- The inverse ring isomorphism maps a fold over `xor` to the sum of the mapped bits. -/
+theorem bitEquiv_symm_foldl_xor (l : List Bool) :
+    bitEquiv.symm (l.foldl xor false) = (l.map bitEquiv.symm).sum := by
+  rw [← map_list_sum]
+  congr 1
+  simp [List.sum_eq_foldl, Bool.add_eq_xor, Bool.zero_eq_false]
 
 end Cslib.BitString
