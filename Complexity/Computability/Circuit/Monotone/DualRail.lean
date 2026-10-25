@@ -219,6 +219,31 @@ private theorem evalCode_pair {σ : Signature} {U : Type*} (I : Interpretation �
   rw [hv]
   simp
 
+/-- Evaluating the dual-rail translation of a single binary gate (`and` or `or`) appends the gate's
+value and its negation to `railBits vs`. -/
+private theorem evalCode_dualGates_binary (vs : List Bool) {a b : ℕ} (ha : a < vs.length)
+    (hb : b < vs.length) :
+    evalCode interpretation false (railBits vs) (dualGates (.and, [a, b])) =
+      railBits (vs ++
+        [Boolean.interpretation .and fun k => [a, b][k.val]?.elim false (vs.getD · false)]) ∧
+    evalCode interpretation false (railBits vs) (dualGates (.or, [a, b])) =
+      railBits (vs ++
+        [Boolean.interpretation .or fun k => [a, b][k.val]?.elim false (vs.getD · false)]) := by
+  have hlr : (railBits vs).length = 2 * vs.length + 1 := length_railBits vs
+  have hTa := getD_railBits_true vs ha
+  have hFa := getD_railBits_false vs ha
+  have hTb := getD_railBits_true vs hb
+  have hFb := getD_railBits_false vs hb
+  simp only [List.getD_eq_getElem?_getD] at hTa hFa hTb hFb
+  rw [railBits_append, railBits_append]
+  constructor <;>
+    (simp only [dualGates, List.getD_cons_zero, List.getD_cons_succ]
+     rw [evalCode_pair _ _ _ _ _ (by
+       simp only [railWire, Bool.false_eq_true, ↓reduceIte, List.mem_cons,
+         List.not_mem_nil, or_false, forall_eq_or_imp, forall_eq]
+       omega)]
+     simp [interpretation, Boolean.interpretation, hTa, hFa, hTb, hFb])
+
 /-- **The translated gate list computes the dual-rail values**: on the dual-rail inputs, the
 gates translating gate `j` carry the value of gate `j` and its negation. -/
 theorem evalCode_dualCode (x : List Bool) {gates : List (Boolean.Op × List ℕ)}
@@ -230,16 +255,17 @@ theorem evalCode_dualCode (x : List Bool) {gates : List (Boolean.Op × List ℕ)
   | append_singleton gates g ih =>
     rw [Program.isCodeFrom_append] at h
     obtain ⟨hgates, ⟨⟨hlen, hlt⟩, -⟩⟩ := h
-    rw [dualCode_append, evalCode_append, ih hgates, evalCode_append_singleton, railBits_append]
+    rw [dualCode_append, evalCode_append, ih hgates, evalCode_append_singleton,
+      show dualCode [g] = dualGates g by simp [dualCode]]
     set vs := evalCode Boolean.interpretation false x gates with hvs
     have hlv : vs.length = x.length + gates.length := length_evalCode _ _ _ _
     have hw (j : ℕ) (hj : j < g.2.length) : g.2.getD j 0 < vs.length := by
       have := getD_lt_of_isCode hj hlt
       omega
     have hlr : (railBits vs).length = 2 * vs.length + 1 := length_railBits vs
-    rw [show dualCode [g] = dualGates g by simp [dualCode]]
     rcases g with ⟨_ | _ | _ | _, args⟩ <;> simp only at hlen hw
     · obtain rfl : args = [] := List.length_eq_zero_iff.1 hlen
+      rw [railBits_append]
       simp only [dualGates]
       rw [evalCode_pair _ _ _ _ _ (by simp)]
       simp [interpretation, Boolean.interpretation]
@@ -247,6 +273,7 @@ theorem evalCode_dualCode (x : List Bool) {gates : List (Boolean.Op × List ℕ)
       have ha : a < vs.length := by simpa using hw 0 (by simp)
       have hTa := getD_railBits_true vs ha
       have hFa := getD_railBits_false vs ha
+      rw [railBits_append]
       simp only [dualGates, List.getD_cons_zero]
       rw [evalCode_pair _ _ _ _ _ (by
           simp only [railWire, ↓reduceIte, List.mem_cons,
@@ -255,33 +282,11 @@ theorem evalCode_dualCode (x : List Bool) {gates : List (Boolean.Op × List ℕ)
       simp only [List.getD_eq_getElem?_getD] at hTa hFa
       simp [interpretation, Boolean.interpretation, hTa, hFa]
     · obtain ⟨a, b, rfl⟩ := List.length_eq_two.1 hlen
-      have ha : a < vs.length := by simpa using hw 0 (by simp)
-      have hb : b < vs.length := by simpa using hw 1 (by simp)
-      have hTa := getD_railBits_true vs ha
-      have hFa := getD_railBits_false vs ha
-      have hTb := getD_railBits_true vs hb
-      have hFb := getD_railBits_false vs hb
-      simp only [dualGates, List.getD_cons_zero, List.getD_cons_succ]
-      rw [evalCode_pair _ _ _ _ _ (by
-          simp only [railWire, Bool.false_eq_true, ↓reduceIte, List.mem_cons,
-            List.not_mem_nil, or_false, forall_eq_or_imp, forall_eq]
-          omega)]
-      simp only [List.getD_eq_getElem?_getD] at hTa hFa hTb hFb
-      simp [interpretation, Boolean.interpretation, hTa, hFa, hTb, hFb]
+      exact (evalCode_dualGates_binary vs (by simpa using hw 0 (by simp))
+        (by simpa using hw 1 (by simp))).1
     · obtain ⟨a, b, rfl⟩ := List.length_eq_two.1 hlen
-      have ha : a < vs.length := by simpa using hw 0 (by simp)
-      have hb : b < vs.length := by simpa using hw 1 (by simp)
-      have hTa := getD_railBits_true vs ha
-      have hFa := getD_railBits_false vs ha
-      have hTb := getD_railBits_true vs hb
-      have hFb := getD_railBits_false vs hb
-      simp only [dualGates, List.getD_cons_zero, List.getD_cons_succ]
-      rw [evalCode_pair _ _ _ _ _ (by
-          simp only [railWire, Bool.false_eq_true, ↓reduceIte, List.mem_cons,
-            List.not_mem_nil, or_false, forall_eq_or_imp, forall_eq]
-          omega)]
-      simp only [List.getD_eq_getElem?_getD] at hTa hFa hTb hFb
-      simp [interpretation, Boolean.interpretation, hTa, hFa, hTb, hFb]
+      exact (evalCode_dualGates_binary vs (by simpa using hw 0 (by simp))
+        (by simpa using hw 1 (by simp))).2
 
 /-! ### Circuits -/
 

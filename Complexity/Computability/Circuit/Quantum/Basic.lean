@@ -76,7 +76,7 @@ qubits `A` is a monoid homomorphism (`Cslib.Quantum.place`).
 
 * [S. Arora, B. Barak, *Computational Complexity: A Modern Approach*][AroraBarak09]
 * [Y. Shi, *Both Toffoli and Controlled-NOT need little help to do universal quantum
-  computation*][Shi2003]
+  computation*][Shi2003], §2 (arXiv:quant-ph/0205115v2)
 -/
 
 @[expose] public section

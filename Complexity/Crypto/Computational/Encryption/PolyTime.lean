@@ -39,12 +39,13 @@ open Probability Turing.MultiTapeTM
 
 /-- The actual chosen-message experiment has a strict clock in the full encoded caller input. -/
 @[fun_prop]
-theorem isPPTOn_game {keyGen : ℕ → ProbComp (List Bool × List Bool)}
-    {encrypt : ℕ → List Bool → Bool → ProbComp (List Bool)}
+theorem isPPTOn_game {Msg : Type} {encMsg : Msg ↪ List Bool}
+    {keyGen : ℕ → ProbComp (List Bool × List Bool)}
+    {encrypt : ℕ → List Bool → Msg → ProbComp (List Bool)}
     (hkeyGen : IsPPTOn encUnary (encPair encBits encBits) keyGen)
-    (hencrypt : IsPPTOn (encPair encUnary (encPair encBits encBool)) encBits
+    (hencrypt : IsPPTOn (encPair encUnary (encPair encBits encMsg)) encBits
       (fun p => encrypt p.1 p.2.1 p.2.2))
-    {adversary : Adversary} (hadversary : adversary.IsPPT)
+    {adversary : AdversaryOf Msg} (hadversary : AdversaryOf.IsPPT encMsg adversary)
     {α : Type} {input : α ↪ List Bool} {n : α → ℕ} {bit : α → Bool}
     (hn : ComputableTidilyInPolyTime n input encUnary)
     (hbit : ComputableTidilyInPolyTime bit input encBool) :

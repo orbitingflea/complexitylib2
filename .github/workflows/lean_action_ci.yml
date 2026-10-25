@@ -134,6 +134,24 @@ jobs:
           git fetch --no-tags --depth=1 origin "$BASE"
           python3 -B scripts/parallel_defs.py --base "$BASE" --github --no-build-check
           python3 -B -m unittest scripts/test_parallel_defs.py
+      # Advisory only: backticked Lean names in the PR description that the checked-out merge
+      # commit does not declare (renamed or dropped while the PR evolved). It reads the sources of
+      # the library, the tests, the abstracts, `.lake/packages` and the toolchain, so it runs after
+      # the build; names that the base declared are marked as removed by the PR. Findings go to the
+      # job summary and a notice; the step never fails the job. The body is the event payload's,
+      # i.e. as of the latest push; after editing the description, run
+      # `scripts/check_pr_names.py --pr N` locally. Its tests run with the Python tests at the start.
+      - name: "PR description names (advisory)"
+        if: github.event_name == 'pull_request'
+        continue-on-error: true
+        timeout-minutes: 5
+        env:
+          RECORDED_BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          BASE=$(git cat-file -p HEAD | sed -n 's/^parent //p' | head -n 1)
+          BASE=${BASE:-$RECORDED_BASE}
+          git fetch --no-tags --depth=1 origin "$BASE"
+          python3 -B scripts/check_pr_names.py --event "$GITHUB_EVENT_PATH" --base "$BASE" --github
       - name: "lake exe mk_all --check"
         run: |
           set -e
