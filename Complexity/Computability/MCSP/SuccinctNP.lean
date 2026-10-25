@@ -17,6 +17,7 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Bi
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Binary
+import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Length
 
 /-!
 # Succinct MCSP is in NP
@@ -46,6 +47,8 @@ given in binary. The verifier instantiates `MCSP.checkCertificateOn` with the li
   enumeration of an instance's samples.
 * `Cslib.SuccinctMCSP.toRaw`: embedding of `SuccinctMCSP.Instance` into raw data.
 * `Cslib.SuccinctMCSP.enc`, `Cslib.SuccinctMCSP.encBinary`: unary- and binary-threshold encodings.
+* `Cslib.SuccinctMCSP.ofFunctionEncLength`: the exact bit length of
+  `SuccinctMCSP.enc (SuccinctMCSP.Instance.ofFunction f S s)`.
 * `Cslib.SuccinctMCSP.rawVerifier`, `Cslib.SuccinctMCSP.verifier`: the `NP` verifiers.
 
 ## Main results
@@ -54,6 +57,8 @@ given in binary. The verifier instantiates `MCSP.checkCertificateOn` with the li
   samples.
 * `Cslib.SuccinctMCSP.mem_iff_exists_circuit_le_sampleBudget`: `SuccinctMCSP` membership with gate
   count capped at `MCSP.sampleBudget`.
+* `Cslib.SuccinctMCSP.rawSamples_ofFunction`, `Cslib.SuccinctMCSP.length_enc_ofFunction`: canonical
+  sample enumeration and encoded length of `Instance.ofFunction`.
 * `Cslib.SuccinctMCSP.mem_of_verifier_eq_true`, `Cslib.SuccinctMCSP.exists_verifier_append`:
   soundness and padded completeness of `SuccinctMCSP.verifier`.
 * `Cslib.SuccinctMCSP.isVerifier`, `Cslib.SuccinctMCSP.isVerifier_encBinary`: verifier correctness.
@@ -218,6 +223,61 @@ theorem encBinary_apply (x : Instance) :
     encBinary x =
       encPair (encPair encUnary (encList (encPair encBits encBool))) encNat (toRaw x) :=
   rfl
+
+private theorem filter_flatMap_ofFunction {n : ℕ} (f : BooleanFunction n)
+    (S : Finset (BitString n)) (l : List (BitString n)) :
+    (l.flatMap fun y => [(y, false), (y, true)]).filter
+        (· ∈ S.image fun x => (x, f x)) =
+      (l.filter (· ∈ S)).map fun y => (y, f y) := by
+  induction l with
+  | nil => rfl
+  | cons y ys ih =>
+    rw [List.flatMap_cons, List.cons_append, List.cons_append, List.nil_append,
+      List.filter_cons, List.filter_cons, List.filter_cons, ih]
+    by_cases hy : y ∈ S <;> cases hfy : f y <;> simp [hy, hfy]
+
+/-- For `Instance.ofFunction f S s`, the canonical sample enumeration `rawSamples` visits the
+inputs of `S` in the order of `BitString.enum n`, paired with their values under `f`. -/
+theorem rawSamples_ofFunction {n : ℕ} (f : BooleanFunction n)
+    (S : Finset (BitString n)) (s : ℕ) :
+    rawSamples (Instance.ofFunction f S s) =
+      ((BitString.enum n).filter (· ∈ S)).map fun y => (List.ofFn y, f y) := by
+  unfold rawSamples Instance.ofFunction enumSamples
+  dsimp only
+  rw [filter_flatMap_ofFunction, List.map_map]
+  rfl
+
+/-- The exact bit length of `SuccinctMCSP.enc (SuccinctMCSP.Instance.ofFunction f S s)` when
+`S.card = q`: the framed unary arity `n`, the twice-framed list of `q` samples of length `n` + `1`,
+and the unary threshold `s`. -/
+def ofFunctionEncLength (n q s : ℕ) : ℕ :=
+  4 * n + 3 + q * (8 * n + 10) + s
+
+private theorem length_encList_rawSamples_ofFunction {n : ℕ} (f : BooleanFunction n)
+    (S : Finset (BitString n)) (s : ℕ) :
+    (encList (encPair encBits encBool)
+      (rawSamples (Instance.ofFunction f S s))).length = S.card * (4 * n + 5) := by
+  have hlen : ((BitString.enum n).filter (· ∈ S)).length = S.card := by
+    have h := length_rawSamples (Instance.ofFunction f S s)
+    rwa [rawSamples_ofFunction, List.length_map, card_samples_ofFunction] at h
+  rw [rawSamples_ofFunction, length_encList, List.map_map]
+  have hconst : ((fun a => 2 * (encPair encBits encBool a).length + 1) ∘
+      fun y : BitString n => (List.ofFn y, f y)) = fun _ => 4 * n + 5 := by
+    funext y
+    simp only [Function.comp_apply, length_encPair, encBits_apply, List.length_ofFn,
+      encBool_apply, List.length_singleton]
+    omega
+  rw [hconst, List.map_const', List.sum_replicate, smul_eq_mul, hlen]
+
+/-- The encoded length of `Instance.ofFunction f S s` under `SuccinctMCSP.enc` depends only on the
+arity `n`, the sample count `S.card`, and the threshold `s`. -/
+@[simp] theorem length_enc_ofFunction {n : ℕ} (f : BooleanFunction n)
+    (S : Finset (BitString n)) (s : ℕ) :
+    (enc (Instance.ofFunction f S s)).length = ofFunctionEncLength n S.card s := by
+  rw [enc_apply, toRaw_apply, length_encPair, length_encPair,
+    length_encList_rawSamples_ofFunction]
+  simp only [Instance.ofFunction, encUnary_apply, List.length_replicate, ofFunctionEncLength]
+  ring
 
 private theorem card_samples_le_length_encList (x : Instance) :
     x.samples.card ≤ (encList (encPair encBits encBool) (rawSamples x)).length := by

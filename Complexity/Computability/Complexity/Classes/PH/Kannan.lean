@@ -21,6 +21,7 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Na
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Binary
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Log
 import Cslib.Computability.Circuit.Boolean.Shannon
+import Complexity.Foundations.Data.Nat.Log
 import Cslib.Foundations.Data.Nat.Asymptotics
 
 /-!
@@ -150,9 +151,7 @@ private theorem le_arity (k n : ℕ) : Nat.log 2 (n + 1) + 1 ≤ arity k n :=
 private theorem eventually_arity_le (k : ℕ) : ∀ᶠ n in atTop, arity k n ≤ n := by
   filter_upwards [Nat.eventually_mul_log_le (2 * (k + 3)) one_lt_two, eventually_ge_atTop 4]
     with n hn h4
-  have hlog : Nat.log 2 (n + 1) ≤ Nat.log 2 n + 1 := by
-    calc Nat.log 2 (n + 1) ≤ Nat.log 2 (n * 2) := Nat.log_mono_right (by omega)
-      _ = Nat.log 2 n + 1 := Nat.log_mul_base (by norm_num) (by omega)
+  have hlog : Nat.log 2 (n + 1) ≤ Nat.log 2 n + 1 := Nat.log_add_one_le 2 n
   have h2 : 2 ≤ Nat.log 2 n := (Nat.le_log_iff_pow_le (by norm_num) (by omega)).2 (by omega)
   calc arity k n ≤ (k + 3) * (Nat.log 2 n + 2) := Nat.mul_le_mul_left _ (by omega)
     _ ≤ 2 * (k + 3) * Nat.log 2 n := by nlinarith

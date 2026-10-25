@@ -469,6 +469,7 @@ public import Complexity.Computability.Circuit.Parallel
 public import Complexity.Computability.Circuit.Pi
 public import Complexity.Computability.Circuit.Pointwise
 public import Complexity.Computability.Circuit.Program
+public import Complexity.Computability.Circuit.Quantum.Basic
 public import Complexity.Computability.Circuit.Rational
 public import Complexity.Computability.Circuit.Rational.Affine
 public import Complexity.Computability.Circuit.Rational.BlockDivision
@@ -883,6 +884,7 @@ public import Complexity.Computability.Kolmogorov.Uncomputability
 public import Complexity.Computability.Languages.Slice
 public import Complexity.Computability.MCSP.AntiChecker
 public import Complexity.Computability.MCSP.Basic
+public import Complexity.Computability.MCSP.FormulaMagnification
 public import Complexity.Computability.MCSP.Magnification
 public import Complexity.Computability.MCSP.NP
 public import Complexity.Computability.MCSP.Partial
@@ -1405,6 +1407,7 @@ public import Complexity.Crypto.Computational.ElGamal
 public import Complexity.Crypto.Computational.Encryption.Authenticated
 public import Complexity.Crypto.Computational.Encryption.Basic
 public import Complexity.Crypto.Computational.Encryption.Circular
+public import Complexity.Crypto.Computational.Encryption.EncryptThenMAC
 public import Complexity.Crypto.Computational.Encryption.Hybrid
 public import Complexity.Crypto.Computational.Encryption.PolyTime
 public import Complexity.Crypto.Computational.Encryption.PublicKeyReplacement
@@ -1495,9 +1498,12 @@ public import Complexity.Crypto.Computational.Homomorphic.Leveled.Security
 public import Complexity.Crypto.Computational.Homomorphic.Refresh
 public import Complexity.Crypto.Computational.Hybrid.SavedPrediction
 public import Complexity.Crypto.Computational.Hybrid.Sequence
+public import Complexity.Crypto.Computational.IndexedSignature
 public import Complexity.Crypto.Computational.LWE.Basic
 public import Complexity.Crypto.Computational.MAC
 public import Complexity.Crypto.Computational.MerkleDamgard
+public import Complexity.Crypto.Computational.MerkleSignature
+public import Complexity.Crypto.Computational.MerkleSignature.Security
 public import Complexity.Crypto.Computational.MerkleTree
 public import Complexity.Crypto.Computational.MerkleTree.Binding
 public import Complexity.Crypto.Computational.OneWay
@@ -1801,6 +1807,7 @@ public import Complexity.Foundations.Data.MvPolynomial.DualNumber
 public import Complexity.Foundations.Data.MvPolynomial.Hessian
 public import Complexity.Foundations.Data.MvPolynomial.HessianRank
 public import Complexity.Foundations.Data.Nat.ArithmeticProgression
+public import Complexity.Foundations.Data.Nat.Asymptotics
 public import Complexity.Foundations.Data.Nat.Bits
 public import Complexity.Foundations.Data.Nat.Bitwise.HighestDiff
 public import Complexity.Foundations.Data.Nat.Bitwise.Multiplication

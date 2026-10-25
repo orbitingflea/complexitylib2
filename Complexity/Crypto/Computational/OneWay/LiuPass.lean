@@ -14,6 +14,8 @@ public import Complexity.Computability.Kolmogorov.AverageCase
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Binary
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Log
+import Complexity.Foundations.Data.Nat.Asymptotics
+import Complexity.Foundations.Data.Nat.Log
 import Complexity.Tactic.PPT
 import Complexity.Tactic.PolyTime
 
@@ -154,7 +156,7 @@ private def stretchLen (γ n : ℕ) : ℕ := n + γ * Nat.log 2 n
 private theorem stretchLen_succ_le (γ n : ℕ) :
     stretchLen γ (n + 1) ≤ stretchLen γ n + γ + 1 := by
   dsimp [stretchLen]
-  have h := Nat.mul_le_mul_left γ (log_two_succ_le n)
+  have h := Nat.mul_le_mul_left γ (Nat.log_add_one_le 2 n)
   rw [mul_add, mul_one] at h
   omega
 
@@ -316,8 +318,8 @@ theorem CondEPPRG.exists_mildlyHardOnAverageToOneSidedApprox_timeBoundedNat_log_
         1 - 1 / ((q.eval m : ℕ) : ℝ) := by
     filter_upwards [hall_sec, hG_ent,
       eventually_ge_atTop (4 * (γ + 1) + 4),
-      eventually_log_two_ge (γ + 2 * d + C₀ + 6),
-      eventually_mul_log_two_add_le α (γ + 5)] with
+      Nat.eventually_le_log (γ + 2 * d + C₀ + 6) Nat.one_lt_two,
+      Nat.eventually_add_mul_log_le (γ + 5) α Nat.one_lt_two] with
       n hn_sec hn_ent hn_4γ hlog_n_ge hlog_bound c m hm_def
     set m₀ := n + γ * Nat.log 2 n with hm₀_def
     have hc_le : c.val ≤ γ + 1 := Nat.le_of_lt_succ c.isLt
@@ -388,7 +390,7 @@ theorem CondEPPRG.exists_mildlyHardOnAverageToOneSidedApprox_timeBoundedNat_log_
         hthr_eq, Function.comp_def]
     set B : ℝ := (n : ℝ) - (α : ℝ) * (Nat.log 2 n : ℝ) - (c.val : ℝ) with hB_def
     have hB3 : 3 ≤ B := by
-      have hlog_real : (α : ℝ) * (Nat.log 2 n : ℝ) + ((γ : ℝ) + 5) ≤ (n : ℝ) := by
+      have hlog_real : ((γ : ℝ) + 5) + (α : ℝ) * (Nat.log 2 n : ℝ) ≤ (n : ℝ) := by
         exact_mod_cast hlog_bound
       have hc_real : (c.val : ℝ) ≤ (γ : ℝ) + 1 := by exact_mod_cast hc_le
       linarith only [hB_def, hlog_real, hc_real]

@@ -21,6 +21,7 @@ import Complexity.Computability.Probabilistic.Repeat
 import Complexity.Computability.Probabilistic.UniformNat
 import Complexity.Crypto.Game.Hybrid
 import Complexity.Crypto.Negligible.Basic
+import Complexity.Foundations.Data.List.Lookup
 import Complexity.Probability.PMF
 import Complexity.Tactic.PolyTime
 import Complexity.Tactic.PPT
@@ -90,13 +91,11 @@ namespace Cslib.Crypto
 open Filter ProbComp Probability Turing.MultiTapeTM
 open scoped NNReal ENNReal
 
-@[fun_prop]
 private theorem computableTidilyInPolyTime_frames {γ : Type} {encIn : γ ↪ List Bool}
     {w : γ → List Bool} (hw : ComputableTidilyInPolyTime w encIn encBits) :
     ComputableTidilyInPolyTime (fun a => frames (w a)) encIn (encList encBits) :=
   computableTidilyInDegree_frames.computableTidilyInPolyTime.comp hw
 
-@[fun_prop]
 private theorem computableTidilyInPolyTime_encList_bits {γ : Type} {encIn : γ ↪ List Bool}
     {l : γ → List (List Bool)}
     (hl : ComputableTidilyInPolyTime l encIn (encList encBits)) :
@@ -104,13 +103,15 @@ private theorem computableTidilyInPolyTime_encList_bits {γ : Type} {encIn : γ 
   (ComputableTidilyInPolyTime.of_eq (encIn := encList encBits) (encMid := encBits)
     fun _ => rfl).comp hl
 
-@[fun_prop]
 private theorem listGetDWithInput {γ : Type} {encIn : γ ↪ List Bool}
     {list : γ → List (List Bool)} {index : γ → ℕ}
     (hlist : ComputableTidilyInPolyTime list encIn (encList encBits))
     (hindex : ComputableTidilyInPolyTime index encIn encUnary) (fallback : List Bool) :
     ComputableTidilyInPolyTime (fun x => (list x).getD (index x) fallback) encIn encBits :=
   (ComputableTidilyInPolyTime.listGetD (encA := encBits) fallback).comp (hlist.prod hindex)
+
+attribute [local fun_prop] computableTidilyInPolyTime_frames
+  computableTidilyInPolyTime_encList_bits listGetDWithInput
 
 /-! ### Secure digital signatures imply one-way functions -/
 
@@ -409,20 +410,6 @@ private theorem two_mul_add_toNat_div_two (i : ℕ) (b : Bool) :
   have hb := Bool.toNat_le b
   omega
 
-private theorem getD_append_cons_ne {α : Type*} (front back : List α) (x₁ x₂ d : α) {k : ℕ}
-    (hk : k ≠ front.length) :
-    (front ++ x₁ :: back).getD k d = (front ++ x₂ :: back).getD k d := by
-  induction front generalizing k with
-  | nil =>
-    cases k with
-    | zero => exact absurd rfl hk
-    | succ k => simp
-  | cons a front ih =>
-    cases k with
-    | zero => simp
-    | succ k =>
-      simpa using ih (by simpa using hk)
-
 private theorem eval_replicate_split {α : Type} (prog : ProbComp α) {m j : ℕ} (hj : j < m) :
     ProbComp.eval (OracleComp.replicate m prog) =
       (do
@@ -466,7 +453,7 @@ private theorem lamportSign_eq_of_agreeAt {n j : ℕ} (hj : j < 2 * n)
       rw [htake_len]
       exact hagree hreq_len k hk
     conv_lhs => rw [hsplit]
-    exact getD_append_cons_ne (w.take j) (w.drop (j + 1)) (w.getD j []) [] [] hne
+    exact List.getD_append_cons_of_ne (w.take j) (w.drop (j + 1)) (w.getD j []) [] [] hne
   · rfl
 
 private theorem exists_unqueried_index {n : ℕ} (hn : 1 ≤ n) {msg : List Bool}
