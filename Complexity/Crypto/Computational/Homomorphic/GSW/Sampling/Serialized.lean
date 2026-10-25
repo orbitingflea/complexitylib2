@@ -10,6 +10,7 @@ module
 public import Complexity.Crypto.Computational.Homomorphic.GSW.Sampling
 public import Complexity.Computability.Probabilistic.CenteredBinomial
 public import Complexity.Computability.Probabilistic.UniformNat
+import Complexity.Foundations.Data.List.Lookup
 import Complexity.Probability.PMF.Map
 import Complexity.Tactic.PPT
 
@@ -95,8 +96,7 @@ def decodeKeyInputs (n m w : ℕ) (inputs : SerializedKeyInputs) : KeyInputs n m
 @[simp] theorem decode_serializeKeyInputs {n m w : ℕ} (inputs : KeyInputs n m w) :
     decodeKeyInputs n m w (serializeKeyInputs inputs) = inputs := by
   cases inputs
-  simp only [decodeKeyInputs, serializeKeyInputs, List.getD_eq_getElem?_getD,
-    List.getElem?_ofFn, Fin.is_lt, ↓reduceDIte, Option.getD_some, ZMod.natCast_zmod_val]
+  simp only [decodeKeyInputs, serializeKeyInputs, List.getD_ofFn, ZMod.natCast_zmod_val]
 
 /-- List all three encryption-coin indices without flattening or reordering them. -/
 def serializeCoins {n m w : ℕ}
@@ -114,8 +114,7 @@ def decodeCoins (n m w : ℕ) (coins : SerializedCoins) :
     (coins : Matrix (Fin (n + 1) × Fin w) (Fin m) Bool) :
     decodeCoins n m w (serializeCoins coins) = coins := by
   funext i j
-  simp only [decodeCoins, serializeCoins, List.getD_eq_getElem?_getD, List.getElem?_ofFn,
-    Fin.is_lt, ↓reduceDIte, Option.getD_some]
+  simp only [decodeCoins, serializeCoins, List.getD_ofFn]
 
 private theorem eval_sampleBinaryNat_eq_map_val (w : ℕ) :
     ProbComp.eval (sampleBinaryNat w) =
