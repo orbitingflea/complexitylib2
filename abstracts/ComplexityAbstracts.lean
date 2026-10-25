@@ -25,6 +25,8 @@ import ComplexityAbstracts.ImmermanSzelepcsenyiAbstract
 import ComplexityAbstracts.ImmermanSzelepcsenyiBridge
 import ComplexityAbstracts.PCPAbstract
 import ComplexityAbstracts.PCPBridge
+import ComplexityAbstracts.PartialMCSPAbstract
+import ComplexityAbstracts.PartialMCSPBridge
 import ComplexityAbstracts.Randomized
 import ComplexityAbstracts.ResolutionAbstract
 import ComplexityAbstracts.ResolutionBridge

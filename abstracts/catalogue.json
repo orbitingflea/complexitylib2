@@ -229,6 +229,27 @@
       ],
       "summary": "Two independent weak random sources whose min-entropies add up to more than the string length give a nearly fair bit through the inner product modulo two.",
       "scope": "Arbitrary sources with real min-entropy bounds, the exact bias bound 2^((n - k1 - k2)/2)/2 and its strong form, and sharpness at k1 + k2 = n; information-theoretic, with no running time asserted."
+    },
+    {
+      "id": "partial-mcsp",
+      "title": "Ilango: Partial MCSP is hard under the Exponential Time Hypothesis",
+      "module": "ComplexityAbstracts.PartialMCSPAbstract",
+      "headline_theorems": [
+        "ComplexityAbstracts.PartialMCSPAbstract.not_decidableInSubexpTime_partialMCSP",
+        "ComplexityAbstracts.PartialMCSPAbstract.not_decidableInSubexpTime_partialMCSP_tableSize"
+      ],
+      "supporting_theorems": [
+        "ComplexityAbstracts.PartialMCSPAbstract.not_decidableInSubexpTime_partialMCSP_encBinary",
+        "ComplexityAbstracts.PartialMCSPAbstract.not_decidableInSubexpTime_partialMCSPBinaryGate",
+        "ComplexityAbstracts.PartialMCSPAbstract.partialMCSP_mem_NP",
+        "ComplexityAbstracts.PartialMCSPAbstract.partialMCSP_mem_NP_encBinary"
+      ],
+      "summary": "Under the Exponential Time Hypothesis, deciding circuit size for partial Boolean functions requires at least quasi-polynomial time in the truth-table size.",
+      "scope": "Explicit 3SAT and PartialMCSP encodings (both unary and binary size thresholds), De Morgan all-gates and binary-gate cost measures, and deterministic multi-tape subexponential-time lower bounds 2^o(m log m) = N^o(log log N).",
+      "foundations": [
+        "ComplexityAbstracts.Encoding",
+        "ComplexityAbstracts.Computation"
+      ]
     }
   ]
 }
