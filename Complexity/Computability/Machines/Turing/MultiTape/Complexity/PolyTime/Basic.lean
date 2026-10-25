@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Primitives
+public import Complexity.Computability.Machines.Turing.MultiTape.Internal.PolyTimePrimitives
 public import Complexity.Computability.Machines.Turing.MultiTape.PolyTime
 public import Mathlib.Algebra.Polynomial.Eval.Defs
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
@@ -245,21 +246,6 @@ end Turing.MultiTapeTM.ComputableTidilyInPolyTime
 /-! ### Plain polynomial-time automation -/
 
 namespace Turing.MultiTapeTM.ComputableInPolyTime
-
-/-- Boolean conjunction is polynomial-time in the standard Boolean encoding. -/
-@[fun_prop]
-theorem bool_and :
-    ComputableInPolyTime (fun (p : Bool × Bool) => p.1 && p.2)
-  (encPair encBool encBool)
-  encBool :=
-  .of_tidy Turing.MultiTapeTM.ComputableTidilyInPolyTime.bool_and
-
-/-- Boolean negation is polynomial-time in the standard Boolean encoding. -/
-@[fun_prop]
-theorem bool_not :
-    ComputableInPolyTime Bool.not encBool
-  encBool :=
-  .of_tidy Turing.MultiTapeTM.ComputableTidilyInPolyTime.bool_not
 
 /-- Boolean disjunction is polynomial-time in the standard Boolean encoding. -/
 @[fun_prop]

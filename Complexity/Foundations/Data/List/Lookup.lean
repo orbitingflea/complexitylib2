@@ -25,6 +25,9 @@ import Mathlib.Data.List.OfFn
 * `List.Forall₂.getD`: related lists are related at every in-range defaulted lookup.
 * `List.getD_append_cons_length`, `List.getD_append_cons_of_ne`: reading the entry at index
   `front.length` of `front ++ x :: back`, and the reads that do not depend on it.
+* `List.getD_take_drop`: reading an in-range entry of `(l.drop k).take w` reads index `k + i`
+  of `l`.
+* `List.getD_ofFn_of_lt`, `List.getD_ofFn`: reading `List.ofFn f` at a valid index returns `f`.
 * `List.forall_mem_set_of_forall_mem`, `List.getD_le_of_forall_le`: preserve invariants under
   updates and bound defaulted reads of numeric register files.
 * `List.getD_map_range`: read a function tabulated over a bounded range.
@@ -66,6 +69,21 @@ theorem List.getD_append_cons_of_ne {α : Type*} (front back : List α) (x y d :
   · rw [List.getD_append_right _ _ _ _ hgt.le, List.getD_append_right _ _ _ _ hgt.le]
     obtain ⟨j, hj⟩ : ∃ j, i - front.length = j + 1 := ⟨i - front.length - 1, by omega⟩
     rw [hj, List.getD_cons_succ, List.getD_cons_succ]
+
+/-- Reading the `i`-th entry below `w` of `(l.drop k).take w` reads index `k + i` of `l`. -/
+theorem List.getD_take_drop {α : Type*} (l : List α) (k : ℕ) {w i : ℕ} (hi : i < w) (d : α) :
+    ((l.drop k).take w).getD i d = l.getD (k + i) d := by
+  simp only [List.getD_eq_getElem?_getD, List.getElem?_take_of_lt hi, List.getElem?_drop]
+
+/-- Reading `List.ofFn f` at a valid index returns the function value, whatever the default. -/
+theorem List.getD_ofFn_of_lt {α : Type*} {n : ℕ} (f : Fin n → α) {i : ℕ} (hi : i < n)
+    (d : α) : (List.ofFn f).getD i d = f ⟨i, hi⟩ := by
+  rw [List.getD_eq_getElem _ _ (by simpa using hi), List.getElem_ofFn]
+
+/-- Reading `List.ofFn f` at `i : Fin n` returns `f i`, whatever the default. -/
+theorem List.getD_ofFn {α : Type*} {n : ℕ} (f : Fin n → α) (i : Fin n) (d : α) :
+    (List.ofFn f).getD i d = f i :=
+  List.getD_ofFn_of_lt f i.isLt d
 
 /-- A property of all the entries of a list holds of all the entries of an update by a value
 having it. -/

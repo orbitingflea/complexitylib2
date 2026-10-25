@@ -13,6 +13,7 @@ public import Complexity.Computability.Circuit.Monotone.DualRail
 public import Cslib.Computability.Circuit.Boolean.Complexity
 import Complexity.Computability.Circuit.Fusion.Boolean
 import Complexity.Computability.Circuit.MapOp
+import Complexity.Foundations.Data.List.Lookup
 import Mathlib.Data.List.GetD
 
 /-!
@@ -86,19 +87,19 @@ private theorem railBitString_eq_append_literals (x : BitString n) (k : Fin (2 *
     railBitString x k =
       Fin.append (Boolean.AltFormula.literals x) (fun _ : Fin 1 => true) (railSelect k) := by
   have hlen : (List.ofFn x).length = n := List.length_ofFn
-  have hx (i : ℕ) (hi : i < n) : (List.ofFn x).getD i false = x ⟨i, hi⟩ := by
-    rw [List.getD_eq_getElem _ _ (by omega), List.getElem_ofFn]
   rw [railBitString, railSelect]
   split_ifs with h0 hpar
   · simp only [h0, getD_railBits_zero, Fin.append_right]
   · have h := getD_railBits_true (List.ofFn x) (w := (k.val - 1) / 2) (by omega)
     rw [show railWire true ((k.val - 1) / 2) = k.val by
       simp only [railWire, ite_true]; omega] at h
-    rw [h, hx _ (by omega), Fin.append_left, Boolean.AltFormula.literals, Fin.append_left]
+    rw [h, List.getD_ofFn_of_lt x (by omega) false, Fin.append_left, Boolean.AltFormula.literals,
+      Fin.append_left]
   · have h := getD_railBits_false (List.ofFn x) (w := (k.val - 1) / 2) (by omega)
     rw [show railWire false ((k.val - 1) / 2) = k.val by
       simp only [railWire, Bool.false_eq_true, ite_false]; omega] at h
-    rw [h, hx _ (by omega), Fin.append_left, Boolean.AltFormula.literals, Fin.append_right]
+    rw [h, List.getD_ofFn_of_lt x (by omega) false, Fin.append_left, Boolean.AltFormula.literals,
+      Fin.append_right]
 
 /-- A monotone circuit producing the dual-rail inputs from the literals, using a single constant
 gate and no conjunction. -/

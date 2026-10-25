@@ -13,6 +13,7 @@ public import Complexity.Foundations.Data.BitString.List
 public import Complexity.Foundations.Data.BitString.List.Operations
 public import Complexity.Foundations.Data.List.OfFn
 public import Mathlib.RingTheory.Trace.Defs
+import Complexity.Foundations.Data.List.Lookup
 import Mathlib.Data.List.GetD
 
 /-!
@@ -279,18 +280,13 @@ input bits. -/
 def blockPos {r n N : ℕ} (h : r * n ≤ N) (q : Fin r × Fin n) : Fin N :=
   Fin.castLE h (finProdFinEquiv q)
 
-theorem getD_take_drop (x : List Bool) {n u : ℕ} (hu : u < n) (i : ℕ) :
-    ((x.drop (n * i)).take n).getD u false = x.getD (n * i + u) false := by
-  rw [List.getD_eq_getElem?_getD, List.getD_eq_getElem?_getD, List.getElem?_take_of_lt hu,
-    List.getElem?_drop]
-
 private theorem readField_blockPos (B : Basis (Fin n) (ZMod 2) F) {r N : ℕ} (h : r * n ≤ N)
     (x : List Bool) (i : Fin r) :
     readField B (blockPos h) (ofList N x) i = fieldOfBits B ((x.drop (n * i)).take n) := by
   rw [readField, fieldOfBits]
   congr 1
   funext u
-  rw [getD_take_drop x u.2]
+  rw [List.getD_take_drop x (n * i) u.2]
   simp [blockPos, ofList, finProdFinEquiv_apply_val, add_comm]
 
 /-- **Ben-Sasson and Kopparty's function in coordinates**: `traceSym 1 r t` at the elements with

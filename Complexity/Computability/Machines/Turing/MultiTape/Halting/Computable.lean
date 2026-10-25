@@ -7,6 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
+public import Complexity.Computability.Machines.Turing.MultiTape.Halting.Computable.Defs
 public import Complexity.Computability.Machines.Turing.MultiTape.Halting.Basic
 public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO
@@ -67,26 +68,6 @@ variable {α β γ : Type*} {encIn : α ↪ List Bool} {encMid : β ↪ List Boo
   {encOut : γ ↪ List Bool}
 
 /-! ### Computable functions -/
-
-/-- `f` is computable: some machine with a binary alphabet and finitely many states computes it
-with respect to the encodings `encIn` and `encOut` within some time and space bounds. -/
-def IsComputable (f : α → β) (encIn : α ↪ List Bool) (encOut : β ↪ List Bool) : Prop :=
-  ∃ t s : α → ℕ, ComputableInTimeAndSpace f encIn encOut t s
-
-/-- **Computability is computability by a total machine**: some machine with a binary alphabet and
-finitely many states halts on every encoded input with the encoded value. -/
-theorem isComputable_iff {f : α → β} :
-    IsComputable f encIn encMid ↔ ∃ (k : ℕ) (State : Type) (_ : Finite State)
-      (tm : MultiTapeTM k Bool State), ∀ a, tm.Computes (encIn a) (encMid (f a)) := by
-  refine ⟨fun ⟨_, _, k, State, hfin, tm, htm⟩ => ⟨k, State, hfin, tm, fun a => (htm a).1⟩,
-    fun ⟨k, State, hfin, tm, htm⟩ => ?_⟩
-  choose t s hts using fun a => (htm a).exists_computesInTimeAndSpace
-  exact ⟨t, s, k, State, hfin, tm, hts⟩
-
-/-- Functions computable within bounds are computable. -/
-theorem ComputableInTimeAndSpace.isComputable {f : α → β} {t s : α → ℕ}
-    (h : ComputableInTimeAndSpace f encIn encMid t s) : IsComputable f encIn encMid :=
-  ⟨t, s, h⟩
 
 /-- Functions tidily computable within bounds are computable. -/
 theorem ComputableTidilyInTimeAndSpace.isComputable {f : α → β} {t s : α → ℕ}

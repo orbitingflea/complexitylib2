@@ -13,6 +13,7 @@ public import Complexity.Computability.Complexity.AffineDisperser.Coordinates
 public import Complexity.Foundations.Data.BitString.Block
 public import Complexity.Foundations.Data.BitString.Enumeration
 import Mathlib.Algebra.CharP.Two
+import Complexity.Foundations.Data.List.Lookup
 import Complexity.Foundations.FieldTheory.Finite.Basic
 
 /-!
@@ -233,10 +234,7 @@ private theorem embed_eq_fieldOfBits (hw : w ≠ 0) {b : ℕ} (hbw : b ≤ w) (a
 /-- The element with the bits of `v` as coordinates. -/
 theorem fieldOfBits_ofFn (hw : w ≠ 0) (v : BitString w) :
     fieldOfBits (𝔅 hw) (List.ofFn v) = (BinaryField.equivBits hw).symm v := by
-  rw [fieldOfBits_basis]
-  congr 1
-  funext j
-  simp [List.getD_eq_getElem?_getD]
+  simp [fieldOfBits_basis]
 
 /-- The numerator of a Lagrange basis polynomial: the product of `t - a'` over the other nodes. -/
 private theorem fieldOfBits_lagrangeNum (hw : w ≠ 0) {b : ℕ} (hbw : b ≤ w) (a : BitString b)
@@ -328,9 +326,8 @@ private theorem fieldOfBits_drop_take (hw : w ≠ 0) {M : ℕ} {y : List Bool}
   apply congrArg (BinaryField.equivBits hw).symm
   funext j
   rw [BitString.block_apply, hY, Fin.val_castAdd, finProdFinEquiv_apply_val,
-    List.getD_eq_getElem?_getD, List.getD_eq_getElem?_getD, List.getElem?_take,
-    ite_eq_left j.2, List.getElem?_drop]
-  congr 2
+    List.getD_take_drop y (i * w) j.2 false]
+  congr 1
   ring
 
 /-- The last `w` bits of the input, as a list. -/
@@ -387,11 +384,6 @@ theorem encodedProgram_eq {L : Language Bool} {gL : List Bool → Bool}
   apply congrArg (BinaryField.equivBits hw0)
   apply congrArg (truthTableExtension _ _)
   funext i
-  have hi : ((List.range M).map fun i =>
-      (y.drop (i * (4 * blockLength M y.length))).take (4 * blockLength M y.length)).getD i [] =
-      (y.drop (i * (4 * blockLength M y.length))).take (4 * blockLength M y.length) := by
-    rw [List.getD_eq_getElem?_getD, List.getElem?_map, List.getElem?_range i.2]
-    rfl
-  rw [hi, fieldOfBits_drop_take hw0 hY]
+  rw [List.getD_map_range _ [] i.2, fieldOfBits_drop_take hw0 hY]
 
 end Cslib.HardnessEncoding

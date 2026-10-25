@@ -7,6 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
+public import Complexity.Computability.Machines.Turing.MultiTape.Internal.DecoderWordMachines
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Lists
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Nat
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Option
@@ -190,29 +191,6 @@ theorem bits_ofBits (w : List Bool) : (ofBits w).bits = w.rdropWhile (!·) := by
         simp [h₀, List.rdropWhile_singleton]
       · simp only [bits_eq_nil_iff, h₀, ↓reduceIte]
         rfl
-
-/-- Drops the `false`s at the start of a word. -/
-def dropFalsesT : Transducer Bool Bool where
-  q₀ := false
-  step
-    | false, false => (false, [])
-    | _, b => (true, [b])
-  final _ := []
-  length_step_le q b := by cases q <;> cases b <;> simp
-  length_final_le _ := by simp
-
-theorem dropFalsesT_run_true (w : List Bool) : dropFalsesT.run true w = w := by
-  induction w with
-  | nil => rfl
-  | cons b w ih => exact congrArg (b :: ·) ih
-
-theorem dropFalsesT_run (w : List Bool) : dropFalsesT.run false w = w.dropWhile (!·) := by
-  induction w with
-  | nil => rfl
-  | cons b w ih =>
-    cases b
-    · exact ih
-    · exact congrArg (true :: ·) (dropFalsesT_run_true w)
 
 /-! ### Decoders -/
 
