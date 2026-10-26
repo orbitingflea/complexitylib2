@@ -98,9 +98,11 @@ private theorem dualGateDM_inSpace (b : Bool) {g : α → Boolean.Op × List ℕ
   have hop := fst' hg
   have hargs := snd' hg
   have hhead : ComputableTidilyInSpace (fun l : List ℕ => l.headD 0) (encList encNat) encNat
-      fun l => (encList encNat l).length := of_inO (.of_linear (ListEncoding.headD 0))
+      fun l => (encList encNat l).length :=
+    of_inO (.of_linear (Internal.NormalForm.linear (ListEncoding.headD 0)))
   have htail : ComputableTidilyInSpace List.tail (encList encNat) (encList encNat)
-      fun l => (encList encNat l).length := of_inO (.of_linear (ListEncoding.tail encNat))
+      fun l => (encList encNat l).length :=
+    of_inO (.of_linear (Internal.NormalForm.linear (ListEncoding.tail encNat)))
   have ha := budget_comp_linear hhead hargs
   have hb := budget_comp_linear hhead (budget_comp_linear htail hargs)
   have hrail (c : Bool) {w : α → ℕ} (hw : ComputableTidilyInSpace w encIn encNat Bs) :

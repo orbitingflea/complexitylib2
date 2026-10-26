@@ -12,6 +12,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Internal.Binary
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.DegreeOptionPrimitives
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Degree.Bounds
 public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.IterateWhile
+import Complexity.Computability.Machines.Turing.MultiTape.Combinators.Comp
 import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.Ring
 

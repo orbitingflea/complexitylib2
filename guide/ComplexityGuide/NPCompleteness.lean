@@ -14,6 +14,7 @@ import Complexity.Computability.Complexity.Problems.Hamiltonian.Undirected
 import Complexity.Computability.Complexity.Problems.IntegerProgramming
 import Complexity.Computability.Complexity.Problems.Knapsack
 import Complexity.Computability.Complexity.Problems.Partition
+import Complexity.Computability.Complexity.Problems.PlanarThreeSATThree
 import Complexity.Computability.Complexity.Problems.SubsetSum
 import Complexity.Computability.Complexity.Problems.TSP
 import Complexity.Computability.Complexity.Problems.ThreeSAT
@@ -242,6 +243,15 @@ Here is the tree, with the reduction for each edge and the completeness theorem 
   copy and connects copies by binary implication cycles. For `m` clauses and `ℓ` literal
   occurrences it produces exactly `m + ℓ` clauses, `3ℓ` literal occurrences, and `ℓ` distinct
   variables. No planarity condition is imposed.
+* Orthogonal planar 3SAT-3 is NP-hard, both when a drawing must exist
+  ({name}`PlanarThreeSATThree_npHard`) and when it is supplied
+  ({name}`DrawnPlanarThreeSATThree_npHard`). Clauses have width at most three, binary clauses
+  are allowed, and each variable has at most three literal occurrences. Routes are simple
+  integer orthogonal paths whose full real supports meet only at common graph endpoints.
+  The native polynomial-time compiler {name}`toDrawnPlanarThreeSAT` starts from ordinary 3SAT.
+  For original size `S = clauses + literal occurrences + 1`, its grid sides are at most
+  `13440*S`; formula size, route count, segment count and Manhattan wire length are quadratic
+  in `S` ({name}`toDrawnPlanarThreeSAT_fits`, {name}`toDrawnPlanarThreeSAT_costs`).
 * Subset sum reduces to partition ({name}`polyTimeReducible_SubsetSum_Partition`,
   {name}`Partition_npComplete`), knapsack ({name}`polyTimeReducible_SubsetSum_Knapsack`,
   {name}`Knapsack_npComplete`) and zero-one integer programming

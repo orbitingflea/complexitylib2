@@ -343,11 +343,10 @@ each statement against the numbered result. Organize modules by subject, not cha
   polynomial threshold, which needs a rate-1 efficient conditional EP-PRG running in `n + O(n^c)`
   multi-tape steps for a constant `c < 1`; prefix-free complexity,
   resource-bounded MCSP variants and connections to learning, cryptography and lower bounds; the
-  circuitized anti-checker with an efficient generator, hardness magnification (packaging
-  `MCSP/FormulaMagnification.lean` Lemma 16 into Oliveira–Santhanam Theorem 1 / Theorem 17
-  `NP ⊄ Formula[poly]` separations and Theorem 5 / Theorem 27 zero-error average-case formula
-  magnification), and hardness results for `MINKT` and `MINcKT` (whose definitions, conditional
-  `K^t` measure, and `NP` memberships are in `Kolmogorov/MINKT.lean`,
+  circuitized anti-checker with an efficient generator; the subexponential-formula consequence
+  Theorem 17(ii) and asymptotic parameter instantiations of Theorem 17(iii) and Theorem 5 in
+  `MCSP/FormulaMagnification.lean`; and hardness results for `MINKT` and `MINcKT` (whose
+  definitions, conditional `K^t` measure, and `NP` memberships are in `Kolmogorov/MINKT.lean`,
   `Kolmogorov/Conditional.lean`, and `Kolmogorov/MINcKT.lean`), as independently scoped
   developments; the reverse
   multi-tape-to-single-tape simulation and machine-backed Nisan–Wigderson decoding.
