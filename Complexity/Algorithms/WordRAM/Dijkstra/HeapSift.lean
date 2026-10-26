@@ -57,6 +57,7 @@ theorem execWithin_append {w T₁ T₂ : ℕ} {c d : Code .exact 27} {x y z : Da
   | op o => exact h₁.seq h₂
   | branch c pos neg _ _ => exact h₁.seq h₂
   | loop c body _ => exact h₁.seq h₂
+  | rand _ _ => exact h₁.seq h₂
 
 /-! ### Heap order with one defect -/
 

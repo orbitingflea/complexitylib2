@@ -82,6 +82,7 @@ public import Complexity.Algorithms.WordRAM.PrefixSums.Update
 public import Complexity.Algorithms.WordRAM.Queue.Basic
 public import Complexity.Algorithms.WordRAM.Queue.Dynamic
 public import Complexity.Algorithms.WordRAM.Queue.Model
+public import Complexity.Algorithms.WordRAM.Quicksort
 public import Complexity.Algorithms.WordRAM.Stack
 public import Complexity.Algorithms.WordRAM.Stack.Controller
 public import Complexity.Algorithms.WordRAM.VanEmdeBoas.Call
@@ -1449,6 +1450,10 @@ public import Complexity.Computability.WordRAM.Notation
 public import Complexity.Computability.WordRAM.PackedCount
 public import Complexity.Computability.WordRAM.RAM
 public import Complexity.Computability.WordRAM.RAMInput
+public import Complexity.Computability.WordRAM.Randomized
+public import Complexity.Computability.WordRAM.Randomized.Defs
+public import Complexity.Computability.WordRAM.Randomized.Expected
+public import Complexity.Computability.WordRAM.Randomized.Structured
 public import Complexity.Computability.WordRAM.Structured
 public import Complexity.Computability.WordRAM.Time
 public import Complexity.Computability.WordRAM.Trace
@@ -1929,6 +1934,7 @@ public import Complexity.Foundations.NumberTheory.AKS.Correctness
 public import Complexity.Foundations.NumberTheory.AKS.Criterion
 public import Complexity.Foundations.NumberTheory.AKS.Introspective
 public import Complexity.Foundations.NumberTheory.AKS.SmallR
+public import Complexity.Foundations.NumberTheory.Harmonic
 public import Complexity.Foundations.Order.BooleanSubalgebra
 public import Complexity.Foundations.Order.Changes
 public import Complexity.Foundations.Order.UpperLower
@@ -1952,6 +1958,7 @@ public import Complexity.Languages.Probabilistic.BitString
 public import Complexity.Languages.Probabilistic.BoundedUniform
 public import Complexity.Languages.Probabilistic.CenteredBinomial
 public import Complexity.Languages.Probabilistic.Concentration
+public import Complexity.Languages.Probabilistic.Expect
 public import Complexity.Languages.Probabilistic.Forking
 public import Complexity.Languages.Probabilistic.Iteration
 public import Complexity.Languages.Probabilistic.LinearHash
