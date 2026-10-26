@@ -250,6 +250,25 @@
         "ComplexityAbstracts.Encoding",
         "ComplexityAbstracts.Computation"
       ]
+    },
+    {
+      "id": "magnification",
+      "title": "McKay–Murray–Williams: barely superlinear circuit lower bounds for MCSP separate P from NP",
+      "module": "ComplexityAbstracts.MagnificationAbstract",
+      "headline_theorems": [
+        "ComplexityAbstracts.MagnificationAbstract.np_not_subset_ppoly_of_mcsp_hard",
+        "ComplexityAbstracts.MagnificationAbstract.p_ne_np_of_mcsp_hard"
+      ],
+      "supporting_theorems": [
+        "ComplexityAbstracts.MagnificationAbstract.mcsp_circuit_of_np_subset_ppoly",
+        "ComplexityAbstracts.MagnificationAbstract.mcsp_pow_circuit_of_np_subset_ppoly"
+      ],
+      "summary": "If NP has polynomial-size circuits, then MCSP on 2^n-bit truth tables has circuits of size 2^n poly(n + s(n)); hence barely superlinear MCSP lower bounds imply NP is not in P/poly and P ≠ NP.",
+      "scope": "Plain De Morgan circuits counting all operation gates, decision MCSP[n^k] on N = 2^n-bit truth tables in standard binary order, and native multi-tape P and NP; conditional magnification from a size lower bound at some arity per exponent.",
+      "foundations": [
+        "ComplexityAbstracts.Encoding",
+        "ComplexityAbstracts.Computation"
+      ]
     }
   ]
 }
