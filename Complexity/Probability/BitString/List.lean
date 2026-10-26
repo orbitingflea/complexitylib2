@@ -26,6 +26,7 @@ independent uniform bit strings. This includes zero-width rows and zero rows.
 * `Cslib.BitString.uniformList_replaceRow`: replacing one row with an independent uniform row
   preserves uniformity.
 * `Cslib.BitString.uniformList_map_listXor`,
+  `Cslib.BitString.uniformList_map_listXor_length`,
   `Cslib.BitString.uniformList_map_zipWith_xor`,
   `Cslib.BitString.uniformList_map_take_zipWith_xor`: XOR with a fixed word preserves uniformity
   (both in `listXor m [y, r]` and direct `List.zipWith Bool.xor y r` forms).

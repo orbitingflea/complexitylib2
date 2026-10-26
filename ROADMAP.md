@@ -120,9 +120,11 @@ families and full-input native runtime.
 - **Sigma protocols and Fiat–Shamir** ([#581]): computational Schnorr signatures under discrete
   log against strict PPT forgers; eavesdropping security in the strict-PPT model, with the
   statistical-distance term from sampling `ZMod q`.
-- **Diffie–Hellman and ElGamal:** group-element messages, efficient key generation and
-  encryption, the efficient DDH random self-reduction (Boneh–Shoup Ex. 10.10), hashed ElGamal,
-  and Cramer–Shoup CCA security ([#1000]).
+- **Diffie–Hellman and ElGamal:** efficient key generation and encryption, the worst-case DDH
+  decider of Boneh–Shoup Ex. 10.10 (amplifying an average-case distinguisher with a Chernoff
+  bound), Hashed ElGamal with a general semantically secure symmetric cipher `E_s` (Boneh–Shoup
+  Theorem 11.5) and a nondegenerate `SecureKDF` instantiation ([#1047]), and Cramer–Shoup CCA
+  security ([#1000]).
 - **Chosen-ciphertext security** ([#1000]): authenticated encryption by encrypt-then-MAC and
   Cramer–Shoup from DDH, with KEM–DEM hybrid encryption ([#881]) as the chosen-plaintext
   starting point (Boneh–Shoup Exercise 11.9).
@@ -482,4 +484,5 @@ not planned, not as proved.
 [#1000]: https://github.com/cslib-community/complexitylib/issues/1000
 [#1001]: https://github.com/cslib-community/complexitylib/issues/1001
 [#1002]: https://github.com/cslib-community/complexitylib/issues/1002
+[#1047]: https://github.com/cslib-community/complexitylib/issues/1047
 [#1104]: https://github.com/cslib-community/complexitylib/issues/1104
