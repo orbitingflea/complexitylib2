@@ -145,5 +145,20 @@ theorem binary_lt : ComputableInPolyTime (fun p : ℕ × ℕ => decide (p.1 < p.
   refine and_congr_right fun _ => and_congr_right fun _ => forall₂_congr fun j _ => ?_
   rw [← Nat.not_le, imp_iff_not_or, not_not]
 
+/-- Non-strict binary comparison, composed from the existing strict comparison certificate.
+Automatic composition uses the computed-operand rule `binary_le'`. -/
+theorem binary_le : ComputableInPolyTime (fun p : ℕ × ℕ => decide (p.1 ≤ p.2))
+    (encPair encNat encNat) encBool := by
+  simpa only [Function.comp_def, ← decide_not, Nat.not_lt] using
+    bool_not.comp (binary_lt.comp ((snd encNat encNat).prod (fst encNat encNat)))
+
+/-- Compare two binary naturals computed uniformly from the same encoded input. -/
+@[fun_prop]
+theorem binary_le' {α : Type} {input : α ↪ List Bool} {left right : α → ℕ}
+    (hleft : ComputableInPolyTime left input encNat)
+    (hright : ComputableInPolyTime right input encNat) :
+    ComputableInPolyTime (fun a => decide (left a ≤ right a)) input encBool :=
+  binary_le.comp (hleft.prod hright)
+
 end ComputableInPolyTime
 end Turing.MultiTapeTM
