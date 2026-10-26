@@ -23,7 +23,7 @@ or bridge participates in their statements or derivations.
 
 ## Main results
 
-* `ComputableInPolyTime.comp`, `.pair`, `.ite`, `.foldl`: direct closure rules.
+* `ComputableInPolyTime.comp`, `.trans`, `.pair`, `.ite`, `.foldl`: direct closure rules.
 * `ComputableInPolyTime.fst`, `.snd`: ordinary encoded-pair projections.
 * `ComputableInPolyTime.frame`, `.unframe`, `.dropFrame`: total word framing and parsers.
 -/
@@ -277,5 +277,36 @@ theorem bool_and : ComputableInPolyTime (fun p : Bool × Bool => p.1 && p.2)
 /-- Boolean negation on its fixed finite input domain. -/
 @[fun_prop]
 theorem bool_not : ComputableInPolyTime Bool.not encBool encBool := of_finite _
+
+/-- Boolean disjunction is polynomial-time in the standard Boolean encoding. -/
+@[fun_prop]
+theorem bool_or :
+    ComputableInPolyTime (fun (p : Bool × Bool) => p.1 || p.2)
+  (encPair encBool encBool)
+  encBool := of_finite _
+
+/-- Boolean exclusive disjunction on its fixed finite input domain. -/
+@[fun_prop]
+theorem bool_xor : ComputableInPolyTime (fun p : Bool × Bool => p.1 ^^ p.2)
+    (encPair encBool encBool) encBool := of_finite _
+
+/-- Conjunction preserves the full input encoding of both decision procedures. -/
+@[fun_prop]
+theorem decide_and {α : Type} {encA : α ↪ List Bool}
+    {left right : α → Prop} [∀ a, Decidable (left a)] [∀ a, Decidable (right a)]
+    (hleft : ComputableInPolyTime (fun a => decide (left a)) encA encBool)
+    (hright : ComputableInPolyTime (fun a => decide (right a)) encA encBool) :
+    ComputableInPolyTime (fun a => decide (left a ∧ right a)) encA encBool := by
+  simpa only [Bool.decide_and, Function.comp_def] using bool_and.comp (hleft.prod hright)
+
+/-- A proposition-valued conditional computes its decision in the standard Boolean encoding. -/
+@[fun_prop]
+theorem ite_decide {α β : Type} {encA : α ↪ List Bool} {encB : β ↪ List Bool}
+    {condition : α → Prop} [∀ a, Decidable (condition a)] {yes no : α → β}
+    (hcondition : ComputableInPolyTime (fun a => decide (condition a)) encA encBool)
+    (hyes : ComputableInPolyTime yes encA encB)
+    (hno : ComputableInPolyTime no encA encB) :
+    ComputableInPolyTime (fun a => if condition a then yes a else no a) encA encB := by
+  simpa only [decide_eq_true_eq] using ite hcondition hyes hno
 
 end Turing.MultiTapeTM.ComputableInPolyTime

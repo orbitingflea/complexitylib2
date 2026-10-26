@@ -62,17 +62,17 @@ theorem correct_fixedWidth_indCPA {E : Scheme} {secretWidth ciphertextWidth budg
     (hkeyGen : IsPPTOn encUnary (encPair encBits encBits) E.keyGen)
     (hencrypt : IsPPTOn (encPair encUnary (encPair encBits encBool)) encBits
       (fun p => E.encrypt p.1 p.2.1 p.2.2))
-    (hD : ComputableTidilyInPolyTime
+    (hD : ComputableInPolyTime
       (fun n => (⟨_, D.circuit n⟩ : Σ m, Circuit Boolean.signature m 1))
       encUnary (Boolean.encCircuit 1))
-    (hbudget : ComputableTidilyInPolyTime budget encUnary encUnary) :
+    (hbudget : ComputableInPolyTime budget encUnary encUnary) :
     (scheme D budget).Correct ∧
       (scheme D budget).FixedWidth (fun n => 3 * secretWidth n + 1)
         (fun n => ciphertextWidth n + 1) ∧
       PolynomiallyBounded (fun n => 3 * secretWidth n + 1) ∧
       PolynomiallyBounded (fun n => ciphertextWidth n + 1) ∧
-      Encryption.INDCPA (scheme D budget).keyGen (scheme D budget).encrypt :=
-  ⟨correct D hE hwidth hboot budget, fixedWidth D hE hwidth hboot budget,
+      Encryption.INDCPA (scheme D budget).keyGen (scheme D budget).encrypt := by
+  exact ⟨correct D hE hwidth hboot budget, fixedWidth D hE hwidth hboot budget,
     (polynomiallyBounded_widths D hD).1, (polynomiallyBounded_widths D hD).2,
     indCPA_scheme hsecure hkeyGen hencrypt hwidth.secret_length hbudget D⟩
 
@@ -92,11 +92,11 @@ theorem exists_scheme_of_polynomiallyBounded {E : Scheme}
     (hevaluate : IsPPTOn
       (encPair encUnary (encPair encBits (encPair (Boolean.encCircuit 1) (encList encBits))))
       encBits (fun p => E.evaluate p.1 p.2.1 p.2.2.1 p.2.2.2))
-    (hD : ComputableTidilyInPolyTime
+    (hD : ComputableInPolyTime
       (fun n => (⟨_, D.circuit n⟩ : Σ m, Circuit Boolean.signature m 1))
       encUnary (Boolean.encCircuit 1)) (hdepth : PolynomiallyBounded depth) :
     ∃ budget : ℕ → ℕ,
-      ComputableTidilyInPolyTime budget encUnary encUnary ∧
+      ComputableInPolyTime budget encUnary encUnary ∧
       (∀ n, depth n ≤ budget n) ∧
       (scheme D budget).Correct ∧
       (∀ n c, c.2.depth ≤ depth n → (scheme D budget).permitted n c) ∧
@@ -107,7 +107,7 @@ theorem exists_scheme_of_polynomiallyBounded {E : Scheme}
       IsPPTOn encUnary (encPair encBits encBits) (scheme D budget).keyGen ∧
       IsPPTOn (encPair encUnary (encPair encBits encBool)) encBits
         (fun p => (scheme D budget).encrypt p.1 p.2.1 p.2.2) ∧
-      ComputableTidilyInPolyTime
+      ComputableInPolyTime
         (fun p : ℕ × List Bool × List Bool => (scheme D budget).decrypt p.1 p.2.1 p.2.2)
         (encPair encUnary (encPair encBits encBits)) encBool ∧
       IsPPTOn
@@ -119,14 +119,14 @@ theorem exists_scheme_of_polynomiallyBounded {E : Scheme}
   have hbudget : ComputableTidilyInPolyTime budget encUnary encUnary := by
     dsimp only [budget]
     fun_prop
-  refine ⟨budget, hbudget, hmajorant, correct D hE hwidth hboot budget,
+  refine ⟨budget, .of_tidy hbudget, hmajorant, correct D hE hwidth hboot budget,
     (fun n c hc => hc.trans (hmajorant n)), fixedWidth D hE hwidth hboot budget,
     (polynomiallyBounded_widths D hD).1, (polynomiallyBounded_widths D hD).2,
-    isPPTOn_scheme_keyGen hkeyGen hencrypt D budget hbudget,
+    isPPTOn_scheme_keyGen hkeyGen hencrypt D budget (.of_tidy hbudget),
     isPPTOn_scheme_encrypt hencrypt D budget,
-    computableTidilyInPolyTime_scheme_decrypt D hD budget,
-    isPPTOn_scheme_evaluate hencrypt D hD hevaluate budget hbudget,
-    indCPA_scheme hsecure hkeyGen hencrypt hwidth.secret_length hbudget D⟩
+    computableInPolyTime_scheme_decrypt D hD budget,
+    isPPTOn_scheme_evaluate hencrypt D hD hevaluate budget (.of_tidy hbudget),
+    indCPA_scheme hsecure hkeyGen hencrypt hwidth.secret_length (.of_tidy hbudget) D⟩
 
 /-- The depth-indexed family `fun d => scheme D (fun _ => d)` (`{E^(d) : d ∈ ℕ}` in
 [Gentry2009, Definition 3, p. 170]) shares one uniform strict PPT clock jointly in `(n, d)`
@@ -161,13 +161,12 @@ theorem schemeFamily_spec {E : Scheme} {secretWidth ciphertextWidth : ℕ → �
           (encPair encBits (encPair (Boolean.encCircuit 1) (encList encBits)))))
         encBits
         (fun p => (scheme D (fun _ => p.2.1)).evaluate p.1 p.2.2.1 p.2.2.2.1 p.2.2.2.2) := by
-  have hD' := hD.tidy
-  refine ⟨(polynomiallyBounded_widths D hD').1, (polynomiallyBounded_widths D hD').2,
+  refine ⟨(polynomiallyBounded_widths D hD).1, (polynomiallyBounded_widths D hD).2,
     isPPTOn_keyGen hkeyGen hencrypt (by fun_prop) (by fun_prop),
     isPPTOn_encrypt hencrypt (by fun_prop) (by fun_prop) (by fun_prop),
-    (computableTidilyInPolyTime_decrypt D hD'
-      (by fun_prop) (by fun_prop) (by fun_prop)).computableInPolyTime,
-    isPPTOn_evaluate hencrypt D hD' hevaluate (by fun_prop) (by fun_prop)
+    (computableInPolyTime_decrypt D hD
+      (by fun_prop) (by fun_prop) (by fun_prop)),
+    isPPTOn_evaluate hencrypt D hD hevaluate (by fun_prop) (by fun_prop)
       (by fun_prop) (by fun_prop) (by fun_prop)⟩
 
 end Cslib.Crypto.Homomorphic.Leveled

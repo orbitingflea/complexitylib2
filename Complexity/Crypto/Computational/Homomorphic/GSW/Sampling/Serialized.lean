@@ -182,15 +182,18 @@ variable {α : Type} {input : α ↪ List Bool} {n m w η : α → ℕ}
 on the caller's complete encoded input; no finite-rank output encoding is used. -/
 @[fun_prop]
 theorem isPPTOn_sampleKeyInputsSerialized
-    (hn : ComputableTidilyInPolyTime n input encUnary)
-    (hm : ComputableTidilyInPolyTime m input encUnary)
-    (hw : ComputableTidilyInPolyTime w input encUnary)
-    (hη : ComputableTidilyInPolyTime η input encUnary) :
+    (hn : ComputableInPolyTime n input encUnary)
+    (hm : ComputableInPolyTime m input encUnary)
+    (hw : ComputableInPolyTime w input encUnary)
+    (hη : ComputableInPolyTime η input encUnary) :
     IsPPTOn input encSerializedKeyInputs
       (fun a => sampleKeyInputsSerialized (n a) (m a) (w a) (η a)) := by
-  have hsecret := hw.sampleBinaryNat.replicate hn
-  have hpublicPart := hsecret.replicate hm
-  have herror := hη.sampleCenteredBinomial.replicate hm
+  have hn := hn.tidy
+  have hm := hm.tidy
+  have hη := hη.tidy
+  have hsecret := hw.sampleBinaryNat.replicate (.of_tidy hn)
+  have hpublicPart := hsecret.replicate (.of_tidy hm)
+  have herror := hη.sampleCenteredBinomial.replicate (.of_tidy hm)
   unfold sampleKeyInputsSerialized encSerializedKeyInputs
   ppt
 
@@ -198,11 +201,15 @@ theorem isPPTOn_sampleKeyInputsSerialized
 dimensions. Every row and outer list delimiter is charged by the output encoding. -/
 @[fun_prop]
 theorem isPPTOn_sampleCoinsSerialized
-    (hn : ComputableTidilyInPolyTime n input encUnary)
-    (hm : ComputableTidilyInPolyTime m input encUnary)
-    (hw : ComputableTidilyInPolyTime w input encUnary) :
+    (hn : ComputableInPolyTime n input encUnary)
+    (hm : ComputableInPolyTime m input encUnary)
+    (hw : ComputableInPolyTime w input encUnary) :
     IsPPTOn input encSerializedCoins
       (fun a => sampleCoinsSerialized (n a) (m a) (w a)) := by
-  exact (((isPPTOn_uniform_bool input).replicate_bool hm).replicate hw).replicate (by fun_prop)
+  have hn := hn.tidy
+  have hm := hm.tidy
+  have hw := hw.tidy
+  exact (((isPPTOn_uniform_bool input).replicate_bool (.of_tidy hm)).replicate
+    (.of_tidy hw)).replicate (by fun_prop)
 
 end Cslib.Crypto.Homomorphic.GSW

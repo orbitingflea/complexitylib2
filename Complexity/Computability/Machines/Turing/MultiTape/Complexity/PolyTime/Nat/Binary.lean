@@ -278,8 +278,10 @@ namespace Turing.MultiTapeTM.ComputableTidilyInPolyTime
 /-- Decode arbitrary little-endian bit words to binary naturals. -/
 @[fun_prop]
 theorem bitsToNat : ComputableTidilyInPolyTime ofBits encBits encNat := by
-  obtain ⟨d, e, h⟩ := Decoder.nat.computable
-  exact h.computableTidilyInPolyTime
+  obtain ⟨c, d, k, State, hfin, tm, htm⟩ :=
+    Internal.NormalForm.polyTime ComputableInPolyTime.bitsToNat
+  exact ⟨_, _, .of_forall_le c d (fun _ => le_rfl),
+    .of_forall_le c d (fun _ => le_rfl), k, State, hfin, tm, htm⟩
 
 
 /-- The binary digits of a natural number, as a raw bit string. -/

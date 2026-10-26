@@ -132,8 +132,14 @@ private theorem computableTidilyInPolyTime_isCollision
     hH.comp (hk.prod hm₁)
   have hH₂ : ComputableTidilyInPolyTime (fun a => H (k a) (m₂ a)) encIn encBits :=
     hH.comp (hk.prod hm₂)
-  unfold isCollision
-  polytime
+  have hdiff := ComputableInPolyTime.bool_not.comp
+    (ComputableInPolyTime.beq (.of_tidy hm₁) (.of_tidy hm₂))
+  have hhash := ComputableInPolyTime.beq (.of_tidy hH₁) (.of_tidy hH₂)
+  have hplain := ComputableInPolyTime.bool_and.comp
+    ((ComputableInPolyTime.bool_and.comp
+      ((ComputableInPolyTime.bool_and.comp
+        ((ComputableInPolyTime.of_tidy hv₁).prod (.of_tidy hv₂))).prod hdiff)).prod hhash)
+  simpa only [isCollision, bne, Function.comp_def] using hplain.tidy
 
 /-- Testing whether `(m₁, m₂)` is a valid collision is polynomial-time when `H` and `valid` are
 polynomial-time. -/

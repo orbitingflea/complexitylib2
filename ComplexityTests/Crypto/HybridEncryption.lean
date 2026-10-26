@@ -336,7 +336,7 @@ theorem idealEncaps_ppt :
       (fun p => idealEncaps p.1 p.2) := by
   have hk : IsPPTOn (encPair encUnary encBits) encBits
       (fun p : ℕ × List Bool => BitString.sampleList p.1) :=
-    ComputableTidilyInPolyTime.sampleList (by fun_prop)
+    ComputableInPolyTime.sampleList (by fun_prop)
   have hret : ComputableTidilyInPolyTime
       (fun p : (ℕ × List Bool) × List Bool => (p.2, ([] : List Bool)))
       (encPair (encPair encUnary encBits) encBits) (encPair encBits encBits) :=

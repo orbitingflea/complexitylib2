@@ -84,9 +84,11 @@ theorem decodeCNF_encCNF (φ : CNF ℕ) : decodeCNF (encCNF φ) = φ :=
   Complexity.cnfDecoder.decode_enc φ
 
 private theorem computableTidilyInPolyTime_decodeCNF :
-    ComputableTidilyInPolyTime decodeCNF encBits encCNF :=
-  let ⟨_, _, h⟩ := Complexity.cnfDecoder.computable
-  h.computableTidilyInPolyTime
+    ComputableTidilyInPolyTime decodeCNF encBits encCNF := by
+  obtain ⟨c, d, k, Q, hfin, tm, htm⟩ :=
+    Internal.NormalForm.polyTime Complexity.cnfDecoder.computableInPolyTime
+  exact ⟨_, _, .of_forall_le c d (fun _ => le_rfl),
+    .of_forall_le c d (fun _ => le_rfl), k, Q, hfin, tm, htm⟩
 
 attribute [local fun_prop] computableTidilyInPolyTime_decodeCNF
 

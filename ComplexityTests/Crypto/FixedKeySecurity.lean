@@ -28,7 +28,7 @@ private def readSelf (_ : ℕ) (word : List Bool) : ProbComp Bool :=
   pure (((FixedKey.publicKeyDecoder.decode word).2.headD []).headD false)
 
 private theorem readSelf_ppt : IsPPT encBool readSelf := by
-  have hdecode := FixedKey.publicKeyDecoder.computableTidilyInPolyTime
+  have hdecode := FixedKey.publicKeyDecoder.computableInPolyTime.tidy
   dsimp only [FixedKey.encPublicKey, Encryption.encCircularPublicKey] at hdecode
   have hread : ComputableTidilyInPolyTime
       (fun word => ((FixedKey.publicKeyDecoder.decode word).2.headD []).headD false)
@@ -69,7 +69,7 @@ private def readJoint (_ : ℕ) (word : List Bool) : ProbComp Bool :=
   pure (artifact.1.headD false ^^ (artifact.2.headD []).headD false)
 
 private theorem readJoint_ppt : IsPPT encBool readJoint := by
-  have hdecode := FixedKey.publicKeyDecoder.computableTidilyInPolyTime
+  have hdecode := FixedKey.publicKeyDecoder.computableInPolyTime.tidy
   dsimp only [FixedKey.encPublicKey, Encryption.encCircularPublicKey] at hdecode
   have hpublic := (ComputableTidilyInPolyTime.headD (encA := encBool)
     (encL := encBits) false).comp hdecode.fst'

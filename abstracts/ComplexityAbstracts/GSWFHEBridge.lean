@@ -702,7 +702,7 @@ theorem leveled_witness (hLWE : DecisionLWE) :
         Native (Leveled.scheme GSW.DepthParameters.decryptionCircuits budget) ∧
         ChosenMessageSecure (Leveled.scheme GSW.DepthParameters.decryptionCircuits budget) := by
   let D := GSW.DepthParameters.decryptionCircuits
-  have hD := GSW.DepthParameters.computableInPolyTime_decryptionCircuits.tidy
+  have hD := GSW.DepthParameters.computableInPolyTime_decryptionCircuits
   have hkeyGen := GSW.DepthParameters.isPPTOn_keyGen
   have hencrypt := GSW.DepthParameters.isPPTOn_encrypt
   have hevaluate := GSW.DepthParameters.isPPTOn_evaluate
@@ -710,7 +710,7 @@ theorem leveled_witness (hLWE : DecisionLWE) :
   obtain ⟨hsecret, hciphertext, hkgJoint, hencJoint, hdecJoint, hevalJoint⟩ :=
     Leveled.schemeFamily_spec D hkeyGen hencrypt hevaluate
       GSW.DepthParameters.computableInPolyTime_decryptionCircuits
-  have hforBudget (budget : ℕ → ℕ) (hb : ComputableTidilyInPolyTime budget encUnary encUnary) :
+  have hforBudget (budget : ℕ → ℕ) (hb : ComputableInPolyTime budget encUnary encUnary) :
       (∀ security, (ProbComp.eval
         ((Leveled.scheme D budget).keyGen security)).map
           (fun keys => (Turing.MultiTapeTM.unframe (Turing.MultiTapeTM.unframe keys.1),
@@ -739,14 +739,15 @@ theorem leveled_witness (hLWE : DecisionLWE) :
       fixedWidths_of_fixedWidth hwidth fun _ _ h => h,
       native_of (Leveled.isPPTOn_scheme_keyGen hkeyGen hencrypt D budget hb)
         (Leveled.isPPTOn_scheme_encrypt hencrypt D budget)
-        (Leveled.computableTidilyInPolyTime_scheme_decrypt D hD budget).computableInPolyTime
+        (Leveled.computableInPolyTime_scheme_decrypt D hD budget)
         (Leveled.isPPTOn_scheme_evaluate hencrypt D hD hevaluate budget hb),
       chosenMessageSecure_of_indCPA hsecure⟩
   refine ⟨circuits, hsize, hsecret, hciphertext,
     nativeInDepth_of hkgJoint hencJoint hdecJoint hevalJoint,
     fun d => hforBudget (fun _ => d) (by fun_prop),
     fun budget hbudget =>
-      ⟨fun _ => ⟨rfl, rfl⟩, hforBudget budget (CryptographyBridge.polyTime_iff.mp hbudget)⟩⟩
+      ⟨fun _ => ⟨rfl, rfl⟩,
+        hforBudget budget (.of_tidy (CryptographyBridge.polyTime_iff.mp hbudget))⟩⟩
 
 /-- **The library's fixed-key scheme witnesses `fullyHomomorphic`**, with GSW's own decryption
 circuits `GSW.DepthParameters.decryptionCircuits.circuit`. -/

@@ -130,20 +130,56 @@ theorem validPC_polyTime :
 
 /-- Complete native scalar evidence; no field assumes a RAM simulator. -/
 noncomputable def nativePrimitives : model.NativePrimitives encoding where
-  constant c := .ofPolyTime (constant_polyTime c)
-  operation op := .ofPolyTime (operation_polyTime op)
-  test t := .ofPolyTime (test_polyTime t)
-  address := .ofPolyTime address_polyTime
-  validMove := .ofPolyTime validMove_polyTime
-  validPC := .ofPolyTime validPC_polyTime
+  constant c := .ofPolyTime (by
+    obtain ⟨t, s, ⟨T, hT, ht⟩, ⟨S, hS, hs⟩, k, Q, hfin, tm, htm⟩ := constant_polyTime c
+    exact ⟨T, S, hT, hS, k, Q, hfin, tm,
+      fun a => ((htm a).mono (ht a) (hs a)).computesInTimeAndSpace⟩)
+  operation op := .ofPolyTime (by
+    obtain ⟨t, s, ⟨T, hT, ht⟩, ⟨S, hS, hs⟩, k, Q, hfin, tm, htm⟩ := operation_polyTime op
+    exact ⟨T, S, hT, hS, k, Q, hfin, tm,
+      fun a => ((htm a).mono (ht a) (hs a)).computesInTimeAndSpace⟩)
+  test t := .ofPolyTime (by
+    obtain ⟨t, s, ⟨T, hT, ht⟩, ⟨S, hS, hs⟩, k, Q, hfin, tm, htm⟩ := test_polyTime t
+    exact ⟨T, S, hT, hS, k, Q, hfin, tm,
+      fun a => ((htm a).mono (ht a) (hs a)).computesInTimeAndSpace⟩)
+  address := .ofPolyTime (by
+    obtain ⟨t, s, ⟨T, hT, ht⟩, ⟨S, hS, hs⟩, k, Q, hfin, tm, htm⟩ := address_polyTime
+    exact ⟨T, S, hT, hS, k, Q, hfin, tm,
+      fun a => ((htm a).mono (ht a) (hs a)).computesInTimeAndSpace⟩)
+  validMove := .ofPolyTime (by
+    obtain ⟨t, s, ⟨T, hT, ht⟩, ⟨S, hS, hs⟩, k, Q, hfin, tm, htm⟩ := validMove_polyTime
+    exact ⟨T, S, hT, hS, k, Q, hfin, tm,
+      fun a => ((htm a).mono (ht a) (hs a)).computesInTimeAndSpace⟩)
+  validPC := .ofPolyTime (by
+    obtain ⟨t, s, ⟨T, hT, ht⟩, ⟨S, hS, hs⟩, k, Q, hfin, tm, htm⟩ := validPC_polyTime
+    exact ⟨T, S, hT, hS, k, Q, hfin, tm,
+      fun a => ((htm a).mono (ht a) (hs a)).computesInTimeAndSpace⟩)
 
 /-- The bounded-natural primitive bundle has polynomial resource bounds in all fields. -/
 theorem nativePrimitives_isPolynomial : nativePrimitives.IsPolynomial where
-  constant c := NativeCertificate.ofPolyTime_isPolynomial (constant_polyTime c)
-  operation op := NativeCertificate.ofPolyTime_isPolynomial (operation_polyTime op)
-  test t := NativeCertificate.ofPolyTime_isPolynomial (test_polyTime t)
-  address := NativeCertificate.ofPolyTime_isPolynomial address_polyTime
-  validMove := NativeCertificate.ofPolyTime_isPolynomial validMove_polyTime
-  validPC := NativeCertificate.ofPolyTime_isPolynomial validPC_polyTime
+  constant c := NativeCertificate.ofPolyTime_isPolynomial (by
+    obtain ⟨t, s, ⟨T, hT, ht⟩, ⟨S, hS, hs⟩, k, Q, hfin, tm, htm⟩ := constant_polyTime c
+    exact ⟨T, S, hT, hS, k, Q, hfin, tm,
+      fun a => ((htm a).mono (ht a) (hs a)).computesInTimeAndSpace⟩)
+  operation op := NativeCertificate.ofPolyTime_isPolynomial (by
+    obtain ⟨t, s, ⟨T, hT, ht⟩, ⟨S, hS, hs⟩, k, Q, hfin, tm, htm⟩ := operation_polyTime op
+    exact ⟨T, S, hT, hS, k, Q, hfin, tm,
+      fun a => ((htm a).mono (ht a) (hs a)).computesInTimeAndSpace⟩)
+  test t := NativeCertificate.ofPolyTime_isPolynomial (by
+    obtain ⟨t, s, ⟨T, hT, ht⟩, ⟨S, hS, hs⟩, k, Q, hfin, tm, htm⟩ := test_polyTime t
+    exact ⟨T, S, hT, hS, k, Q, hfin, tm,
+      fun a => ((htm a).mono (ht a) (hs a)).computesInTimeAndSpace⟩)
+  address := NativeCertificate.ofPolyTime_isPolynomial (by
+    obtain ⟨t, s, ⟨T, hT, ht⟩, ⟨S, hS, hs⟩, k, Q, hfin, tm, htm⟩ := address_polyTime
+    exact ⟨T, S, hT, hS, k, Q, hfin, tm,
+      fun a => ((htm a).mono (ht a) (hs a)).computesInTimeAndSpace⟩)
+  validMove := NativeCertificate.ofPolyTime_isPolynomial (by
+    obtain ⟨t, s, ⟨T, hT, ht⟩, ⟨S, hS, hs⟩, k, Q, hfin, tm, htm⟩ := validMove_polyTime
+    exact ⟨T, S, hT, hS, k, Q, hfin, tm,
+      fun a => ((htm a).mono (ht a) (hs a)).computesInTimeAndSpace⟩)
+  validPC := NativeCertificate.ofPolyTime_isPolynomial (by
+    obtain ⟨t, s, ⟨T, hT, ht⟩, ⟨S, hS, hs⟩, k, Q, hfin, tm, htm⟩ := validPC_polyTime
+    exact ⟨T, S, hT, hS, k, Q, hfin, tm,
+      fun a => ((htm a).mono (ht a) (hs a)).computesInTimeAndSpace⟩)
 
 end Cslib.GenericRAM.BoundedNat

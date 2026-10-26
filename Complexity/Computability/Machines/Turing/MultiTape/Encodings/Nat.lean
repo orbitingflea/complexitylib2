@@ -18,7 +18,8 @@ import Mathlib.Tactic.Ring
 /-!
 # The successor in binary
 
-`encNat` encodes a natural number by its binary digits, least significant first (`Nat.bits`).
+`encNat`, reexported from `Encodings.Nat.Bits`, encodes a natural number by its binary digits,
+least significant first (`Nat.bits`).
 The successor is a left fold over the digits that keeps a carry and appends one digit per round,
 followed by a final carry digit. Its tidy computability is derived from that of the fold
 (`Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.foldl`) and of the parts of a round.
