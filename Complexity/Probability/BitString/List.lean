@@ -107,6 +107,28 @@ theorem uniformList_map_take_zipWith_xor {n : ℕ} {msg : List Bool} (hmsg : msg
     rw [List.take_of_length_le (length_of_mem_support_uniformList hpad).le]
   rw [hcongr, ← hmsg, uniformList_map_zipWith_xor]
 
+/-- XORing a uniform `m`-bit word `pad` with any word `r` at width `pad.length` preserves the
+uniform distribution `uniformList m`. -/
+theorem uniformList_map_listXor_length (m : ℕ) (r : List Bool) :
+    (uniformList m).map (fun pad => listXor pad.length [pad, r]) = uniformList m := by
+  have hcomp :
+      (fun pad : List Bool => listXor pad.length [pad, r]) ∘ List.ofFn =
+        (fun pad : List Bool => listXor m [pad, r]) ∘ (List.ofFn : BitString m → List Bool) := by
+    funext x
+    simp
+  calc
+    (uniformList m).map (fun pad => listXor pad.length [pad, r])
+      = (PMF.uniformOfFintype (BitString m)).map
+          ((fun pad : List Bool => listXor pad.length [pad, r]) ∘ List.ofFn) := by
+        rw [uniformList, PMF.map_comp]
+    _ = (PMF.uniformOfFintype (BitString m)).map
+          ((fun pad : List Bool => listXor m [pad, r]) ∘ List.ofFn) := by
+        rw [hcomp]
+    _ = (uniformList m).map (fun pad => listXor m [pad, r]) := by
+        rw [uniformList, PMF.map_comp]
+    _ = uniformList m :=
+        uniformList_map_listXor m r
+
 /-- Replacing row `j < count` of a uniform `count * width`-bit string with an independent uniform
 `width`-bit string preserves the uniform distribution `uniformList (count * width)`. -/
 theorem uniformList_replaceRow (width count : ℕ) (j : Fin count) :

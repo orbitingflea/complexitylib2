@@ -460,6 +460,7 @@ public import Complexity.Computability.Circuit.Monotone.BipartiteMatching
 public import Complexity.Computability.Circuit.Monotone.Clique.Approximator
 public import Complexity.Computability.Circuit.Monotone.Clique.Asymptotic
 public import Complexity.Computability.Circuit.Monotone.Clique.Essential
+public import Complexity.Computability.Circuit.Monotone.Clique.LogarithmicPetals
 public import Complexity.Computability.Circuit.Monotone.Clique.LowerBound
 public import Complexity.Computability.Circuit.Monotone.Clique.Negative
 public import Complexity.Computability.Circuit.Monotone.Clique.Positive
@@ -1376,6 +1377,7 @@ public import Complexity.Computability.QueryComplexity.ApproximateDegree
 public import Complexity.Computability.QueryComplexity.ApproximateDegree.Or
 public import Complexity.Computability.QueryComplexity.Degree
 public import Complexity.Computability.QueryComplexity.Huang
+public import Complexity.Computability.QueryComplexity.Midrijanis
 public import Complexity.Computability.QueryComplexity.Monotone
 public import Complexity.Computability.QueryComplexity.NisanSzegedy
 public import Complexity.Computability.QueryComplexity.OneSided
@@ -1496,9 +1498,9 @@ public import Complexity.Computability.WordRAM.Notation
 public import Complexity.Computability.WordRAM.PackedCount
 public import Complexity.Computability.WordRAM.RAM
 public import Complexity.Computability.WordRAM.RAMInput
-public import Complexity.Computability.WordRAM.Randomized
 public import Complexity.Computability.WordRAM.Randomized.Defs
 public import Complexity.Computability.WordRAM.Randomized.Expected
+public import Complexity.Computability.WordRAM.Randomized.Defs
 public import Complexity.Computability.WordRAM.Randomized.Structured
 public import Complexity.Computability.WordRAM.Structured
 public import Complexity.Computability.WordRAM.Time
@@ -1747,6 +1749,7 @@ public import Complexity.Foundations.BooleanAnalysis.Linearity
 public import Complexity.Foundations.BooleanAnalysis.LongCode
 public import Complexity.Foundations.BooleanAnalysis.LowDegree
 public import Complexity.Foundations.BooleanAnalysis.LowDegreeParity
+public import Complexity.Foundations.BooleanAnalysis.MaximalSupport
 public import Complexity.Foundations.BooleanAnalysis.MirrorSets
 public import Complexity.Foundations.BooleanAnalysis.Monotone
 public import Complexity.Foundations.BooleanAnalysis.MultilinearExtension
@@ -2028,6 +2031,7 @@ public import Complexity.Languages.Probabilistic.Oracle.Support
 public import Complexity.Languages.Probabilistic.Oracle.Transcript
 public import Complexity.Languages.Probabilistic.Presample
 public import Complexity.Languages.Probabilistic.QueryCount
+public import Complexity.Languages.Probabilistic.QueryCount.Support
 public import Complexity.Languages.Probabilistic.RandomOracle
 public import Complexity.Languages.Probabilistic.RandomOracle.Probabilistic
 public import Complexity.Languages.Probabilistic.RandomPermutation
