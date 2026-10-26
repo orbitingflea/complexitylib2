@@ -37,7 +37,7 @@ open scoped ENNReal
 /-! ## 1. Non-monotone input with duplicates: `[3, 1, 2, 1]` at `w = 9` -/
 
 theorem quicksort_dup4 :
-    HaltsWithin 9 Quicksort.program (.init [3, 1, 2, 1]) 384 ∧
+    RandHaltsWithin 9 Quicksort.program (.init [3, 1, 2, 1]) 384 ∧
     AlmostSurelyHalts 9 Quicksort.program (.init [3, 1, 2, 1]) ∧
     RandCallsBounded 9 Quicksort.program (.init [3, 1, 2, 1]) 384 3 ∧
     (∀ cfg ∈ (runRand 9 Quicksort.program 384 (.running (.init [3, 1, 2, 1]))).support,
@@ -71,7 +71,7 @@ theorem quicksort_dup4 :
 /-! ## 2. Six-element non-monotone input with multiple duplicate groups: `[4, 2, 4, 0, 2, 1]` -/
 
 theorem quicksort_dup6 :
-    HaltsWithin 9 Quicksort.program (.init [4, 2, 4, 0, 2, 1]) (Quicksort.worstCaseTime 6) ∧
+    RandHaltsWithin 9 Quicksort.program (.init [4, 2, 4, 0, 2, 1]) (Quicksort.worstCaseTime 6) ∧
     RandCallsBounded 9 Quicksort.program (.init [4, 2, 4, 0, 2, 1])
       (Quicksort.worstCaseTime 6) 5 ∧
     (∀ cfg ∈ (runRand 9 Quicksort.program (Quicksort.worstCaseTime 6)
@@ -107,7 +107,7 @@ theorem quicksort_dup6 :
 /-! ## 3. Edge cases `[]` and `[5]` at `w = 3`: zero `rand` calls -/
 
 theorem quicksort_nil :
-    HaltsWithin 3 Quicksort.program (.init []) 32 ∧
+    RandHaltsWithin 3 Quicksort.program (.init []) 32 ∧
     RandCallsBounded 3 Quicksort.program (.init []) 32 0 ∧
     expectedTime 3 Quicksort.program (.init []) ≤ 32 := by
   have hw : logWidth 3 ([] : List ℕ).length ≤ 3 := by decide
@@ -118,7 +118,7 @@ theorem quicksort_nil :
   exact ⟨hHalts, hCalls, by simpa [Quicksort.expectedTimeBound] using hExp⟩
 
 theorem quicksort_singleton :
-    HaltsWithin 3 Quicksort.program (.init [5]) 60 ∧
+    RandHaltsWithin 3 Quicksort.program (.init [5]) 60 ∧
     RandCallsBounded 3 Quicksort.program (.init [5]) 60 0 ∧
     (∀ cfg ∈ (runRand 3 Quicksort.program 60 (.running (.init [5]))).support,
       ∃ y : Data 16, cfg = .halted 0 y ∧ y.mem 1 = 5) ∧

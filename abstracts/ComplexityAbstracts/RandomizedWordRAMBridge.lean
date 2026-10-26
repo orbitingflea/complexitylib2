@@ -567,7 +567,7 @@ def quicksortExactProgram : Program .exact 16 :=
 `quicksortExactProgram : Program .exact 16`. -/
 theorem quicksort_exact_correct_and_bounds {w : ℕ} {input : List ℕ}
     (hw : logWidth 3 input.length ≤ w) (hfit : InputFits w input) :
-    HaltsWithin w quicksortExactProgram (.init input) (Quicksort.worstCaseTime input.length) ∧
+    RandHaltsWithin w quicksortExactProgram (.init input) (Quicksort.worstCaseTime input.length) ∧
     RandCallsBounded w quicksortExactProgram (.init input)
       (Quicksort.worstCaseTime input.length) (input.length - 1) ∧
     (∀ cfg ∈ (runRand w quicksortExactProgram (Quicksort.worstCaseTime input.length)
@@ -617,7 +617,7 @@ theorem quicksort_exact_correct_and_bounds {w : ℕ} {input : List ℕ}
       hcode_std.expectedTime_program Quicksort.Reg.zero]
   obtain ⟨hHalts, hCalls, hPost, hExp⟩ := Quicksort.quicksort_correct_and_bounds hw hfit
   refine ⟨?_, ?_, ?_, ?_⟩
-  · unfold HaltsWithin at hHalts ⊢
+  · unfold RandHaltsWithin at hHalts ⊢
     rwa [hrun_eq]
   · unfold RandCallsBounded at hCalls ⊢
     rwa [hrun_eq]
@@ -933,8 +933,8 @@ theorem program_surjective (p : List (S.Instr r)) :
   funext i
   exact hf i
 
-/-- Translate a library randomized configuration `Cslib.WordRAM.Cfg r` to `S.Cfg r`. -/
-def cfgOf : Cslib.WordRAM.Cfg r → S.Cfg r
+/-- Translate a library randomized configuration `Cslib.WordRAM.RandCfg r` to `S.Cfg r`. -/
+def cfgOf : Cslib.WordRAM.RandCfg r → S.Cfg r
   | .running ⟨pc, ⟨reg, mem⟩⟩ => S.running (S.state pc reg mem)
   | .halted v ⟨reg, mem⟩ => S.halted v reg mem
   | .faulted => S.faulted
@@ -944,7 +944,7 @@ def cfgOf : Cslib.WordRAM.Cfg r → S.Cfg r
 /-- One randomized step of `S.programOf q` matches `Cslib.WordRAM.stepRand` up to `cfgOf` and
 `compOf`. -/
 theorem stepRand_matches {S : Presentation} (h : Laws S) (w : ℕ) (q : Program .exact r)
-    (cfg : Cslib.WordRAM.Cfg r) :
+    (cfg : Cslib.WordRAM.RandCfg r) :
     S.stepRand w (S.programOf q) (S.cfgOf cfg) =
       S.compOf (S.cfgOf <$> Cslib.WordRAM.stepRand w q cfg) := by
   rcases cfg with ⟨pc, ⟨reg, mem⟩⟩ | ⟨v, ⟨reg, mem⟩⟩ | _
@@ -954,17 +954,19 @@ theorem stepRand_matches {S : Presentation} (h : Laws S) (w : ℕ) (q : Program 
     · rw [hq, Option.map_none] at hget
       change S.stepRand w (S.programOf q) (S.running (S.state pc reg mem)) = _
       rw [h.stepRand_none hget]
-      simp [Cslib.WordRAM.stepRand, hq, cfgOf]
+      simp [Cslib.WordRAM.stepRand, Cslib.WordRAM.step, RandCfg.ofOutcome, hq, cfgOf]
     rw [hq, Option.map_some] at hget
     change S.stepRand w (S.programOf q) (S.running (S.state pc reg mem)) = _
     match j, hget with
     | .op (.const d x), hget =>
       rw [h.stepRand_const hget]
       by_cases hx : x < 2 ^ w <;>
-        simp [Cslib.WordRAM.stepRand, hq, Op.eval, Data.put, Fits, hx, Data.set, cfgOf]
+        simp [Cslib.WordRAM.stepRand, Cslib.WordRAM.step, RandCfg.ofOutcome, hq, Op.eval, Data.put,
+          Fits, hx, Data.set, cfgOf]
     | .op (.copy d i), hget =>
       rw [h.stepRand_copy hget]
-      simp [Cslib.WordRAM.stepRand, hq, Op.eval, Data.set, cfgOf]
+      simp [Cslib.WordRAM.stepRand, Cslib.WordRAM.step, RandCfg.ofOutcome, hq, Op.eval, Data.set,
+        cfgOf]
     | .op (.alu (.bin g) d args), hget =>
       have he := S.eval_aluOpOf h g (reg (args (0 : Fin 2))) (reg (args (1 : Fin 2)))
       have hlib : StandardOp.evalExact w (.bin g) (reg ∘ args) =
@@ -973,41 +975,47 @@ theorem stepRand_matches {S : Presentation} (h : Laws S) (w : ℕ) (q : Program 
       | none =>
         rw [hg] at he
         rw [h.stepRand_alu_none hget he]
-        simp only [Cslib.WordRAM.stepRand, hq, Op.eval, Basis.exact, hlib, hg, bind,
-          Option.bind_none]
+        simp only [Cslib.WordRAM.stepRand, Cslib.WordRAM.step, RandCfg.ofOutcome, hq, Op.eval,
+          Basis.exact, hlib, hg, bind, Option.bind_none]
         rfl
       | some x =>
         rw [hg] at he
         rw [h.stepRand_alu_some hget he]
         by_cases hx : x < 2 ^ w
-        · simp only [Cslib.WordRAM.stepRand, hq, Op.eval, Basis.exact, hlib, hg]
+        · simp only [Cslib.WordRAM.stepRand, Cslib.WordRAM.step, RandCfg.ofOutcome, hq, Op.eval,
+            Basis.exact, hlib, hg]
           simp [Data.put, Fits, hx, Data.set, cfgOf]
-        · simp only [Cslib.WordRAM.stepRand, hq, Op.eval, Basis.exact, hlib, hg]
+        · simp only [Cslib.WordRAM.stepRand, Cslib.WordRAM.step, RandCfg.ofOutcome, hq, Op.eval,
+            Basis.exact, hlib, hg]
           simp [Data.put, Fits, hx, cfgOf]
     | .op (.alu .width d args), hget =>
       rw [h.stepRand_width hget]
-      simp [Cslib.WordRAM.stepRand, hq, Op.eval, Basis.exact, StandardOp.evalExact, Data.put,
-        Fits, Data.set, Nat.lt_two_pow_self, cfgOf]
+      simp [Cslib.WordRAM.stepRand, Cslib.WordRAM.step, RandCfg.ofOutcome, hq, Op.eval,
+        Basis.exact, StandardOp.evalExact, Data.put, Fits, Data.set, Nat.lt_two_pow_self, cfgOf]
     | .op (.load d a), hget =>
       rw [h.stepRand_load hget]
-      simp [Cslib.WordRAM.stepRand, hq, Op.eval, Data.set, cfgOf]
+      simp [Cslib.WordRAM.stepRand, Cslib.WordRAM.step, RandCfg.ofOutcome, hq, Op.eval, Data.set,
+        cfgOf]
     | .op (.store a i), hget =>
       rw [h.stepRand_store hget]
-      simp [Cslib.WordRAM.stepRand, hq, Op.eval, Data.write, cfgOf]
+      simp [Cslib.WordRAM.stepRand, Cslib.WordRAM.step, RandCfg.ofOutcome, hq, Op.eval,
+        Data.write, cfgOf]
     | .jump t, hget =>
       rw [h.stepRand_jump hget]
-      simp [Cslib.WordRAM.stepRand, hq, cfgOf]
+      simp [Cslib.WordRAM.stepRand, Cslib.WordRAM.step, RandCfg.ofOutcome, hq, cfgOf]
     | .branch (.eq i j) t, hget =>
       rw [h.stepRand_branchEq hget]
       by_cases hij : reg i = reg j <;>
-        simp [Cslib.WordRAM.stepRand, hq, Cond.Holds, hij, cfgOf]
+        simp [Cslib.WordRAM.stepRand, Cslib.WordRAM.step, RandCfg.ofOutcome, hq, Cond.Holds, hij,
+          cfgOf]
     | .branch (.lt i j) t, hget =>
       rw [h.stepRand_branchLt hget]
       by_cases hij : reg i < reg j <;>
-        simp [Cslib.WordRAM.stepRand, hq, Cond.Holds, hij, cfgOf]
+        simp [Cslib.WordRAM.stepRand, Cslib.WordRAM.step, RandCfg.ofOutcome, hq, Cond.Holds, hij,
+          cfgOf]
     | .halt i, hget =>
       rw [h.stepRand_halt hget]
-      simp [Cslib.WordRAM.stepRand, hq, cfgOf]
+      simp [Cslib.WordRAM.stepRand, Cslib.WordRAM.step, RandCfg.ofOutcome, hq, cfgOf]
     | .rand d i, hget =>
       rw [h.stepRand_rand hget]
       by_cases hx : reg i < 2 ^ w
@@ -1035,7 +1043,7 @@ theorem compBind_compOf_map {S : Presentation} (h : Laws S) {α β γ : Type} (f
 /-- Clocked `T`-step runs of `S.programOf q` match `Cslib.WordRAM.runRand` up to `cfgOf` and
 `compOf`. -/
 theorem runRand_matches {S : Presentation} (h : Laws S) (w : ℕ) (q : Program .exact r) (T : ℕ)
-    (cfg : Cslib.WordRAM.Cfg r) :
+    (cfg : Cslib.WordRAM.RandCfg r) :
     S.runRand w (S.programOf q) T (S.cfgOf cfg) =
       S.compOf (S.cfgOf <$> Cslib.WordRAM.runRand w q T cfg) := by
   induction T generalizing cfg with
@@ -1061,8 +1069,8 @@ theorem evalRand_eq {S : Presentation} (h : Laws S) (w : ℕ) (q : Program .exac
 theorem haltsWithin_iff {S : Presentation} (h : Laws S) (w : ℕ) (q : Program .exact r)
     (T : ℕ) (pc : ℕ) (reg : Fin r → ℕ) (mem : ℕ → ℕ) :
     S.HaltsWithin w (S.programOf q) (S.state pc reg mem) T ↔
-      Cslib.WordRAM.HaltsWithin w q ⟨pc, ⟨reg, mem⟩⟩ T := by
-  simp only [Presentation.HaltsWithin, Cslib.WordRAM.HaltsWithin, S.evalRand_eq h,
+      Cslib.WordRAM.RandHaltsWithin w q ⟨pc, ⟨reg, mem⟩⟩ T := by
+  simp only [Presentation.HaltsWithin, Cslib.WordRAM.RandHaltsWithin, S.evalRand_eq h,
     PMF.mem_support_map_iff, ← Cslib.WordRAM.support_evalRand]
   constructor
   · intro hh cfg' hcfg'

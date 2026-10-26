@@ -26,8 +26,8 @@ discrete tail-sum formula over clocked horizons:
 Because `.halted` and `.faulted` are absorbing, each horizon `t` contributes the probability that
 execution has not yet terminated after `t` steps. Summing over `t : ℕ` yields the exact 1-step
 Bellman equation `expectedStepsFrom_running`, connects directly to structured `ExecRand` trees via
-`ExecRand.expectedTime_program`, reduces to a finite sum under `HaltsWithin`
-(`HaltsWithin.expectedTime_eq_sum`, `expectedTime_le_of_haltsWithin`), and recovers exact
+`ExecRand.expectedTime_program`, reduces to a finite sum under `RandHaltsWithin`
+(`RandHaltsWithin.expectedTime_eq_sum`, `expectedTime_le_of_randHaltsWithin`), and recovers exact
 deterministic step counts (`Executes.expectedTime_eq`).
 
 For structured `Code B r` programs, `expectedCodeTime` measures the expected instruction count of
@@ -41,18 +41,19 @@ additivity (`expectedCodeTime_seq`), branch laws (`expectedCodeTime_branch_pos`,
 * `Cslib.WordRAM.AlmostSurelyHalts`: zero faults at all horizons and supremum halting probability
   equal to `1`.
 * `Cslib.WordRAM.expectedStepsFrom`, `Cslib.WordRAM.expectedTime`: `ℝ≥0∞`-valued expected
-  remaining instructions from a `Cfg r` or initial `State r`.
+  remaining instructions from a `RandCfg r` or initial `State r`.
 * `Cslib.WordRAM.expectedCodeTime`: `ℝ≥0∞`-valued expected instruction count of a structured
   `Code B r`.
 
 ## Main results
 
 * `Cslib.WordRAM.expectedStepsFrom_running`: 1-step Bellman equation for `expectedStepsFrom`.
-* `Cslib.WordRAM.HaltsWithin.almostSurelyHalts`,
+* `Cslib.WordRAM.RandHaltsWithin.almostSurelyHalts`,
   `Cslib.WordRAM.AlmostSurelyHalts.of_expectedTime_ne_top`: sufficient conditions for almost-sure
   halting.
-* `Cslib.WordRAM.HaltsWithin.expectedTime_eq_sum`,
-  `Cslib.WordRAM.expectedTime_le_of_haltsWithin`: finite-horizon reduction under `HaltsWithin`.
+* `Cslib.WordRAM.RandHaltsWithin.expectedTime_eq_sum`,
+  `Cslib.WordRAM.expectedTime_le_of_randHaltsWithin`: finite-horizon reduction under
+  `RandHaltsWithin`.
 * `Cslib.WordRAM.Executes.expectedTime_eq`: deterministic halting runs have `expectedTime = n`.
 * `Cslib.WordRAM.ExecRand.expectedTime_program`: exact bridge between compiled `c.program out` and
   `expectedCodeTime`.
@@ -80,27 +81,29 @@ namespace WordRAM
 variable {B : Basis} {r : ℕ}
 
 /-- Set of active (`.running`) configurations. -/
-def Cfg.runningSet (r : ℕ) : Set (Cfg r) := {cfg | ∃ u, cfg = .running u}
+def RandCfg.runningSet (r : ℕ) : Set (RandCfg r) := {cfg | ∃ u, cfg = .running u}
 
 /-- Set of cleanly halted (`.halted`) configurations. -/
-def Cfg.haltedSet (r : ℕ) : Set (Cfg r) := {cfg | ∃ v d, cfg = .halted v d}
+def RandCfg.haltedSet (r : ℕ) : Set (RandCfg r) := {cfg | ∃ v d, cfg = .halted v d}
 
 @[simp]
-theorem Cfg.mem_runningSet_iff {cfg : Cfg r} : cfg ∈ Cfg.runningSet r ↔ ∃ u, cfg = .running u :=
+theorem RandCfg.mem_runningSet_iff {cfg : RandCfg r} :
+    cfg ∈ RandCfg.runningSet r ↔ ∃ u, cfg = .running u :=
   Iff.rfl
 
 @[simp]
-theorem Cfg.mem_haltedSet_iff {cfg : Cfg r} : cfg ∈ Cfg.haltedSet r ↔ ∃ v d, cfg = .halted v d :=
+theorem RandCfg.mem_haltedSet_iff {cfg : RandCfg r} :
+    cfg ∈ RandCfg.haltedSet r ↔ ∃ v d, cfg = .halted v d :=
   Iff.rfl
 
 /-- Starting from `s`, `p` never faults and halts with probability tending to `1`. -/
 def AlmostSurelyHalts (w : ℕ) (p : Program B r) (s : State r) : Prop :=
-  FaultFree w p s ∧
-    (⨆ T : ℕ, (evalRand w p T s).toOuterMeasure (Cfg.haltedSet r)) = 1
+  RandFaultFree w p s ∧
+    (⨆ T : ℕ, (evalRand w p T s).toOuterMeasure (RandCfg.haltedSet r)) = 1
 
 /-- Halting probability is monotone in the horizon `T` because `.halted` is absorbing. -/
 theorem evalRand_haltedSet_mono (w : ℕ) (p : Program B r) (s : State r) :
-    Monotone fun T => (evalRand w p T s).toOuterMeasure (Cfg.haltedSet r) := by
+    Monotone fun T => (evalRand w p T s).toOuterMeasure (RandCfg.haltedSet r) := by
   refine monotone_nat_of_le_succ fun T => ?_
   have hstep : evalRand w p (T + 1) s =
       (evalRand w p T s).bind (fun cfg => (stepRand w p cfg).eval) := by
@@ -108,38 +111,38 @@ theorem evalRand_haltedSet_mono (w : ℕ) (p : Program B r) (s : State r) :
     simp only [evalRand, runRand_succ, runRand_zero, bind_pure]
   rw [hstep, PMF.toOuterMeasure_bind_apply, PMF.toOuterMeasure_apply]
   refine ENNReal.tsum_le_tsum fun cfg => ?_
-  by_cases hcfg : cfg ∈ Cfg.haltedSet r
+  by_cases hcfg : cfg ∈ RandCfg.haltedSet r
   · have hmem := hcfg
     obtain ⟨v, d, rfl⟩ := hcfg
-    have h1 : (stepRand w p (.halted v d)).eval.toOuterMeasure (Cfg.haltedSet r) = 1 := by
+    have h1 : (stepRand w p (.halted v d)).eval.toOuterMeasure (RandCfg.haltedSet r) = 1 := by
       simp [stepRand_halted, PMF.toOuterMeasure_pure_apply, hmem]
     rw [Set.indicator_of_mem hmem, h1, mul_one]
   · simp [Set.indicator_of_notMem hcfg]
 
 /-- Any worst-case bounded execution halts almost surely. -/
-theorem HaltsWithin.almostSurelyHalts {w T : ℕ} {p : Program B r} {s : State r}
-    (h : HaltsWithin w p s T) : AlmostSurelyHalts w p s := by
-  refine ⟨h.faultFree,
+theorem RandHaltsWithin.almostSurelyHalts {w T : ℕ} {p : Program B r} {s : State r}
+    (h : RandHaltsWithin w p s T) : AlmostSurelyHalts w p s := by
+  refine ⟨h.randFaultFree,
     le_antisymm (iSup_le fun _ => Cslib.Probability.PMF.toOuterMeasure_le_one _ _)
       (le_iSup_of_le T ?_)⟩
-  have hcompl : (evalRand w p T s).toOuterMeasure (Cfg.haltedSet r)ᶜ = 0 := by
+  have hcompl : (evalRand w p T s).toOuterMeasure (RandCfg.haltedSet r)ᶜ = 0 := by
     rw [PMF.toOuterMeasure_apply_eq_zero_iff, Set.disjoint_left]
     intro cfg hmem hnot
     rw [support_evalRand] at hmem
     exact hnot (h cfg hmem)
-  have hsum : (evalRand w p T s).toOuterMeasure (Cfg.haltedSet r) +
-      (evalRand w p T s).toOuterMeasure (Cfg.haltedSet r)ᶜ = 1 := by
+  have hsum : (evalRand w p T s).toOuterMeasure (RandCfg.haltedSet r) +
+      (evalRand w p T s).toOuterMeasure (RandCfg.haltedSet r)ᶜ = 1 := by
     rw [PMF.toOuterMeasure_apply, PMF.toOuterMeasure_apply, ← ENNReal.tsum_add]
     convert (evalRand w p T s).tsum_coe using 1
     congr 1
     funext cfg
-    by_cases hc : cfg ∈ Cfg.haltedSet r <;> simp [hc]
+    by_cases hc : cfg ∈ RandCfg.haltedSet r <;> simp [hc]
   rw [hcompl, add_zero] at hsum
   exact hsum.ge
 
 /-- Expected number of remaining instructions starting from configuration `cfg`, defined via the
 tail sum of active-configuration probabilities. -/
-noncomputable def expectedStepsFrom (w : ℕ) (p : Program B r) (cfg : Cfg r) : ℝ≥0∞ :=
+noncomputable def expectedStepsFrom (w : ℕ) (p : Program B r) (cfg : RandCfg r) : ℝ≥0∞ :=
   ∑' t : ℕ, (runRand w p t cfg).eval.toOuterMeasure {cfg' | ∃ u, cfg' = .running u}
 
 /-- Expected running time of `p` at word size `w` from initial state `s`, valued in `ℝ≥0∞`. -/
@@ -192,41 +195,42 @@ theorem expectedStepsFrom_running (w : ℕ) (p : Program B r) (s : State r) :
   rw [ENNReal.tsum_comm]
   simp only [ProbComp.expect, expectedStepsFrom, ENNReal.tsum_mul_left]
 
-/-- Under `FaultFree`, every horizon partitions probability `1` between `.running` and `.halted`. -/
-theorem FaultFree.running_add_halted_eq_one {w : ℕ} {p : Program B r} {s : State r}
-    (hf : FaultFree w p s) (t : ℕ) :
+/-- Under `RandFaultFree`, every horizon partitions probability `1` between `.running` and
+`.halted`. -/
+theorem RandFaultFree.running_add_halted_eq_one {w : ℕ} {p : Program B r} {s : State r}
+    (hf : RandFaultFree w p s) (t : ℕ) :
     (evalRand w p t s).toOuterMeasure {cfg | ∃ u, cfg = .running u} +
-      (evalRand w p t s).toOuterMeasure (Cfg.haltedSet r) = 1 := by
+      (evalRand w p t s).toOuterMeasure (RandCfg.haltedSet r) = 1 := by
   rw [PMF.toOuterMeasure_apply, PMF.toOuterMeasure_apply, ← ENNReal.tsum_add]
   convert (evalRand w p t s).tsum_coe using 1
   congr 1
   funext cfg
   cases cfg with
-  | running u => simp [Cfg.haltedSet]
-  | halted v d => simp [Cfg.haltedSet]
+  | running u => simp [RandCfg.haltedSet]
+  | halted v d => simp [RandCfg.haltedSet]
   | faulted =>
-    simp [Cfg.haltedSet, hf.evalRand_faulted_eq_zero t]
+    simp [RandCfg.haltedSet, hf.evalRand_faulted_eq_zero t]
 
 /-- A fault-free execution with finite expected running time halts almost surely. -/
 theorem AlmostSurelyHalts.of_expectedTime_ne_top {w : ℕ} {p : Program B r} {s : State r}
-    (hf : FaultFree w p s) (htop : expectedTime w p s ≠ ⊤) :
+    (hf : RandFaultFree w p s) (htop : expectedTime w p s ≠ ⊤) :
     AlmostSurelyHalts w p s := by
   refine ⟨hf, le_antisymm (iSup_le fun _ => Cslib.Probability.PMF.toOuterMeasure_le_one _ _) ?_⟩
   by_contra hlt
-  have hlt1 : (⨆ t : ℕ, (evalRand w p t s).toOuterMeasure (Cfg.haltedSet r)) < 1 :=
+  have hlt1 : (⨆ t : ℕ, (evalRand w p t s).toOuterMeasure (RandCfg.haltedSet r)) < 1 :=
     lt_of_not_ge hlt
-  set supH := ⨆ t : ℕ, (evalRand w p t s).toOuterMeasure (Cfg.haltedSet r)
+  set supH := ⨆ t : ℕ, (evalRand w p t s).toOuterMeasure (RandCfg.haltedSet r)
   have hpos : 0 < 1 - supH := tsub_pos_of_lt hlt1
   have hle_run : ∀ t : ℕ,
       1 - supH ≤ (evalRand w p t s).toOuterMeasure {cfg | ∃ u, cfg = .running u} := by
     intro t
     have hpart := hf.running_add_halted_eq_one t
-    have hle_sup : (evalRand w p t s).toOuterMeasure (Cfg.haltedSet r) ≤ supH :=
-      le_iSup (fun k => (evalRand w p k s).toOuterMeasure (Cfg.haltedSet r)) t
+    have hle_sup : (evalRand w p t s).toOuterMeasure (RandCfg.haltedSet r) ≤ supH :=
+      le_iSup (fun k => (evalRand w p k s).toOuterMeasure (RandCfg.haltedSet r)) t
     refine tsub_le_iff_right.mpr ?_
     calc
       1 = (evalRand w p t s).toOuterMeasure {cfg | ∃ u, cfg = .running u} +
-            (evalRand w p t s).toOuterMeasure (Cfg.haltedSet r) := hpart.symm
+            (evalRand w p t s).toOuterMeasure (RandCfg.haltedSet r) := hpart.symm
       _ ≤ (evalRand w p t s).toOuterMeasure {cfg | ∃ u, cfg = .running u} + supH := by gcongr
   have hinf : (⊤ : ℝ≥0∞) ≤ expectedTime w p s := by
     calc
@@ -234,26 +238,26 @@ theorem AlmostSurelyHalts.of_expectedTime_ne_top {w : ℕ} {p : Program B r} {s 
       _ ≤ expectedTime w p s := ENNReal.tsum_le_tsum hle_run
   exact htop (top_unique hinf)
 
-/-- Under `HaltsWithin w p s T`, the active-configuration tail sum vanishes from `T` onward and
+/-- Under `RandHaltsWithin w p s T`, the active-configuration tail sum vanishes from `T` onward and
 reduces to a finite sum over `Finset.range T`. -/
-theorem HaltsWithin.expectedTime_eq_sum {w T : ℕ} {p : Program B r} {s : State r}
-    (h : HaltsWithin w p s T) :
+theorem RandHaltsWithin.expectedTime_eq_sum {w T : ℕ} {p : Program B r} {s : State r}
+    (h : RandHaltsWithin w p s T) :
     expectedTime w p s =
       ∑ t ∈ Finset.range T,
         (evalRand w p t s).toOuterMeasure {cfg | ∃ u, cfg = .running u} := by
   rw [expectedTime, tsum_eq_sum (s := Finset.range T)]
   intro t ht
   have hT : T ≤ t := Nat.le_of_not_lt (Finset.mem_range.not.mp ht)
-  rw [evalRand_eq_of_haltsWithin h hT, PMF.toOuterMeasure_apply_eq_zero_iff, Set.disjoint_left]
+  rw [evalRand_eq_of_randHaltsWithin h hT, PMF.toOuterMeasure_apply_eq_zero_iff, Set.disjoint_left]
   intro cfg hmem hrun
   obtain ⟨u, rfl⟩ := hrun
   rw [support_evalRand] at hmem
   obtain ⟨v, d, hvd⟩ := h _ hmem
   cases hvd
 
-/-- A worst-case step bound `HaltsWithin w p s T` immediately bounds `expectedTime` by `T`. -/
-theorem expectedTime_le_of_haltsWithin {w T : ℕ} {p : Program B r} {s : State r}
-    (h : HaltsWithin w p s T) :
+/-- A worst-case step bound `RandHaltsWithin w p s T` immediately bounds `expectedTime` by `T`. -/
+theorem expectedTime_le_of_randHaltsWithin {w T : ℕ} {p : Program B r} {s : State r}
+    (h : RandHaltsWithin w p s T) :
     expectedTime w p s ≤ T := by
   rw [h.expectedTime_eq_sum]
   calc

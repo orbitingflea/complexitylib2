@@ -11,7 +11,7 @@ public import Complexity.Init
 public import Complexity.Computability.WordRAM.Allocation
 public import Complexity.Computability.WordRAM.Heap
 public import Complexity.Computability.WordRAM.Notation
-public import Complexity.Computability.WordRAM.Randomized
+public import Complexity.Computability.WordRAM.Randomized.Expected
 public import Complexity.Computability.WordRAM.Time
 public import Complexity.Foundations.NumberTheory.Harmonic
 import Mathlib.Data.List.Sort
@@ -54,7 +54,7 @@ sampled pivot `off ← rand (hi - lo - 1)` ensures that:
 ## Main results
 
 * `Cslib.Algorithms.WordRAM.Quicksort.quicksort_correct_and_bounds`: joint certificate of
-  `HaltsWithin`, `RandCallsBounded` (`≤ n - 1`), pathwise sorted-array realization + `Modifies`
+  `RandHaltsWithin`, `RandCallsBounded` (`≤ n - 1`), pathwise sorted-array realization + `Modifies`
   frame, and `O(n log n)` `expectedTime` at word size `w ≥ logWidth 3 input.length`.
 
 ## References
@@ -1883,7 +1883,7 @@ theorem setup_spec {w : ℕ} {input : List ℕ} (hw : logWidth 3 input.length �
 
 For any `input : List ℕ` of length `n` and word size `w ≥ logWidth 3 n` with `InputFits w input`:
 1. `program` halts without faulting within `worstCaseTime n = 20 * n ^ 2 + 8 * n + 32` instructions
-   on every execution path (`HaltsWithin`);
+   on every execution path (`RandHaltsWithin`);
 2. Every execution path makes at most `n - 1` `rand` calls (`RandCallsBounded`);
 3. On every supported halting configuration `.halted 0 y`, `y.Bounded w` holds,
    `memSlice 1 (n + 1) y.mem` is a sorted permutation of `input`, `Block.mk 1 n` realizes
@@ -1893,7 +1893,7 @@ For any `input : List ℕ` of length `n` and word size `w ≥ logWidth 3 n` with
    unconditionally (even when `input` contains duplicate elements). -/
 theorem quicksort_correct_and_bounds {w : ℕ} {input : List ℕ}
     (hw : logWidth 3 input.length ≤ w) (hfit : InputFits w input) :
-    HaltsWithin w program (.init input) (worstCaseTime input.length) ∧
+    RandHaltsWithin w program (.init input) (worstCaseTime input.length) ∧
     RandCallsBounded w program (.init input) (worstCaseTime input.length) (input.length - 1) ∧
     (∀ cfg ∈ (runRand w program (worstCaseTime input.length) (.running (.init input))).support,
       ∃ y : Data 16, cfg = .halted 0 y ∧
