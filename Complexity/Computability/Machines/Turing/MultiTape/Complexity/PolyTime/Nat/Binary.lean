@@ -610,18 +610,8 @@ end Turing.MultiTapeTM.ComputableInPolyTime
 
 namespace Turing.MultiTapeTM.ComputableInPolyTime
 
-/-- Multiply computed binary values, fixing their intermediate encodings for proof search. -/
-@[fun_prop]
-theorem binary_mul' {α : Type}
-    {input : α ↪ List Bool}
-    {left : α → ℕ}
-    {right : α → ℕ}
-    (hleft : ComputableInPolyTime left input encNat)
-    (hright : ComputableInPolyTime right input encNat) :
-    ComputableInPolyTime (fun (a : α) => left a * right a) input
-  encNat :=
-  .of_tidy (@Turing.MultiTapeTM.ComputableTidilyInPolyTime.binary_mul' α input left right
-      hleft.tidy hright.tidy)
+-- Preserve the original facade's registration scope for captured binary multiplication.
+attribute [fun_prop] binary_mul'
 
 /-- `2 ^ k` in binary, from `k` in unary, by doubling. -/
 @[fun_prop]
