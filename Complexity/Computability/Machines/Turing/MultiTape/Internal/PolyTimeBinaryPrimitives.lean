@@ -1,0 +1,149 @@
+/-
+Copyright (c) 2026 Christian Reitwiessner, Samuel Schlesinger. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Christian Reitwiessner, Samuel Schlesinger, Karn Seth
+-/
+module
+-- upstream: candidate
+
+public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Nat.Arithmetic
+public import Complexity.Computability.Machines.Turing.MultiTape.Internal.PolyTimeNatFrontends
+public import Complexity.Computability.Machines.Turing.MultiTape.Internal.EqualityPrimitives
+public import Complexity.Computability.Machines.Turing.MultiTape.Internal.DegreeClosure
+import Mathlib.Data.Nat.Bitwise
+import Mathlib.Data.List.GetD
+
+/-!
+# Direct polynomial-time binary addition and comparison
+
+The existing carry folds and bit-position scan are certified using plain machine closure.
+Reachable word states are bounded by the encoded input length, not the numeric operands.
+-/
+
+@[expose] public section
+namespace Turing.MultiTapeTM
+open Cslib NatAdd NatSucc
+
+namespace ComputableInPolyTime
+
+/-- Addition of binary naturals, using the carry and remaining-word folds.
+Compose this certificate with the producers' `.prod` certificate. Global automatic addition
+remains separate from this named rule, since an unconstrained intermediate encoding can select
+a binary branch where a surrounding computation needs a unary size. -/
+theorem binary_add : ComputableInPolyTime (fun p : ℕ × ℕ => p.1 + p.2)
+    (encPair encNat encNat) encNat := by
+  let encS := encPair encBool (encPair encBits encBits)
+  have hstep : ComputableInDegree (fun p : (Bool × List Bool × List Bool) × Bool =>
+      addStep p.1 p.2) (encPair encS encBool) encS 1 1 := by
+    have hs := ComputableInDegree.fst encS encBool
+    have hrest := (ComputableInDegree.snd encBool (encPair encBits encBits)).comp hs
+    have hr := (ComputableInDegree.fst encBits encBits).comp hrest
+    have hflag := (ComputableInDegree.fst encBool (encPair encBits encBits)).comp hs
+    have hout := (ComputableInDegree.snd encBits encBits).comp hrest
+    have habc := (ComputableInDegree.snd encS encBool).prod
+      (Internal.DecoderWords.bool_degree.comp hr |>.prod hflag)
+    have hcarry := (ComputableInDegree.of_finite
+      (encIn := encPair encBool (encPair encBool encBool))
+      (encMid := encBool) fun t : Bool × Bool × Bool => carry t.1 t.2.1 t.2.2).comp habc
+    have hdigit := (ComputableInDegree.of_finite
+      (encIn := encPair encBool (encPair encBool encBool))
+      (encMid := encBool) fun t : Bool × Bool × Bool => t.1 ^^ (t.2.1 ^^ t.2.2)).comp habc
+    exact (hcarry.prod ((Internal.DecoderWords.tail_degree.comp hr).prod
+      (hout.append hdigit (encOut := encBits) fun _ => rfl))).mono
+  have hbits : ComputableInPolyTime Nat.bits encNat encBits := of_eq fun _ => rfl
+  have hfold := foldl' (encA := encBool) (encL := encBits) (encB := encS)
+    (list := fun p : ℕ × ℕ => p.1.bits) (init := fun p => (false, p.2.bits, []))
+    (hbits.comp (fst encNat encNat))
+    ((const false).prod ((hbits.comp (snd encNat encNat)).prod (const [])))
+    hstep.computableInPolyTime
+    (B := fun p => 2 * (encPair encNat encNat p).length + 4)
+    (PolyBounded.of_forall_le 4 1 fun _ => by simp only [pow_one]; omega) (by
+      intro p i _
+      obtain ⟨h₁, h₂⟩ := length_foldl_addStep (p.1.bits.take i) (false, p.2.bits, [])
+      simp only [encS, length_encPair, encBool_apply, List.length_singleton, encBits_apply,
+        encNat_apply, List.length_take, List.length_nil] at h₁ h₂ ⊢
+      omega)
+  let encAcc := encPair encBool encBits
+  have hsuccStep : ComputableInDegree (fun p : (Bool × List Bool) × Bool =>
+      succStep p.1 p.2) (encPair encAcc encBool) encAcc 1 1 := by
+    have hs := ComputableInDegree.fst encAcc encBool
+    have hb := ComputableInDegree.snd encAcc encBool
+    have hflag := (ComputableInDegree.fst encBool encBits).comp hs
+    have hout := (ComputableInDegree.snd encBool encBits).comp hs
+    have hc := (ComputableInDegree.of_finite (encIn := encPair encBool encBool) (encMid := encBool)
+      fun q : Bool × Bool => q.1 && q.2).comp (hflag.prod hb)
+    have hd := (ComputableInDegree.of_finite (encIn := encPair encBool encBool) (encMid := encBool)
+      fun q : Bool × Bool => q.1 ^^ q.2).comp (hflag.prod hb)
+    exact (hc.prod (hout.append hd (encOut := encBits) fun _ => rfl)).mono
+  have hfinish : ComputableInPolyTime succFinish encAcc encBits := by
+    have hword := ComputableInDegree.snd encBool encBits
+    have hyes : ComputableInDegree (fun p : Bool × List Bool => p.2 ++ [true])
+        encAcc encBits 1 1 :=
+      hword.append (ComputableInDegree.const (encMid := encBool) true)
+        (encOut := encBits) (fun _ => rfl)
+    exact ite (fst encBool encBits) hyes.computableInPolyTime (snd encBool encBits)
+  have hs : ComputableInPolyTime id encS encS := id'
+  have hfin := foldl' (encA := encBool) (encL := encBits) (encB := encAcc)
+    hs.snd'.fst' (hs.fst'.prod hs.snd'.snd') hsuccStep.computableInPolyTime
+    (B := fun s => (encS s).length + 3)
+    (PolyBounded.of_forall_le 3 1 fun _ => by simp only [pow_one]; omega) (by
+      intro s i _
+      simp only [length_foldl_succStep, encS, encAcc, length_encPair, encBool_apply, id_eq,
+        List.length_singleton, encBits_apply, List.length_take]
+      omega)
+  refine ((hfinish.comp hfin).comp hfold).of_enc_eq fun p => ?_
+  simp only [Function.comp_apply, id_eq, encBits_apply, encNat_apply]
+  rw [succFinish_foldl, ← foldl_addStep, List.nil_append, addBits_bits]
+  rfl
+
+/-- Strict comparison by scanning binary bit positions, never the numeric operand range. -/
+@[fun_prop]
+theorem binary_lt : ComputableInPolyTime (fun p : ℕ × ℕ => decide (p.1 < p.2))
+    (encPair encNat encNat) encBool := by
+  have hbits : ComputableInPolyTime Nat.bits encNat encBits := of_eq fun _ => rfl
+  have hlen : ComputableInPolyTime (fun n : ℕ => n.bits.length) encNat encUnary :=
+    Internal.DecoderWords.unary_degree.computableInPolyTime.comp hbits
+  have hwords : ComputableInDegree (fun p : ℕ × ℕ => p.1.bits ++ p.2.bits)
+      (encPair encNat encNat) encBits 1 1 :=
+    (ComputableInDegree.fst encNat encNat).append (ComputableInDegree.snd encNat encNat)
+      (fun _ => rfl)
+  have hsum : ComputableInPolyTime (fun p : ℕ × ℕ => p.1.bits.length + p.2.bits.length)
+      (encPair encNat encNat) encUnary := by
+    simpa only [Function.comp_def, List.length_append] using
+      Internal.DecoderWords.unary_degree.computableInPolyTime.comp hwords.computableInPolyTime
+  have hscan : ComputableInPolyTime (fun p : ℕ × ℕ =>
+      (List.range p.2.bits.length).any fun i =>
+        !p.1.bits.getD i false && p.2.bits.getD i false &&
+          (List.range (p.1.bits.length + p.2.bits.length)).all fun j =>
+            decide (j ≤ i) || p.1.bits.getD j false == p.2.bits.getD j false)
+      (encPair encNat encNat) encBool := by
+    simp only [List.any_eq_not_all_not]
+    apply bool_not.comp
+    apply allWithInput (range.comp (hlen.comp (snd encNat encNat)))
+    apply bool_not.comp
+    let input := encPair (encPair encNat encNat) encUnary
+    have hlist := range.comp (hsum.comp (fst (encPair encNat encNat) encUnary))
+    have hhigh : ComputableInPolyTime (fun p : (ℕ × ℕ) × ℕ =>
+        (List.range (p.1.1.bits.length + p.1.2.bits.length)).all fun j =>
+          decide (j ≤ p.2) || p.1.1.bits.getD j false == p.1.2.bits.getD j false)
+        input encBool := by
+      apply allWithInput hlist
+      fun_prop
+    have hflags : ComputableInPolyTime (fun p : (ℕ × ℕ) × ℕ =>
+        !p.1.1.bits.getD p.2 false && p.1.2.bits.getD p.2 false) input encBool := by
+      fun_prop
+    exact bool_and.comp (hflags.prod hhigh)
+  refine hscan.of_enc_eq fun p => congrArg encBool ?_
+  have hbit (k i : ℕ) : k.bits.getD i false = k.testBit i := by
+    rw [Nat.testBit_eq_inth, ← List.getD_default_eq_getI]
+    rfl
+  rw [Bool.eq_iff_iff, decide_eq_true_iff, Nat.lt_iff_exists_testBit]
+  simp only [hbit, Nat.size_eq_bits_len, List.any_eq_true, List.mem_range, Bool.and_eq_true,
+    Bool.not_eq_true', List.all_eq_true, Bool.or_eq_true, decide_eq_true_eq, beq_iff_eq]
+  refine exists_congr fun i => and_congr_right fun _ => ?_
+  rw [and_assoc]
+  refine and_congr_right fun _ => and_congr_right fun _ => forall₂_congr fun j _ => ?_
+  rw [← Nat.not_le, imp_iff_not_or, not_not]
+
+end ComputableInPolyTime
+end Turing.MultiTapeTM

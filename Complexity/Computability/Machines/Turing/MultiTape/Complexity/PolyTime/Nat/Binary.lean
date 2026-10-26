@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.PolyTimeNatFrontends
+public import Complexity.Computability.Machines.Turing.MultiTape.Internal.PolyTimeBinaryPrimitives
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Arith
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
@@ -89,41 +90,6 @@ theorem size_add_le (m n : ℕ) : (m + n).size ≤ m.size + n.size + 1 := by
   have h₂ : 2 ^ n.size ≤ 2 ^ (m.size + n.size) := Nat.pow_le_pow_right (by lia) (by lia)
   rw [Nat.pow_succ]
   lia
-
-/-- `m < n` exactly when some bit position below the length of `n` holds a zero in `m` and a one
-in `n`, and every higher position below the total length agrees. -/
-theorem lt_iff_exists_testBit (m n : ℕ) :
-    m < n ↔ ∃ i < n.size, m.testBit i = false ∧ n.testBit i = true ∧
-      ∀ j < m.size + n.size, i < j → m.testBit j = n.testBit j := by
-  have hbig {k j : ℕ} (hj : k.size ≤ j) : k.testBit j = false :=
-    Nat.testBit_eq_false_of_lt ((Nat.lt_size_self k).trans_le (Nat.pow_le_pow_right (by lia) hj))
-  constructor
-  · intro hlt
-    obtain ⟨i, hi, hhigh⟩ := Nat.exists_most_significant_bit
-      (show m ^^^ n ≠ 0 from fun h => hlt.ne (Nat.eq_of_testBit_eq fun j => by
-        have := Nat.testBit_xor m n j
-        rw [h, Nat.zero_testBit] at this
-        revert this
-        cases m.testBit j <;> cases n.testBit j <;> simp))
-    rw [Nat.testBit_xor] at hi
-    have heq : ∀ j, i < j → m.testBit j = n.testBit j := fun j hj => by
-      have := hhigh j hj
-      rw [Nat.testBit_xor] at this
-      revert this
-      cases m.testBit j <;> cases n.testBit j <;> simp
-    cases hmi : m.testBit i <;> cases hni : n.testBit i <;> rw [hmi, hni] at hi
-    · simp at hi
-    · refine ⟨i, ?_, hmi, hni, fun j _ hj => heq j hj⟩
-      by_contra h
-      rw [hbig (Nat.le_of_not_lt h)] at hni
-      exact Bool.false_ne_true hni
-    · exact absurd (Nat.lt_of_testBit i hni hmi fun j hj => (heq j hj).symm) (Nat.lt_asymm hlt)
-    · simp at hi
-  · rintro ⟨i, -, hm, hn, h⟩
-    refine Nat.lt_of_testBit i hm hn fun j hj => ?_
-    by_cases hj' : j < m.size + n.size
-    · exact h j hj' hj
-    · rw [hbig (by lia), hbig (by lia)]
 
 /-- The binary length of a sum is at most one more than the longer binary length of the
 summands. -/
