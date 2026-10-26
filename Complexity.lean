@@ -817,6 +817,7 @@ public import Complexity.Computability.Complexity.Problems.TQBF
 public import Complexity.Computability.Complexity.Problems.TQBF.Closed
 public import Complexity.Computability.Complexity.Problems.TSP
 public import Complexity.Computability.Complexity.Problems.ThreeSAT
+public import Complexity.Computability.Complexity.Problems.ThreeSATThree
 public import Complexity.Computability.Complexity.Problems.TwoSAT
 public import Complexity.Computability.Complexity.Problems.TwoSAT.Completeness
 public import Complexity.Computability.Complexity.Problems.TwoSAT.Layout
@@ -2038,11 +2039,14 @@ public import Complexity.Logics.Propositional.CNF
 public import Complexity.Logics.Propositional.CNF.Coding
 public import Complexity.Logics.Propositional.CNF.Compact
 public import Complexity.Logics.Propositional.CNF.ExactlyOne
+public import Complexity.Logics.Propositional.CNF.ImplicationCycle
 public import Complexity.Logics.Propositional.CNF.ModelCount
 public import Complexity.Logics.Propositional.CNF.Parity
 public import Complexity.Logics.Propositional.CNF.PolyTime
 public import Complexity.Logics.Propositional.CNF.ThreeCNF
 public import Complexity.Logics.Propositional.CNF.ThreeCNF.PolyTime
+public import Complexity.Logics.Propositional.CNF.ThreeOccurrence
+public import Complexity.Logics.Propositional.CNF.ThreeOccurrence.PolyTime
 public import Complexity.Logics.Propositional.CNF.TwoCNF
 public import Complexity.Logics.Propositional.CNF.UnsatVal
 public import Complexity.Logics.Propositional.ClauseSet.Basic

@@ -17,6 +17,7 @@ import Complexity.Computability.Complexity.Problems.Partition
 import Complexity.Computability.Complexity.Problems.SubsetSum
 import Complexity.Computability.Complexity.Problems.TSP
 import Complexity.Computability.Complexity.Problems.ThreeSAT
+import Complexity.Computability.Complexity.Problems.ThreeSATThree
 import Complexity.Computability.Complexity.Problems.VertexCover
 import Complexity.Tactic.PolyTime
 
@@ -234,6 +235,13 @@ Here is the tree, with the reduction for each edge and the completeness theorem 
   3SAT to exact 3SAT ({name}`polyTimeReducible_ThreeSAT_ExactThreeSAT`,
   {name}`ExactThreeSAT_npComplete`) and to subset sum ({name}`polyTimeReducible_ThreeSAT_SubsetSum`,
   {name}`SubsetSum_npComplete`).
+* 3SAT reduces to {name}`ThreeSATThree` via {name}`toThreeSATThree`
+  ({name}`ThreeSATThree_npComplete`). Its clauses have at most three literals, including binary
+  clauses, and every variable has at most three literal occurrences. Repetitions within a clause
+  count separately. {name}`Cslib.Logic.PL.CNF.toThreeOccurrence` gives each occurrence a fresh
+  copy and connects copies by binary implication cycles. For `m` clauses and `ℓ` literal
+  occurrences it produces exactly `m + ℓ` clauses, `3ℓ` literal occurrences, and `ℓ` distinct
+  variables. No planarity condition is imposed.
 * Subset sum reduces to partition ({name}`polyTimeReducible_SubsetSum_Partition`,
   {name}`Partition_npComplete`), knapsack ({name}`polyTimeReducible_SubsetSum_Knapsack`,
   {name}`Knapsack_npComplete`) and zero-one integer programming
