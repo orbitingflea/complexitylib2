@@ -1401,7 +1401,9 @@ public import Complexity.Computability.PCP.SelectedComposition
 public import Complexity.Computability.PCP.ThreeSAT
 public import Complexity.Computability.PCP.TwoProverGame
 public import Complexity.Computability.PolyTime.BitString.InitialTestsSearch
+public import Complexity.Computability.PolyTime.BooleanAnalysis.BoundedIncidenceExactness
 public import Complexity.Computability.PolyTime.BooleanAnalysis.BoundedIncidenceSemantics
+public import Complexity.Computability.PolyTime.BooleanAnalysis.BoundedIncidenceStepCert
 public import Complexity.Computability.PolyTime.BooleanAnalysis.SparsePolyCounter
 public import Complexity.Computability.PolyTime.CNF.BranchedSparseCNFCounter
 public import Complexity.Computability.PolyTime.CNF.ClauseJetEval
