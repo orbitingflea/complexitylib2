@@ -40,6 +40,15 @@ directly, and computational definitions over infinite sample spaces can reuse th
   first-stage distribution.
 * `Cslib.Crypto.Game.advantage_bind_uniformOfFintype_of_ne_le`: exceptional-point loss under a
   uniform finite first-stage choice, extracted from the reviewed support in PR #1103.
+* `Cslib.Crypto.Game.advantage_bind_le_nnreal`,
+  `Cslib.Crypto.Game.bind_apply_le_add_bind_apply`,
+  `Cslib.Crypto.Game.advantage_bind_le_succProbability_bind`,
+  `Cslib.Crypto.Game.advantage_bind_le_of_support`,
+  `Cslib.Crypto.Game.advantage_bind_comm`: `ℝ≥0` mixture, pointwise error-averaging, support,
+  and `PMF.bind_comm` advantage lemmas, extracted from the reviewed support in PR #1169.
+* `Cslib.Crypto.Game.succProbability_uniform_bool_xor`,
+  `Cslib.Crypto.Game.advantage_le_two_mul_uniform_bool_xor`: hidden-bit XOR mixture success
+  probability and factor-of-two game-hop bound.
 
 ## References
 
@@ -338,6 +347,121 @@ theorem advantage_bind_uniformOfFintype_of_ne_le {α : Type*} [Fintype α] [None
   have hadv := Game.advantage_le_of_apply_le hinv_ne_top hle₁ hle₂
   rw [ENNReal.toReal_inv, ENNReal.toReal_natCast, ← NNReal.coe_natCast, ← NNReal.coe_inv] at hadv
   exact NNReal.coe_le_coe.mp hadv
+
+/-- `ℝ≥0` version of `Game.advantage_bind_le`. -/
+theorem advantage_bind_le_nnreal {α : Type*} (d : PMF α) (game1 game2 : α → Game)
+    {ε : ℝ≥0} (h : ∀ a, Game.advantage (game1 a) (game2 a) ≤ ε) :
+    Game.advantage (d.bind game1) (d.bind game2) ≤ ε :=
+  NNReal.coe_le_coe.mp (Game.advantage_bind_le d game1 game2 fun a => NNReal.coe_le_coe.mpr (h a))
+
+/-- Averaging pointwise acceptance-probability bounds `game1 x b ≤ game2 x b + err x b` and
+`game2 x b ≤ game1 x b + err x b` over `μ : PMF β` preserves the bounds for `μ.bind`. -/
+theorem bind_apply_le_add_bind_apply {β : Type*} (μ : PMF β)
+    (game1 game2 err : β → Game) (b : Bool)
+    (h : ∀ x, game1 x b ≤ game2 x b + err x b ∧ game2 x b ≤ game1 x b + err x b) :
+    (μ.bind game1) b ≤ (μ.bind game2) b + (μ.bind err) b ∧
+      (μ.bind game2) b ≤ (μ.bind game1) b + (μ.bind err) b := by
+  have h1 (f g : β → Game) (hle : ∀ x, f x b ≤ g x b + err x b) :
+      (μ.bind f) b ≤ (μ.bind g) b + (μ.bind err) b := by
+    simp only [PMF.bind_apply, ← ENNReal.tsum_add, ← mul_add]
+    exact ENNReal.tsum_le_tsum fun x => mul_le_mul_of_nonneg_left (hle x) zero_le
+  exact ⟨h1 game1 game2 fun x => (h x).1, h1 game2 game1 fun x => (h x).2⟩
+
+/-- Averaging pointwise acceptance-probability bounds `game1 x true ≤ game2 x true + err x true`
+and `game2 x true ≤ game1 x true + err x true` over `μ : PMF β` bounds the `Game.advantage` of the
+mixtures by `Game.succProbability (μ.bind err)`. -/
+theorem advantage_bind_le_succProbability_bind {β : Type*} (μ : PMF β)
+    (game1 game2 err : β → Game)
+    (h : ∀ x, game1 x true ≤ game2 x true + err x true ∧
+      game2 x true ≤ game1 x true + err x true) :
+    Game.advantage (μ.bind game1) (μ.bind game2) ≤ Game.succProbability (μ.bind err) := by
+  have ⟨h1, h2⟩ := bind_apply_le_add_bind_apply μ game1 game2 err true h
+  have hadv := Game.advantage_le_of_apply_le (PMF.apply_ne_top (μ.bind err) true) h1 h2
+  exact NNReal.coe_le_coe.mp (by simpa only [Game.coe_succProbability] using hadv)
+
+/-- Support-restricted version of `Game.advantage_bind_le_nnreal`: a uniform advantage bound on
+`μ.support` extends to `μ.bind`. -/
+theorem advantage_bind_le_of_support {α : Type*} (μ : PMF α) (game1 game2 : α → Game)
+    {ε : ℝ≥0} (h : ∀ a ∈ μ.support, Game.advantage (game1 a) (game2 a) ≤ ε) :
+    Game.advantage (μ.bind game1) (μ.bind game2) ≤ ε := by
+  classical
+  let game2' : α → Game := fun a => if a ∈ μ.support then game2 a else game1 a
+  have hbind : μ.bind game2 = μ.bind game2' := by
+    ext b; simp only [PMF.bind_apply]
+    refine tsum_congr fun a => ?_
+    by_cases ha : a ∈ μ.support
+    · simp only [game2', ha, ↓reduceIte]
+    · simp [show μ a = 0 by simpa [PMF.mem_support_iff] using ha]
+  rw [hbind]
+  refine advantage_bind_le_nnreal μ game1 game2' fun a => ?_
+  dsimp only [game2']; split_ifs with ha
+  · exact h a ha
+  · simp
+
+/-- Swapping two independent first-stage distributions via `PMF.bind_comm` preserves
+`Game.advantage`. -/
+theorem advantage_bind_comm {α β : Type*} (p : PMF α) (q : PMF β) (f g : α → β → Game) :
+    Game.advantage (p.bind fun a => q.bind fun b => f a b)
+      (p.bind fun a => q.bind fun b => g a b) =
+    Game.advantage (q.bind fun b => p.bind fun a => f a b)
+      (q.bind fun b => p.bind fun a => g a b) := by
+  rw [PMF.bind_comm p q f, PMF.bind_comm p q g]
+
+open Probability in
+/-- For any Boolean-indexed family of games `g : Bool → Game`, sampling a uniform hidden bit
+`bit ← PMF.uniformOfFintype Bool` and outputting `guess ^^ bit` for `guess ← g bit` succeeds with
+probability `(1 + succProbability (g false) - succProbability (g true)) / 2`. -/
+theorem succProbability_uniform_bool_xor (g : Bool → Game) :
+    (succProbability
+      ((PMF.uniformOfFintype Bool).bind fun bit => (g bit).map (fun guess => guess ^^ bit)) : ℝ) =
+      (1 + (succProbability (g false) : ℝ) - succProbability (g true)) / 2 := by
+  have h1 :
+      ((PMF.uniformOfFintype Bool).bind fun bit =>
+        (g bit).map (fun guess => guess ^^ bit)) true =
+      2⁻¹ * g false true + 2⁻¹ * g true false := by
+    rw [PMF.bind_apply, tsum_bool]
+    simp [PMF.uniformOfFintype_apply, PMF.map_apply]
+  have hfalse : (g true false).toReal = 1 - (g true true).toReal := by
+    have hsum := succProbability_add_failProbability (g true)
+    have hsumR := congrArg (fun x : ℝ≥0 => (x : ℝ)) hsum
+    simp only [NNReal.coe_add, NNReal.coe_one, succProbability, failProbability,
+      ENNReal.coe_toNNReal_eq_toReal] at hsumR
+    linarith
+  rw [coe_succProbability, h1, ENNReal.toReal_add
+    (ENNReal.mul_ne_top (by simp) (PMF.apply_ne_top _ _))
+    (ENNReal.mul_ne_top (by simp) (PMF.apply_ne_top _ _)),
+    ENNReal.toReal_mul, ENNReal.toReal_mul, ENNReal.toReal_inv, ENNReal.toReal_ofNat,
+    hfalse, coe_succProbability, coe_succProbability]
+  ring
+
+open Probability in
+/-- For any two Boolean-indexed game families `g₀, g₁ : Bool → Game`, the advantage
+`advantage (g₀ false) (g₀ true)` is bounded by twice the distinguishing advantage between their
+uniform hidden-bit XOR mixtures plus `advantage (g₁ false) (g₁ true)`. -/
+theorem advantage_le_two_mul_uniform_bool_xor (g₀ g₁ : Bool → Game) :
+    advantage (g₀ false) (g₀ true) ≤
+      2 * advantage
+        ((PMF.uniformOfFintype Bool).bind fun bit => (g₀ bit).map (fun guess => guess ^^ bit))
+        ((PMF.uniformOfFintype Bool).bind fun bit => (g₁ bit).map (fun guess => guess ^^ bit)) +
+      advantage (g₁ false) (g₁ true) := by
+  rw [← NNReal.coe_le_coe]
+  simp only [NNReal.coe_add, NNReal.coe_mul, NNReal.coe_ofNat, coe_advantage,
+    succProbability_uniform_bool_xor]
+  have hle :
+      |((succProbability (g₀ false) : ℝ) - succProbability (g₀ true)) -
+        ((succProbability (g₁ false) : ℝ) - succProbability (g₁ true))| =
+      2 * |(1 + (succProbability (g₀ false) : ℝ) - succProbability (g₀ true)) / 2 -
+        (1 + (succProbability (g₁ false) : ℝ) - succProbability (g₁ true)) / 2| := by
+    rw [show (1 + (succProbability (g₀ false) : ℝ) - succProbability (g₀ true)) / 2 -
+        (1 + (succProbability (g₁ false) : ℝ) - succProbability (g₁ true)) / 2 =
+      (((succProbability (g₀ false) : ℝ) - succProbability (g₀ true)) -
+        ((succProbability (g₁ false) : ℝ) - succProbability (g₁ true))) / 2 by ring,
+      abs_div, Nat.abs_ofNat]
+    ring
+  have htri := abs_sub_abs_le_abs_sub
+    ((succProbability (g₀ false) : ℝ) - succProbability (g₀ true))
+    ((succProbability (g₁ false) : ℝ) - succProbability (g₁ true))
+  linarith
 
 end Game
 end Cslib.Crypto

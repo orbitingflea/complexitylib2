@@ -9,6 +9,7 @@ module
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 public import Complexity.Computability.Machines.Turing.MultiTape.PolyTime
+public import Complexity.Computability.Machines.Turing.MultiTape.Internal.PolyTimeListToBits
 public import Complexity.Foundations.Data.BitString.List.Operations
 public import Complexity.Foundations.Data.BitString.List.Binary
 public import Complexity.Foundations.Data.BitString.Enumeration
@@ -509,11 +510,6 @@ theorem bitsZipWithInput (op : Bool → Bool → Bool) {α : Type} {input : α �
     ComputableInPolyTime (fun a => (left a).zipWith op (right a)) input encBits :=
   .of_tidy (ComputableTidilyInPolyTime.bitsZipWithInput op hleft.tidy hright.tidy)
 
-/-- Convert framed Boolean lists to raw words without changing their contents. -/
-@[fun_prop]
-theorem listToBits : ComputableInPolyTime (fun l => l) (encList encBool) encBits :=
-  .of_tidy ComputableTidilyInPolyTime.listToBits
-
 /-- Read a row of a computed word, charging padding and both computed unary indices. -/
 @[fun_prop]
 theorem bitsRowWithInput {α : Type} {input : α ↪ List Bool}
@@ -528,8 +524,9 @@ theorem bitsRowWithInput {α : Type} {input : α ↪ List Bool}
 /-- Frame the existing input encoding, charging every delimiter. -/
 @[fun_prop]
 theorem bitsFrame {α : Type} (enc : α ↪ List Bool) :
-    ComputableInPolyTime (fun a => Turing.MultiTapeTM.frame (enc a)) enc encBits :=
-  .of_tidy (ComputableTidilyInPolyTime.bitsFrame (α := α) (enc := enc))
+    ComputableInPolyTime (fun a => Turing.MultiTapeTM.frame (enc a)) enc encBits := by
+  have henc : ComputableInPolyTime (fun a => enc a) enc encBits := of_eq fun _ => rfl
+  exact frame.comp henc
 
 /-- Saturating binary decoding to unary is polynomial time on arbitrary input words. -/
 @[fun_prop]
@@ -702,11 +699,8 @@ theorem bitsFoldlWithInput (op : Bool → Bool → Bool) {list : α → List Boo
     (hlist : ComputableInPolyTime list input encBits)
     (hinit : ComputableInPolyTime init input encBool) :
     ComputableInPolyTime (fun a => (list a).foldl op (init a)) input encBool :=
-  .of_tidy (ComputableTidilyInPolyTime.bitsFoldlWithInput (op := op)
-    (list := list)
-    (init := init)
-    (hlist := hlist.tidy)
-    (hinit := hinit.tidy))
+  foldl' (encA := encBool) hlist hinit (of_finite (fun p : Bool × Bool => op p.1 p.2))
+    (.const 1) (fun _ _ _ => by simp)
 
 /-- Apply a fixed Boolean operation pointwise, stopping at the shorter word. -/
 @[fun_prop]
