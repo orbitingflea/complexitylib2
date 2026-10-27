@@ -27,7 +27,7 @@ the FHE industrial context, the first-order design decisions and the repository'
 | OpenAI math TCS results: review Fortnow's rewrites and extract in-scope results | [#1002] |
 | A Verso guide with a chapter per area | [#585] |
 | Planar SAT and geometric hardness: orthogonal planar 3SAT-3 with explicit grid bounds, parsimonious compilers | [#1079] |
-| Randomized Word RAM: a `rand` instruction, expected running time, randomized algorithms | [#1124] |
+| Randomized Word RAM: broader expected-time rules, simulation bridges and selection | [#1124] |
 | Proof automation: predictable polynomial-time certificate search | [#1155] |
 
 ### Landmark theorems, in priority order
@@ -120,11 +120,8 @@ families and full-input native runtime.
 - **Sigma protocols and Fiat–Shamir** ([#581]): computational Schnorr signatures under discrete
   log against strict PPT forgers; eavesdropping security in the strict-PPT model, with the
   statistical-distance term from sampling `ZMod q`.
-- **Diffie–Hellman and ElGamal:** efficient key generation and encryption, the worst-case DDH
-  decider of Boneh–Shoup Ex. 10.10 (amplifying an average-case distinguisher with a Chernoff
-  bound), Hashed ElGamal with a general semantically secure symmetric cipher `E_s` (Boneh–Shoup
-  Theorem 11.5) and a nondegenerate `SecureKDF` instantiation ([#1047]), and Cramer–Shoup CCA
-  security ([#1000]).
+- **Diffie–Hellman and ElGamal:** Hashed ElGamal with a general semantically secure symmetric
+  cipher `E_s` (Boneh–Shoup Theorem 11.5) ([#1047]).
 - **Chosen-ciphertext security** ([#1000]): authenticated encryption by encrypt-then-MAC and
   Cramer–Shoup from DDH, with KEM–DEM hybrid encryption ([#881]) as the chosen-plaintext
   starting point (Boneh–Shoup Exercise 11.9).
@@ -134,7 +131,7 @@ families and full-input native runtime.
   general moduli; module SIS and module LWE toward Dilithium-style schemes, as theory.
 - **Symmetric:** Carter–Wegman word-level `IsOraclePPT` PRF reduction wrappers, `MACScheme`
   packaging for randomized Carter–Wegman, and a computational nonce-MAC interface ([#736]); the
-  4-round strong Feistel bound ([#748]); the Naor–Reingold PRF from DDH (efficient lazy-sampling
+  Naor–Reingold PRF from DDH (efficient lazy-sampling
   reduction and `PseudorandomFunction` bridge; algebraic/tree evaluation and distributional
   prefix-hybrid bound landed) ([#1093]).
 - **General:** reusable adaptive reductions, public-key encryption, universal-instance zero
@@ -394,10 +391,10 @@ each statement against the numbered result. Organize modules by subject, not cha
   classes over arbitrary value domains with weighted or bit costs; simulations between instances;
   the typed core proposed in [CSLib #1158](https://github.com/leanprover/cslib/pull/1158).
 - **Word RAM:** an AC⁰ basis; wider-fragment and Turing-machine simulations; size-based width
-  selection with an input-fit guarantee and explicit overhead; expected-time reasoning,
-  random-tape equivalence, and BPP/RP/ZPP simulation bridges for the randomized word RAM
-  ([#1124]), with randomized quicksort and selection as first clients; transfer of cell-probe
-  lower bounds; and the Horn-SAT, 2SAT, matching and domino-tiling clients.
+  selection with an input-fit guarantee and explicit overhead; expected-time rules for unbounded
+  almost-surely terminating structured loops; random-tape equivalence and BPP/RP/ZPP simulation
+  bridges for the randomized word RAM ([#1124]); randomized selection; transfer of cell-probe lower
+  bounds; and the Horn-SAT, 2SAT, matching and domino-tiling clients.
 - **Stateful algorithms and data structures:** Word-RAM controllers for larger adaptive and
   iterative clients, including the two-stack queue and timeline-editing controllers; reusable
   allocation and deallocation, shrinking, and live and peak space accounting; ownership and
@@ -441,6 +438,15 @@ still to read them for the mathematics and write proofs against Complexitylib's 
 adapted code keeps its Apache 2.0 attribution. The rewrites state no license and are only read
 and credited.
 
+- **Native declared-variable counting** ([#1226](https://github.com/cslib-community/complexitylib/issues/1226)):
+  `CountingNativeEndpoint.exists_declaredCounter` supplies one native counter for each fixed width,
+  exact on every valid declared-size/CNF input and zero otherwise. It has
+  `2^{O_k(interpolationScale N)} * (L + 1)^{O_k(1)}` time and independent polynomial workspace in the
+  original external encoded length `L`, with no supplier premises. The module derives
+  subexponential-time `k`-SAT, zero SAT exponents, `¬ETH`, and `¬SETH`. This is the Sections 3–6 and
+  Appendices A–B interpolation-scale bound, not the sharper Appendix D runtime. Integration,
+  validation, and the curated formal abstract are tracked in #1226.
+
 ## Documentation and repository
 
 - **The guide** ([#585]): a chapter per area, including Foundations (bit strings, Fourier
@@ -480,7 +486,6 @@ not planned, not as proved.
 [#643]: https://github.com/cslib-community/complexitylib/issues/643
 [#645]: https://github.com/cslib-community/complexitylib/issues/645
 [#736]: https://github.com/cslib-community/complexitylib/issues/736
-[#748]: https://github.com/cslib-community/complexitylib/issues/748
 [#798]: https://github.com/cslib-community/complexitylib/issues/798
 [#862]: https://github.com/cslib-community/complexitylib/issues/862
 [#881]: https://github.com/cslib-community/complexitylib/issues/881

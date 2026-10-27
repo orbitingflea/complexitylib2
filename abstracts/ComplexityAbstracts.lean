@@ -32,6 +32,8 @@ import ComplexityAbstracts.PCPBridge
 import ComplexityAbstracts.PartialMCSPAbstract
 import ComplexityAbstracts.PartialMCSPBridge
 import ComplexityAbstracts.Randomized
+import ComplexityAbstracts.RandomizedWordRAMAbstract
+import ComplexityAbstracts.RandomizedWordRAMBridge
 import ComplexityAbstracts.ResolutionAbstract
 import ComplexityAbstracts.ResolutionBridge
 import ComplexityAbstracts.SavitchAbstract
@@ -40,6 +42,8 @@ import ComplexityAbstracts.ShamirAbstract
 import ComplexityAbstracts.ShamirBridge
 import ComplexityAbstracts.SipserLautemannAbstract
 import ComplexityAbstracts.SipserLautemannBridge
+import ComplexityAbstracts.SubexponentialSATAbstract
+import ComplexityAbstracts.SubexponentialSATBridge
 import ComplexityAbstracts.SubsetSumAbstract
 import ComplexityAbstracts.SubsetSumBridge
 import ComplexityAbstracts.TQBFAbstract
