@@ -47,6 +47,7 @@ subexponential counting endpoint of [OpenAI2026ETH], Section 6.4 (pp. 43–44).
 namespace Cslib.Complexity.CountingSparsify
 
 open Cslib.Logic.PL Cslib.Logic.PL.CNF.Sparsification Turing.MultiTapeTM
+open Cslib.Logic.PL.CNF (validDeclaredInput validDeclaredInput_eq_true_iff normalizeDeclaredLeaf)
 
 variable {P : Type} {encP : P ↪ List Bool}
 
@@ -191,7 +192,7 @@ private theorem computableInPolyTime_finish {NOf : P → ℕ}
 
 /-- Normalize one total declared-count leaf implementation. The intermediate declared count is
 charged explicitly in both resource bounds; semantic correctness still requires the support and
-counting promises of `normalizeDeclaredLeaf_eq_modelCount`. -/
+counting promises of `Cslib.Logic.PL.CNF.normalizeDeclaredLeaf_eq_modelCount`. -/
 theorem exists_computableInO_normalizeDeclaredLeaf {NOf : P → ℕ}
     (hN : ComputableInPolyTime NOf encP encUnary)
     {h : P × CNF ℕ → ℕ} {t s : P × CNF ℕ → ℕ}
