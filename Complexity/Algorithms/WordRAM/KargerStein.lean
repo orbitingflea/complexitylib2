@@ -1711,8 +1711,7 @@ theorem branchTail_exec {w fp b k t : ℕ} {x : Data 24}
       Function.update_of_ne (by omega)]
     exact hmod_sub a (by rw [Finset.mem_Ico]; omega)
   · simp +decide [y, p₁₁, p₁₀, p₉, p₈, p₇, p₆, p₅, p₄, p₃, p₂, p₁]
-  · simp +decide [y, p₁₁]
-    rfl
+  · simp +decide [y, p₁₁, childFp]
   · simp [y]
   · rw [hym, Function.update_of_ne (by omega), Function.update_of_ne (by omega),
       Function.update_self]

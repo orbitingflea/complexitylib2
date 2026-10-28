@@ -9,15 +9,16 @@ Authors: OpenAI, Samuel Schlesinger, Anton Kovsharov
 import ComplexityAbstracts.Check
 import ComplexityAbstracts.Encoding
 import ComplexityAbstracts.SubexponentialSATBridge
-import Complexity.Computability.Machines.Turing.MultiTape.ResourceBounds
+import Cslib.Computability.Machines.Turing.MultiTape.Deterministic
 import Mathlib.Analysis.SpecialFunctions.Pow.Real
 import Mathlib.Analysis.SpecialFunctions.Sqrt
 import Mathlib.Data.Fintype.Pi
 
 /-! # OpenAI: the Exponential Time Hypothesis is false
 
-The four theorems below are proved through `SubexponentialSATBridge` from the unconditional
-native counting endpoint.
+The four complexity theorems below are proved through `SubexponentialSATBridge` from the
+unconditional native counting endpoint. A fifth theorem, `length_encCNF`, gives the exact length
+of the input encoding.
 
 The primary result is one deterministic machine for each fixed clause width that computes the
 number of satisfying assignments of every formula of that width. With `n` the number of distinct
@@ -33,12 +34,12 @@ agreement with the canonical definitions. Machinery is existential. The bridge i
 public unconditional endpoint, whose native counter and consequences prove the displayed
 statements without any branch-certificate or exactness hypothesis.
 
-**What a reader inspects.** Read the definitions below, the displayed `Encoding` foundation,
-and the one additional allowed module, `MultiTape.ResourceBounds`. The latter contributes only
-the plain native `ComputableInO` resource convention, explained below, over upstream deterministic
-machines. No CNF implementation, complexity-class definition or counting construction is
-allowlisted. Lean checks the bridge proofs; `#check_abstract` audits the dependency boundary
-of the definitions and theorem statements, not their English interpretation.
+**What a reader inspects.** Read the definitions below and the displayed `Encoding` foundation.
+The machine model is upstream cslib's deterministic multi-tape Turing machine; no library
+module beyond `Encoding` is allowlisted, so no CNF implementation, complexity-class definition or
+counting construction enters the statements. Lean checks the bridge proofs; `#check_abstract`
+audits the dependency boundary of the definitions and theorem statements, not their English
+interpretation.
 
 ## References and credit
 
@@ -47,6 +48,8 @@ of the definitions and theorem statements, not their English interpretation.
   `openai/math@7ef5c0cc5ca4b0e072b7a050fca09ab24bc6fa3a`.
 * [R. Impagliazzo and R. Paturi, *On the complexity of k-SAT*][ImpagliazzoPaturi2001]: the
   exponential-time hypotheses and the infimum exponent.
+* [M. R. Garey and D. S. Johnson, *Computers and Intractability*][GareyJohnson1979]: reasonable
+  encodings.
 
 The native port is the joint work recorded in #1226, including Samuel Schlesinger,
 Anton Kovsharov, Erik Demaine and the contributing Codex, Claude and Jetski workers. The native
@@ -56,6 +59,8 @@ Construction provenance is recorded in
 -/
 
 namespace ComplexityAbstracts.SubexponentialSATAbstract
+
+open ComplexityTests.Abstracts.Encoding
 
 /-! ## Formulas and model counting
 
@@ -87,17 +92,17 @@ def eval (φ : Formula) (σ : ℕ → Bool) : Bool :=
 /-- A formula is satisfiable when some total Boolean assignment makes it true. -/
 def Satisfiable (φ : Formula) : Prop := ∃ σ : ℕ → Bool, eval φ σ = true
 
-/-- Variables in occurrence order, retaining repetitions. -/
-def vars (φ : Formula) : List ℕ := φ.flatten.map Literal.var
+/-- The variables occurring in `φ`. -/
+def vars (φ : Formula) : Finset ℕ := (φ.flatten.map Literal.var).toFinset
 
-/-- The number of distinct occurring variables, independent of their numeric labels. -/
-def numVars (φ : Formula) : ℕ := (vars φ).toFinset.card
+/-- The number of variables occurring in `φ`, independent of their numeric labels. -/
+def numVars (φ : Formula) : ℕ := (vars φ).card
 
-/-- The number of satisfying assignments of `φ`: assignments of its distinct variables, each
-variable counted once, that make `φ` true. -/
+/-- The number of satisfying assignments of `φ`: assignments `vars φ → Bool` that make `φ` true
+when every other variable is set to `false`. -/
 def modelCount (φ : Formula) : ℕ :=
-  (Finset.univ.filter fun σ : (vars φ).toFinset → Bool =>
-    eval φ (fun v => if h : v ∈ (vars φ).toFinset then σ ⟨v, h⟩ else false) = true).card
+  (Finset.univ.filter fun σ : vars φ → Bool =>
+    eval φ (fun v => if h : v ∈ vars φ then σ ⟨v, h⟩ else false) = true).card
 
 /-- Every clause of `φ` has at most `k` literals. -/
 def HasWidth (k : ℕ) (φ : Formula) : Prop := ∀ clause ∈ φ, clause.length ≤ k
@@ -112,9 +117,7 @@ encoded by the empty word. The shared foundation spells out all framing and list
 /-- Encode each literal as a framed binary index followed by its polarity bit; frame the
 literals within clauses and the clauses within the formula. This is the native `encCNF`. -/
 def encCNF : Formula ↪ List Bool :=
-  ComplexityTests.Abstracts.Encoding.encList (ComplexityTests.Abstracts.Encoding.encList
-    (ComplexityTests.Abstracts.Encoding.encPair ComplexityTests.Abstracts.Encoding.encNat
-      ComplexityTests.Abstracts.Encoding.encBool))
+  encList (encList (encPair encNat encBool))
 
 /-! ## Deterministic machine and resource conventions
 
@@ -124,16 +127,20 @@ and symbol operations. The input tape is read-only, and output is write-only. Ti
 transitions until halting; work space counts visited work-tape cells over every run prefix.
 No condition is imposed on bitstrings outside the chosen encoding's image.
 
-The native predicate `Turing.MultiTapeTM.ComputableInO f encIn encOut T S` means that there
-exists a constant `C` and one such machine computing `f` on every encoded input `x` within
-`C * (T x + 1)` steps and `C * (S x + 1)` work cells, with the additional bound
-`(encOut (f x)).length ≤ C * (S x + 1)`. Thus output is charged even though its tape is not a
-work tape. Time and space are independent budgets; a time bound does not supply polynomial
-space. This is the library's existing resource predicate, not a unit-cost arithmetic machine.
-
-For decision problems below, `DecidableInTimeAndSpace` computes the exact Boolean membership
-bit and halts on every encoded instance. Its finite machine and all bounds precede the inputs.
+Upstream `ComputableInTimeAndSpace f encIn encOut t s` asserts one such machine that, on every
+input `x`, halts with `encOut (f x)` within `t x` steps and `s x` work cells.
+`DecidableInTimeAndSpace` is the case of the exact Boolean membership bit. The finite machine and
+all bounds precede the inputs. Time and space are independent budgets; a time bound does not
+supply polynomial space.
 -/
+
+/-- `f` is computable within time `O(T x)` and space `O(S x)`, with the encoded output also of
+length `O(S x)`: output is charged even though its tape is not a work tape. -/
+def ComputableInO {α β : Type} (f : α → β) (encIn : α ↪ List Bool) (encOut : β ↪ List Bool)
+    (T S : α → ℕ) : Prop :=
+  ∃ c, Turing.MultiTapeTM.ComputableInTimeAndSpace f encIn encOut
+      (fun x => c * (T x + 1)) (fun x => c * (S x + 1)) ∧
+    ∀ x, (encOut (f x)).length ≤ c * (S x + 1)
 
 /-- A decision problem is decidable in time `O(T x)`, with some independent space bound. -/
 def DecidableInTimeO {α : Type} (A : Set α) (enc : α ↪ List Bool) (T : α → ℝ) : Prop :=
@@ -168,6 +175,21 @@ def ETH : Prop :=
 def SETH : Prop :=
   ∀ ε : ℝ, 0 < ε → ∃ k : ℕ, ¬DecidableInExpTime (KSAT k) encCNF numVars (1 - ε)
 
+/-! ## Input size
+
+The polynomial factors below are polynomials in the length of `encCNF φ`, which is exactly
+determined by the formula.
+-/
+
+/-- **The encoding is concise.** Its length is exactly one bit per clause, plus `10 + 8 · b` bits
+for each literal occurrence, where `b = Nat.size v` is the number of binary digits of its variable
+`v`. Thus the input length is linear in the number of literals and logarithmic in the variable
+labels, as for a reasonable encoding in the sense of
+[Garey and Johnson][GareyJohnson1979]. -/
+theorem length_encCNF (φ : Formula) :
+    (encCNF φ).length = φ.length + (φ.flatten.map fun l => 10 + 8 * Nat.size l.var).sum :=
+  SubexponentialSATBridge.length_encCNF φ
+
 /-! ## Exact counting and the exponential time hypotheses
 
 The primary theorem fixes the counter, constants and native machine for each `k` before every
@@ -190,7 +212,7 @@ is the number of variables and `L` the encoding length. -/
 theorem exact_count (k : ℕ) :
     ∃ (count : Formula → ℕ) (A e b : ℕ),
       (∀ φ, HasWidth k φ → count φ = modelCount φ) ∧
-      Turing.MultiTapeTM.ComputableInO count encCNF ComplexityTests.Abstracts.Encoding.encNat
+      ComputableInO count encCNF encNat
         (fun φ => ⌈(2 : ℝ) ^ (A * interpolationScale (numVars φ))⌉₊ * ((encCNF φ).length + 1) ^ e)
         (fun φ => ((encCNF φ).length + 1) ^ b) :=
   SubexponentialSATBridge.exact_count k
@@ -209,10 +231,9 @@ end ComplexityAbstracts.SubexponentialSATAbstract
 
 /--
 info: abstract audit passed for `ComplexityAbstracts.SubexponentialSATAbstract`:
-25 root declarations, 139 dependencies checked
+27 root declarations, 143 dependencies checked
 -/
 #guard_msgs (whitespace := lax) in
 #check_abstract ComplexityAbstracts.SubexponentialSATAbstract allowing [
-  ComplexityAbstracts.Encoding,
-  Complexity.Computability.Machines.Turing.MultiTape.ResourceBounds
+  ComplexityAbstracts.Encoding
 ]

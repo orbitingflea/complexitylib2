@@ -170,12 +170,13 @@
         "ComplexityTests.Abstracts.GSWFHEAbstract.fullyHomomorphic"
       ],
       "summary": "Bootstrapping the GSW scheme gives leveled fully homomorphic encryption from decision LWE, and fully homomorphic encryption under an additional circular-security assumption.",
-      "scope": "Explicit GSW key generation, encryption and decryption at a centered-binomial LWE family with quasi-polynomial modulus. The leveled scheme family E has joint native strict PPT runtime in (security, d) via NativeInDepth, its fresh-ciphertext key pair has the GSW key-generation law, and the fully homomorphic scheme's key generation is Gentry's self-loop key; the evaluator, the rest of the leveled keys and the decryption circuits are existential. Perfect correctness on fresh encryptions, fixed widths, polynomial-size decryption circuits, native strict PPT algorithms and asymptotic IND-CPA. Circular security is a separate hypothesis; no lattice hardness, circuit privacy, multi-hop evaluation or concrete loss.",
+      "scope": "Explicit GSW key generation, encryption and decryption at a centered-binomial LWE family with quasi-polynomial modulus. The leveled scheme family E has joint native strict PPT runtime in (security, d) via NativeInDepth, its fresh-ciphertext key pair has the GSW key-generation law, and the fully homomorphic scheme's key generation is Gentry's self-loop key; the evaluator, the rest of the leveled keys and the decryption circuits are existential. Perfect correctness on fresh encryptions, fixed widths, uniformly generated polynomial-size decryption circuits, native strict PPT algorithms and asymptotic IND-CPA. Circular security is a separate hypothesis; no lattice hardness, circuit privacy, multi-hop evaluation or concrete loss.",
       "namespace": "ComplexityTests.Abstracts.GSWFHEAbstract",
       "foundations": [
         "ComplexityAbstracts.Encoding",
         "ComplexityAbstracts.Computation",
-        "ComplexityAbstracts.Randomized"
+        "ComplexityAbstracts.Randomized",
+        "ComplexityAbstracts.GSW"
       ]
     },
     {
@@ -239,6 +240,9 @@
         "ComplexityAbstracts.SubexponentialSATAbstract.not_eth",
         "ComplexityAbstracts.SubexponentialSATAbstract.not_seth",
         "ComplexityAbstracts.SubexponentialSATAbstract.satExponent_eq_zero"
+      ],
+      "supporting_theorems": [
+        "ComplexityAbstracts.SubexponentialSATAbstract.length_encCNF"
       ],
       "summary": "For each fixed clause width, one deterministic native machine exactly counts satisfying assignments in subexponential time and polynomial space. Every fixed-width SAT exponent is zero, and ETH and SETH are false. Native formalization of OpenAI's manuscript, revised 25 October 2026, by the contributors to #1226.",
       "scope": "Explicit CNF semantics, model counts over the occurring variables, and binary formula/output encodings; the interpolation-scale exponent n (log log (n + 16))² / sqrt(log(n + 16)) from §§3–6 and Proposition 6.4, where n is the number of variables, with polynomial time overhead and polynomial workspace in the encoded formula length. Includes all fixed widths and sizes; the count is exact on every formula of the given width. This does not establish the sharper Theorem 1.1 / Appendix D bound.",

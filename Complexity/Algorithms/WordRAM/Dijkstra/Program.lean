@@ -9,6 +9,7 @@ module
 
 public import Complexity.Algorithms.WordRAM.Dijkstra.Statement
 public import Complexity.Algorithms.WordRAM.Dijkstra.ExactNotation
+public import Complexity.Computability.WordRAM.Function
 
 /-!
 # Dijkstra's algorithm on the word RAM: the program
@@ -34,6 +35,15 @@ On the exact basis a subtraction below zero faults. The program's only subtracti
 
 ## Main definitions
 
+* `Cslib.Algorithms.WordRAM.Dijkstra.Instance.encodeWeight`: a matrix entry as a word.
+* `Cslib.Algorithms.WordRAM.Dijkstra.Instance.encode`: the weight-matrix input words.
+* `Cslib.Algorithms.WordRAM.Dijkstra.Instance.outAddr`: the output address of a vertex.
+* `Cslib.Algorithms.WordRAM.Dijkstra.QuadraticSpec`: a flat program computes every distance from
+  the source within `K n ^ 2` instructions.
+* `Cslib.Algorithms.WordRAM.Dijkstra.QuadraticStatement`: some program meets `QuadraticSpec`.
+* `Cslib.Algorithms.WordRAM.Dijkstra.QueryStatement`: the distance to one queried vertex is
+  uniformly computable in `O(n ^ 2)` instructions, in the sense of
+  `Cslib.WordRAM.UniformComputableInO`.
 * `Cslib.Algorithms.WordRAM.Dijkstra.dijkstra`: the program.
 * `Cslib.Algorithms.WordRAM.Dijkstra.relaxWord`: one relaxation on encoded words.
 
@@ -49,6 +59,58 @@ On the exact basis a subtraction below zero faults. The program's only subtracti
 namespace Cslib.Algorithms.WordRAM.Dijkstra
 
 open Cslib.WordRAM
+
+namespace Instance
+
+variable (I : Instance)
+
+/-- A matrix entry as a word: `0` for no edge and `c + 1` for an edge of weight `c`. -/
+def encodeWeight : Option ℕ → ℕ
+  | none => 0
+  | some c => c + 1
+
+/-- The input words: `n`, the source, and the weight matrix row by row. The entry of row `u` and
+column `v` is word `u * n + v + 2`, so `Cslib.WordRAM.Data.init` places it at address
+`u * n + v + 3`. -/
+def encode : List ℕ :=
+  I.n :: (I.source : ℕ) ::
+    (List.finRange I.n).flatMap fun u =>
+      (List.finRange I.n).map fun v => encodeWeight (I.weight u v)
+
+/-- The output address of vertex `v`: the `n` cells just past the input, which ends at address
+`n * n + 2`. -/
+def outAddr (v : Fin I.n) : ℕ := I.n * I.n + 3 + v
+
+end Instance
+
+/-- **Quadratic-time shortest paths.** At every word size `w` that holds `(n + 2) ^ 2 (W + 2)`,
+where `W` is the largest weight, the flat program `p`, started on the input words of an instance,
+halts within `K n ^ 2` instructions, the final `halt` included, and its memory then holds at
+`I.outAddr v` the encoded distance from the source to `v`, for every vertex `v`. The register
+value returned by `halt` is not part of the result. -/
+def QuadraticSpec {r : ℕ} (p : Program .exact r) (K : ℕ) : Prop :=
+  ∀ (I : Instance) (w : ℕ), Fits w ((I.n + 2) ^ 2 * (I.maxWeight + 2)) →
+    ∃ t m, Runs w p (.init I.encode) t m ∧ (∃ v, step w p t = .halt v) ∧
+      m + 1 ≤ K * I.n ^ 2 ∧
+      ∀ v : Fin I.n, t.data.mem (I.outAddr v) = encodeDist (I.dist I.source v)
+
+/-- **Phase 1 main theorem (statement).** Some word-RAM program over the exact basis computes
+all shortest-path distances from the source of a weighted directed graph with `n` vertices
+within `O(n ^ 2)` instructions. -/
+def QuadraticStatement : Prop :=
+  ∃ r, ∃ p : Program .exact r, ∃ K, QuadraticSpec p K
+
+/-- A query: an instance and a target vertex. -/
+abbrev Query := Σ I : Instance, Fin I.n
+
+/-- **Corollary form, in the library's notion of computation.** The encoded distance from the
+source to a queried target is uniformly computable over the exact basis in `O(n ^ 2)`
+instructions, on the input words of the instance followed by the target, at every word size that
+holds `(n + 2) ^ 2 (W + 2)`. -/
+def QueryStatement : Prop :=
+  UniformComputableInO .exact (fun q : Query => encodeDist (q.1.dist q.1.source q.2))
+    (fun _ q => q.1.encode ++ [(q.2 : ℕ)]) (fun q => q.1.n) (fun n _ => n ^ 2)
+    (fun q w => Fits w ((q.1.n + 2) ^ 2 * (q.1.maxWeight + 2)))
 
 /-! ### Register names -/
 

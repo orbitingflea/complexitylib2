@@ -33,8 +33,12 @@ the invariant with that vertex visited.
 
 ## Main results
 
+* `Cslib.Algorithms.WordRAM.Dijkstra.decodeDist_encodeDist`: decoding inverts the encoding of
+  distances.
 * `Cslib.Algorithms.WordRAM.Dijkstra.decodeDist_le`: decoding preserves order between nonzero
   words.
+* `Cslib.Algorithms.WordRAM.Dijkstra.Instance.le_maxWeight`: every edge weight is at most the
+  largest one.
 * `Cslib.Algorithms.WordRAM.Dijkstra.Instance.dist_le_edge`: the distance to the head of an edge
   is at most the distance to its tail plus its weight.
 * `Cslib.Algorithms.WordRAM.Dijkstra.Instance.Inv.init`: the invariant holds initially.
@@ -63,6 +67,7 @@ theorem encodeDist_decodeDist (x : ℕ) : encodeDist (decodeDist x) = x := by
   | zero => simp [decodeDist, encodeDist]
   | succ x => simp [decodeDist, encodeDist]
 
+/-- Decoding inverts the encoding of distances: a distance word decodes to its distance. -/
 @[simp]
 theorem decodeDist_encodeDist (d : ℕ∞) : decodeDist (encodeDist d) = d := by
   induction d using ENat.recTopCoe with
@@ -88,12 +93,6 @@ theorem le_maxWeight {u v : Fin I.n} {c : ℕ} (h : I.weight u v = some c) : c �
   have hle := Finset.le_sup (f := fun uv : Fin I.n × Fin I.n =>
     (I.weight uv.1 uv.2).getD 0) (Finset.mem_univ (u, v))
   simpa only [h, Option.getD_some, maxWeight] using hle
-
-/-- Every matrix entry is at most the largest weight plus one. -/
-theorem encodeWeight_le (u v : Fin I.n) : encodeWeight (I.weight u v) ≤ I.maxWeight + 1 := by
-  cases h : I.weight u v with
-  | none => simp [encodeWeight]
-  | some c => exact Nat.add_le_add_right (I.le_maxWeight h) 1
 
 /-- Relaxation of the edges out of `u`: the tentative distance of `v` becomes at most that of `u`
 plus the weight of the edge from `u` to `v`, if there is one. -/
@@ -121,8 +120,6 @@ private theorem dist_le_addWeight {a b : I.Vertex} (p : Quiver.Path a b) :
     I.dist a b ≤ p.addWeight I.arrowWeight :=
   iInf_le _ p
 
--- Path rewriting must unfold `Vertex` to identify its endpoints with `Fin I.n`.
-set_option backward.isDefEq.respectTransparency false in
 /-- Extending a path by an edge bounds the distance to the new endpoint. -/
 theorem dist_le_edge {a b : Fin I.n} {c : ℕ} (he : I.weight a b = some c) :
     I.dist I.source b ≤ I.dist I.source a + c := by
@@ -132,8 +129,8 @@ theorem dist_le_edge {a b : Fin I.n} {c : ℕ} (he : I.weight a b = some c) :
   apply le_iInf
   intro p
   let e : Quiver.Hom (V := I.Vertex) a b := ⟨c, he⟩
-  simpa only [Quiver.Path.addWeight_cons, arrowWeight] using
-    I.dist_le_addWeight (p.cons e)
+  exact (I.dist_le_addWeight (p.cons e)).trans_eq
+    (Quiver.Path.addWeight_cons (V := I.Vertex) I.arrowWeight p e)
 
 /-- Relaxation never increases a tentative distance. -/
 private theorem relax_le (D : Fin I.n → ℕ∞) (u v : Fin I.n) :
@@ -142,8 +139,6 @@ private theorem relax_le (D : Fin I.n → ℕ∞) (u v : Fin I.n) :
   | none => simp [relax, he]
   | some c => simpa only [relax, he] using min_le_left (D v) (D u + c)
 
--- Path rewriting must unfold `Vertex` to identify its endpoints with `Fin I.n`.
-set_option backward.isDefEq.respectTransparency false in
 /-- Every path to an unvisited vertex bounds an unvisited tentative distance from above. -/
 private theorem Inv.cut {S : Finset (Fin I.n)} {D : Fin I.n → ℕ∞} (h : I.Inv S D)
     {v : I.Vertex} (p : Quiver.Path (V := I.Vertex) I.source v) (hv : v ∉ S) :
@@ -151,10 +146,9 @@ private theorem Inv.cut {S : Finset (Fin I.n)} {D : Fin I.n → ℕ∞} (h : I.I
   induction p with
   | nil =>
     refine ⟨I.source, hv, ?_⟩
-    simp only [Quiver.Path.addWeight_nil]
-    exact h.source.le
+    exact h.source.le.trans_eq (Quiver.Path.addWeight_nil (V := I.Vertex) I.arrowWeight _).symm
   | @cons b v p e ih =>
-    simp only [Quiver.Path.addWeight_cons]
+    rw [Quiver.Path.addWeight_cons (V := I.Vertex) I.arrowWeight p e]
     by_cases hb : b ∈ S
     · refine ⟨v, hv, ?_⟩
       calc

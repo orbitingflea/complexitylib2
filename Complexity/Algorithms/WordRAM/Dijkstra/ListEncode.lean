@@ -9,6 +9,7 @@ module
 
 public import Complexity.Algorithms.WordRAM.Dijkstra.HeapStatement
 public import Complexity.Algorithms.WordRAM.Dijkstra.Invariant
+import Mathlib.Algebra.BigOperators.Fin
 
 /-!
 # Dijkstra's algorithm with a binary heap: the input words
@@ -32,12 +33,20 @@ parallel edges to a vertex has the effect of the lightest one.
 
 ## Main results
 
+* `Cslib.Algorithms.WordRAM.Dijkstra.ListInstance.encode_length`: the input has `n + 2 m + 3`
+  words.
 * `Cslib.Algorithms.WordRAM.Dijkstra.ListInstance.init_offset`,
   `Cslib.Algorithms.WordRAM.Dijkstra.ListInstance.init_target`,
   `Cslib.Algorithms.WordRAM.Dijkstra.ListInstance.init_weight`: the input words in the initial
   memory.
 * `Cslib.Algorithms.WordRAM.Dijkstra.decode_edgesWord`: the scan of the edges out of a vertex
   relaxes the tentative distances.
+
+## References
+
+* [E. W. Dijkstra, *A note on two problems in connexion with graphs*][Dijkstra1959]
+* [T. H. Cormen, C. E. Leiserson, R. L. Rivest and C. Stein, *Introduction to
+  Algorithms*][CLRS2009]
 -/
 
 @[expose] public section
@@ -53,12 +62,6 @@ variable (G : ListInstance) {r : ℕ}
 /-- The first address past the input words: the base of the distance words. -/
 def dbase : ℕ := G.n + 2 * G.m + 4
 
-/-- A sum over `Fin n` is the sum of the list over `List.finRange n`. -/
-private theorem sum_finRange_map {n : ℕ} (f : Fin n → ℕ) :
-    ((List.finRange n).map f).sum = ∑ i, f i := by
-  rw [Finset.sum, Fin.univ_def]
-  simp
-
 /-- The edges of all lists, in order. -/
 private def edges : List (Fin G.n × ℕ) := (List.finRange G.n).flatMap G.adj
 
@@ -69,7 +72,7 @@ private theorem offset_eq_length (u : ℕ) :
 
 /-- The edge list has `m` edges. -/
 private theorem length_edges : G.edges.length = G.m := by
-  simp [edges, m, List.length_flatMap, sum_finRange_map]
+  simp [edges, m, List.length_flatMap, ← Fin.sum_univ_def]
 
 /-- Edge `offset u + i` of the edge list is edge `i` out of `u`. -/
 private theorem edges_getElem (u : Fin G.n) {i : ℕ} (hi : i < (G.adj u).length) :
@@ -135,7 +138,7 @@ theorem offset_succ {u : ℕ} (hu : u < G.n) :
 
 /-- The offset of `n` is the number of edges. -/
 theorem offset_n : G.offset G.n = G.m := by
-  rw [offset, List.take_of_length_le (by simp), sum_finRange_map]
+  rw [offset, List.take_of_length_le (by simp), ← Fin.sum_univ_def]
   rfl
 
 /-- The offsets grow. -/

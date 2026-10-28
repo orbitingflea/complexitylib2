@@ -6,6 +6,7 @@ Authors: Samuel Schlesinger
 
 import ComplexityAbstracts.SubexponentialSATAbstract
 import Complexity.Computability.Complexity.FineGrained
+import Complexity.Computability.Machines.Turing.MultiTape.ResourceBounds
 import Complexity.Computability.Complexity.FineGrained.CountingScale
 import Complexity.Logics.Propositional.CNF.ModelCount
 
@@ -24,6 +25,8 @@ example (φ : Formula) (σ : ℕ → Bool) : eval φ σ = Cslib.Logic.PL.CNF.eva
 
 example (φ : Formula) : Satisfiable φ ↔ Cslib.Logic.PL.CNF.Satisfiable φ := Iff.rfl
 
+example (φ : Formula) : vars φ = (Cslib.Logic.PL.CNF.vars φ).toFinset := rfl
+
 example (φ : Formula) : numVars φ = Cslib.Logic.PL.CNF.numVars φ := rfl
 
 example (φ : Formula) : modelCount φ = Cslib.Logic.PL.CNF.modelCount φ := rfl
@@ -31,6 +34,11 @@ example (φ : Formula) : modelCount φ = Cslib.Logic.PL.CNF.modelCount φ := rfl
 example (k : ℕ) (φ : Formula) : HasWidth k φ ↔ ∀ c ∈ φ, c.length ≤ k := Iff.rfl
 
 example : encCNF = Cslib.Complexity.encCNF := rfl
+
+example {α β : Type} (f : α → β) (encIn : α ↪ List Bool) (encOut : β ↪ List Bool)
+    (T S : α → ℕ) :
+    ComputableInO f encIn encOut T S ↔ Turing.MultiTapeTM.ComputableInO f encIn encOut T S :=
+  Iff.rfl
 
 example {α : Type} (A : Set α) (enc : α ↪ List Bool) (T : α → ℝ) :
     DecidableInTimeO A enc T ↔ Cslib.Complexity.DecidableInTimeO A enc T := Iff.rfl
@@ -52,6 +60,12 @@ example (n : ℕ) :
 -- The empty formula has one satisfying assignment (of no variables); an empty clause has none.
 example : modelCount [] = 1 := by decide
 example : modelCount [[]] = 0 := by decide
+
+-- The encoding length formula on small inputs: one clause bit plus `10 + 8 · Nat.size v` per
+-- literal occurrence.
+example : (encCNF [[(2, true)]]).length = 27 := by decide
+example : (encCNF [[(0, false)], []]).length = 12 := by decide
+example : (encCNF [[(2, true)]]).length = 1 + (10 + 8 * Nat.size 2) := length_encCNF _
 
 -- Variables are counted once each, independent of their labels and repetitions.
 example : modelCount [[(0, true)]] = 1 := by decide

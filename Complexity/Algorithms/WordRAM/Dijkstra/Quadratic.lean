@@ -82,6 +82,13 @@ structure OuterInv (I : Instance) (y : Data 17) : Prop where
 
 variable {I : Instance} {w : ℕ}
 
+/-- Every matrix entry is at most the largest weight plus one. -/
+theorem Instance.encodeWeight_le (I : Instance) (u v : Fin I.n) :
+    Instance.encodeWeight (I.weight u v) ≤ I.maxWeight + 1 := by
+  cases h : I.weight u v with
+  | none => simp [Instance.encodeWeight]
+  | some c => exact Nat.add_le_add_right (I.le_maxWeight h) 1
+
 /-- Indexing a concatenation of rows of equal length. -/
 private theorem getD_flatMap_rows {α : Type*} (l : List α) (f : α → List ℕ)
     (N : ℕ) (hf : ∀ a ∈ l, (f a).length = N) (i j : ℕ) (hi : i < l.length)

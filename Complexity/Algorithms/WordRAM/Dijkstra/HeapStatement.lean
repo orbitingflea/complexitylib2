@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Algorithms.WordRAM.Dijkstra.Statement
+public import Complexity.Computability.WordRAM.Time
 
 /-!
 # Dijkstra's algorithm on the word RAM with adjacency lists: statements
@@ -25,13 +26,12 @@ source vertex. The lists may repeat a pair of endpoints (parallel edges) and may
 self-loops. The instance determines a weight-matrix instance of
 `Cslib.Algorithms.WordRAM.Dijkstra.Instance` that keeps, for each pair of endpoints, the
 lightest of its edges (`Cslib.Algorithms.WordRAM.Dijkstra.ListInstance.toInstance`); the distance
-is the distance of that instance, so it is the same notion as in the quadratic-time statement.
+is the distance of that instance.
 
 The program reads the input words `n`, the source, the `n + 1` offsets of the adjacency lists in
-the edge array, and the edges in order, each as two words, its target and its weight. Its output
-has the form of the quadratic-time statement: when it halts, the `n` memory cells just past the
-input hold the distances from the source, with `0` for an unreachable vertex and `d + 1` for
-distance `d`.
+the edge array, and the edges in order, each as two words, its target and its weight. When it
+halts, the `n` memory cells just past the input hold the distances from the source, with `0` for
+an unreachable vertex and `d + 1` for distance `d`.
 
 ## Main definitions
 
@@ -83,8 +83,8 @@ def lightest (u v : Fin G.n) : Option ℕ :=
   ((G.adj u).filterMap fun e => if e.1 = v then some e.2 else none).min?
 
 /-- The weight-matrix instance with the same vertices and source, whose entry for `u` and `v` is
-the least weight of an edge from `u` to `v`. Parallel edges other than the lightest one lie on no
-shortest path, so this instance has the same distances as the multigraph. -/
+the least weight of an edge from `u` to `v`. Keeping a lightest edge between each pair preserves
+distances. -/
 def toInstance : Instance where
   n := G.n
   weight := G.lightest
@@ -160,7 +160,7 @@ def LogLinearSpec {r : ℕ} (p : Program .exact r) (K : ℕ) : Prop :=
       steps + 1 ≤ K * (G.m + 1) * (Nat.log 2 G.n + 1) ∧
       ∀ v : Fin G.n, t.data.mem (G.outAddr v) = encodeDist (G.dist G.source v)
 
-/-- **Phase 2 main theorem (statement).** Some word-RAM program over the exact basis computes
+/-- **Log-linear main theorem (statement).** Some word-RAM program over the exact basis computes
 all shortest-path distances from the source of a weighted directed graph with `n` vertices and
 `m` edges, given by adjacency lists, within `O((m + 1) log n)` instructions. -/
 def LogLinearStatement : Prop :=

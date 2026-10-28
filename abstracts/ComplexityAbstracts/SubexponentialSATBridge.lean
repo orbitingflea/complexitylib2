@@ -14,7 +14,7 @@ import Complexity.Computability.Complexity.FineGrained.CountingNativeModelCount
 Transfer the unconditional native counting endpoint to the abstract. Its list-of-list CNF
 representation, Boolean evaluation, model count, encoding combinators, fine-grained
 classes and interpolation scale are definitionally equal to the definitions displayed in
-`SubexponentialSATAbstract.lean`. Thus these four transfers require no semantic weakening,
+`SubexponentialSATAbstract.lean`. Thus these transfers require no semantic weakening,
 additional hypothesis or alternative machine notion. The abstract does not import the native
 definitions into its statement surface, and this bridge does not import the abstract.
 
@@ -33,7 +33,7 @@ dense relabeling, with all resource charges referring to `encCNF φ`.
 The native endpoint's dense-relabeling argument supplies the decision consequences for formulas
 with arbitrary natural labels and the occurring-variable parameter. Its SAT exponent and
 ETH/SETH results are transferred directly here. No branch-certificate or exactness premise
-remains in any of the four theorems.
+remains in any of the four complexity theorems.
 
 The argument follows OpenAI's *The Exponential Time Hypothesis is False*, revised 25 October
 2026, Sections 3–6, Proposition 6.4 (pp. 43–44), and Appendices A–B [OpenAI2026ETH], pinned to
@@ -58,6 +58,28 @@ theorem exact_count (k : ℕ) :
           ((encCNF φ).length + 1) ^ e)
         (fun φ => ((encCNF φ).length + 1) ^ b) :=
   CountingNativeEndpoint.exists_modelCounter k
+
+/-- The exact length of the CNF encoding: one bit per clause, plus `10 + 8 · Nat.size v` bits for
+each literal occurrence with variable `v`. -/
+theorem length_encCNF (φ : List (List (ℕ × Bool))) :
+    (encCNF φ).length = φ.length + (φ.flatten.map fun l => 10 + 8 * Nat.size l.1).sum := by
+  have hc (c : List (ℕ × Bool)) : 2 * (encList (encPair encNat encBool) c).length =
+      (c.map fun l => 10 + 8 * Nat.size l.1).sum := by
+    induction c with
+    | nil => rfl
+    | cons l c ih =>
+      have hl : (encPair encNat encBool l).length = 2 * Nat.size l.1 + 2 := by
+        rw [length_encPair, encNat_apply, Nat.size_eq_bits_len]; rfl
+      rw [encList_cons, List.length_append, length_frame, hl, List.map_cons, List.sum_cons, ← ih]
+      ring
+  induction φ with
+  | nil => rfl
+  | cons c φ ih =>
+    change (encList _ (c :: φ)).length = _
+    change (encList _ φ).length = _ at ih
+    rw [encList_cons, List.length_append, length_frame, ih, List.flatten_cons, List.map_append,
+      List.sum_append, ← hc c, List.length_cons]
+    ring
 
 /-- The native counter refutes the library's Exponential Time Hypothesis. -/
 theorem not_eth : ¬ETH := CountingNativeEndpoint.not_ETH
