@@ -486,6 +486,7 @@ public import Complexity.Computability.Circuit.Boolean.BoundedError
 public import Complexity.Computability.Circuit.Boolean.Braverman.Approximation
 public import Complexity.Computability.Circuit.Boolean.Braverman.Fooling
 public import Complexity.Computability.Circuit.Boolean.Braverman.Gates
+public import Complexity.Computability.Circuit.Boolean.Braverman.Resilience
 public import Complexity.Computability.Circuit.Boolean.Broadcast
 public import Complexity.Computability.Circuit.Boolean.CarryLookahead
 public import Complexity.Computability.Circuit.Boolean.CarryLookahead.PolyTime
@@ -689,6 +690,7 @@ public import Complexity.Computability.Circuit.Boolean.ThresholdNC1
 public import Complexity.Computability.Circuit.Boolean.TopDown
 public import Complexity.Computability.Circuit.Boolean.Tournament
 public import Complexity.Computability.Circuit.Boolean.Unbounded
+public import Complexity.Computability.Circuit.Boolean.Unbounded.Restriction
 public import Complexity.Computability.Circuit.Boolean.WeightedThreshold
 public import Complexity.Computability.Circuit.Boolean.WeightedThreshold.Activation
 public import Complexity.Computability.Circuit.Boolean.WeightedThreshold.Activity
@@ -1567,6 +1569,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Nat.A
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Nat.Bits
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Nat.Division
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Nat.Subtraction
+public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Nat.Words
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.NatLength
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.NatPower
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.NatStream
@@ -1596,6 +1599,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Halting.Rice
 public import Complexity.Computability.Machines.Turing.MultiTape.Halting.SMN
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.BinaryComparison
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.BinaryCounter
+public import Complexity.Computability.Machines.Turing.MultiTape.Internal.BinaryNormalization
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.BinaryPrimitives
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.BinarySizeFacts
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.CodecWordMachines
@@ -2891,6 +2895,7 @@ public import Complexity.Probability.ProductConditioning
 public import Complexity.Probability.ProductConditioning.SideInformation
 public import Complexity.Probability.Quantile
 public import Complexity.Probability.RejectionSampling
+public import Complexity.Probability.Resilience
 public import Complexity.Probability.Rewinding
 public import Complexity.Probability.Shearer
 public import Complexity.Probability.SmallBias
