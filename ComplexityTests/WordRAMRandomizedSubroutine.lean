@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Init
-public import Complexity.Computability.WordRAM.Randomized.Expected
+public import Complexity.Computability.WordRAM.Randomized.ExecCodeDist
 public import Complexity.Computability.WordRAM.Randomized.Subroutine
 
 /-!

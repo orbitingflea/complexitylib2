@@ -8,7 +8,8 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.WordRAM.Subroutine
-public import Complexity.Computability.WordRAM.Randomized.Expected
+public import Complexity.Computability.WordRAM.Randomized.ExecCodeDist
+import Complexity.Probability.PMF.TSum
 
 /-!
 # Composable Randomized Word-RAM Data-Structure Subroutines
@@ -17,8 +18,8 @@ This file extends the deterministic `Cslib.WordRAM.SubroutineDS` interface to **
 structures and Las Vegas subroutines** on the Word-RAM — covering both structures initialized from a
 random seed (such as universal hash tables, 2-choice hash tables, and cuckoo hash tables) and
 structures whose operations make random choices via `Instr.rand` (such as treaps, skip lists,
-reservoir samplers, or randomized rehashing); see [MitzenmacherUpfal2017], Sections 1.5, 2.1, and
-2.3.
+reservoir samplers, or randomized rehashing); see [MitzenmacherUpfal2017], Sections 1.2, 2.1, 2.3,
+and 2.4.
 
 ## Core design
 
@@ -36,7 +37,7 @@ density factor `seedSlack : ℝ≥0∞`:
 
 2. **Distributional execution (`ExecCodeDist`):**
    - `setup_exec` and `step_exec` use `ExecCodeDist` from
-     `Complexity.Computability.WordRAM.Randomized.Expected`, which supports both bounded
+     `Complexity.Computability.WordRAM.Randomized.ExecCodeDist`, which supports both bounded
      randomized code (`ExecRand`) and unbounded almost-surely terminating Las Vegas `while` loops
      (`ExecCodeDist.loop_geometric`).
 
@@ -82,7 +83,8 @@ density factor `seedSlack : ℝ≥0∞`:
 * [T. H. Cormen, C. E. Leiserson, R. L. Rivest and C. Stein, *Introduction to Algorithms*,
   Chapter 17][CLRS2009]
 * [M. Mitzenmacher and E. Upfal, *Probability and Computing: Randomization and Probabilistic
-  Techniques in Algorithms and Data Analysis*][MitzenmacherUpfal2017], Sections 1.5, 2.1, and 2.3.
+  Techniques in Algorithms and Data Analysis*][MitzenmacherUpfal2017], Sections 1.2, 2.1, 2.3, and
+  2.4.
 -/
 
 @[expose] public section
@@ -303,7 +305,7 @@ end Cslib.WordRAM.SubroutineDS
 
 namespace Cslib.WordRAM.Randomized.SubroutineDS
 
-open Cslib.WordRAM
+open Cslib.WordRAM Cslib.Probability.PMF
 open scoped ENNReal
 
 universe u v z
@@ -618,10 +620,10 @@ theorem frame_caller_dist (C : SubroutineDS P D w base params s₀)
     obtain ⟨x', hx', rfl⟩ := hq_map
     obtain ⟨hb', hreg, hmem⟩ := hframe p hp x' hx'
     exact (C.frame_caller (hrep p hp) hb' hreg hdisj hmem).1
-  · rw [frameDist, tsum_pmf_bind]
+  · rw [frameDist, tsum_bind_mul]
     refine tsum_congr fun p => ?_
     by_cases hp : p ∈ ν.support
-    · rw [tsum_pmf_map]
+    · rw [tsum_map_mul]
       have hpot_eq : (∑' x', μ_caller p x' * (C.potential p.1 (x'.comap f) : ℝ≥0∞)) =
           ∑' x', μ_caller p x' * (C.potential p.1 (p.2.comap f) : ℝ≥0∞) := by
         refine tsum_congr fun x' => ?_
@@ -700,7 +702,7 @@ theorem code_rename (C : SubroutineDS P D w base params s₀)
         (∑' q, μ_caller p q * (C.potential q.1 (q.2.comap f) : ℝ≥0∞)) =
           ∑' q_ds, μ_ds (proj p) q_ds * (C.potential q_ds.1 q_ds.2 : ℝ≥0∞) := by
       intro p
-      rw [tsum_pmf_map]
+      rw [tsum_map_mul]
       refine tsum_congr fun q_ds => ?_
       rw [Data.comap_extend hf]
     simp_rw [hPot_inner]
@@ -709,12 +711,12 @@ theorem code_rename (C : SubroutineDS P D w base params s₀)
             ∑' q_ds, μ_ds (proj p) q_ds * (C.potential q_ds.1 q_ds.2 : ℝ≥0∞))) =
           ∑' p_ds, ν_ds p_ds * (T_ds p_ds +
             ∑' q_ds, μ_ds p_ds q_ds * (C.potential q_ds.1 q_ds.2 : ℝ≥0∞)) :=
-      (tsum_pmf_map ν proj fun p_ds =>
+      (tsum_map_mul ν proj fun p_ds =>
         T_ds p_ds + ∑' q_ds, μ_ds p_ds q_ds * (C.potential q_ds.1 q_ds.2 : ℝ≥0∞)).symm
     have hRHS :
         (∑' p, ν p * (C.potential p.1 (p.2.comap f) : ℝ≥0∞)) =
           ∑' p_ds, ν_ds p_ds * (C.potential p_ds.1 p_ds.2 : ℝ≥0∞) :=
-      (tsum_pmf_map ν proj fun p_ds => (C.potential p_ds.1 p_ds.2 : ℝ≥0∞)).symm
+      (tsum_map_mul ν proj fun p_ds => (C.potential p_ds.1 p_ds.2 : ℝ≥0∞)).symm
     rw [hLHS, hRHS]
     exact hamort_ds
 
@@ -802,10 +804,10 @@ theorem call_rename (C : SubroutineDS P D w base params s₀)
   · have hpot_prep :
         (∑' p', ν_prep p' * (C.potential p'.1 (p'.2.comap f) : ℝ≥0∞)) =
           ∑' p, ν p * (C.potential p.1 (p.2.comap f) : ℝ≥0∞) := by
-      simp only [ν_prep, frameDist, tsum_pmf_bind]
+      simp only [ν_prep, frameDist, tsum_bind_mul]
       refine tsum_congr fun p => ?_
       by_cases hp : p ∈ ν.support
-      · rw [tsum_pmf_map]
+      · rw [tsum_map_mul]
         have hpot_eq : (∑' x', μ_prep p x' * (C.potential p.1 (x'.comap f) : ℝ≥0∞)) =
             ∑' x', μ_prep p x' * (C.potential p.1 (p.2.comap f) : ℝ≥0∞) := by
           refine tsum_congr fun x' => ?_
@@ -827,7 +829,7 @@ theorem call_rename (C : SubroutineDS P D w base params s₀)
               (T_code (p.1, x') +
                 ∑' q, μ_code (p.1, x') q * (C.potential q.1 (q.2.comap f) : ℝ≥0∞)) := by
         intro p
-        simp only [T_call, μ_call, tsum_pmf_bind, add_assoc]
+        simp only [T_call, μ_call, tsum_bind_mul, add_assoc]
         congr 1
         rw [← ENNReal.tsum_add]
         simp_rw [mul_add]
@@ -843,9 +845,9 @@ theorem call_rename (C : SubroutineDS P D w base params s₀)
       congr 1
       symm
       dsimp only [ν_prep, frameDist]
-      rw [tsum_pmf_bind]
+      rw [tsum_bind_mul]
       refine tsum_congr fun p => ?_
-      rw [tsum_pmf_map]
+      rw [tsum_map_mul]
     have hprep_le : (∑' p, ν p * T_prep p) ≤ B_prep := by
       calc
         (∑' p, ν p * T_prep p)
@@ -978,7 +980,7 @@ theorem steps_expected_amortized (C : SubroutineDS P D w base params s₀)
     have hpot_prep :
         (∑' p', ν_prep p' * (C.potential p'.1 p'.2 : ℝ≥0∞)) =
           ∑' p, ν p * (C.potential p.1 p.2 : ℝ≥0∞) := by
-      rw [tsum_pmf_map]
+      rw [tsum_map_mul]
       refine tsum_congr fun p => ?_
       by_cases hp : p ∈ ν.support
       · rw [C.prepare_potential (hrep p hp)]
@@ -1006,7 +1008,7 @@ theorem steps_expected_amortized (C : SubroutineDS P D w base params s₀)
     let T₁ : ℝ≥0∞ := ∑' p, ν p * T_op p
     have hT₁_eq : T₁ = ∑' p', ν_prep p' * T_step p' := by
       symm
-      exact tsum_pmf_map ν (fun p => (p.1, C.prepare o p.2)) T_step
+      exact tsum_map_mul ν (fun p => (p.1, C.prepare o p.2)) T_step
     have hex_cons : C.ExecSteps s (o :: os) ν ν_final (T₁ + T_rest) := by
       refine ExecSteps.cons (μ_step := μ_op) (T_step := T_op) (fun p hp => ?_) hex_rest
       have hp' : (p.1, C.prepare o p.2) ∈ ν_prep.support :=
@@ -1016,7 +1018,7 @@ theorem steps_expected_amortized (C : SubroutineDS P D w base params s₀)
         T₁ + (∑' q, ν₁ q * (C.potential q.1 q.2 : ℝ≥0∞)) =
           ∑' p', ν_prep p' * (T_step p' + ∑' q, μ_step p' q * (C.potential q.1 q.2 : ℝ≥0∞)) := by
       rw [hT₁_eq, hν₁_eq]
-      simp only [tsum_pmf_bind, ← ENNReal.tsum_add, mul_add]
+      simp only [tsum_bind_mul, ← ENNReal.tsum_add, mul_add]
     refine ⟨ν_final, T₁ + T_rest, hex_cons, hseed_final, hrep_final, ?_⟩
     calc
       (T₁ + T_rest) + ∑' q, ν_final q * (C.potential q.1 q.2 : ℝ≥0∞)

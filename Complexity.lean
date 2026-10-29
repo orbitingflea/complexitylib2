@@ -2028,6 +2028,7 @@ public import Complexity.Computability.WordRAM.Power
 public import Complexity.Computability.WordRAM.RAM
 public import Complexity.Computability.WordRAM.RAMInput
 public import Complexity.Computability.WordRAM.Randomized.Defs
+public import Complexity.Computability.WordRAM.Randomized.ExecCodeDist
 public import Complexity.Computability.WordRAM.Randomized.Expected
 public import Complexity.Computability.WordRAM.Randomized.LoopSegment
 public import Complexity.Computability.WordRAM.Randomized.Structured
@@ -2899,6 +2900,7 @@ public import Complexity.Probability.PMF.Bind
 public import Complexity.Probability.PMF.Event
 public import Complexity.Probability.PMF.Expect
 public import Complexity.Probability.PMF.Map
+public import Complexity.Probability.PMF.TSum
 public import Complexity.Probability.PMF.Uniform
 public import Complexity.Probability.PairwiseIndependent
 public import Complexity.Probability.PairwiseIndependentHash
