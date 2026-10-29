@@ -518,6 +518,17 @@ each statement against the numbered result. Organize modules by subject, not cha
   almost-surely terminating structured loops; random-tape equivalence and BPP/RP/ZPP simulation
   bridges for the randomized word RAM ([#1124]); transfer of cell-probe lower bounds; and the
   Horn-SAT, 2SAT, matching and domino-tiling clients.
+- **Caller-safe queried thin products** ([#1618](https://github.com/cslib-community/complexitylib/issues/1618)):
+  actual memory operations are rebased above a runtime caller base, using a computed source
+  modulus and charged load normalization. The initialized 163-register program restores local
+  input, returns an absolute answer pointer and preserves the caller outside a polynomial window.
+  Setup/return adds at most `2048*(N*D+Q+1)` to three times the original product charge. At
+  `D=4^m`, `L=19m`, `D^18≤N` and `Q*2^m≤N²`, the full charge including halt is at most
+  `17301504*(19m+1)*N²/D^(1/18)`. Distinct-set sparsity retains an additive occurrence charge.
+  Every width at least `256*clog₂(base+N+Q+P+5)` suffices for initialized caller-word bound `P`.
+  The reserved window is at most `(2*(N+Q+3))^128` and is not bulk-initialized. Actual ET-record
+  reads, matrix/query placement, producer-readback composition and the full [#1394] endpoint
+  remain open.
 - **Conditional Convolution-3SUM host** ([#1524]): the charged native host initializes from the
   ordinary input and runs every generated instance, conditional on a concrete solver's execution,
   correctness and frame theorem. This completes the conditional host milestone. Integrating the
