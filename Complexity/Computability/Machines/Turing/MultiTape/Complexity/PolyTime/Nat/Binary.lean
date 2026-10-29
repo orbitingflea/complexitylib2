@@ -186,7 +186,7 @@ theorem natBits : ComputableTidilyInPolyTime Nat.bits encNat encBits := of_eq fu
 @[fun_prop]
 theorem binary_add : ComputableTidilyInPolyTime (fun p : ℕ × ℕ => p.1 + p.2)
     (encPair encNat encNat) encNat :=
-  computableTidilyInDegree_add.computableTidilyInPolyTime
+  ComputableInPolyTime.binary_add.tidy
 
 /-- Multiplication of binary naturals. -/
 @[fun_prop]
