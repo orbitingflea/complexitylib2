@@ -303,6 +303,63 @@ theorem fastCutHighProbProgram_barbell8 :
 
 /-! ## 3. Disconnected and zero-weight 8-vertex multigraphs (`minCut = 0`) -/
 
+/-- Positive-weight disconnected 8-vertex multigraph: edge `{0, 1}` of weight `4` and isolated
+vertices `2..7`, exercising the transition from `totS > 0` (`rand` contraction) to `totS = 0`
+(deterministic contraction) across the recursive `FastCut` frame stack. -/
+def disconnected8W (u v : Fin 8) : ℕ :=
+  if (u.val = 0 ∧ v.val = 1) ∨ (u.val = 1 ∧ v.val = 0) then 4 else 0
+
+theorem isMultigraph_disconnected8W : IsMultigraph disconnected8W := by
+  refine ⟨fun u v => ?_, fun u => ?_⟩ <;>
+  · unfold disconnected8W
+    split_ifs <;> omega
+
+theorem minCut_disconnected8W : minCut disconnected8W = 0 := by
+  apply Nat.eq_zero_of_le_zero
+  have hnt : IsNonTrivialCut ({(2 : Fin 8)} : Finset (Fin 8)) :=
+    isNonTrivialCut_singleton (by decide) 2
+  have hcw : cutWeight disconnected8W ({(2 : Fin 8)} : Finset (Fin 8)) = 0 := by
+    unfold cutWeight
+    rw [Finset.sum_singleton]
+    apply Finset.sum_eq_zero
+    intro v _
+    have h2 : ((2 : Fin 8).val) = 2 := rfl
+    unfold disconnected8W
+    split_ifs <;> omega
+  exact hcw ▸ minCut_le_cutWeight disconnected8W hnt
+
+theorem fastCutProgram_disconnected8 :
+    RandHaltsWithin 16 fastCutProgram
+      (.init (8 :: flattenMatrix disconnected8W)) (fastCutTime 8) ∧
+    RandHaltsWithin 16 fastCutHighProbProgram
+      (.init (8 :: flattenMatrix disconnected8W)) (fastCutHighProbTime 8) ∧
+    (∀ cfg ∈ (runRand 16 fastCutProgram (fastCutTime 8)
+        (.running (.init (8 :: flattenMatrix disconnected8W)))).support,
+      ∃ (y : Data 24) (C : Finset (Fin 8)),
+        cfg = .halted (cutWeight disconnected8W C) y ∧ IsNonTrivialCut C) := by
+  have hw : logWidth 4 8 ≤ 16 := by decide
+  have hentry : ∀ u v : Fin 8, disconnected8W u v ≤ 4 := fun u v => by
+    unfold disconnected8W
+    split_ifs <;> omega
+  have hrow : ∀ u : Fin 8, rowDeg disconnected8W u ≤ 32 := fun u => by
+    unfold rowDeg
+    calc
+      ∑ v : Fin 8, disconnected8W u v ≤ ∑ _v : Fin 8, 4 := Finset.sum_le_sum fun v _ => hentry u v
+      _ = 32 := by simp
+  have htot : Fits 16 (totalDoubledWeight disconnected8W) := by
+    have hle : totalDoubledWeight disconnected8W ≤ 256 := by
+      unfold totalDoubledWeight
+      calc
+        ∑ u : Fin 8, rowDeg disconnected8W u ≤ ∑ _u : Fin 8, 32 :=
+          Finset.sum_le_sum fun u _ => hrow u
+        _ = 256 := by simp
+    exact (by decide : Fits 16 256).of_le hle
+  have h1 := fastCutProgram_spec (by decide : 2 ≤ 8) isMultigraph_disconnected8W hw htot
+  have h2 := fastCutHighProbProgram_spec (by decide : 2 ≤ 8) isMultigraph_disconnected8W hw htot
+  refine ⟨h1.1, h2.1, fun cfg hcfg => ?_⟩
+  obtain ⟨y, C, hcfg_eq, -, hC_nt, -⟩ := h1.2.2.1 cfg hcfg
+  exact ⟨y, C, hcfg_eq, hC_nt⟩
+
 /-- Empty 8-vertex multigraph (`totalDoubledWeight = 0`), exercising the `totS = 0` deterministic
 contraction branch across the recursive `FastCut` frame stack. -/
 def zero8W : Fin 8 → Fin 8 → ℕ := fun _ _ => 0

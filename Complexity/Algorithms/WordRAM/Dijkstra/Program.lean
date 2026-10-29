@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Algorithms.WordRAM.Dijkstra.Statement
-public import Complexity.Algorithms.WordRAM.Dijkstra.ExactNotation
+public import Complexity.Computability.WordRAM.ExactNotation
 public import Complexity.Computability.WordRAM.Function
 
 /-!

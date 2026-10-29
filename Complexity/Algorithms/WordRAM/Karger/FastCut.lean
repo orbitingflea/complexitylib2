@@ -9,20 +9,47 @@ module
 
 public import Complexity.Init
 public import Complexity.Algorithms.WordRAM.Karger.Graph
-public import Complexity.Computability.WordRAM.Randomized.Structured
+public import Complexity.Languages.Probabilistic.QueryCount.Support
 
 /-!
-# Mathematical recurrences, quadratic potential, and loop segments for Karger–Stein (`FastCut`)
+# Mathematical recurrences and quadratic potential for Karger–Stein (`FastCut`)
 
 Combinatorial, arithmetic, and probabilistic foundations for the Karger–Stein recursive global
-minimum cut algorithm `[KargerStein1996]` on the randomized word RAM, together with a general
-structured loop-segment composition calculus (`Cslib.WordRAM.LoopSegment`) for iterative explicit
-call-stack machines.
+minimum cut algorithm (`[KargerStein1996]`, Section 4, Figure 6, Lemmas 4.1–4.3, and the
+minimum-cut-value part of Theorem 4.4; paraphrase) on the randomized word RAM.
+
+## Design notes and deviations from `[KargerStein1996]`
+
+1. **Integer contraction threshold (`fastCutThreshold`):** `[KargerStein1996]`, Section 4, Figure 6
+   contracts each branch to `⌈k / √2 + 1⌉` vertices so that `(t * (t - 1)) / (k * (k - 1)) ≥ 1 / 2`
+   (Section 4, Lemma 4.3). We instead define `fastCutThreshold k` as the smallest integer `t ≥ 2`
+   satisfying `k * (k - 1) ≤ 2 * t * (t - 1)`. This integer deviation directly enforces Lemma 4.3's
+   `≥ 1 / 2` per-branch survival inequality without square roots or divisions; it is never larger
+   than `⌈k / √2 + 1⌉` and is strictly smaller at e.g. `k = 8` (`t = 6` vs `7`).
+2. **Base case at `k ≤ 6`, as in the source:** each leaf runs one random contraction down to
+   `2` vertices, the base case `G' ← Contract(G, 2)` of `[KargerStein1996]`, Section 4,
+   Figure 6. The cutoff follows equation (2) and the remark at the end of the proof of Lemma 4.3
+   (recurse for `n ≥ 7`); Figure 6 itself tests "fewer than 6 vertices". A leaf keeps a fixed
+   minimum cut with probability `≥ 2 / (k * (k - 1)) ≥ 2 / 30`, equation (2)'s base-case bound
+   `1 / 15`. The `15` in `1 / (Nat.log 2 n + 15)` is the source's constant: the proof of
+   Lemma 4.3 sets `z₀ = 59` and shows `z_k < 59 + 2 * k` for `k ≥ 1`, so
+   `p_k = 4 / (z_k + 1) ≥ 2 / (30 + k)`; at depth at most `2 * Nat.log 2 n` this is
+   `1 / (Nat.log 2 n + 15)`.
+3. **Concrete Word-RAM constants and trial schedule (`fastCutTrials`):** `[KargerStein1996]`,
+   Section 4, Lemmas 4.1–4.3 state asymptotic `O(n ^ 2 log n)` time, `O(n ^ 2)` space and
+   `Ω(1 / log n)` single-tree success probability, and the proof of Theorem 4.4 repeats the
+   algorithm `O(log ^ 2 n)` times; the explicit coefficients in `fastCutNodeTime` and
+   `fastCutScratch`, the trial schedule `fastCutTrials n = (Nat.log 2 n + 15) * (Nat.log 2 n + 2)`
+   and the `1 / (2 * n)` failure target are concrete parameter choices of this formalization.
+4. **Elementary quadratic potential `Φ(k) = (k - 4) ^ 2`:** `two_mul_pot_threshold_le` proves
+   `2 * (fastCutThreshold k - 4) ^ 2 ≤ (k - 4) ^ 2` for all `k ≥ 7` via integer arithmetic
+   (`49 * 2 = 98 < 100 = 10 ^ 2`), replacing real-valued recurrence unrolling in
+   `[KargerStein1996]`, Section 4, Lemmas 4.1–4.3.
 
 ## Main definitions
 
 * `Cslib.Algorithms.WordRAM.Karger.fastCutThreshold`: smallest integer `t ≥ 2` satisfying
-  `k * (k - 1) ≤ 2 * t * (t - 1)` (pure-integer replacement for `⌈k / √2 + 1⌉`).
+  `k * (k - 1) ≤ 2 * t * (t - 1)`.
 * `Cslib.Algorithms.WordRAM.Karger.fastCutDepth`,
   `Cslib.Algorithms.WordRAM.Karger.frameSize`,
   `Cslib.Algorithms.WordRAM.Karger.fastCutScratch`: recursion depth, per-frame memory footprint, and
@@ -31,8 +58,6 @@ call-stack machines.
   `Cslib.Algorithms.WordRAM.Karger.fastCutNodeQueries`,
   `Cslib.Algorithms.WordRAM.Karger.fastCutTrials`: explicit time, `rand`-call, and high-probability
   amplification budgets.
-* `Cslib.WordRAM.LoopSegment`: multi-iteration execution segments of a `while` loop before exit,
-  closed under `single`, `trans`, and `finish`.
 
 ## Main results
 
@@ -42,12 +67,15 @@ call-stack machines.
 * `Cslib.Algorithms.WordRAM.Karger.fastCutDepth_le_two_mul_log`: recursion depth bound
   `fastCutDepth k ≤ 2 * Nat.log 2 k`.
 * `Cslib.Algorithms.WordRAM.Karger.fastCutScratch_le`: total root-to-leaf stack workspace bound
-  `fastCutScratch n ≤ 26 * (n * n)` for `n ≥ 2`.
+  `fastCutScratch n ≤ 26 * (n * n)` for `n ≥ 2` (`[KargerStein1996]`, Section 4, Lemma 4.2;
+  paraphrase).
 * `Cslib.Algorithms.WordRAM.Karger.two_branch_hit_prob_ge`,
   `Cslib.Algorithms.WordRAM.Karger.root_hit_prob_eq`,
   `Cslib.Algorithms.WordRAM.Karger.fastCutHighProb_failure_le`: elementary `ENNReal` probability
   recurrence `1 - (1 - 1 / s) ^ 2 ≥ 2 / (s + 1)` giving `≥ 1 / (Nat.log 2 n + 15)` single-tree
-  success and `≤ 1 / (2 * n)` amplified failure without `Real.log` or `Real.exp`.
+  success (`[KargerStein1996]`, Section 4, Lemma 4.3; paraphrase) and `≤ 1 / (2 * n)` amplified
+  failure (the minimum-cut-value part of `[KargerStein1996]`, Section 4, Theorem 4.4; paraphrase)
+  without `Real.log` or `Real.exp`.
 
 ## References
 
@@ -73,7 +101,9 @@ def fastCutThresholdAux (k : ℕ) : ℕ → ℕ → ℕ
       t
 
 /-- Pure-integer Karger–Stein contraction threshold: for `k ≥ 7`, the smallest `t ≥ 2` such that
-`k * (k - 1) ≤ 2 * t * (t - 1)`, ensuring `((t * (t - 1)) / (k * (k - 1)) : ℝ≥0∞) ≥ 1 / 2`. -/
+`k * (k - 1) ≤ 2 * t * (t - 1)`, ensuring `((t * (t - 1)) / (k * (k - 1)) : ℝ≥0∞) ≥ 1 / 2`
+(`[KargerStein1996]`, Section 4, Lemma 4.3; paraphrase). This integer deviation from Figure 6's
+`⌈k / √2 + 1⌉` is never larger and is strictly smaller at e.g. `k = 8` (`t = 6` vs `7`). -/
 def fastCutThreshold (k : ℕ) : ℕ :=
   fastCutThresholdAux k k 2
 
@@ -85,7 +115,7 @@ private theorem mul_pred_le_two_mul_pred_sub_two {k : ℕ} (hk : 4 ≤ k) :
   rw [h1, h2]
   nlinarith
 
-theorem fastCutThresholdAux_spec {k fuel t : ℕ} (hk : 4 ≤ k) (ht : t ≤ k - 1)
+private theorem fastCutThresholdAux_spec {k fuel t : ℕ} (hk : 4 ≤ k) (ht : t ≤ k - 1)
     (hfuel : k - 1 ≤ t + fuel) :
     let r := fastCutThresholdAux k fuel t
     t ≤ r ∧ r ≤ k - 1 ∧
@@ -117,41 +147,36 @@ theorem fastCutThresholdAux_spec {k fuel t : ℕ} (hk : 4 ≤ k) (ht : t ≤ k -
     · simp only [hlt, ↓reduceIte]
       exact ⟨le_rfl, ht, Nat.le_of_not_lt hlt, fun _ hge hlt' => absurd hlt' (not_lt_of_ge hge)⟩
 
+/-- Lower bound `2 ≤ fastCutThreshold k` for `k ≥ 4`. -/
 theorem fastCutThreshold_ge_two {k : ℕ} (hk : 4 ≤ k) :
     2 ≤ fastCutThreshold k :=
   (fastCutThresholdAux_spec hk (by omega) (by omega)).1
 
+/-- Upper bound `fastCutThreshold k ≤ k - 1` for `k ≥ 4`. -/
 theorem fastCutThreshold_le_pred {k : ℕ} (hk : 4 ≤ k) :
     fastCutThreshold k ≤ k - 1 :=
   (fastCutThresholdAux_spec hk (by omega) (by omega)).2.1
 
+/-- Strict decrease `fastCutThreshold k < k` for `k ≥ 4`. -/
 theorem fastCutThreshold_lt {k : ℕ} (hk : 4 ≤ k) :
     fastCutThreshold k < k := by
   have := fastCutThreshold_le_pred hk
   omega
 
+/-- Defining threshold inequality
+`k * (k - 1) ≤ 2 * fastCutThreshold k * (fastCutThreshold k - 1)`. -/
 theorem fastCutThreshold_spec {k : ℕ} (hk : 4 ≤ k) :
     k * (k - 1) ≤ 2 * fastCutThreshold k * (fastCutThreshold k - 1) :=
   (fastCutThresholdAux_spec hk (by omega) (by omega)).2.2.1
 
+/-- Minimality of `fastCutThreshold k`: every `2 ≤ m < fastCutThreshold k` satisfies
+`2 * m * (m - 1) < k * (k - 1)`. -/
 theorem fastCutThreshold_lt_of_lt {k m : ℕ} (hk : 4 ≤ k) (hm2 : 2 ≤ m)
     (hmlt : m < fastCutThreshold k) :
     2 * m * (m - 1) < k * (k - 1) :=
   (fastCutThresholdAux_spec hk (by omega) (by omega)).2.2.2 m hm2 hmlt
 
-theorem fastCutThreshold_eq_of_bounds {k r : ℕ} (hk : 4 ≤ k) (hr2 : 2 ≤ r)
-    (hge : k * (k - 1) ≤ 2 * r * (r - 1))
-    (hmin : ∀ m, 2 ≤ m → m < r → 2 * m * (m - 1) < k * (k - 1)) :
-    r = fastCutThreshold k := by
-  apply le_antisymm
-  · by_contra hgt
-    have hlt : fastCutThreshold k < r := Nat.lt_of_not_ge hgt
-    exact absurd (fastCutThreshold_spec hk)
-      (not_le_of_gt (hmin (fastCutThreshold k) (fastCutThreshold_ge_two hk) hlt))
-  · by_contra hlt'
-    have hlt : r < fastCutThreshold k := Nat.lt_of_not_ge hlt'
-    exact absurd hge (not_le_of_gt (fastCutThreshold_lt_of_lt hk hr2 hlt))
-
+/-- For `k ≥ 7`, the contraction threshold satisfies `6 ≤ fastCutThreshold k`. -/
 theorem fastCutThreshold_ge_six {k : ℕ} (hk : 7 ≤ k) :
     6 ≤ fastCutThreshold k := by
   have hspec := fastCutThreshold_spec (by omega : 4 ≤ k)
@@ -166,6 +191,8 @@ theorem fastCutThreshold_ge_six {k : ℕ} (hk : 7 ≤ k) :
     interval_cases fastCutThreshold k <;> decide
   omega
 
+/-- Predecessor minimality inequality
+`2 * (fastCutThreshold k - 1) * (fastCutThreshold k - 2) < k * (k - 1)` for `k ≥ 7`. -/
 theorem fastCutThreshold_min {k : ℕ} (hk : 7 ≤ k) :
     2 * (fastCutThreshold k - 1) * (fastCutThreshold k - 2) < k * (k - 1) := by
   have h6 := fastCutThreshold_ge_six hk
@@ -234,12 +261,14 @@ def fastCutDepth (k : ℕ) : ℕ :=
     0
 termination_by k
 
+/-- Base-case unfolding of `fastCutDepth` for `k < 7`. -/
 theorem fastCutDepth_of_lt_seven {k : ℕ} (hk : k < 7) :
     fastCutDepth k = 0 := by
   have h : ¬7 ≤ k := by omega
   rw [fastCutDepth]
   simp only [h, ↓reduceDIte]
 
+/-- Recursive unfolding of `fastCutDepth` for `k ≥ 7`. -/
 theorem fastCutDepth_of_ge_seven {k : ℕ} (hk : 7 ≤ k) :
     fastCutDepth k = fastCutDepth (fastCutThreshold k) + 1 := by
   rw [fastCutDepth]
@@ -306,12 +335,14 @@ def fastCutScratch (k : ℕ) : ℕ :=
     frameSize k
 termination_by k
 
+/-- Base-case unfolding of `fastCutScratch` for `k < 7`. -/
 theorem fastCutScratch_of_lt_seven {k : ℕ} (hk : k < 7) :
     fastCutScratch k = frameSize k := by
   have h : ¬7 ≤ k := by omega
   rw [fastCutScratch]
   simp only [h, ↓reduceDIte]
 
+/-- Recursive unfolding of `fastCutScratch` for `k ≥ 7`. -/
 theorem fastCutScratch_of_ge_seven {k : ℕ} (hk : 7 ≤ k) :
     fastCutScratch k = frameSize k + fastCutScratch (fastCutThreshold k) := by
   rw [fastCutScratch]
@@ -325,6 +356,7 @@ private theorem frameSize_le_thirteen_mul_pot {k : ℕ} (hk : 7 ≤ k) :
   rw [hsub]
   nlinarith
 
+/-- Potential-based upper bound `fastCutScratch k ≤ 26 * (k - 4) ^ 2` for `k ≥ 7`. -/
 theorem fastCutScratch_le_pot {k : ℕ} (hk : 7 ≤ k) :
     fastCutScratch k ≤ 26 * (k - 4) ^ 2 := by
   induction k using Nat.strongRecOn with
@@ -373,12 +405,14 @@ def fastCutNodeQueries (k : ℕ) : ℕ :=
     k - 2
 termination_by k
 
+/-- Base-case unfolding of `fastCutNodeQueries` for `k < 7`. -/
 theorem fastCutNodeQueries_of_lt_seven {k : ℕ} (hk : k < 7) :
     fastCutNodeQueries k = k - 2 := by
   have h : ¬7 ≤ k := by omega
   rw [fastCutNodeQueries]
   simp only [h, ↓reduceDIte]
 
+/-- Recursive unfolding of `fastCutNodeQueries` for `k ≥ 7`. -/
 theorem fastCutNodeQueries_of_ge_seven {k : ℕ} (hk : 7 ≤ k) :
     fastCutNodeQueries k =
       2 * (k - fastCutThreshold k) + 2 * fastCutNodeQueries (fastCutThreshold k) := by
@@ -437,17 +471,21 @@ def fastCutNodeTime (k : ℕ) : ℕ :=
     2400
 termination_by k
 
+/-- Base-case unfolding of `fastCutNodeTime` for `k < 7`. -/
 theorem fastCutNodeTime_of_lt_seven {k : ℕ} (hk : k < 7) :
     fastCutNodeTime k = 2400 := by
   have h : ¬7 ≤ k := by omega
   rw [fastCutNodeTime]
   simp only [h, ↓reduceDIte]
 
+/-- Recursive unfolding of `fastCutNodeTime` for `k ≥ 7`. -/
 theorem fastCutNodeTime_of_ge_seven {k : ℕ} (hk : 7 ≤ k) :
     fastCutNodeTime k = 200 * (k * k) + 2 * fastCutNodeTime (fastCutThreshold k) := by
   rw [fastCutNodeTime]
   simp only [hk, ↓reduceDIte]
 
+/-- Potential-based upper bound `fastCutNodeTime k ≤ (1200 * fastCutDepth k + 2700) * (k - 4) ^ 2`
+for `k ≥ 7`. -/
 theorem fastCutNodeTime_le_pot {k : ℕ} (hk : 7 ≤ k) :
     fastCutNodeTime k ≤ (1200 * fastCutDepth k + 2700) * (k - 4) ^ 2 := by
   induction k using Nat.strongRecOn with
@@ -646,11 +684,15 @@ theorem root_hit_prob_eq (n : ℕ) :
   rw [hmul, Nat.cast_mul, Nat.cast_ofNat]
   simpa using ENNReal.mul_div_mul_left (1 : ℝ≥0∞) ((Nat.log 2 n + 15 : ℕ) : ℝ≥0∞) h20 h2t
 
-/-- Number of independent `FastCut` trees `(Nat.log 2 n + 15) * (Nat.log 2 n + 2)` (`O(log ^ 2 n)`)
-used by `fastCutHighProbProgram` to achieve failure probability `≤ 1 / (2 * n)`. -/
+/-- Concrete `O(log ^ 2 n)` trial schedule `(Nat.log 2 n + 15) * (Nat.log 2 n + 2)` used by
+`fastCutHighProbProgram` to achieve failure probability `≤ 1 / (2 * n)` (instantiating the
+asymptotic `O(log ^ 2 n)` repetition count in the proof of `[KargerStein1996]`, Section 4,
+Theorem 4.4; paraphrase). -/
 def fastCutTrials (n : ℕ) : ℕ :=
   (Nat.log 2 n + 15) * (Nat.log 2 n + 2)
 
+/-- For every `n`, `fastCutTrials n` executes at least one `FastCut` tree
+(`1 ≤ fastCutTrials n`). -/
 theorem fastCutTrials_pos (n : ℕ) :
     1 ≤ fastCutTrials n := by
   unfold fastCutTrials
@@ -658,15 +700,11 @@ theorem fastCutTrials_pos (n : ℕ) :
 
 private theorem one_sub_inv_pow_le_half {M : ℕ} (hM1 : 1 ≤ M) :
     ((1 : ℝ≥0∞) - (1 : ℝ≥0∞) / (M : ℝ≥0∞)) ^ M ≤ (1 : ℝ≥0∞) / 2 := by
-  rw [one_sub_inv_nat hM1]
+  rw [one_sub_inv_nat hM1, ennreal_div_pow]
   have hM_pow0 : ((M : ℝ≥0∞) ^ M) ≠ 0 := pow_ne_zero M (by exact_mod_cast (by omega : M ≠ 0))
   have hM_powt : ((M : ℝ≥0∞) ^ M) ≠ ⊤ := ENNReal.pow_ne_top (ENNReal.natCast_ne_top M)
   have h20 : (2 : ℝ≥0∞) ≠ 0 := by norm_num
   have h2t : (2 : ℝ≥0∞) ≠ ⊤ := by norm_num
-  have hdiv_pow : (((M - 1 : ℕ) : ℝ≥0∞) / (M : ℝ≥0∞)) ^ M =
-      ((M - 1 : ℕ) : ℝ≥0∞) ^ M / (M : ℝ≥0∞) ^ M := by
-    simp only [div_eq_mul_inv, mul_pow, ENNReal.inv_pow]
-  rw [hdiv_pow]
   rw [ENNReal.div_le_iff_le_mul (Or.inl hM_pow0) (Or.inl hM_powt)]
   rw [← ENNReal.mul_div_right_comm]
   rw [ENNReal.le_div_iff_mul_le (Or.inl h20) (Or.inl h2t), one_mul, mul_comm]
@@ -694,6 +732,7 @@ theorem fastCutHighProb_failure_le (n : ℕ) :
           omega
         exact_mod_cast hle
 
+/-- Weakened failure probability bound `(1 - 1 / (Nat.log 2 n + 15)) ^ fastCutTrials n ≤ 1 / n`. -/
 theorem fastCutHighProb_failure_le_inv_n (n : ℕ) :
     ((1 : ℝ≥0∞) - (1 : ℝ≥0∞) / ((Nat.log 2 n + 15 : ℕ) : ℝ≥0∞)) ^ fastCutTrials n ≤
       (1 : ℝ≥0∞) / (n : ℝ≥0∞) := by
@@ -702,182 +741,3 @@ theorem fastCutHighProb_failure_le_inv_n (n : ℕ) :
   exact_mod_cast (by omega : n ≤ 2 * n)
 
 end Cslib.Algorithms.WordRAM.Karger
-
-/-! ### Compositional `while`-loop segments (`Cslib.WordRAM.LoopSegment`) -/
-
-namespace Cslib.WordRAM
-
-/-- `LoopSegment w cond body x m`: starting at data `x`, executing zero or more iterations of
-`Code.loop cond body` (each verifying `cond.Holds`, running `body`, and charging `+ 2` for the loop
-header test and back-jump) without yet taking the loop-exit check produces `m`.
-
-Enables structural induction on explicit call-stack depth inside a single outer `while sp > 0`
-loop, where popping a recursive frame lowers `sp` from `b + 1` to `b` without exiting the loop when
-`b > 0`. -/
-inductive LoopSegment {B : Basis} {r : ℕ} (w : ℕ) (cond : Cond r) (body : Code B r) :
-    Data r → ProbComp (Data r × ℕ) → Prop where
-  /-- Zero iterations, charging `0` instructions. -/
-  | nil (x : Data r) : LoopSegment w cond body x (pure (x, 0))
-  /-- One active loop iteration followed by a continuation segment. -/
-  | step {x : Data r} {mb : ProbComp (Data r × ℕ)} {mr : Data r → ProbComp (Data r × ℕ)}
-      (hc : cond.Holds x)
-      (hb : ExecRand w body x mb)
-      (hr : ∀ z ∈ mb.support, LoopSegment w cond body z.1 (mr z.1)) :
-      LoopSegment w cond body x (do
-        let z₁ ← mb
-        let z₂ ← mr z₁.1
-        pure (z₂.1, z₁.2 + z₂.2 + 2))
-
-namespace LoopSegment
-
-variable {B : Basis} {r w : ℕ} {cond : Cond r} {body : Code B r}
-
-/-- A single randomized loop iteration (`+ 2` loop-header instructions). -/
-theorem single {x : Data r} {mb : ProbComp (Data r × ℕ)}
-    (hc : cond.Holds x) (hb : ExecRand w body x mb) :
-    LoopSegment w cond body x ((fun z => (z.1, z.2 + 2)) <$> mb) := by
-  have h := LoopSegment.step hc hb (mr := fun d => pure (d, 0)) fun z _ => .nil z.1
-  simpa only [pure_bind, Nat.add_zero, ← bind_pure_comp] using h
-
-/-- A single deterministic loop iteration (`+ 2` loop-header instructions). -/
-theorem detSingle {x y : Data r} {n : ℕ}
-    (hc : cond.Holds x) (hb : Exec w body x y n) :
-    LoopSegment w cond body x (pure (y, n + 2)) := by
-  simpa only [map_pure] using single hc hb.execRand
-
-/-- Sequential composition of two loop segments. -/
-theorem trans {x : Data r} {m₁ : ProbComp (Data r × ℕ)} {m₂ : Data r → ProbComp (Data r × ℕ)}
-    (h₁ : LoopSegment w cond body x m₁)
-    (h₂ : ∀ z ∈ m₁.support, LoopSegment w cond body z.1 (m₂ z.1)) :
-    LoopSegment w cond body x (do
-      let z₁ ← m₁
-      let z₂ ← m₂ z₁.1
-      pure (z₂.1, z₁.2 + z₂.2)) := by
-  induction h₁ with
-  | nil x =>
-    have hx : (x, 0) ∈ (pure (x, 0) : ProbComp (Data r × ℕ)).support := by simp
-    have h₂x := h₂ (x, 0) hx
-    have heq : (do
-        let z₁ ← (pure (x, 0) : ProbComp (Data r × ℕ))
-        let z₂ ← m₂ z₁.1
-        pure (z₂.1, z₁.2 + z₂.2)) = m₂ x := by
-      simp only [pure_bind, Nat.zero_add, Prod.mk.eta, bind_pure]
-    rw [heq]
-    exact h₂x
-  | @step x mb mr hc hb hr ih =>
-    let mr' : Data r → ProbComp (Data r × ℕ) := fun d => do
-      let b ← mr d
-      let c ← m₂ b.1
-      pure (c.1, b.2 + c.2)
-    have hnext : ∀ a ∈ mb.support, LoopSegment w cond body a.1 (mr' a.1) := by
-      intro a ha
-      refine ih a ha fun b hb_mem => h₂ (b.1, a.2 + b.2 + 2) ?_
-      rw [OracleComp.mem_supportWith_bind_iff]
-      refine ⟨a, ha, ?_⟩
-      rw [OracleComp.mem_supportWith_bind_iff]
-      exact ⟨b, hb_mem, by simp⟩
-    have hstep := LoopSegment.step (mr := mr') hc hb hnext
-    convert hstep using 1
-    simp only [mr', bind_assoc, pure_bind, Nat.add_assoc]
-    refine congrArg (mb >>= ·) (funext fun a => ?_)
-    refine congrArg (mr a.1 >>= ·) (funext fun b => ?_)
-    refine congrArg (m₂ b.1 >>= ·) (funext fun c => ?_)
-    congr 2
-    omega
-
-/-- Existential sequential composition of two loop segments using `Classical.choose`. -/
-theorem trans_exists {x : Data r} {m₁ : ProbComp (Data r × ℕ)}
-    {Q : Data r → ProbComp (Data r × ℕ) → Prop}
-    (h₁ : LoopSegment w cond body x m₁)
-    (h₂ : ∀ z ∈ m₁.support, ∃ m', LoopSegment w cond body z.1 m' ∧ Q z.1 m') :
-    ∃ m₂ : Data r → ProbComp (Data r × ℕ),
-      LoopSegment w cond body x (do
-        let z₁ ← m₁
-        let z₂ ← m₂ z₁.1
-        pure (z₂.1, z₁.2 + z₂.2)) ∧
-      ∀ z ∈ m₁.support, LoopSegment w cond body z.1 (m₂ z.1) ∧ Q z.1 (m₂ z.1) := by
-  classical
-  let m₂ : Data r → ProbComp (Data r × ℕ) := fun d =>
-    if h : ∃ m', LoopSegment w cond body d m' ∧ Q d m' then h.choose else pure (d, 0)
-  have hm₂ : ∀ z ∈ m₁.support, LoopSegment w cond body z.1 (m₂ z.1) ∧ Q z.1 (m₂ z.1) := by
-    intro z hz
-    have hex := h₂ z hz
-    simp only [m₂, hex, ↓reduceDIte]
-    exact hex.choose_spec
-  exact ⟨m₂, h₁.trans fun z hz => (hm₂ z hz).1, hm₂⟩
-
-/-- Prepending a deterministic single iteration onto a continuation `LoopSegment`. -/
-theorem stepDet {x y : Data r} {n₁ : ℕ} {m₂ : ProbComp (Data r × ℕ)}
-    (hc : cond.Holds x) (hb : Exec w body x y n₁)
-    (hr : LoopSegment w cond body y m₂) :
-    LoopSegment w cond body x ((fun z => (z.1, n₁ + 2 + z.2)) <$> m₂) := by
-  have h := (detSingle hc hb).trans (m₂ := fun _ => m₂) fun z hz => by
-    cases OracleComp.eq_of_mem_supportWith_pure hz
-    exact hr
-  simpa only [pure_bind, ← bind_pure_comp] using h
-
-/-- Closing a `LoopSegment` into `ExecRand w (.loop cond body)` once every supported state
-violates `cond` (`+ 2` instructions for the final loop-exit check). -/
-theorem finish {x : Data r} {m : ProbComp (Data r × ℕ)}
-    (h : LoopSegment w cond body x m)
-    (hexit : ∀ z ∈ m.support, ¬cond.Holds z.1) :
-    ExecRand w (.loop cond body) x ((fun z => (z.1, z.2 + 2)) <$> m) := by
-  induction h with
-  | nil x =>
-    have hx : ¬cond.Holds x := hexit (x, 0) (by simp)
-    simpa only [map_pure] using ExecRand.loop_exit hx
-  | @step x mb mr hc hb hr ih =>
-    let ml' : Data r → ProbComp (Data r × ℕ) := fun d =>
-      (fun b => (b.1, b.2 + 2)) <$> mr d
-    have hcont : ∀ a ∈ mb.support,
-        ExecRand w (.loop cond body) a.1 (ml' a.1) := by
-      intro a ha
-      refine ih a ha fun b hb_mem => hexit (b.1, a.2 + b.2 + 2) ?_
-      rw [OracleComp.mem_supportWith_bind_iff]
-      refine ⟨a, ha, ?_⟩
-      rw [OracleComp.mem_supportWith_bind_iff]
-      exact ⟨b, hb_mem, by simp⟩
-    have hiter := ExecRand.loop_iter (ml := ml') hc hb hcont
-    convert hiter using 1
-    simp only [ml', ← bind_pure_comp, bind_assoc, pure_bind, Nat.add_assoc]
-
-/-- Any register preserved by `body` is preserved along every `LoopSegment`. -/
-theorem regs_eq {x : Data r} {m : ProbComp (Data r × ℕ)} {i : Fin r}
-    (h : LoopSegment w cond body x m) (hi : body.Preserves i)
-    {z : Data r × ℕ} (hz : z ∈ m.support) :
-    z.1.regs i = x.regs i := by
-  induction h generalizing z with
-  | nil _ =>
-    cases OracleComp.eq_of_mem_supportWith_pure hz
-    rfl
-  | step _ hb _ ih =>
-    obtain ⟨a, ha, hrest⟩ := OracleComp.mem_supportWith_bind_iff.mp hz
-    obtain ⟨b, hb_mem, hpure⟩ := OracleComp.mem_supportWith_bind_iff.mp hrest
-    cases OracleComp.eq_of_mem_supportWith_pure hpure
-    exact (ih a ha hb_mem).trans (hb.regs_eq hi ha)
-
-private theorem bounded_aux {x : Data r} {m : ProbComp (Data r × ℕ)}
-    (h : LoopSegment w cond body x m) (hx : x.Bounded w) :
-    ∀ z : Data r × ℕ, z ∈ m.support → z.1.Bounded w := by
-  induction h with
-  | nil _ =>
-    intro z hz
-    cases OracleComp.eq_of_mem_supportWith_pure hz
-    exact hx
-  | step _ hb _ ih =>
-    intro z hz
-    obtain ⟨a, ha, hrest⟩ := OracleComp.mem_supportWith_bind_iff.mp hz
-    obtain ⟨b, hb_mem, hpure⟩ := OracleComp.mem_supportWith_bind_iff.mp hrest
-    cases OracleComp.eq_of_mem_supportWith_pure hpure
-    exact ih a ha (hb.bounded hx ha) b hb_mem
-
-/-- `LoopSegment` preserves `Data.Bounded w` on every supported path. -/
-theorem bounded {x : Data r} {m : ProbComp (Data r × ℕ)}
-    (h : LoopSegment w cond body x m) (hx : x.Bounded w)
-    {z : Data r × ℕ} (hz : z ∈ m.support) :
-    z.1.Bounded w :=
-  bounded_aux h hx z hz
-
-end LoopSegment
-
-end Cslib.WordRAM

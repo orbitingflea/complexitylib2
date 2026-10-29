@@ -42,9 +42,52 @@ minimum cuts, and the correctness, resource bounds, and success/failure probabil
    worst-case steps, missing `minCut W` with probability at most `1 / (2 * n)` whenever
    `0 < minCut W`.
 
-At word size `w`, a *word* is a natural number below `2 ^ w`. The Karger (1993) theorems assume
-`3 * (Nat.log 2 n + 1) ≤ w` and the Karger–Stein (1996) theorems assume
-`4 * (Nat.log 2 n + 1) ≤ w` (so workspace addresses and trial counts fit in a word), alongside
+The single-trial bound `2 / (n * (n - 1))` formalizes `[KargerStein1996]`, Section 2, Theorem 2.2
+(via Lemma 2.1; Section 2.1, Corollary 2.4 for weighted graphs), `[Karger1993]`, Section 2,
+Theorem 2.1 (whose proof computes the exact product `C(n, 2)⁻¹`; the statement is asymptotic), and
+`[MitzenmacherUpfal2017]`, Section 1.5, Theorem 1.8 (paraphrase), where the source's `C(n, 2)⁻¹` is
+written `2 / (n * (n - 1))`. The `O(n ^ 2)` step bounds follow the adjacency-matrix and
+degree-array implementation of `[KargerStein1996]`, Section 3 (Section 3.2, Corollary 3.2), and
+`kargerAmplified` and `kargerHighProb` instantiate the `O(n ^ 2 log n)`-trial amplification of
+`[Karger1993]`, Section 2, Corollary 2.1 (paraphrase). Relative to
+`[KargerStein1996]`, Section 3, our program uses two implementation variants: (a) whereas
+Section 3.1 draws twice (`u` proportional to `D[u]` then `v` proportional to `W[u, v]`), one
+unit-cost `rand` draw in `{0, …, S - 1}` resolved by prefix sums over `rowDeg` and `W[u, v]`
+achieves the same `2 * W[u, v] / S` distribution of Lemma 3.1; (b) whereas Section 3.2 takes
+`O(n)` time per contraction step, swap-compacting active slot `k - 1` into `v` runs each step in
+`O(k)` time on `k` active supervertices. The concrete trial count
+`R = (n * (n - 1) / 2) * (Nat.log 2 n + 2)` and the `1 / (2 * n)` failure bound are our own
+parameter choice, and `0 < minCut W` in the probability clauses is excluded only for proof
+convenience (deterministic `S = 0` contraction still halts without faulting and outputs a valid cut
+weight).
+
+The recursive `FastCut` theorems (`kargerSteinFastCut` and `kargerSteinHighProb`) formalize
+`[KargerStein1996]`, Section 4 ("The Recursive Contraction Algorithm"): Figure 6
+(`Recursive-Contract`), Lemma 4.1 (`O(n ^ 2 log n)` running time), Lemma 4.2 (`O(n ^ 2)` space in
+the matrix representation), Lemma 4.3 (`Omega(1 / log n)` single-tree success probability via
+equation (2)), and the minimum-cut-value part of Theorem 4.4 (paraphrase). Theorem 4.4 finds all
+minimum cuts with high probability in `O(n ^ 2 log ^ 3 n)` time and `O(m log(n ^ 2 / m))` space;
+`kargerSteinHighProb` proves that the returned value is `minCut W` except with probability at
+most `1 / (2 * n)`, within the `O(n ^ 2)` matrix workspace. As in Figure 6, a leaf
+(`2 <= k <= 6`) runs one randomized contraction down to `2` vertices; the cutoff follows
+equation (2) and the remark at the end of the proof of Lemma 4.3 (recurse for `n >= 7`), whereas
+Figure 6 itself tests "fewer than 6 vertices". The `15` in `1 / (Nat.log 2 n + 15)` is the
+source's constant: equation (2)'s base-case probability `1 / 15` gives
+`p_k = 4 / (z_k + 1) >= 2 / (30 + k)` (from `z_0 = 59` and `z_k < 59 + 2 k` for `k >= 1` in the
+proof of Lemma 4.3), evaluated at recursion depth at most `2 * Nat.log 2 n`. This formalization
+makes three design choices of its own: (1) instead of `ceil(1 + k / sqrt 2)` (Figure 6), each
+internal node (`k >= 7`) contracts to the least integer `t >= 2` with
+`k * (k - 1) <= 2 * t * (t - 1)` (never larger than `ceil(1 + k / sqrt 2)`, and strictly smaller
+at e.g. `k = 8`, where `t = 6` versus `7`, while keeping survival probability `>= 1 / 2`); (2) the
+step constants `2500` and `2600`, the trial count `R = (Nat.log 2 n + 15) * (Nat.log 2 n + 2)`,
+and the `1 / (2 * n)` failure target are our own (the proof of Theorem 4.4 uses `O(log ^ 2 n)`
+repetitions); and (3) the integer quadratic potential `(k - 4) ^ 2` bounding recursion depth, leaf
+count, and internal work without `Real.sqrt` or `Real.log` is original to this formalization.
+
+At word size `w`, a *word* is a natural number below `2 ^ w`, and `Nat.log 2 n` denotes
+`floor(log_2 n)` (with `0` at `0`). The Karger (1993) theorems assume `3 * (Nat.log 2 n + 1) ≤ w`
+and the Karger–Stein (1996) theorems assume `4 * (Nat.log 2 n + 1) ≤ w` (so workspace addresses and
+trial counts fit in a word), alongside
 `totalDoubledWeight W < 2 ^ w` (so every edge weight, vertex degree, and total active edge weight
 fits in a word across contractions).
 
@@ -61,9 +104,10 @@ Simplifications relative to `Cslib.WordRAM` and `Cslib.Algorithms.WordRAM.Karger
   instead of `Modifies` and `Block`.
 
 A reader only needs to inspect the definitions and theorem statements in this file to verify that
-the formalization proves the intended mathematical claims; Lean checks the proofs via
+the formalization proves the intended mathematical claims. Lean checks the proofs via
 `KargerMinCutBridge` and `RandomizedWordRAMBridge` under `propext`, `Classical.choice`, and
-`Quot.sound`, and `#check_abstract` verifies zero allowlisted project modules.
+`Quot.sound`. The audit command `#check_abstract` verifies that all definitions and theorem
+statements in this namespace reference no imported project declarations.
 
 ## References
 
@@ -279,8 +323,9 @@ def flattenMatrix {n : ℕ} (W : Fin n → Fin n → ℕ) : List ℕ :=
 any `n`-vertex multigraph (`n ≥ 2`) at word size `w ≥ 3 * (Nat.log 2 n + 1)` with
 `totalDoubledWeight W < 2 ^ w` within `42 * n ^ 2 + 12 * n + 21` steps and `n - 2` `rand` calls.
 Every branch outputs `cutWeight W C ≥ minCut W` for a non-trivial cut `C` while preserving memory
-outside `[2, 2 + n * n + n)`, and when `0 < minCut W` it outputs `minCut W` with probability at
-least `2 / (n * (n - 1))`. -/
+outside `[2, 2 + n * n + n)`, and when `0 < minCut W` (excluded only for proof convenience; `S = 0`
+contraction still halts fault-free with a valid cut weight) it outputs `minCut W` with probability
+at least `2 / (n * (n - 1))`. -/
 theorem kargerSingleTrial :
     ∃ p : Program 16,
       ∀ (n w : ℕ) (W : Fin n → Fin n → ℕ),
@@ -323,8 +368,8 @@ theorem kargerSingleTrial :
 (`1 ≤ R < 2 ^ w`) independent contraction trials on `R :: n :: flattenMatrix W` within
 `R * (50 * n ^ 2 + 12 * n + 30) + 16` steps and `R * (n - 2)` `rand` calls, preserving the input
 matrix and all memory outside `[3 + n * n, 3 + 2 * (n * n) + n)`. Every branch outputs a genuine
-non-trivial cut weight `≥ minCut W`, and when `0 < minCut W` the probability of missing `minCut W`
-is at most `(1 - 2 / (n * (n - 1))) ^ R`. -/
+non-trivial cut weight `≥ minCut W`, and when `0 < minCut W` (excluded only for proof convenience)
+the probability of missing `minCut W` is at most `(1 - 2 / (n * (n - 1))) ^ R`. -/
 theorem kargerAmplified :
     ∃ p : Program 22,
       ∀ (R n w : ℕ) (W : Fin n → Fin n → ℕ),
@@ -369,8 +414,8 @@ theorem kargerAmplified :
 runs `R = (n * (n - 1) / 2) * (Nat.log 2 n + 2)` independent contractions on `n :: flattenMatrix W`
 within `33 * n ^ 4 * (Nat.log 2 n + 2)` steps and `R * (n - 2)` `rand` calls, preserving the input
 matrix and all memory outside `[2 + n * n, 2 + 2 * (n * n) + n)`. Every branch outputs a genuine
-non-trivial cut weight `≥ minCut W`, and when `0 < minCut W` the probability of missing `minCut W`
-is at most `1 / (2 * n)`. -/
+non-trivial cut weight `≥ minCut W`, and when `0 < minCut W` (excluded only for proof convenience)
+the probability of missing `minCut W` is at most `1 / (2 * n)`. -/
 theorem kargerHighProb :
     ∃ p : Program 22,
       ∀ (n w : ℕ) (W : Fin n → Fin n → ℕ),
@@ -410,12 +455,17 @@ theorem kargerHighProb :
       simp_all [AluOp.eval, Comp.bind, Comp.eval, Comp.CallsAtMost,
         stepRand, runRand])
 
-/-- **Single-tree Karger–Stein `FastCut` (`O(n ^ 2 log n)` time).** One fixed 24-register program
-recursively contracts `n :: flattenMatrix W` (`n ≥ 2`) at word size `w ≥ 4 * (Nat.log 2 n + 1)`
-with `totalDoubledWeight W < 2 ^ w` within `2500 * n ^ 2 * (Nat.log 2 n + 2)` steps and
+/-- **Single-tree Karger–Stein `FastCut` (`O(n ^ 2 log n)` time, `[KargerStein1996]`, Section 4,
+Figure 6 and Lemmas 4.1–4.3).** One fixed 24-register program recursively contracts
+`n :: flattenMatrix W` (`n ≥ 2`) at word size `w ≥ 4 * (Nat.log 2 n + 1)` with
+`totalDoubledWeight W < 2 ^ w` within `2500 * n ^ 2 * (Nat.log 2 n + 2)` steps and
 `6 * (n * n)` `rand` calls, preserving the input matrix and all memory outside
-`[2 + n * n, 2 + 27 * (n * n))`. Every branch outputs a genuine non-trivial cut weight
-`≥ minCut W`, and when `0 < minCut W` it outputs `minCut W` with probability at least
+`[2 + n * n, 2 + 27 * (n * n))`. Internal nodes (`k >= 7`) contract to the least `t >= 2` with
+`k * (k - 1) <= 2 * t * (t - 1)` (an integer variant of Figure 6's `ceil(1 + k / sqrt 2)`), and
+leaves (`k <= 6`) run one randomized contraction down to `2` vertices, as in Figure 6 (equation
+(2)'s base-case probability `1 / 15` gives the `+ 15` term).
+Every branch outputs a genuine non-trivial cut weight `≥ minCut W`, and when `0 < minCut W`
+(excluded only for proof convenience) it outputs `minCut W` with probability at least
 `1 / (Nat.log 2 n + 15)`. -/
 theorem kargerSteinFastCut :
     ∃ p : Program 24,
@@ -455,14 +505,16 @@ theorem kargerSteinFastCut :
       simp_all [AluOp.eval, Comp.bind, Comp.eval, Comp.CallsAtMost,
         stepRand, runRand])
 
-/-- **High-probability Karger–Stein global minimum cut (`O(n ^ 2 log ^ 3 n)` time).** One fixed
-24-register program runs `R = (Nat.log 2 n + 15) * (Nat.log 2 n + 2)` independent `FastCut` trees
-on `n :: flattenMatrix W` (`n ≥ 2`) at word size `w ≥ 4 * (Nat.log 2 n + 1)` with
+/-- **High-probability Karger–Stein global minimum cut (`O(n ^ 2 log ^ 3 n)` time, the
+minimum-cut-value part of `[KargerStein1996]`, Section 4, Theorem 4.4).** One fixed 24-register
+program runs our concrete
+parameter choice `R = (Nat.log 2 n + 15) * (Nat.log 2 n + 2)` independent `FastCut` trees on
+`n :: flattenMatrix W` (`n ≥ 2`) at word size `w ≥ 4 * (Nat.log 2 n + 1)` with
 `totalDoubledWeight W < 2 ^ w` within `2600 * n ^ 2 * (Nat.log 2 n + 15) * (Nat.log 2 n + 2) ^ 2`
 steps and `R * (6 * (n * n))` `rand` calls, preserving the input matrix and all memory outside
 `[2 + n * n, 2 + 27 * (n * n))`. Every branch outputs a genuine non-trivial cut weight
-`≥ minCut W`, and when `0 < minCut W` the probability of missing `minCut W` is at most
-`1 / (2 * n)`. -/
+`≥ minCut W`, and when `0 < minCut W` (excluded only for proof convenience) the probability of
+missing `minCut W` is at most `1 / (2 * n)`. -/
 theorem kargerSteinHighProb :
     ∃ p : Program 24,
       ∀ (n w : ℕ) (W : Fin n → Fin n → ℕ),

@@ -12,32 +12,45 @@ public import Complexity.Algorithms.WordRAM.Karger.Graph
 public import Complexity.Algorithms.WordRAM.Karger.Contract
 public import Complexity.Algorithms.WordRAM.Karger.FastCut
 public import Complexity.Computability.WordRAM.Copy
+public import Complexity.Computability.WordRAM.Randomized.LoopSegment
 public import Complexity.Computability.WordRAM.Time
 
 /-!
 # Karger–Stein's recursive `FastCut` algorithm on the word RAM
 
-Implements the Karger–Stein recursive randomized global minimum cut algorithm `[KargerStein1996]`
-on `n`-vertex weighted undirected multigraphs (`n ≥ 2`, `IsMultigraph W`) over
-`Cslib.WordRAM.Basis.standard` using `r = 24` registers and an explicit iterative frame stack in
-`O(n ^ 2)` scratch words (`≤ 26 * n ^ 2` stack words plus `n ^ 2` input words), providing two
-machine-level endpoints on `n :: flattenMatrix W`:
+Implements the Karger–Stein recursive randomized global minimum cut algorithm (`[KargerStein1996]`,
+Section 4, Figure 6, Lemmas 4.1–4.3, and the minimum-cut-value part of Theorem 4.4; paraphrase) on
+`n`-vertex weighted undirected
+multigraphs (`n ≥ 2`, `IsMultigraph W`) over `Cslib.WordRAM.Basis.standard` using `r = 24`
+registers and an explicit iterative frame stack in `O(n ^ 2)` scratch words (`≤ 26 * n ^ 2` stack
+words plus `n ^ 2` input words, matching Section 4, Lemma 4.2), providing two machine-level
+endpoints on `n :: flattenMatrix W`:
 
-1. **Single-tree recursive contraction (`fastCutProgram`, `r = 24`):** contracts recursively from
-   `k ≥ 7` down to the pure-integer threshold `t = fastCutThreshold k` (smallest `t ≥ 2` with
-   `k * (k - 1) ≤ 2 * t * (t - 1)`) along two independent branches, switches at `k ≤ 6` to a
-   single contraction down to `2` supervertices, halts within `fastCutTime n = 2500 * n ^ 2 *
-   (Nat.log 2 n + 2)` (`O(n ^ 2 log n)`) steps and `fastCutNodeQueries n ≤ 6 * n ^ 2` (`O(n ^ 2)`)
-   `rand` calls with a genuine non-trivial cut weight `cutWeight W C ≥ minCut W` on every supported
-   path, modifies only `[2 + n ^ 2, 2 + 27 * n ^ 2)`, and achieves `minCut W` with probability at
-   least `1 / (Nat.log 2 n + 15)` whenever `0 < minCut W`.
-2. **Amplified high-probability global minimum cut (`fastCutHighProbProgram`, `r = 24`):** executes
-   `fastCutTrials n = (Nat.log 2 n + 15) * (Nat.log 2 n + 2)` (`O(log ^ 2 n)`) independent
+1. **Single-tree recursive contraction (`fastCutProgram`, `r = 24`, `[KargerStein1996]`, Section 4,
+   Figure 6 and Lemmas 4.1–4.3; paraphrase):** contracts recursively from `k ≥ 7` down to the
+   pure-integer threshold `t = fastCutThreshold k` (smallest `t ≥ 2` with `k * (k - 1) ≤ 2 * t *
+   (t - 1)`, an integer deviation from Figure 6's `⌈k / √2 + 1⌉` that is never larger and is
+   strictly smaller at e.g. `k = 8`, where `t = 6` vs `7`) along two independent branches, switches
+   at `k ≤ 6` to a single contraction down to `2` supervertices (the source's base case: Figure 6's
+   `Contract(G, 2)` with the size-7 cutoff of equation (2); a leaf keeps a fixed minimum cut with
+   probability `≥ 2 / (k * (k - 1)) ≥ 1 / 15`, equation (2)'s base-case bound, which is where the
+   `15` comes from), halts within `fastCutTime n = 2500 * n ^ 2 * (Nat.log 2 n + 2)`
+   (`O(n ^ 2 log n)`) steps and `fastCutNodeQueries n ≤ 6 * n ^ 2` (`O(n ^ 2)`) `rand` calls with a
+   genuine non-trivial cut weight `cutWeight W C ≥ minCut W` on every supported path, modifies only
+   `[2 + n ^ 2, 2 + 27 * n ^ 2)`, and achieves `minCut W` with probability at least
+   `1 / (Nat.log 2 n + 15)` whenever `0 < minCut W` (excluded only for proof convenience; when
+   `minCut W = 0`, any non-trivial zero-weight cut is already optimal).
+2. **Amplified high-probability global minimum cut (`fastCutHighProbProgram`, `r = 24`,
+   `[KargerStein1996]`, Section 4, Theorem 4.4; paraphrase, the value part only: the source finds
+   all minimum cuts in `O(m log(n ^ 2 / m))` space; we prove the returned value is `minCut W` except
+   with probability `≤ 1 / (2 * n)`):** executes our concrete `O(log ^ 2 n)`
+   trial schedule `fastCutTrials n = (Nat.log 2 n + 15) * (Nat.log 2 n + 2)` of independent
    `FastCut` trees reusing the same `[2 + n ^ 2, 2 + 27 * n ^ 2)` scratch arena, halts within
    `fastCutHighProbTime n = 2600 * n ^ 2 * (Nat.log 2 n + 15) * (Nat.log 2 n + 2) ^ 2`
    (`O(n ^ 2 log ^ 3 n)`) steps and `fastCutTrials n * (6 * n ^ 2)` `rand` calls with a genuine
    non-trivial cut weight `≥ minCut W`, and misses `minCut W` with probability at most
-   `1 / (2 * n)` (hence at most `1 / n`) whenever `0 < minCut W`.
+   `1 / (2 * n)` (hence at most `1 / n`) whenever `0 < minCut W` (excluded only for proof
+   convenience).
 
 ## Main definitions
 
@@ -54,11 +67,13 @@ machine-level endpoints on `n :: flattenMatrix W`:
 
 * `Cslib.Algorithms.WordRAM.Karger.fastCutProgram_spec`: worst-case `O(n ^ 2 log n)` step bound,
   `O(n ^ 2)` `rand`-call bound, pathwise non-trivial cut realization, `Modifies` frame, and
-  `1 / (Nat.log 2 n + 15)` success probability lower bound for `fastCutProgram`.
+  `1 / (Nat.log 2 n + 15)` success probability lower bound for `fastCutProgram`
+  (`[KargerStein1996]`, Section 4, Figure 6 and Lemmas 4.1–4.3; paraphrase).
 * `Cslib.Algorithms.WordRAM.Karger.fastCutHighProbProgram_spec`,
   `Cslib.Algorithms.WordRAM.Karger.fastCutHighProbProgram_failure_le_inv_n`: worst-case
   `O(n ^ 2 log ^ 3 n)` step bound, pathwise non-trivial cut realization, `Modifies` frame, and
-  `1 / (2 * n)` (`1 / n`) failure probability upper bound for `fastCutHighProbProgram`.
+  `1 / (2 * n)` (`1 / n`) failure probability upper bound for `fastCutHighProbProgram`
+  (the minimum-cut-value part of `[KargerStein1996]`, Section 4, Theorem 4.4; paraphrase).
 
 ## References
 
@@ -78,7 +93,7 @@ open Cslib.WordRAM
 /-! ### Word-size sufficiency (`logWidth 4 n ≤ w`) and input layout -/
 
 /-- `16 ≤ 24`, used to embed `computeDegreesAndTotal` and `contractDownTo` into `Data 24`. -/
-theorem hr24 : 16 ≤ 24 := by decide
+private theorem hr24 : 16 ≤ 24 := by decide
 
 /-- Under `2 ≤ n` and `logWidth 4 n ≤ w`, stack workspace end-addresses up to `2 + 27 * (n * n)` fit
 in `w`-bit words. -/
@@ -147,10 +162,6 @@ theorem holdsMatrix_init_fastCut {r n : ℕ} (W : Fin n → Fin n → ℕ) :
     rw [Nat.add_comm 1, List.getD_cons_succ]
   rw [hcons, List.getD_eq_getElem?_getD, List.getElem?_eq_getElem hlt, Option.getD_some]
   exact getElem_flattenMatrix W i j
-
-private theorem pmf_toOuterMeasure_map_ks {α β : Type*} (p : PMF α) (g : α → β) (S : Set β) :
-    (p.map g).toOuterMeasure S = p.toOuterMeasure (g ⁻¹' S) := by
-  rw [PMF.toOuterMeasure_map_apply]
 
 private theorem toOuterMeasure_mono_support {α : Type} (m : ProbComp α) {S T : Set α}
     (h : ∀ a ∈ m.support, a ∈ S → a ∈ T) :
@@ -855,36 +866,6 @@ theorem totalDoubledWeight_le_of_isContractionOf {n k : ℕ} {W₀ : Fin n → F
             rintro x rfl hxb
             exact hab hxb
 
-/-- Append a deterministic `ExecWithin` continuation onto a randomized `ExecRand` computation as a
-pure `Functor.map`. -/
-theorem execRand_seq_det {B : Basis} {r w T : ℕ} {c₁ c₂ : Code B r} {x : Data r}
-    {m₁ : ProbComp (Data r × ℕ)} {Q : Data r → Data r → Prop}
-    (h₁ : ExecRand w c₁ x m₁)
-    (h₂ : ∀ z ∈ m₁.support, ∃ y, ExecWithin w c₂ z.1 y T ∧ Q z.1 y) :
-    ∃ g : Data r → Data r × ℕ,
-      ExecRand w (.seq c₁ c₂) x ((fun z => ((g z.1).1, z.2 + (g z.1).2)) <$> m₁) ∧
-      ∀ z ∈ m₁.support, (g z.1).2 ≤ T ∧ Exec w c₂ z.1 (g z.1).1 (g z.1).2 ∧ Q z.1 (g z.1).1 := by
-  classical
-  let g : Data r → Data r × ℕ := fun d =>
-    if h : ∃ y, ExecWithin w c₂ d y T ∧ Q d y then
-      (h.choose, h.choose_spec.1.choose)
-    else (d, 0)
-  have hg : ∀ z ∈ m₁.support,
-      (g z.1).2 ≤ T ∧ Exec w c₂ z.1 (g z.1).1 (g z.1).2 ∧ Q z.1 (g z.1).1 := by
-    intro z hz
-    have hex := h₂ z hz
-    simp only [g, hex, ↓reduceDIte]
-    exact ⟨hex.choose_spec.1.choose_spec.1, hex.choose_spec.1.choose_spec.2, hex.choose_spec.2⟩
-  have hseq := ExecRand.seq h₁ (m₂ := fun d => pure (g d)) fun z hz => (hg z hz).2.1.execRand
-  have heq : (do
-      let z₁ ← m₁
-      let z₂ ← (pure (g z₁.1) : ProbComp (Data r × ℕ))
-      pure (z₂.1, z₁.2 + z₂.2)) =
-      ((fun z => ((g z.1).1, z.2 + (g z.1).2)) <$> m₁) := by
-    simp only [pure_bind, ← bind_pure_comp]
-  rw [heq] at hseq
-  exact ⟨g, hseq, hg⟩
-
 end Subroutines
 
 /-! ### Explicit iterative call-stack machine for `FastCut` (`r = 24`)
@@ -950,8 +931,8 @@ def basePost : Code .standard 24 := ram[
 def baseCaseAndPop : Code .standard 24 := ram[
   ⟪basePre⟫;
   ⟪ksCopyCode⟫;
-  ⟪computeDegreesAndTotalAt hr24⟫;
-  ⟪contractDownToAt hr24⟫;
+  ⟪computeDegreesAndTotalAt (by decide)⟫;
+  ⟪contractDownToAt (by decide)⟫;
   ⟪basePost⟫
 ]
 
@@ -1021,8 +1002,8 @@ def branchContractAndPush : Code .standard 24 := ram[
   ⟪thresholdCode⟫;
   ⟪branchSetup⟫;
   ⟪ksCopyCode⟫;
-  ⟪computeDegreesAndTotalAt hr24⟫;
-  ⟪contractDownToAt hr24⟫;
+  ⟪computeDegreesAndTotalAt (by decide)⟫;
+  ⟪contractDownToAt (by decide)⟫;
   ⟪branchTail⟫
 ]
 
@@ -1480,7 +1461,7 @@ theorem baseCaseAndPop_spec {n w fp parentFp b k : ℕ} {W₀ : Fin n → Fin n 
     have hbase := base_survival_ge hk2 hk6
     have hC_nt : IsNonTrivialCut (pullbackCut part B) :=
       isNonTrivialCut_pullbackCut hC.surj hB_nt
-    rw [ProbComp.eval_map, pmf_toOuterMeasure_map_ks]
+    rw [ProbComp.eval_map, PMF.toOuterMeasure_map_apply]
     refine (hbase.trans hprob).trans (toOuterMeasure_mono_support m_c fun z₀ hsup hz₀ => ?_)
     rcases hg z₀ hsup with ⟨_, _, _, _, _, _, hzret⟩
     change (g z₀.1).1.regs retVal = minCut W₀
@@ -1967,7 +1948,7 @@ theorem branchContractAndPush_spec {n w fp b k : ℕ} {W₀ : Fin n → Fin n �
     have hhalf := half_le_threshold_survival hk7
     have hC_nt : IsNonTrivialCut (pullbackCut part B) :=
       isNonTrivialCut_pullbackCut hC.surj hB_nt
-    rw [ProbComp.eval_map, pmf_toOuterMeasure_map_ks]
+    rw [ProbComp.eval_map, PMF.toOuterMeasure_map_apply]
     refine (hhalf.trans hprob).trans (toOuterMeasure_mono_support m_c fun z₀ hsup hz₀ => ?_)
     rcases hg z₀ hsup with ⟨_, _, _, _, _, _, _, _, _, hm_sub⟩
     rcases hz₀ with ⟨W₁, part₁, B₁, hC₁, hws₁, _, hpb₁⟩
@@ -1992,24 +1973,11 @@ private theorem probComp_seq_hit_ge {r : ℕ} (m₁ : ProbComp (Data r × ℕ))
     rw [ProbComp.eval_bind]
     refine congrArg (m₁.eval.bind ·) (funext fun z₁ => ?_)
     rw [bind_pure_comp, ProbComp.eval_map]
-  calc
-    s₁ * s₂ ≤ m₁.eval.toOuterMeasure {z | pre z.1} * s₂ :=
-      mul_le_mul_of_nonneg_right hp zero_le
-    _ ≤ _ := by
-      rw [heval, PMF.toOuterMeasure_bind_apply, PMF.toOuterMeasure_apply,
-        ← ENNReal.tsum_mul_right]
-      refine ENNReal.tsum_le_tsum fun z₁ => ?_
-      by_cases hpre : pre z₁.1
-      · have hmem : z₁ ∈ {z : Data r × ℕ | pre z.1} := hpre
-        rw [Set.indicator_of_mem hmem]
-        by_cases hs : z₁ ∈ m₁.support
-        · rw [pmf_toOuterMeasure_map_ks]
-          exact mul_le_mul_of_nonneg_left (hstep z₁ hs hpre) zero_le
-        · have hs' : z₁ ∉ m₁.eval.support := by rwa [ProbComp.support_eval]
-          rw [(PMF.apply_eq_zero_iff m₁.eval z₁).mpr hs', zero_mul, zero_mul]
-      · have hnot : z₁ ∉ {z : Data r × ℕ | pre z.1} := hpre
-        rw [Set.indicator_of_notMem hnot, zero_mul]
-        exact zero_le
+  rw [heval]
+  refine toOuterMeasure_bind_ge_mul_ennreal _ _
+    {z : Data r × ℕ | pre z.1} {z : Data r × ℕ | post z.1} hp fun z₁ hz₁ hpre => ?_
+  rw [PMF.toOuterMeasure_map_apply]
+  exact hstep z₁ ((ProbComp.support_eval m₁) ▸ hz₁) hpre
 
 private theorem isQueryBounded_seq {r q₁ q₂ : ℕ} {m₁ : ProbComp (Data r × ℕ)}
     {m₂ : Data r → ProbComp (Data r × ℕ)}
@@ -2074,7 +2042,7 @@ theorem fastCutStep_base_seg {n w fp parentFp b k : ℕ} {W₀ : Fin n → Fin n
     rcases hsup_b z₀ hz₀ with ⟨ht₀, hmod₀, hz0, hzfp, hzsp, hcut⟩
     exact ⟨by omega, hm_h ▸ hmod₀, hz0, hzfp, hzsp, hcut⟩
   · intro B hmin_pos hB_nt hB_min
-    rw [ProbComp.eval_map, pmf_toOuterMeasure_map_ks]
+    rw [ProbComp.eval_map, PMF.toOuterMeasure_map_apply]
     exact hsurv_b B hmin_pos hB_nt hB_min
 
 theorem fastCutNode_base {n w d fp parentFp b k : ℕ} {W₀ : Fin n → Fin n → ℕ}
@@ -2212,7 +2180,7 @@ theorem fastCutStep_stage0_seg {n w fp b k : ℕ} {W₀ : Fin n → Fin n → �
       exact Function.update_self _ _ _
     exact ⟨by omega, modifies_trans_subset hmod_s hmod₀ Finset.Subset.rfl hsub, hstg_val, rest⟩
   · intro B hmin_pos hB_nt hB_min
-    rw [ProbComp.eval_map, pmf_toOuterMeasure_map_ks]
+    rw [ProbComp.eval_map, PMF.toOuterMeasure_map_apply]
     exact hsurv_c B hmin_pos hB_nt hB_min
 
 theorem fastCutStep_stage1_seg {n w fp b k v1 : ℕ} {W₀ : Fin n → Fin n → ℕ}
@@ -2363,7 +2331,7 @@ theorem fastCutStep_stage1_seg {n w fp b k v1 : ℕ} {W₀ : Fin n → Fin n →
     exact ⟨by omega, modifies_trans_subset hmod_s hmod₀ Finset.Subset.rfl hsub,
       hstg_val, hv1_val, rest⟩
   · intro B hmin_pos hB_nt hB_min
-    rw [ProbComp.eval_map, pmf_toOuterMeasure_map_ks]
+    rw [ProbComp.eval_map, PMF.toOuterMeasure_map_apply]
     exact hsurv_c B hmin_pos hB_nt hB_min
 
 theorem fastCutStep_stage2_seg {w fp parentFp b k v1 r2 : ℕ} {x : Data 24}
@@ -2764,7 +2732,7 @@ theorem fastCutNode_spec {n w : ℕ} {W₀ : Fin n → Fin n → ℕ}
           (hsurv_b1 B hmin_pos hB_nt hB_min)
           (fun z₁ hz₁ hhit₁ z₂ hz₂ => ((hm₂_fn z₁ hz₁).2.2.1 z₂ hz₂).2.2.2.2.2.2 hhit₁)
           (fun z₁ hz₁ _ => by
-            rw [pmf_toOuterMeasure_map_ks]
+            rw [PMF.toOuterMeasure_map_apply]
             exact (hm₂_fn z₁ hz₁).2.2.2 B hmin_pos hB_nt hB_min)
         have heq_s : (d' + 30) + 1 = d' + 1 + 30 := by omega
         rwa [heq_s] at hrec
@@ -3016,7 +2984,7 @@ theorem fastCutTree_spec {n w sb : ℕ} {W : Fin n → Fin n → ℕ} {x : Data 
       ext u; simp [pullbackCut]
     have hprob := hsurv_seg C_star hmin_pos hC_nt (by rw [hpb, hC_min])
     rw [root_hit_prob_eq n] at hprob
-    rw [ProbComp.eval_map, pmf_toOuterMeasure_map_ks]
+    rw [ProbComp.eval_map, PMF.toOuterMeasure_map_apply]
     exact hprob
 
 end FrameMachine
@@ -3117,16 +3085,18 @@ theorem fastCutCode_spec {n w : ℕ} {W : Fin n → Fin n → ℕ}
     rcases hsup_t z₀ hz₀ with ⟨ht₀, hmod₀, _, _, _, _, _, hcut₀⟩
     exact ⟨by omega, hm_s ▸ hmod₀, hcut₀⟩
   · intro hmin_pos
-    rw [ProbComp.eval_map, pmf_toOuterMeasure_map_ks]
+    rw [ProbComp.eval_map, PMF.toOuterMeasure_map_apply]
     exact hsurv_t hmin_pos
 
-/-- **Single-tree Karger–Stein `FastCut` specification (`fastCutProgram`).**
+/-- **Single-tree Karger–Stein `FastCut` specification (`fastCutProgram`, `[KargerStein1996]`,
+Section 4, Figure 6 and Lemmas 4.1–4.3; paraphrase).**
 At word size `w ≥ logWidth 4 n` when `2 ≤ n` and `totalDoubledWeight W < 2 ^ w`:
 1. `fastCutProgram` halts within `fastCutTime n = 2500 * n ^ 2 * (Nat.log 2 n + 2)` steps;
 2. executes at most `fastCutNodeQueries n` (`≤ 6 * (n * n)`) `rand` calls;
 3. on every supported branch, outputs `cutWeight W C ≥ minCut W` for a genuine non-trivial cut `C`
    of `W` while modifying memory only in `[2 + n * n, 2 + 27 * (n * n))`;
-4. when `0 < minCut W`, outputs `minCut W` with probability at least `1 / (Nat.log 2 n + 15)`. -/
+4. when `0 < minCut W` (excluded only for proof convenience), outputs `minCut W` with probability at
+   least `1 / (Nat.log 2 n + 15)`. -/
 theorem fastCutProgram_spec {n w : ℕ} {W : Fin n → Fin n → ℕ}
     (hn : 2 ≤ n) (hW : IsMultigraph W)
     (hw : logWidth 4 n ≤ w) (htot : Fits w (totalDoubledWeight W)) :
@@ -3165,7 +3135,7 @@ theorem fastCutProgram_spec {n w : ℕ} {W : Fin n → Fin n → ℕ}
     rcases hsup z hz with ⟨_, hmod, C, hC_nt, hrv⟩
     exact ⟨z.1, C, by rw [hrv], hbnd.2, hC_nt, minCut_le_cutWeight W hC_nt, hmod⟩
   · intro hmin_pos
-    rw [evalRand, hrun, ProbComp.eval_map, pmf_toOuterMeasure_map_ks]
+    rw [evalRand, hrun, ProbComp.eval_map, PMF.toOuterMeasure_map_apply]
     refine (hsurv hmin_pos).trans (PMF.toOuterMeasure_mono _ ?_)
     intro z hz
     exact ⟨z.1, congrArg (fun v => RandCfg.halted v z.1) hz.1⟩
@@ -3577,7 +3547,7 @@ theorem fastCutAmpBody_spec {w sb n R i : ℕ} {W : Fin n → Fin n → ℕ} {me
     have hhit_ge : (1 : ℝ≥0∞) / ((Nat.log 2 n + 15 : ℕ) : ℝ≥0∞) ≤
         m_out.eval.toOuterMeasure {z | z.1.regs bestVal = minCut W} := by
       dsimp only [m_out]
-      rw [ProbComp.eval_map, pmf_toOuterMeasure_map_ks]
+      rw [ProbComp.eval_map, PMF.toOuterMeasure_map_apply]
       refine (hsurv_t hmin_pos).trans (toOuterMeasure_mono_support m_t fun z₀ hz₀ hrv_eq => ?_)
       rcases hsup_t z₀ hz₀ with ⟨_, _, _, _, _, _, hbv₀, _⟩
       rcases hg z₀ hz₀ with ⟨_, _, _, _, _, _, _, hbv_g⟩
@@ -3702,13 +3672,13 @@ theorem fastCutAmpLoop_spec {w sb n R : ℕ} {W : Fin n → Fin n → ℕ} {mem�
       · intro z₁ hz₁_eval _
         have hz₁ : z₁ ∈ m_b.support := (ProbComp.support_eval m_b) ▸ hz₁_eval
         obtain ⟨m_r, hm_r, _, _, hfail_r⟩ := hnext z₁ hz₁
-        rw [hml_def, hm_r.codeComp_eq, pmf_toOuterMeasure_map_ks]
+        rw [hml_def, hm_r.codeComp_eq, PMF.toOuterMeasure_map_apply]
         exact hfail_r hmin_pos
       · intro z₁ hz₁_eval hhit
         have hz₁ : z₁ ∈ m_b.support := (ProbComp.support_eval m_b) ▸ hz₁_eval
         have hbv₁ : z₁.1.regs bestVal = minCut W := not_not.mp hhit
         obtain ⟨m_r, hm_r, _, hsup_r, _⟩ := hnext z₁ hz₁
-        rw [hml_def, hm_r.codeComp_eq, pmf_toOuterMeasure_map_ks, PMF.toOuterMeasure_apply]
+        rw [hml_def, hm_r.codeComp_eq, PMF.toOuterMeasure_map_apply, PMF.toOuterMeasure_apply]
         refine ENNReal.tsum_eq_zero.mpr fun z₂ => ?_
         by_cases hz₂_eval : z₂ ∈ m_r.eval.support
         · have hz₂ : z₂ ∈ m_r.support := (ProbComp.support_eval m_r) ▸ hz₂_eval
@@ -3777,17 +3747,19 @@ theorem fastCutHighProbCode_spec {n w : ℕ} {W : Fin n → Fin n → ℕ}
     rcases hsup_l z₀ hz₀ with ⟨ht₀, hinv_f, _⟩
     exact ⟨by omega, hinv_f.modifies_ws, hinv_f.best_cut (fastCutTrials_pos n)⟩
   · intro hmin_pos
-    rw [ProbComp.eval_map, pmf_toOuterMeasure_map_ks]
+    rw [ProbComp.eval_map, PMF.toOuterMeasure_map_apply]
     exact (hfail_l hmin_pos).trans (fastCutHighProb_failure_le n)
 
-/-- **Amplified `O(n ^ 2 log ^ 3 n)` high-probability Karger–Stein (`fastCutHighProbProgram`).**
+/-- **Amplified `O(n ^ 2 log ^ 3 n)` high-probability Karger–Stein (`fastCutHighProbProgram`,
+the minimum-cut-value part of `[KargerStein1996]`, Section 4, Theorem 4.4; paraphrase).**
 At word size `w ≥ logWidth 4 n` when `2 ≤ n` and `totalDoubledWeight W < 2 ^ w`:
 1. `fastCutHighProbProgram` halts within
    `fastCutHighProbTime n = 2600 * n ^ 2 * (Nat.log 2 n + 15) * (Nat.log 2 n + 2) ^ 2` steps;
 2. executes at most `fastCutTrials n * (6 * (n * n))` `rand` calls;
 3. on every supported branch, outputs `cutWeight W C ≥ minCut W` for a genuine non-trivial cut `C`
    of `W` while modifying memory only in `[2 + n * n, 2 + 27 * (n * n))`;
-4. when `0 < minCut W`, misses `minCut W` with probability at most `1 / (2 * n)`. -/
+4. when `0 < minCut W` (excluded only for proof convenience), misses `minCut W` with probability at
+   most `1 / (2 * n)`. -/
 theorem fastCutHighProbProgram_spec {n w : ℕ} {W : Fin n → Fin n → ℕ}
     (hn : 2 ≤ n) (hW : IsMultigraph W)
     (hw : logWidth 4 n ≤ w) (htot : Fits w (totalDoubledWeight W)) :
@@ -3828,7 +3800,7 @@ theorem fastCutHighProbProgram_spec {n w : ℕ} {W : Fin n → Fin n → ℕ}
     rcases hsup z hz with ⟨_, hmod, C, hC_nt, hbv⟩
     exact ⟨z.1, C, by rw [hbv], hbnd.2, hC_nt, minCut_le_cutWeight W hC_nt, hmod⟩
   · intro hmin_pos
-    rw [evalRand, hrun, ProbComp.eval_map, pmf_toOuterMeasure_map_ks]
+    rw [evalRand, hrun, ProbComp.eval_map, PMF.toOuterMeasure_map_apply]
     refine (PMF.toOuterMeasure_mono _ ?_).trans (hfail hmin_pos)
     intro z hz heq
     exact hz.1 z.1 (congrArg (fun v => RandCfg.halted v z.1) heq)

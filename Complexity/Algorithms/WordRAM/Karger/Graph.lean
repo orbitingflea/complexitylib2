@@ -11,6 +11,7 @@ public import Complexity.Init
 public import Complexity.Probability.PMF.Event
 public import Complexity.Probability.PMF.Uniform
 import Mathlib.Algebra.Order.Ring.Nat
+import Mathlib.Algebra.Order.Ring.Pow
 import Mathlib.Data.Nat.Log
 
 /-!
@@ -19,6 +20,41 @@ import Mathlib.Data.Nat.Log
 Combinatorial and probabilistic core for Karger's randomized contraction algorithm `[Karger1993]`
 and the Karger–Stein recursive algorithm `[KargerStein1996]` on `n`-vertex weighted undirected
 multigraphs represented as symmetric zero-diagonal adjacency matrices `W : Fin n → Fin n → ℕ`.
+
+## Source statements and notation mapping
+
+* **Cut-survival bounds (paraphrase):**
+  - `[Karger1993]`, Section 2, Theorem 2.1 and Corollary 2.1 (paraphrase): contracting randomly
+    chosen edges in an `n`-vertex multigraph down to `2` meta-vertices preserves any fixed global
+    minimum cut with probability at least `C(n, 2)⁻¹ = 2 / (n * (n - 1))`, and repeating
+    `O(n ^ 2 log n)` independent trials finds a minimum cut with high probability.
+  - `[KargerStein1996]`, Section 2, Lemma 2.1, Theorem 2.2, and Corollary 2.3, and Section 2.1,
+    Corollary 2.4 (paraphrase): a fixed cut survives contraction if and only if no contracted edge
+    crosses it; at `k` active supervertices every singleton cut has weight at least `minCut W`, so
+    total doubled weight `S` is at least `k * minCut W`, a single edge-weight-proportional step
+    crosses a fixed minimum cut with probability at most `2 / k`, and contracting from `n` down to
+    `t` supervertices preserves the cut with probability at least
+    `C(t, 2) / C(n, 2) = t * (t - 1) / (n * (n - 1))`.
+  - `[MitzenmacherUpfal2017]`, Section 1.5, Theorem 1.8 (paraphrase): multiplying the conditional
+    single-step survival bounds `1 - 2 / i = (i - 2) / i` for `i = n, …, 3` telescopes to
+    `2 / (n * (n - 1))`.
+* **Notation mapping and implementation variants:**
+  - `C(t, 2) / C(n, 2)` and `C(n, 2)⁻¹` ↔ `((t * (t - 1) : ℕ) : ℝ≥0∞) / (n * (n - 1))` and
+    `2 / (n * (n - 1))` (`step_survival_prob_ge`, `telescope_survival_step`);
+  - `[KargerStein1996]`, Section 3.1, Lemma 3.1 selects `(u, v)` with probability
+    `2 * W u v / S` via two `Random-Select` draws (`u` proportional to `D(u)` then `v` proportional
+    to `W(u, v)`); our `edgeOffset` / `IsSampledPair` formalizes an equivalent single-draw variant
+    using one uniform draw `r ∈ Fin S` (`S = totalDoubledWeight W = ∑ u, rowDeg W u`) resolved by
+    prefix sums over `rowDeg` then row weights `W u v`, achieving the same `2 * W u v / S`
+    distribution;
+  - `[KargerStein1996]`, Section 3.2 (Figure 5) updates the `n × n` matrix in `O(n)` time per
+    contraction (hence Corollary 3.2's `O(n ^ 2)` total); our `embedCompact` / `contractMatrix`
+    swap-compacts active slot `k - 1` into the removed slot `v` so each contraction on `k` active
+    supervertices scans only `0..k - 1` (`O(k)` time);
+  - `highProbTrials n = (n * (n - 1) / 2) * (Nat.log 2 n + 2)` and the elementary `Real.exp`-free
+    Bernoulli bound `highProb_failure_le` (`≤ 1 / (2 * n)`) are our own concrete parameter choices
+    instantiating the `O(n ^ 2 log n)` repeated-trial amplification of `[Karger1993]`, Section 2,
+    Corollary 2.1.
 
 ## Main definitions
 
@@ -1127,7 +1163,8 @@ theorem toOuterMeasure_compl_le_one_sub {α : Type*} (p : PMF α) (s : Set α) {
     p.toOuterMeasure sᶜ + q ≤ p.toOuterMeasure sᶜ + p.toOuterMeasure s := by gcongr
     _ = 1 := by rw [add_comm, hsum]
 
-private theorem ennreal_div_pow (a b : ℝ≥0∞) (m : ℕ) :
+/-- Power of a quotient in `ℝ≥0∞`: `(a / b) ^ m = a ^ m / b ^ m`. -/
+theorem ennreal_div_pow (a b : ℝ≥0∞) (m : ℕ) :
     (a / b) ^ m = a ^ m / b ^ m := by
   simp only [div_eq_mul_inv, mul_pow, ENNReal.inv_pow]
 
@@ -1179,34 +1216,17 @@ theorem telescope_survival_step {t m : ℕ} (ht : 2 ≤ t) (htm : t ≤ m) :
       (t * (t - 1)) * ((m + 1) * (m * (m - 1))) := by ring
   exact_mod_cast hnat
 
-/-- Elementary `ℕ` Bernoulli inequality: `d ^ (j + 1) + (j + 1) * d ^ j ≤ (d + 1) ^ (j + 1)`. -/
-theorem bernoulli_pow_nat (d j : ℕ) :
-    d ^ (j + 1) + (j + 1) * d ^ j ≤ (d + 1) ^ (j + 1) := by
-  induction j with
-  | zero => simp
-  | succ j ih =>
-    calc
-      d ^ (j + 2) + (j + 2) * d ^ (j + 1)
-        ≤ (d ^ (j + 1) + (j + 1) * d ^ j) * (d + 1) := by
-          have : (d ^ (j + 1) + (j + 1) * d ^ j) * (d + 1) =
-              (d ^ (j + 2) + (j + 2) * d ^ (j + 1)) + (j + 1) * d ^ j := by ring
-          rw [this]
-          exact Nat.le_add_right _ _
-      _ ≤ (d + 1) ^ (j + 1) * (d + 1) := Nat.mul_le_mul_right (d + 1) ih
-      _ = (d + 1) ^ (j + 2) := by ring
-
+/-- Elementary Bernoulli power bound `2 * (m - 1) ^ m ≤ m ^ m` for `1 ≤ m`. -/
 theorem two_mul_pred_pow_le_pow {m : ℕ} (hm : 1 ≤ m) :
     2 * (m - 1) ^ m ≤ m ^ m := by
-  rcases eq_or_lt_of_le hm with rfl | hgt
-  · simp
-  · obtain ⟨d, rfl⟩ : ∃ d, m = d + 1 := ⟨m - 1, by omega⟩
-    simp only [Nat.add_sub_cancel]
-    have hbern := bernoulli_pow_nat d d
-    have hle : d ^ (d + 1) ≤ (d + 1) * d ^ d := by
-      have : d ^ (d + 1) = d * d ^ d := by ring
-      rw [this]
-      exact Nat.mul_le_mul_right (d ^ d) (Nat.le_succ d)
-    omega
+  obtain ⟨d, rfl⟩ : ∃ d, m = d + 1 := ⟨m - 1, by omega⟩
+  simp only [Nat.add_sub_cancel]
+  have hbern := pow_add_mul_le_add_pow (a := d) (b := 1) (Nat.zero_le d) (by omega) (d + 1)
+  simp only [Nat.add_sub_cancel, mul_one, Nat.cast_id] at hbern
+  have hle : d ^ (d + 1) ≤ (d + 1) * d ^ d := by
+    rw [pow_succ']
+    exact Nat.mul_le_mul_right (d ^ d) (Nat.le_succ d)
+  omega
 
 theorem one_sub_two_div_pairs_eq {n : ℕ} (hn : 2 ≤ n) :
     (1 : ℝ≥0∞) - (2 : ℝ≥0∞) / ((n * (n - 1) : ℕ) : ℝ≥0∞) =

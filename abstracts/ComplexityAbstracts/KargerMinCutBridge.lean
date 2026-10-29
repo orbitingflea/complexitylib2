@@ -820,6 +820,7 @@ private theorem ampTrialBody_toExact {w sb n R i : ℕ} {W : Fin n → Fin n →
     ExecRand (B := .exact) w (toExactCode ampTrialBody) x m := by
   let wb := sb + n * n
   let db := sb + 2 * (n * n)
+  have hr22 : 16 ≤ 22 := by decide
   have hwEnd : Fits w (wb + n * n) := hdEnd.of_le (by omega)
   have hwb1_fit : Fits w (wb + 1) := hdEnd.of_le (by omega)
   have h2_fit : Fits w 2 := hdEnd.of_le (by omega)
@@ -1297,6 +1298,7 @@ private theorem baseCaseAndPop_toExact {n w fp b k : ℕ} {W₀ : Fin n → Fin 
   have hk_cp' : x_cp.regs activeK = k := by
     rw [hk_cp]; simpa +decide [x_pre, p₅, p₄, p₃, p₂, p₁, Function.update_apply] using hk_reg
   have ht_cp' : x_cp.regs targetT = 2 := by rw [ht_cp]; simp [x_pre]
+  have hr24 : 16 ≤ 24 := by decide
   obtain ⟨x_deg, ⟨_, _, hex_deg⟩, hws_deg, _, hwb_deg, hdb_deg, hstr_deg, hk_deg, ht_deg, htot_deg,
       hhi_deg⟩ :=
     computeDegreesAndTotalAt_exec hr24 (x := x_cp) (wb := wb) (db := db) (str := k) (k := k)
@@ -1445,6 +1447,7 @@ private theorem branchContractAndPush_toExact {n w fp b k : ℕ} {W₀ : Fin n �
     rw [hk_cp]; simpa +decide [x_set, s₇, s₆, s₅, s₄, s₃, s₂, s₁, Function.update_apply] using hk_th
   have ht_cp' : x_cp.regs targetT = t := by
     rw [ht_cp]; simpa +decide [x_set, s₇, s₆, s₅, s₄, s₃, s₂, s₁, Function.update_apply] using ht_th
+  have hr24 : 16 ≤ 24 := by decide
   obtain ⟨x_deg, ⟨_, _, hex_deg⟩, hws_deg, _, hwb_deg, hdb_deg, hstr_deg, hk_deg, ht_deg, htot_deg,
       hhi_deg⟩ :=
     computeDegreesAndTotalAt_exec hr24 (x := x_cp) (wb := wb) (db := db) (str := k) (k := k)
