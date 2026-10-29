@@ -14,6 +14,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.List
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Pair
 public import Complexity.Foundations.Data.BitString.List.Operations
 public import Complexity.Crypto.Primitives.PRG.NisanWigderson.Derandomization
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO.PolyTime
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Fold
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat

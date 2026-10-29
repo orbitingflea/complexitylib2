@@ -1139,6 +1139,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO.Option
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO.Pi
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO.Plain
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO.PolyTime
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO.PolynomialPadding
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO.Sum
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigOLe
