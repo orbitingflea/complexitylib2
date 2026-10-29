@@ -74,6 +74,36 @@ universe u v z
 
 variable {r : ℕ} {D : Stateful.Spec.{u, v, z}}
 
+/-- Deliver encoded operation arguments into registers marked `input i = true` without changing
+maintained memory or non-input registers. -/
+def Data.prepare {Op : Type*} (input : Fin r → Bool) (encode : Op → Fin r → ℕ)
+    (o : Op) (x : Data r) : Data r where
+  regs i := if input i then encode o i else x.regs i
+  mem := x.mem
+
+/-- Delivering operation arguments preserves the machine memory unchanged. -/
+@[simp]
+theorem Data.prepare_mem {Op : Type*} (input : Fin r → Bool) (encode : Op → Fin r → ℕ)
+    (o : Op) (x : Data r) :
+    (x.prepare input encode o).mem = x.mem := rfl
+
+/-- Registers outside the calling convention retain their contents. -/
+theorem Data.prepare_regs_of_not_input {Op : Type*} {input : Fin r → Bool}
+    {encode : Op → Fin r → ℕ} {i : Fin r} (hi : input i = false) (o : Op) (x : Data r) :
+    (x.prepare input encode o).regs i = x.regs i := by
+  simp [Data.prepare, hi]
+
+/-- Argument delivery preserves bounded words when the arguments fit. -/
+theorem Data.prepare_bounded {w : ℕ} {Op : Type*} {input : Fin r → Bool}
+    {encode : Op → Fin r → ℕ} {o : Op} {x : Data r} (hx : x.Bounded w)
+    (ho : ∀ i, input i = true → Fits w (encode o i)) :
+    (x.prepare input encode o).Bounded w := by
+  refine ⟨fun i => ?_, hx.2⟩
+  change Fits w (if input i then encode o i else x.regs i)
+  split
+  · exact ho i (by assumption)
+  · exact hx.1 i
+
 /-- A single program serving all operations through a fixed register calling convention. -/
 structure DynamicProgram (D : Stateful.Spec.{u, v, z}) (r : ℕ) where
   /-- The same code is executed for every operation. -/
@@ -92,9 +122,8 @@ namespace DynamicProgram
 variable (P : DynamicProgram D r)
 
 /-- Deliver operation arguments without changing maintained memory or non-input registers. -/
-def prepare (o : D.Op) (x : Data r) : Data r where
-  regs i := if P.input i then P.encode o i else x.regs i
-  mem := x.mem
+abbrev prepare (o : D.Op) (x : Data r) : Data r :=
+  x.prepare P.input P.encode o
 
 /-- Delivering operation arguments preserves the machine memory unchanged. -/
 @[simp]
@@ -102,17 +131,13 @@ theorem prepare_mem (o : D.Op) (x : Data r) : (P.prepare o x).mem = x.mem := rfl
 
 /-- Registers outside the calling convention retain their contents. -/
 theorem prepare_regs_of_not_input {i : Fin r} (hi : P.input i = false) (o : D.Op) (x : Data r) :
-    (P.prepare o x).regs i = x.regs i := by
-  simp [prepare, hi]
+    (P.prepare o x).regs i = x.regs i :=
+  Data.prepare_regs_of_not_input hi o x
 
 /-- Argument delivery preserves bounded words when the arguments fit. -/
 theorem prepare_bounded {w : ℕ} {o : D.Op} {x : Data r} (hx : x.Bounded w)
-    (ho : ∀ i, P.input i = true → Fits w (P.encode o i)) : (P.prepare o x).Bounded w := by
-  refine ⟨fun i => ?_, hx.2⟩
-  change Fits w (if P.input i then P.encode o i else x.regs i)
-  split
-  · exact ho i (by assumption)
-  · exact hx.1 i
+    (ho : ∀ i, P.input i = true → Fits w (P.encode o i)) : (P.prepare o x).Bounded w :=
+  Data.prepare_bounded hx ho
 
 /-- Evaluate one typed call, delivering its arguments and decoding its observation. The returned
 cost includes the final halt. `fuel` bounds iterations of each structured loop per entry, not

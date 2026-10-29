@@ -18,8 +18,11 @@ This file extends the deterministic `Cslib.WordRAM.SubroutineDS` interface to **
 structures and Las Vegas subroutines** on the Word-RAM — covering both structures initialized from a
 random seed (such as universal hash tables, 2-choice hash tables, and cuckoo hash tables) and
 structures whose operations make random choices via `Instr.rand` (such as treaps, skip lists,
-reservoir samplers, or randomized rehashing); see [MitzenmacherUpfal2017], Sections 1.2, 2.1, 2.3,
-and 2.4.
+reservoir samplers, or randomized rehashing). The `Cslib.WordRAM.Randomized.SubroutineDS`
+interface, `ExecSteps` trace relation, and inline framing combinators are original library
+constructions for compositional Word-RAM verification; the potential-method amortized accounting
+follows [CLRS2009], Chapter 17, and the discrete expectation, conditional expectation, and
+geometric-trial principles follow [MitzenmacherUpfal2017], Sections 2.1, 2.3, and 2.4.
 
 ## Core design
 
@@ -41,22 +44,28 @@ density factor `seedSlack : ℝ≥0∞`:
      randomized code (`ExecRand`) and unbounded almost-surely terminating Las Vegas `while` loops
      (`ExecCodeDist.loop_geometric`).
 
-3. **Addition-only `ℝ≥0∞` amortized-in-expectation bound:**
+3. **Addition-only `ℝ≥0∞` amortized-in-expectation bound and charged cost scope:**
    - Every admissible operation `o : D.Op` from abstract state `s : D.State` and coupled state
      distribution `ν : PMF (Seed × Data r_ds)` produces a transition kernel
      `μ_step : Seed × Data r_ds → PMF (Seed × Data r_ds)` and expected step count
      `T_step : Seed × Data r_ds → ℝ≥0∞` satisfying (for `Φ(p) := potential p.1 p.2`)
      `∑' p, ν p * (T_step p + ∑' q, μ_step p q * Φ(q)) ≤ charge s o + ∑' p, ν p * Φ(p)`.
-   - Across any admissible finite operation sequence `ops : List D.Op`, `seq_expected_amortized`
-     telescopes these one-step bounds without `ℝ≥0∞` subtraction:
-     total expected step cost is at most `initTime + initPotential + D.totalCost charge s₀ ops`.
+   - Across any fixed admissible operation sequence `ops : List D.Op`, `ExecSteps` delivers
+     standalone operation arguments via `C.prepare o` (a semantic register replacement
+     `Data.prepare` with no native instructions or preparation cost), and `seq_expected_amortized`
+     telescopes the one-step bounds without `ℝ≥0∞` subtraction: total expected cost for fresh
+     initialization plus the subroutine bodies across `ops` is at most
+     `initTime + initPotential + D.totalCost charge s₀ ops`. Inline callers that execute native
+     instructions to prepare operation arguments use `call_rename`, which charges an explicit bound
+     `B_prep` for the caller's preparation block `prep`.
 
 ## Main definitions
 
 * `Cslib.WordRAM.Randomized.SubroutineDS`: reusable randomized Word-RAM subroutine certificate for
   a deterministic specification `D : Stateful.Spec`.
 * `Cslib.WordRAM.Randomized.SubroutineDS.ExecSteps`: multi-operation distributional execution trace
-  threading coupled state distributions and expected step costs across `ops : List D.Op`.
+  threading coupled state distributions and expected subroutine-body step costs across a fixed list
+  `ops : List D.Op` with semantic `prepare` argument delivery.
 * `Cslib.WordRAM.SubroutineDS.toRandomized`: canonical embedding of any deterministic
   `Cslib.WordRAM.SubroutineDS` into `Cslib.WordRAM.Randomized.SubroutineDS`.
 * `Cslib.WordRAM.Randomized.SubroutineDS.mapSimulates`, `toStandard`: basis transport from
@@ -69,22 +78,23 @@ density factor `seedSlack : ℝ≥0∞`:
 * `Cslib.WordRAM.Randomized.SubroutineDS.zeroFillCode_exec`, `initClear_exec`, `initClear_rename`:
   expected-time initialization on arbitrary dirty memory.
 * `Cslib.WordRAM.Randomized.SubroutineDS.code_rename`, `call_rename`: inline subroutine invocation
-  on caller state space `Data r_caller` via register injection `f : Fin r_ds → Fin r_caller`.
+  on caller state space `Data r_caller` via register injection `f : Fin r_ds → Fin r_caller` (with
+  charged caller argument-preparation bound `B_prep` in `call_rename`).
 * `Cslib.WordRAM.Randomized.SubroutineDS.frame_caller`, `frame_caller_dist`: preservation of `rep`,
   `potential`, and the coupled `(Seed × Data r_caller)` distribution across arbitrary deterministic
   or randomized caller steps that do not modify persistent DS registers (`P.input i = false`) or
   `[base, base + space)`.
 * `Cslib.WordRAM.Randomized.SubroutineDS.steps_expected_amortized`, `seq_expected_amortized`:
-  end-to-end telescope theorems bounding total expected time across any admissible operation
-  sequence `ops : List D.Op`.
+  end-to-end telescope theorems bounding expected initialization plus subroutine-body step cost
+  across any fixed admissible operation sequence `ops : List D.Op` under semantic `prepare`
+  argument delivery.
 
 ## References
 
 * [T. H. Cormen, C. E. Leiserson, R. L. Rivest and C. Stein, *Introduction to Algorithms*,
   Chapter 17][CLRS2009]
 * [M. Mitzenmacher and E. Upfal, *Probability and Computing: Randomization and Probabilistic
-  Techniques in Algorithms and Data Analysis*][MitzenmacherUpfal2017], Sections 1.2, 2.1, 2.3, and
-  2.4.
+  Techniques in Algorithms and Data Analysis*][MitzenmacherUpfal2017], Sections 2.1, 2.3, and 2.4.
 -/
 
 @[expose] public section
@@ -453,42 +463,6 @@ theorem initFresh_rename (C : SubroutineDS P D w base params s₀)
 /-! ### Projection 3: Generic `O(space)` dirty-memory initialization (`zeroFillCode_exec`,
 `initClear_exec`, `initClear_rename`) -/
 
-private def zeroFillSpec : Stateful.Spec.{0, 0, 0} where
-  State := PUnit
-  Op := PEmpty
-  Result o := PEmpty.elim o
-  step _ o := PEmpty.elim o
-
-private noncomputable def toZeroFillDet (C : SubroutineDS P D w base params s₀) :
-    Cslib.WordRAM.SubroutineDS
-      { P with initSetup := .op (.copy P.zeroReg P.zeroReg) }
-      zeroFillSpec w base params PUnit.unit where
-  space := C.space
-  spanTime := C.spanTime
-  setupTime := 1
-  initPotential := 0
-  charge _ o := PEmpty.elim o
-  rep _ x := x.Bounded w
-  potential _ := 0
-  encode o := PEmpty.elim o
-  argMatch o := PEmpty.elim o
-  decode o := PEmpty.elim o
-  bounded h := h
-  rep_unique _ _ := rfl
-  arguments_fit o := PEmpty.elim o
-  encode_matches o := PEmpty.elim o
-  rep_supported _ _ hb _ := hb
-  potential_supported _ _ _ := rfl
-  clear_nodup := C.clear_nodup
-  params_not_clear := C.params_not_clear
-  incCur_eval := C.incCur_eval
-  span_exec := C.span_exec
-  setup_exec {x₁} hx₁ _ hfr _ _ := by
-    refine ⟨x₁.set P.zeroReg (x₁.regs P.zeroReg), ExecWithin.copy, ?_,
-      hx₁.set (hx₁.1 P.zeroReg), Nat.le_refl 0, Modifies.refl _ _⟩
-    simp [Data.set, hfr]
-  step_exec o := PEmpty.elim o
-
 /-- Generic execution of `P.zeroFillCode` clearing `[base, base + C.space)` in `4 * C.space + 6`
 instructions over any basis `B`. -/
 theorem zeroFillCode_exec (C : SubroutineDS P D w base params s₀) {x₁ : Data r_ds}
@@ -502,7 +476,7 @@ theorem zeroFillCode_exec (C : SubroutineDS P D w base params s₀) {x₁ : Data
       (∀ j, x₂.regs (P.initParams j) = params j) ∧
       (∀ a ∈ (Block.mk base C.space).footprint, x₂.mem a = 0) ∧
       Modifies (Block.mk base C.space).footprint x₁.mem x₂.mem :=
-  C.toZeroFillDet.zeroFillCode_exec hx₁ hb₁ hfr₁ hpar₁
+  P.zeroFillCode_exec C.clear_nodup C.params_not_clear C.incCur_eval hx₁ hb₁ hfr₁ hpar₁
 
 /-- Execute `P.initClear` on **arbitrary dirty memory** in
 `C.initTime + (4 * C.space + 6 : ℕ)` expected instructions. -/
@@ -873,37 +847,18 @@ theorem call_rename (C : SubroutineDS P D w base params s₀)
 `seq_expected_amortized`) -/
 
 /-- Deliver standalone operation arguments for `o` without changing memory or persistent
-registers (`P.input i = false`). -/
-def prepare (C : SubroutineDS P D w base params s₀) (o : D.Op) (x : Data r_ds) : Data r_ds where
-  regs i := if P.input i then C.encode o i else x.regs i
-  mem := x.mem
-
-@[simp]
-theorem prepare_mem (C : SubroutineDS P D w base params s₀) (o : D.Op) (x : Data r_ds) :
-    (C.prepare o x).mem = x.mem := rfl
-
-theorem prepare_regs_of_not_input (C : SubroutineDS P D w base params s₀)
-    {i : Fin r_ds} (hi : P.input i = false) (o : D.Op) (x : Data r_ds) :
-    (C.prepare o x).regs i = x.regs i := by
-  simp [prepare, hi]
-
-theorem prepare_bounded (C : SubroutineDS P D w base params s₀)
-    {s : D.State} {o : D.Op} {x : Data r_ds} (hx : x.Bounded w) (hv : D.valid s o) :
-    (C.prepare o x).Bounded w := by
-  refine ⟨fun i => ?_, hx.2⟩
-  change Fits w (if P.input i then C.encode o i else x.regs i)
-  split
-  · exact C.arguments_fit o hv i (by assumption)
-  · exact hx.1 i
+registers (`P.input i = false`), sharing `Data.prepare` with `DynamicProgram.prepare`. -/
+abbrev prepare (C : SubroutineDS P D w base params s₀) (o : D.Op) (x : Data r_ds) : Data r_ds :=
+  x.prepare P.input C.encode o
 
 theorem prepare_rep (C : SubroutineDS P D w base params s₀)
     {θ : C.Seed} {s : D.State} {o : D.Op} {x : Data r_ds}
     (hr : C.rep θ s x) (hv : D.valid s o) :
     C.rep θ s (C.prepare o x) :=
   C.rep_supported
-    (fun _ hi => C.prepare_regs_of_not_input hi o x)
+    (fun _ hi => Data.prepare_regs_of_not_input hi o x)
     (fun _ _ => rfl)
-    (C.prepare_bounded (C.bounded hr) hv)
+    (Data.prepare_bounded (C.bounded hr) (C.arguments_fit o hv))
     hr
 
 theorem prepare_potential (C : SubroutineDS P D w base params s₀)
@@ -911,7 +866,7 @@ theorem prepare_potential (C : SubroutineDS P D w base params s₀)
     (hr : C.rep θ s x) :
     C.potential θ (C.prepare o x) = C.potential θ x :=
   C.potential_supported
-    (fun _ hi => C.prepare_regs_of_not_input hi o x)
+    (fun _ hi => Data.prepare_regs_of_not_input hi o x)
     (fun _ _ => rfl)
     hr
 
@@ -925,7 +880,12 @@ state distribution `ν : PMF (C.Seed × Data r_ds)`, executing each operation `o
 delivering arguments via `C.prepare o` and running `P.code` under `ExecCodeDist` produces the
 final coupled distribution `ν_final`, decodes the exact abstract return value `(D.step s o).2` at
 every step, modifies memory only within `[base, base + C.space)`, and incurs total expected
-operation step cost `T_ops`. -/
+subroutine-body step cost `T_ops`.
+
+Note on cost scope: `ExecSteps.cons` starts each operation execution from `C.prepare o p.2`, which
+is a semantic register replacement (`Data.prepare`) with no native instructions or preparation
+charge. Callers that execute native instructions to prepare operation arguments inline should use
+`call_rename` with its explicit preparation bound `B_prep`. -/
 inductive ExecSteps (C : SubroutineDS P D w base params s₀) :
     D.State → List D.Op → PMF (C.Seed × Data r_ds) → PMF (C.Seed × Data r_ds) → ℝ≥0∞ → Prop where
   | nil (s : D.State) (ν : PMF (C.Seed × Data r_ds)) :
@@ -945,11 +905,11 @@ inductive ExecSteps (C : SubroutineDS P D w base params s₀) :
 
 /-- **Multi-operation expected-amortized telescope (`steps_expected_amortized`).**
 From any abstract state `s : D.State` and coupled state distribution `ν : PMF (C.Seed × Data r_ds)`
-satisfying the seed-marginal bound and `C.rep p.1 s p.2` on `ν.support`, executing any admissible
-operation sequence `ops : List D.Op` (`D.ValidHistory s ops`) produces a final coupled distribution
-`ν_final` and total expected operation step count `T_ops : ℝ≥0∞` witnessing
-`C.ExecSteps s ops ν ν_final T_ops` and satisfying the addition-only `ℝ≥0∞` telescope inequality
-(with `Φ(p) := C.potential p.1 p.2`)
+satisfying the seed-marginal bound and `C.rep p.1 s p.2` on `ν.support`, executing any fixed
+admissible operation sequence `ops : List D.Op` (`D.ValidHistory s ops`) with semantic argument
+delivery (`C.prepare`) produces a final coupled distribution `ν_final` and total expected
+subroutine-body step count `T_ops : ℝ≥0∞` witnessing `C.ExecSteps s ops ν ν_final T_ops` and
+satisfying the addition-only `ℝ≥0∞` telescope inequality (with `Φ(p) := C.potential p.1 p.2`)
 `T_ops + ∑' q, ν_final q * Φ(q) ≤ D.totalCost C.charge s ops + ∑' p, ν p * Φ(p)`. -/
 theorem steps_expected_amortized (C : SubroutineDS P D w base params s₀)
     {s : D.State} (ops : List D.Op) (ν : PMF (C.Seed × Data r_ds))
@@ -1038,9 +998,11 @@ theorem steps_expected_amortized (C : SubroutineDS P D w base params s₀)
           ac_rfl
 
 /-- **End-to-end expected-amortized theorem from fresh initialization (`seq_expected_amortized`).**
-Starting from zeroed `[base, base + C.space)`, `P.initFresh` followed by any admissible operation
-sequence `ops : List D.Op` (`D.ValidHistory s₀ ops`) has total expected instruction cost
-`C.initTime + T_ops` bounded by
+Starting from zeroed `[base, base + C.space)`, `P.initFresh` followed by any fixed admissible
+operation sequence `ops : List D.Op` (`D.ValidHistory s₀ ops`) has total expected instruction cost
+`C.initTime + T_ops` (for initialization plus subroutine bodies under semantic `C.prepare` argument
+delivery, excluding any outer driver/argument-preparation instructions; see `call_rename` and
+`B_prep` for charged inline argument preparation) bounded by
 `C.initTime + C.initPotential + D.totalCost C.charge s₀ ops`. -/
 theorem seq_expected_amortized (C : SubroutineDS P D w base params s₀)
     {x : Data r_ds} (ops : List D.Op)

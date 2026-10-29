@@ -26,7 +26,9 @@ program counter `pc + c.size` of any containing flat program `p`, and satisfies 
 Bellman inequality: for `s' y := .running ⟨pc + c.size, y⟩`,
 `expectedStepsFrom w p (.running ⟨pc, x⟩) ≤ T + ∑' y, μ y * expectedStepsFrom w p (s' y)`.
 
-Discrete and conditional expectation principles and the geometric-trial expectation bound follow
+The `ExecCodeDist` relation, absorbing-chain exit kernel `loopExitPMF`, and flat-program
+bridges are original library constructions for compositional Word-RAM verification; the underlying
+discrete expectation, conditional expectation, and geometric-trial expectation principles follow
 [MitzenmacherUpfal2017], Sections 2.1, 2.3, and 2.4.
 
 ## Main definitions
@@ -1043,28 +1045,11 @@ theorem mapSimulates {B' : Basis} (ψ : B.Simulates B') (h : ExecCodeDist w c x 
   | loop_geometric I Q hp_pos hp_top _ hB hinv hp_exit hx ih_body =>
     exact loop_geometric I Q hp_pos hp_top ih_body hB hinv hp_exit hx
 
-private theorem extend_comap_eq {r' : ℕ} {f : Fin r → Fin r'} (hf : f.Injective) (x : Data r') :
-    (x.comap f).extend f x = x := by
-  ext j
-  · change Function.extend f (x.regs ∘ f) x.regs j = x.regs j
-    by_cases hj : ∃ i, f i = j
-    · obtain ⟨i, rfl⟩ := hj
-      exact hf.extend_apply _ _ i
-    · exact Function.extend_apply' _ _ _ hj
-  · rfl
-
 private theorem extend_left_injective {r' : ℕ} {f : Fin r → Fin r'} (hf : f.Injective)
     (x : Data r') : Function.Injective (fun y : Data r => y.extend f x) := by
   intro y₁ y₂ h
   have h' := congrArg (Data.comap f) h
   simpa [Data.comap_extend hf] using h'
-
-private theorem pmf_map_toOuterMeasure {α β : Type*} (p : PMF α) (g : α → β) (S : Set β) :
-    (p.map g).toOuterMeasure S = p.toOuterMeasure (g ⁻¹' S) := by
-  rw [PMF.map, PMF.toOuterMeasure_bind_apply, PMF.toOuterMeasure_apply]
-  refine tsum_congr fun a => ?_
-  rw [Function.comp_apply, PMF.toOuterMeasure_pure_apply]
-  by_cases ha : g a ∈ S <;> simp [ha]
 
 private theorem pmf_map_apply_injective {α β : Type*} (p : PMF α) {g : α → β}
     (hg : g.Injective) (a : α) :
@@ -1171,7 +1156,7 @@ theorem rename {r' : ℕ} {f : Fin r → Fin r'} (hf : f.Injective) {x : Data r'
       rintro z' ⟨u, hIu, rfl⟩ hcz'
       have hcu : cond.Holds u := by
         simpa [g, Cond.holds_rename, Data.comap_extend hf] using hcz'
-      simp only [μ_body', g, Data.comap_extend hf, pmf_map_toOuterMeasure]
+      simp only [μ_body', g, Data.comap_extend hf, PMF.toOuterMeasure_map_apply]
       have hset : ((fun y : Data r => y.extend f x) ⁻¹' {y' | ¬(cond.rename f).Holds y'}) =
           {y | ¬cond.Holds y} := by
         ext y
@@ -1180,9 +1165,10 @@ theorem rename {r' : ℕ} {f : Fin r → Fin r'} (hf : f.Injective) {x : Data r'
       exact hp_exit u hIu hcu
     have hx_inv' : LoopStateInv (cond.rename f) I' Q' x := by
       rcases hx_inv with ⟨hcx, hIx⟩ | ⟨hcx, hQx⟩
-      · exact Or.inl ⟨(Cond.holds_rename _ _).2 hcx, ⟨x.comap f, hIx, (extend_comap_eq hf x).symm⟩⟩
+      · exact Or.inl ⟨(Cond.holds_rename _ _).2 hcx,
+          ⟨x.comap f, hIx, (Data.extend_comap hf x).symm⟩⟩
       · exact Or.inr ⟨fun h => hcx ((Cond.holds_rename _ _).1 h),
-          ⟨x.comap f, hQx, (extend_comap_eq hf x).symm⟩⟩
+          ⟨x.comap f, hQx, (Data.extend_comap hf x).symm⟩⟩
     have hloop := loop_geometric (cond := cond.rename f) (body := body.rename f)
       I' Q' hp_pos hp_top
       (μ_body := μ_body') (T_body := T_body') (B_body := B_body) (x := x)
@@ -1201,7 +1187,7 @@ theorem rename {r' : ℕ} {f : Fin r → Fin r'} (hf : f.Injective) {x : Data r'
     refine hloop.congr_dist ?_ le_rfl
     ext y'
     rw [loopExitPMF_apply_of_hasSum (hasSum_loopExitDensity hp_pos hp_top hinv' hp_exit' hx_inv')]
-    have hx_eq : x = g (x.comap f) := (extend_comap_eq hf x).symm
+    have hx_eq : x = g (x.comap f) := (Data.extend_comap hf x).symm
     by_cases hy' : y' ∈ Set.range g
     · obtain ⟨y, rfl⟩ := hy'
       rw [pmf_map_apply_injective _ hg,
