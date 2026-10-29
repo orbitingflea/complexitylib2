@@ -1437,6 +1437,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.Str
 public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
 public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyZeroSpace
 public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.Transducer
+public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.ZipTransducer
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Arith
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO.Bounds
@@ -1593,7 +1594,6 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Nat.S
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Nat.Words
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.NatLength
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.NatPower
-public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.NatStream
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Option
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Padding
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Pair
@@ -1645,6 +1645,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Internal.Kernel
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.KernelOnWords
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.KernelTransducer
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.KernelZeroSpace
+public import Complexity.Computability.Machines.Turing.MultiTape.Internal.KernelZipTransducer
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.LinearCodecPrimitives
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.LinearPairPrimitives
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.LinearPrimitives
