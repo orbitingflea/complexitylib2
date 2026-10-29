@@ -153,6 +153,10 @@ public import Complexity.Algorithms.WordRAM.ThreeSum.ChanHe.Count
 public import Complexity.Algorithms.WordRAM.ThreeSum.ChanHe.Parameters
 public import Complexity.Algorithms.WordRAM.ThreeSum.ChanHe.Residues
 public import Complexity.Algorithms.WordRAM.ThreeSum.Fill
+public import Complexity.Algorithms.WordRAM.ThreeSum.Host.Loop
+public import Complexity.Algorithms.WordRAM.ThreeSum.Host.Prepare
+public import Complexity.Algorithms.WordRAM.ThreeSum.Host.Program
+public import Complexity.Algorithms.WordRAM.ThreeSum.Host.Width
 public import Complexity.Algorithms.WordRAM.ThreeSum.Memory
 public import Complexity.Algorithms.WordRAM.ThreeSum.Weight
 public import Complexity.Algorithms.WordRAM.VanEmdeBoas.Call
@@ -886,9 +890,12 @@ public import Complexity.Computability.Complexity.FineGrained.GeneralCNFBranchSc
 public import Complexity.Computability.Complexity.FineGrained.GraphProblems
 public import Complexity.Computability.Complexity.FineGrained.LocalMapCounting
 public import Complexity.Computability.Complexity.FineGrained.OrthogonalVectors
+public import Complexity.Computability.Complexity.FineGrained.PPSZ.AssignSL
 public import Complexity.Computability.Complexity.FineGrained.PPSZ.Basic
 public import Complexity.Computability.Complexity.FineGrained.PPSZ.CriticalTree
 public import Complexity.Computability.Complexity.FineGrained.PPSZ.Defs
+public import Complexity.Computability.Complexity.FineGrained.PPSZ.Frozen
+public import Complexity.Computability.Complexity.FineGrained.PPSZ.General
 public import Complexity.Computability.Complexity.FineGrained.PPSZ.GeneralK
 public import Complexity.Computability.Complexity.FineGrained.PPSZ.Limit
 public import Complexity.Computability.Complexity.FineGrained.PPSZ.Placement
@@ -1716,6 +1723,7 @@ public import Complexity.Computability.WordRAM.Randomized.Defs
 public import Complexity.Computability.WordRAM.Randomized.Expected
 public import Complexity.Computability.WordRAM.Randomized.LoopSegment
 public import Complexity.Computability.WordRAM.Randomized.Structured
+public import Complexity.Computability.WordRAM.RegisterFrame
 public import Complexity.Computability.WordRAM.Signed.Arithmetic
 public import Complexity.Computability.WordRAM.Signed.Comparison
 public import Complexity.Computability.WordRAM.Signed.Compile
@@ -2503,6 +2511,7 @@ public import Complexity.Logics.Propositional.QBF.Arithmetization
 public import Complexity.Logics.Propositional.Resolution
 public import Complexity.Logics.Propositional.Resolution.Pigeonhole
 public import Complexity.Logics.Propositional.Resolution.Proof
+public import Complexity.Logics.Propositional.Resolution.Restrict
 public import Complexity.Logics.Propositional.Resolution.SizeWidth
 public import Complexity.Logics.Propositional.Resolution.TreeLike
 public import Complexity.Logics.Propositional.Resolution.Tseitin

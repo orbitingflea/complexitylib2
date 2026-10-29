@@ -449,6 +449,11 @@ each statement against the numbered result. Organize modules by subject, not cha
   almost-surely terminating structured loops; random-tape equivalence and BPP/RP/ZPP simulation
   bridges for the randomized word RAM ([#1124]); transfer of cell-probe lower bounds; and the
   Horn-SAT, 2SAT, matching and domino-tiling clients.
+- **Conditional Convolution-3SUM host** ([#1524]): the charged native host initializes from the
+  ordinary input and runs every generated instance, conditional on a concrete solver's execution,
+  correctness and frame theorem. This completes the conditional host milestone. Integrating the
+  concrete fast Exact Triangle solver and the full input/time/width/asymptotic reduction remains
+  open under [#1394].
 - **Stateful algorithms and data structures:** Word-RAM controllers for larger adaptive and
   iterative clients, including the two-stack queue and timeline-editing controllers; reusable
   allocation and deallocation, shrinking, and live and peak space accounting; ownership and
@@ -590,4 +595,5 @@ not planned, not as proved.
 [#1442]: https://github.com/cslib-community/complexitylib/issues/1442
 [#1447]: https://github.com/cslib-community/complexitylib/issues/1447
 [#1449]: https://github.com/cslib-community/complexitylib/issues/1449
+[#1524]: https://github.com/cslib-community/complexitylib/issues/1524
 [#1572]: https://github.com/cslib-community/complexitylib/issues/1572
