@@ -429,6 +429,10 @@ each statement against the numbered result. Organize modules by subject, not cha
   kept separate; and develop general open-program composition. Use Cook–Levin and GGM as
   regression clients. Improve configuration views, tape partitions and handoff identities only
   where several clients benefit, keeping machine transitions out of global simp.
+- **Native Chan–He components** ([#1446]): native parameter, collision-counting, prime-table and
+  collision-tested minimum-search programs have explicit local fit/frame/cost contracts.
+  Frontend enumeration, heavy extraction, recursive traversal, packed output and global
+  preprocessing width/time composition remain.
 - **Mathlib TM2:** sublinear work-space comparisons and a linear-space forward simulation.
 - **Generic RAM:** uniform arbitrary-program dispatch and general width-selection and input-fit
   theorems; simulating operations by programs over smaller bases; structured programs and time
@@ -444,7 +448,7 @@ each statement against the numbered result. Organize modules by subject, not cha
   witness recovery ([#1447]) are proved mathematically. The tensor identity, full recursion,
   shared encodings and pruned-evaluation core ([#1459]) include exact visited-leaf and passed-set
   bounds, with the empty zero-depth root handled explicitly. The finite thin-product component
-  ([#1463]) proves valid layouts, arbitrary-size padding/tiling, exact queried signed products and
+  ([#1463](https://github.com/cslib-community/complexitylib/issues/1463)) proves valid layouts, arbitrary-size padding/tiling, exact queried signed products and
   sparse encoding/leaf/passed-set totals. These counts are not native instruction costs. It still
   needs native tensor/sparse-query programs, native Chan–He preprocessing, the reduction
   host, the fast Exact Triangle solver and full
@@ -598,7 +602,9 @@ not planned, not as proved.
 [#1435]: https://github.com/cslib-community/complexitylib/issues/1435
 [#1438]: https://github.com/cslib-community/complexitylib/issues/1438
 [#1442]: https://github.com/cslib-community/complexitylib/issues/1442
+[#1446]: https://github.com/cslib-community/complexitylib/issues/1446
 [#1447]: https://github.com/cslib-community/complexitylib/issues/1447
 [#1449]: https://github.com/cslib-community/complexitylib/issues/1449
+[#1459]: https://github.com/cslib-community/complexitylib/issues/1459
 [#1524]: https://github.com/cslib-community/complexitylib/issues/1524
 [#1572]: https://github.com/cslib-community/complexitylib/issues/1572
