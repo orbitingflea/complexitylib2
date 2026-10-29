@@ -10,7 +10,6 @@
  "Complexity/Computability/Machines/Turing/MultiTape/Complexity/InSpace/Bit.lean": 1,
  "Complexity/Computability/Machines/Turing/MultiTape/Complexity/InSpace/Plain.lean": 4,
  "Complexity/Computability/Machines/Turing/MultiTape/Complexity/InSpaceLib.lean": 45,
- "Complexity/Computability/Machines/Turing/MultiTape/Complexity/LinearSpaceArith.lean": 1,
  "Complexity/Computability/Machines/Turing/MultiTape/Complexity/Lists.lean": 14,
  "Complexity/Computability/Machines/Turing/MultiTape/Complexity/LogSpace.lean": 2,
  "Complexity/Computability/Machines/Turing/MultiTape/Complexity/LogSpace/ConfigurationGraph/Radix.lean": 3,
