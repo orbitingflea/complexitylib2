@@ -438,9 +438,42 @@ each statement against the numbered result. Organize modules by subject, not cha
   theorems; simulating operations by programs over smaller bases; structured programs and time
   classes over arbitrary value domains with weighted or bit costs; simulations between instances;
   the typed core proposed in [CSLib #1158](https://github.com/leanprover/cslib/pull/1158).
+- **Native pruned-query evaluator** ([#1526](https://github.com/cslib-community/complexitylib/issues/1526)):
+  fixed 96-register code computes distinct root/child queries, stack traversal and signed
+  accumulators. Initialized flat runs preserve query order and duplicates, input and outside
+  frame. Setup, sparse clearing, control/index work and halt fit
+  `8192*(L+Q+1+(L+1)*|leaves(requested queries)|)` instructions, with widths derived from
+  original magnitude/address bounds. A callable pointer/epoch kernel permits directory reuse.
+  Query grouping, band/tile composition, sparse-product and Exact Triangle solving, and full
+  input/time/width/asymptotic composition remain under #1394.
+
 - **Shared native matrix encoders** ([#1493](https://github.com/cslib-community/complexitylib/issues/1493)): compute all `10^L` leaf values from `7^L`
   signed inputs within `240*(L+1)*10^L` standard WordRAM instructions, plus the final halt,
   with fixed code/registers and concrete initialized inputs, frames and explicit width bounds.
+- **Native shared-band preparation** ([#1523](https://github.com/cslib-community/complexitylib/issues/1523)): computes deterministic subset tables and a valid
+  layout, prepares padded signed matrix bands, invokes both shared encoders for every band, and
+  restores the original initialized input. Fixed 96-register code has a charged bound, including
+  halt, of `4096*(L+1)*(1+N*4^m+2^L+2*numBands*10^L)+1`; at `L=19m`, `N≥(4^m)^18`, it is at most
+  `81920*(L+1)*N²/(4^m)^(1/18)`.
+- **Native wanted-query routing**
+  ([#1561](https://github.com/cslib-community/complexitylib/issues/1561)): computes the
+  selected-subset table, tile keys, query codes, counts, prefix offsets and stable scatter from
+  original raw coordinates. Its initialized run preserves every original occurrence and gives
+  each tile exactly its finite `wantedStrings` code set, within
+  `128*(L+1)*(Q+numBands²+2^L+1)` instructions including halt. It uses fixed 96-register code and
+  an explicit positive sufficient-width threshold. Joining these groups to shared band encoders,
+  invoking the pruned kernel and reconstructing queried products remain separate native work.
+- **Native queried-product composition**
+  ([#1581](https://github.com/cslib-community/complexitylib/issues/1581)): joins the actual router
+  and band producers to the pointer/epoch kernel, restores the original input, and reconstructs
+  every requested signed product in original order. It charges raw-entry conversion, all copies,
+  dispatch, one shared directory initialization, epochs and reporting. At `L=19m`, `D=4^m`,
+  `D^18≤N` and occurrence sparsity `Q*2^m≤N²`, its initialized fixed 160-register program uses at
+  most `4325376*(19m+1)*N²/D^(1/18)` instructions including halt, with sufficient width
+  `128*clog₂(N+Q+A+2)` for entry bound `A`. The distinct-set sparsity theorem instead retains an
+  explicit additive charge for all `Q` occurrences. Native sparse-product and Exact Triangle
+  solving, full input/time/width/asymptotic composition, and the improved Section 4 route to
+  exponent 1.9992 remain under [#1394].
 - **Word RAM:** an AC⁰ basis; wider-fragment and Turing-machine simulations;
   transfer of Anthropic's modular machine and 3SUM/APSP algorithms; direct 3SUM adaptation ([#1394])
   has the Convolution-3SUM/Exact Triangle correctness reduction, a charged native single-instance
@@ -483,6 +516,12 @@ each statement against the numbered result. Organize modules by subject, not cha
   so `BinaryHeap` and `FibonacciHeap` share a generic `run_ops_exact` theorem, and factor a common
   `ShortestPathSpec p bound` predicate in `Dijkstra/HeapStatement.lean` across `LogLinearSpec`,
   `FibonacciSpec`, and `FibonacciLinearSpec`.
+
+- **Native ExactTriangle preparation** ([#1532](https://github.com/cslib-community/complexitylib/issues/1532)):
+  initialized execution computes the complete catalogue and raw zero/one instance matrices,
+  with exact finite readback, logarithmic width, polynomial prefix words and address space,
+  and a `690n²Dg` charged bound in the source's admissible parameter regime. Prime selection,
+  solving the prepared instances, product/backend composition and the full #1394 endpoint remain.
 
 ## Coverage and reuse
 

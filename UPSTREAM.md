@@ -170,6 +170,21 @@ Do not add a ledger row for an ordinary candidate or repeat its source marker he
   blocks in either address order or identical blocks.
   This is the encoder component only; band/tile preparation and full native composition remain
   in [#1394](https://github.com/cslib-community/complexitylib/issues/1394).
+* **Native shared-band preparation.** The native shared-band preparation component
+  ([#1523](https://github.com/cslib-community/complexitylib/issues/1523)) computes a deterministic
+  `Layout` and both subset tables by native mask/popcount scans, computes the square-root block
+  count by a charged loop, and decodes each band-array index into the original row/column and
+  thin-dimension coordinates. Real matrix bounds are checked before row-major multiplication.
+  Each shared row/column band calls the unchanged encoder once; tiles refer to its catalogue
+  block in the existing leaf order. The fixed 96-register standard code starts from actual
+  `State.init` scalar/matrix input, charges snapshot and restoration of the complete original
+  prefix, and preserves arbitrary outside memory. All counter/address fits follow from an
+  explicit original-parameter word budget; signed fits follow from the original entry bound.
+  Its complete instruction bound, including halt, is
+  `81920*(L+1)*N²/(4^m)^(1/18)` when `L=19m` and `N≥(4^m)^18`. Native power, ordered-filter,
+  finite-digit and row-major list lemmas live in small topic modules; the existing mathematical
+  layout, matrix and encoding interfaces are reused. No source machine or call/time oracle
+  is introduced.
 * **Direct 3SUM adaptation.** `Algorithms/ThreeSum/Convolution.lean` adapts the explicit
   Convolution-3SUM to Exact Triangle correctness reduction from Anthropic's
   [`formal-math@16a5ce41304fcdaea4e0be7c132e1c361dc26da5`](https://github.com/anthropics/formal-math/tree/16a5ce41304fcdaea4e0be7c132e1c361dc26da5/3sum-apsp),
@@ -232,6 +247,20 @@ Do not add a ledger row for an ordinary candidate or repeat its source marker he
   witness recovery component ([#1447](https://github.com/cslib-community/complexitylib/issues/1447)),
   using the existing matrices, lopsided graph and `Set.EqOn` answer API. Computable integer parameters
   retain the source's exact real floor/ceiling specifications through checked bridges.
+  `Algorithms/WordRAM/ExactTriangle/` implements the complete initialized preparation component
+  ([#1532](https://github.com/cslib-community/complexitylib/issues/1532)). Fixed sixty-four-register
+  code of at most 641 flat instructions consumes raw `(D,g,n,p)` headers and signed-encoded
+  A–B, B–C and A–C weights. It computes the residue classes, query chunks and records and writes
+  both padded instance matrices. These matrices contain raw unsigned zero/one words; a signed
+  product consumer must charge their conversion. The supplied positive modulus is not selected
+  by this program. In the source regime `16 ≤ D ≤ n`, `1 ≤ g` and `p` in the square-root prime
+  window, actual initialized execution including halt costs at most `690n²Dg`. Every sufficiently
+  wide physical machine has the same output. Under `D,g,p ≤ n` and input magnitudes bounded by
+  `(n+2)^κ`, sufficient width is at most `(κ+18)clog₂(n+2)`, and every prefix's words and address
+  support are bounded by `(n+2)^(κ+19)`. The generic width and signed-fit topic modules are reused
+  unchanged from #1537 and #1552. These are actual execution and fit proofs, without supplied
+  layout, execution or solver contracts. Product composition #1581 and the full #1394 endpoint
+  remain separate.
   `Algorithms/MatrixMultiplication/Schonhage/` adapts the tensor-recursion core from the same pin's
   `Sec2/{Lemma6,Recursion,Lemma7_8,Lemma10}.lean`: the ten-term polynomial identity with explicit
   error, full evaluation, shared encodings, pruned values, visited leaves and passed-set totals.
@@ -251,6 +280,60 @@ Do not add a ledger row for an ordinary candidate or repeat its source marker he
   [#1394](https://github.com/cslib-community/complexitylib/issues/1394), including the improved
   Section 4 route needed for the published exponent 1.9992. Anthropic's copyright and attribution
   are retained; the native proofs and representation choices are local.
+* **Native pruned-query evaluator.** The explicit-stack pruned-query evaluator ([#1526](https://github.com/cslib-community/complexitylib/issues/1526))
+  is original native code, reusing the finite `Pruned.result`, `childSet` and trace/leaf
+  quantities from `Sec2/Lemma10.lean`. `PrunedQuery.queryIndex` directly applies the existing
+  encoder `leafIndex` to `privateLeaf`; its executable output dictionary retains digit nine
+  for the inner wildcard. Fixed 96-register code computes child lists by actual digit tests,
+  division and timestamp deduplication, scans requested cells only, and charges the full stack,
+  signed kernels and reporting. Its complete initialized runs and callable pointer/epoch kernel
+  have explicit source-magnitude, address and outside-frame contracts. The actual bound including
+  halt is `8192*(L+Q+1+(L+1)*|leaves(requested queries)|)`. The source Light implementation's
+  semantics and instruction constants are not reused.
+  Native wanted-query routing ([#1561](https://github.com/cslib-community/complexitylib/issues/1561))
+  uses actual count, prefix and stable-scatter passes after computing the subset table and each
+  query's tile/code. It reuses `MaskTable.layout`, `outStrOfPos`, `wantedStrings` and the existing
+  `PrunedQuery.queryIndex`/encoder leaf order; no parallel layout or output-string universe is
+  added. Primitive counts use Mathlib's `Nat.count` and its prefix/monotonicity APIs directly.
+  The generic `CountingSort` topic module adds stable positions, their permutation and
+  bucket-span meaning, without redundant count/offset definitions. The narrow `WordRAM.Sequence`
+  proof module reassociates existing
+  structured execution derivations without changing code or charges. Original scalar headers
+  and raw coordinate pairs are the entire initialized input. Fixed 96-register standard code
+  computes all tables and grouped arrays, preserves the original input/outside frame, and
+  charges at most `128*(L+1)*(Q+numBands²+2^L+1)` instructions including halt. Its positive
+  ceiling-logarithmic admission threshold depends only on the original numerical budget.
+  Within-tile order is stable input order; no sorted or duplicate-free query premise is needed
+  by the pruned kernel.
+  The band catalogue retains the same leaf ordering and canonical signed words.
+  Native queried-product composition ([#1581](https://github.com/cslib-community/complexitylib/issues/1581))
+  now connects those actual programs. It computes all protected buffers and tile arguments,
+  calls the shared encoders and pruned pointer/epoch kernel, and reconstructs every requested
+  `Matrix.mul` value in original order, retaining duplicates. Original signed matrices and raw
+  coordinate pairs are the entire initialized input. Raw nonnegative mode actually doubles
+  every matrix word before signed encoding, covering the raw 0/1 producer ABI. Copies,
+  header adaptation, one directory initialization, dispatch, epochs, reporting and restoration
+  are all charged. Existing `MaskTable.layout`, `wantedStrings`, `encodingL/R`, leaf numbering,
+  `Pruned.result` and stable-position meanings are reused; the existing `Wanted.tileKey_eq_iff`
+  lemma is exposed for the concrete tile-correctness proof without changing its statement.
+  The fixed 160-register program has at most 32768 flat instructions including halt and reads
+  no physical-width instruction. At `L=19m`, `D=4^m`, `D^18≤N`, `Q*2^m≤N²`, the complete charge
+  including halt is `4325376*(19m+1)*N²/D^(1/18)`. Distinct-set sparsity retains an additive
+  occurrence charge instead. The sufficient physical width is `128*clog₂(N+Q+A+2)`; its
+  magnitude/address budget and allocation have explicit polynomial envelopes in the original
+  dimensions, request count and entry bound. These are original native execution/resource
+  proofs, not a transfer of the source Light semantics or instruction constants. Exact Triangle
+  parameter/instance preparation and outer solving, full ordinary-3SUM composition, and the
+  improved Section 4 route to exponent 1.9992 remain separate work under #1394.
+  Stage `exec_*` lemmas are internal implementation APIs exported across proof modules;
+  callers use the flat initialized runs, width theorem or pointer/epoch kernel. The narrow
+  `WordRAM.ArrayAppend` and `WordRAM.InputArray` topic modules keep append/input dependencies
+  and interface changes away from the widely imported `Allocation` core.
+  Post-integration [#1553](https://github.com/cslib-community/complexitylib/issues/1553) includes
+  replacing pruned `powers` with sibling #1536's generic `Power.program`, preserving the
+  `4L+10` budget via five retained constant initializations plus its `4L+5` run. Its exact
+  register map, affected execution/width/cost clients and sibling integration order are
+  recorded there. This documentation/test repair does not change either sibling's program.
 * **Typed RAM upstream core.** [CSLib #1158](https://github.com/leanprover/cslib/pull/1158) at
   `beea60a15eddc91d93e92fa5af9fb965c351d0d5` proposes
   `Cslib/Computability/Machines/RAM/Basic.lean`, in namespace `Cslib.RAM.Typed`.
@@ -329,7 +412,7 @@ agreement during upstream review.
 | `Foundations/Combinatorics/{FiniteCover,Hoeffding,Hypergeometric,PowersetTail,Sunflower}` | Consider Mathlib combinatorics; probabilistic-method lemmas belong near `Combinatorics/Probabilistic`. |
 | `Foundations/Data/Finset/Expect` | Product-type expectation helpers extracted from `Foundations/Combinatorics/Expander/Products` (#317); Mathlib candidates. |
 | `Foundations/Data/Finset/Markov` | Mathlib candidate: `Algebra/Order/BigOperators/Group/Finset` (`Finset.card_filter_mul_le_sum`, `Finset.mul_card_filter_le_sum`). |
-| `Foundations/Data/Finset/OrderGlue` | Follow-up to #1496: rename the generic `forall_level_iff`, `exists_innerLevel`, `outerLevel_notMem` and `filter_glue` using order-embedding/complement terminology (for example `forall_iff_orderEmb_and_compl`), retaining this topic module. Migrate the concrete `Schonhage/Levels` and `Schonhage/Batch` clients together with the active native band-preparation client; defer that API migration until the latter is stable. |
+| `Foundations/Data/Finset/OrderGlue` | #1545 resolves the generic naming follow-up from #1496 after native bands stabilized in #1536: order-embedding/subset/complement terminology, Mathlib's `orderEmbOfFin_mem`/`range_orderEmbOfFin` and ordinary substitution in place of five redundant wrappers, and migration of finite tensor clients with checked native band clients. Retain this focused topic module. |
 | `Foundations/Data/Matrix/Permanent` | Mathlib candidate: Laplace expansion of the permanent along row and column 0, beside `LinearAlgebra/Matrix/Permanent` (mirroring `Matrix.det_succ_row_zero`). |
 | `Foundations/LinearAlgebra/{Rank,Matrix/CutRank,Matrix/Lindsey}` | Mathlib candidates: `LinearAlgebra/Dimension/LinearMap` and `LinearAlgebra/Matrix/Rank`; placement of Lindsey's lemma needs agreement. |
 | `Probability/PairwiseIndependentHash/Shift` | Consider integration into `PairwiseIndependentHash`. |
