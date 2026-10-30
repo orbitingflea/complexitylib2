@@ -23,7 +23,7 @@ the FHE industrial context, the first-order design decisions and the repository'
 | Consolidation: duplicates, accurate statements and docs, less churn | [#949], [#939] |
 | Fully homomorphic encryption: follow-ups to the instantiated bootstrapping theorem, then modern schemes | [#1104] |
 | Boneh–Shoup cryptography tracks; zero-knowledge architecture | [#640], [#643] |
-| Crypto frontier tracks: Kilian's succinct arguments, chosen-ciphertext security, signatures from one-way functions | [#999], [#1000], [#1001] |
+| Crypto frontier tracks: Kilian's succinct arguments, chosen-ciphertext follow-ups, signatures from one-way functions | [#999], [#1824], [#1001] |
 | OpenAI math TCS results: review Fortnow's rewrites and extract in-scope results | [#1002] |
 | A Verso guide with a chapter per area | [#585] |
 | Planar SAT and geometric hardness: orthogonal planar 3SAT-3 with explicit grid bounds, parsimonious compilers | [#1079] |
@@ -124,10 +124,10 @@ families and full-input native runtime.
   general-cipher Hashed ElGamal (Boneh–Shoup Theorem 11.5; the general-cipher construction,
   Game 0/1/2 hybrids, Equation `(11.14)` reductions, and normalized `n`-bit-key `DEMOneTimeINDCPAOn`
   / `linearHashKDF` endpoints have landed) ([#1047]).
-- **Chosen-ciphertext security** ([#1000]): authenticated encryption by encrypt-then-MAC and
-  Cramer–Shoup from DDH, with KEM–DEM hybrid encryption ([#881]) as the chosen-plaintext
-  starting point (Boneh–Shoup Exercise 11.9).
-- **Lattices** ([#645]): Fiat–Shamir with aborts and signatures from SIS (Lyubashevsky 2009,
+- **Chosen-ciphertext security** ([#1824]): the one-time halves of the authenticated-encryption
+  results (1AE ⇒ 1CCA, and one-time Encrypt-then-MAC), multi-challenge CCA from the
+  single-challenge Cramer–Shoup theorem, and Cramer–Shoup with general associated data.
+- **Lattices**: Fiat–Shamir with aborts and signatures from SIS (Lyubashevsky 2009,
   2012); strict-PPT samplers for integer boxes; identification security under SIS; efficiency
   certificates for the simulator and extractor; full interactive-view simulation; SIS for
   general moduli; module SIS and module LWE toward Dilithium-style schemes, as theory.
@@ -719,7 +719,7 @@ reusing graph and matroid foundations and the shared data-structure interfaces.
 - **A typed-call evaluator** for fixed-program Word-RAM clients, returning the typed observation,
   final state and halt-inclusive instruction cost, so the prefix-sum and stack clients no longer
   assemble preparation, evaluation and halt accounting by hand.
-- **Priority-queue and shortest-path consolidation** ([#1363]): lift operation-count helpers
+- **Priority-queue and shortest-path consolidation** ([#949]): lift operation-count helpers
   (`numQueries`, `numInserts`, `numDecreaseKeys`, `numExtractMins`) to `IndexedMinPQ`, parameterize
   flat-program operation-sequence execution (`RunsOps`) over `PQCode` in `PriorityQueue/Basic.lean`
   so `BinaryHeap` and `FibonacciHeap` share a generic `run_ops_exact` theorem, and factor a common
@@ -831,11 +831,9 @@ not planned, not as proved.
 [#608]: https://github.com/cslib-community/complexitylib/issues/608
 [#640]: https://github.com/cslib-community/complexitylib/issues/640
 [#643]: https://github.com/cslib-community/complexitylib/issues/643
-[#645]: https://github.com/cslib-community/complexitylib/issues/645
 [#798]: https://github.com/cslib-community/complexitylib/issues/798
 [#800]: https://github.com/cslib-community/complexitylib/issues/800
 [#862]: https://github.com/cslib-community/complexitylib/issues/862
-[#881]: https://github.com/cslib-community/complexitylib/issues/881
 [#884]: https://github.com/cslib-community/complexitylib/issues/884
 [#886]: https://github.com/cslib-community/complexitylib/issues/886
 [#888]: https://github.com/cslib-community/complexitylib/issues/888
@@ -851,7 +849,6 @@ not planned, not as proved.
 [#939]: https://github.com/cslib-community/complexitylib/issues/939
 [#949]: https://github.com/cslib-community/complexitylib/issues/949
 [#999]: https://github.com/cslib-community/complexitylib/issues/999
-[#1000]: https://github.com/cslib-community/complexitylib/issues/1000
 [#1001]: https://github.com/cslib-community/complexitylib/issues/1001
 [#1002]: https://github.com/cslib-community/complexitylib/issues/1002
 [#1047]: https://github.com/cslib-community/complexitylib/issues/1047
@@ -861,7 +858,6 @@ not planned, not as proved.
 [#1155]: https://github.com/cslib-community/complexitylib/issues/1155
 [#1336]: https://github.com/cslib-community/complexitylib/issues/1336
 [#1351]: https://github.com/cslib-community/complexitylib/issues/1351
-[#1363]: https://github.com/cslib-community/complexitylib/issues/1363
 [#1394]: https://github.com/cslib-community/complexitylib/issues/1394
 [#1435]: https://github.com/cslib-community/complexitylib/issues/1435
 [#1438]: https://github.com/cslib-community/complexitylib/issues/1438
@@ -871,3 +867,4 @@ not planned, not as proved.
 [#1449]: https://github.com/cslib-community/complexitylib/issues/1449
 [#1524]: https://github.com/cslib-community/complexitylib/issues/1524
 [#1572]: https://github.com/cslib-community/complexitylib/issues/1572
+[#1824]: https://github.com/cslib-community/complexitylib/issues/1824

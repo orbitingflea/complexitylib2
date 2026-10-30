@@ -1177,6 +1177,8 @@ public import Complexity.Computability.Complexity.Classes.Space.TQBF.PolyTime
 public import Complexity.Computability.Complexity.Classes.Space.TQBF.Prenex
 public import Complexity.Computability.Complexity.Classes.Space.TQBF.Reduction
 public import Complexity.Computability.Complexity.Classes.Space.Time
+public import Complexity.Computability.Complexity.Classes.Sparse
+public import Complexity.Computability.Complexity.Classes.Sparse.Fortune
 public import Complexity.Computability.Complexity.Classes.TFNP
 public import Complexity.Computability.Complexity.Classes.TFNP.SearchToDecision
 public import Complexity.Computability.Complexity.Classes.TFNP.Subclasses
@@ -2375,8 +2377,10 @@ public import Complexity.Crypto.Protocols.SigmaProtocol.SchnorrSignature
 public import Complexity.Crypto.Protocols.Signature.RandomOracle
 public import Complexity.Foundations.Algebra.FiniteMagnitude
 public import Complexity.Foundations.Algebra.GeometricTail
+public import Complexity.Foundations.Algebra.Shear
 public import Complexity.Foundations.Analysis.Asymptotics.Exponential
 public import Complexity.Foundations.Analysis.BernoulliInequality
+public import Complexity.Foundations.Analysis.Fourier.ZModProd
 public import Complexity.Foundations.Analysis.HarmonicMean
 public import Complexity.Foundations.Analysis.InnerProductSpace.Basic
 public import Complexity.Foundations.Analysis.LpNorm
@@ -2386,6 +2390,7 @@ public import Complexity.Foundations.Analysis.RootError
 public import Complexity.Foundations.Analysis.RowCompression
 public import Complexity.Foundations.Analysis.RowCompression.Floors
 public import Complexity.Foundations.Analysis.RowCompression.Iteration
+public import Complexity.Foundations.Analysis.RowCompression.Preloss
 public import Complexity.Foundations.Analysis.SpecialFunctions.Arccos
 public import Complexity.Foundations.Analysis.SpecialFunctions.PolynomialSwitch
 public import Complexity.Foundations.Analysis.SpecialFunctions.SmoothSwitch
@@ -2478,6 +2483,7 @@ public import Complexity.Foundations.Combinatorics.Expander.Random
 public import Complexity.Foundations.Combinatorics.Expander.Reindex
 public import Complexity.Foundations.Combinatorics.Expander.Reingold
 public import Complexity.Foundations.Combinatorics.Expander.Replacement
+public import Complexity.Foundations.Combinatorics.Expander.ShearTranslation
 public import Complexity.Foundations.Combinatorics.Expander.SimpleGraph
 public import Complexity.Foundations.Combinatorics.Expander.SlotGraph
 public import Complexity.Foundations.Combinatorics.Expander.Spectrum
@@ -2621,6 +2627,7 @@ public import Complexity.Foundations.Data.List.BalancedFold
 public import Complexity.Foundations.Data.List.Basic
 public import Complexity.Foundations.Data.List.Counting
 public import Complexity.Foundations.Data.List.Equiv
+public import Complexity.Foundations.Data.List.EraseDupsBy
 public import Complexity.Foundations.Data.List.Filter
 public import Complexity.Foundations.Data.List.Fold
 public import Complexity.Foundations.Data.List.Last
@@ -2765,6 +2772,7 @@ public import Complexity.Foundations.Order.Changes
 public import Complexity.Foundations.Order.UpperLower
 public import Complexity.Foundations.Probability.AtomCutoffs
 public import Complexity.Foundations.Probability.ColumnDetector
+public import Complexity.Foundations.Probability.ConditionalProductMean
 public import Complexity.Foundations.Probability.CorrectionAtom
 public import Complexity.Foundations.Probability.DetectedHierarchy
 public import Complexity.Foundations.Probability.DetectedStage
@@ -2968,6 +2976,7 @@ public import Complexity.Logics.Propositional.Pigeonhole
 public import Complexity.Logics.Propositional.QBF
 public import Complexity.Logics.Propositional.QBF.Arithmetization
 public import Complexity.Logics.Propositional.Resolution
+public import Complexity.Logics.Propositional.Resolution.Interpolation
 public import Complexity.Logics.Propositional.Resolution.Pigeonhole
 public import Complexity.Logics.Propositional.Resolution.Proof
 public import Complexity.Logics.Propositional.Resolution.Restrict
