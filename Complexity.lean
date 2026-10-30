@@ -96,6 +96,7 @@ public import Complexity.Algorithms.WordRAM.Dijkstra.Statement
 public import Complexity.Algorithms.WordRAM.DynamicArray
 public import Complexity.Algorithms.WordRAM.ElementDistinctness
 public import Complexity.Algorithms.WordRAM.ElementDistinctnessRAM
+public import Complexity.Algorithms.WordRAM.ExactLog
 public import Complexity.Algorithms.WordRAM.ExactTriangle.Catalogue
 public import Complexity.Algorithms.WordRAM.ExactTriangle.ChunkCatalogue
 public import Complexity.Algorithms.WordRAM.ExactTriangle.Chunks
@@ -198,13 +199,20 @@ public import Complexity.Algorithms.WordRAM.FusionTree.Query.Traversal
 public import Complexity.Algorithms.WordRAM.FusionTree.Rank
 public import Complexity.Algorithms.WordRAM.FusionTree.ReadHeader
 public import Complexity.Algorithms.WordRAM.FusionTree.Static
+public import Complexity.Algorithms.WordRAM.Hashing.KWise
 public import Complexity.Algorithms.WordRAM.Hashing.MultiplyShift
+public import Complexity.Algorithms.WordRAM.Hashing.Tabulation
 public import Complexity.Algorithms.WordRAM.Histogram
 public import Complexity.Algorithms.WordRAM.Karger.Contract
 public import Complexity.Algorithms.WordRAM.Karger.FastCut
 public import Complexity.Algorithms.WordRAM.Karger.Graph
 public import Complexity.Algorithms.WordRAM.KargerMinCut
 public import Complexity.Algorithms.WordRAM.KargerStein
+public import Complexity.Algorithms.WordRAM.MatrixMultiplication.CyclicConvolution.Coefficient
+public import Complexity.Algorithms.WordRAM.MatrixMultiplication.CyclicConvolution.Exec
+public import Complexity.Algorithms.WordRAM.MatrixMultiplication.CyclicConvolution.Flat
+public import Complexity.Algorithms.WordRAM.MatrixMultiplication.CyclicConvolution.Program
+public import Complexity.Algorithms.WordRAM.MatrixMultiplication.CyclicConvolution.Term
 public import Complexity.Algorithms.WordRAM.MatrixMultiplication.Schonhage.BandAll
 public import Complexity.Algorithms.WordRAM.MatrixMultiplication.Schonhage.BandCatalogue
 public import Complexity.Algorithms.WordRAM.MatrixMultiplication.Schonhage.BandCollect
@@ -2710,6 +2718,7 @@ public import Complexity.Foundations.Quantum.Measurement
 public import Complexity.Foundations.Relation.InductiveCounting
 public import Complexity.Foundations.Relation.RelatesWithinSteps
 public import Complexity.Foundations.RingTheory.CyclicIntRing
+public import Complexity.Foundations.RingTheory.CyclicIntRing.Coefficients
 public import Complexity.Foundations.Semantics.Stateful.Amortized
 public import Complexity.Foundations.Semantics.Stateful.Basic
 public import Complexity.Foundations.Semantics.Stateful.Composition
