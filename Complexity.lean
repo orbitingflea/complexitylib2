@@ -29,6 +29,7 @@ public import Complexity.Algorithms.Lean.Sort.Bitonic.Basic
 public import Complexity.Algorithms.Lean.Sort.Bitonic.Correctness
 public import Complexity.Algorithms.Lean.Sort.Bitonic.Trace
 public import Complexity.Algorithms.Lean.Sort.Bitonic.ZeroOne
+public import Complexity.Algorithms.Lean.UniformProbing
 public import Complexity.Algorithms.Lean.VanEmdeBoas.Basic
 public import Complexity.Algorithms.Lean.VanEmdeBoas.Elements
 public import Complexity.Algorithms.Lean.VanEmdeBoas.Insert
@@ -86,6 +87,7 @@ public import Complexity.Algorithms.WordRAM.Dictionary.CuckooHashing
 public import Complexity.Algorithms.WordRAM.Dictionary.CuckooHashing.HashFamily
 public import Complexity.Algorithms.WordRAM.Dictionary.LinearProbing
 public import Complexity.Algorithms.WordRAM.Dictionary.LinearProbing.FiveWise
+public import Complexity.Algorithms.WordRAM.Dictionary.UniformProbing
 public import Complexity.Algorithms.WordRAM.Dijkstra.Fibonacci
 public import Complexity.Algorithms.WordRAM.Dijkstra.FibonacciStatement
 public import Complexity.Algorithms.WordRAM.Dijkstra.GenericPQ
