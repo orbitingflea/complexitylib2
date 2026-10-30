@@ -1133,6 +1133,7 @@ public import Complexity.Computability.Complexity.Classes.PP.Bit
 public import Complexity.Computability.Complexity.Classes.PP.Characterization
 public import Complexity.Computability.Complexity.Classes.PP.Closure
 public import Complexity.Computability.Complexity.Classes.PP.Oracle
+public import Complexity.Computability.Complexity.Classes.PP.Time
 public import Complexity.Computability.Complexity.Classes.PP.TruthTable
 public import Complexity.Computability.Complexity.Classes.Padding
 public import Complexity.Computability.Complexity.Classes.Padding.Polynomial
@@ -2699,6 +2700,8 @@ public import Complexity.Foundations.Data.Nat.Prime
 public import Complexity.Foundations.Data.Nat.Primrec
 public import Complexity.Foundations.Data.Nat.Radix
 public import Complexity.Foundations.Data.Nat.Radix.Measurement
+public import Complexity.Foundations.Data.Nat.ResidueSum
+public import Complexity.Foundations.Data.Nat.SqrtLog
 public import Complexity.Foundations.Data.Nat.SqrtRatio
 public import Complexity.Foundations.Data.Nat.Subexponential
 public import Complexity.Foundations.Data.Option
@@ -2826,6 +2829,7 @@ public import Complexity.Languages.Probabilistic.BitString
 public import Complexity.Languages.Probabilistic.BoundedUniform
 public import Complexity.Languages.Probabilistic.CenteredBinomial
 public import Complexity.Languages.Probabilistic.Concentration
+public import Complexity.Languages.Probabilistic.Event
 public import Complexity.Languages.Probabilistic.Expect
 public import Complexity.Languages.Probabilistic.Forking
 public import Complexity.Languages.Probabilistic.Iteration
@@ -3075,7 +3079,9 @@ public import Complexity.Probability.PairwiseIndependent
 public import Complexity.Probability.PairwiseIndependentHash
 public import Complexity.Probability.PairwiseIndependentHash.Affine
 public import Complexity.Probability.PairwiseIndependentHash.AtomChannels
+public import Complexity.Probability.PairwiseIndependentHash.ConditionalAveraging
 public import Complexity.Probability.PairwiseIndependentHash.DetectorChannels
+public import Complexity.Probability.PairwiseIndependentHash.FrameChannel
 public import Complexity.Probability.PairwiseIndependentHash.HeavyCount
 public import Complexity.Probability.PairwiseIndependentHash.HierarchyChannels
 public import Complexity.Probability.PairwiseIndependentHash.Retention

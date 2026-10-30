@@ -323,9 +323,8 @@ DLOGTIME-uniform AC⁰ under explicit conventions.
 
 - **Håstad's optimal MAX-E3SAT hardness** ([#886]): for `0 < ε < 1/8`, NP-hardness of
   distinguishing satisfiable E3-CNF formulas from those where every assignment satisfies at most
-  `7/8 + ε` of the clauses. This needs the reduction to MAX-E3LIN;
-  Raz–Holenstein parallel repetition for small-soundness Label Cover; and
-  the perfect-completeness reduction.
+  `7/8 + ε` of the clauses. This needs Raz–Holenstein parallel repetition for small-soundness
+  Label Cover and Håstad's separate perfect-completeness construction for MAX-E3SAT.
 - The FGLSS clique-hardness reduction and its amplification, retaining the exact gap and
   reduction runtime.
 - Gap and approximation-preserving reductions, APX/PTAS/FPTAS, inapproximability consequences of
@@ -757,15 +756,13 @@ reuse is demonstrated.
 
 - **One sensitivity API.** Define the sensitivity measures over any `Fintype` in CSLib and drop
   the separate measures of the sensitivity-separation development.
-- **Weighted multigraph cuts and two-branch probability recurrence** ([#1336]): extract
+- **Weighted multigraph cuts** ([#1336]): extract
   `IsMultigraph` (renamed e.g. `IsSymmLoopless` or phrased via `Matrix.IsSymm` with zero diagonal),
   `IsNonTrivialCut`,
   `cutWeight`, `minCut`, `rowDeg`, `totalDoubledWeight`, `flattenMatrix`, and `IsContractionOf` from
   `Complexity/Algorithms/WordRAM/Karger/Graph.lean` (shared by `KargerMinCut` and `KargerStein`) into
   `Complexity/Foundations/Combinatorics/WeightedCut.lean` with a bridge lemma relating `cutWeight W C`
-  to `(Cslib.Multigraph.edgeCut ends C).card`. Extract `two_branch_hit_prob_ge` from
-  `Karger/FastCut.lean` into a shared probabilistic-program module; its `ProbComp` evaluation and
-  support dependencies should stay above the `PMF` event layer.
+  to `(Cslib.Multigraph.edgeCut ends C).card`.
 - **CNF evaluation certificates:** `fun_prop` certificates for evaluating literals, clauses and
   formulas under a polynomial-time assignment, so clients stop passing `CNF.eval`,
   `Clause.eval` and `Literal.eval` to `fun_prop` as unfolding hints.
