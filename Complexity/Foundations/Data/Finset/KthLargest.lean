@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Init
+public import Mathlib.Algebra.Order.Group.Abs
 public import Mathlib.Data.Finset.Max
 
 /-!
@@ -31,6 +32,8 @@ is at least `t` exactly when at least `k` values are at least `t` (`Finset.le_kt
 
 * `Finset.kthLargest_nonneg`, `Finset.kthLargest_le`: bounds.
 * `Finset.lt_kthLargest_iff`, `Finset.le_kthLargest_iff`: the threshold characterizations.
+* `Finset.kthLargest_le_kthLargest_add`, `Finset.abs_kthLargest_sub_kthLargest_le`: stability
+  under perturbation of the values.
 
 ## References
 
@@ -112,5 +115,38 @@ theorem le_kthLargest_iff (hk : 0 < k) (ht : 0 < t) :
   · intro hcard
     obtain ⟨x, hxs, htx, hkx⟩ := exists_le_card hk (t ≤ ·) hcard
     exact htx.trans (le_kthLargest_of_le_card hxs hkx)
+
+section Stability
+
+variable {R : Type*} [AddCommGroup R] [LinearOrder R] [IsOrderedAddMonoid R] {k : ℕ}
+  {s : Finset α} {h₁ h₂ : α → R} {ε : R}
+
+/-- **Rank stability, one side** [OpenAI2026LogSpace, (5.4)]: if every value of `h₁` exceeds the
+corresponding value of `h₂` by at most `ε ≥ 0`, so does the `k`-th largest value. -/
+theorem kthLargest_le_kthLargest_add (hk : 0 < k) (hε : 0 ≤ ε) (h : ∀ x ∈ s, h₁ x ≤ h₂ x + ε) :
+    kthLargest k s h₁ ≤ kthLargest k s h₂ + ε := by
+  set r := kthLargest k s h₁
+  rcases le_or_gt r ε with hr | hr
+  · exact hr.trans (le_add_of_nonneg_left kthLargest_nonneg)
+  have hr0 : 0 < r := hε.trans_lt hr
+  have hcard := (le_kthLargest_iff hk hr0).mp le_rfl
+  have hlo : r - ε ≤ kthLargest k s h₂ := by
+    refine (le_kthLargest_iff hk (sub_pos.mpr hr)).mpr (hcard.trans (card_le_card fun x hx => ?_))
+    rw [mem_filter] at hx ⊢
+    exact ⟨hx.1, sub_le_iff_le_add.mpr (hx.2.trans (h x hx.1))⟩
+  exact sub_le_iff_le_add.mp hlo
+
+/-- **Rank stability** [OpenAI2026LogSpace, (5.4)]: `|rank_k h₁ − rank_k h₂| ≤ sup |h₁ − h₂|`.
+If the values differ by at most `ε ≥ 0` everywhere on `s`, so do their `k`-th largest values. -/
+theorem abs_kthLargest_sub_kthLargest_le (hk : 0 < k) (hε : 0 ≤ ε)
+    (h : ∀ x ∈ s, |h₁ x - h₂ x| ≤ ε) : |kthLargest k s h₁ - kthLargest k s h₂| ≤ ε := by
+  rw [abs_sub_le_iff]
+  constructor
+  · exact sub_le_iff_le_add'.mpr (kthLargest_le_kthLargest_add hk hε fun x hx =>
+      sub_le_iff_le_add'.mp (le_of_abs_le (h x hx)))
+  · exact sub_le_iff_le_add'.mpr (kthLargest_le_kthLargest_add hk hε fun x hx =>
+      sub_le_iff_le_add'.mp (le_of_abs_le ((abs_sub_comm _ _).trans_le (h x hx))))
+
+end Stability
 
 end Finset
