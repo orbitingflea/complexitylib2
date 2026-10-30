@@ -447,7 +447,7 @@ each statement against the numbered result. Organize modules by subject, not cha
   multi-tape steps for a constant `c < 1`; prefix-free complexity,
   resource-bounded MCSP variants and connections to learning, cryptography and lower bounds; the
   circuitized anti-checker with an efficient generator; the subexponential-formula consequence
-  Theorem 17(ii) and asymptotic parameter instantiations of Theorem 17(iii) and Theorem 5 in
+  Theorem 17(ii) and the asymptotic parameter instantiation of Theorem 5 in
   `MCSP/FormulaMagnification.lean`; and hardness results for `MINKT` and `MINcKT` (whose
   definitions, conditional `K^t` measure, and `NP` memberships are in `Kolmogorov/MINKT.lean`,
   `Kolmogorov/Conditional.lean`, and `Kolmogorov/MINcKT.lean`), as independently scoped
@@ -710,9 +710,9 @@ reusing graph and matroid foundations and the shared data-structure interfaces.
   iterative clients, including the two-stack queue and timeline-editing controllers; reusable
   allocation and deallocation, shrinking, and live and peak space accounting; ownership and
   recursive procedures; model realizations for cell probes, caches and randomness; present and
-  historical queries for the retroactive interface; deletion in the shared ordered-set interface,
-  balancing, and heap or RAM representations of search trees; uniform preprocessing and dynamic
-  updates for fusion trees; deletion and predecessor for van Emde Boas sets; and deallocation,
+  historical queries for the retroactive interface; balancing and heap or RAM representations of
+  search trees; uniform preprocessing and dynamic updates for fusion trees; deletion and
+  predecessor for van Emde Boas sets; and deallocation,
   shrinking and compiled client controllers for the doubling array.
 - **A typed-call evaluator** for fixed-program Word-RAM clients, returning the typed observation,
   final state and halt-inclusive instruction cost, so the prefix-sum and stack clients no longer
