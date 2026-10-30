@@ -1077,6 +1077,7 @@ public import Complexity.Computability.Complexity.Classes.LogSpace.Randomized.Am
 public import Complexity.Computability.Complexity.Classes.LogSpace.Randomized.BPP
 public import Complexity.Computability.Complexity.Classes.LogSpace.Randomized.ConfigurationMatrix
 public import Complexity.Computability.Complexity.Classes.LogSpace.Randomized.ConfigurationReader
+public import Complexity.Computability.Complexity.Classes.LogSpace.Randomized.TimeLayer
 public import Complexity.Computability.Complexity.Classes.LogSpace.Savitch
 public import Complexity.Computability.Complexity.Classes.LogSpace.USTCON
 public import Complexity.Computability.Complexity.Classes.MIP
@@ -1880,6 +1881,7 @@ public import Complexity.Computability.PCP.Approximation.LabelCover
 public import Complexity.Computability.PCP.Approximation.MaxCSP
 public import Complexity.Computability.PCP.Approximation.MaxExactThreeSAT
 public import Complexity.Computability.PCP.Approximation.MaxThreeSAT
+public import Complexity.Computability.PCP.Approximation.ThreeXOR
 public import Complexity.Computability.PCP.AssignmentTester
 public import Complexity.Computability.PCP.AssignmentTester.Selection
 public import Complexity.Computability.PCP.Completeness
@@ -1919,6 +1921,8 @@ public import Complexity.Computability.PCP.Encoded.Verifier.Soundness
 public import Complexity.Computability.PCP.GapTheorem
 public import Complexity.Computability.PCP.GenericComposition
 public import Complexity.Computability.PCP.LocalTest
+public import Complexity.Computability.PCP.LocalTest.DecisionTree
+public import Complexity.Computability.PCP.LocalTest.Repetition
 public import Complexity.Computability.PCP.ParallelRepetition.Recursion
 public import Complexity.Computability.PCP.Power
 public import Complexity.Computability.PCP.Power.Complexity
@@ -1940,6 +1944,7 @@ public import Complexity.Computability.PolyTime.CNF.GreedyParityContext
 public import Complexity.Computability.PolyTime.CNF.GreedyParitySearch
 public import Complexity.Computability.PolyTime.CNF.SparseCNFLeafCounter
 public import Complexity.Computability.PolyTime.CNF.SparsePolyCompile
+public import Complexity.Computability.PolyTime.CSP.ToCNF
 public import Complexity.Computability.PolyTime.CommonCountingAccum
 public import Complexity.Computability.PolyTime.FineGrained.ParameterCheck
 public import Complexity.Computability.PolyTime.GreedyLabelSchedule
@@ -1985,6 +1990,7 @@ public import Complexity.Computability.Probabilistic.Sampling
 public import Complexity.Computability.Probabilistic.Selection
 public import Complexity.Computability.Probabilistic.Traverse
 public import Complexity.Computability.Probabilistic.UniformNat
+public import Complexity.Computability.PropertyTesting.Linearity
 public import Complexity.Computability.QueryComplexity.ApproximateDegree
 public import Complexity.Computability.QueryComplexity.ApproximateDegree.Or
 public import Complexity.Computability.QueryComplexity.Degree
@@ -2738,6 +2744,7 @@ public import Complexity.Foundations.LinearAlgebra.Matrix.Rank
 public import Complexity.Foundations.LinearAlgebra.Matrix.RectPermanent
 public import Complexity.Foundations.LinearAlgebra.Matrix.SchurComplement
 public import Complexity.Foundations.LinearAlgebra.Matrix.SubmatrixRobust
+public import Complexity.Foundations.LinearAlgebra.Matrix.TimeLayer
 public import Complexity.Foundations.LinearAlgebra.Matrix.Toeplitz
 public import Complexity.Foundations.LinearAlgebra.PivotSpace
 public import Complexity.Foundations.LinearAlgebra.Rank
@@ -2928,6 +2935,7 @@ public import Complexity.Logics.Propositional.CNF.UnsatVal
 public import Complexity.Logics.Propositional.CSP
 public import Complexity.Logics.Propositional.CSP.ToBoolean
 public import Complexity.Logics.Propositional.CSP.ToCNF
+public import Complexity.Logics.Propositional.CSP.ToCNF.Count
 public import Complexity.Logics.Propositional.ClauseSet.Basic
 public import Complexity.Logics.Propositional.ClauseSet.Sparsification
 public import Complexity.Logics.Propositional.ClauseSet.Sparsification.Bounds

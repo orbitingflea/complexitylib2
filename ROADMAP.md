@@ -323,8 +323,8 @@ DLOGTIME-uniform AC⁰ under explicit conventions.
 
 - **Håstad's optimal MAX-E3SAT hardness** ([#886]): for `0 < ε < 1/8`, NP-hardness of
   distinguishing satisfiable E3-CNF formulas from those where every assignment satisfies at most
-  `7/8 + ε` of the clauses. This needs the reduction to MAX-E3LIN and, through the 4-clause XOR
-  gadget, to MAX-E3SAT; Raz–Holenstein parallel repetition for small-soundness Label Cover; and
+  `7/8 + ε` of the clauses. This needs the reduction to MAX-E3LIN;
+  Raz–Holenstein parallel repetition for small-soundness Label Cover; and
   the perfect-completeness reduction.
 - The FGLSS clique-hardness reduction and its amplification, retaining the exact gap and
   reduction runtime.
@@ -441,8 +441,9 @@ each statement against the numbered result. Organize modules by subject, not cha
   sample and runtime upper bounds. Develop low-degree likelihood-ratio and sum-of-squares
   comparisons where justified, distinguishing restricted-model bounds from unrestricted
   computational hardness. Use the [distributional framework](#average-case-complexity).
-- **Property and distribution testing:** access models, one/two-sided and tolerant testing,
-  query and sample bounds, canonical testers and lower bounds.
+- **Property and distribution testing:** independent repetition of Boolean local tests and BLR
+  linearity testing have explicit decision-tree query bounds. Remaining: further access models,
+  tolerant and distribution testing, query and sample bounds, canonical testers and lower bounds.
 - **Kolmogorov complexity and metacomplexity** ([#798], [#884]): the near-linear threshold regime
   of Liu–Pass Theorem 3.1 (c), hardness for every polynomial `t(n) ≥ (1 + ε)n` rather than above a
   polynomial threshold, which needs a rate-1 efficient conditional EP-PRG running in `n + O(n^c)`
