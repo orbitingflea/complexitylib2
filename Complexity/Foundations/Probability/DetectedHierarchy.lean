@@ -46,10 +46,12 @@ stage is strictly upper triangular, nonnegative and substochastic with entries a
 
 * `Matrix.hierarchy`, `Matrix.hierarchyCorrection`, `Matrix.hierarchyProj`: the stages.
 * `Matrix.primaryCopy`: the all-primary copy of a base vertex.
+* `Matrix.radixCopyEquiv`: radix identifiers for copies, reusing `finProdFinEquiv`.
 
 ## Main results
 
 * `Matrix.hierarchy_invariant`: every stage is a valid input of the next one.
+* `Matrix.radixCopyEquiv_lt`: the radix identification reflects the parent-then-copy order.
 * `Matrix.sub_hierarchyReward_le`: the stage bound `0 ≤ p x - W_l (x̄_l) ≤ |V 0| (2 ^ c)⁻¹ ^ l`.
 
 ## References
@@ -63,6 +65,34 @@ public section
 open Finset Cslib.Probability
 
 namespace Matrix
+
+/-- **Radix identifiers for copies**: `Fin (n (m + 1) ^ (l + 1))` as the copies of
+`Fin (n (m + 1) ^ l)`, where the number `y + (m + 1) x` is the copy `y` of the parent `x`. This is
+the preprint's appending of a radix-`D₀` digit [OpenAI2026LogSpace, Section 4.5]. -/
+def radixCopyEquiv (n m l : ℕ) :
+    Fin (n * (m + 1) ^ (l + 1)) ≃ Lex (Fin (n * (m + 1) ^ l) × Fin (m + 1)) :=
+  (finCongr (by ring)).trans (finProdFinEquiv.symm.trans toLex)
+
+theorem radixCopyEquiv_val (n m l : ℕ) (a : Fin (n * (m + 1) ^ (l + 1))) :
+    a.val = (ofLex (radixCopyEquiv n m l a)).2.val +
+      (m + 1) * (ofLex (radixCopyEquiv n m l a)).1.val := by
+  have h := finProdFinEquiv_apply_val (ofLex (radixCopyEquiv n m l a))
+  simp only [radixCopyEquiv, Equiv.trans_apply, ofLex_toLex, Equiv.apply_symm_apply,
+    finCongr_apply, Fin.val_cast] at h
+  exact h
+
+/-- The radix identification reflects the order: copies are ordered by parent, then by symbol. -/
+theorem radixCopyEquiv_lt (n m l : ℕ) {a b : Fin (n * (m + 1) ^ (l + 1))}
+    (h : radixCopyEquiv n m l a < radixCopyEquiv n m l b) : a < b := by
+  rw [Fin.lt_def, radixCopyEquiv_val n m l a, radixCopyEquiv_val n m l b]
+  rcases Prod.Lex.lt_iff.mp h with h1 | ⟨h1, h2⟩
+  · have hx : (ofLex (radixCopyEquiv n m l a)).1.val + 1 ≤
+        (ofLex (radixCopyEquiv n m l b)).1.val := h1
+    have hy := (ofLex (radixCopyEquiv n m l a)).2.isLt
+    nlinarith
+  · rw [h1]
+    have : (ofLex (radixCopyEquiv n m l a)).2.val < (ofLex (radixCopyEquiv n m l b)).2.val := h2
+    omega
 
 variable {q cπ Cπ Cpair Cvar : ℝ} (P : HierarchyParams q cπ Cπ Cpair Cvar) {V : ℕ → Type*}
   [∀ l, Fintype (V l)] [∀ l, LinearOrder (V l)] (e : ∀ l, V (l + 1) ≃ Lex (V l × Fin (P.m + 1)))

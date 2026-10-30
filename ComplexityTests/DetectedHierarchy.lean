@@ -70,42 +70,18 @@ private theorem walk_row (n : ℕ) : walk n *ᵥ 1 ≤ 1 := by
 
 /-! ### Stage vertices `Fin (3 (m + 1) ^ l)` with lexicographic copies -/
 
-/-- `Fin (3 (m + 1) ^ (l + 1))` as the copies of `Fin (3 (m + 1) ^ l)`: `u = y + (m + 1) x`
-corresponds to the copy `y` of the parent `x`. -/
-private def copyEquiv (m l : ℕ) :
-    Fin (3 * (m + 1) ^ (l + 1)) ≃ Lex (Fin (3 * (m + 1) ^ l) × Fin (m + 1)) :=
-  (finCongr (by ring)).trans (finProdFinEquiv.symm.trans toLex)
-
-private theorem copyEquiv_val (m l : ℕ) (a : Fin (3 * (m + 1) ^ (l + 1))) :
-    a.val = (ofLex (copyEquiv m l a)).2.val + (m + 1) * (ofLex (copyEquiv m l a)).1.val := by
-  have h := finProdFinEquiv_apply_val (ofLex (copyEquiv m l a))
-  simp only [copyEquiv, Equiv.trans_apply, ofLex_toLex, Equiv.apply_symm_apply,
-    finCongr_apply, Fin.val_cast] at h
-  exact h
-
-/-- The identification reflects the order. -/
-private theorem copyEquiv_reflect (m l : ℕ) (a b : Fin (3 * (m + 1) ^ (l + 1)))
-    (h : copyEquiv m l a < copyEquiv m l b) : a < b := by
-  rw [Fin.lt_def, copyEquiv_val m l a, copyEquiv_val m l b]
-  rcases Prod.Lex.lt_iff.mp h with h1 | ⟨h1, h2⟩
-  · have hx : (ofLex (copyEquiv m l a)).1.val + 1 ≤ (ofLex (copyEquiv m l b)).1.val := h1
-    have hy := (ofLex (copyEquiv m l a)).2.isLt
-    nlinarith
-  · rw [h1]
-    have : (ofLex (copyEquiv m l a)).2.val < (ofLex (copyEquiv m l b)).2.val := h2
-    omega
-
 -- After one stage at rate `f₀ = 1` with full-retention channels, the walk on `Fin 3` becomes a
 -- strictly upper triangular, nonnegative, substochastic matrix on `Fin (3 (m + 1))` with
 -- entries at most `q⁻¹ = 1 / 2`, for every choice of the stage parameters.
 example (P : HierarchyParams 2 1 1 1 0) :
-    let H := hierarchy P (V := fun l => Fin (3 * (P.m + 1) ^ l)) (copyEquiv P.m)
+    let H := hierarchy P (V := fun l => Fin (3 * (P.m + 1) ^ l)) (radixCopyEquiv 3 P.m)
       (fun _ => all) (fun _ => all) (walk (3 * (P.m + 1) ^ 0)) 1
     H.IsStrictUpperTriangular ∧ (∀ x y, 0 ≤ H x y) ∧ H *ᵥ 1 ≤ 1 ∧
       ∀ x y, H x y ≤ (2 : ℝ)⁻¹ ^ 1 :=
   hierarchy_invariant (P := P) (q := 2) (V := fun l => Fin (3 * (P.m + 1) ^ l))
-    (e := copyEquiv P.m) (X := fun _ => all) (Y := fun _ => all) (S := walk (3 * (P.m + 1) ^ 0))
-    (π := fun _ => 1) (copyEquiv_reflect P.m) (by norm_num) one_pos
+    (e := radixCopyEquiv 3 P.m) (X := fun _ => all) (Y := fun _ => all)
+    (S := walk (3 * (P.m + 1) ^ 0))
+    (π := fun _ => 1) (fun l _ _ h => radixCopyEquiv_lt 3 P.m l h) (by norm_num) one_pos
     (walk_upper _) (walk_nonneg _) (walk_row _) 1 fun l hl => by
       obtain rfl : l = 0 := by omega
       exact retentionChannels_all (f := (2 : ℝ)⁻¹ ^ 0) (Cπ := 1) (Cpair := 1) (by norm_num)
