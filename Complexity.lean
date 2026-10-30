@@ -2354,7 +2354,9 @@ public import Complexity.Foundations.Analysis.InnerProductSpace.Basic
 public import Complexity.Foundations.Analysis.LpNorm
 public import Complexity.Foundations.Analysis.LpNormMeasure
 public import Complexity.Foundations.Analysis.MarkovBrothersInequality
+public import Complexity.Foundations.Analysis.RootError
 public import Complexity.Foundations.Analysis.SpecialFunctions.Arccos
+public import Complexity.Foundations.Analysis.SpecialFunctions.SmoothSwitch
 public import Complexity.Foundations.BooleanAnalysis.Bernoulli
 public import Complexity.Foundations.BooleanAnalysis.Bonami
 public import Complexity.Foundations.BooleanAnalysis.BucketWeight
@@ -2723,6 +2725,7 @@ public import Complexity.Foundations.NumberTheory.SqrtPrimeWindow
 public import Complexity.Foundations.Order.BooleanSubalgebra
 public import Complexity.Foundations.Order.Changes
 public import Complexity.Foundations.Order.UpperLower
+public import Complexity.Foundations.Probability.AtomCutoffs
 public import Complexity.Foundations.Probability.ColumnDetector
 public import Complexity.Foundations.Probability.CorrectionAtom
 public import Complexity.Foundations.Probability.DetectedHierarchy
@@ -2731,6 +2734,7 @@ public import Complexity.Foundations.Probability.Gaussian.Multivariate
 public import Complexity.Foundations.Probability.Gaussian.Real
 public import Complexity.Foundations.Probability.Gaussian.Sheppard
 public import Complexity.Foundations.Probability.HierarchyParams
+public import Complexity.Foundations.Probability.RootMetric
 public import Complexity.Foundations.Probability.SecondMoment
 public import Complexity.Foundations.Probability.StochasticAtom
 public import Complexity.Foundations.Quantum.Measurement
