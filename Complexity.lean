@@ -84,6 +84,8 @@ public import Complexity.Algorithms.WordRAM.Deduplicate.Program
 public import Complexity.Algorithms.WordRAM.Dictionary.ChainedHash
 public import Complexity.Algorithms.WordRAM.Dictionary.CuckooHashing
 public import Complexity.Algorithms.WordRAM.Dictionary.CuckooHashing.HashFamily
+public import Complexity.Algorithms.WordRAM.Dictionary.LinearProbing
+public import Complexity.Algorithms.WordRAM.Dictionary.LinearProbing.FiveWise
 public import Complexity.Algorithms.WordRAM.Dijkstra.Fibonacci
 public import Complexity.Algorithms.WordRAM.Dijkstra.FibonacciStatement
 public import Complexity.Algorithms.WordRAM.Dijkstra.GenericPQ
@@ -2562,6 +2564,7 @@ public import Complexity.Foundations.Data.Fin.Tuple
 public import Complexity.Foundations.Data.Finset.Average
 public import Complexity.Foundations.Data.Finset.Expect
 public import Complexity.Foundations.Data.Finset.Finpartition
+public import Complexity.Foundations.Data.Finset.KthLargest
 public import Complexity.Foundations.Data.Finset.Markov
 public import Complexity.Foundations.Data.Finset.OrderGlue
 public import Complexity.Foundations.Data.Finset.OrderedFilter
@@ -2693,6 +2696,7 @@ public import Complexity.Foundations.LinearAlgebra.Matrix.Kronecker
 public import Complexity.Foundations.LinearAlgebra.Matrix.Lindsey
 public import Complexity.Foundations.LinearAlgebra.Matrix.ListProd
 public import Complexity.Foundations.LinearAlgebra.Matrix.Moore
+public import Complexity.Foundations.LinearAlgebra.Matrix.PilotCorrection
 public import Complexity.Foundations.LinearAlgebra.Matrix.Rank
 public import Complexity.Foundations.LinearAlgebra.Matrix.RectPermanent
 public import Complexity.Foundations.LinearAlgebra.Matrix.SchurComplement
@@ -2715,6 +2719,8 @@ public import Complexity.Foundations.NumberTheory.SqrtPrimeWindow
 public import Complexity.Foundations.Order.BooleanSubalgebra
 public import Complexity.Foundations.Order.Changes
 public import Complexity.Foundations.Order.UpperLower
+public import Complexity.Foundations.Probability.ColumnDetector
+public import Complexity.Foundations.Probability.DetectedStage
 public import Complexity.Foundations.Probability.Gaussian.Multivariate
 public import Complexity.Foundations.Probability.Gaussian.Real
 public import Complexity.Foundations.Probability.Gaussian.Sheppard
@@ -2982,6 +2988,7 @@ public import Complexity.Probability.PMF.UniformSubset
 public import Complexity.Probability.PairwiseIndependent
 public import Complexity.Probability.PairwiseIndependentHash
 public import Complexity.Probability.PairwiseIndependentHash.Affine
+public import Complexity.Probability.PairwiseIndependentHash.DetectorChannels
 public import Complexity.Probability.PairwiseIndependentHash.Retention
 public import Complexity.Probability.PairwiseIndependentHash.RetentionChannel
 public import Complexity.Probability.PairwiseIndependentHash.Shift
