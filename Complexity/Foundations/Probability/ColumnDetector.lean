@@ -68,6 +68,7 @@ Markov's inequality for the gate failures with the lower tail of the start chann
 ## Main results
 
 * `Matrix.columnDetector_nonneg`, `Matrix.columnDetector_le_one`: detector numbers lie in `[0, 1]`.
+* `Matrix.card_filter_rowGate_lt_one_mul_le`: a row gate fails on few terminal draws.
 * `Matrix.le_columnDetector`: columns with many large entries are detected.
 * `Matrix.lt_card_of_lt_columnDetector`: detected columns have many substantial entries.
 
@@ -170,6 +171,66 @@ theorem columnDetector_le_one (hϕ0 : ∀ t, 0 ≤ ϕ t) (hϕ1 : ∀ t, ϕ t ≤
         sum_le_sum fun _ _ => sum_le_sum fun _ _ => detectorTrial_le_one hϕ0 hϕ1 hρ1
     _ = Fintype.card ι * #({t | Y t y} : Finset κ) := by
         simp only [sum_const, card_univ, nsmul_eq_mul, mul_one]
+
+omit [Fintype κ] in
+/-- **Row gates rarely fail** [OpenAI2026LogSpace, proofs of Lemmas 4.3 (1) and 5.1]. Let row `x`
+of `G ≥ 0` sum to at most `k`, and let `ρ` be one through `η > 0`. Let `T` be a finite set of
+terminal draws on which every vertex `w ≠ y` is retained at most a `c f` fraction of the time.
+Then the row gate of `x` is below one on at most a `(1 + c k / η) / K` fraction of `T`.
+
+The gate can fail only if `K` retained entries exceed `η f`. At most `k / (η f)` entries do, and
+the retention counts of these entries over `T` sum to at most `#T (1 + c k / η)`, counting `y`
+itself once; this is Markov's inequality. No independence between rows is used. -/
+theorem card_filter_rowGate_lt_one_mul_le (T : Finset κ) (x : V) (hf : 0 < f) {η : ℝ}
+    (hη : 0 < η) (hρη : ∀ t, t ≤ η → ρ t = 1) (hG0 : ∀ w, 0 ≤ G x w) {k : ℝ}
+    (hGk : ∑ w, G x w ≤ k) (hK : 0 < K) {c : ℝ} (hc : 0 ≤ c)
+    (hpair : ∀ w, w ≠ y → (#{t ∈ T | Y t w} : ℝ) ≤ c * f * #T) :
+    (#{t ∈ T | rowGate ρ K f G {w | Y t w} x < 1} : ℝ) * K ≤ #T * (1 + c * k / η) := by
+  classical
+  set W : Finset V := {w | η * f < G x w}
+  have hW : (#W : ℝ) * (η * f) ≤ k :=
+    (card_filter_mul_le_sum univ _ (fun w => G x w) (fun w _ => hG0 w)
+      fun _ _ hw => hw.le).trans hGk
+  have hbadK : ∀ t ∈ T, rowGate ρ K f G {w | Y t w} x < 1 → (K : ℝ) ≤ #{w ∈ W | Y t w} := by
+    intro t _ ht
+    have hlt : η < kthLargest K {w | Y t w} (fun w => G x w / f) := by
+      by_contra hle
+      rw [rowGate, hρη _ (not_lt.mp hle)] at ht
+      exact lt_irrefl _ ht
+    have hcard := (lt_kthLargest_iff hK hη.le).mp hlt
+    have hsub : ({w ∈ ({w | Y t w} : Finset V) | η < G x w / f} : Finset V) ⊆
+        {w ∈ W | Y t w} := fun w hw => by
+      simp only [mem_filter, mem_univ, true_and, W] at hw ⊢
+      exact ⟨by rw [lt_div_iff₀ hf] at hw; exact hw.2, hw.1⟩
+    exact_mod_cast hcard.trans (card_le_card hsub)
+  have hMarkov : (#{t ∈ T | rowGate ρ K f G {w | Y t w} x < 1} : ℝ) * K ≤
+      ∑ t ∈ T, (#{w ∈ W | Y t w} : ℝ) :=
+    card_filter_mul_le_sum T _ _ (fun _ _ => by positivity) hbadK
+  have hswap : ∑ t ∈ T, (#{w ∈ W | Y t w} : ℝ) = ∑ w ∈ W, (#{t ∈ T | Y t w} : ℝ) := by
+    simp only [natCast_card_filter]
+    exact sum_comm
+  have hterm : ∀ w ∈ W, (#{t ∈ T | Y t w} : ℝ) ≤ (if y = w then (#T : ℝ) else 0) +
+      c * f * #T := by
+    intro w _
+    by_cases hwy : y = w
+    · have hle : (#{t ∈ T | Y t w} : ℝ) ≤ #T := by exact_mod_cast card_filter_le _ _
+      have : 0 ≤ c * f * #T := by positivity
+      simp only [hwy, ↓reduceIte]
+      linarith
+    · simp only [hwy, ↓reduceIte, zero_add]
+      exact hpair w (Ne.symm hwy)
+  have hWf : (#W : ℝ) * f ≤ k / η := by
+    rw [le_div_iff₀ hη]; linarith
+  calc (#{t ∈ T | rowGate ρ K f G {w | Y t w} x < 1} : ℝ) * K
+      ≤ ∑ w ∈ W, ((if y = w then (#T : ℝ) else 0) + c * f * #T) :=
+        hMarkov.trans (hswap ▸ sum_le_sum hterm)
+    _ = (if y ∈ W then (#T : ℝ) else 0) + #W * (c * f * #T) := by
+        rw [sum_add_distrib, sum_ite_eq, sum_const, nsmul_eq_mul]
+    _ ≤ #T + #T * c * (#W * f) := by
+        have : (if y ∈ W then (#T : ℝ) else 0) ≤ #T := by split_ifs <;> [exact le_rfl; positivity]
+        nlinarith
+    _ ≤ #T + #T * c * (k / η) := by gcongr
+    _ = #T * (1 + c * k / η) := by ring
 
 variable {π cπ Cπ Cpair Cvar : ℝ}
 
@@ -316,58 +377,14 @@ theorem le_columnDetector (hch : RetentionChannels X Y f π cπ Cπ Cpair Cvar) 
     have : (0 : ℝ) < K := by linarith
     exact_mod_cast this
   -- Markov's inequality for the row gates: each row fails its gate on few terminal draws
-  have hgate : ∀ x, (#{t ∈ T | gate t x < 1} : ℝ) * K ≤ #T * D := by
-    intro x
-    set W : Finset V := {w | η * f < G x w}
-    have hW : (#W : ℝ) * (η * f) ≤ k :=
-      (card_filter_mul_le_sum univ _ (fun w => G x w) (fun w _ => hG0 x w)
-        fun _ _ hw => hw.le).trans (hGk x)
-    have hbadK : ∀ t ∈ T, gate t x < 1 → (K : ℝ) ≤ #{w ∈ W | Y t w} := by
-      intro t _ ht
-      have hlt : η < kthLargest K {w | Y t w} (fun w => G x w / f) := by
-        by_contra hle
-        have h1 := hρη _ (not_lt.mp hle)
-        simp only [gate, rowGate] at ht
-        rw [h1] at ht
-        exact lt_irrefl _ ht
-      have hcard := (lt_kthLargest_iff hKpos hη.le).mp hlt
-      have hsub : ({w ∈ ({w | Y t w} : Finset V) | η < G x w / f} : Finset V) ⊆
-          {w ∈ W | Y t w} := fun w hw => by
-        simp only [mem_filter, mem_univ, true_and, W] at hw ⊢
-        exact ⟨by rw [lt_div_iff₀ hf] at hw; exact hw.2, hw.1⟩
-      exact_mod_cast hcard.trans (card_le_card hsub)
-    have hMarkov : (#{t ∈ T | gate t x < 1} : ℝ) * K ≤ ∑ t ∈ T, (#{w ∈ W | Y t w} : ℝ) :=
-      card_filter_mul_le_sum T _ _ (fun _ _ => by positivity) hbadK
-    have hswap : ∑ t ∈ T, (#{w ∈ W | Y t w} : ℝ) = ∑ w ∈ W, (#{t ∈ T | Y t w} : ℝ) := by
-      simp only [natCast_card_filter]
-      exact sum_comm
-    have hterm : ∀ w ∈ W, (#{t ∈ T | Y t w} : ℝ) ≤ (if y = w then (#T : ℝ) else 0) +
-        Cpair * f * #T := by
-      intro w _
-      have hle : (#{t ∈ T | Y t w} : ℝ) ≤ #T := by exact_mod_cast card_filter_le _ _
-      by_cases hwy : y = w
-      · simp only [hwy, ↓reduceIte]
-        have : 0 ≤ Cpair * f * #T := by positivity
-        linarith
-      · simp only [hwy, ↓reduceIte, zero_add]
-        have hp := hch.pair w y (Ne.symm hwy)
-        rw [dens_cast, dens_cast, ← mul_div_assoc, div_le_div_iff_of_pos_right hκr] at hp
-        have hset : ({t ∈ T | Y t w} : Finset κ) = ({t | Y t w ∧ Y t y} : Finset κ) := by
-          ext t; simp only [T, mem_filter, mem_univ, true_and]; tauto
-        rw [hset]
-        exact hp
-    have hWf : (#W : ℝ) * f ≤ k / η := by
-      rw [le_div_iff₀ hη]; linarith
-    calc (#{t ∈ T | gate t x < 1} : ℝ) * K
-        ≤ ∑ w ∈ W, ((if y = w then (#T : ℝ) else 0) + Cpair * f * #T) :=
-          hMarkov.trans (hswap ▸ sum_le_sum hterm)
-      _ = (if y ∈ W then (#T : ℝ) else 0) + #W * (Cpair * f * #T) := by
-          rw [sum_add_distrib, sum_ite_eq, sum_const, nsmul_eq_mul]
-      _ ≤ #T + #T * Cpair * (#W * f) := by
-          have : (if y ∈ W then (#T : ℝ) else 0) ≤ #T := by split_ifs <;> [exact le_rfl; positivity]
-          nlinarith
-      _ ≤ #T + #T * Cpair * (k / η) := by gcongr
-      _ = #T * D := by simp only [D]; ring
+  have hgate : ∀ x, (#{t ∈ T | gate t x < 1} : ℝ) * K ≤ #T * D := fun x =>
+    card_filter_rowGate_lt_one_mul_le T x hf hη hρη (hG0 x) (hGk x) hKpos hCpair fun w hwy => by
+      have hp := hch.pair w y hwy
+      rw [dens_cast, dens_cast, ← mul_div_assoc, div_le_div_iff_of_pos_right hκr] at hp
+      have hset : ({t ∈ T | Y t w} : Finset κ) = ({t | Y t w ∧ Y t y} : Finset κ) := by
+        ext t; simp only [T, mem_filter, mem_univ, true_and]; tauto
+      rw [hset]
+      exact hp
   -- the expected number of retained large rows that fail their gate
   set N : ι → ℝ := fun s => #{x ∈ A | X s x}
   set L : ι → κ → ℝ := fun s t => #{x ∈ A | X s x ∧ gate t x < 1}

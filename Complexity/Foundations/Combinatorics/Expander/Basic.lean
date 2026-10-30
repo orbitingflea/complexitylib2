@@ -59,6 +59,7 @@ below is proved from these characterizations. `λ(G) ≤ 1` always, and `G` is a
 * `Cslib.RotationMap.expect_walk`, `Cslib.RotationMap.expect_mul_walk_comm`,
   `Cslib.RotationMap.expect_walk_sq_le`: the walk operator preserves expectations, is
   self-adjoint and does not increase the second moment.
+* `Cslib.RotationMap.sq_walk_le`: Jensen's inequality for the walk.
 * `Cslib.RotationMap.spectralExpansion_le_iff`,
   `Cslib.RotationMap.abs_expect_mul_walk_le`,
   `Cslib.RotationMap.spectralExpansion_le_iff_abs_expect_mul_walk_le`,
@@ -261,6 +262,14 @@ theorem walk_pow_const [Nonempty D] (t : ℕ) (c : ℝ) : (G.walk ^ t) (fun _ �
   | zero => rfl
   | succ t ih => rw [pow_succ, Module.End.mul_apply, walk_const, ih]
 
+/-- **Jensen's inequality for the walk**: the square of an average of neighbors is at most the
+average of the squares. -/
+theorem sq_walk_le (f : V → ℝ) (v : V) : G.walk f v ^ 2 ≤ G.walk (fun w ↦ f w ^ 2) v := by
+  rcases isEmpty_or_nonempty D with hD | hD
+  · simp [walk_apply]
+  simpa [walk_apply] using
+    expect_mul_sq_le_sq_mul_sq univ (fun i ↦ f (G.neighbor v i)) fun _ ↦ 1
+
 variable [Fintype V]
 
 /-- The walk operator preserves expectations. -/
@@ -298,11 +307,7 @@ theorem expect_mul_walk_comm (f g : V → ℝ) :
 theorem expect_walk_sq_le (f : V → ℝ) : 𝔼 v, G.walk f v ^ 2 ≤ 𝔼 v, f v ^ 2 := by
   rcases isEmpty_or_nonempty D with hD | hD
   · simpa [walk_apply] using expect_nonneg fun v _ ↦ sq_nonneg (f v)
-  calc 𝔼 v, G.walk f v ^ 2 ≤ 𝔼 v, 𝔼 i, f (G.neighbor v i) ^ 2 := by
-        refine expect_le_expect fun v _ ↦ ?_
-        simpa [walk_apply] using
-          expect_mul_sq_le_sq_mul_sq univ (fun i ↦ f (G.neighbor v i)) fun _ ↦ 1
-    _ = 𝔼 v, f v ^ 2 := G.expect_expect_neighbor fun v ↦ f v ^ 2
+  exact (expect_le_expect fun v _ ↦ G.sq_walk_le f v).trans_eq (G.expect_walk fun v ↦ f v ^ 2)
 
 end Walk
 
