@@ -1022,6 +1022,7 @@ public import Complexity.Computability.Circuit.Monotone.Clique.LowerBound
 public import Complexity.Computability.Circuit.Monotone.Clique.Negative
 public import Complexity.Computability.Circuit.Monotone.Clique.Positive
 public import Complexity.Computability.Circuit.Monotone.DualRail
+public import Complexity.Computability.Circuit.Monotone.Encoding
 public import Complexity.Computability.Circuit.Monotone.Formula
 public import Complexity.Computability.Circuit.Monotone.KarchmerWigderson
 public import Complexity.Computability.Circuit.Monotone.Set
@@ -2301,6 +2302,7 @@ public import Complexity.Computability.WordRAM.Generic
 public import Complexity.Computability.WordRAM.GhostLoop
 public import Complexity.Computability.WordRAM.Heap
 public import Complexity.Computability.WordRAM.InputArray
+public import Complexity.Computability.WordRAM.Invariance
 public import Complexity.Computability.WordRAM.ListArray
 public import Complexity.Computability.WordRAM.MapOp
 public import Complexity.Computability.WordRAM.MemoryWindow
@@ -3268,6 +3270,7 @@ public import Complexity.Logics.Propositional.Resolution
 public import Complexity.Logics.Propositional.Resolution.CliqueColoring
 public import Complexity.Logics.Propositional.Resolution.Interpolation
 public import Complexity.Logics.Propositional.Resolution.Interpolation.Extraction
+public import Complexity.Logics.Propositional.Resolution.Interpolation.MonotoneExtraction
 public import Complexity.Logics.Propositional.Resolution.Interpolation.PolyTime
 public import Complexity.Logics.Propositional.Resolution.Pigeonhole
 public import Complexity.Logics.Propositional.Resolution.Proof
