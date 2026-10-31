@@ -1166,6 +1166,7 @@ public import Complexity.Computability.Complexity.Classes.CountingSimulation.Cou
 public import Complexity.Computability.Complexity.Classes.CountingSimulation.FastAlgorithm
 public import Complexity.Computability.Complexity.Classes.CountingSimulation.FastAnalysis
 public import Complexity.Computability.Complexity.Classes.CountingSimulation.FastLeaves
+public import Complexity.Computability.Complexity.Classes.CountingSimulation.FastSimulation
 public import Complexity.Computability.Complexity.Classes.CountingSimulation.Guarded
 public import Complexity.Computability.Complexity.Classes.CountingSimulation.Interfaces
 public import Complexity.Computability.Complexity.Classes.DP
