@@ -834,6 +834,7 @@ public import Complexity.Computability.Circuit.Boolean.Tableau.Basic
 public import Complexity.Computability.Circuit.Boolean.Tableau.Correct
 public import Complexity.Computability.Circuit.Boolean.Tableau.Layout
 public import Complexity.Computability.Circuit.Boolean.Tableau.Space
+public import Complexity.Computability.Circuit.Boolean.Tableau.Succinct
 public import Complexity.Computability.Circuit.Boolean.Threshold
 public import Complexity.Computability.Circuit.Boolean.Threshold.Parity
 public import Complexity.Computability.Circuit.Boolean.ThresholdNC1
@@ -981,6 +982,7 @@ public import Complexity.Computability.Circuit.Frontier.TensorNetwork.ScheduledR
 public import Complexity.Computability.Circuit.Frontier.TensorNetwork.TaperedRecovery
 public import Complexity.Computability.Circuit.Frontier.TensorNetwork.Truncated
 public import Complexity.Computability.Circuit.Frontier.TensorNetwork.TruncatedPolyTime
+public import Complexity.Computability.Circuit.Frontier.TensorNetwork.TruncatedResources
 public import Complexity.Computability.Circuit.Frontier.TensorNetwork.VertexDesc
 public import Complexity.Computability.Circuit.Frontier.TwoSidedWitness
 public import Complexity.Computability.Circuit.Frontier.Unconditional
@@ -1371,6 +1373,7 @@ public import Complexity.Computability.Complexity.Classes.Sparse.BoundedTruthTab
 public import Complexity.Computability.Complexity.Classes.Sparse.Conjunctive
 public import Complexity.Computability.Complexity.Classes.Sparse.Fortune
 public import Complexity.Computability.Complexity.Classes.Sparse.Hausdorff
+public import Complexity.Computability.Complexity.Classes.Sparse.Kadin
 public import Complexity.Computability.Complexity.Classes.Sparse.Mahaney
 public import Complexity.Computability.Complexity.Classes.Sparse.OneQuery
 public import Complexity.Computability.Complexity.Classes.Sparse.Prune
@@ -3001,6 +3004,7 @@ public import Complexity.Foundations.Data.Nat.Choose.Real
 public import Complexity.Foundations.Data.Nat.Div
 public import Complexity.Foundations.Data.Nat.Doubling
 public import Complexity.Foundations.Data.Nat.Factorial
+public import Complexity.Foundations.Data.Nat.Fields
 public import Complexity.Foundations.Data.Nat.IntermediateValue
 public import Complexity.Foundations.Data.Nat.Log
 public import Complexity.Foundations.Data.Nat.OfDigits
