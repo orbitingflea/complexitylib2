@@ -202,7 +202,7 @@ index links to canonical definitions rather than keeping a second set.
 - **Reducibilities** ([#1351]): logspace Turing reductions, in an oracle model whose query tape is
   not charged to the space bound, and their transitivity; the rest of the inclusion hierarchy of
   Ladner, Lynch and Selman, and its separations.
-- **Sparse and tally sets** ([#1819]): `P/poly = P^SPARSE` (Meyer), extending
+- **Sparse and tally sets:** `P/poly = P^SPARSE` (Meyer), extending
   `PPoly.of_sparse` in `Circuit/Boolean/Sparse.lean`.
 - **Berman–Hartmanis:** p-isomorphism and paddability; paddable NP-complete sets are p-isomorphic,
   so the standard NP-complete problems are all p-isomorphic to SAT; the isomorphism conjecture as a
@@ -235,6 +235,11 @@ index links to canonical definitions rather than keeping a second set.
 
 ### Counting and modular classes
 
+- Complete the unconditional `SharpTIME(T)` to binary-output `FTIME(2^{O(T/√log T)})`
+  endpoint in [#1833](https://github.com/cslib-community/complexitylib/issues/1833). The native
+  terminal-path class agrees with `SharpP` at polynomial clocks; the count-first simulation
+  supplies joint time and polynomial workspace conditional on the explicit-network contraction
+  algorithm. Integration of the concrete contraction removes that remaining premise.
 - The Another Solution Problem (ASP) framework: certify polynomial-time forward and inverse
   witness maps. The parsimonious reductions to positive exact-one SAT and its planar
   three-occurrence variants already preserve counts over occurring variables; the new local
@@ -340,10 +345,9 @@ DLOGTIME-uniform AC⁰ under explicit conventions.
 
 - Proof-space lower bounds, Frege, cutting planes, polynomial calculus and sum-of-squares, and
   certified DPLL solver runtimes.
-- **Feasible interpolation** ([#1817]): extraction-time bounds for Resolution interpolants over
-  an explicit circuit encoding; a sharper monotone separator bound (Alon–Boppana) for a
-  stronger clique–coloring size lower bound; and the transfer of communication lower bounds to
-  proof-size lower bounds.
+- **Feasible interpolation** ([#1817]): a polynomial-time builder for the monotone interpolant
+  (the De Morgan builder is done), and the transfer of communication lower bounds to proof-size
+  lower bounds.
 - **Proof search:** automatizability and weak automatizability with explicit encodings and
   runtime dependence on the shortest proof; proof-search reductions built on the Cook–Reckhow
   and p-simulation APIs; then reflection principles and bounded-arithmetic witnessing theorems.
@@ -506,17 +510,15 @@ reusing graph and matroid foundations and the shared data-structure interfaces.
 - **Spanning trees and matroids:** minimum spanning trees with sorting and disjoint-set costs;
   weighted matroid greedy optimality with an independence-oracle interface; then matroid
   intersection with explicit oracle and implementation costs.
-- **Submodular optimization:** the `1 - 1/e` approximation for nonnegative monotone submodular
-  maximization under a cardinality constraint, charging value-oracle calls separately from their
-  concrete realizations; then further constraints and approximation bounds.
+- **Submodular optimization:** further constraints and approximation bounds beyond the
+  cardinality-constrained `1 - 1/e` greedy, charging value-oracle calls separately from their
+  concrete realizations.
 
 ### Online algorithms and competitive analysis
 
 - Request sequences, online strategies, offline optima and competitive ratios with additive
   constants; distinguish deterministic and randomized strategies and oblivious and adaptive
   adversaries. Compare algorithms in the same action and cost model, including initialization.
-- **Paging:** an LRU competitive bound and a matching deterministic lower bound as the first
-  clients. Reuse native amortized certificates and make adversarial request generation explicit.
 - **Adaptive search trees:** a BST access-and-rotation model, the splay access lemma, static
   optimality, working-set and dynamic-finger bounds, and Wilber-style lower bounds. State dynamic
   optimality as a conjectural research target with explicit strategy and sequence quantifiers.
@@ -871,5 +873,4 @@ not planned, not as proved.
 [#1524]: https://github.com/cslib-community/complexitylib/issues/1524
 [#1572]: https://github.com/cslib-community/complexitylib/issues/1572
 [#1817]: https://github.com/cslib-community/complexitylib/issues/1817
-[#1819]: https://github.com/cslib-community/complexitylib/issues/1819
 [#1824]: https://github.com/cslib-community/complexitylib/issues/1824
