@@ -8,6 +8,9 @@ public import Complexity.Algorithms.ExactTriangle.PieceBounds
 public import Complexity.Algorithms.ExactTriangle.Splitting
 public import Complexity.Algorithms.ExactTriangle.Weights
 public import Complexity.Algorithms.ExactTriangle.Witnesses
+public import Complexity.Algorithms.Lean.AVLTree.Basic
+public import Complexity.Algorithms.Lean.AVLTree.Erase
+public import Complexity.Algorithms.Lean.AVLTree.Stateful
 public import Complexity.Algorithms.Lean.CuckooHashing
 public import Complexity.Algorithms.Lean.Dictionary
 public import Complexity.Algorithms.Lean.DisjointSet
@@ -871,6 +874,7 @@ public import Complexity.Computability.Circuit.Frontier.Reduction
 public import Complexity.Computability.Circuit.Frontier.Sweep
 public import Complexity.Computability.Circuit.Frontier.TensorNetwork
 public import Complexity.Computability.Circuit.Frontier.TensorNetwork.Constraint
+public import Complexity.Computability.Circuit.Frontier.TensorNetwork.Deformation
 public import Complexity.Computability.Circuit.Frontier.TensorNetwork.Explicit
 public import Complexity.Computability.Circuit.Frontier.TwoSidedWitness
 public import Complexity.Computability.Circuit.Frontier.Unconditional
@@ -1195,6 +1199,7 @@ public import Complexity.Computability.Complexity.Classes.Space.TQBF.Reduction
 public import Complexity.Computability.Complexity.Classes.Space.Time
 public import Complexity.Computability.Complexity.Classes.Sparse
 public import Complexity.Computability.Complexity.Classes.Sparse.Fortune
+public import Complexity.Computability.Complexity.Classes.Sparse.Mahaney
 public import Complexity.Computability.Complexity.Classes.TFNP
 public import Complexity.Computability.Complexity.Classes.TFNP.SearchToDecision
 public import Complexity.Computability.Complexity.Classes.TFNP.Subclasses
@@ -1609,6 +1614,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Poly
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Bounds
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Configuration
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.DPi
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.EraseDupsBy
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Finite
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Fold
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Int
@@ -2505,6 +2511,7 @@ public import Complexity.Foundations.Combinatorics.Expander.Cayley
 public import Complexity.Foundations.Combinatorics.Expander.Cheeger
 public import Complexity.Foundations.Combinatorics.Expander.Connected
 public import Complexity.Foundations.Combinatorics.Expander.Contraction
+public import Complexity.Foundations.Combinatorics.Expander.ElementaryMove
 public import Complexity.Foundations.Combinatorics.Expander.Existence
 public import Complexity.Foundations.Combinatorics.Expander.Family
 public import Complexity.Foundations.Combinatorics.Expander.FourthMoment
@@ -2836,6 +2843,7 @@ public import Complexity.Foundations.Probability.HeavyCount
 public import Complexity.Foundations.Probability.HeavyCountRarity
 public import Complexity.Foundations.Probability.HierarchyParams
 public import Complexity.Foundations.Probability.PolynomialAtomCutoffs
+public import Complexity.Foundations.Probability.PolynomialAtomRows
 public import Complexity.Foundations.Probability.ProductError
 public import Complexity.Foundations.Probability.RootMetric
 public import Complexity.Foundations.Probability.SecondMoment
