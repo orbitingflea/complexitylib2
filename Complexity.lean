@@ -2322,6 +2322,7 @@ public import Complexity.Computability.WordRAM.Multiword.Transfer
 public import Complexity.Computability.WordRAM.Multiword.Workspace
 public import Complexity.Computability.WordRAM.Native
 public import Complexity.Computability.WordRAM.Notation
+public import Complexity.Computability.WordRAM.OfTuring
 public import Complexity.Computability.WordRAM.PackedCount
 public import Complexity.Computability.WordRAM.Power
 public import Complexity.Computability.WordRAM.RAM
