@@ -907,6 +907,7 @@ public import Complexity.Computability.Circuit.Frontier.TensorNetwork.ChildNumbe
 public import Complexity.Computability.Circuit.Frontier.TensorNetwork.ChildSize
 public import Complexity.Computability.Circuit.Frontier.TensorNetwork.Constraint
 public import Complexity.Computability.Circuit.Frontier.TensorNetwork.Deformation
+public import Complexity.Computability.Circuit.Frontier.TensorNetwork.DescribedContraction
 public import Complexity.Computability.Circuit.Frontier.TensorNetwork.DirectContraction
 public import Complexity.Computability.Circuit.Frontier.TensorNetwork.Explicit
 public import Complexity.Computability.Circuit.Frontier.TensorNetwork.IntegralCoordinates
@@ -915,6 +916,7 @@ public import Complexity.Computability.Circuit.Frontier.TensorNetwork.LocalDefor
 public import Complexity.Computability.Circuit.Frontier.TensorNetwork.ModeExpansion
 public import Complexity.Computability.Circuit.Frontier.TensorNetwork.NativeRecovery
 public import Complexity.Computability.Circuit.Frontier.TensorNetwork.PacketEntry
+public import Complexity.Computability.Circuit.Frontier.TensorNetwork.PacketEvaluator
 public import Complexity.Computability.Circuit.Frontier.TensorNetwork.Recursion
 public import Complexity.Computability.Circuit.Frontier.TensorNetwork.Reindex
 public import Complexity.Computability.Circuit.Frontier.TensorNetwork.Schedule
@@ -1045,6 +1047,7 @@ public import Complexity.Computability.Communication.Lifting.Partition
 public import Complexity.Computability.Communication.Lifting.Simulation
 public import Complexity.Computability.Communication.Newman
 public import Complexity.Computability.Communication.Nondeterministic.Basic
+public import Complexity.Computability.Communication.Nondeterministic.Functions
 public import Complexity.Computability.Communication.Operations
 public import Complexity.Computability.Communication.Protocol
 public import Complexity.Computability.Communication.Randomized
@@ -1534,6 +1537,7 @@ public import Complexity.Computability.GenericRAM.Native.IndexFold
 public import Complexity.Computability.GenericRAM.Native.MeasurementFold
 public import Complexity.Computability.GenericRAM.Native.Nat
 public import Complexity.Computability.GenericRAM.Native.StackRecursion
+public import Complexity.Computability.GenericRAM.Native.StackRecursionTree
 public import Complexity.Computability.GenericRAM.Native.SubsetPairFold
 public import Complexity.Computability.GenericRAM.Signed
 public import Complexity.Computability.GenericRAM.Signed.Fits
