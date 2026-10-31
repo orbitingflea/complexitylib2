@@ -401,6 +401,7 @@ public import Complexity.Algorithms.WordRAM.NatGcd
 public import Complexity.Algorithms.WordRAM.NatLog
 public import Complexity.Algorithms.WordRAM.NatNthRoot
 public import Complexity.Algorithms.WordRAM.NatSqrt
+public import Complexity.Algorithms.WordRAM.PPSZ.Amplify
 public import Complexity.Algorithms.WordRAM.PPSZ.Clauses
 public import Complexity.Algorithms.WordRAM.PPSZ.Implied
 public import Complexity.Algorithms.WordRAM.PPSZ.Odometer
@@ -934,8 +935,13 @@ public import Complexity.Computability.Circuit.Frontier.TensorNetwork.DescribedL
 public import Complexity.Computability.Circuit.Frontier.TensorNetwork.DirectContraction
 public import Complexity.Computability.Circuit.Frontier.TensorNetwork.Explicit
 public import Complexity.Computability.Circuit.Frontier.TensorNetwork.FastContraction
+public import Complexity.Computability.Circuit.Frontier.TensorNetwork.FastContractionDerivation
+public import Complexity.Computability.Circuit.Frontier.TensorNetwork.FastContractionLeaf
 public import Complexity.Computability.Circuit.Frontier.TensorNetwork.FastContractionMachine
 public import Complexity.Computability.Circuit.Frontier.TensorNetwork.FastContractionPolyTime
+public import Complexity.Computability.Circuit.Frontier.TensorNetwork.FastContractionSchedule
+public import Complexity.Computability.Circuit.Frontier.TensorNetwork.FastContractionShape
+public import Complexity.Computability.Circuit.Frontier.TensorNetwork.FastContractionSize
 public import Complexity.Computability.Circuit.Frontier.TensorNetwork.FastContractionStep
 public import Complexity.Computability.Circuit.Frontier.TensorNetwork.IntegralCoordinates
 public import Complexity.Computability.Circuit.Frontier.TensorNetwork.KernelProduct
@@ -943,6 +949,7 @@ public import Complexity.Computability.Circuit.Frontier.TensorNetwork.LocalDefor
 public import Complexity.Computability.Circuit.Frontier.TensorNetwork.ModeExpansion
 public import Complexity.Computability.Circuit.Frontier.TensorNetwork.NativeCall
 public import Complexity.Computability.Circuit.Frontier.TensorNetwork.NativeChild
+public import Complexity.Computability.Circuit.Frontier.TensorNetwork.NativeChildBounds
 public import Complexity.Computability.Circuit.Frontier.TensorNetwork.NativeChildPolyTime
 public import Complexity.Computability.Circuit.Frontier.TensorNetwork.NativeRecovery
 public import Complexity.Computability.Circuit.Frontier.TensorNetwork.PacketEntry
@@ -1145,6 +1152,8 @@ public import Complexity.Computability.Complexity.Classes.CountingSimulation.Ass
 public import Complexity.Computability.Complexity.Classes.CountingSimulation.BlockNetworks
 public import Complexity.Computability.Complexity.Classes.CountingSimulation.Containments
 public import Complexity.Computability.Complexity.Classes.CountingSimulation.FastAlgorithm
+public import Complexity.Computability.Complexity.Classes.CountingSimulation.FastAnalysis
+public import Complexity.Computability.Complexity.Classes.CountingSimulation.FastLeaves
 public import Complexity.Computability.Complexity.Classes.CountingSimulation.Guarded
 public import Complexity.Computability.Complexity.Classes.CountingSimulation.Interfaces
 public import Complexity.Computability.Complexity.Classes.DP
