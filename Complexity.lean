@@ -15,6 +15,9 @@ public import Complexity.Algorithms.Lean.CuckooHashing
 public import Complexity.Algorithms.Lean.Dictionary
 public import Complexity.Algorithms.Lean.DisjointSet
 public import Complexity.Algorithms.Lean.DisjointSet.UnionFind
+public import Complexity.Algorithms.Lean.FenwickTree.Basic
+public import Complexity.Algorithms.Lean.FenwickTree.Lowbit
+public import Complexity.Algorithms.Lean.FenwickTree.Stateful
 public import Complexity.Algorithms.Lean.FusionTree.Capacity
 public import Complexity.Algorithms.Lean.FusionTree.Compression
 public import Complexity.Algorithms.Lean.FusionTree.Correction
@@ -35,6 +38,9 @@ public import Complexity.Algorithms.Lean.Online.Basic
 public import Complexity.Algorithms.Lean.Paging.Basic
 public import Complexity.Algorithms.Lean.Paging.LRU
 public import Complexity.Algorithms.Lean.Paging.LowerBound
+public import Complexity.Algorithms.Lean.Query.Submodular.Greedy
+public import Complexity.Algorithms.Lean.Query.Submodular.LowerBound
+public import Complexity.Algorithms.Lean.Query.Submodular.ValueQuery
 public import Complexity.Algorithms.Lean.Queue
 public import Complexity.Algorithms.Lean.Retroactive
 public import Complexity.Algorithms.Lean.SearchTree.Basic
@@ -45,6 +51,8 @@ public import Complexity.Algorithms.Lean.Sort.Bitonic.Basic
 public import Complexity.Algorithms.Lean.Sort.Bitonic.Correctness
 public import Complexity.Algorithms.Lean.Sort.Bitonic.Trace
 public import Complexity.Algorithms.Lean.Sort.Bitonic.ZeroOne
+public import Complexity.Algorithms.Lean.Submodular.Basic
+public import Complexity.Algorithms.Lean.Submodular.Greedy
 public import Complexity.Algorithms.Lean.UniformProbing
 public import Complexity.Algorithms.Lean.VanEmdeBoas.Basic
 public import Complexity.Algorithms.Lean.VanEmdeBoas.Elements
@@ -389,6 +397,7 @@ public import Complexity.Algorithms.WordRAM.NatGcd
 public import Complexity.Algorithms.WordRAM.NatLog
 public import Complexity.Algorithms.WordRAM.NatNthRoot
 public import Complexity.Algorithms.WordRAM.NatSqrt
+public import Complexity.Algorithms.WordRAM.PPZ.Forced
 public import Complexity.Algorithms.WordRAM.PrefixSums.Dynamic
 public import Complexity.Algorithms.WordRAM.PrefixSums.Query
 public import Complexity.Algorithms.WordRAM.PrefixSums.Tree
@@ -1350,6 +1359,7 @@ public import Complexity.Computability.Complexity.FineGrained.PPSZ.Limit
 public import Complexity.Computability.Complexity.FineGrained.PPSZ.Placement
 public import Complexity.Computability.Complexity.FineGrained.PPSZ.Unique
 public import Complexity.Computability.Complexity.FineGrained.PPZ
+public import Complexity.Computability.Complexity.FineGrained.PPZ.LazyOrder
 public import Complexity.Computability.Complexity.FineGrained.PermutationIndependentSet
 public import Complexity.Computability.Complexity.FineGrained.Reduction
 public import Complexity.Computability.Complexity.FineGrained.ReplacementParams
