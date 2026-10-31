@@ -10,6 +10,8 @@ public import Complexity.Algorithms.ExactTriangle.Weights
 public import Complexity.Algorithms.ExactTriangle.Witnesses
 public import Complexity.Algorithms.Lean.CuckooHashing
 public import Complexity.Algorithms.Lean.Dictionary
+public import Complexity.Algorithms.Lean.DisjointSet
+public import Complexity.Algorithms.Lean.DisjointSet.UnionFind
 public import Complexity.Algorithms.Lean.FusionTree.Capacity
 public import Complexity.Algorithms.Lean.FusionTree.Compression
 public import Complexity.Algorithms.Lean.FusionTree.Correction
@@ -1833,6 +1835,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.C
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Deterministic
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.ExtendTapes
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.InputFromTape
+public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.IntervalTensor
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.IterateWhile
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Loop
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.OrElse
@@ -2291,6 +2294,7 @@ public import Complexity.Crypto.Computational.Hybrid.SavedPrediction
 public import Complexity.Crypto.Computational.Hybrid.Sequence
 public import Complexity.Crypto.Computational.IndexedSignature
 public import Complexity.Crypto.Computational.IndexedSignature.Counter
+public import Complexity.Crypto.Computational.IndexedSignature.Seeded
 public import Complexity.Crypto.Computational.LWE.Basic
 public import Complexity.Crypto.Computational.MAC
 public import Complexity.Crypto.Computational.MerkleDamgard
@@ -2368,6 +2372,7 @@ public import Complexity.Crypto.Computational.SchnorrIdentification
 public import Complexity.Crypto.Computational.Signature
 public import Complexity.Crypto.Computational.Stretch
 public import Complexity.Crypto.Computational.Stretch.Quantitative
+public import Complexity.Crypto.Computational.TreeSignature
 public import Complexity.Crypto.Computational.UniformChoice
 public import Complexity.Crypto.Computational.ZeroKnowledge
 public import Complexity.Crypto.Game
@@ -2418,6 +2423,7 @@ public import Complexity.Foundations.Analysis.LpNormMeasure
 public import Complexity.Foundations.Analysis.MarkovBrothersInequality
 public import Complexity.Foundations.Analysis.RootError
 public import Complexity.Foundations.Analysis.RowCompression
+public import Complexity.Foundations.Analysis.RowCompression.FalseOverflow
 public import Complexity.Foundations.Analysis.RowCompression.Floors
 public import Complexity.Foundations.Analysis.RowCompression.Iteration
 public import Complexity.Foundations.Analysis.RowCompression.Preloss
@@ -2511,6 +2517,7 @@ public import Complexity.Foundations.Combinatorics.Expander.Loops
 public import Complexity.Foundations.Combinatorics.Expander.LowerBound
 public import Complexity.Foundations.Combinatorics.Expander.Mixing
 public import Complexity.Foundations.Combinatorics.Expander.Multigraph
+public import Complexity.Foundations.Combinatorics.Expander.PairShearTranslation
 public import Complexity.Foundations.Combinatorics.Expander.Perm
 public import Complexity.Foundations.Combinatorics.Expander.Power
 public import Complexity.Foundations.Combinatorics.Expander.Random
@@ -2737,6 +2744,7 @@ public import Complexity.Foundations.Data.Polynomial.ParityAmplifier
 public import Complexity.Foundations.Data.Polynomial.ParityAmplifierDegree
 public import Complexity.Foundations.Data.Polynomial.SignQueries
 public import Complexity.Foundations.Data.Polynomial.StagedJetArithmetic
+public import Complexity.Foundations.Data.Polynomial.TaperedHermite
 public import Complexity.Foundations.Data.Rat.Basic
 public import Complexity.Foundations.Data.Seq.Computation
 public import Complexity.Foundations.Data.Set.Card
@@ -2817,6 +2825,7 @@ public import Complexity.Foundations.Probability.ConditionalProductMean
 public import Complexity.Foundations.Probability.CorrectionAtom
 public import Complexity.Foundations.Probability.DetectedHierarchy
 public import Complexity.Foundations.Probability.DetectedStage
+public import Complexity.Foundations.Probability.EfronStein
 public import Complexity.Foundations.Probability.EstimatorPrecision
 public import Complexity.Foundations.Probability.FineProductMean
 public import Complexity.Foundations.Probability.FourthRootHierarchyParams
@@ -2826,6 +2835,7 @@ public import Complexity.Foundations.Probability.Gaussian.Sheppard
 public import Complexity.Foundations.Probability.HeavyCount
 public import Complexity.Foundations.Probability.HeavyCountRarity
 public import Complexity.Foundations.Probability.HierarchyParams
+public import Complexity.Foundations.Probability.PolynomialAtomCutoffs
 public import Complexity.Foundations.Probability.ProductError
 public import Complexity.Foundations.Probability.RootMetric
 public import Complexity.Foundations.Probability.SecondMoment
