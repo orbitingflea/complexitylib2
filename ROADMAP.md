@@ -180,9 +180,12 @@ index links to canonical definitions rather than keeping a second set.
   completeness, padding, self-reducibility, relativization and oracle separations, preserving
   each reduction's resource bound.
 - **Time hierarchies** ([#1572]): native polynomial padding separates every pair of integer
-  degrees `1 ≤ a < b`. Remaining targets include the general deterministic `f log f` hierarchy
-  with its simulation bound ([#800]), noninteger polynomial degrees and finer logarithmic
-  gaps, and sharp nondeterministic and alternating time hierarchies with certified simulators.
+  degrees `1 ≤ a < b`, and the `O(t log t)` universal simulation ([#800]) gives
+  `DTIME f ⊂ DTIME g` for time-constructible `f ≥ n` once `(f + 1) * polylog f ≤ g`, with an
+  absolute exponent (`Hierarchy/TimePolylog`). Remaining targets include the textbook
+  `f log f = o(g)` hierarchy, which needs the diagonal to clock the universal machine's own
+  steps, noninteger polynomial degrees, and sharp nondeterministic and alternating time
+  hierarchies with certified simulators.
 - The space hierarchy for `log n ≤ g n`, which needs a universal simulation that does not hold
   its input.
 - **Space:** Savitch bounds for general space-constructible functions.
@@ -239,11 +242,6 @@ index links to canonical definitions rather than keeping a second set.
 
 ### Counting and modular classes
 
-- Complete the unconditional `SharpTIME(T)` to binary-output `FTIME(2^{O(T/√log T)})`
-  endpoint in [#1833](https://github.com/cslib-community/complexitylib/issues/1833). The native
-  terminal-path class agrees with `SharpP` at polynomial clocks; the count-first simulation
-  supplies joint time and polynomial workspace conditional on the explicit-network contraction
-  algorithm. Integration of the concrete contraction removes that remaining premise.
 - The Another Solution Problem (ASP) framework: certify polynomial-time forward and inverse
   witness maps. The parsimonious reductions to positive exact-one SAT and its planar
   three-occurrence variants already preserve counts over occurring variables; the new local
@@ -568,10 +566,12 @@ reusing graph and matroid foundations and the shared data-structure interfaces.
   compact root descriptors, with derived logarithmic width and uniform
   `Oκ((n+1) log²(n+2))` charged cost. This frontend is composed into the complete native
   preprocessing and the conditional ordinary host described below.
-- **Efficient universal simulation** ([#800]): realize the buffered Hennie–Stearns backend
-  with time `O_M(t log(t + 2))`, together with a source-space-sensitive storage bound.
-  The current interpreter has a stronger polynomial certificate and a streaming input lookup;
-  the buffered representation, its native cleanup routines and their amortized bounds remain.
+- **Efficient universal simulation** ([#800]): the clocked universal function runs in time
+  `O(N + poly(D, M) · (t + 1) log(t + 2))`, for encoded input length `N`, description length `D`
+  and largest input symbol `M`, by a divide-and-conquer windowed simulation
+  (`computableInO_universal_nlogn`). Remaining: a source-space-sensitive storage bound (the
+  space is currently bounded only by the time), and an unclocked form that runs until the
+  simulated machine halts.
 - **Plain computability** ([#862]): complete the plain calculus ([#608]), delete the tidy
   calculus, keeping only a machine-level kernel inside the Machines layer, and switch the
   abstract bridges to the shared predicate.
@@ -791,6 +791,12 @@ and credited.
   subexponential-time `k`-SAT, zero SAT exponents, `¬ETH`, and `¬SETH`. This is the Sections 3–6 and
   Appendices A–B interpolation-scale bound, not the sharper Appendix D runtime. Integration,
   validation, and the curated formal abstract are tracked in #1226.
+- **The sharper Theorem 1.1 bound** ([#1538](https://github.com/cslib-community/complexitylib/issues/1538)):
+  `ContractionCounting.exists_modelCounter_fixedDensity` proves the fixed-density bound
+  `2^{O_{k,D}(n / √log n)}` by tensor contraction (Theorem D.1 with `ℓ = 1`), and
+  `DensityBranchCounting.exists_modelCounter` combines it with the interpolation-scale counter in
+  one machine. The arbitrary-density bound `2^{O_k(n log log n / √log n)}` still needs Theorem D.1
+  with truncation order `ℓ = n + 1` and Lemma D.2.
 
 ## Documentation and repository
 
