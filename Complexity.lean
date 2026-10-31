@@ -942,6 +942,8 @@ public import Complexity.Computability.Circuit.Frontier.TensorNetwork.Deformatio
 public import Complexity.Computability.Circuit.Frontier.TensorNetwork.DescribedContraction
 public import Complexity.Computability.Circuit.Frontier.TensorNetwork.DescribedLift
 public import Complexity.Computability.Circuit.Frontier.TensorNetwork.DirectContraction
+public import Complexity.Computability.Circuit.Frontier.TensorNetwork.EntryContraction
+public import Complexity.Computability.Circuit.Frontier.TensorNetwork.EntryContractionMachine
 public import Complexity.Computability.Circuit.Frontier.TensorNetwork.Explicit
 public import Complexity.Computability.Circuit.Frontier.TensorNetwork.FastContraction
 public import Complexity.Computability.Circuit.Frontier.TensorNetwork.FastContractionDerivation
@@ -967,6 +969,7 @@ public import Complexity.Computability.Circuit.Frontier.TensorNetwork.PacketTerm
 public import Complexity.Computability.Circuit.Frontier.TensorNetwork.Recursion
 public import Complexity.Computability.Circuit.Frontier.TensorNetwork.ReductionLift
 public import Complexity.Computability.Circuit.Frontier.TensorNetwork.Reindex
+public import Complexity.Computability.Circuit.Frontier.TensorNetwork.RowsFirstPolyTime
 public import Complexity.Computability.Circuit.Frontier.TensorNetwork.Schedule
 public import Complexity.Computability.Circuit.Frontier.TensorNetwork.ScheduleCount
 public import Complexity.Computability.Circuit.Frontier.TensorNetwork.ScheduledRecursion
@@ -1172,6 +1175,7 @@ public import Complexity.Computability.Complexity.Classes.CountingSimulation.Blo
 public import Complexity.Computability.Complexity.Classes.CountingSimulation.Containments
 public import Complexity.Computability.Complexity.Classes.CountingSimulation.Count
 public import Complexity.Computability.Complexity.Classes.CountingSimulation.CountingClasses
+public import Complexity.Computability.Complexity.Classes.CountingSimulation.EntryAnalysis
 public import Complexity.Computability.Complexity.Classes.CountingSimulation.FastAlgorithm
 public import Complexity.Computability.Complexity.Classes.CountingSimulation.FastAnalysis
 public import Complexity.Computability.Complexity.Classes.CountingSimulation.FastLeaves
