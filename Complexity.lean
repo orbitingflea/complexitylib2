@@ -2355,6 +2355,7 @@ public import Complexity.Computability.RAM.Squaring
 public import Complexity.Computability.Reduction.ManyOne
 public import Complexity.Computability.TreeEval.Ary.Basic
 public import Complexity.Computability.TreeEval.Ary.CookMertz
+public import Complexity.Computability.TreeEval.Ary.Packed
 public import Complexity.Computability.TreeEval.Basic
 public import Complexity.Computability.TreeEval.CookMertz
 public import Complexity.Computability.TreeEval.Encoding
@@ -2936,6 +2937,7 @@ public import Complexity.Foundations.Data.Code.ListDecoding
 public import Complexity.Foundations.Data.Code.LocalDecoding
 public import Complexity.Foundations.Data.Code.LocalListDecoding
 public import Complexity.Foundations.Data.Code.LowDegreeExtension
+public import Complexity.Foundations.Data.Code.LowDegreeExtension.UnitSum
 public import Complexity.Foundations.Data.Code.Multilinearity
 public import Complexity.Foundations.Data.Code.MultilinearitySoundness
 public import Complexity.Foundations.Data.Code.ReedMuller
