@@ -1735,6 +1735,11 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Alternating
 public import Complexity.Computability.Machines.Turing.MultiTape.Alternating.Game
 public import Complexity.Computability.Machines.Turing.MultiTape.Alternating.GuessVerify
 public import Complexity.Computability.Machines.Turing.MultiTape.BlockComputation
+public import Complexity.Computability.Machines.Turing.MultiTape.BlockComputation.ConcreteEvaluator
+public import Complexity.Computability.Machines.Turing.MultiTape.BlockComputation.ConcreteEvaluatorCorrect
+public import Complexity.Computability.Machines.Turing.MultiTape.BlockComputation.ConcreteSupplier
+public import Complexity.Computability.Machines.Turing.MultiTape.BlockComputation.ConcreteSupplierCorrect
+public import Complexity.Computability.Machines.Turing.MultiTape.BlockComputation.ConcreteSupplierSpace
 public import Complexity.Computability.Machines.Turing.MultiTape.BlockComputation.EncodedTree
 public import Complexity.Computability.Machines.Turing.MultiTape.BlockComputation.Encoding
 public import Complexity.Computability.Machines.Turing.MultiTape.BlockComputation.Encoding.NativeChecked
@@ -2457,6 +2462,7 @@ public import Complexity.Computability.TreeEval.Ary.Packed.RawControllerCorrect
 public import Complexity.Computability.TreeEval.Ary.Packed.RawControllerEncoding
 public import Complexity.Computability.TreeEval.Ary.Packed.RawControllerNative
 public import Complexity.Computability.TreeEval.Ary.Packed.RawControllerOutput
+public import Complexity.Computability.TreeEval.Ary.Packed.RawControllerPoint
 public import Complexity.Computability.TreeEval.Ary.Packed.RawControllerQuery
 public import Complexity.Computability.TreeEval.Ary.Packed.RawControllerSpace
 public import Complexity.Computability.TreeEval.Ary.PackingParameters
@@ -3273,6 +3279,7 @@ public import Complexity.Foundations.Probability.Gaussian.Real
 public import Complexity.Foundations.Probability.Gaussian.Sheppard
 public import Complexity.Foundations.Probability.HeavyCount
 public import Complexity.Foundations.Probability.HeavyCountRarity
+public import Complexity.Foundations.Probability.HeavyCountTail
 public import Complexity.Foundations.Probability.HierarchyParams
 public import Complexity.Foundations.Probability.PolynomialAtomCompression
 public import Complexity.Foundations.Probability.PolynomialAtomCutoffs
@@ -3288,6 +3295,7 @@ public import Complexity.Foundations.Probability.ProductError
 public import Complexity.Foundations.Probability.RootMetric
 public import Complexity.Foundations.Probability.RootMetric.Conditioning
 public import Complexity.Foundations.Probability.RootMetric.Minkowski
+public import Complexity.Foundations.Probability.RootMetric.Slices
 public import Complexity.Foundations.Probability.SecondMoment
 public import Complexity.Foundations.Probability.SourceRelease
 public import Complexity.Foundations.Probability.StochasticAtom
