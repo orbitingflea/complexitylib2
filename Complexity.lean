@@ -35,6 +35,9 @@ public import Complexity.Algorithms.Lean.KMP.Search
 public import Complexity.Algorithms.Lean.Kruskal.Basic
 public import Complexity.Algorithms.Lean.Kruskal.SimpleGraph
 public import Complexity.Algorithms.Lean.Matroid.Greedy
+public import Complexity.Algorithms.Lean.MaxFlow.Basic
+public import Complexity.Algorithms.Lean.MaxFlow.BipartiteMatching
+public import Complexity.Algorithms.Lean.MaxFlow.EdmondsKarp
 public import Complexity.Algorithms.Lean.MergeSort.Comparator
 public import Complexity.Algorithms.Lean.Online.Basic
 public import Complexity.Algorithms.Lean.Paging.Basic
@@ -1510,6 +1513,7 @@ public import Complexity.Computability.Complexity.FineGrained
 public import Complexity.Computability.Complexity.FineGrained.Assignment
 public import Complexity.Computability.Complexity.FineGrained.BruteForce
 public import Complexity.Computability.Complexity.FineGrained.CircuitCounting
+public import Complexity.Computability.Complexity.FineGrained.CircuitLowerBoundBudget
 public import Complexity.Computability.Complexity.FineGrained.ContractionCircuitCounting
 public import Complexity.Computability.Complexity.FineGrained.ContractionCounting
 public import Complexity.Computability.Complexity.FineGrained.ContractionMatching
@@ -2032,6 +2036,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Poly
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Search
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Sqrt
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.SqrtLog
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.SqrtLog.Budget
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Option
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Pi
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
@@ -3293,8 +3298,10 @@ public import Complexity.Foundations.Data.Nat.Radix.Measurement
 public import Complexity.Foundations.Data.Nat.RecursionTree
 public import Complexity.Foundations.Data.Nat.ResidueSum
 public import Complexity.Foundations.Data.Nat.SqrtLog
+public import Complexity.Foundations.Data.Nat.SqrtLog.Budget
 public import Complexity.Foundations.Data.Nat.SqrtLog.Factor
 public import Complexity.Foundations.Data.Nat.SqrtLog.Linear
+public import Complexity.Foundations.Data.Nat.SqrtLog.LowerBound
 public import Complexity.Foundations.Data.Nat.SqrtLog.Shifted
 public import Complexity.Foundations.Data.Nat.SqrtRatio
 public import Complexity.Foundations.Data.Nat.Subexponential
