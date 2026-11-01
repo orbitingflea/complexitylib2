@@ -58,6 +58,7 @@ the selection is not an exhaustive API reference.
 ## Selected results
 
 * [Cook–Levin: SAT is NP-complete](abstracts/ComplexityAbstracts/CookLevinAbstract.lean): Every efficiently checkable bit-string problem reduces in polynomial time to satisfiability.
+* [Agrawal–Kayal–Saxena: PRIMES is in P](abstracts/ComplexityAbstracts/PrimesAbstract.lean): Primality of a natural number given in binary is decidable in deterministic polynomial time.
 * [The PCP theorem](abstracts/ComplexityAbstracts/PCPAbstract.lean): NP proofs can be checked with logarithmic randomness and constantly many nonadaptive queries.
 * [Fagin: logic captures NP](abstracts/ComplexityAbstracts/FaginAbstract.lean): Existential second-order logic captures precisely the isomorphism-invariant NP properties of finite relational structures.
 * [Savitch: NPSPACE equals PSPACE](abstracts/ComplexityAbstracts/SavitchAbstract.lean): Nondeterminism does not enlarge polynomial space.
@@ -77,6 +78,7 @@ the selection is not an exhaustive API reference.
 * [Sipser–Gács–Lautemann: BPP lies in the second polynomial level](abstracts/ComplexityAbstracts/SipserLautemannAbstract.lean): Bounded-error polynomial time admits both existential–universal and universal–existential polynomial descriptions.
 * [Chor–Goldreich: the inner product extracts from two weak sources](abstracts/ComplexityAbstracts/ChorGoldreichAbstract.lean): Two independent weak random sources whose min-entropies add up to more than the string length give a nearly fair bit through the inner product modulo two.
 * [OpenAI: the Exponential Time Hypothesis is false](abstracts/ComplexityAbstracts/SubexponentialSATAbstract.lean): For each fixed clause width, one deterministic machine exactly counts satisfying assignments in subexponential time and polynomial space; every fixed-width SAT exponent is zero, and ETH and SETH are false.
+* [Schöning: 3-SAT in time (4/3)^n on the randomized word RAM](abstracts/ComplexityAbstracts/SchoeningAbstract.lean): One fixed randomized word-RAM program runs ⌈(3n + 1)(4/3)^n⌉·c independent trials of Schöning's local search; it never errs on unsatisfiable formulas and fails on satisfiable 3-CNFs with probability at most e^(-c).
 * [Ilango: Partial MCSP is hard under the Exponential Time Hypothesis](abstracts/ComplexityAbstracts/PartialMCSPAbstract.lean): Under ETH, deciding circuit size for partial Boolean functions cannot be done in time 2^o(m log m) = N^o(log log N). *Note (October 2026):* the native formalization now [proves ETH false](abstracts/ComplexityAbstracts/SubexponentialSATAbstract.lean). This conditional entry is retained and its theorem remains valid, but its premise is false.
 * [McKay–Murray–Williams: barely superlinear circuit lower bounds for MCSP separate P from NP](abstracts/ComplexityAbstracts/MagnificationAbstract.lean): If NP has polynomial-size circuits, then MCSP on 2^n-bit truth tables has circuits of size 2^n poly(n + s(n)); hence barely superlinear MCSP lower bounds separate NP from P/poly and P from NP.
 

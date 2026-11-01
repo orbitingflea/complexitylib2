@@ -40,6 +40,8 @@ import ComplexityAbstracts.PCPAbstract
 import ComplexityAbstracts.PCPBridge
 import ComplexityAbstracts.PartialMCSPAbstract
 import ComplexityAbstracts.PartialMCSPBridge
+import ComplexityAbstracts.PrimesAbstract
+import ComplexityAbstracts.PrimesBridge
 import ComplexityAbstracts.Randomized
 import ComplexityAbstracts.RandomizedWordRAMAbstract
 import ComplexityAbstracts.RandomizedWordRAMBridge
@@ -47,6 +49,8 @@ import ComplexityAbstracts.ResolutionAbstract
 import ComplexityAbstracts.ResolutionBridge
 import ComplexityAbstracts.SavitchAbstract
 import ComplexityAbstracts.SavitchBridge
+import ComplexityAbstracts.SchoeningAbstract
+import ComplexityAbstracts.SchoeningBridge
 import ComplexityAbstracts.ShamirAbstract
 import ComplexityAbstracts.ShamirBridge
 import ComplexityAbstracts.SipserLautemannAbstract
