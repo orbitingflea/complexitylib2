@@ -2715,6 +2715,10 @@ public import Complexity.Crypto.Protocols.SigmaProtocol.Lyubashevsky.NativeExtra
 public import Complexity.Crypto.Protocols.SigmaProtocol.SchnorrIdentification
 public import Complexity.Crypto.Protocols.SigmaProtocol.SchnorrSignature
 public import Complexity.Crypto.Protocols.Signature.RandomOracle
+public import Complexity.DataStructure.HashFamily.Spec
+public import Complexity.DataStructure.HashFamily.WordRAM.Basic
+public import Complexity.DataStructure.ObliviousSequence
+public import Complexity.DataStructure.WordRAM.Randomized.ObliviousSequence
 public import Complexity.Foundations.Algebra.FiniteMagnitude
 public import Complexity.Foundations.Algebra.GeometricTail
 public import Complexity.Foundations.Algebra.Shear
@@ -3486,6 +3490,7 @@ public import Complexity.Probability.HashIsolation
 public import Complexity.Probability.IID
 public import Complexity.Probability.Isolation
 public import Complexity.Probability.KWiseIndependent
+public import Complexity.Probability.KWiseIndependent.Coupling
 public import Complexity.Probability.KWiseIndependent.DoubleTabulation
 public import Complexity.Probability.KWiseIndependent.Polynomial
 public import Complexity.Probability.KWiseIndependent.Restriction
