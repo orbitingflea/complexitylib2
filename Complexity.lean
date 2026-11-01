@@ -1400,6 +1400,7 @@ public import Complexity.Computability.Complexity.Classes.Time.BoundedExists
 public import Complexity.Computability.Complexity.Classes.Time.Polynomial
 public import Complexity.Computability.Complexity.Classes.Time.Verifier
 public import Complexity.Computability.Complexity.Classes.Time.WordRAM
+public import Complexity.Computability.Complexity.Classes.TimeSpace.Williams
 public import Complexity.Computability.Complexity.Classes.Toda
 public import Complexity.Computability.Complexity.Classes.Toda.Counting
 public import Complexity.Computability.Complexity.Classes.Toda.Hierarchy
@@ -1742,6 +1743,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.BlockComputatio
 public import Complexity.Computability.Machines.Turing.MultiTape.BlockComputation.ConcreteSupplierCorrect
 public import Complexity.Computability.Machines.Turing.MultiTape.BlockComputation.ConcreteSupplierSpace
 public import Complexity.Computability.Machines.Turing.MultiTape.BlockComputation.Driver
+public import Complexity.Computability.Machines.Turing.MultiTape.BlockComputation.DriverBounds
 public import Complexity.Computability.Machines.Turing.MultiTape.BlockComputation.DriverComputable
 public import Complexity.Computability.Machines.Turing.MultiTape.BlockComputation.DriverCorrect
 public import Complexity.Computability.Machines.Turing.MultiTape.BlockComputation.EncodedTree
@@ -1820,6 +1822,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.BlockComputatio
 public import Complexity.Computability.Machines.Turing.MultiTape.BlockComputation.ScheduleReadSpace
 public import Complexity.Computability.Machines.Turing.MultiTape.BlockComputation.ScheduleReadWindow
 public import Complexity.Computability.Machines.Turing.MultiTape.BlockComputation.ScheduleSearch
+public import Complexity.Computability.Machines.Turing.MultiTape.BlockComputation.ScheduleSearchBounds
 public import Complexity.Computability.Machines.Turing.MultiTape.BlockComputation.ScheduleSearchCorrect
 public import Complexity.Computability.Machines.Turing.MultiTape.BlockComputation.ScheduleSearchSpace
 public import Complexity.Computability.Machines.Turing.MultiTape.BlockComputationTree
@@ -3314,6 +3317,7 @@ public import Complexity.Foundations.Probability.PolynomialAtomRows.RootError
 public import Complexity.Foundations.Probability.PolynomialAtomRows.Saturation
 public import Complexity.Foundations.Probability.ProductError
 public import Complexity.Foundations.Probability.RootMetric
+public import Complexity.Foundations.Probability.RootMetric.ConditionalWalk
 public import Complexity.Foundations.Probability.RootMetric.Conditioning
 public import Complexity.Foundations.Probability.RootMetric.Minkowski
 public import Complexity.Foundations.Probability.RootMetric.Slices
@@ -3628,6 +3632,7 @@ public import Complexity.Probability.PairwiseIndependentHash.HeavyCount
 public import Complexity.Probability.PairwiseIndependentHash.HierarchyChannels
 public import Complexity.Probability.PairwiseIndependentHash.Retention
 public import Complexity.Probability.PairwiseIndependentHash.RetentionChannel
+public import Complexity.Probability.PairwiseIndependentHash.RowFourthMoment
 public import Complexity.Probability.PairwiseIndependentHash.Shift
 public import Complexity.Probability.PairwiseIndependentHash.SliceFourthMoment
 public import Complexity.Probability.PairwiseIndependentHash.SliceGap
