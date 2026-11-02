@@ -2929,6 +2929,8 @@ public import Complexity.DataStructure.Dictionary.WordRAM.LinearProbing.FiveWise
 public import Complexity.DataStructure.Dictionary.WordRAM.UniformProbing
 public import Complexity.DataStructure.DisjointSet.Spec
 public import Complexity.DataStructure.DisjointSet.UnionFind
+public import Complexity.DataStructure.DynamicArray.BitResizable
+public import Complexity.DataStructure.DynamicArray.Spec
 public import Complexity.DataStructure.DynamicArray.WordRAM.Basic
 public import Complexity.DataStructure.FenwickTree.Basic
 public import Complexity.DataStructure.FenwickTree.Impl
@@ -2976,6 +2978,8 @@ public import Complexity.DataStructure.HashFamily.WordRAM.KWise
 public import Complexity.DataStructure.HashFamily.WordRAM.MultiplyShift
 public import Complexity.DataStructure.HashFamily.WordRAM.Tabulation
 public import Complexity.DataStructure.Memory.Alloc
+public import Complexity.DataStructure.Memory.BitPacking
+public import Complexity.DataStructure.Memory.BitResizable
 public import Complexity.DataStructure.Memory.Copy
 public import Complexity.DataStructure.Memory.Field
 public import Complexity.DataStructure.Memory.Frame
