@@ -3110,6 +3110,7 @@ public import Complexity.Foundations.BooleanAnalysis.Bonami
 public import Complexity.Foundations.BooleanAnalysis.BucketWeight
 public import Complexity.Foundations.BooleanAnalysis.Concentration
 public import Complexity.Foundations.BooleanAnalysis.Convolution
+public import Complexity.Foundations.BooleanAnalysis.CoordinateOperators
 public import Complexity.Foundations.BooleanAnalysis.CoordinateSampling
 public import Complexity.Foundations.BooleanAnalysis.Decomposition
 public import Complexity.Foundations.BooleanAnalysis.Degree
@@ -3160,6 +3161,7 @@ public import Complexity.Foundations.BooleanAnalysis.SparseHermiteRecovery
 public import Complexity.Foundations.BooleanAnalysis.SparseIncidence
 public import Complexity.Foundations.BooleanAnalysis.SparseReplacementDesign
 public import Complexity.Foundations.BooleanAnalysis.SpectralSample
+public import Complexity.Foundations.BooleanAnalysis.StableInfluence
 public import Complexity.Foundations.BooleanAnalysis.Symmetrization
 public import Complexity.Foundations.BooleanAnalysis.Tribes
 public import Complexity.Foundations.BooleanAnalysis.Variance
@@ -3562,6 +3564,7 @@ public import Complexity.Foundations.Probability.DetectedStage
 public import Complexity.Foundations.Probability.EfronStein
 public import Complexity.Foundations.Probability.EstimatorPrecision
 public import Complexity.Foundations.Probability.EstimatorSchedule
+public import Complexity.Foundations.Probability.FineOmission
 public import Complexity.Foundations.Probability.FineProductMean
 public import Complexity.Foundations.Probability.FourthRootHierarchyParams
 public import Complexity.Foundations.Probability.Gaussian.Multivariate
@@ -3588,6 +3591,8 @@ public import Complexity.Foundations.Probability.RootMetric.Conditioning
 public import Complexity.Foundations.Probability.RootMetric.Minkowski
 public import Complexity.Foundations.Probability.RootMetric.Slices
 public import Complexity.Foundations.Probability.SamplerPrefix
+public import Complexity.Foundations.Probability.ScheduledFineProductMean
+public import Complexity.Foundations.Probability.ScheduledProductMean
 public import Complexity.Foundations.Probability.SecondMoment
 public import Complexity.Foundations.Probability.SourceRelease
 public import Complexity.Foundations.Probability.StochasticAtom
