@@ -1467,11 +1467,14 @@ public import Complexity.Computability.Complexity.CookLevin.Completeness
 public import Complexity.Computability.Complexity.CookLevin.Correctness
 public import Complexity.Computability.Complexity.CookLevin.Counting
 public import Complexity.Computability.Complexity.CookLevin.Encoding
+public import Complexity.Computability.Complexity.CookLevin.Levin
 public import Complexity.Computability.Complexity.CookLevin.Parameters
 public import Complexity.Computability.Complexity.CookLevin.Parsimonious
 public import Complexity.Computability.Complexity.CookLevin.PolyTime
 public import Complexity.Computability.Complexity.CookLevin.Reduction
+public import Complexity.Computability.Complexity.CookLevin.RunFeatures
 public import Complexity.Computability.Complexity.CookLevin.Tableau
+public import Complexity.Computability.Complexity.CookLevin.Witness
 public import Complexity.Computability.Complexity.Fagin.Converse
 public import Complexity.Computability.Complexity.Fagin.Layout
 public import Complexity.Computability.Complexity.Fagin.Ordered
@@ -2021,6 +2024,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Poly
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.BinaryLog
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Choose
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Div
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Eq
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Factorial
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Fin
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Gcd
@@ -2284,6 +2288,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Space
 public import Complexity.Computability.Machines.Turing.MultiTape.StepMachine.Basic
 public import Complexity.Computability.Machines.Turing.MultiTape.StepMachine.Comp
 public import Complexity.Computability.Machines.Turing.MultiTape.TapeLemmas
+public import Complexity.Computability.Machines.Turing.MultiTape.TrackedRun
 public import Complexity.Computability.Machines.Turing.MultiTape.Universal.Basic
 public import Complexity.Computability.Machines.Turing.MultiTape.Universal.Bit
 public import Complexity.Computability.Machines.Turing.MultiTape.Universal.Bound
@@ -2799,6 +2804,8 @@ public import Complexity.Crypto.Computational.IndexedSignature
 public import Complexity.Crypto.Computational.IndexedSignature.Counter
 public import Complexity.Crypto.Computational.IndexedSignature.Seeded
 public import Complexity.Crypto.Computational.Kilian
+public import Complexity.Crypto.Computational.Kilian.NP
+public import Complexity.Crypto.Computational.Kilian.Soundness
 public import Complexity.Crypto.Computational.LWE.Basic
 public import Complexity.Crypto.Computational.MAC
 public import Complexity.Crypto.Computational.MerkleDamgard
@@ -2870,6 +2877,7 @@ public import Complexity.Crypto.Computational.Pseudoentropy.WordReduction
 public import Complexity.Crypto.Computational.Pseudoentropy.WordSeedExtraction
 public import Complexity.Crypto.Computational.PseudorandomFunction
 public import Complexity.Crypto.Computational.PseudorandomFunction.Coins
+public import Complexity.Crypto.Computational.PseudorandomFunction.MultiKey
 public import Complexity.Crypto.Computational.PseudorandomFunction.RandomOracle
 public import Complexity.Crypto.Computational.PseudorandomFunction.TruthTable
 public import Complexity.Crypto.Computational.PseudorandomGenerator
@@ -2881,6 +2889,7 @@ public import Complexity.Crypto.Computational.Signature
 public import Complexity.Crypto.Computational.Stretch
 public import Complexity.Crypto.Computational.Stretch.Quantitative
 public import Complexity.Crypto.Computational.TreeSignature
+public import Complexity.Crypto.Computational.TreeSignature.CoinHybrid
 public import Complexity.Crypto.Computational.UniformChoice
 public import Complexity.Crypto.Computational.ZeroKnowledge
 public import Complexity.Crypto.Game
@@ -3947,6 +3956,7 @@ public import Complexity.Probability.RankDecoder.Native
 public import Complexity.Probability.RejectionSampling
 public import Complexity.Probability.Resilience
 public import Complexity.Probability.Rewinding
+public import Complexity.Probability.Rewinding.Consistency
 public import Complexity.Probability.Shearer
 public import Complexity.Probability.SmallBias
 public import Complexity.Probability.SmallBias.Powering
