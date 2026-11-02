@@ -2929,6 +2929,7 @@ public import Complexity.DataStructure.Dictionary.WordRAM.LinearProbing.FiveWise
 public import Complexity.DataStructure.Dictionary.WordRAM.UniformProbing
 public import Complexity.DataStructure.DisjointSet.Spec
 public import Complexity.DataStructure.DisjointSet.UnionFind
+public import Complexity.DataStructure.DynamicArray.ResizableWord
 public import Complexity.DataStructure.DynamicArray.WordRAM.Basic
 public import Complexity.DataStructure.FenwickTree.Basic
 public import Complexity.DataStructure.FenwickTree.Impl
@@ -2981,6 +2982,7 @@ public import Complexity.DataStructure.Memory.Field
 public import Complexity.DataStructure.Memory.Frame
 public import Complexity.DataStructure.Memory.Record
 public import Complexity.DataStructure.Memory.Region
+public import Complexity.DataStructure.Memory.Resizable
 public import Complexity.DataStructure.Memory.Spec
 public import Complexity.DataStructure.Memory.Triple
 public import Complexity.DataStructure.ObliviousSequence
@@ -3423,6 +3425,7 @@ public import Complexity.Foundations.Data.Nat.Bitwise.PackedCount
 public import Complexity.Foundations.Data.Nat.Bitwise.Packing
 public import Complexity.Foundations.Data.Nat.Bitwise.Projection
 public import Complexity.Foundations.Data.Nat.Bitwise.Sparse
+public import Complexity.Foundations.Data.Nat.Bitwise.Subword
 public import Complexity.Foundations.Data.Nat.Bitwise.SumTree
 public import Complexity.Foundations.Data.Nat.Card
 public import Complexity.Foundations.Data.Nat.CeilDiv
