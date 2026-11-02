@@ -111,7 +111,6 @@ public import Complexity.Algorithms.WordRAM.Dijkstra.Relax
 public import Complexity.Algorithms.WordRAM.Dijkstra.Statement
 public import Complexity.Algorithms.WordRAM.ElementDistinctness
 public import Complexity.Algorithms.WordRAM.ElementDistinctnessRAM
-public import Complexity.Algorithms.WordRAM.ExactLog
 public import Complexity.Algorithms.WordRAM.ExactTriangle.CallableFixedPrime
 public import Complexity.Algorithms.WordRAM.ExactTriangle.CallableFixedPrime.Adapt
 public import Complexity.Algorithms.WordRAM.ExactTriangle.CallableFixedPrime.Admission
@@ -2586,6 +2585,7 @@ public import Complexity.Computability.WordRAM.Copy
 public import Complexity.Computability.WordRAM.CopySum
 public import Complexity.Computability.WordRAM.Defs
 public import Complexity.Computability.WordRAM.Dynamic
+public import Complexity.Computability.WordRAM.ExactLog
 public import Complexity.Computability.WordRAM.ExactNotation
 public import Complexity.Computability.WordRAM.Function
 public import Complexity.Computability.WordRAM.GhostLoop
@@ -2632,7 +2632,9 @@ public import Complexity.Computability.WordRAM.Randomized.UniformLoopExit
 public import Complexity.Computability.WordRAM.Realization.Basic
 public import Complexity.Computability.WordRAM.Realization.Bind
 public import Complexity.Computability.WordRAM.Realization.Branch
+public import Complexity.Computability.WordRAM.Realization.Client.MemoryStack
 public import Complexity.Computability.WordRAM.Realization.Glue
+public import Complexity.Computability.WordRAM.Realization.GlueVector
 public import Complexity.Computability.WordRAM.Realization.Grade
 public import Complexity.Computability.WordRAM.Realization.Loop
 public import Complexity.Computability.WordRAM.Realization.MemoryBackend
