@@ -2648,6 +2648,7 @@ public import Complexity.Computability.WordRAM.Realization.MemoryBackend
 public import Complexity.Computability.WordRAM.Realization.Module
 public import Complexity.Computability.WordRAM.Realization.Primitive
 public import Complexity.Computability.WordRAM.Realization.Program
+public import Complexity.Computability.WordRAM.Realization.Reindex
 public import Complexity.Computability.WordRAM.Realization.Result
 public import Complexity.Computability.WordRAM.Realization.While
 public import Complexity.Computability.WordRAM.Realization.WhileAbsorb
@@ -3020,10 +3021,16 @@ public import Complexity.DataStructure.PriorityQueue.WordRAM.FibonacciHeap.Model
 public import Complexity.DataStructure.PriorityQueue.WordRAM.FibonacciHeap.Program
 public import Complexity.DataStructure.PriorityQueue.WordRAM.FibonacciHeap.Trees
 public import Complexity.DataStructure.Queue.Memory
+public import Complexity.DataStructure.Queue.Memory.Transfer
 public import Complexity.DataStructure.Queue.Spec
-public import Complexity.DataStructure.Queue.WordRAM.Basic
-public import Complexity.DataStructure.Queue.WordRAM.Dynamic
 public import Complexity.DataStructure.Queue.WordRAM.Model
+public import Complexity.DataStructure.Queue.WordRAM.RegisterCorrectness
+public import Complexity.DataStructure.Queue.WordRAM.RegisterDynamic
+public import Complexity.DataStructure.Queue.WordRAM.RegisterExecution
+public import Complexity.DataStructure.Queue.WordRAM.RegisterMetadata
+public import Complexity.DataStructure.Queue.WordRAM.RegisterMethods
+public import Complexity.DataStructure.Queue.WordRAM.RegisterProgram
+public import Complexity.DataStructure.Queue.WordRAM.RegisterTransfer
 public import Complexity.DataStructure.Retroactive.Basic
 public import Complexity.DataStructure.SearchTree.Basic
 public import Complexity.DataStructure.SearchTree.Cost
@@ -3559,6 +3566,7 @@ public import Complexity.Foundations.Probability.AtomCutoffs
 public import Complexity.Foundations.Probability.ColumnDetector
 public import Complexity.Foundations.Probability.ConditionalProductMean
 public import Complexity.Foundations.Probability.CorrectionAtom
+public import Complexity.Foundations.Probability.CorrectionRowTasks
 public import Complexity.Foundations.Probability.DetectedHierarchy
 public import Complexity.Foundations.Probability.DetectedStage
 public import Complexity.Foundations.Probability.EfronStein
@@ -3574,6 +3582,10 @@ public import Complexity.Foundations.Probability.HeavyCount
 public import Complexity.Foundations.Probability.HeavyCountRarity
 public import Complexity.Foundations.Probability.HeavyCountTail
 public import Complexity.Foundations.Probability.HierarchyParams
+public import Complexity.Foundations.Probability.HierarchySampling
+public import Complexity.Foundations.Probability.HierarchyTaskData
+public import Complexity.Foundations.Probability.HierarchyTaskMeans
+public import Complexity.Foundations.Probability.PilotTasks
 public import Complexity.Foundations.Probability.PolynomialAtomCompression
 public import Complexity.Foundations.Probability.PolynomialAtomCutoffs
 public import Complexity.Foundations.Probability.PolynomialAtomFalseOverflow
