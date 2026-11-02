@@ -1924,6 +1924,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Degree
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Degree.Bounds
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Degree.Primitives
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Doubled
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Fold
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.InSpace
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.InSpace.Bit
@@ -1939,6 +1940,8 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.InSp
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.LinearSpaceArith
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Lists
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.LogSpace
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.LogSpace.Composition.Recompute
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.LogSpace.Composition.SmallSpace
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.LogSpace.ConfigurationGraph
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.LogSpace.ConfigurationGraph.Basic
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.LogSpace.ConfigurationGraph.Bounds
@@ -2117,6 +2120,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Halting.Partrec
 public import Complexity.Computability.Machines.Turing.MultiTape.Halting.Reduction
 public import Complexity.Computability.Machines.Turing.MultiTape.Halting.Rice
 public import Complexity.Computability.Machines.Turing.MultiTape.Halting.SMN
+public import Complexity.Computability.Machines.Turing.MultiTape.HaltsAt
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.BinaryAddition
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.BinaryComparison
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.BinaryCounter
@@ -2277,9 +2281,9 @@ public import Complexity.Computability.Machines.Turing.MultiTape.StepMachine.Bas
 public import Complexity.Computability.Machines.Turing.MultiTape.StepMachine.Comp
 public import Complexity.Computability.Machines.Turing.MultiTape.TapeLemmas
 public import Complexity.Computability.Machines.Turing.MultiTape.Universal.Basic
+public import Complexity.Computability.Machines.Turing.MultiTape.Universal.Bit
 public import Complexity.Computability.Machines.Turing.MultiTape.Universal.Bound
 public import Complexity.Computability.Machines.Turing.MultiTape.Universal.Complexity
-public import Complexity.Computability.Machines.Turing.MultiTape.Universal.Compose
 public import Complexity.Computability.Machines.Turing.MultiTape.Universal.Correct
 public import Complexity.Computability.Machines.Turing.MultiTape.Universal.Decode
 public import Complexity.Computability.Machines.Turing.MultiTape.Universal.InPlace
