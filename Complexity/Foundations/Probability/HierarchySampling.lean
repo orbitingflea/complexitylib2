@@ -244,6 +244,12 @@ variable
     (hτ0 : ∀ r, 0 ≤ τ r) (hτ1 : ∀ r, τ r ≤ 1) (hτ₀ : 0 ≤ τ₀)
     (hτ : ∀ r, r ≤ τ₀ → τ r = 1) (hI : ∀ v r, v ≤ P.δ₁ → I v r = 0)
 
+/-- The channel constructor uses the true stage rate for its source budget. -/
+theorem ofChannels_p :
+    (ofChannels P X Y hXY hYX hf hπ hcπ hpair hC hC1 hi
+      I τ h τ₀ hQ hτ0 hτ1 hτ₀ hτ hI).p = Cpair * f := by
+  rfl
+
 /-- The channel constructor preserves its `I` parameter. -/
 theorem ofChannels_I :
     (ofChannels P X Y hXY hYX hf hπ hcπ hpair hC hC1 hi
@@ -279,6 +285,12 @@ theorem ofChannels_Kc :
     (ofChannels P X Y hXY hYX hf hπ hcπ hpair hC hC1 hi
       I τ h τ₀ hQ hτ0 hτ1 hτ₀ hτ hI).Kc = ⌈4 * (1
         + Cpair * P.R)⌉₊ := by
+  rfl
+
+/-- The channel constructor uses the actual terminal pair constant. -/
+theorem ofChannels_c :
+    (ofChannels P X Y hXY hYX hf hπ hcπ hpair hC hC1 hi
+      I τ h τ₀ hQ hτ0 hτ1 hτ₀ hτ hI).c = Cpair := by
   rfl
 
 /-- The channel constructor preserves its `π` parameter. -/

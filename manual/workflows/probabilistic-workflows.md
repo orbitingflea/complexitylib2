@@ -146,11 +146,71 @@ For finite prime frame environments, start with
 [HierarchyRankCutoffs](../../Complexity/Foundations/Probability/HierarchyRankCutoffs.lean)
 and its [complete regression client](../../ComplexityTests/HierarchyCutoffs.lean).
 The constructor examples use H=4, P=5 and horizon zero on a positive singleton matrix.
-These constructors have two independent full-environment seeds. The actual request support
-and conditional-walk noise theorems instead use one environment's terminal-coordinate split;
-the noise bound retains the raw input fourth moment. Supply the stated horizon and injective
-identifiers before applying them. These results do not establish a recursive estimator,
-a native implementation, resource bounds or RL=L; the remaining objective is
+These constructors have two independent full-environment seeds. For the genuine mean of
+one actual environment, import
+[HierarchyCorrectionMean](../../Complexity/Foundations/Probability/HierarchyCorrectionMean.lean)
+and follow its [complete regression client](../../ComplexityTests/HierarchyCorrectionMean.lean).
+`terminalSplit` retains every spectator coordinate. Use `genuine_request_mean_usage` for
+an independent usage grid rate, including narrower usage; the same-rate specialization is
+`genuine_request_mean_density`. Both transport the source-conditioned average through the
+split and derive source nonemptiness and the actual usage density. Supply a nonzero padding
+multiplier, injective identifiers, an admissible request, a finite prime rank horizon, equal
+true source/terminal stage rates, and a nonnegative substochastic matrix C bounded entrywise
+by that rate. The usage exponent need not belong to the rank horizon: its box has positive
+side at every finite exponent. The children are the existing raw input, its genuine joint
+source/usage preparation and the final pilot maximum. The target remains the existing
+correction iterate on the true split channels. `CorrectionSampling.withUsage` reuses all gates
+and source/incoming laws, replacing only the measured usage marginal and terminal pair bound.
+
+The P=5 client has different nonempty source and terminal copy suffixes and a genuine final
+pilot proved zero from its detector rank. Its narrower-usage example fixes source/rank exponent
+1 and uses usage exponent 2, with actual densities 81/625 and 16/625 and a strictly positive
+complete request mean. Thus the usage change is observable in the actual environment.
+
+For a sampling source narrower than the true stage, import
+[HierarchySourceSampling](../../Complexity/Foundations/Probability/HierarchySourceSampling.lean)
+and use `source_request_mean`; follow its
+[complete regression client](../../ComplexityTests/HierarchySourceSampling.lean).
+Supply source exponent `s`, stage exponent `k`, `k ≤ s`, and a horizon containing `s`.
+The true `stageSource` retains the source role and suffix at the terminal stage rate.
+`stageRaw` and `stageMaximum` use these genuine stage channels. `sourcePreparation`
+uses the actual sampling source for its incoming gate. `source_normalizer` identifies its
+joint actual source/usage mean on the same environment, and `stage_atomCutoff_eq`
+preserves the true cutoff. `CorrectionSampling.withSource` changes only the sampling-source
+pair law, preserving the true input, final pilot, gates and incoming budget. The common
+`correctionRequest_eq_split` avoids rebuilding the split transport for each choice of children.
+
+The P=5 regression has source/stage/usage exponents 2/1/3, actual densities
+16/625, 81/625 and 1/625, different nonempty copy suffixes, and a free spectator role.
+It proves a positive complete actual request mean with the genuine final pilot. Usage
+exponent 3 is outside the required source/stage horizon 2.
+
+To discharge the raw input fourth moment for a positive-iteration residual, import
+[HierarchyRawMoment](../../Complexity/Foundations/Probability/HierarchyRawMoment.lean)
+and apply `rawIncomingNormalized_noise_le_lower`. Supply positive N, u, row rank K and
+incoming rank Kc. The selected cutoff laws derive the actual left correction child's
+range `CA = 2 * Q(atomCap)`, row support K and incoming support Kc, for arbitrary raw,
+preparatory and pilot children. Its source-released product costs
+`K^3 * CA^4 * Kc * (rate(km) / u)` times the weighted right-child fourth moment.
+`incomingMomentBudget` adds the actual weighted direct and negative child moments, with
+a conservative factor 64 for the signed sum. The right child includes the exact usage
+ratio and midpoint marginal divisor from `rawSample`; it never takes the old source as
+an extra argument. All children may share every rank coordinate.
+
+The [checked examples](../../ComplexityTests/HierarchyRawMoment.lean) include a complete
+P=5 residual with input moment one and positive correction product, different nonempty
+copy suffixes and a spectator. A correlated two-factor example has exact moment 257/2.
+An identity family with one nonzero per row and column has moment n at N=u=1, so support
+and range caps alone do not imply a width-independent unnormalized moment. The new client
+requires lower-child moments to be paid by a later induction; it assumes no final raw or
+noise certificate. Zero correction remains literal; the moment/noise bridge here treats
+positive iterations. Pilot/copy paths, quantitative lower-child budgets, summation and
+recursive/native correctness remain open.
+
+For a coarser source, `source_incoming_cost_le` quantifies the generic incoming cost as
+`32 * R * (sourceRate / stageRate)`; the fixed incoming rank is not proved to pay that
+inflated budget. Arbitrary coarser sampling sources, a fully assembled recursive hierarchy,
+lower-child budget induction, native realization and RL=L remain in
 [issue #1721](https://github.com/cslib-community/complexitylib/issues/1721).
 
 ## Carry the certificate into a security proof
