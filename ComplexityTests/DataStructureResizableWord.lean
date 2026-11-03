@@ -113,4 +113,79 @@ info: 'Cslib.DataStructure.DynamicArray.ResizableWord.twoArrays_reuse_released_m
 #guard_msgs (whitespace := lax) in
 #print axioms ResizableWord.twoArrays_reuse_released_memory
 
+/--
+info: 'Cslib.WordRAM.Resizable.readSubwordCode_exec' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.WordRAM.Resizable.readSubwordCode_exec
+
+/--
+info: 'Cslib.WordRAM.Resizable.writeSubwordCode_exec' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.WordRAM.Resizable.writeSubwordCode_exec
+
+/--
+info: 'Cslib.DataStructure.DynamicArray.ResizableWord.demonicRefinement' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms ResizableWord.demonicRefinement
+
+/--
+info: 'Cslib.DataStructure.DynamicArray.ResizableWord.demonicAmortized' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms ResizableWord.demonicAmortized
+
+/--
+info: 'Cslib.DataStructure.DynamicArray.ResizableWord.readArrayCode_exec' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms ResizableWord.readArrayCode_exec
+
+/--
+info: 'Cslib.DataStructure.DynamicArray.ResizableWord.writeArrayCode_exec' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms ResizableWord.writeArrayCode_exec
+
+/--
+info: 'Cslib.DataStructure.DynamicArray.ResizableWord.appendArrayCode_exec' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms ResizableWord.appendArrayCode_exec
+
+/--
+info: 'Cslib.DataStructure.DynamicArray.ResizableWord.popArrayCode_exec' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms ResizableWord.popArrayCode_exec
+
+/--
+info: 'Cslib.DataStructure.Memory.Resizable.ChunkedTape.releaseWord1_then_allocWord1_spec' depends on axioms: [propext,
+ Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Resizable.ChunkedTape.releaseWord1_then_allocWord1_spec
+
+/--
+info: 'Cslib.DataStructure.DynamicArray.ResizableWord.twoArrays_singleTape_reuse' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms ResizableWord.twoArrays_singleTape_reuse
+
 end ComplexityTests.DataStructureResizableWord

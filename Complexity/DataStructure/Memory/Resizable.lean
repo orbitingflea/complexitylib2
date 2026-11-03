@@ -7,6 +7,7 @@ Authors: Renfei Zhou
 module
 -- upstream: candidate
 
+public import Complexity.Computability.WordRAM.Resizable
 public import Complexity.DataStructure.Memory.Field
 public import Complexity.DataStructure.StateTransition.Refinement
 public import Mathlib.Algebra.BigOperators.Group.Finset.Basic
@@ -191,13 +192,17 @@ instance decidableValidHistory (w : ℕ) (s : State) (os : List Op) :
   | cons o os ih =>
     exact decidable_of_iff (valid w s o ∧ (spec w).ValidHistory (step s o).1 os) Iff.rfl
 
-/-- Demonic relational transition at word width `w`: `.growDirty k` permits any post-state `s'`
-that preserves `s.mem` outside `[s.frontier, s.frontier + k)` and places arbitrary `w`-bit words
-in `[s.frontier, s.frontier + k)` (`[KLZ26]` §5.1, Footnotes 10 & 13). -/
+/-- Demonic relational transition at word width `w`: `.grow k` and `.growDirty k` permit any
+post-state `s'` that preserves `s.mem` outside `[s.frontier, s.frontier + k)` (including keeping
+`s'.mem a = 0` for `a ≥ s.frontier + k` when `ZeroAbove s` holds) and places arbitrary `w`-bit
+words in `[s.frontier, s.frontier + k)` (`[KLZ26]` §5.1, Footnotes 10 & 13). -/
 def demonicStep (w : ℕ) (s : State) : (o : Op) → State → o.Result → Prop
   | .read a, s', r => s' = s ∧ r = s.mem a
   | .write a v, s', _ => s' = ⟨Function.update s.mem a v, s.frontier⟩
-  | .grow k, s', r => s' = ⟨clear s.mem s.frontier k, s.frontier + k⟩ ∧ r = s.frontier
+  | .grow k, s', r =>
+      s'.frontier = s.frontier + k ∧ r = s.frontier ∧
+        (∀ a, a < s.frontier ∨ s.frontier + k ≤ a → s'.mem a = s.mem a) ∧
+        (∀ a, s.frontier ≤ a → a < s.frontier + k → Fits w (s'.mem a))
   | .growDirty k, s', r =>
       s'.frontier = s.frontier + k ∧ r = s.frontier ∧
         (∀ a, a < s.frontier ∨ s.frontier + k ≤ a → s'.mem a = s.mem a) ∧
@@ -397,10 +402,7 @@ theorem wellFormed_demonicStep {w : ℕ} {s s' : State} {o : Op} {r : o.Result}
   | write a v =>
     subst hstep
     exact hs.step (o := .write a v) hv
-  | grow k =>
-    rcases hstep with ⟨rfl, -⟩
-    exact hs.step (o := .alloc k) hv
-  | growDirty k =>
+  | grow k | growDirty k =>
     rcases hstep with ⟨hfront, -, hout, hin⟩
     refine ⟨hfront.symm ▸ hv, fun a => ?_⟩
     by_cases ha : s.frontier ≤ a ∧ a < s.frontier + k
@@ -411,6 +413,34 @@ theorem wellFormed_demonicStep {w : ℕ} {s s' : State} {o : Op} {r : o.Result}
     subst hstep
     exact wellFormed_step (o := .shrink k) hs hv
 
+/-- Every valid transition of `demonicStep w` preserves `ZeroAbove` strictly above the new
+frontier. -/
+theorem zeroAbove_demonicStep {w : ℕ} {s s' : State} {o : Op} {r : o.Result}
+    (hs : ZeroAbove s) (hv : valid w s o) (hstep : demonicStep w s o s' r) :
+    ZeroAbove s' := by
+  cases o with
+  | read a =>
+    rcases hstep with ⟨rfl, -⟩
+    exact hs
+  | write a v =>
+    subst hstep
+    exact zeroAbove_step (o := .write a v) hs hv
+  | grow k | growDirty k =>
+    rcases hstep with ⟨hfront, -, hout, -⟩
+    intro a ha
+    rw [hfront] at ha
+    rw [hout a (Or.inr ha)]
+    exact hs a (by omega)
+  | shrink k =>
+    subst hstep
+    exact zeroAbove_step (o := .shrink k) hs hv
+
+/-- Every valid transition of `demonicStep w` preserves `Canonical w`. -/
+theorem canonical_demonicStep {w : ℕ} {s s' : State} {o : Op} {r : o.Result}
+    (hs : Canonical w s) (hv : valid w s o) (hstep : demonicStep w s o s' r) :
+    Canonical w s' :=
+  ⟨wellFormed_demonicStep hs.1 hv hstep, zeroAbove_demonicStep hs.2 hv hstep⟩
+
 /-! ## Refinement of the demonic specification and lifting `Memory.Prog` -/
 
 /-- Every deterministic `step` transition is a valid transition of `demonicStep w`. -/
@@ -419,8 +449,7 @@ theorem demonicStep_of_step (w : ℕ) (s : State) (o : Op) :
   cases o with
   | read a => exact ⟨rfl, rfl⟩
   | write a v => rfl
-  | grow k => exact ⟨rfl, rfl⟩
-  | growDirty k =>
+  | grow k | growDirty k =>
     refine ⟨rfl, rfl, ?_, ?_⟩
     · intro a ha
       exact clear_of_not_owns (by simp only [Block.Owns]; omega)
@@ -429,6 +458,17 @@ theorem demonicStep_of_step (w : ℕ) (s : State) (o : Op) :
       rw [clear_of_owns ⟨hlo, hhi⟩]
       exact fits_zero w
   | shrink k => rfl
+
+/-- Any machine-level `WordRAM.Resizable.DemonicGrow` transition from a `ZeroAbove` state satisfies
+`demonicStep w s (.grow k)`. -/
+theorem demonicStep_grow_of_demonicGrow {w k : ℕ} {s s' : State}
+    (hs : ZeroAbove s) (hfront : s'.frontier = s.frontier + k)
+    (hg : WordRAM.Resizable.DemonicGrow w s.frontier k s.mem s'.mem) :
+    demonicStep w s (.grow k) s' s.frontier := by
+  refine ⟨hfront, rfl, fun a ha => ?_, hg.2.1⟩
+  rcases ha with hlt | hge
+  · exact hg.1 a hlt
+  · rw [hg.2.2 a hge, hs a (by omega)]
 
 /-- The deterministic specification `spec w` refines `demonicSpec w` over the identity state
 map: every client verified against `demonicSpec w` is valid and has its behavior included in
@@ -731,5 +771,208 @@ theorem packTwoWay_shrink_grow_frontier (s₀ s₁ : State) {k : ℕ} (hk : k �
       (packTwoWay s₀ s₁).frontier := by
   simp only [packTwoWay_frontier, step_shrink, step_grow]
   omega
+
+/-! ## Single-linear-tape chunked multiplexer (`ChunkedTape`, `[LLYZ23a]` Lemma 5.1) -/
+
+namespace ChunkedTape
+
+/-- Number of `C`-word chunks required to hold `L` words (`⌈L / C⌉`). -/
+def numChunks (C L : ℕ) : ℕ :=
+  (L + C - 1) / C
+
+@[simp]
+theorem numChunks_zero (C : ℕ) : numChunks C 0 = 0 := by
+  unfold numChunks
+  rcases Nat.eq_zero_or_pos C with rfl | hC
+  · rfl
+  · exact Nat.div_eq_of_lt (by omega)
+
+@[simp]
+theorem numChunks_one (L : ℕ) : numChunks 1 L = L := by
+  simp [numChunks]
+
+theorem le_numChunks_mul {C L : ℕ} (hC : 0 < C) :
+    L ≤ numChunks C L * C := by
+  unfold numChunks
+  have hdiv := Nat.div_add_mod (L + C - 1) C
+  have hmod : (L + C - 1) % C < C := Nat.mod_lt _ hC
+  have hcomm : C * ((L + C - 1) / C) = (L + C - 1) / C * C := Nat.mul_comm _ _
+  omega
+
+theorem numChunks_mul_le {C L : ℕ} (hC : 0 < C) :
+    numChunks C L * C ≤ L + C := by
+  unfold numChunks
+  have hle : (L + C - 1) / C * C ≤ L + C - 1 := Nat.div_mul_le_self (L + C - 1) C
+  omega
+
+/-- Fixed header size in words for multiplexing `B` segments with at most `K_max` chunks each:
+`[0, B)` stores segment word lengths, `[B, B + B * K_max)` stores `chunkToSlot`, and
+`[B + B * K_max, B + 2 * B * K_max)` stores `slotOwner`. -/
+def headerWords (B K_max : ℕ) : ℕ :=
+  B + 2 * B * K_max
+
+/-- Physical address of the slot-index entry `chunkToSlot(i, q)` in the header. -/
+def chunkSlotAddr (B K_max : ℕ) (i : Fin B) (q : ℕ) : ℕ :=
+  B + i.val * K_max + q
+
+/-- Physical address of the reverse owner entry `slotOwner(p)` in the header. -/
+def slotOwnerAddr (B K_max p : ℕ) : ℕ :=
+  B + B * K_max + p
+
+/-- Physical address of word offset `off < C` inside physical chunk slot `p`. -/
+def dataWordAddr (B C K_max p off : ℕ) : ℕ :=
+  headerWords B K_max + p * C + off
+
+/-- Total number of active `C`-word chunks across all `B` logical segments. -/
+def totalChunks (C : ℕ) {B : ℕ} (segs : Fin B → State) : ℕ :=
+  ∑ i : Fin B, numChunks C (segs i).frontier
+
+/-- Representation invariant asserting that a single linear resizable memory `s : State`
+multiplexes `B` logical resizable segments `segs : Fin B → State` using `C`-word chunks with
+chunk capacity `K_max` per segment (`[LLYZ23a]` Lemma 5.1, `[BHKLZ26]` Lemma 2.1). -/
+structure Realizes (B C K_max : ℕ) (s : State) (segs : Fin B → State) : Prop where
+  /-- Chunk size is positive. -/
+  chunk_pos : 0 < C
+  /-- Segment word lengths are stored in `[0, B)`. -/
+  len_stored : ∀ i : Fin B, s.mem i.val = (segs i).frontier
+  /-- Each segment uses at most `K_max` chunks. -/
+  chunks_fit : ∀ i : Fin B, numChunks C (segs i).frontier ≤ K_max
+  /-- The single physical tape has frontier `headerWords B K_max + totalChunks C segs * C`. -/
+  frontier_eq : s.frontier = headerWords B K_max + totalChunks C segs * C
+  /-- Every active logical chunk `(i, q)` maps to a valid physical slot `< totalChunks C segs`. -/
+  slot_lt : ∀ (i : Fin B) (q : ℕ), q < numChunks C (segs i).frontier →
+    s.mem (chunkSlotAddr B K_max i q) < totalChunks C segs
+  /-- `slotOwner` is the left inverse of `chunkToSlot` on all active logical chunks. -/
+  owner_inv : ∀ (i : Fin B) (q : ℕ), q < numChunks C (segs i).frontier →
+    s.mem (slotOwnerAddr B K_max (s.mem (chunkSlotAddr B K_max i q))) = i.val * K_max + q
+  /-- Every allocated word `a < (segs i).frontier` of segment `i` is stored in its assigned
+  physical chunk slot at offset `a % C`. -/
+  data_eq : ∀ (i : Fin B) (a : ℕ), a < (segs i).frontier →
+    s.mem (dataWordAddr B C K_max (s.mem (chunkSlotAddr B K_max i (a / C))) (a % C)) =
+      (segs i).mem a
+
+/-- **Space bound for single-tape chunked multiplexing (`[LLYZ23a]` Lemma 5.1, `[BHKLZ26]`
+Lemma 2.1).** Storing `B` logical resizable segments `segs` in a single linear resizable memory `s`
+with chunk size `C` and chunk-table capacity `K_max` uses at most
+`(∑ i, (segs i).frontier) + B * C + headerWords B K_max` words at every step. -/
+theorem Realizes.frontier_le {B C K_max : ℕ} {s : State} {segs : Fin B → State}
+    (h : Realizes B C K_max s segs) :
+    s.frontier ≤ MultiSegment.totalWords segs + B * C + headerWords B K_max := by
+  rw [h.frontier_eq]
+  unfold totalChunks
+  rw [Finset.sum_mul]
+  have hsum :
+      ∑ i : Fin B, numChunks C (segs i).frontier * C ≤
+        ∑ i : Fin B, ((segs i).frontier + C) :=
+    Finset.sum_le_sum fun i _ => numChunks_mul_le h.chunk_pos
+  have hsplit :
+      (∑ i : Fin B, ((segs i).frontier + C)) = MultiSegment.totalWords segs + B * C := by
+    rw [Finset.sum_add_distrib, Finset.sum_const, Finset.card_univ, Fintype.card_fin, smul_eq_mul]
+    rfl
+  omega
+
+/-- Bit-level space bound for single-tape chunked multiplexing (`[LLYZ23a]` Lemma 5.1,
+`[BHKLZ26]` Lemma 2.1): choosing `C = ⌈√(L_max / w)⌉` and `K_max = ⌈L_max / C⌉` gives
+`∑ i, w * ℓ_i + O(B * √(L_max * w) + B * w)` bits on the single physical tape `s`. -/
+theorem Realizes.spaceBits_le (w : ℕ) {B C K_max : ℕ} {s : State} {segs : Fin B → State}
+    (h : Realizes B C K_max s segs) :
+    spaceBits w s ≤
+      MultiSegment.totalBits w segs + w * (B * C + headerWords B K_max) := by
+  unfold spaceBits MultiSegment.totalBits
+  rw [← Nat.mul_add, ← Nat.add_assoc]
+  exact Nat.mul_le_mul_left w h.frontier_le
+
+/-- Exact word count for unit-chunk (`C = 1`) single-tape multiplexing: zero internal chunk
+rounding waste (`s.frontier = headerWords B K_max + ∑ i, (segs i).frontier`). -/
+theorem Realizes.frontier_eq_of_unitChunk {B K_max : ℕ} {s : State} {segs : Fin B → State}
+    (h : Realizes B 1 K_max s segs) :
+    s.frontier = headerWords B K_max + MultiSegment.totalWords segs := by
+  simpa [totalChunks, MultiSegment.totalWords] using h.frontier_eq
+
+/-- Read logical word `a` of segment `i` on the single linear tape (`2` reads, `O(1)` worst-case
+time). -/
+def readWord (B C K_max : ℕ) (i : Fin B) (a : ℕ) : Prog ℕ := do
+  let p ← read (chunkSlotAddr B K_max i (a / C))
+  read (dataWordAddr B C K_max p (a % C))
+
+/-- Write `v` to logical word `a` of segment `i` on the single linear tape (`1` read + `1` write =
+`2` operations, `O(1)` worst-case time). -/
+def writeWord (B C K_max : ℕ) (i : Fin B) (a v : ℕ) : Prog Unit := do
+  let p ← read (chunkSlotAddr B K_max i (a / C))
+  write (dataWordAddr B C K_max p (a % C)) v
+
+/-- Allocate `1` word at the end of segment `i` in a unit-chunk (`C = 1`) single linear tape with
+`N_chk` currently active data words (`6` operations, `O(1)` worst-case time, zero shifting). -/
+def allocWord1 (B K_max N_chk : ℕ) (i : Fin B) : Prog ℕ := do
+  let L_i ← read i.val
+  write i.val (L_i + 1)
+  let _ ← grow 1
+  write (chunkSlotAddr B K_max i L_i) N_chk
+  write (slotOwnerAddr B K_max N_chk) (i.val * K_max + L_i)
+  write (dataWordAddr B 1 K_max N_chk 0) 0
+  return L_i
+
+/-- Release `1` word from the end of segment `i` in a unit-chunk (`C = 1`) single linear tape with
+`N_chk` currently active data words by swapping the last physical data slot `N_chk - 1` into the
+freed slot `p` and shrinking the single physical tape by `1` word (`9` operations, `O(1)`
+worst-case time, **no** `Ω(N_chk)` shift). -/
+def releaseWord1 (B K_max N_chk : ℕ) (i : Fin B) : Prog Unit := do
+  let L_i ← read i.val
+  let L' := L_i - 1
+  write i.val L'
+  let p ← read (chunkSlotAddr B K_max i L')
+  let p_last := N_chk - 1
+  let lastVal ← read (dataWordAddr B 1 K_max p_last 0)
+  let lastOwner ← read (slotOwnerAddr B K_max p_last)
+  write (dataWordAddr B 1 K_max p 0) lastVal
+  write (B + lastOwner) p
+  write (slotOwnerAddr B K_max p) lastOwner
+  shrink 1
+
+/-- `readWord` on a valid `ChunkedTape` returns `(segs i).mem a`, leaves `s` unchanged, and
+executes in `2` operations. -/
+theorem readWord_spec (w : ℕ) {B C K_max : ℕ} {s : State} {segs : Fin B → State}
+    (h : Realizes B C K_max s segs) (i : Fin B) {a : ℕ} (ha : a < (segs i).frontier) :
+    (spec w).clientResult s (readWord B C K_max i a) = (segs i).mem a ∧
+      (spec w).clientState s (readWord B C K_max i a) = s ∧
+      ((spec w).clientHistory s (readWord B C K_max i a)).length = 2 := by
+  exact ⟨h.data_eq i a ha, rfl, rfl⟩
+
+/-- `writeWord` executes in `2` operations and preserves `s.frontier`. -/
+theorem writeWord_spec (w B C K_max : ℕ) (s : State) (i : Fin B) (a v : ℕ) :
+    ((spec w).clientState s (writeWord B C K_max i a v)).frontier = s.frontier ∧
+      ((spec w).clientHistory s (writeWord B C K_max i a v)).length = 2 :=
+  ⟨rfl, rfl⟩
+
+/-- `allocWord1` executes in `6` operations and grows the single physical tape `s` by `1` word. -/
+theorem allocWord1_spec (w B K_max N_chk : ℕ) (s : State) (i : Fin B) :
+    ((spec w).clientState s (allocWord1 B K_max N_chk i)).frontier = s.frontier + 1 ∧
+      ((spec w).clientHistory s (allocWord1 B K_max N_chk i)).length = 6 :=
+  ⟨rfl, rfl⟩
+
+/-- `releaseWord1` executes in `9` operations and shrinks the single physical tape `s` by `1`
+word. -/
+theorem releaseWord1_spec (w B K_max N_chk : ℕ) (s : State) (i : Fin B) :
+    ((spec w).clientState s (releaseWord1 B K_max N_chk i)).frontier = s.frontier - 1 ∧
+      ((spec w).clientHistory s (releaseWord1 B K_max N_chk i)).length = 9 :=
+  ⟨rfl, rfl⟩
+
+/-- **Single-tape memory reuse without shifting:** When segment `i` releases `1` word via
+`releaseWord1` and segment `j` subsequently allocates `1` word via `allocWord1` on the **same**
+linear tape `s` (`1 ≤ s.frontier`, `1 ≤ N_chk`), the single physical tape returns to the exact
+same frontier `s.frontier` in `15` total operations (`O(1)` worst-case time, independent of tape
+length). -/
+theorem releaseWord1_then_allocWord1_spec (w B K_max N_chk : ℕ) (s : State) (i j : Fin B)
+    (hs : 1 ≤ s.frontier) :
+    let prog : Prog ℕ := do
+      releaseWord1 B K_max N_chk i
+      allocWord1 B K_max (N_chk - 1) j
+    ((spec w).clientState s prog).frontier = s.frontier ∧
+      ((spec w).clientHistory s prog).length = 15 := by
+  refine ⟨?_, rfl⟩
+  change s.frontier - 1 + 1 = s.frontier
+  omega
+
+end ChunkedTape
 
 end Cslib.DataStructure.Memory.Resizable

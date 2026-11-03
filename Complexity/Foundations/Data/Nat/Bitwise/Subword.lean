@@ -23,8 +23,8 @@ items), where an item at bit offset `[i * b, (i + 1) * b)` may either lie within
 
 * `Cslib.BitString.packedWords`: number of `w`-bit words `⌈n * b / w⌉ = (n * b + w - 1) / w`
   occupied by `n` items of width `b` bits.
-* `Cslib.BitString.extractSlice`, `Cslib.BitString.spliceWord`: single-word bit-slice extraction
-  and replacement.
+* `Cslib.BitString.extractSlice`, `Cslib.BitString.spliceWord`, `Cslib.BitString.wordMask`:
+  single-word bit-slice extraction, bitwise replacement, and overflow-safe mask generation.
 * `Cslib.BitString.memBit`: bit-stream view of word-addressed memory `mem : ℕ → ℕ`.
 * `Cslib.BitString.readSubword`, `Cslib.BitString.writeSubword`: reading and writing a `b`-bit
   item at index `i` using at most two word accesses.
@@ -33,6 +33,9 @@ items), where an item at bit offset `[i * b, (i + 1) * b)` may either lie within
 
 * `Cslib.BitString.mul_le_packedWords_mul`, `Cslib.BitString.packedWords_mul_le`,
   `Cslib.BitString.packedWords_succ_le`: tight word-count and bit-space inequalities.
+* `Cslib.BitString.extractSlice_eq_bitops`, `Cslib.BitString.spliceWord_eq_bitops`,
+  `Cslib.BitString.combineSlices_eq_bitops`: overflow-safe Word-RAM ALU equivalences for
+  sub-word extraction, splicing, and slice combination.
 * `Cslib.BitString.readSubword_eq_ofBits`: `readSubword` reconstructs the `b` bits starting at
   bit offset `i * b`.
 * `Cslib.BitString.memBit_writeSubword`: `writeSubword` updates bits `[i * b, (i + 1) * b)` and
@@ -157,25 +160,142 @@ theorem testBit_extractSlice (word off len k : ℕ) :
   simp only [extractSlice, Nat.testBit_mod_two_pow, Nat.testBit_div_two_pow, Nat.add_comm off k]
 
 /-- Replace bits `[off, off + len)` of a `w`-bit word `word` with the low `len` bits of `val`,
-clipping the result to `w` bits. -/
+clipping the result to `w` bits using pure bitwise operations (`&&&`, `^^^`, `|||`, `<<<`). -/
 def spliceWord (w word off len val : ℕ) : ℕ :=
-  Nat.ofBits fun k : Fin w =>
-    if off ≤ k.val ∧ k.val < off + len then val.testBit (k.val - off) else word.testBit k.val
+  let wWord := word % 2 ^ w
+  let sMask := (2 ^ len - 1) <<< off
+  let sVal := ((val % 2 ^ len) <<< off) % 2 ^ w
+  (wWord ^^^ (wWord &&& sMask)) ||| sVal
 
 /-- `spliceWord` always produces a `w`-bit word. -/
-theorem spliceWord_fits (w word off len val : ℕ) : Fits w (spliceWord w word off len val) :=
-  Nat.ofBits_lt_two_pow _
+theorem spliceWord_fits (w word off len val : ℕ) : Fits w (spliceWord w word off len val) := by
+  unfold spliceWord Fits
+  have hw_pos : 0 < 2 ^ w := Nat.two_pow_pos w
+  have h1 : word % 2 ^ w < 2 ^ w := Nat.mod_lt _ hw_pos
+  have h2 : ((val % 2 ^ len) <<< off) % 2 ^ w < 2 ^ w := Nat.mod_lt _ hw_pos
+  have hand : (word % 2 ^ w) &&& ((2 ^ len - 1) <<< off) < 2 ^ w := by
+    rw [Nat.and_comm]
+    exact Nat.and_lt_two_pow _ h1
+  have hxor : (word % 2 ^ w) ^^^ ((word % 2 ^ w) &&& ((2 ^ len - 1) <<< off)) < 2 ^ w :=
+    Nat.xor_lt_two_pow h1 hand
+  exact Nat.or_lt_two_pow hxor h2
 
 /-- Bit `k < w` of `spliceWord w word off len val`. -/
 theorem testBit_spliceWord_of_lt {w word off len val k : ℕ} (hk : k < w) :
     (spliceWord w word off len val).testBit k =
       if off ≤ k ∧ k < off + len then val.testBit (k - off) else word.testBit k := by
-  simpa only [spliceWord] using Nat.testBit_ofBits_lt _ k hk
+  unfold spliceWord
+  simp only [Nat.testBit_or, Nat.testBit_xor, Nat.testBit_and, Nat.testBit_mod_two_pow,
+    Nat.testBit_shiftLeft, Nat.testBit_two_pow_sub_one, decide_eq_true hk, Bool.true_and]
+  by_cases hoff : off ≤ k
+  · simp only [decide_eq_true hoff, Bool.true_and]
+    by_cases hlen : k - off < len
+    · have hcond : off ≤ k ∧ k < off + len := ⟨hoff, by omega⟩
+      rw [ite_eq_left hcond]
+      simp only [decide_eq_true hlen, Bool.and_true, Bool.true_and, bne_self_eq_false,
+        Bool.false_or]
+    · have hcond : ¬ (off ≤ k ∧ k < off + len) := by omega
+      rw [ite_eq_right hcond]
+      simp only [decide_eq_false hlen, Bool.and_false, Bool.false_and, Bool.bne_false,
+        Bool.or_false]
+  · have hcond : ¬ (off ≤ k ∧ k < off + len) := by omega
+    rw [ite_eq_right hcond]
+    simp only [decide_eq_false hoff, Bool.false_and, Bool.and_false, Bool.bne_false, Bool.or_false]
 
 /-- Bit `k ≥ w` of `spliceWord w word off len val` is `false`. -/
 theorem testBit_spliceWord_of_ge {w word off len val k : ℕ} (hk : w ≤ k) :
     (spliceWord w word off len val).testBit k = false := by
-  simpa only [spliceWord] using Nat.testBit_ofBits_ge _ k hk
+  exact Nat.testBit_lt_two_pow
+    ((spliceWord_fits w word off len val).trans_le (Nat.pow_le_pow_right (by decide) hk))
+
+/-! ## Overflow-safe Word-RAM ALU equivalences for bitmasks, extraction, and splicing -/
+
+/-- Overflow-safe computation of the `len`-bit mask `2 ^ len - 1` via `half := 1 <<< (len - 1)` and
+`(half - 1) + half`, so every intermediate value fits in `w` bits whenever `1 ≤ len ≤ w` (avoiding
+the `1 <<< w = 2 ^ w` overflow when `len = w`). -/
+def wordMask (len : ℕ) : ℕ :=
+  let half := 1 <<< (len - 1)
+  (half - 1) + half
+
+/-- For `0 < len`, `wordMask len = 2 ^ len - 1`. -/
+theorem wordMask_eq {len : ℕ} (hlen : 0 < len) : wordMask len = 2 ^ len - 1 := by
+  dsimp only [wordMask]
+  rw [Nat.shiftLeft_eq, Nat.one_mul]
+  have hpos : 0 < 2 ^ (len - 1) := Nat.two_pow_pos (len - 1)
+  have hpow : 2 ^ len = 2 ^ (len - 1) * 2 := by
+    rw [← Nat.pow_succ]
+    congr 1
+    omega
+  omega
+
+/-- Every intermediate value of `wordMask len` fits in `w` bits when `0 < len` and `len ≤ w`. -/
+theorem wordMask_intermediates_fit {w len : ℕ} (hlen_pos : 0 < len) (hlen : len ≤ w) :
+    Fits w (len - 1) ∧
+      Fits w (1 <<< (len - 1)) ∧
+      Fits w ((1 <<< (len - 1)) - 1) ∧
+      Fits w (wordMask len) := by
+  have hlm1 : len - 1 < w := by omega
+  have h1 : Fits w (len - 1) := (fits_self w).of_le (by omega)
+  have hhalf_eq : 1 <<< (len - 1) = 2 ^ (len - 1) := by rw [Nat.shiftLeft_eq, Nat.one_mul]
+  have h2 : Fits w (1 <<< (len - 1)) := by
+    rw [Fits, hhalf_eq]
+    exact Nat.pow_lt_pow_right (by decide) hlm1
+  have h3 : Fits w ((1 <<< (len - 1)) - 1) := h2.of_le (Nat.sub_le _ _)
+  have h4 : Fits w (wordMask len) := by
+    rw [Fits, wordMask_eq hlen_pos]
+    have hle : 2 ^ len ≤ 2 ^ w := Nat.pow_le_pow_right (by decide) hlen
+    have hpos : 0 < 2 ^ len := Nat.two_pow_pos len
+    omega
+  exact ⟨h1, h2, h3, h4⟩
+
+/-- `extractSlice word off len` equals `(word >>> off) &&& wordMask len` when `0 < len`. -/
+theorem extractSlice_eq_bitops (word off : ℕ) {len : ℕ} (hlen : 0 < len) :
+    extractSlice word off len = (word >>> off) &&& wordMask len := by
+  rw [extractSlice, wordMask_eq hlen, Nat.shiftRight_eq_div_pow, Nat.and_two_pow_sub_one_eq_mod]
+
+/-- When `Fits w word`, `0 < len`, and `off + len ≤ w`, `spliceWord` equals the overflow-safe
+Word-RAM ALU expression
+`(word ^^^ (word &&& (wordMask len <<< off))) ||| ((val &&& wordMask len) <<< off)`,
+and every intermediate value fits in `w` bits. -/
+theorem spliceWord_eq_bitops {w word off len val : ℕ}
+    (hword : Fits w word) (hlen : 0 < len) (hfit : off + len ≤ w) :
+    let mask := wordMask len
+    let sMask := mask <<< off
+    let sVal := (val &&& mask) <<< off
+    Fits w sMask ∧ Fits w (val &&& mask) ∧ Fits w sVal ∧
+      Fits w (word &&& sMask) ∧ Fits w (word ^^^ (word &&& sMask)) ∧
+      Fits w ((word ^^^ (word &&& sMask)) ||| sVal) ∧
+      spliceWord w word off len val = (word ^^^ (word &&& sMask)) ||| sVal := by
+  intro mask sMask sVal
+  have hmask_eq : mask = 2 ^ len - 1 := wordMask_eq hlen
+  have hpow_le : 2 ^ (len + off) ≤ 2 ^ w := Nat.pow_le_pow_right (by decide) (by omega)
+  have hsMask_lt : sMask < 2 ^ w := by
+    change mask <<< off < 2 ^ w
+    rw [Nat.shiftLeft_eq, hmask_eq]
+    have hpos : 0 < 2 ^ len := Nat.two_pow_pos len
+    have hlt : (2 ^ len - 1) * 2 ^ off < 2 ^ len * 2 ^ off :=
+      Nat.mul_lt_mul_of_pos_right (by omega) (Nat.two_pow_pos off)
+    rw [← Nat.pow_add] at hlt
+    exact lt_of_lt_of_le hlt hpow_le
+  have hval_and : val &&& mask = val % 2 ^ len := by
+    rw [hmask_eq, Nat.and_two_pow_sub_one_eq_mod]
+  have hval_and_lt : val &&& mask < 2 ^ w := by
+    rw [hval_and]
+    exact lt_of_lt_of_le (Nat.mod_lt _ (Nat.two_pow_pos len))
+      (Nat.pow_le_pow_right (by decide) (by omega))
+  have hsVal_lt : sVal < 2 ^ w := by
+    change (val &&& mask) <<< off < 2 ^ w
+    rw [Nat.shiftLeft_eq, hval_and]
+    have hlt : (val % 2 ^ len) * 2 ^ off < 2 ^ len * 2 ^ off :=
+      Nat.mul_lt_mul_of_pos_right (Nat.mod_lt _ (Nat.two_pow_pos len)) (Nat.two_pow_pos off)
+    rw [← Nat.pow_add] at hlt
+    exact lt_of_lt_of_le hlt hpow_le
+  have hand_lt : word &&& sMask < 2 ^ w := Nat.and_lt_two_pow _ hsMask_lt
+  have hxor_lt : word ^^^ (word &&& sMask) < 2 ^ w := Nat.xor_lt_two_pow hword hand_lt
+  have hor_lt : (word ^^^ (word &&& sMask)) ||| sVal < 2 ^ w := Nat.or_lt_two_pow hxor_lt hsVal_lt
+  refine ⟨hsMask_lt, hval_and_lt, hsVal_lt, hand_lt, hxor_lt, hor_lt, ?_⟩
+  unfold spliceWord
+  rw [Nat.mod_eq_of_lt hword, ← hmask_eq, ← hval_and, Nat.mod_eq_of_lt hsVal_lt]
 
 /-! ## Sub-word array reads and writes across at most two consecutive words -/
 
@@ -187,6 +307,51 @@ def memBit (w : ℕ) (mem : ℕ → ℕ) (bitIdx : ℕ) : Bool :=
 `b`-bit word. -/
 def combineSlices (b lowLen lowPart highPart : ℕ) : ℕ :=
   spliceWord b lowPart lowLen (b - lowLen) highPart
+
+/-- When `lowPart < 2 ^ lowLen` and `highPart < 2 ^ (b - lowLen)` with `lowLen ≤ b ≤ w`,
+`combineSlices b lowLen lowPart highPart` equals `lowPart ||| (highPart <<< lowLen)`, and both
+`highPart <<< lowLen` and the combined result fit in `w` bits. -/
+theorem combineSlices_eq_bitops {w b lowLen lowPart highPart : ℕ}
+    (hb : b ≤ w) (hlow_le : lowLen ≤ b)
+    (hlow : Fits lowLen lowPart) (hhigh : Fits (b - lowLen) highPart) :
+    Fits w (highPart <<< lowLen) ∧
+      Fits w (lowPart ||| (highPart <<< lowLen)) ∧
+      combineSlices b lowLen lowPart highPart = lowPart ||| (highPart <<< lowLen) := by
+  have hshift_lt : highPart <<< lowLen < 2 ^ b := by
+    rw [Nat.shiftLeft_eq]
+    have hlt : highPart * 2 ^ lowLen < 2 ^ (b - lowLen) * 2 ^ lowLen :=
+      Nat.mul_lt_mul_of_pos_right hhigh (Nat.two_pow_pos lowLen)
+    rw [← Nat.pow_add, Nat.sub_add_cancel hlow_le] at hlt
+    exact hlt
+  have hpow_bw : 2 ^ b ≤ 2 ^ w := Nat.pow_le_pow_right (by decide) hb
+  have hlow_b : lowPart < 2 ^ b :=
+    lt_of_lt_of_le hlow (Nat.pow_le_pow_right (by decide) hlow_le)
+  have hshift_w : Fits w (highPart <<< lowLen) := lt_of_lt_of_le hshift_lt hpow_bw
+  have hor_w : Fits w (lowPart ||| (highPart <<< lowLen)) :=
+    lt_of_lt_of_le (Nat.or_lt_two_pow hlow_b hshift_lt) hpow_bw
+  refine ⟨hshift_w, hor_w, ?_⟩
+  apply Nat.eq_of_testBit_eq
+  intro k
+  rw [Nat.testBit_or, Nat.testBit_shiftLeft]
+  by_cases hk : k < b
+  · unfold combineSlices
+    rw [testBit_spliceWord_of_lt hk]
+    by_cases hge : lowLen ≤ k
+    · have hcond : lowLen ≤ k ∧ k < lowLen + (b - lowLen) := ⟨hge, by omega⟩
+      have hlow_false : lowPart.testBit k = false :=
+        Nat.testBit_lt_two_pow (hlow.trans_le (Nat.pow_le_pow_right (by decide) hge))
+      rw [ite_eq_left hcond, hlow_false]
+      simp only [decide_eq_true hge, Bool.true_and, Bool.false_or]
+    · have hcond : ¬ (lowLen ≤ k ∧ k < lowLen + (b - lowLen)) := by omega
+      rw [ite_eq_right hcond]
+      simp only [decide_eq_false hge, Bool.false_and, Bool.or_false]
+  · unfold combineSlices
+    rw [testBit_spliceWord_of_ge (by omega)]
+    have hlow_false : lowPart.testBit k = false :=
+      Nat.testBit_lt_two_pow (hlow_b.trans_le (Nat.pow_le_pow_right (by decide) (by omega)))
+    have hshift_false : (highPart <<< lowLen).testBit k = false :=
+      Nat.testBit_lt_two_pow (hshift_lt.trans_le (Nat.pow_le_pow_right (by decide) (by omega)))
+    rw [← Nat.testBit_shiftLeft, hlow_false, hshift_false, Bool.or_self]
 
 /-- Read the `b`-bit item at index `i` from `mem` (at most two word reads when `b ≤ w`). -/
 def readSubword (w : ℕ) (mem : ℕ → ℕ) (b i : ℕ) : ℕ :=
