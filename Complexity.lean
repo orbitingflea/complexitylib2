@@ -2852,6 +2852,7 @@ public import Complexity.Crypto.Computational.InaccessibleEntropy.OneWay
 public import Complexity.Crypto.Computational.InaccessibleEntropy.Repetition
 public import Complexity.Crypto.Computational.IndexedSignature
 public import Complexity.Crypto.Computational.IndexedSignature.Counter
+public import Complexity.Crypto.Computational.IndexedSignature.Double
 public import Complexity.Crypto.Computational.IndexedSignature.Seeded
 public import Complexity.Crypto.Computational.Kilian
 public import Complexity.Crypto.Computational.Kilian.NP
@@ -2939,6 +2940,7 @@ public import Complexity.Crypto.Computational.SchnorrProtocol
 public import Complexity.Crypto.Computational.Signature
 public import Complexity.Crypto.Computational.Stretch
 public import Complexity.Crypto.Computational.Stretch.Quantitative
+public import Complexity.Crypto.Computational.TCRSignature
 public import Complexity.Crypto.Computational.TargetCollisionResistant
 public import Complexity.Crypto.Computational.TreeSignature
 public import Complexity.Crypto.Computational.TreeSignature.CoinHybrid
@@ -2950,6 +2952,7 @@ public import Complexity.Crypto.Computational.ZeroKnowledge.AuxClock
 public import Complexity.Crypto.Computational.ZeroKnowledge.Levin
 public import Complexity.Crypto.Computational.ZeroKnowledge.Soundness
 public import Complexity.Crypto.Game
+public import Complexity.Crypto.Game.CloseTo
 public import Complexity.Crypto.Game.Hybrid
 public import Complexity.Crypto.Game.Statistical
 public import Complexity.Crypto.Game.UntilBad
@@ -2976,6 +2979,7 @@ public import Complexity.Crypto.Protocols.MPC.SharedMul
 public import Complexity.Crypto.Protocols.SigmaProtocol.Abort
 public import Complexity.Crypto.Protocols.SigmaProtocol.Basic
 public import Complexity.Crypto.Protocols.SigmaProtocol.Composition
+public import Complexity.Crypto.Protocols.SigmaProtocol.Computational
 public import Complexity.Crypto.Protocols.SigmaProtocol.Efficient
 public import Complexity.Crypto.Protocols.SigmaProtocol.FiatShamir
 public import Complexity.Crypto.Protocols.SigmaProtocol.Identification
