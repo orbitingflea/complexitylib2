@@ -18,87 +18,97 @@ public import Mathlib.Algebra.BigOperators.Group.Finset.Basic
 This module defines the **bit-granular resizable Word-RAM memory model** on top of the existing
 Word-RAM and `Cslib.DataStructure.Memory` infrastructure. In this model (following the virtual
 memory framework of Pătrașcu (2008) and Dodis, Pătrașcu, and Thorup (2010)), a data structure's
-memory is an array of bits `[0, bitSize)` whose allocated length `bitSize : ℕ` grows and shrinks
-dynamically in **bits** while being accessed in fields of up to `w` bits on a `w`-bit Word RAM
-[Hagerup1998].
+memory is a single contiguous array of bits `[0, bitSize)` whose allocated length `bitSize : ℕ`
+grows and shrinks dynamically in **bits** while being accessed in fields of up to `w` bits on a
+`w`-bit Word RAM [Hagerup1998].
 
 ## Model design and rejected alternatives
 
-1. **Semantics of growing and shrinking (`grow`, `growDirty`, `shrink`):**
-   - `grow δ` increases `s.bitSize` to `s.bitSize + δ` and returns the old `s.bitSize` (the bit
-     offset of the newly allocated `δ`-bit slice).
+1. **Semantics of growing and shrinking (`grow`, `shrink`) and address-capacity bound (`Fits w`):**
+   - `grow δ` (admissible when `Fits w (s.bitSize + δ)`, i.e., `s.bitSize + δ < 2 ^ w`) increases
+     `s.bitSize` to `s.bitSize + δ` and returns the old `s.bitSize` (the bit offset of the newly
+     allocated `δ`-bit slice). Requiring `Fits w (s.bitSize + δ)` ensures that every bit offset and
+     the total bit size `s.bitSize` can be stored and manipulated in a single `w`-bit Word-RAM
+     register (`State.WellFormed.bitSize_fits`).
    - `shrink δ` (admissible when `δ ≤ s.bitSize`) decreases `s.bitSize` to `s.bitSize - δ` and
      clears the released bits `[s.bitSize - δ, s.bitSize)`.
-   - *Rejected alternative:* Allowing `resize newSize` without separating `grow` and `shrink` or
-     without a `δ ≤ s.bitSize` precondition. Separating `grow` and `shrink` mirrors `Memory.alloc`
-     (which returns the base offset of the newly obtained slice) and makes underflow an explicit
-     admissibility obligation (`D.valid`).
+   - *Rejected alternative:* Allowing `resize newSize` without separating `grow` and `shrink`, or
+     allowing `s.bitSize` to exceed `2 ^ w - 1` (which would make bit offsets overflow `w`-bit
+     registers on the Word RAM).
 
-2. **Contents of newly obtained memory (`spec` vs. `dirtySpec`):**
-   - We provide both the deterministic zero-initialized specification `BitMemory.spec w` (where
-     newly grown bits `[bitSize, bitSize + δ)` are `0`, equipping `BitMemory.spec w` with
-     `StateTransitionSpec.HasStepFn`) and the relational specification `BitMemory.dirtySpec w`
-     (where `grow δ` may place arbitrary bit values in `[bitSize, bitSize + δ)` while preserving
-     all existing bits `[0, bitSize)`). We prove `spec_refines_dirtySpec`, showing that `spec w`
-     refines `dirtySpec w`.
-   - *Rejected alternative:* Providing only a nondeterministic dirty-allocation specification.
-     Retaining the deterministic `HasStepFn` specification alongside `dirtySpec` allows
-     deterministic data structures (such as the Stage 1 resizable array) to use functional
-     execution (`runClient`, `ValidHistory`, `Refinement.ofFn`) while randomized or dirty-tolerant
-     structures can target either specification.
+2. **Contents of newly obtained memory (`dirtySpec` vs. `spec`):**
+   - Our primary specification is the demonic relational specification `BitMemory.dirtySpec w`, in
+     which `grow δ` may place arbitrary Boolean bit values in the newly allocated slice
+     `[s.bitSize, s.bitSize + δ)` while preserving all existing bits `[0, s.bitSize)`, maintaining
+     `zero_above` for all `i ≥ s.bitSize + δ`, and preserving `w`-bit word bounds
+     (`wellFormed_dirtyStep`).
+   - Alongside `dirtySpec w`, we provide the deterministic zero-initialized specification
+     `BitMemory.spec w` (`HasStepFn`) and prove
+     `spec_refines_dirtySpec : Refinement (dirtySpec w) (spec w)` together with
+     `writeFieldMem_of_dirtyStep_grow`, which shows that any `grow δ` (`δ ≤ w`) immediately
+     followed by overwriting the new `δ`-bit slice transitions to the exact same state under every
+     demonic choice of `dirtyStep` as under `spec w`.
+   - *Rejected alternative:* Verifying data structures only against zero-initialized `grow δ`, which
+     would rely on the allocator clearing newly grown bits for free.
 
 3. **Cost of resizing (`charge`):**
-   - Reading or writing a `b`-bit field (`b ≤ w`) costs `1` bit-memory unit (and compiles to at
-     most `2` word reads or `4` word accesses on `Memory.spec w` via `BitPacking.readFieldProg`
-     and `BitPacking.writeFieldProg`).
+   - Reading or writing a `b`-bit field (`b ≤ w`) costs `1` bit-memory unit (and executes in `O(1)`
+     Word-RAM instructions; see `Complexity.Computability.WordRAM.BitResizable`).
    - Resizing by `δ` bits (`grow δ` or `shrink δ`) costs `max 1 (δ ⌈/⌉ w)` units, which is `1`
-     whenever `δ ≤ w` (e.g., growing or shrinking by one `b`-bit item with `b ≤ w`) and `⌈δ / w⌉`
-     when `δ > w`.
+     whenever `δ ≤ w` and `⌈δ / w⌉` when `δ > w`.
    - *Rejected alternative:* Charging `δ` (one unit per bit) for `grow δ` / `shrink δ`, which
      would make `b`-bit appends cost `Θ(b)` instead of `O(1)` on a Word RAM; or charging `1` for
-     arbitrarily large `δ ≫ w`, which would allow zero-initializing `m` words in `O(1)` time.
+     arbitrarily large `δ ≫ w`.
 
-4. **Space measure at every step (`spaceBitsAt`, `wordSize`, `pairTotalBitsWithMetadata`):**
-   - For a single structure in state `s : BitMemory.State`, its current space is `s.bitSize` bits
-     (occupying `s.wordSize w = s.bitSize ⌈/⌉ w` words of `w` bits, plus `w` bits = 1 word if the
-     descriptor `s.bitSize` is stored in memory).
-   - Along an execution history, space is measured at **every step `t`** by the current `bitSize`
-     of the state after `t` operations (not only the peak high-water mark), so `shrink δ` reduces
-     the space measure by `δ` bits immediately.
-   - *Rejected alternative:* Measuring space only by a monotone word high-water mark (`frontier`),
+4. **Space measure at every step (`spaceBitsAt`, `wordSize`):**
+   - In state `s : BitMemory.State`, the current space is `s.bitSize` bits (occupying
+     `s.wordSize w = s.bitSize ⌈/⌉ w` words of `w` bits).
+   - Space is measured at **every step `t`** by the current `bitSize` after `t` operations, so
+     `shrink δ` reduces the space measure by `δ` bits immediately.
+   - *Rejected alternative:* Measuring space only by a monotone high-water mark (`frontier`),
      which cannot express space reclamation when a structure shrinks.
 
-5. **Frame condition and composition with reusable released memory (`Framed`, `boundedPairSpec`):**
-   - `BitMemory.Framed D w` equips a refinement `Refinement D (BitMemory.spec w)` with an exact
-     bit-size profile `sizeBits : D.State → ℕ` such that `s.bitSize = sizeBits (abs s)` in every
-     represented state.
-   - Multiple structures compose over `pairSpec w = product (BitMemory.spec w) (BitMemory.spec w)`.
-     Each structure owns an independent bit-resizable region; operations on one structure leave
-     the other structure's `mem` and `bitSize` unchanged (`pairSpec_stepFn_inl`,
-     `pairSpec_stepFn_inr`). Under a shared bit budget `B` (`boundedPairSpec w B`), bits released
-     by shrinking one structure immediately reduce `s₁.bitSize + s₂.bitSize` and can be allocated
-     by another structure (`reuse_released_bits`).
-   - *Rejected alternative:* Placing multiple variable-size bit structures directly at fixed
-     offsets in a single flat bit array without virtual segments or paging, which would require
-     `Θ(n / w)` word shifts whenever an earlier structure grows by `b` bits.
+5. **Frame condition and single-tape composition (`DirtyFramed`, `Framed`, `boundedDirtySpec`,
+   `swapRemoveChunkProg`):**
+   - `BitMemory.DirtyFramed D w` and `BitMemory.Framed D w` equip refinements over `dirtySpec w`
+     and `spec w` with an exact bit-size profile `sizeBits : D.State → ℕ` such that
+     `s.bitSize = sizeBits (abs s)` in every represented state. Every `DirtyFramed D w` induces a
+     `Framed D w` via `DirtyFramed.toFramed`.
+   - Multiple structures share **one** linear `BitMemory.State` `[0, s.bitSize)` (rather than
+     separate `State × State` tapes). Under `boundedDirtySpec w B`, shrinking by `δ` bits on the
+     single tape immediately reduces `s.bitSize` by `δ` and makes those `δ` bits available for a
+     subsequent `grow δ` (`singleTape_reuse_released_bits`). For general multi-segment composition
+     with `O(1)` worst-case operations per segment on a single `[0, s.bitSize)` tape, we provide
+     the swap-with-last physical chunk compaction primitive `swapRemoveChunkProg` (`O(1)` operations
+     on `dirtySpec w`), which releases an interior `s`-bit chunk by moving the last physical chunk
+     into the freed slot and calling `shrink s` at the end of the single tape.
+   - *Rejected alternative:* Modeling multi-structure composition only as a cartesian product
+     `State × State` of separate memory tapes, which sidesteps multiplexing inside one linear
+     address space `[0, s.bitSize)`.
 
 ## Main definitions
 
-* `BitMemory.State`, `BitMemory.Op`, `BitMemory.stepFn`, `BitMemory.spec`: state, operations, and
-  deterministic specification of bit-granular resizable memory.
-* `BitMemory.dirtyStep`, `BitMemory.dirtySpec`: relational specification where newly grown bits
-  have arbitrary contents.
+* `BitMemory.State`, `BitMemory.Op`, `BitMemory.dirtyStep`, `BitMemory.dirtySpec`: state,
+  operations, and demonic specification of bit-granular resizable memory.
+* `BitMemory.stepFn`, `BitMemory.spec`, `BitMemory.spec_refines_dirtySpec`: deterministic
+  zero-initialized specification and its refinement of `dirtySpec w`.
 * `BitMemory.charge`: operation cost charging `1` for `b ≤ w` field accesses and `max 1 (δ ⌈/⌉ w)`
   for `δ`-bit resizes.
-* `BitMemory.Framed`: bit-size-tracked refinements over `BitMemory.spec w`.
-* `BitMemory.boundedPairSpec`: two bit-resizable structures sharing a total bit budget `B`.
+* `BitMemory.DirtyFramed`, `BitMemory.Framed`: bit-size-tracked refinements over `dirtySpec w` and
+  `spec w`.
+* `BitMemory.boundedDirtySpec`, `BitMemory.boundedSpec`: single-tape bit-budgeted specifications.
+* `BitMemory.swapRemoveChunkProg`: single-tape `O(1)` swap-with-last chunk release primitive.
 
 ## Main results
 
-* `BitMemory.wellFormed_stepFn`: every valid operation preserves `State.WellFormed w`.
-* `BitMemory.dirtyStep_of_stepFn`: every deterministic `stepFn` step satisfies `dirtyStep`.
-* `BitMemory.reuse_released_bits`: shrinking structure 1 by `δ` bits frees `δ` bits that
-  structure 2 can immediately allocate via `grow δ` within the same total bit budget `B`.
+* `BitMemory.wellFormed_dirtyStep`, `BitMemory.wellFormed_stepFn`: every valid operation preserves
+  `State.WellFormed w` under both `dirtySpec w` and `spec w`.
+* `BitMemory.writeFieldMem_of_dirtyStep_grow`: overwriting a newly grown `δ`-bit slice (`δ ≤ w`)
+  yields the exact same state under any demonic `dirtyStep` as under deterministic `stepFn`.
+* `BitMemory.singleTape_reuse_released_bits`: shrinking a single tape by `δ` bits frees `δ` bits
+  that a subsequent `grow δ` can immediately allocate within the same bit budget `B`.
+* `BitMemory.swapRemoveChunkProg_demonic`: `swapRemoveChunkProg` compacts an interior `s`-bit chunk
+  and shrinks the single tape by `s` bits in `3` `BitMemory` operations under `dirtySpec w`.
 * `BitMemory.realize_readBits_triple`, `BitMemory.realize_writeBits_triple`: realization of
   bit-field operations on `Memory.spec w`.
 
@@ -115,7 +125,7 @@ open scoped BigOperators
 open Cslib.WordRAM Cslib.DataStructure Cslib.DataStructure.Memory
 open Cslib.DataStructure.Memory.BitPacking
 
-/-! ## Concrete state and bit-level helpers -/
+/-! ## Concrete state and bitwise range clearing -/
 
 /-- The state of a bit-granular resizable memory segment: word-indexed storage `mem : ℕ → ℕ`
 together with the current allocated size `bitSize : ℕ` in **bits**. -/
@@ -156,15 +166,21 @@ def State.getField (s : State) (w a b : ℕ) : ℕ :=
 theorem getBit_empty (w i : ℕ) : empty.getBit w i = false := by
   simp [State.getBit, readBit]
 
+/-- Clear all bits of `word` whose bit indices `q * w + j` (`j < w`) lie in `[lo, hi)`,
+simultaneously masking `word` to `w` bits, using pure bitwise/shift operations (`&&&`, `^^^`,
+`<<<`, `-`). -/
+def clearRangeWord (w word q lo hi : ℕ) : ℕ :=
+  let start := lo - q * w
+  let stop := min w (hi - q * w)
+  clearMask (word &&& bitMask w) (sliceMask start (stop - start))
+
 /-- Clear all bits in the half-open bit interval `[lo, hi)` across `mem : ℕ → ℕ`. -/
 def clearRangeMem (w : ℕ) (mem : ℕ → ℕ) (lo hi : ℕ) : ℕ → ℕ :=
-  fun q => Nat.ofBits (fun j : Fin w =>
-    if lo ≤ q * w + j.val ∧ q * w + j.val < hi then false
-    else (mem q).testBit j.val)
+  fun q => clearRangeWord w (mem q) q lo hi
 
 theorem clearRangeMem_fits (w : ℕ) (mem : ℕ → ℕ) (lo hi q : ℕ) :
     Fits w (clearRangeMem w mem lo hi q) :=
-  Nat.ofBits_lt_two_pow _
+  clearMask_lt (Nat.and_lt_two_pow (mem q) (bitMask_lt w)) _
 
 theorem readBit_clearRangeMem {w : ℕ} (hw : 0 < w) (mem : ℕ → ℕ) (lo hi i : ℕ) :
     readBit w 0 (clearRangeMem w mem lo hi) i =
@@ -172,18 +188,33 @@ theorem readBit_clearRangeMem {w : ℕ} (hw : 0 < w) (mem : ℕ → ℕ) (lo hi 
   have hmod : i % w < w := Nat.mod_lt i hw
   have hdiv_mod : i / w * w + i % w = i := by
     simpa only [Nat.mul_comm] using Nat.div_add_mod i w
-  simp [readBit, clearRangeMem, Nat.testBit_ofBits_lt _ _ hmod, hdiv_mod]
+  simp only [readBit, Nat.zero_add, clearRangeMem, clearRangeWord, clearMask_testBit,
+    Nat.testBit_and, bitMask_testBit, hmod, decide_true, Bool.and_true, sliceMask_testBit]
+  by_cases h : lo ≤ i ∧ i < hi
+  · have hcond : lo - i / w * w ≤ i % w ∧
+        i % w < lo - i / w * w + (min w (hi - i / w * w) - (lo - i / w * w)) := by
+      omega
+    simp [h, hcond]
+  · have hcond : ¬(lo - i / w * w ≤ i % w ∧
+        i % w < lo - i / w * w + (min w (hi - i / w * w) - (lo - i / w * w))) := by
+      omega
+    rw [ite_eq_right h, decide_eq_false hcond]
+    simp
 
-/-- Well-formedness at word width `w`: every word fits in `w` bits and every bit outside the
-allocated range `[0, s.bitSize)` is `false`. -/
+/-- Well-formedness at word width `w`: every word fits in `w` bits, the allocated bit size
+`s.bitSize` fits in a `w`-bit word (`s.bitSize < 2 ^ w`), and every bit outside the allocated range
+`[0, s.bitSize)` is `false`. -/
 structure State.WellFormed (s : State) (w : ℕ) : Prop where
   /-- Every word in `s.mem` is `< 2 ^ w`. -/
   mem_fits : ∀ q, Fits w (s.mem q)
+  /-- The allocated bit size fits in a `w`-bit register (`s.bitSize < 2 ^ w`). -/
+  bitSize_fits : Fits w s.bitSize
   /-- All bits at or above `s.bitSize` are zero. -/
   zero_above : ∀ i, s.bitSize ≤ i → s.getBit w i = false
 
 theorem wellFormed_empty (w : ℕ) : empty.WellFormed w where
   mem_fits _ := fits_zero w
+  bitSize_fits := fits_zero w
   zero_above i _ := getBit_empty w i
 
 /-! ## Operations and transitions -/
@@ -209,11 +240,13 @@ abbrev Op.Result : Op → Type
   | .shrink _ => Unit
   | .size => ℕ
 
-/-- Admissibility of a `BitMemory.Op` at word width `w` in state `s`. -/
+/-- Admissibility of a `BitMemory.Op` at word width `w` in state `s`.
+In particular, `.grow δ` requires `Fits w (s.bitSize + δ)` so that the new bit size and all valid
+bit addresses fit in a single `w`-bit machine word. -/
 def valid (w : ℕ) (s : State) : Op → Prop
   | .readBits bitAddr len => len ≤ w ∧ bitAddr + len ≤ s.bitSize
   | .writeBits bitAddr len val => len ≤ w ∧ bitAddr + len ≤ s.bitSize ∧ Fits len val
-  | .grow _ => True
+  | .grow δ => Fits w (s.bitSize + δ)
   | .shrink δ => δ ≤ s.bitSize
   | .size => True
 
@@ -237,7 +270,7 @@ def stepFn (w : ℕ) (s : State) : (o : Op) → State × o.Result
 abbrev spec (w : ℕ) : StateTransitionSpec :=
   StateTransitionSpec.ofFn (stepFn w) (valid w)
 
-/-- Programs over `BitMemory.spec w`. -/
+/-- Programs over `BitMemory.Op`. -/
 abbrev Prog (α : Type) : Type := PFunctor.FreeM ⟨Op, Op.Result⟩ α
 
 /-- Read `len` bits at `bitAddr`. -/
@@ -286,7 +319,7 @@ abbrev getSize : Prog ℕ :=
       len ≤ w ∧ bitAddr + len ≤ s.bitSize ∧ Fits len val := Iff.rfl
 
 @[simp] theorem valid_grow (w : ℕ) (s : State) (δ : ℕ) :
-    valid w s (.grow δ) ↔ True := Iff.rfl
+    valid w s (.grow δ) ↔ Fits w (s.bitSize + δ) := Iff.rfl
 
 @[simp] theorem valid_shrink (w : ℕ) (s : State) (δ : ℕ) :
     valid w s (.shrink δ) ↔ δ ≤ s.bitSize := Iff.rfl
@@ -336,17 +369,18 @@ theorem wellFormed_stepFn {w : ℕ} (hw : 0 < w) {s : State} (hs : s.WellFormed 
   | readBits bitAddr len => exact hs
   | writeBits bitAddr len val =>
     obtain ⟨hlen, hbound, _⟩ := hv
-    refine ⟨writeFieldMem_fits hs.mem_fits bitAddr len val, fun i hi => ?_⟩
+    refine ⟨writeFieldMem_fits hw hs.mem_fits hlen val, hs.bitSize_fits, fun i hi => ?_⟩
     simp only [stepFn, State.getBit] at hi ⊢
     rw [readBit_writeFieldMem hw s.mem hlen i, ite_eq_right (by omega)]
     exact hs.zero_above i hi
   | grow δ =>
-    refine ⟨clearRangeMem_fits w s.mem s.bitSize (s.bitSize + δ), fun i hi => ?_⟩
+    refine ⟨clearRangeMem_fits w s.mem s.bitSize (s.bitSize + δ), hv, fun i hi => ?_⟩
     simp only [stepFn, State.getBit] at hi ⊢
     rw [readBit_clearRangeMem hw s.mem s.bitSize (s.bitSize + δ) i, ite_eq_right (by omega)]
     exact hs.zero_above i (by omega)
   | shrink δ =>
-    refine ⟨clearRangeMem_fits w s.mem (s.bitSize - δ) s.bitSize, fun i hi => ?_⟩
+    refine ⟨clearRangeMem_fits w s.mem (s.bitSize - δ) s.bitSize,
+      lt_of_le_of_lt (Nat.sub_le _ _) hs.bitSize_fits, fun i hi => ?_⟩
     simp only [stepFn, State.getBit] at hi ⊢
     rw [readBit_clearRangeMem hw s.mem (s.bitSize - δ) s.bitSize i]
     by_cases hlt : i < s.bitSize
@@ -364,9 +398,9 @@ theorem getBit_stepFn_grow_of_lt {w : ℕ} (hw : 0 < w) (s : State) (δ : ℕ)
 
 /-- `grow δ` preserves all existing fields within `[0, s.bitSize)`. -/
 theorem getField_stepFn_grow {w : ℕ} (hw : 0 < w) (s : State) (δ : ℕ)
-    {a b : ℕ} (hab : a + b ≤ s.bitSize) :
+    {a b : ℕ} (hbw : b ≤ w) (hab : a + b ≤ s.bitSize) :
     (stepFn w s (.grow δ)).1.getField w a b = s.getField w a b := by
-  apply readField_congr_bits
+  apply readField_congr_bits hw hbw
   intro k hk
   exact getBit_stepFn_grow_of_lt hw s δ (by omega)
 
@@ -379,47 +413,121 @@ theorem getBit_stepFn_shrink_of_lt {w : ℕ} (hw : 0 < w) (s : State) (δ : ℕ)
 
 /-- `shrink δ` preserves all surviving fields within `[0, s.bitSize - δ)`. -/
 theorem getField_stepFn_shrink {w : ℕ} (hw : 0 < w) (s : State) (δ : ℕ)
-    {a b : ℕ} (hab : a + b ≤ s.bitSize - δ) :
+    {a b : ℕ} (hbw : b ≤ w) (hab : a + b ≤ s.bitSize - δ) :
     (stepFn w s (.shrink δ)).1.getField w a b = s.getField w a b := by
-  apply readField_congr_bits
+  apply readField_congr_bits hw hbw
   intro k hk
   exact getBit_stepFn_shrink_of_lt hw s δ (by omega)
 
-/-! ## Relational dirty-allocation specification (`dirtySpec`) -/
+/-! ## Relational dirty-allocation specification (`dirtySpec`) and refinement -/
 
-/-- Relational step semantics where `grow δ` may place arbitrary bit values in the newly allocated
-slice `[s.bitSize, s.bitSize + δ)` while preserving all existing bits `[0, s.bitSize)` and word
-bounds. -/
+/-- Relational step semantics where `grow δ` may place arbitrary Boolean bit values in the newly
+allocated slice `[s.bitSize, s.bitSize + δ)` while preserving all existing bits `[0, s.bitSize)`,
+clearing all bits at or above `s.bitSize + δ`, and maintaining `w`-bit word bounds. -/
 def dirtyStep (w : ℕ) (s : State) (o : Op) (s' : State) (r : o.Result) : Prop :=
   match o with
   | .grow δ =>
       s'.bitSize = s.bitSize + δ ∧ r = s.bitSize ∧
       (∀ q, Fits w (s'.mem q)) ∧
-      (∀ i < s.bitSize, s'.getBit w i = s.getBit w i)
+      (∀ i < s.bitSize, s'.getBit w i = s.getBit w i) ∧
+      (∀ i, s.bitSize + δ ≤ i → s'.getBit w i = false)
   | o => stepFn w s o = (s', r)
 
 /-- Relational specification of bit-granular resizable memory with uninitialized (`dirty`) newly
 grown bits. -/
-def dirtySpec (w : ℕ) : StateTransitionSpec where
+abbrev dirtySpec (w : ℕ) : StateTransitionSpec where
   State := State
   Op := Op
   Result := Op.Result
   step := dirtyStep w
   valid := valid w
 
-/-- Every deterministic `stepFn` transition satisfies `dirtyStep`. -/
-theorem dirtyStep_of_stepFn {w : ℕ} (hw : 0 < w) (s : State) (o : Op) :
+/-- Every deterministic `stepFn` transition from a well-formed state satisfies `dirtyStep`. -/
+theorem dirtyStep_of_stepFn {w : ℕ} (hw : 0 < w) {s : State} (hs : s.WellFormed w) (o : Op) :
     dirtyStep w s o (stepFn w s o).1 (stepFn w s o).2 := by
   cases o with
   | grow δ =>
-    refine ⟨rfl, rfl, clearRangeMem_fits w s.mem s.bitSize (s.bitSize + δ), fun i hi => ?_⟩
-    exact getBit_stepFn_grow_of_lt hw s δ hi
+    refine ⟨rfl, rfl, clearRangeMem_fits w s.mem s.bitSize (s.bitSize + δ),
+      fun i hi => getBit_stepFn_grow_of_lt hw s δ hi, fun i hi => ?_⟩
+    simp only [stepFn, State.getBit]
+    rw [readBit_clearRangeMem hw s.mem s.bitSize (s.bitSize + δ) i, ite_eq_right (by omega)]
+    exact hs.zero_above i (by omega)
   | readBits _ _ => rfl
   | writeBits _ _ _ => rfl
   | shrink _ => rfl
   | size => rfl
 
-/-! ## Operation cost and space measure -/
+/-- Every admissible `dirtyStep` transition preserves `State.WellFormed w` when `0 < w`. -/
+theorem wellFormed_dirtyStep {w : ℕ} (hw : 0 < w) {s s' : State} {o : Op} {r : o.Result}
+    (hs : s.WellFormed w) (hv : valid w s o) (hstep : dirtyStep w s o s' r) :
+    s'.WellFormed w := by
+  cases o with
+  | grow δ =>
+    obtain ⟨hsz, _, hmem, _, hzero⟩ := hstep
+    exact ⟨hmem, hsz ▸ hv, fun i hi => hzero i (hsz ▸ hi)⟩
+  | readBits _ _ =>
+    have h := wellFormed_stepFn hw hs hv
+    rwa [hstep] at h
+  | writeBits _ _ _ =>
+    have h := wellFormed_stepFn hw hs hv
+    rwa [hstep] at h
+  | shrink _ =>
+    have h := wellFormed_stepFn hw hs hv
+    rwa [hstep] at h
+  | size =>
+    have h := wellFormed_stepFn hw hs hv
+    rwa [hstep] at h
+
+/-- **Demonic grow followed by full slice overwrite is deterministic**: when `s` is well-formed at
+`w > 0`, `δ ≤ w`, and `dirtyStep w s (.grow δ) s₁ offset` transitions to any demonic state `s₁`,
+overwriting `[offset, offset + δ)` with `val` produces the exact same memory state
+`writeFieldMem w 0 s.mem s.bitSize δ val` independent of the demonic bits in `s₁`. -/
+theorem writeFieldMem_of_dirtyStep_grow {w : ℕ} (hw : 0 < w) {s s₁ : State}
+    (hs : s.WellFormed w) {δ offset val : ℕ} (hδ : δ ≤ w)
+    (hstep : dirtyStep w s (.grow δ) s₁ offset) :
+    writeFieldMem w 0 s₁.mem offset δ val = writeFieldMem w 0 s.mem s.bitSize δ val := by
+  obtain ⟨hsz, rfl, hmem₁, hpres, hzero₁⟩ := hstep
+  funext q
+  apply Nat.eq_of_testBit_eq
+  intro j
+  by_cases hj : j < w
+  · have hmod : (q * w + j) % w = j := by
+      rw [Nat.mul_comm, Nat.mul_add_mod, Nat.mod_eq_of_lt hj]
+    have hdiv : (q * w + j) / w = q := by
+      rw [Nat.mul_comm, Nat.mul_add_div hw, Nat.div_eq_of_lt hj, Nat.add_zero]
+    have hbit := readBit_writeFieldMem hw s₁.mem (base := 0) (a := s.bitSize) (b := δ)
+      (val := val) hδ (q * w + j)
+    have hbit₀ := readBit_writeFieldMem hw s.mem (base := 0) (a := s.bitSize) (b := δ)
+      (val := val) hδ (q * w + j)
+    simp only [readBit, Nat.zero_add, hdiv, hmod] at hbit hbit₀
+    rw [hbit, hbit₀]
+    split_ifs with hrange
+    · rfl
+    · by_cases hlt : q * w + j < s.bitSize
+      · have hp := hpres (q * w + j) hlt
+        simpa [State.getBit, readBit, hdiv, hmod] using hp
+      · have hge : s.bitSize + δ ≤ q * w + j := by omega
+        have hz₁ := hzero₁ (q * w + j) hge
+        have hz₀ := hs.zero_above (q * w + j) (by omega)
+        simp only [State.getBit, readBit, Nat.zero_add, hdiv, hmod] at hz₁ hz₀
+        rw [hz₁, hz₀]
+  · have hf₁ := writeFieldMem_fits (base := 0) (a := s.bitSize) hw hmem₁ hδ val q
+    have hf₀ := writeFieldMem_fits (base := 0) (a := s.bitSize) hw hs.mem_fits hδ val q
+    rw [Nat.testBit_lt_two_pow (lt_of_lt_of_le hf₁
+        (Nat.pow_le_pow_right Nat.two_pos (Nat.le_of_not_lt hj))),
+      Nat.testBit_lt_two_pow (lt_of_lt_of_le hf₀
+        (Nat.pow_le_pow_right Nat.two_pos (Nat.le_of_not_lt hj)))]
+
+/-- In particular, deterministic `stepFn` on `.grow δ` (`δ ≤ w`) followed by `writeFieldMem`
+simplifies `writeFieldMem w 0 (clearRangeMem w s.mem s.bitSize (s.bitSize + δ)) s.bitSize δ val`
+to `writeFieldMem w 0 s.mem s.bitSize δ val`. -/
+theorem writeFieldMem_clearRangeMem_self {w : ℕ} (hw : 0 < w) {s : State}
+    (hs : s.WellFormed w) {δ : ℕ} (hδ : δ ≤ w) (val : ℕ) :
+    writeFieldMem w 0 (clearRangeMem w s.mem s.bitSize (s.bitSize + δ)) s.bitSize δ val =
+      writeFieldMem w 0 s.mem s.bitSize δ val :=
+  writeFieldMem_of_dirtyStep_grow hw hs hδ (dirtyStep_of_stepFn hw hs (.grow δ))
+
+/-! ## Operation cost, `spec_refines_dirtySpec`, and space measure -/
 
 /-- Operation cost in the bit-granular resizable memory model at word width `w`:
 * `readBits`, `writeBits`, `size` cost `1` unit;
@@ -457,14 +565,55 @@ theorem charge_shrink_of_le {w δ : ℕ} (hw : 0 < w) (hδ : δ ≤ w) (s : Stat
   have hle : δ ⌈/⌉ w ≤ 1 := by rwa [Nat.ceilDiv_le_iff hw, one_mul]
   exact max_eq_left hle
 
+/-- Every operation in `BitMemory` costs at least `1` unit. -/
+theorem one_le_charge (w : ℕ) (s : State) (o : Op) : 1 ≤ charge w s o := by
+  cases o <;> simp [charge]
+
+/-- The deterministic zero-initialized specification `BitMemory.spec w` refines the demonic
+dirty-allocation specification `BitMemory.dirtySpec w` on well-formed states. -/
+@[nolint defsWithUnderscore] def spec_refines_dirtySpec {w : ℕ} (hw : 0 < w) :
+    Refinement (dirtySpec w) (spec w) where
+  methods o := .liftBind o fun a => .pure a
+  inv s := s.WellFormed w
+  abs s := s
+  valid o _ hv := .liftBind (D := spec w) o _ hv fun s' a _ => .pure s' a
+  correct {s} o {a s' tr} hs hv hrun := by
+    cases hrun with
+    | liftBind _ _ a _ hstep hrest =>
+      cases hrest
+      have hfn : stepFn w s o = (s', a) := (((spec w).step_iff_stepFn _ _ _ _).mp hstep).symm
+      have hdirty := dirtyStep_of_stepFn hw hs o
+      have hwf := wellFormed_stepFn hw hs hv
+      rw [hfn] at hdirty hwf
+      exact ⟨hdirty, hwf⟩
+
+/-- `spec_refines_dirtySpec` preserves `BitMemory.charge w` with zero potential. -/
+theorem spec_refines_dirtySpec_amortized {w : ℕ} (hw : 0 < w) :
+    (spec_refines_dirtySpec hw).Amortized (charge w) (charge w) (fun _ => 0) := by
+  refine ⟨fun {s} o {a s' tr} _ _ hrun => ?_⟩
+  cases hrun with
+  | liftBind _ _ r _ _ hrest =>
+    cases hrest
+    simp [spec_refines_dirtySpec]
+
 /-- The current allocated space in bits at step `t` along an operation sequence `ops` from `s₀`. -/
 def spaceBitsAt (w : ℕ) (s₀ : State) (ops : List Op) (t : ℕ) : ℕ :=
   (((spec w).run s₀ (ops.take t)).1).bitSize
 
-/-! ## Frame condition and multi-structure composition with reusable memory -/
+/-! ## Frame condition and single-tape memory reuse -/
 
-/-- A refinement of an abstract specification `D` over `BitMemory.spec w` with an exact bit-space
-profile `sizeBits : D.State → ℕ` at every step. -/
+/-- A refinement of an abstract specification `D` over the demonic `BitMemory.dirtySpec w` with an
+exact bit-space profile `sizeBits : D.State → ℕ` at every step. -/
+structure DirtyFramed (D : StateTransitionSpec) (w : ℕ) extends Refinement D (dirtySpec w) where
+  /-- Exact allocated bit count of a represented abstract state `d : D.State`. -/
+  sizeBits : D.State → ℕ
+  /-- Every represented concrete state has `s.bitSize = sizeBits (abs s)`. -/
+  bitSize_eq : ∀ {s}, inv s → s.bitSize = sizeBits (abs s)
+  /-- Every represented concrete state is well-formed at word width `w`. -/
+  wellFormed : ∀ {s}, inv s → s.WellFormed w
+
+/-- A refinement of an abstract specification `D` over the deterministic `BitMemory.spec w` with an
+exact bit-space profile `sizeBits : D.State → ℕ` at every step. -/
 structure Framed (D : StateTransitionSpec) (w : ℕ) extends Refinement D (spec w) where
   /-- Exact allocated bit count of a represented abstract state `d : D.State`. -/
   sizeBits : D.State → ℕ
@@ -473,140 +622,150 @@ structure Framed (D : StateTransitionSpec) (w : ℕ) extends Refinement D (spec 
   /-- Every represented concrete state is well-formed at word width `w`. -/
   wellFormed : ∀ {s}, inv s → s.WellFormed w
 
-/-- Two independent bit-resizable memory segments in one machine. -/
-abbrev pairSpec (w : ℕ) : StateTransitionSpec :=
-  product (spec w) (spec w)
+/-- Any `DirtyFramed D w` refinement over `dirtySpec w` automatically induces a `Framed D w`
+refinement over `spec w` by composing with `spec_refines_dirtySpec`. -/
+def DirtyFramed.toFramed {D : StateTransitionSpec} {w : ℕ} (hw : 0 < w)
+    (M : DirtyFramed D w) : Framed D w where
+  toRefinement := M.toRefinement.comp (spec_refines_dirtySpec hw)
+  sizeBits := M.sizeBits
+  bitSize_eq hi := M.bitSize_eq hi.2
+  wellFormed hi := hi.1
 
-/-- Charge function on `pairSpec w` summing the operation cost on whichever segment is called. -/
-def pairCharge (w : ℕ) : (pairSpec w).State → (pairSpec w).Op → ℕ :=
-  productCharge (charge w) (charge w)
+/-- Single-tape bit-budgeted demonic specification: a single `BitMemory.State` `[0, s.bitSize)`
+operating within a total bit budget `B` (`B < 2 ^ w`). -/
+abbrev boundedDirtySpec (w B : ℕ) : StateTransitionSpec where
+  State := State
+  Op := Op
+  Result := Op.Result
+  step := dirtyStep w
+  valid s o := valid w s o ∧
+    match o with
+    | .grow δ => s.bitSize + δ ≤ B
+    | _ => s.bitSize ≤ B
 
-/-- Lift a `BitMemory.Prog α` to operate on the left segment of `pairSpec w`. -/
-def liftLeft (w : ℕ) {α : Type} (p : Prog α) : (pairSpec w).Client α :=
-  p.liftM fun o => PFunctor.FreeM.lift (P := (pairSpec w).signature) (.inl o)
+/-- Single-tape bit-budgeted deterministic specification: a single `BitMemory.State`
+`[0, s.bitSize)` operating within a total bit budget `B`. -/
+abbrev boundedSpec (w B : ℕ) : StateTransitionSpec :=
+  StateTransitionSpec.ofFn (stepFn w) (boundedDirtySpec w B).valid
 
-/-- Lift a `BitMemory.Prog α` to operate on the right segment of `pairSpec w`. -/
-def liftRight (w : ℕ) {α : Type} (p : Prog α) : (pairSpec w).Client α :=
-  p.liftM fun o => PFunctor.FreeM.lift (P := (pairSpec w).signature) (.inr o)
+/-- **Single-tape memory reuse theorem**: on a single bit-resizable tape `[0, s.bitSize)` within bit
+budget `B` (`Fits w B`), shrinking by `δ ≤ s.bitSize` bits immediately reduces `s₁.bitSize` to
+`s.bitSize - δ`, and those `δ` released bits can be immediately re-allocated on the **same** tape
+via `grow δ` (under any demonic transition of `dirtyStep w`) without exceeding the bit budget
+`B`. -/
+theorem singleTape_reuse_released_bits {w B δ : ℕ} {s : State}
+    (hB_fits : Fits w B) (hB : s.bitSize ≤ B) (hδ : δ ≤ s.bitSize) :
+    let s₁ := (stepFn w s (.shrink δ)).1
+    (boundedDirtySpec w B).valid s (.shrink δ) ∧
+      s₁.bitSize = s.bitSize - δ ∧
+      (boundedDirtySpec w B).valid s₁ (.grow δ) ∧
+      ∀ s₂ r, dirtyStep w s₁ (.grow δ) s₂ r → s₂.bitSize = s.bitSize ∧ s₂.bitSize ≤ B := by
+  refine ⟨⟨hδ, hB⟩, rfl, ⟨?_, ?_⟩, fun s₂ r hstep => ?_⟩
+  · change (s.bitSize - δ) + δ < 2 ^ w
+    exact lt_of_le_of_lt (by omega) hB_fits
+  · dsimp only [stepFn]
+    omega
+  · obtain ⟨hsz, _⟩ := hstep
+    dsimp only [stepFn] at hsz
+    exact ⟨by omega, by omega⟩
 
-/-- Evaluating `liftLeft w p` on `(s₁, s₂)` runs `p` on `s₁` and preserves `s₂`. -/
-theorem runClient_liftLeft (w : ℕ) {α : Type} (s₁ s₂ : State) (p : Prog α) :
-    (pairSpec w).runClient (s₁, s₂) (liftLeft w p) =
-      let (v, s₁', os) := (spec w).runClient s₁ p
-      (v, (s₁', s₂), os.map Sum.inl) := by
-  induction p generalizing s₁ with
-  | pure a => rfl
-  | liftBind o k ih =>
-    change (let r := (pairSpec w).stepFn (s₁, s₂) (.inl o);
-      let res := (pairSpec w).runClient r.1 (liftLeft w (k r.2));
-      (res.1, res.2.1, .inl o :: res.2.2)) = _
-    have h := ih ((stepFn w s₁ o).2) ((stepFn w s₁ o).1)
-    dsimp only at h ⊢
-    rw [h]
-    rfl
+/-- **Single-tape `O(1)` swap-with-last chunk release (`[LLYZ23a]` Lemma 5.1 / `[BHKLZ26]`
+Lemma 2.1)**: given a single bit-resizable tape `[0, headerBits + (lastPhys + 1) * s)` containing
+`lastPhys + 1` physical chunks of `s` bits (`s ≤ w`) after a `headerBits`-bit header, releasing
+physical chunk `p ≤ lastPhys` copies the last physical chunk `lastPhys` into slot `p` and shrinks
+the single tape by `s` bits in `3` `BitMemory` operations (`readBits`, `writeBits`, `shrink s`). -/
+def swapRemoveChunkProg (headerBits s p lastPhys : ℕ) : Prog Unit := do
+  let lastVal ← readBits (headerBits + lastPhys * s) s
+  writeBits (headerBits + p * s) s lastVal
+  shrink s
 
-/-- Evaluating `liftRight w p` on `(s₁, s₂)` preserves `s₁` and runs `p` on `s₂`. -/
-theorem runClient_liftRight (w : ℕ) {α : Type} (s₁ s₂ : State) (p : Prog α) :
-    (pairSpec w).runClient (s₁, s₂) (liftRight w p) =
-      let (v, s₂', os) := (spec w).runClient s₂ p
-      (v, (s₁, s₂'), os.map Sum.inr) := by
-  induction p generalizing s₂ with
-  | pure a => rfl
-  | liftBind o k ih =>
-    change (let r := (pairSpec w).stepFn (s₁, s₂) (.inr o);
-      let res := (pairSpec w).runClient r.1 (liftRight w (k r.2));
-      (res.1, res.2.1, .inr o :: res.2.2)) = _
-    have h := ih ((stepFn w s₂ o).2) ((stepFn w s₂ o).1)
-    dsimp only at h ⊢
-    rw [h]
-    rfl
-
-/-- Admissibility of a left-lifted history on `pairSpec w`. -/
-theorem validHistory_map_inl (w : ℕ) (s₁ s₂ : State) (os : List Op) :
-    (pairSpec w).ValidHistory (s₁, s₂) (os.map Sum.inl) ↔ (spec w).ValidHistory s₁ os := by
-  induction os generalizing s₁ with
-  | nil => rfl
-  | cons o os ih => exact and_congr_right fun _ => ih _
-
-/-- Admissibility of a right-lifted history on `pairSpec w`. -/
-theorem validHistory_map_inr (w : ℕ) (s₁ s₂ : State) (os : List Op) :
-    (pairSpec w).ValidHistory (s₁, s₂) (os.map Sum.inr) ↔ (spec w).ValidHistory s₂ os := by
-  induction os generalizing s₂ with
-  | nil => rfl
-  | cons o os ih => exact and_congr_right fun _ => ih _
-
-/-- Cost of a left-lifted history on `pairSpec w`. -/
-theorem totalCost_map_inl (w : ℕ) (s₁ s₂ : State) (os : List Op) :
-    (pairSpec w).totalCost (pairCharge w) (s₁, s₂) (os.map Sum.inl) =
-      (spec w).totalCost (charge w) s₁ os := by
-  induction os generalizing s₁ with
-  | nil => rfl
-  | cons o os ih => exact congrArg (charge w s₁ o + ·) (ih _)
-
-/-- Cost of a right-lifted history on `pairSpec w`. -/
-theorem totalCost_map_inr (w : ℕ) (s₁ s₂ : State) (os : List Op) :
-    (pairSpec w).totalCost (pairCharge w) (s₁, s₂) (os.map Sum.inr) =
-      (spec w).totalCost (charge w) s₂ os := by
-  induction os generalizing s₂ with
-  | nil => rfl
-  | cons o os ih => exact congrArg (charge w s₂ o + ·) (ih _)
-
-/-- Combine method tables on two independent `BitMemory.spec w` segments into a method table on
-`pairSpec w`. -/
-def prodMethods (w : ℕ) {D₁ D₂ : StateTransitionSpec}
-    (m₁ : Methods D₁ (spec w)) (m₂ : Methods D₂ (spec w)) :
-    Methods (product D₁ D₂) (pairSpec w)
-  | .inl o => liftLeft w (m₁ o)
-  | .inr o => liftRight w (m₂ o)
-
-/-- Total allocated bits across two bit-resizable segments. -/
-def pairTotalBits (s : State × State) : ℕ :=
-  s.1.bitSize + s.2.bitSize
-
-/-- Total allocated bits including one `w`-bit descriptor word per segment (`2 * w` additive
-bits). -/
-def pairTotalBitsWithMetadata (w : ℕ) (s : State × State) : ℕ :=
-  s.1.bitSize + s.2.bitSize + 2 * w
-
-/-- **Frame condition for composed bit-resizable segments**: an operation on the first segment
-leaves the second segment's `mem` and `bitSize` completely unchanged, and vice versa. -/
-@[simp]
-theorem pairSpec_stepFn_inl (w : ℕ) (s : State × State) (o : Op) :
-    ((pairSpec w).stepFn s (.inl o)).1.2 = s.2 := rfl
-
-@[simp]
-theorem pairSpec_stepFn_inr (w : ℕ) (s : State × State) (o : Op) :
-    ((pairSpec w).stepFn s (.inr o)).1.1 = s.1 := rfl
-
-/-- Two bit-resizable segments sharing a single pool of `B` bits: an operation is admissible iff it
-is admissible on its target segment and the resulting total live bit count
-`s'₁.bitSize + s'₂.bitSize` stays within the shared budget `B`. -/
-abbrev boundedPairSpec (w B : ℕ) : StateTransitionSpec :=
-  StateTransitionSpec.ofFn
-    (fun (s : State × State) (o : Op ⊕ Op) => (pairSpec w).stepFn s o)
-    (fun (s : State × State) (o : Op ⊕ Op) =>
-      (pairSpec w).valid s o ∧ pairTotalBits ((pairSpec w).stepFn s o).1 ≤ B)
-
-/-- **Memory reuse theorem**: when segment 1 shrinks by `δ` bits from a state within budget `B`,
-those `δ` released bits immediately reduce `pairTotalBits` by `δ` and can be allocated by segment 2
-via `grow δ` without exceeding the shared bit budget `B`. -/
-theorem reuse_released_bits {w B δ : ℕ} {s : State × State}
-    (hB : pairTotalBits s ≤ B) (hδ : δ ≤ s.1.bitSize) :
-    let s₁ := ((boundedPairSpec w B).stepFn s (.inl (.shrink δ))).1
-    (boundedPairSpec w B).valid s (.inl (.shrink δ)) ∧
-      pairTotalBits s₁ = pairTotalBits s - δ ∧
-      (boundedPairSpec w B).valid s₁ (.inr (.grow δ)) ∧
-      pairTotalBits ((boundedPairSpec w B).stepFn s₁ (.inr (.grow δ))).1 = pairTotalBits s := by
-  change (valid w s.1 (.shrink δ) ∧
-      (stepFn w s.1 (.shrink δ)).1.bitSize + s.2.bitSize ≤ B) ∧
-    (stepFn w s.1 (.shrink δ)).1.bitSize + s.2.bitSize = (s.1.bitSize + s.2.bitSize) - δ ∧
-    (valid w s.2 (.grow δ) ∧
-      (stepFn w s.1 (.shrink δ)).1.bitSize + (stepFn w s.2 (.grow δ)).1.bitSize ≤ B) ∧
-    (stepFn w s.1 (.shrink δ)).1.bitSize + (stepFn w s.2 (.grow δ)).1.bitSize =
-      s.1.bitSize + s.2.bitSize
-  simp only [valid, stepFn]
-  have hB' : s.1.bitSize + s.2.bitSize ≤ B := hB
-  exact ⟨⟨hδ, by omega⟩, by omega, ⟨trivial, by omega⟩, by omega⟩
+/-- `swapRemoveChunkProg` is demonically valid on `dirtySpec w` and shrinks the single tape from
+`headerBits + (lastPhys + 1) * s` bits to `headerBits + lastPhys * s` bits while preserving all
+other physical chunks `q ≠ p` (`q < lastPhys`) and placing the old contents of chunk `lastPhys`
+into slot `p`. -/
+theorem swapRemoveChunkProg_demonic {w headerBits s p lastPhys : ℕ} (hw : 0 < w) (hsw : s ≤ w)
+    {st : State} (hsz : st.bitSize = headerBits + (lastPhys + 1) * s)
+    (hp : p ≤ lastPhys) :
+    (dirtySpec w).DemonicValid st (swapRemoveChunkProg headerBits s p lastPhys) ∧
+      ∀ u st' tr,
+        (dirtySpec w).ClientRun st (swapRemoveChunkProg headerBits s p lastPhys) u st' tr →
+        st'.bitSize = headerBits + lastPhys * s ∧
+        (p < lastPhys →
+          st'.getField w (headerBits + p * s) s = st.getField w (headerBits + lastPhys * s) s) ∧
+        (∀ q < lastPhys, q ≠ p →
+          st'.getField w (headerBits + q * s) s = st.getField w (headerBits + q * s) s) := by
+  have hlast_bound : headerBits + lastPhys * s + s ≤ st.bitSize := by
+    rw [hsz, Nat.succ_mul]
+    omega
+  have hp_bound : headerBits + p * s + s ≤ st.bitSize := by
+    have : p * s ≤ lastPhys * s := Nat.mul_le_mul_right s hp
+    omega
+  have hv_read : (dirtySpec w).valid st (.readBits (headerBits + lastPhys * s) s) :=
+    ⟨hsw, hlast_bound⟩
+  refine ⟨.liftBind _ _ hv_read fun st₁ v hstep₁ => ?_, fun u st' tr hrun => ?_⟩
+  · obtain ⟨h1, h1v⟩ := (Prod.mk.injEq _ _ _ _).mp hstep₁
+    subst h1
+    subst h1v
+    have hv_write : (dirtySpec w).valid st
+        (.writeBits (headerBits + p * s) s (readField w 0 st.mem (headerBits + lastPhys * s) s)) :=
+      ⟨hsw, hp_bound, readField_fits w 0 st.mem _ s⟩
+    refine .liftBind _ _ hv_write fun st₂ _ hstep₂ => ?_
+    obtain ⟨h2, -⟩ := (Prod.mk.injEq _ _ _ _).mp hstep₂
+    subst h2
+    have hv_shrink : (dirtySpec w).valid
+        ⟨writeFieldMem w 0 st.mem (headerBits + p * s) s
+          (readField w 0 st.mem (headerBits + lastPhys * s) s), st.bitSize⟩ (.shrink s) := by
+      change s ≤ st.bitSize
+      omega
+    exact .liftBind _ _ hv_shrink fun st₃ _ _ => .pure st₃ ()
+  · obtain ⟨_, v, st₁, tr₁, hstep₁, hrest₁, _⟩ :=
+      ((dirtySpec w).clientRun_liftBind_iff _ _ _ _ _ _).mp hrun
+    obtain ⟨h1, h1v⟩ := (Prod.mk.injEq _ _ _ _).mp hstep₁
+    subst h1
+    subst h1v
+    obtain ⟨_, _, st₂, tr₂, hstep₂, hrest₂, _⟩ :=
+      ((dirtySpec w).clientRun_liftBind_iff _ _ _ _ _ _).mp hrest₁
+    obtain ⟨h2, -⟩ := (Prod.mk.injEq _ _ _ _).mp hstep₂
+    subst h2
+    obtain ⟨_, _, st₃, tr₃, hstep₃, hrest₃, _⟩ :=
+      ((dirtySpec w).clientRun_liftBind_iff _ _ _ _ _ _).mp hrest₂
+    obtain ⟨h3, -⟩ := (Prod.mk.injEq _ _ _ _).mp hstep₃
+    subst h3
+    obtain ⟨_, rfl, _⟩ := ((dirtySpec w).clientRun_pure_iff _ _ _ _ _).mp hrest₃
+    have hsz' : st.bitSize = headerBits + lastPhys * s + s := by
+      rw [hsz, Nat.succ_mul, Nat.add_assoc]
+    refine ⟨by dsimp only [stepFn]; omega, fun hplt => ?_, fun q hq hqp => ?_⟩
+    · have hp_surv : headerBits + p * s + s ≤ st.bitSize - s := by
+        have : (p + 1) * s ≤ lastPhys * s := Nat.mul_le_mul_right s hplt
+        rw [Nat.add_mul, Nat.one_mul] at this
+        omega
+      have hget := getField_stepFn_shrink hw
+        ⟨writeFieldMem w 0 st.mem (headerBits + p * s) s
+          (readField w 0 st.mem (headerBits + lastPhys * s) s), st.bitSize⟩ s hsw hp_surv
+      dsimp only [stepFn, State.getField] at hget ⊢
+      rw [hget]
+      exact readField_writeFieldMem_same hw st.mem hsw (readField_fits w 0 st.mem _ s)
+    · have hq_surv : headerBits + q * s + s ≤ st.bitSize - s := by
+        have : (q + 1) * s ≤ lastPhys * s := Nat.mul_le_mul_right s hq
+        rw [Nat.add_mul, Nat.one_mul] at this
+        omega
+      have hget := getField_stepFn_shrink hw
+        ⟨writeFieldMem w 0 st.mem (headerBits + p * s) s
+          (readField w 0 st.mem (headerBits + lastPhys * s) s), st.bitSize⟩ s hsw hq_surv
+      dsimp only [stepFn, State.getField] at hget ⊢
+      rw [hget]
+      have hdisj : (headerBits + q * s) + s ≤ headerBits + p * s ∨
+          (headerBits + p * s) + s ≤ headerBits + q * s := by
+        rcases lt_or_gt_of_ne hqp with hlt | hgt
+        · left
+          have : (q + 1) * s ≤ p * s := Nat.mul_le_mul_right s hlt
+          rw [Nat.add_mul, Nat.one_mul] at this
+          omega
+        · right
+          have : (p + 1) * s ≤ q * s := Nat.mul_le_mul_right s hgt
+          rw [Nat.add_mul, Nat.one_mul] at this
+          omega
+      exact readField_writeFieldMem_of_disjoint hw st.mem hsw hsw hdisj
 
 /-! ## Realization of bit-field operations on `Memory.spec w` -/
 
@@ -635,7 +794,7 @@ theorem realize_readBits_triple {w base bitAddr len : ℕ} (hw : 0 < w)
     simp only [stepFn]
     apply Nat.eq_of_testBit_eq
     intro k
-    rw [readField_testBit, readField_testBit]
+    rw [readField_testBit hw (base + 1) m.mem hlen k, readField_testBit hw 0 s.mem hlen k]
     split_ifs with hk
     · simp only [readBit, Nat.zero_add]
       have hk_lt : (bitAddr + k) / w < s.wordSize w :=
@@ -650,6 +809,7 @@ writing a `len`-bit field (`len ≤ w`, `bitAddr + len ≤ s.bitSize`, `Fits len
 `(stepFn w s (.writeBits bitAddr len val)).1.mem q` for all `q < s.wordSize w`. -/
 theorem realize_writeBits_triple {w base bitAddr len val : ℕ} (hw : 0 < w)
     {s : State} {m : Memory.State}
+    (hm_fits : ∀ addr, Fits w (m.mem addr))
     (hmem : ∀ q < s.wordSize w, m.mem (base + 1 + q) = s.mem q)
     (hfront : base + 1 + s.wordSize w ≤ m.frontier)
     (hv : valid w s (.writeBits bitAddr len val)) :
@@ -660,13 +820,13 @@ theorem realize_writeBits_triple {w base bitAddr len val : ℕ} (hw : 0 < w)
         m'.frontier = m.frontier) := by
   obtain ⟨hlen, hbound, _⟩ := hv
   rcases Nat.eq_zero_or_pos len with rfl | hpos
-  · refine (writeFieldProg_triple (Or.inl rfl)).mono le_rfl ?_
+  · refine (writeFieldProg_triple hw hlen hm_fits (Or.inl rfl)).mono le_rfl ?_
     rintro ⟨⟩ m' ⟨hm, hf⟩
     refine ⟨fun q hq => ?_, hf⟩
     simp [hm, stepFn, hmem q hq]
   · have hcov : s.bitSize ≤ s.wordSize w * w := Nat.le_ceilDiv_mul hw
     have ⟨hq₀, hq₁⟩ := word_indices_lt_of_bit_bound hw hpos (hbound.trans hcov)
-    refine (writeFieldProg_triple (Or.inr ⟨by omega, by omega⟩)).mono le_rfl ?_
+    refine (writeFieldProg_triple hw hlen hm_fits (Or.inr ⟨by omega, by omega⟩)).mono le_rfl ?_
     rintro ⟨⟩ m' ⟨hm, hf⟩
     refine ⟨fun q hq => ?_, hf⟩
     rw [hm]
@@ -675,24 +835,33 @@ theorem realize_writeBits_triple {w base bitAddr len val : ℕ} (hw : 0 < w)
     have hlen0 : ¬len = 0 := by omega
     rw [ite_eq_right hlen0, ite_eq_right hlen0]
     simp only [Nat.zero_add]
-    by_cases hqq : (bitAddr + len - 1) / w = bitAddr / w
-    · rw [ite_eq_left hqq, ite_eq_left hqq]
-      by_cases h0 : q = bitAddr / w
-      · subst h0
-        rw [Function.update_self, Function.update_self, hmem _ hq₀]
-      · rw [Function.update_of_ne (by omega), Function.update_of_ne h0]
-        exact hmem q hq
-    · rw [ite_eq_right hqq, ite_eq_right hqq]
-      by_cases h1 : q = (bitAddr + len - 1) / w
+    by_cases hstrad : w - bitAddr % w < len
+    · rw [ite_eq_left hstrad, ite_eq_left hstrad]
+      have hne : (bitAddr + len - 1) / w ≠ bitAddr / w :=
+        (sub_mod_lt_iff_div_ne hw hpos).mp hstrad
+      have hq₁_eq : (bitAddr + len - 1) / w = bitAddr / w + 1 := by
+        rcases div_add_pred_eq_or_succ hw hpos hlen with h | h
+        · exact absurd h hne
+        · exact h
+      have hq₁' : bitAddr / w + 1 < s.wordSize w := hq₁_eq ▸ hq₁
+      by_cases h1 : q = bitAddr / w + 1
       · subst h1
-        rw [Function.update_self, Function.update_self,
-          Function.update_of_ne (by omega), Function.update_of_ne hqq, hmem _ hq₁]
+        have hassoc : base + 1 + (bitAddr / w + 1) = base + 1 + bitAddr / w + 1 := by omega
+        rw [hassoc, Function.update_self, Function.update_self,
+          Function.update_of_ne (by omega), Function.update_of_ne (by omega),
+          ← hassoc, hmem _ hq₁']
       · rw [Function.update_of_ne (by omega), Function.update_of_ne h1]
         by_cases h0 : q = bitAddr / w
         · subst h0
           rw [Function.update_self, Function.update_self, hmem _ hq₀]
         · rw [Function.update_of_ne (by omega), Function.update_of_ne h0]
           exact hmem q hq
+    · rw [ite_eq_right hstrad, ite_eq_right hstrad]
+      by_cases h0 : q = bitAddr / w
+      · subst h0
+        rw [Function.update_self, Function.update_self, hmem _ hq₀]
+      · rw [Function.update_of_ne (by omega), Function.update_of_ne h0]
+        exact hmem q hq
 
 /-! ## Complete words, partially owned tail word, and `BitUnchangedOutside` frame condition -/
 
@@ -710,12 +879,13 @@ def State.tailBits (s : State) (w : ℕ) : ℕ :=
 theorem State.WellFormed.tail_fits {w : ℕ} (hw : 0 < w) {s : State}
     (hs : s.WellFormed w) : Fits (s.tailBits w) (s.mem (s.completeWords w)) := by
   have heq : s.mem (s.completeWords w) =
-      Nat.ofBits (fun j : Fin (s.tailBits w) => (s.mem (s.completeWords w)).testBit j.val) := by
+      extractSlice (s.mem (s.completeWords w)) 0 (s.tailBits w) := by
     apply Nat.eq_of_testBit_eq
     intro j
+    rw [extractSlice_testBit, Nat.zero_add]
     by_cases hj : j < s.tailBits w
-    · rw [Nat.testBit_ofBits_lt _ _ hj]
-    · rw [Nat.testBit_ofBits_ge _ _ (Nat.le_of_not_lt hj)]
+    · simp [hj]
+    · simp only [hj, decide_false, Bool.false_and]
       by_cases hjw : j < w
       · have hmod : (s.completeWords w * w + j) % w = j := by
           rw [Nat.mul_comm, Nat.mul_add_mod, Nat.mod_eq_of_lt hjw]
@@ -731,7 +901,7 @@ theorem State.WellFormed.tail_fits {w : ℕ} (hw : 0 < w) {s : State}
       · exact Nat.testBit_lt_two_pow (lt_of_lt_of_le (hs.mem_fits _)
           (Nat.pow_le_pow_right (by decide) (Nat.le_of_not_lt hjw)))
   rw [Fits, heq]
-  exact Nat.ofBits_lt_two_pow _
+  exact extractSlice_lt _ _ _
 
 /-- In a well-formed state at word width `w > 0`, all words strictly beyond the tail word
 (`q > s.completeWords w`) are `0`. -/
@@ -790,7 +960,7 @@ theorem bitUnchangedOutside_grow {w : ℕ} (hw : 0 < w) (s : State) (δ : ℕ) :
 theorem bitUnchangedOutside_dirtyStep_grow {w : ℕ} {s s' : State} {δ res : ℕ}
     (h : dirtyStep w s (.grow δ) s' res) :
     BitUnchangedOutside w s s' ∅ := by
-  obtain ⟨hsz, _, _, hpres⟩ := h
+  obtain ⟨hsz, _, _, hpres, _⟩ := h
   intro i hi _
   exact hpres i (by omega)
 

@@ -14,9 +14,9 @@ public import Complexity.DataStructure.StateTransition
 /-!
 # Specification of a Resizable Array of `b`-Bit Items
 
-`DynamicArray.spec b` specifies a resizable array (dynamic array) holding `b`-bit natural numbers
-(`Fits b x`, i.e., `x < 2 ^ b`). The abstract state is `List ℕ`, initialized at the empty list `[]`,
-supporting four operations:
+`DynamicArray.spec w b` specifies a resizable array (dynamic array) holding `b`-bit natural numbers
+(`Fits b x`, i.e., `x < 2 ^ b`) on a `w`-bit machine (`Fits w ((xs.length + 1) * b)` on `append`).
+The abstract state is `List ℕ`, initialized at the empty list `[]`, supporting four operations:
 
 * `append x`: append a `b`-bit item `x` to the end of the array (`xs ↦ xs ++ [x]`).
 * `pop`: remove and return the last item of the array (`xs ↦ xs.dropLast`, returning `xs.getLast?`).
@@ -72,20 +72,21 @@ def stepFn (xs : State) : (o : Op) → State × o.Result
   | .read i => (xs, xs.getD i 0)
   | .write i x => (xs.set i x, ())
 
-/-- Admissibility of an array operation for `b`-bit items (`Fits b x`):
-* `append x` requires `Fits b x`;
+/-- Admissibility of an array operation for `b`-bit items (`Fits b x`) at word width `w`:
+* `append x` requires `Fits b x` and `Fits w ((xs.length + 1) * b)` (the new bit size fits in a
+  `w`-bit word);
 * `pop` is always admissible;
 * `read i` requires `i < xs.length`;
 * `write i x` requires `i < xs.length ∧ Fits b x`. -/
-def valid (b : ℕ) (xs : State) : Op → Prop
-  | .append x => Fits b x
+def valid (w b : ℕ) (xs : State) : Op → Prop
+  | .append x => Fits b x ∧ Fits w ((xs.length + 1) * b)
   | .pop => True
   | .read i => i < xs.length
   | .write i x => i < xs.length ∧ Fits b x
 
-/-- State-transition specification of a resizable array of `b`-bit items without a capacity cap. -/
-abbrev spec (b : ℕ) : StateTransitionSpec :=
-  StateTransitionSpec.ofFn stepFn (valid b)
+/-- State-transition specification of a resizable array of `b`-bit items at word width `w`. -/
+abbrev spec (w b : ℕ) : StateTransitionSpec :=
+  StateTransitionSpec.ofFn stepFn (valid w b)
 
 @[simp]
 theorem stepFn_append (xs : State) (x : ℕ) :
@@ -104,20 +105,20 @@ theorem stepFn_write (xs : State) (i x : ℕ) :
     stepFn xs (.write i x) = (xs.set i x, ()) := rfl
 
 @[simp]
-theorem valid_append (b : ℕ) (xs : State) (x : ℕ) :
-    valid b xs (.append x) ↔ Fits b x := Iff.rfl
+theorem valid_append (w b : ℕ) (xs : State) (x : ℕ) :
+    valid w b xs (.append x) ↔ Fits b x ∧ Fits w ((xs.length + 1) * b) := Iff.rfl
 
 @[simp]
-theorem valid_pop (b : ℕ) (xs : State) :
-    valid b xs .pop ↔ True := Iff.rfl
+theorem valid_pop (w b : ℕ) (xs : State) :
+    valid w b xs .pop ↔ True := Iff.rfl
 
 @[simp]
-theorem valid_read (b : ℕ) (xs : State) (i : ℕ) :
-    valid b xs (.read i) ↔ i < xs.length := Iff.rfl
+theorem valid_read (w b : ℕ) (xs : State) (i : ℕ) :
+    valid w b xs (.read i) ↔ i < xs.length := Iff.rfl
 
 @[simp]
-theorem valid_write (b : ℕ) (xs : State) (i x : ℕ) :
-    valid b xs (.write i x) ↔ i < xs.length ∧ Fits b x := Iff.rfl
+theorem valid_write (w b : ℕ) (xs : State) (i x : ℕ) :
+    valid w b xs (.write i x) ↔ i < xs.length ∧ Fits b x := Iff.rfl
 
 /-- Length of the array after one operation. -/
 theorem length_stepFn_fst (xs : State) (o : Op) :

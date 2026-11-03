@@ -7,29 +7,36 @@ Authors: Renfei Zhou
 module
 -- upstream: candidate
 
+public import Complexity.Computability.WordRAM.BitResizable
 public import Complexity.DataStructure.DynamicArray.Spec
 public import Complexity.DataStructure.Memory.BitResizable
 
 /-!
 # Resizable Array of `b`-Bit Items in the Bit-Granular Resizable Word RAM
 
-This module implements `DynamicArray.spec b` (for `0 < b ≤ w`) over the bit-granular resizable
-memory `BitMemory.spec w`.
+This module implements `DynamicArray.spec w b` (for `0 < b ≤ w`) over both:
+1. the demonic bit-granular resizable memory `BitMemory.dirtySpec w` (where newly grown bits have
+   arbitrary Boolean contents, `[KLZ26]` §5.1) and its deterministic specialization
+   `BitMemory.spec w`, and
+2. the concrete bit-granular resizable Word-RAM instruction set `BitRAM.Code .standard 12`
+   (`appendCode`, `popCode`, `readCode`, `writeCode`) with proven worst-case machine-instruction
+   bounds (`BitRAM.DemonicExecWithin`).
 
 Because the underlying memory grows and shrinks in **bits**, an array of `n_t` items of `b` bits is
 stored contiguously in `n_t * b` bits without wasted padding bits between items or doubling slack:
 
-* `append x`: calls `BitMemory.grow b` (extending `bitSize` from `n_t * b` to `(n_t + 1) * b`) and
-  `BitMemory.writeBits (n_t * b) b x`. Worst-case cost: `2` bit-memory operations (`O(1)`
-  worst-case time).
+* `append x`: calls `BitMemory.grow b` (extending `bitSize` from `n_t * b` to `(n_t + 1) * b` with
+  arbitrary demonic bits in `[n_t * b, (n_t + 1) * b)`) and immediately overwrites those `b` bits
+  via `BitMemory.writeBits (n_t * b) b x`. Worst-case cost: `2` bit-memory operations (`≤ 45`
+  `BitRAM` machine instructions).
 * `pop`: queries `sz ← BitMemory.getSize`; if `sz < b` (`n_t = 0`), returns `none`; otherwise reads
   the last item at `sz - b = (n_t - 1) * b` and calls `BitMemory.shrink b`, immediately releasing
   `b` bits so `bitSize` drops to `(n_t - 1) * b`. Worst-case cost: at most `3` bit-memory
-  operations (`O(1)` worst-case time).
-* `read i`: calls `BitMemory.readBits (i * b) b`. Worst-case cost: `1` bit-memory operation (`O(1)`
-  worst-case time).
+  operations (`≤ 38` `BitRAM` machine instructions).
+* `read i`: calls `BitMemory.readBits (i * b) b`. Worst-case cost: `1` bit-memory operation (`≤ 34`
+  `BitRAM` machine instructions).
 * `write i x`: calls `BitMemory.writeBits (i * b) b x`. Worst-case cost: `1` bit-memory operation
-  (`O(1)` worst-case time).
+  (`≤ 44` `BitRAM` machine instructions).
 
 ## Space bound at every step
 
@@ -38,37 +45,44 @@ At every step `t` with current array length `n_t`, the allocated bit-segment siz
 the single `w`-bit descriptor word that records `bitSize`, the total space at step `t` is
 `n_t * b + w` bits (`O(1)` words of additive metadata overhead).
 
-## Subroutine composition and reuse of released memory
+## Single-tape subroutine composition and reuse of released memory
 
-We compose two resizable `b`-bit arrays in one machine (`twoArraysRefinement`, `twoArraysFramed`)
-and prove a concrete client theorem (`popPushTransfer_reuses_released_bits`) that pops an item
-from array 1 and appends it to array 2 under a shared bit budget
-`B = (xs₁.length + xs₂.length) * b`: the `b` bits released by `pop` on array 1 are immediately
-reused by `append` on array 2 without increasing the total allocated bit count above `B`.
+All multi-structure and subroutine compositions in this module live in a **single** linear
+bit-resizable memory state `s : BitMemory.State` (`[0, s.bitSize)`):
+1. `singleTape_sequential_subroutine_reuse`: a client runs a first resizable-array computation on
+   `BitMemory.dirtySpec w` that shrinks back to empty (`s₁.bitSize = 0`), and a second
+   resizable-array computation immediately reuses the released `[0, M)` bit address space from bit
+   offset `0` on the same `BitMemory.State`.
+2. `SingleTapeTwoArrays`: two resizable `b`-bit arrays `(xs₁, xs₂)` coexist simultaneously in one
+   `BitMemory.State` with a `w`-bit header at `[0, w)` storing `n₁ = xs₁.length`, `xs₁` packed in
+   `[w, w + n₁ * b)`, and `xs₂` packed in `[w + n₁ * b, w + (n₁ + n₂) * b)`, so the single tape
+   has exact bit size `s.bitSize = w + (xs₁.length + xs₂.length) * b` at every step. When an item
+   is popped from the tail of `xs₂` (shrinking `s.bitSize` by `b` bits via `shrink b`) and appended
+   to `xs₁` (`singleTape_pop₂_append₁_reuses_released_bits`), the `b` bits released by `shrink b`
+   are immediately reused by `grow b` on the same `BitMemory.State` under demonic `dirtySpec w`
+   without exceeding `w + (xs₁.length + xs₂.length) * b` bits.
 
 ## Main definitions
 
 * `append`, `pop`, `read`, `write`, `ops`, `methods`: the resizable array operations as
-  `BitMemory.Prog w` programs.
+  `BitMemory.Prog` programs.
 * `abs`, `Inv`: abstraction function and representation invariant.
-* `refinement`, `framed`: verified refinement and bit-size-framed implementation of
-  `DynamicArray.spec b` over `BitMemory.spec w`.
-* `twoArraysSpec`, `twoArraysRefinement`: composition of two resizable `b`-bit arrays in one
-  machine.
-* `popPushTransfer`: client subroutine that pops from array 1 and appends to array 2.
+* `dirtyRefinement`, `dirtyFramed`, `refinement`, `framed`: verified refinements and bit-size-framed
+  implementations of `DynamicArray.spec w b` over `BitMemory.dirtySpec w` and `BitMemory.spec w`.
+* `appendCode`, `popCode`, `readCode`, `writeCode`: concrete `BitRAM.Code .standard 12` machine
+  programs for the four array operations.
+* `SingleTapeTwoArrays`: concurrent single-tape representation of two `b`-bit arrays in one
+  `BitMemory.State`.
 
 ## Main results
 
-* `ops_validHistory`, `ops_step`, `ops_cost`: worst-case `O(1)` correctness and cost (`≤ 3`
-  bit-memory units) of every array operation.
-* `bitSize_eq_length_mul`: at every represented state, `s.bitSize = (abs w b s).length * b`
-  (and `s.bitSize + w = (abs w b s).length * b + w` including the `w`-bit segment descriptor).
-* `amortized`: worst-case (zero-potential) cost certificate of `3` units per operation.
-* `client_run_from_empty`: adaptive client theorem starting from `BitMemory.empty` (`[]`).
-* `twoArrays_client_run_from_empty`: adaptive client theorem for a caller using two resizable
-  `b`-bit arrays in one machine.
-* `popPushTransfer_reuses_released_bits`: popping from array 1 and appending to array 2 reuses the
-  released `b` bits within the shared bit budget `B = (xs₁.length + xs₂.length) * b`.
+* `dirtyAmortized`, `dirty_client_run_from_empty`: worst-case `O(1)` (`≤ 3` bit-memory units)
+  correctness, exact `n_t * b`-bit space bound, and adaptive client theorem directly over demonic
+  `BitMemory.dirtySpec w`.
+* `appendCode_exec`, `popCode_exec`, `readCode_exec`, `writeCode_exec`: machine-level
+  `BitRAM.DemonicExecWithin` correctness and instruction-count bounds (`≤ 45` instructions).
+* `singleTape_sequential_subroutine_reuse`, `singleTape_pop₂_append₁_reuses_released_bits`:
+  single-tape subroutine composition and released-bit reuse on `BitMemory.dirtySpec w`.
 
 ## References
 
@@ -79,12 +93,12 @@ reused by `append` on array 2 without increasing the total allocated bit count a
 
 namespace Cslib.DataStructure.DynamicArray.BitResizable
 
-open Cslib.WordRAM Cslib.DataStructure Cslib.DataStructure.Memory
+open Cslib.WordRAM Cslib.WordRAM.BitRAM Cslib.DataStructure Cslib.DataStructure.Memory
 open Cslib.DataStructure.Memory.BitPacking Cslib.DataStructure.Memory.BitMemory
 
 variable {w b : ℕ}
 
-/-! ## Method implementations over `BitMemory.spec w` -/
+/-! ## Method implementations over `BitMemory.dirtySpec w` and `BitMemory.spec w` -/
 
 /-- Append a `b`-bit value `x` by growing the bit segment by `b` bits and writing `x` at the new
 bit offset. -/
@@ -119,8 +133,12 @@ def ops (b : ℕ) : (o : DynamicArray.Op) → BitMemory.Prog o.Result
   | .read i => read b i
   | .write i x => write b i x
 
-/-- Method table implementing `DynamicArray.spec b` over `BitMemory.spec w`. -/
-abbrev methods (w b : ℕ) : Methods (DynamicArray.spec b) (BitMemory.spec w) :=
+/-- Method table implementing `DynamicArray.spec w b` over `BitMemory.spec w`. -/
+abbrev methods (w b : ℕ) : Methods (DynamicArray.spec w b) (BitMemory.spec w) :=
+  ops b
+
+/-- Method table implementing `DynamicArray.spec w b` over demonic `BitMemory.dirtySpec w`. -/
+abbrev dirtyMethods (w b : ℕ) : Methods (DynamicArray.spec w b) (BitMemory.dirtySpec w) :=
   ops b
 
 /-! ## Abstraction function and representation invariant -/
@@ -150,7 +168,7 @@ structure Inv (w b : ℕ) (s : BitMemory.State) : Prop where
 
 /-- The empty `BitMemory.State` satisfies `Inv w b` and represents the empty array `[]`. -/
 theorem inv_empty (w b : ℕ) : Inv w b BitMemory.empty ∧ abs w b BitMemory.empty = [] := by
-  refine ⟨⟨wellFormed_empty w, by simp [count]⟩, ?_⟩
+  refine ⟨⟨BitMemory.wellFormed_empty w, by simp [count]⟩, ?_⟩
   simp [abs, count]
 
 /-- **Tight bit-space bound**: in every state satisfying `Inv w b s`, the allocated size in bits is
@@ -232,14 +250,17 @@ theorem runClient_write (s : BitMemory.State) (i x : ℕ) :
 /-- Admissibility of `ops b o` over `BitMemory.spec w`. -/
 theorem ops_validHistory (hbw : b ≤ w)
     {s : BitMemory.State} (hs : Inv w b s) (o : DynamicArray.Op)
-    (hv : (DynamicArray.spec b).valid (abs w b s) o) :
+    (hv : (DynamicArray.spec w b).valid (abs w b s) o) :
     (BitMemory.spec w).ValidHistory s ((BitMemory.spec w).clientHistory s (ops b o)) := by
   cases o with
   | append x =>
-    have hx : Fits b x := hv
+    obtain ⟨hx, hfits⟩ := hv
+    have hgrow : Fits w (s.bitSize + b) := by
+      rw [bitSize_eq_length_mul hs]
+      simpa [Nat.succ_mul] using hfits
     dsimp only [ops, StateTransitionSpec.clientHistory]
     rw [runClient_append]
-    exact ⟨trivial, ⟨hbw, le_rfl, hx⟩, trivial⟩
+    exact ⟨hgrow, ⟨hbw, le_rfl, hx⟩, trivial⟩
   | pop =>
     by_cases hlt : s.bitSize < b
     · dsimp only [ops, StateTransitionSpec.clientHistory]
@@ -313,11 +334,15 @@ theorem ops_cost (hw : 0 < w) (hbw : b ≤ w) (s : BitMemory.State) (o : Dynamic
 
 /-- Semantic correctness and invariant preservation of `append`. -/
 theorem step_append (hw : 0 < w) (hb : 0 < b) (hbw : b ≤ w)
-    {s : BitMemory.State} (hs : Inv w b s) {x : ℕ} (hx : Fits b x) :
+    {s : BitMemory.State} (hs : Inv w b s) {x : ℕ}
+    (hv : (DynamicArray.spec w b).valid (abs w b s) (.append x)) :
     let s' := (BitMemory.spec w).clientState s (append b x)
     let r := (BitMemory.spec w).clientResult s (append b x)
     (abs w b s', r) = DynamicArray.stepFn (abs w b s) (.append x) ∧ Inv w b s' := by
-  have hv_grow : BitMemory.valid w s (.grow b) := trivial
+  obtain ⟨hx, hfits⟩ := hv
+  have hv_grow : BitMemory.valid w s (.grow b) := by
+    rw [BitMemory.valid_grow, bitSize_eq_length_mul hs]
+    simpa [Nat.succ_mul] using hfits
   have hwf₁ : (BitMemory.stepFn w s (.grow b)).1.WellFormed w :=
     wellFormed_stepFn hw hs.wellFormed hv_grow
   have hv_write : BitMemory.valid w (BitMemory.stepFn w s (.grow b)).1
@@ -348,8 +373,8 @@ theorem step_append (hw : 0 < w) (hb : 0 < b) (hbw : b ≤ w)
       have hdisj : i * b + b ≤ s.bitSize := by
         rw [hs.bitSize_eq]
         exact slot_end_le_of_lt b hi_lt
-      rw [readField_writeFieldMem_of_disjoint hw _ hbw (Or.inl hdisj)]
-      exact getField_stepFn_grow hw s b hdisj
+      rw [readField_writeFieldMem_of_disjoint hw _ hbw hbw (Or.inl hdisj)]
+      exact getField_stepFn_grow hw s b hbw hdisj
     · rw [List.getElem_append_right (by simp)]
       simp only [List.length_ofFn, Nat.sub_self, List.getElem_singleton]
       change readField w 0 (writeFieldMem w 0
@@ -358,7 +383,7 @@ theorem step_append (hw : 0 < w) (hb : 0 < b) (hbw : b ≤ w)
       exact readField_writeFieldMem_same hw _ hbw hx
 
 /-- Semantic correctness and invariant preservation of `pop`. -/
-theorem step_pop (hw : 0 < w) (hb : 0 < b)
+theorem step_pop (hw : 0 < w) (hb : 0 < b) (hbw : b ≤ w)
     {s : BitMemory.State} (hs : Inv w b s) :
     let s' := (BitMemory.spec w).clientState s (pop b)
     let r := (BitMemory.spec w).clientResult s (pop b)
@@ -413,7 +438,7 @@ theorem step_pop (hw : 0 < w) (hb : 0 < b)
             | succ k => simp [Nat.succ_mul]
           rw [hsub]
           exact slot_end_le_of_lt b hi₁
-        exact getField_stepFn_shrink hw s b hslot
+        exact getField_stepFn_shrink hw s b hbw hslot
     · have hne : abs w b s ≠ [] := by
         intro hnil
         have := congrArg List.length hnil
@@ -434,7 +459,6 @@ theorem step_read {s : BitMemory.State} (hs : Inv w b s) {i : ℕ}
     let s' := (BitMemory.spec w).clientState s (read b i)
     let r := (BitMemory.spec w).clientResult s (read b i)
     (abs w b s', r) = DynamicArray.stepFn (abs w b s) (.read i) ∧ Inv w b s' := by
-  have hi' : i < count b s := by simpa [length_abs] using hi
   refine ⟨Prod.ext rfl ?_, hs⟩
   change s.getField w (i * b) b = (abs w b s).getD i 0
   rw [List.getD_eq_getElem?_getD, List.getElem?_eq_getElem hi, Option.getD_some]
@@ -466,7 +490,6 @@ theorem step_write (hw : 0 < w) (hbw : b ≤ w)
   · simp [length_abs, count]
   · intro j hj₁ hj₂
     rw [length_abs] at hj₁
-    have hj' : j < count b s := hj₁
     simp only [abs, List.getElem_set, List.getElem_ofFn]
     change readField w 0 (writeFieldMem w 0 s.mem (i * b) b x) (j * b) b =
       if i = j then x else s.getField w (j * b) b
@@ -475,71 +498,305 @@ theorem step_write (hw : 0 < w) (hbw : b ≤ w)
       rw [ite_eq_left rfl]
       exact readField_writeFieldMem_same hw s.mem hbw hx
     · rw [ite_eq_right hij]
-      exact readField_writeFieldMem_of_disjoint hw s.mem hbw (slot_disjoint_of_ne b hij)
+      exact readField_writeFieldMem_of_disjoint hw s.mem hbw hbw (slot_disjoint_of_ne b hij)
 
 /-- Combined step correctness for all four `DynamicArray.Op` operations. -/
 theorem ops_step (hw : 0 < w) (hb : 0 < b) (hbw : b ≤ w)
     {s : BitMemory.State} (hs : Inv w b s) (o : DynamicArray.Op)
-    (hv : (DynamicArray.spec b).valid (abs w b s) o) :
+    (hv : (DynamicArray.spec w b).valid (abs w b s) o) :
     (abs w b ((BitMemory.spec w).clientState s (ops b o)),
       (BitMemory.spec w).clientResult s (ops b o)) =
         DynamicArray.stepFn (abs w b s) o ∧
       Inv w b ((BitMemory.spec w).clientState s (ops b o)) := by
   cases o with
   | append x => exact step_append hw hb hbw hs hv
-  | pop => exact step_pop hw hb hs
+  | pop => exact step_pop hw hb hbw hs
   | read i => exact step_read hs hv
   | write i x => exact step_write hw hbw hs hv.1 hv.2
 
-/-! ## Refinement, framed implementation, and client theorems -/
+/-! ## Direct verification against demonic `BitMemory.dirtySpec w` -/
 
-/-- Verified refinement of `DynamicArray.spec b` over `BitMemory.spec w`. -/
+/-- Each array method `ops b o` is demonically admissible on `BitMemory.dirtySpec w` whenever `s`
+satisfies `Inv w b s` and `o` is admissible in `abs w b s`. -/
+theorem ops_demonicValid (hbw : b ≤ w)
+    {s : BitMemory.State} (hs : Inv w b s) (o : DynamicArray.Op)
+    (hv : (DynamicArray.spec w b).valid (abs w b s) o) :
+    (BitMemory.dirtySpec w).DemonicValid s (ops b o) := by
+  cases o with
+  | append x =>
+    obtain ⟨hx, hfits⟩ := hv
+    have hgrow : Fits w (s.bitSize + b) := by
+      rw [bitSize_eq_length_mul hs]
+      simpa [Nat.succ_mul] using hfits
+    refine .liftBind (D := BitMemory.dirtySpec w) (.grow b) _ hgrow fun s₁ offset hstep₁ => ?_
+    have hsz₁ : s₁.bitSize = s.bitSize + b := hstep₁.1
+    have hoff : offset = s.bitSize := hstep₁.2.1
+    subst hoff
+    have hv_wr : (BitMemory.dirtySpec w).valid s₁ (.writeBits s.bitSize b x) :=
+      ⟨hbw, by omega, hx⟩
+    exact .liftBind (D := BitMemory.dirtySpec w) (.writeBits s.bitSize b x) _ hv_wr
+      fun s₂ a _ => .pure (D := BitMemory.dirtySpec w) s₂ a
+  | pop =>
+    refine .liftBind (D := BitMemory.dirtySpec w) .size _ trivial fun s₁ sz hstep₁ => ?_
+    obtain ⟨h1, h1v⟩ := (Prod.mk.injEq _ _ _ _).mp hstep₁
+    subst h1; subst h1v
+    change (BitMemory.dirtySpec w).DemonicValid s
+      (if s.bitSize < b then
+        pure none
+      else do
+        let x ← BitMemory.readBits (s.bitSize - b) b
+        BitMemory.shrink b
+        pure (some x))
+    by_cases hlt : s.bitSize < b
+    · simp only [hlt, ↓reduceIte]
+      exact .pure (D := BitMemory.dirtySpec w) s none
+    · simp only [hlt, ↓reduceIte]
+      have hle : b ≤ s.bitSize := Nat.le_of_not_lt hlt
+      have hv_rd : (BitMemory.dirtySpec w).valid s (.readBits (s.bitSize - b) b) :=
+        ⟨hbw, by omega⟩
+      refine .liftBind (D := BitMemory.dirtySpec w) (.readBits (s.bitSize - b) b) _ hv_rd
+        fun s₂ x hstep₂ => ?_
+      obtain ⟨h2, -⟩ := (Prod.mk.injEq _ _ _ _).mp hstep₂
+      subst h2
+      exact .liftBind (D := BitMemory.dirtySpec w) (.shrink b) _ hle
+        fun s₃ _ _ => .pure (D := BitMemory.dirtySpec w) s₃ (some x)
+  | read i =>
+    have hi : i < count b s := by simpa [length_abs] using hv
+    have hslot : i * b + b ≤ s.bitSize := by
+      rw [hs.bitSize_eq]
+      exact slot_end_le_of_lt b hi
+    exact .liftBind (D := BitMemory.dirtySpec w) (.readBits (i * b) b) _ ⟨hbw, hslot⟩
+      fun s₁ a _ => .pure (D := BitMemory.dirtySpec w) s₁ a
+  | write i x =>
+    obtain ⟨hi', hx⟩ := hv
+    have hi : i < count b s := by simpa [length_abs] using hi'
+    have hslot : i * b + b ≤ s.bitSize := by
+      rw [hs.bitSize_eq]
+      exact slot_end_le_of_lt b hi
+    exact .liftBind (D := BitMemory.dirtySpec w) (.writeBits (i * b) b x) _ ⟨hbw, hslot, hx⟩
+      fun s₁ a _ => .pure (D := BitMemory.dirtySpec w) s₁ a
+
+/-- Under `Inv w b s`, every demonic execution of `ops b o` on `BitMemory.dirtySpec w` produces the
+exact same result and post-state as `BitMemory.spec w` and costs at most `3` bit-memory units,
+because `append b x` immediately overwrites the newly grown `b` bits `[s.bitSize, s.bitSize + b)`
+via `writeBits`. -/
+theorem clientRun_ops_dirty (hw : 0 < w) (hbw : b ≤ w)
+    {s s' : BitMemory.State} (hs : Inv w b s) (o : DynamicArray.Op)
+    {r : o.Result} {tr : (BitMemory.dirtySpec w).Transcript}
+    (hrun : (BitMemory.dirtySpec w).ClientRun s (ops b o) r s' tr) :
+    r = (BitMemory.spec w).clientResult s (ops b o) ∧
+      s' = (BitMemory.spec w).clientState s (ops b o) ∧
+      (BitMemory.dirtySpec w).totalCostTranscript (BitMemory.charge w) s tr ≤ 3 := by
+  cases o with
+  | append x =>
+    obtain ⟨_, offset, s₁, tr₁, hstep₁, hrun₁, rfl⟩ :=
+      ((BitMemory.dirtySpec w).clientRun_liftBind_iff _ _ _ _ _ _).mp hrun
+    obtain ⟨_, u, s₂, tr₂, hstep₂, hrun₂, rfl⟩ :=
+      ((BitMemory.dirtySpec w).clientRun_liftBind_iff _ _ _ _ _ _).mp hrun₁
+    obtain ⟨rfl, rfl, rfl⟩ := ((BitMemory.dirtySpec w).clientRun_pure_iff _ _ _ _ _).mp hrun₂
+    have hoff : offset = s.bitSize := hstep₁.2.1
+    subst hoff
+    have hsz₁ : s₁.bitSize = s.bitSize + b := hstep₁.1
+    obtain ⟨h2, -⟩ := (Prod.mk.injEq _ _ _ _).mp hstep₂
+    have hmem_eq : writeFieldMem w 0 s₁.mem s.bitSize b x =
+        writeFieldMem w 0 (clearRangeMem w s.mem s.bitSize (s.bitSize + b)) s.bitSize b x := by
+      rw [writeFieldMem_of_dirtyStep_grow hw hs.wellFormed hbw hstep₁,
+        ← writeFieldMem_clearRangeMem_self hw hs.wellFormed hbw x]
+    refine ⟨rfl, ?_, ?_⟩
+    · rw [← h2]
+      change BitMemory.State.mk (writeFieldMem w 0 s₁.mem s.bitSize b x) s₁.bitSize =
+        ((BitMemory.spec w).runClient s (append b x)).2.1
+      rw [runClient_append]
+      change BitMemory.State.mk (writeFieldMem w 0 s₁.mem s.bitSize b x) s₁.bitSize =
+        BitMemory.State.mk
+          (writeFieldMem w 0 (clearRangeMem w s.mem s.bitSize (s.bitSize + b)) s.bitSize b x)
+          (s.bitSize + b)
+      rw [hmem_eq, hsz₁]
+    · have hch : BitMemory.charge w s (.grow b) = 1 :=
+        BitMemory.charge_grow_of_le hw hbw s
+      simp only [StateTransitionSpec.totalCostTranscript_cons,
+        StateTransitionSpec.totalCostTranscript_nil, hch, BitMemory.charge_writeBits]
+      omega
+  | pop =>
+    obtain ⟨_, sz, s₁, tr₁, hstep₁, hrun₁, rfl⟩ :=
+      ((BitMemory.dirtySpec w).clientRun_liftBind_iff _ _ _ _ _ _).mp hrun
+    obtain ⟨h1, h1v⟩ := (Prod.mk.injEq _ _ _ _).mp hstep₁
+    subst h1; subst h1v
+    change (BitMemory.dirtySpec w).ClientRun s
+      (if s.bitSize < b then
+        pure none
+      else do
+        let x ← BitMemory.readBits (s.bitSize - b) b
+        BitMemory.shrink b
+        pure (some x)) r s' tr₁ at hrun₁
+    by_cases hlt : s.bitSize < b
+    · simp only [hlt, ↓reduceIte] at hrun₁
+      obtain ⟨rfl, rfl, rfl⟩ := ((BitMemory.dirtySpec w).clientRun_pure_iff _ _ _ _ _).mp hrun₁
+      change none = ((BitMemory.spec w).runClient s' (pop b)).1 ∧
+        s' = ((BitMemory.spec w).runClient s' (pop b)).2.1 ∧ _
+      rw [runClient_pop_of_lt hlt]
+      refine ⟨rfl, rfl, ?_⟩
+      simp only [StateTransitionSpec.totalCostTranscript_cons,
+        StateTransitionSpec.totalCostTranscript_nil, BitMemory.charge_size]
+      omega
+    · simp only [hlt, ↓reduceIte] at hrun₁
+      obtain ⟨_, x, s₂, tr₂, hstep₂, hrun₂, rfl⟩ :=
+        ((BitMemory.dirtySpec w).clientRun_liftBind_iff _ _ _ _ _ _).mp hrun₁
+      obtain ⟨h2, h2v⟩ := (Prod.mk.injEq _ _ _ _).mp hstep₂
+      subst h2; subst h2v
+      obtain ⟨_, u, s₃, tr₃, hstep₃, hrun₃, rfl⟩ :=
+        ((BitMemory.dirtySpec w).clientRun_liftBind_iff _ _ _ _ _ _).mp hrun₂
+      obtain ⟨h3, -⟩ := (Prod.mk.injEq _ _ _ _).mp hstep₃
+      subst h3
+      obtain ⟨rfl, rfl, rfl⟩ := ((BitMemory.dirtySpec w).clientRun_pure_iff _ _ _ _ _).mp hrun₃
+      change some (readField w 0 s.mem (s.bitSize - b) b) =
+          ((BitMemory.spec w).runClient s (pop b)).1 ∧
+        { mem := clearRangeMem w s.mem (s.bitSize - b) s.bitSize, bitSize := s.bitSize - b } =
+          ((BitMemory.spec w).runClient s (pop b)).2.1 ∧ _
+      rw [runClient_pop_of_ge hlt]
+      refine ⟨rfl, rfl, ?_⟩
+      have hsh : BitMemory.charge w s (.shrink b) = 1 :=
+        BitMemory.charge_shrink_of_le hw hbw s
+      simp only [StateTransitionSpec.totalCostTranscript_cons,
+        StateTransitionSpec.totalCostTranscript_nil, BitMemory.charge_size,
+        BitMemory.charge_readBits, hsh]
+      omega
+  | read i =>
+    obtain ⟨_, a, s₁, tr₁, hstep₁, hrun₁, rfl⟩ :=
+      ((BitMemory.dirtySpec w).clientRun_liftBind_iff _ _ _ _ _ _).mp hrun
+    obtain ⟨h1, h1v⟩ := (Prod.mk.injEq _ _ _ _).mp hstep₁
+    subst h1; subst h1v
+    obtain ⟨rfl, rfl, rfl⟩ := ((BitMemory.dirtySpec w).clientRun_pure_iff _ _ _ _ _).mp hrun₁
+    refine ⟨rfl, rfl, ?_⟩
+    simp only [StateTransitionSpec.totalCostTranscript_cons,
+      StateTransitionSpec.totalCostTranscript_nil, BitMemory.charge_readBits]
+    omega
+  | write i x =>
+    obtain ⟨_, a, s₁, tr₁, hstep₁, hrun₁, rfl⟩ :=
+      ((BitMemory.dirtySpec w).clientRun_liftBind_iff _ _ _ _ _ _).mp hrun
+    obtain ⟨h1, h1v⟩ := (Prod.mk.injEq _ _ _ _).mp hstep₁
+    subst h1; subst h1v
+    obtain ⟨rfl, rfl, rfl⟩ := ((BitMemory.dirtySpec w).clientRun_pure_iff _ _ _ _ _).mp hrun₁
+    refine ⟨rfl, rfl, ?_⟩
+    simp only [StateTransitionSpec.totalCostTranscript_cons,
+      StateTransitionSpec.totalCostTranscript_nil, BitMemory.charge_writeBits]
+    omega
+
+/-- Direct refinement of `DynamicArray.spec w b` over the demonic `BitMemory.dirtySpec w`. -/
+def dirtyRefinement (hw : 0 < w) (hb : 0 < b) (hbw : b ≤ w) :
+    Refinement (DynamicArray.spec w b) (BitMemory.dirtySpec w) where
+  methods := dirtyMethods w b
+  inv := Inv w b
+  abs := abs w b
+  valid {_} o hs hv := ops_demonicValid hbw hs o hv
+  correct {_} o {_ _ _} hs hv hrun := by
+    obtain ⟨rfl, rfl, _⟩ := clientRun_ops_dirty hw hbw hs o hrun
+    exact ops_step hw hb hbw hs o hv
+
+/-- Demonic bit-size-framed implementation of `DynamicArray.spec w b` over `BitMemory.dirtySpec w`,
+recording that every represented array `xs` occupies `xs.length * b` bits. -/
+def dirtyFramed (hw : 0 < w) (hb : 0 < b) (hbw : b ≤ w) :
+    BitMemory.DirtyFramed (DynamicArray.spec w b) w where
+  toRefinement := dirtyRefinement hw hb hbw
+  sizeBits xs := xs.length * b
+  bitSize_eq hs := bitSize_eq_length_mul hs
+  wellFormed hs := hs.wellFormed
+
+/-- **Demonic worst-case `O(1)` cost certificate (zero potential)**: every operation of
+`DynamicArray.spec w b` costs at most `3` bit-memory operations on every demonic execution path of
+`BitMemory.dirtySpec w`. -/
+theorem dirtyAmortized (hw : 0 < w) (hb : 0 < b) (hbw : b ≤ w) :
+    (dirtyRefinement hw hb hbw).Amortized (BitMemory.charge w) (fun _ _ => 3) (fun _ => 0) where
+  step {_} o {_ _ _} hs _ hrun := by
+    obtain ⟨_, _, hcost⟩ := clientRun_ops_dirty hw hbw hs o hrun
+    simpa using hcost
+
+/-- **Main Stage 1 theorem for adaptive clients on demonic `BitMemory.dirtySpec w`**: running any
+admissible adaptive client `p : (DynamicArray.spec w b).Client α` from `BitMemory.empty` (`[]`)
+over `BitMemory.dirtySpec w` is demonically valid (`DemonicValid`), and every demonic execution path
+produces the exact specified answer and final array state `xs'`, executes in at most `3 * m`
+bit-memory operations (where `m` is the number of array operations issued by `p`), and ends with
+allocated bit size `xs'.length * b` bits (`xs'.length * b + w` bits including the `w`-bit segment
+descriptor). -/
+theorem dirty_client_run_from_empty {α : Type} (hw : 0 < w) (hb : 0 < b) (hbw : b ≤ w)
+    (p : (DynamicArray.spec w b).Client α)
+    (hv : (DynamicArray.spec w b).ValidHistory [] ((DynamicArray.spec w b).clientHistory [] p)) :
+    let linked := link (dirtyMethods w b) p
+    (BitMemory.dirtySpec w).DemonicValid BitMemory.empty linked ∧
+      ∀ r s' tr,
+        (BitMemory.dirtySpec w).ClientRun BitMemory.empty linked r s' tr →
+        (BitMemory.dirtySpec w).ValidTranscript BitMemory.empty tr s' ∧
+          r = (DynamicArray.spec w b).clientResult [] p ∧
+          abs w b s' = (DynamicArray.spec w b).clientState [] p ∧
+          s'.bitSize = ((DynamicArray.spec w b).clientState [] p).length * b ∧
+          (BitMemory.dirtySpec w).totalCostTranscript (BitMemory.charge w) BitMemory.empty tr ≤
+            3 * ((DynamicArray.spec w b).clientHistory [] p).length := by
+  have ⟨hinv0, habs0⟩ := inv_empty w b
+  have hv0 : (DynamicArray.spec w b).ValidHistory (abs w b BitMemory.empty)
+      ((DynamicArray.spec w b).clientHistory (abs w b BitMemory.empty) p) := by
+    rwa [habs0]
+  have hvD : (DynamicArray.spec w b).DemonicValid (abs w b BitMemory.empty) p :=
+    ((DynamicArray.spec w b).demonicValid_iff_validHistory_runClient _ p).mpr hv0
+  refine ⟨((dirtyRefinement hw hb hbw).simulates_demonic p hinv0 hvD).1, fun r s' tr hrun => ?_⟩
+  obtain ⟨hinv', tr_D, hrun_D, hcost_le⟩ :=
+    (dirtyAmortized hw hb hbw).demonic p hinv0 hvD hrun
+  dsimp only [dirtyRefinement] at hinv' hrun_D hcost_le
+  rw [habs0] at hrun_D hcost_le
+  obtain ⟨_, hr, habs', rfl⟩ :=
+    ((DynamicArray.spec w b).clientRun_iff_runClient [] p r (abs w b s') tr_D).mp hrun_D
+  rw [StateTransitionSpec.totalCostTranscript_canonicalTranscript,
+    StateTransitionSpec.totalCost_const, Nat.mul_comm] at hcost_le
+  refine ⟨hrun.validTranscript, hr, habs', ?_, by omega⟩
+  rw [bitSize_eq_length_mul hinv', habs']
+
+/-! ## Deterministic specialization over `BitMemory.spec w` -/
+
+/-- Verified refinement of `DynamicArray.spec w b` over `BitMemory.spec w`. -/
 def refinement (hw : 0 < w) (hb : 0 < b) (hbw : b ≤ w) :
-    Refinement (DynamicArray.spec b) (BitMemory.spec w) :=
+    Refinement (DynamicArray.spec w b) (BitMemory.spec w) :=
   Refinement.ofFn (methods w b) (Inv w b) (abs w b)
     (fun {_} o hs hv => ops_validHistory hbw hs o hv)
     (fun {_} o hs hv => by
       obtain ⟨hstep, hinv⟩ := ops_step hw hb hbw hs o hv
       exact ⟨hstep.symm, hinv⟩)
 
-/-- Bit-size-framed implementation of `DynamicArray.spec b` over `BitMemory.spec w`, recording that
-every represented array `xs` occupies `xs.length * b` bits. -/
+/-- Bit-size-framed implementation of `DynamicArray.spec w b` over `BitMemory.spec w`, recording
+that every represented array `xs` occupies `xs.length * b` bits. -/
 def framed (hw : 0 < w) (hb : 0 < b) (hbw : b ≤ w) :
-    BitMemory.Framed (DynamicArray.spec b) w where
+    BitMemory.Framed (DynamicArray.spec w b) w where
   toRefinement := refinement hw hb hbw
   sizeBits xs := xs.length * b
   bitSize_eq hs := bitSize_eq_length_mul hs
   wellFormed hs := hs.wellFormed
 
 /-- **Worst-case `O(1)` cost certificate (zero potential)**: every operation of
-`DynamicArray.spec b` costs at most `3` bit-memory operations in the worst case. -/
+`DynamicArray.spec w b` costs at most `3` bit-memory operations in the worst case. -/
 theorem amortized (hw : 0 < w) (hb : 0 < b) (hbw : b ≤ w) :
     (refinement hw hb hbw).Amortized (BitMemory.charge w) (fun _ _ => 3) (fun _ => 0) :=
   Refinement.Amortized.ofFn fun {s} o _ _ => by
     simpa [refinement, methods] using ops_cost hw hbw s o
 
-/-- **Main Stage 1 theorem for adaptive clients from empty**: running any admissible adaptive
-client `p : (DynamicArray.spec b).Client α` from `BitMemory.empty` (`[]`) produces the exact
-specified answer and final array state `xs'`, executes in at most `3 * m` bit-memory operations
-(where `m` is the number of array operations issued by `p`), and ends with allocated bit size
-`xs'.length * b` bits (`xs'.length * b + w` bits including the `w`-bit segment descriptor). -/
+/-- **Stage 1 theorem for adaptive clients over `BitMemory.spec w`**: running any admissible
+adaptive client `p : (DynamicArray.spec w b).Client α` from `BitMemory.empty` (`[]`) produces the
+exact specified answer and final array state `xs'`, executes in at most `3 * m` bit-memory
+operations, and ends with allocated bit size `xs'.length * b` bits. -/
 theorem client_run_from_empty {α : Type} (hw : 0 < w) (hb : 0 < b) (hbw : b ≤ w)
-    (p : (DynamicArray.spec b).Client α)
-    (hv : (DynamicArray.spec b).ValidHistory [] ((DynamicArray.spec b).clientHistory [] p)) :
+    (p : (DynamicArray.spec w b).Client α)
+    (hv : (DynamicArray.spec w b).ValidHistory [] ((DynamicArray.spec w b).clientHistory [] p)) :
     let linked := link (methods w b) p
     let s' := (BitMemory.spec w).clientState BitMemory.empty linked
     (BitMemory.spec w).ValidHistory BitMemory.empty
         ((BitMemory.spec w).clientHistory BitMemory.empty linked) ∧
       (BitMemory.spec w).clientResult BitMemory.empty linked =
-        (DynamicArray.spec b).clientResult [] p ∧
-      abs w b s' = (DynamicArray.spec b).clientState [] p ∧
-      s'.bitSize = ((DynamicArray.spec b).clientState [] p).length * b ∧
+        (DynamicArray.spec w b).clientResult [] p ∧
+      abs w b s' = (DynamicArray.spec w b).clientState [] p ∧
+      s'.bitSize = ((DynamicArray.spec w b).clientState [] p).length * b ∧
       (BitMemory.spec w).totalCost (BitMemory.charge w) BitMemory.empty
         ((BitMemory.spec w).clientHistory BitMemory.empty linked) ≤
-          3 * ((DynamicArray.spec b).clientHistory [] p).length := by
+          3 * ((DynamicArray.spec w b).clientHistory [] p).length := by
   have ⟨hinv0, habs0⟩ := inv_empty w b
-  have hv0 : (DynamicArray.spec b).ValidHistory (abs w b BitMemory.empty)
-      ((DynamicArray.spec b).clientHistory (abs w b BitMemory.empty) p) := by
+  have hv0 : (DynamicArray.spec w b).ValidHistory (abs w b BitMemory.empty)
+      ((DynamicArray.spec w b).clientHistory (abs w b BitMemory.empty) p) := by
     rwa [habs0]
   obtain ⟨hv_low, hres, habs', hinv'⟩ := (refinement hw hb hbw).simulates_client p hinv0 hv0
   have hcost := (amortized hw hb hbw).client p hinv0 hv0
@@ -549,219 +806,598 @@ theorem client_run_from_empty {α : Type} (hw : 0 < w) (hb : 0 < b) (hbw : b ≤
   refine ⟨hv_low, hres, habs', ?_, by omega⟩
   rw [bitSize_eq_length_mul hinv', habs']
 
-/-! ## Client subroutine composition: two resizable `b`-bit arrays in one machine -/
+/-! ## Concrete `BitRAM` machine-instruction grounding of the resizable `b`-bit array -/
 
-/-- Specification of two independent resizable `b`-bit arrays in one machine. -/
-abbrev twoArraysSpec (b : ℕ) : StateTransitionSpec :=
-  product (DynamicArray.spec b) (DynamicArray.spec b)
+/-- Concrete `BitRAM.Code .standard 12` program for `DynamicArray.Op.append x` (with `x` in `r3`):
+loads `b` into `r1`, executes `.grow 1 1` (growing `bitSize` by `b` bits and placing old `bitSize`
+in `r1`), loads `b` into `r2`, and executes `BitRAM.writeBitsCode`. -/
+def appendCode (b : ℕ) : BitRAM.Code .standard 12 :=
+  .seq (.op (.const 1 b))
+    (.seq (.grow 1 1)
+      (.seq (.op (.const 2 b))
+        BitRAM.writeBitsCode))
 
-/-- Refinement implementing two resizable `b`-bit arrays over `BitMemory.pairSpec w`. -/
-def twoArraysRefinement (hw : 0 < w) (hb : 0 < b) (hbw : b ≤ w) :
-    Refinement (twoArraysSpec b) (BitMemory.pairSpec w) :=
-  Refinement.ofFn
-    (BitMemory.prodMethods w (methods w b) (methods w b))
-    (fun s => Inv w b s.1 ∧ Inv w b s.2)
-    (fun s => (abs w b s.1, abs w b s.2))
-    (fun {s} o hs hv => by
-      rcases s with ⟨s₁, s₂⟩
-      cases o with
-      | inl o =>
-        dsimp only [twoArraysSpec, product, Sum.elim_inl, BitMemory.prodMethods, methods,
-          StateTransitionSpec.clientHistory]
-        rw [BitMemory.runClient_liftLeft]
-        exact (BitMemory.validHistory_map_inl w s₁ s₂ _).mpr
-          (ops_validHistory hbw hs.1 o hv)
-      | inr o =>
-        dsimp only [twoArraysSpec, product, Sum.elim_inr, BitMemory.prodMethods, methods,
-          StateTransitionSpec.clientHistory]
-        rw [BitMemory.runClient_liftRight]
-        exact (BitMemory.validHistory_map_inr w s₁ s₂ _).mpr
-          (ops_validHistory hbw hs.2 o hv))
-    (fun {s} o hs hv => by
-      rcases s with ⟨s₁, s₂⟩
-      cases o with
-      | inl o =>
-        obtain ⟨hstep, hinv⟩ := ops_step hw hb hbw hs.1 o hv
-        dsimp only [twoArraysSpec, product, Sum.elim_inl, BitMemory.prodMethods, methods,
-          StateTransitionSpec.clientState, StateTransitionSpec.clientResult] at hstep ⊢
-        rw [BitMemory.runClient_liftLeft]
-        dsimp only
-        have h1 : abs w b ((BitMemory.spec w).runClient s₁ (ops b o)).2.1 =
-            (DynamicArray.stepFn (abs w b s₁) o).1 := congrArg Prod.fst hstep
-        have h2 : ((BitMemory.spec w).runClient s₁ (ops b o)).1 =
-            (DynamicArray.stepFn (abs w b s₁) o).2 := congrArg Prod.snd hstep
-        exact ⟨Prod.ext (Prod.ext h1.symm rfl) h2.symm, hinv, hs.2⟩
-      | inr o =>
-        obtain ⟨hstep, hinv⟩ := ops_step hw hb hbw hs.2 o hv
-        dsimp only [twoArraysSpec, product, Sum.elim_inr, BitMemory.prodMethods, methods,
-          StateTransitionSpec.clientState, StateTransitionSpec.clientResult] at hstep ⊢
-        rw [BitMemory.runClient_liftRight]
-        dsimp only
-        have h1 : abs w b ((BitMemory.spec w).runClient s₂ (ops b o)).2.1 =
-            (DynamicArray.stepFn (abs w b s₂) o).1 := congrArg Prod.fst hstep
-        have h2 : ((BitMemory.spec w).runClient s₂ (ops b o)).1 =
-            (DynamicArray.stepFn (abs w b s₂) o).2 := congrArg Prod.snd hstep
-        exact ⟨Prod.ext (Prod.ext rfl h1.symm) h2.symm, hs.1, hinv⟩)
+/-- **Machine-level correctness of `appendCode`**: for any well-formed machine state `x : Data 12`
+satisfying `Inv w b x.toBitMemoryState` and `(DynamicArray.spec w b).valid _ (.append (x.regs 3))`,
+`appendCode b` executes in at most `45` `BitRAM` instructions under demonic `.grow`, preserving
+`Inv w b`, updating the abstract array to `abs w b x.toBitMemoryState ++ [x.regs 3]`, and setting
+`y.bitSize = ((abs w b x.toBitMemoryState).length + 1) * b`. -/
+theorem appendCode_exec (hw : 0 < w) (hb : 0 < b) (hbw : b ≤ w)
+    {x : BitRAM.Data 12} (hx : x.WellFormed w) (hinv : Inv w b x.toBitMemoryState)
+    (hv : (DynamicArray.spec w b).valid (abs w b x.toBitMemoryState) (.append (x.regs 3))) :
+    BitRAM.DemonicExecWithin w (appendCode b) x
+      (fun y =>
+        Inv w b y.toBitMemoryState ∧
+        abs w b y.toBitMemoryState = abs w b x.toBitMemoryState ++ [x.regs 3] ∧
+        y.bitSize = ((abs w b x.toBitMemoryState).length + 1) * b) 45 := by
+  obtain ⟨hval_b, hfits_new⟩ := hv
+  have hb_fits : Fits w b := Fits.of_le (fits_self w) hbw
+  have hgrow_fits : Fits w (x.bitSize + b) := by
+    have hsz : x.bitSize = (abs w b x.toBitMemoryState).length * b := bitSize_eq_length_mul hinv
+    rw [hsz]
+    simpa [Nat.succ_mul] using hfits_new
+  refine DemonicExecWithin.step_const (T := 44) hb_fits ?_
+  have hcost_grow : max 1 (b ⌈/⌉ w) ≤ 1 :=
+    (BitMemory.charge_grow_of_le hw hbw x.toBitMemoryState).le
+  refine .seq
+    (Q := fun y₁ : BitRAM.Data 12 =>
+      ∃ s₁ : BitMemory.State,
+        BitMemory.dirtyStep w x.toBitMemoryState (.grow b) s₁ x.bitSize ∧
+        y₁ = ⟨Function.update (x.set 1 b).regs 1 x.bitSize, s₁.mem, s₁.bitSize⟩)
+    (T₁ := 1) (T₂ := 43)
+    (.grow hgrow_fits hcost_grow fun s₁ hs₁ => ⟨s₁, hs₁, rfl⟩)
+    (fun y₁ ⟨s₁, hs₁, hy₁_eq⟩ => ?_) (by omega)
+  subst hy₁_eq
+  refine DemonicExecWithin.step_const (T := 42) hb_fits ?_
+  let x₂ : BitRAM.Data 12 :=
+    (⟨Function.update (x.set 1 b).regs 1 x.bitSize, s₁.mem, s₁.bitSize⟩ : BitRAM.Data 12).set 2 b
+  have hs₁_wf : s₁.WellFormed w :=
+    BitMemory.wellFormed_dirtyStep hw hinv.wellFormed
+      (show BitMemory.valid w x.toBitMemoryState (.grow b) from hgrow_fits) hs₁
+  have hx₂_wf : x₂.WellFormed w := by
+    refine ⟨fun i => ?_, hs₁_wf⟩
+    by_cases hi2 : i = 2
+    · subst hi2; exact hb_fits
+    · by_cases hi1 : i = 1
+      · subst hi1
+        change Fits w x.bitSize
+        exact hx.mem_wf.bitSize_fits
+      · simp only [x₂, BitRAM.Data.set, Function.update_of_ne hi2, Function.update_of_ne hi1]
+        exact hx.regs_fits i
+  have hv_write : BitMemory.valid w x₂.toBitMemoryState
+      (.writeBits (x₂.regs 1) (x₂.regs 2) (x₂.regs 3)) := by
+    refine ⟨hbw, ?_, hval_b⟩
+    change x.bitSize + b ≤ s₁.bitSize
+    rw [hs₁.1]
+    exact le_rfl
+  refine (BitRAM.writeBitsCode_exec hw hx₂_wf hv_write).mono (fun y hy => ?_) le_rfl
+  have hmem_eq : writeFieldMem w 0 s₁.mem x.bitSize b (x.regs 3) =
+      writeFieldMem w 0 (clearRangeMem w x.mem x.bitSize (x.bitSize + b))
+        x.bitSize b (x.regs 3) := by
+    rw [writeFieldMem_of_dirtyStep_grow hw hinv.wellFormed hbw hs₁,
+      ← writeFieldMem_clearRangeMem_self hw hinv.wellFormed hbw (x.regs 3)]
+    rfl
+  have hy_st : y.toBitMemoryState =
+      (BitMemory.spec w).clientState x.toBitMemoryState (append b (x.regs 3)) := by
+    rw [hy]
+    ext q
+    · change writeFieldMem w 0 s₁.mem x.bitSize b (x.regs 3) q = _
+      rw [hmem_eq]
+      rfl
+    · exact hs₁.1
+  obtain ⟨hstep_app, hinv_app⟩ := step_append hw hb hbw hinv ⟨hval_b, hfits_new⟩
+  have habs_app :
+      abs w b ((BitMemory.spec w).clientState x.toBitMemoryState (append b (x.regs 3))) =
+        abs w b x.toBitMemoryState ++ [x.regs 3] := congrArg Prod.fst hstep_app
+  change Inv w b y.toBitMemoryState ∧
+    abs w b y.toBitMemoryState = abs w b x.toBitMemoryState ++ [x.regs 3] ∧
+    y.toBitMemoryState.bitSize = ((abs w b x.toBitMemoryState).length + 1) * b
+  rw [hy_st]
+  refine ⟨hinv_app, habs_app, ?_⟩
+  rw [bitSize_eq_length_mul hinv_app, habs_app, List.length_append, List.length_singleton]
 
-/-- Every operation on either array in `twoArraysRefinement` costs at most `3` bit-memory units in
-the worst case. -/
-theorem twoArrays_amortized (hw : 0 < w) (hb : 0 < b) (hbw : b ≤ w) :
-    (twoArraysRefinement hw hb hbw).Amortized (BitMemory.pairCharge w)
-      (fun _ _ => 3) (fun _ => 0) :=
-  Refinement.Amortized.ofFn fun {s} o _ _ => by
-    rcases s with ⟨s₁, s₂⟩
-    cases o with
-    | inl o =>
-      dsimp only [twoArraysSpec, product, Sum.elim_inl, twoArraysRefinement, Refinement.ofFn,
-        BitMemory.prodMethods, methods, StateTransitionSpec.clientHistory]
-      rw [BitMemory.runClient_liftLeft]
-      dsimp only
-      rw [BitMemory.totalCost_map_inl, Nat.add_zero]
-      exact ops_cost hw hbw s₁ o
-    | inr o =>
-      dsimp only [twoArraysSpec, product, Sum.elim_inr, twoArraysRefinement, Refinement.ofFn,
-        BitMemory.prodMethods, methods, StateTransitionSpec.clientHistory]
-      rw [BitMemory.runClient_liftRight]
-      dsimp only
-      rw [BitMemory.totalCost_map_inr, Nat.add_zero]
-      exact ops_cost hw hbw s₂ o
+/-- Concrete `BitRAM.Code .standard 12` program for `DynamicArray.Op.pop`:
+loads `b` into `r2`, reads `bitSize` into `r1`, and branches on `r1 < r2` (`bitSize < b`). If
+empty, sets `r1 := 0` (`none`); otherwise sets `r1 := r1 - r2` (`bitSize - b`), runs
+`readBitsCode` (putting the last item in `r0`), loads `b` into `r1`, runs `.shrink 1` (shrinking
+`bitSize` by `b` bits), and sets `r1 := 1` (`some r0`). -/
+def popCode (b : ℕ) : BitRAM.Code .standard 12 :=
+  .seq (.op (.const 2 b))
+    (.seq (.size 1)
+      (.branch (.lt 1 2)
+        (.op (.const 1 0))
+        (.seq (.op (.bin .sub 1 1 2))
+          (.seq BitRAM.readBitsCode
+            (.seq (.op (.const 1 b))
+              (.seq (.shrink 1)
+                (.op (.const 1 1))))))))
 
-/-- **Client theorem for two composed resizable `b`-bit arrays**: any adaptive client `p` calling
-two resizable `b`-bit arrays as subroutines from `(BitMemory.empty, BitMemory.empty)` (`([], [])`)
-produces the specified result and final pair of arrays `(xs₁', xs₂')`, runs in at most `3 * m`
-bit-memory operations for `m` array calls, and at completion uses
-`(xs₁'.length + xs₂'.length) * b` bits of segment storage (`+ 2 * w` bits with segment
-descriptors). -/
-theorem twoArrays_client_run_from_empty {α : Type} (hw : 0 < w) (hb : 0 < b) (hbw : b ≤ w)
-    (p : (twoArraysSpec b).Client α)
-    (hv : (twoArraysSpec b).ValidHistory ([], []) ((twoArraysSpec b).clientHistory ([], []) p)) :
-    let R := twoArraysRefinement hw hb hbw
-    let s₀ : BitMemory.State × BitMemory.State := (BitMemory.empty, BitMemory.empty)
-    let linked := link R.methods p
-    let s' := (BitMemory.pairSpec w).clientState s₀ linked
-    let d' := (twoArraysSpec b).clientState ([], []) p
-    (BitMemory.pairSpec w).ValidHistory s₀ ((BitMemory.pairSpec w).clientHistory s₀ linked) ∧
-      (BitMemory.pairSpec w).clientResult s₀ linked =
-        (twoArraysSpec b).clientResult ([], []) p ∧
-      (abs w b s'.1, abs w b s'.2) = d' ∧
-      pairTotalBits s' = (d'.1.length + d'.2.length) * b ∧
-      (BitMemory.pairSpec w).totalCost (BitMemory.pairCharge w) s₀
-        ((BitMemory.pairSpec w).clientHistory s₀ linked) ≤
-          3 * ((twoArraysSpec b).clientHistory ([], []) p).length := by
-  have ⟨hinv1, habs1⟩ := inv_empty w b
-  have ⟨hinv2, habs2⟩ := inv_empty w b
-  let R := twoArraysRefinement hw hb hbw
-  let s₀ : BitMemory.State × BitMemory.State := (BitMemory.empty, BitMemory.empty)
-  have hinv0 : R.inv s₀ := ⟨hinv1, hinv2⟩
-  have habs0 : R.abs s₀ = ([], []) := Prod.ext habs1 habs2
-  have hv0 : (twoArraysSpec b).ValidHistory (R.abs s₀)
-      ((twoArraysSpec b).clientHistory (R.abs s₀) p) := by
-    rwa [habs0]
-  obtain ⟨hv_low, hres, habs', hinv'⟩ := R.simulates_client p hinv0 hv0
-  have hcost := (twoArrays_amortized hw hb hbw).client p hinv0 hv0
-  rw [habs0] at hres habs' hcost
-  rw [StateTransitionSpec.totalCost_const, Nat.mul_comm] at hcost
-  refine ⟨hv_low, hres, habs', ?_, by omega⟩
-  change ((BitMemory.pairSpec w).clientState s₀ (link R.methods p)).1.bitSize +
-    ((BitMemory.pairSpec w).clientState s₀ (link R.methods p)).2.bitSize =
-    (((twoArraysSpec b).clientState ([], []) p).1.length +
-      ((twoArraysSpec b).clientState ([], []) p).2.length) * b
-  rw [bitSize_eq_length_mul hinv'.1, bitSize_eq_length_mul hinv'.2]
-  have h1 : abs w b ((BitMemory.pairSpec w).clientState s₀ (link R.methods p)).1 =
-      ((twoArraysSpec b).clientState ([], []) p).1 := congrArg Prod.fst habs'
-  have h2 : abs w b ((BitMemory.pairSpec w).clientState s₀ (link R.methods p)).2 =
-      ((twoArraysSpec b).clientState ([], []) p).2 := congrArg Prod.snd habs'
-  rw [h1, h2, Nat.add_mul]
+/-- **Machine-level correctness of `popCode`**: for any well-formed machine state `x : Data 12`
+satisfying `Inv w b x.toBitMemoryState`, `popCode b` executes in at most `40` `BitRAM` instructions,
+preserving `Inv w b`, updating `abs w b y.toBitMemoryState` to
+`(abs w b x.toBitMemoryState).dropLast`, encoding `(abs w b x.toBitMemoryState).getLast?` via
+`(if y.regs 1 = 0 then none else some (y.regs 0))`, and shrinking `y.bitSize` to
+`((abs w b x.toBitMemoryState).length - 1) * b`. -/
+theorem popCode_exec (hw : 0 < w) (hb : 0 < b) (hbw : b ≤ w)
+    {x : BitRAM.Data 12} (hx : x.WellFormed w) (hinv : Inv w b x.toBitMemoryState) :
+    BitRAM.DemonicExecWithin w (popCode b) x
+      (fun y =>
+        Inv w b y.toBitMemoryState ∧
+        abs w b y.toBitMemoryState = (abs w b x.toBitMemoryState).dropLast ∧
+        (if y.regs 1 = 0 then none else some (y.regs 0)) =
+          (abs w b x.toBitMemoryState).getLast? ∧
+        y.bitSize = ((abs w b x.toBitMemoryState).length - 1) * b) 40 := by
+  have hb_fits : Fits w b := Fits.of_le (fits_self w) hbw
+  have h0 : Fits w 0 := fits_zero w
+  have h1 : Fits w 1 := fits_one (Nat.ne_of_gt hw)
+  refine DemonicExecWithin.step_const (T := 39) hb_fits ?_
+  refine .seq (T₁ := 1) (T₂ := 38)
+    (.size hx.mem_wf.bitSize_fits rfl le_rfl)
+    (fun x₁ hx₁ => ?_) (by omega)
+  subst hx₁
+  by_cases hlt : x.bitSize < b
+  · refine .branch_pos (T₀ := 1) hlt (DemonicExecWithin.const h0 ?_) (by omega)
+    have hcount0 : count b x.toBitMemoryState = 0 := Nat.div_eq_of_lt hlt
+    have habs0 : abs w b x.toBitMemoryState = [] := by simp [abs, hcount0]
+    have hsz0 : x.bitSize = 0 := by
+      change x.toBitMemoryState.bitSize = 0
+      rw [hinv.bitSize_eq, hcount0, Nat.zero_mul]
+    refine ⟨hinv, ?_, ?_, ?_⟩
+    · change abs w b x.toBitMemoryState = (abs w b x.toBitMemoryState).dropLast
+      simp [habs0]
+    · simp [habs0]
+    · change x.bitSize = ((abs w b x.toBitMemoryState).length - 1) * b
+      simp [hsz0, habs0]
+  · have hle : b ≤ x.bitSize := Nat.le_of_not_lt hlt
+    have hsub_fits : Fits w (x.bitSize - b) :=
+      Fits.of_le hx.mem_wf.bitSize_fits (Nat.sub_le _ _)
+    refine .branch_neg (T₀ := 36) hlt ?_ (by omega)
+    refine DemonicExecWithin.step_bin (T := 35) hsub_fits ?_
+    let x₂ : BitRAM.Data 12 := ((x.set 2 b).set 1 x.bitSize).set 1 (x.bitSize - b)
+    have hx₂_wf : x₂.WellFormed w := by
+      refine ⟨fun i => ?_, hx.mem_wf⟩
+      by_cases hi1 : i = 1
+      · subst hi1; exact hsub_fits
+      · by_cases hi2 : i = 2
+        · subst hi2; exact hb_fits
+        · simp only [x₂, BitRAM.Data.set, Function.update_of_ne hi1, Function.update_of_ne hi2]
+          exact hx.regs_fits i
+    have hv_read : BitMemory.valid w x₂.toBitMemoryState (.readBits (x₂.regs 1) (x₂.regs 2)) := by
+      refine ⟨hbw, ?_⟩
+      change (x.bitSize - b) + b ≤ x.bitSize
+      exact (Nat.sub_add_cancel hle).le
+    refine .seq (T₁ := 32) (T₂ := 3)
+      (BitRAM.readBitsCode_exec hw hx₂_wf hv_read)
+      (fun y₁ ⟨hr0, hst₁⟩ => ?_) (by omega)
+    change y₁.regs 0 = readField w 0 x.mem (x.bitSize - b) b at hr0
+    change y₁.toBitMemoryState = x.toBitMemoryState at hst₁
+    refine DemonicExecWithin.step_const (T := 2) hb_fits ?_
+    have hle₁ : (y₁.set 1 b).regs 1 ≤ (y₁.set 1 b).bitSize := by
+      change b ≤ y₁.toBitMemoryState.bitSize
+      rw [hst₁]
+      exact hle
+    have hcost_sh : max 1 (((y₁.set 1 b).regs 1) ⌈/⌉ w) ≤ 1 :=
+      (BitMemory.charge_shrink_of_le hw hbw x.toBitMemoryState).le
+    refine .seq (T₁ := 1) (T₂ := 1)
+      (.shrink hle₁ hcost_sh rfl)
+      (fun y₂ hy₂ => ?_) (by omega)
+    subst hy₂
+    refine DemonicExecWithin.const h1 ?_
+    obtain ⟨hstep_pop, hinv_pop⟩ := step_pop hw hb hbw hinv
+    have hstate_pop : (BitMemory.spec w).clientState x.toBitMemoryState (pop b) =
+        (BitMemory.stepFn w x.toBitMemoryState (.shrink b)).1 := by
+      dsimp only [StateTransitionSpec.clientState]
+      rw [runClient_pop_of_ge hlt]
+      rfl
+    have hres_pop : (BitMemory.spec w).clientResult x.toBitMemoryState (pop b) =
+        some (x.toBitMemoryState.getField w (x.bitSize - b) b) := by
+      dsimp only [StateTransitionSpec.clientResult]
+      rw [runClient_pop_of_ge hlt]
+      rfl
+    let y₃ : BitRAM.Data 12 :=
+      (⟨(y₁.set 1 b).regs,
+        (BitMemory.stepFn w (y₁.set 1 b).toBitMemoryState (.shrink ((y₁.set 1 b).regs 1))).1.mem,
+        (y₁.set 1 b).bitSize - (y₁.set 1 b).regs 1⟩ : BitRAM.Data 12).set 1 1
+    have hy₃_st : y₃.toBitMemoryState =
+        (BitMemory.spec w).clientState x.toBitMemoryState (pop b) := by
+      rw [hstate_pop]
+      ext q
+      · change (BitMemory.stepFn w y₁.toBitMemoryState (.shrink b)).1.mem q = _
+        rw [hst₁]
+      · change y₁.toBitMemoryState.bitSize - b = _
+        rw [hst₁]
+        rfl
+    have habs_pop : abs w b ((BitMemory.spec w).clientState x.toBitMemoryState (pop b)) =
+        (abs w b x.toBitMemoryState).dropLast := congrArg Prod.fst hstep_pop
+    have hget_pop : (BitMemory.spec w).clientResult x.toBitMemoryState (pop b) =
+        (abs w b x.toBitMemoryState).getLast? := congrArg Prod.snd hstep_pop
+    change Inv w b y₃.toBitMemoryState ∧
+      abs w b y₃.toBitMemoryState = (abs w b x.toBitMemoryState).dropLast ∧
+      (if y₃.regs 1 = 0 then none else some (y₃.regs 0)) =
+        (abs w b x.toBitMemoryState).getLast? ∧
+      y₃.toBitMemoryState.bitSize = ((abs w b x.toBitMemoryState).length - 1) * b
+    rw [hy₃_st]
+    refine ⟨hinv_pop, habs_pop, ?_, ?_⟩
+    · change (if (1 : ℕ) = 0 then none else some (y₁.regs 0)) = _
+      simp only [Nat.one_ne_zero, ↓reduceIte, hr0, ← hget_pop, hres_pop]
+      rfl
+    · rw [bitSize_eq_length_mul hinv_pop, habs_pop, List.length_dropLast]
 
-/-- A client subroutine on `twoArraysSpec b` that pops the last item from array 1 and, if present,
-appends it to array 2. -/
-def popPushTransfer (b : ℕ) : (twoArraysSpec b).Client (Option ℕ) := do
-  let mx ← PFunctor.FreeM.lift (P := (twoArraysSpec b).signature) (.inl .pop)
-  match mx with
-  | none => pure none
-  | some x => do
-    PFunctor.FreeM.lift (P := (twoArraysSpec b).signature) (.inr (.append x))
-    pure (some x)
+/-- Concrete `BitRAM.Code .standard 12` program for `DynamicArray.Op.read i` (with `i` in `r1`):
+loads `b` into `r2`, computes `r1 := r1 * r2` (`i * b`), and executes `BitRAM.readBitsCode`. -/
+def readCode (b : ℕ) : BitRAM.Code .standard 12 :=
+  .seq (.op (.const 2 b))
+    (.seq (.op (.bin .mul 1 1 2))
+      BitRAM.readBitsCode)
 
-/-- Abstract evaluation of `popPushTransfer b` when the first array `xs₁` is non-empty. -/
-theorem runClient_popPushTransfer {xs₁ xs₂ : DynamicArray.State} (hne : xs₁ ≠ []) :
-    (twoArraysSpec b).runClient (xs₁, xs₂) (popPushTransfer b) =
-      (some (xs₁.getLast hne), (xs₁.dropLast, xs₂ ++ [xs₁.getLast hne]),
-        [.inl .pop, .inr (.append (xs₁.getLast hne))]) := by
-  unfold popPushTransfer
-  simp only [StateTransitionSpec.runClient_lift_bind', DynamicArray.stepFn_pop,
-    List.getLast?_eq_some_getLast hne]
-  rfl
+/-- **Machine-level correctness of `readCode`**: for any well-formed machine state `x : Data 12`
+satisfying `Inv w b x.toBitMemoryState` and `x.regs 1 < (abs w b x.toBitMemoryState).length`,
+`readCode b` executes in at most `34` `BitRAM` instructions, leaving `y.toBitMemoryState` unchanged
+and setting `y.regs 0 = (abs w b x.toBitMemoryState).getD (x.regs 1) 0`. -/
+theorem readCode_exec (hw : 0 < w) (hbw : b ≤ w)
+    {x : BitRAM.Data 12} (hx : x.WellFormed w) (hinv : Inv w b x.toBitMemoryState)
+    (hv : (DynamicArray.spec w b).valid (abs w b x.toBitMemoryState) (.read (x.regs 1))) :
+    BitRAM.DemonicExecWithin w (readCode b) x
+      (fun y =>
+        y.toBitMemoryState = x.toBitMemoryState ∧
+        y.regs 0 = (abs w b x.toBitMemoryState).getD (x.regs 1) 0) 34 := by
+  have hb_fits : Fits w b := Fits.of_le (fits_self w) hbw
+  have hi' : x.regs 1 < count b x.toBitMemoryState := by simpa [length_abs] using hv
+  have hslot : x.regs 1 * b + b ≤ x.bitSize := by
+    change x.regs 1 * b + b ≤ x.toBitMemoryState.bitSize
+    rw [hinv.bitSize_eq]
+    exact slot_end_le_of_lt b hi'
+  have hmul_fits : Fits w (x.regs 1 * b) :=
+    Fits.of_le hx.mem_wf.bitSize_fits (Nat.le_trans (Nat.le_add_right _ b) hslot)
+  refine DemonicExecWithin.step_const (T := 33) hb_fits ?_
+  refine DemonicExecWithin.step_bin (T := 32) hmul_fits ?_
+  let x₁ : BitRAM.Data 12 := (x.set 2 b).set 1 (x.regs 1 * b)
+  have hx₁_wf : x₁.WellFormed w := by
+    refine ⟨fun i => ?_, hx.mem_wf⟩
+    by_cases hi1 : i = 1
+    · subst hi1; exact hmul_fits
+    · by_cases hi2 : i = 2
+      · subst hi2; exact hb_fits
+      · simp only [x₁, BitRAM.Data.set, Function.update_of_ne hi1, Function.update_of_ne hi2]
+        exact hx.regs_fits i
+  have hv_read : BitMemory.valid w x₁.toBitMemoryState (.readBits (x₁.regs 1) (x₁.regs 2)) :=
+    ⟨hbw, hslot⟩
+  refine (BitRAM.readBitsCode_exec hw hx₁_wf hv_read).mono (fun y ⟨hr0, hst⟩ => ?_) le_rfl
+  obtain ⟨hstep_rd, _⟩ := step_read hinv hv
+  have hrd_eq : x.toBitMemoryState.getField w (x.regs 1 * b) b =
+      (abs w b x.toBitMemoryState).getD (x.regs 1) 0 := congrArg Prod.snd hstep_rd
+  exact ⟨hst, hr0.trans hrd_eq⟩
 
-/-- **Released-memory reuse across two resizable `b`-bit arrays**: when array 1 is non-empty
-(`xs₁ ≠ []`), executing `popPushTransfer b` over `(s₁, s₂)` pops the last `b`-bit item from array 1
-(immediately shrinking `s₁.bitSize` by `b` bits) and appends it to array 2 (growing `s₂.bitSize` by
-the released `b` bits), so that the combined bit usage `pairTotalBits` at every intermediate and
-final state never exceeds `(xs₁.length + xs₂.length) * b` bits. -/
-theorem popPushTransfer_reuses_released_bits (hw : 0 < w) (hb : 0 < b) (hbw : b ≤ w)
-    {s₁ s₂ : BitMemory.State} (hs₁ : Inv w b s₁) (hs₂ : Inv w b s₂)
-    (hne : abs w b s₁ ≠ []) :
-    let R := twoArraysRefinement hw hb hbw
-    let s : BitMemory.State × BitMemory.State := (s₁, s₂)
-    let s_after_pop : BitMemory.State × BitMemory.State :=
-      ((BitMemory.spec w).clientState s₁ (pop b), s₂)
-    let s_final : BitMemory.State × BitMemory.State :=
-      (BitMemory.pairSpec w).clientState s (link R.methods (popPushTransfer b))
-    pairTotalBits s = ((abs w b s₁).length + (abs w b s₂).length) * b ∧
-      pairTotalBits s_after_pop = pairTotalBits s - b ∧
-      pairTotalBits s_final = pairTotalBits s ∧
-      abs w b s_final.1 = (abs w b s₁).dropLast ∧
-      abs w b s_final.2 = abs w b s₂ ++ [(abs w b s₁).getLast hne] := by
-  have hlen_pos : 0 < (abs w b s₁).length := List.length_pos_iff.mpr hne
-  have ⟨hpop_step, hpop_inv⟩ := step_pop hw hb hs₁
-  have hpop_abs : abs w b ((BitMemory.spec w).clientState s₁ (pop b)) = (abs w b s₁).dropLast :=
-    congrArg Prod.fst hpop_step
-  have hlast_fits : Fits b ((abs w b s₁).getLast hne) := by
-    rw [List.getLast_eq_getElem]
-    simp only [abs, List.getElem_ofFn]
-    exact readField_fits w 0 s₁.mem _ b
-  have htotal_init : pairTotalBits (s₁, s₂) = ((abs w b s₁).length + (abs w b s₂).length) * b := by
-    simp only [pairTotalBits, bitSize_eq_length_mul hs₁, bitSize_eq_length_mul hs₂, Nat.add_mul]
-  have htotal_mid : pairTotalBits ((BitMemory.spec w).clientState s₁ (pop b), s₂) =
-      pairTotalBits (s₁, s₂) - b := by
-    simp only [pairTotalBits, bitSize_eq_length_mul hpop_inv, bitSize_eq_length_mul hs₁,
-      bitSize_eq_length_mul hs₂, hpop_abs, List.length_dropLast]
-    cases h : (abs w b s₁).length with
-    | zero => omega
-    | succ k =>
-      simp only [Nat.add_sub_cancel, Nat.succ_mul]
-      omega
-  let R := twoArraysRefinement hw hb hbw
-  have hinv_init : R.inv (s₁, s₂) := ⟨hs₁, hs₂⟩
-  have hv_abs : (twoArraysSpec b).ValidHistory (R.abs (s₁, s₂))
-      ((twoArraysSpec b).clientHistory (R.abs (s₁, s₂)) (popPushTransfer b)) := by
-    dsimp only [R, twoArraysRefinement, Refinement.ofFn, StateTransitionSpec.clientHistory]
-    rw [runClient_popPushTransfer hne]
-    exact ⟨trivial, hlast_fits, trivial⟩
-  obtain ⟨_, _, habs_final, hinv_final⟩ := R.simulates_client (popPushTransfer b) hinv_init hv_abs
-  have habs_eq : (twoArraysSpec b).clientState (R.abs (s₁, s₂)) (popPushTransfer b) =
-      ((abs w b s₁).dropLast, abs w b s₂ ++ [(abs w b s₁).getLast hne]) := by
-    dsimp only [R, twoArraysRefinement, Refinement.ofFn, StateTransitionSpec.clientState]
-    rw [runClient_popPushTransfer hne]
-  have hf1 : abs w b ((BitMemory.pairSpec w).clientState (s₁, s₂)
-      (link R.methods (popPushTransfer b))).1 = (abs w b s₁).dropLast :=
-    congrArg Prod.fst (habs_final.trans habs_eq)
-  have hf2 : abs w b ((BitMemory.pairSpec w).clientState (s₁, s₂)
-      (link R.methods (popPushTransfer b))).2 =
-      abs w b s₂ ++ [(abs w b s₁).getLast hne] :=
-    congrArg Prod.snd (habs_final.trans habs_eq)
-  refine ⟨htotal_init, htotal_mid, ?_, hf1, hf2⟩
-  change ((BitMemory.pairSpec w).clientState (s₁, s₂)
-      (link R.methods (popPushTransfer b))).1.bitSize +
-    ((BitMemory.pairSpec w).clientState (s₁, s₂)
-      (link R.methods (popPushTransfer b))).2.bitSize =
-    pairTotalBits (s₁, s₂)
-  rw [bitSize_eq_length_mul hinv_final.1, bitSize_eq_length_mul hinv_final.2, hf1, hf2,
-    htotal_init, List.length_dropLast, List.length_append, List.length_singleton]
-  cases h : (abs w b s₁).length with
-  | zero => omega
-  | succ k =>
-    simp only [Nat.add_sub_cancel, Nat.succ_mul, Nat.add_mul]
+/-- Concrete `BitRAM.Code .standard 12` program for `DynamicArray.Op.write i v` (with `i` in `r1`
+and `v` in `r3`): loads `b` into `r2`, computes `r1 := r1 * r2` (`i * b`), and executes
+`BitRAM.writeBitsCode`. -/
+def writeCode (b : ℕ) : BitRAM.Code .standard 12 :=
+  .seq (.op (.const 2 b))
+    (.seq (.op (.bin .mul 1 1 2))
+      BitRAM.writeBitsCode)
+
+/-- **Machine-level correctness of `writeCode`**: for any well-formed machine state `x : Data 12`
+satisfying `Inv w b x.toBitMemoryState` and
+`(DynamicArray.spec w b).valid _ (.write (x.regs 1) (x.regs 3))`, `writeCode b` executes in at most
+`44` `BitRAM` instructions, preserving `Inv w b`, updating `abs w b y.toBitMemoryState` to
+`(abs w b x.toBitMemoryState).set (x.regs 1) (x.regs 3)`, and maintaining
+`y.bitSize = (abs w b x.toBitMemoryState).length * b`. -/
+theorem writeCode_exec (hw : 0 < w) (hbw : b ≤ w)
+    {x : BitRAM.Data 12} (hx : x.WellFormed w) (hinv : Inv w b x.toBitMemoryState)
+    (hv : (DynamicArray.spec w b).valid (abs w b x.toBitMemoryState)
+      (.write (x.regs 1) (x.regs 3))) :
+    BitRAM.DemonicExecWithin w (writeCode b) x
+      (fun y =>
+        Inv w b y.toBitMemoryState ∧
+        abs w b y.toBitMemoryState =
+          (abs w b x.toBitMemoryState).set (x.regs 1) (x.regs 3) ∧
+        y.bitSize = (abs w b x.toBitMemoryState).length * b) 44 := by
+  obtain ⟨hi, hval_b⟩ := hv
+  have hb_fits : Fits w b := Fits.of_le (fits_self w) hbw
+  have hi' : x.regs 1 < count b x.toBitMemoryState := by simpa [length_abs] using hi
+  have hslot : x.regs 1 * b + b ≤ x.bitSize := by
+    change x.regs 1 * b + b ≤ x.toBitMemoryState.bitSize
+    rw [hinv.bitSize_eq]
+    exact slot_end_le_of_lt b hi'
+  have hmul_fits : Fits w (x.regs 1 * b) :=
+    Fits.of_le hx.mem_wf.bitSize_fits (Nat.le_trans (Nat.le_add_right _ b) hslot)
+  refine DemonicExecWithin.step_const (T := 43) hb_fits ?_
+  refine DemonicExecWithin.step_bin (T := 42) hmul_fits ?_
+  let x₁ : BitRAM.Data 12 := (x.set 2 b).set 1 (x.regs 1 * b)
+  have hx₁_wf : x₁.WellFormed w := by
+    refine ⟨fun i => ?_, hx.mem_wf⟩
+    by_cases hi1 : i = 1
+    · subst hi1; exact hmul_fits
+    · by_cases hi2 : i = 2
+      · subst hi2; exact hb_fits
+      · simp only [x₁, BitRAM.Data.set, Function.update_of_ne hi1, Function.update_of_ne hi2]
+        exact hx.regs_fits i
+  have hv_write : BitMemory.valid w x₁.toBitMemoryState
+      (.writeBits (x₁.regs 1) (x₁.regs 2) (x₁.regs 3)) :=
+    ⟨hbw, hslot, hval_b⟩
+  refine (BitRAM.writeBitsCode_exec hw hx₁_wf hv_write).mono (fun y hy => ?_) le_rfl
+  obtain ⟨hstep_wr, hinv_wr⟩ := step_write hw hbw hinv hi hval_b
+  have habs_wr : abs w b ((BitMemory.spec w).clientState x.toBitMemoryState
+      (write b (x.regs 1) (x.regs 3))) =
+      (abs w b x.toBitMemoryState).set (x.regs 1) (x.regs 3) := congrArg Prod.fst hstep_wr
+  have hy_eq : y.toBitMemoryState =
+      (BitMemory.spec w).clientState x.toBitMemoryState (write b (x.regs 1) (x.regs 3)) := hy
+  change Inv w b y.toBitMemoryState ∧
+    abs w b y.toBitMemoryState = (abs w b x.toBitMemoryState).set (x.regs 1) (x.regs 3) ∧
+    y.toBitMemoryState.bitSize = (abs w b x.toBitMemoryState).length * b
+  rw [hy_eq]
+  exact ⟨hinv_wr, habs_wr, bitSize_eq_length_mul hinv⟩
+
+/-! ## Single-tape subroutine composition in ONE `BitMemory.State` -/
+
+/-- Linking commutes with monadic bind on `Client`. -/
+theorem link_bind {D E : StateTransitionSpec} {α β : Type} (m : Methods D E)
+    (p : D.Client α) (k : α → D.Client β) :
+    (link m p).bind (fun a => link m (k a)) = link m (p.bind k) := by
+  induction p with
+  | pure a => rfl
+  | liftBind o cont ih =>
+    change ((m o).bind (fun x => link m (cont x))).bind (fun a => link m (k a)) =
+      (m o).bind (fun x => link m ((cont x).bind k))
+    rw [PFunctor.FreeM.bind_assoc]
+    congr 1
+    funext x
+    exact ih x
+
+/-- **Sequential single-tape subroutine composition on demonic `BitMemory.dirtySpec w`**:
+when a client runs a phase-1 array program `p₁` from `BitMemory.empty` that returns the array to
+empty (`(DynamicArray.spec w b).clientState [] p₁ = []`, releasing all allocated bits via `shrink`
+so `s₁.bitSize = 0`), and then runs a phase-2 array program `p₂` on the **same** single tape `s₁`,
+phase 2 reuses the released bit address space `[0, M)` from bit offset `0`, producing the exact
+phase-2 result and final array `xs₂'` with `s₂.bitSize = xs₂'.length * b` and combined cost at most
+`3 * (m₁ + m₂)`. -/
+theorem singleTape_sequential_subroutine_reuse {α β : Type}
+    (hw : 0 < w) (hb : 0 < b) (hbw : b ≤ w)
+    (p₁ : (DynamicArray.spec w b).Client α)
+    (p₂ : α → (DynamicArray.spec w b).Client β)
+    (hv₁ : (DynamicArray.spec w b).ValidHistory []
+      ((DynamicArray.spec w b).clientHistory [] p₁))
+    (hempty₁ : (DynamicArray.spec w b).clientState [] p₁ = [])
+    (hv₂ : (DynamicArray.spec w b).ValidHistory []
+      ((DynamicArray.spec w b).clientHistory []
+        (p₂ ((DynamicArray.spec w b).clientResult [] p₁)))) :
+    let a₁ := (DynamicArray.spec w b).clientResult [] p₁
+    let combined := do
+      let a ← link (dirtyMethods w b) p₁
+      link (dirtyMethods w b) (p₂ a)
+    (BitMemory.dirtySpec w).DemonicValid BitMemory.empty combined ∧
+      ∀ r s₂ tr,
+        (BitMemory.dirtySpec w).ClientRun BitMemory.empty combined r s₂ tr →
+        (BitMemory.dirtySpec w).ValidTranscript BitMemory.empty tr s₂ ∧
+          r = (DynamicArray.spec w b).clientResult [] (p₂ a₁) ∧
+          abs w b s₂ = (DynamicArray.spec w b).clientState [] (p₂ a₁) ∧
+          s₂.bitSize = ((DynamicArray.spec w b).clientState [] (p₂ a₁)).length * b ∧
+          (BitMemory.dirtySpec w).totalCostTranscript (BitMemory.charge w) BitMemory.empty tr ≤
+            3 * (((DynamicArray.spec w b).clientHistory [] p₁).length +
+              ((DynamicArray.spec w b).clientHistory [] (p₂ a₁)).length) := by
+  intro a₁ combined
+  have hcomp : combined = link (dirtyMethods w b) (p₁ >>= p₂) :=
+    link_bind (dirtyMethods w b) p₁ p₂
+  have hv_both : (DynamicArray.spec w b).ValidHistory []
+      ((DynamicArray.spec w b).clientHistory [] (p₁ >>= p₂)) := by
+    rw [StateTransitionSpec.clientHistory_bind, StateTransitionSpec.validHistory_append]
+    refine ⟨hv₁, ?_⟩
+    rw [(DynamicArray.spec w b).run_runClient p₁ [], hempty₁]
+    exact hv₂
+  obtain ⟨hdv, hmain_run⟩ := dirty_client_run_from_empty hw hb hbw (p₁ >>= p₂) hv_both
+  rw [← hcomp] at hdv hmain_run
+  refine ⟨hdv, fun r s₂ tr hrun => ?_⟩
+  rcases hmain_run r s₂ tr hrun with ⟨hv_low, hr, habs₂, hsz₂, hcost⟩
+  have hr_eq : (DynamicArray.spec w b).clientResult [] (p₁ >>= p₂) =
+      (DynamicArray.spec w b).clientResult [] (p₂ a₁) := by
+    rw [StateTransitionSpec.clientResult_bind, hempty₁]
+  have hst_eq : (DynamicArray.spec w b).clientState [] (p₁ >>= p₂) =
+      (DynamicArray.spec w b).clientState [] (p₂ a₁) := by
+    rw [StateTransitionSpec.clientState_bind, hempty₁]
+  have hhist_eq : ((DynamicArray.spec w b).clientHistory [] (p₁ >>= p₂)).length =
+      ((DynamicArray.spec w b).clientHistory [] p₁).length +
+        ((DynamicArray.spec w b).clientHistory [] (p₂ a₁)).length := by
+    rw [StateTransitionSpec.clientHistory_bind, hempty₁, List.length_append]
+  rw [hr_eq] at hr
+  rw [hst_eq] at habs₂ hsz₂
+  rw [hhist_eq] at hcost
+  exact ⟨hv_low, hr, habs₂, hsz₂, hcost⟩
+
+/-- **Concurrent single-tape two-array representation (`SingleTapeTwoArrays`)**:
+two resizable `b`-bit arrays `(xs₁, xs₂)` stored simultaneously in a **single** linear
+`s : BitMemory.State` (`[0, s.bitSize)`):
+* Bits `[0, w)` hold the `w`-bit header `n₁ = xs₁.length`.
+* Bits `[w, w + n₁ * b)` hold the `n₁` items of `xs₁`.
+* Bits `[w + n₁ * b, w + (n₁ + n₂) * b)` hold the `n₂` items of `xs₂`.
+* The total allocated bit size of the single tape is `s.bitSize = w + (n₁ + n₂) * b`. -/
+structure SingleTapeTwoArrays (w b : ℕ) (s : BitMemory.State)
+    (xs₁ xs₂ : DynamicArray.State) : Prop where
+  /-- The single bit-memory state is well-formed at word width `w`. -/
+  wellFormed : s.WellFormed w
+  /-- Header `[0, w)` stores `xs₁.length`. -/
+  header_eq : s.getField w 0 w = xs₁.length
+  /-- `xs₁.length` fits in a `w`-bit word. -/
+  len₁_fits : Fits w xs₁.length
+  /-- Total allocated bit size is `w + (xs₁.length + xs₂.length) * b`. -/
+  bitSize_eq : s.bitSize = w + (xs₁.length + xs₂.length) * b
+  /-- Array 1 items sit in `[w, w + xs₁.length * b)`. -/
+  items₁ : ∀ i (hi : i < xs₁.length), s.getField w (w + i * b) b = xs₁[i]
+  /-- Array 2 items sit in `[w + xs₁.length * b, w + (xs₁.length + xs₂.length) * b)`. -/
+  items₂ : ∀ j (hj : j < xs₂.length),
+    s.getField w (w + (xs₁.length + j) * b) b = xs₂[j]
+
+/-- Initialize the single-tape two-array layout `(xs₁ = [], xs₂ = [])` from `BitMemory.empty` by
+growing `w` bits for the header and writing `0` into `[0, w)`. -/
+def initSingleTapeTwoArrays (w : ℕ) : BitMemory.Prog Unit := do
+  let _ ← BitMemory.grow w
+  BitMemory.writeBits 0 w 0
+
+/-- Initializing `SingleTapeTwoArrays` from `BitMemory.empty` on demonic `BitMemory.dirtySpec w`
+establishes `SingleTapeTwoArrays w b s' [] []` with `s'.bitSize = w` in `2` bit-memory units. -/
+theorem initSingleTapeTwoArrays_demonic (hw : 0 < w)
+    {r : Unit} {s' : BitMemory.State} {tr : (BitMemory.dirtySpec w).Transcript}
+    (hrun : (BitMemory.dirtySpec w).ClientRun BitMemory.empty
+      (initSingleTapeTwoArrays w) r s' tr) :
+    SingleTapeTwoArrays w b s' [] [] ∧ s'.bitSize = w ∧
+      (BitMemory.dirtySpec w).totalCostTranscript (BitMemory.charge w) BitMemory.empty tr = 2 := by
+  obtain ⟨_, off, s₁, tr₁, hstep₁, hrun₁, rfl⟩ :=
+    ((BitMemory.dirtySpec w).clientRun_liftBind_iff _ _ _ _ _ _).mp hrun
+  obtain ⟨_, u, s₂, tr₂, hstep₂, hrun₂, rfl⟩ :=
+    ((BitMemory.dirtySpec w).clientRun_liftBind_iff _ _ _ _ _ _).mp hrun₁
+  obtain ⟨rfl, rfl, rfl⟩ := ((BitMemory.dirtySpec w).clientRun_pure_iff _ _ _ _ _).mp hrun₂
+  have hoff : off = 0 := hstep₁.2.1
+  subst hoff
+  have hsz₁ : s₁.bitSize = w := by simpa using hstep₁.1
+  have hvalid₁ : BitMemory.valid w BitMemory.empty (.grow w) := by
+    change Fits w (0 + w)
+    simpa using fits_self w
+  have hs₁_wf : s₁.WellFormed w :=
+    BitMemory.wellFormed_dirtyStep (o := .grow w) hw (BitMemory.wellFormed_empty w)
+      hvalid₁ hstep₁
+  obtain ⟨h2, -⟩ := (Prod.mk.injEq _ _ _ _).mp hstep₂
+  have hs'_wf : s'.WellFormed w := by
+    rw [← h2]
+    exact BitMemory.wellFormed_stepFn (o := .writeBits 0 w 0) hw hs₁_wf
+      ⟨le_rfl, by omega, fits_zero w⟩
+  have hsz' : s'.bitSize = w := by
+    rw [← h2]
+    exact hsz₁
+  refine ⟨⟨hs'_wf, ?_, fits_zero w, by simp [hsz'], fun i hi => by simp at hi,
+    fun j hj => by simp at hj⟩, hsz', ?_⟩
+  · rw [← h2]
+    change readField w 0 (writeFieldMem w 0 s₁.mem 0 w 0) 0 w = 0
+    exact readField_writeFieldMem_same hw s₁.mem le_rfl (fits_zero w)
+  · have hch : BitMemory.charge w BitMemory.empty (.grow w) = 1 :=
+      BitMemory.charge_grow_of_le hw le_rfl BitMemory.empty
+    simp [StateTransitionSpec.totalCostTranscript_cons,
+      StateTransitionSpec.totalCostTranscript_nil, hch]
+
+/-- Single-tape program that pops the sole item of `xs₂ = [v]` (at bit offset `w + n₁ * b`) by
+calling `shrink b` on the single tape, and then appends `v` to `xs₁` by calling `grow b`, writing
+`v` into `[w + n₁ * b, w + (n₁ + 1) * b)`, and incrementing the header `n₁` in `[0, w)`. -/
+def singleTapePop₂Append₁Prog (w b : ℕ) : BitMemory.Prog ℕ := do
+  let n₁ ← BitMemory.readBits 0 w
+  let v ← BitMemory.readBits (w + n₁ * b) b
+  BitMemory.shrink b
+  let off ← BitMemory.grow b
+  BitMemory.writeBits off b v
+  BitMemory.writeBits 0 w (n₁ + 1)
+  pure v
+
+/-- **Single-tape released-memory reuse (`singleTape_pop₂_append₁_reuses_released_bits`)**:
+in a **single** linear `BitMemory.State` holding `SingleTapeTwoArrays w b s xs₁ [v]`, executing
+`singleTapePop₂Append₁Prog w b` on demonic `BitMemory.dirtySpec w` pops `v` from array 2 via
+`shrink b` (reducing `s.bitSize` from `w + (xs₁.length + 1) * b` to `w + xs₁.length * b`) and
+immediately reuses those `b` bits via `grow b` to append `v` to array 1, ending in a state `s'`
+on the **same** single tape satisfying `SingleTapeTwoArrays w b s' (xs₁ ++ [v]) []` with
+`s'.bitSize = s.bitSize = w + (xs₁.length + 1) * b` in `6` bit-memory units (`O(1)` time). -/
+theorem singleTape_pop₂_append₁_reuses_released_bits (hw : 0 < w) (hbw : b ≤ w)
+    {s : BitMemory.State} {xs₁ : DynamicArray.State} {v : ℕ}
+    (hst : SingleTapeTwoArrays w b s xs₁ [v])
+    (hn₁_succ : Fits w (xs₁.length + 1)) (hv_fits : Fits b v)
+    {r : ℕ} {s' : BitMemory.State} {tr : (BitMemory.dirtySpec w).Transcript}
+    (hrun : (BitMemory.dirtySpec w).ClientRun s (singleTapePop₂Append₁Prog w b) r s' tr) :
+    r = v ∧
+      SingleTapeTwoArrays w b s' (xs₁ ++ [v]) [] ∧
+      s'.bitSize = s.bitSize ∧
+      (BitMemory.dirtySpec w).totalCostTranscript (BitMemory.charge w) s tr = 6 := by
+  obtain ⟨_, n₁, s₁, tr₁, hstep₁, hrun₁, rfl⟩ :=
+    ((BitMemory.dirtySpec w).clientRun_liftBind_iff _ _ _ _ _ _).mp hrun
+  obtain ⟨h1, h1v⟩ := (Prod.mk.injEq _ _ _ _).mp hstep₁
+  subst h1; subst h1v
+  obtain ⟨_, v', s₂, tr₂, hstep₂, hrun₂, rfl⟩ :=
+    ((BitMemory.dirtySpec w).clientRun_liftBind_iff _ _ _ _ _ _).mp hrun₁
+  obtain ⟨h2, h2v⟩ := (Prod.mk.injEq _ _ _ _).mp hstep₂
+  subst h2; subst h2v
+  obtain ⟨_, u₃, s₃, tr₃, hstep₃, hrun₃, rfl⟩ :=
+    ((BitMemory.dirtySpec w).clientRun_liftBind_iff _ _ _ _ _ _).mp hrun₂
+  obtain ⟨h3, -⟩ := (Prod.mk.injEq _ _ _ _).mp hstep₃
+  subst h3
+  obtain ⟨_, off, s₄, tr₄, hstep₄, hrun₄, rfl⟩ :=
+    ((BitMemory.dirtySpec w).clientRun_liftBind_iff _ _ _ _ _ _).mp hrun₃
+  obtain ⟨_, u₅, s₅, tr₅, hstep₅, hrun₅, rfl⟩ :=
+    ((BitMemory.dirtySpec w).clientRun_liftBind_iff _ _ _ _ _ _).mp hrun₄
+  obtain ⟨h5, -⟩ := (Prod.mk.injEq _ _ _ _).mp hstep₅
+  subst h5
+  obtain ⟨_, u₆, s₆, tr₆, hstep₆, hrun₆, rfl⟩ :=
+    ((BitMemory.dirtySpec w).clientRun_liftBind_iff _ _ _ _ _ _).mp hrun₅
+  obtain ⟨h6, -⟩ := (Prod.mk.injEq _ _ _ _).mp hstep₆
+  subst h6
+  obtain ⟨rfl, rfl, rfl⟩ := ((BitMemory.dirtySpec w).clientRun_pure_iff _ _ _ _ _).mp hrun₆
+  have hn₁_eq : readField w 0 s.mem 0 w = xs₁.length := hst.header_eq
+  have hv_eq : readField w 0 s.mem (w + readField w 0 s.mem 0 w * b) b = v := by
+    rw [hn₁_eq]
+    have h0 := hst.items₂ 0 (by simp)
+    change readField w 0 s.mem (w + (xs₁.length + 0) * b) b = [v][0] at h0
+    simpa using h0
+  have hsz_s : s.bitSize = w + (xs₁.length + 1) * b := by
+    simpa using hst.bitSize_eq
+  have hle_b : b ≤ s.bitSize := by
+    rw [hsz_s, Nat.add_mul, Nat.one_mul]
     omega
+  have hs₃_wf : (BitMemory.stepFn w s (.shrink b)).1.WellFormed w :=
+    BitMemory.wellFormed_stepFn (o := .shrink b) hw hst.wellFormed hle_b
+  have hsz₃ : s.bitSize - b = w + xs₁.length * b := by
+    rw [hsz_s, Nat.add_mul, Nat.one_mul]
+    omega
+  have hoff_step : off = s.bitSize - b := hstep₄.2.1
+  subst hoff_step
+  have hstep₄_sz : s₄.bitSize = (s.bitSize - b) + b := hstep₄.1
+  have hsz₄ : s₄.bitSize = s.bitSize := by
+    rw [hstep₄_sz, Nat.sub_add_cancel hle_b]
+  have hgrow_valid : BitMemory.valid w (BitMemory.stepFn w s (.shrink b)).1 (.grow b) := by
+    change Fits w ((s.bitSize - b) + b)
+    rw [Nat.sub_add_cancel hle_b]
+    exact hst.wellFormed.bitSize_fits
+  have hs₄_wf : s₄.WellFormed w :=
+    BitMemory.wellFormed_dirtyStep (o := .grow b) hw hs₃_wf hgrow_valid hstep₄
+  have hmem₅_eq : writeFieldMem w 0 s₄.mem (s.bitSize - b) b v =
+      writeFieldMem w 0 (BitMemory.stepFn w s (.shrink b)).1.mem (w + xs₁.length * b) b v := by
+    have h1 := writeFieldMem_of_dirtyStep_grow hw hs₃_wf hbw hstep₄ (val := v)
+    change writeFieldMem w 0 s₄.mem (s.bitSize - b) b v =
+      writeFieldMem w 0 (BitMemory.stepFn w s (.shrink b)).1.mem (s.bitSize - b) b v at h1
+    exact h1.trans (by rw [hsz₃])
+  rw [hv_eq, hn₁_eq]
+  have hs₅_wf : (BitMemory.stepFn w s₄ (.writeBits (s.bitSize - b) b v)).1.WellFormed w :=
+    BitMemory.wellFormed_stepFn (o := .writeBits (s.bitSize - b) b v) hw hs₄_wf
+      ⟨hbw, by rw [hsz₄]; exact (Nat.sub_add_cancel hle_b).le, hv_fits⟩
+  have hs'_wf : (BitMemory.stepFn w (BitMemory.stepFn w s₄ (.writeBits (s.bitSize - b) b v)).1
+      (.writeBits 0 w (xs₁.length + 1))).1.WellFormed w :=
+    BitMemory.wellFormed_stepFn (o := .writeBits 0 w (xs₁.length + 1)) hw hs₅_wf
+      ⟨le_rfl, by change 0 + w ≤ s₄.bitSize; omega, hn₁_succ⟩
+  refine ⟨rfl, ⟨hs'_wf, ?_, ?_, ?_, ?_, ?_⟩, hsz₄, ?_⟩
+  · change readField w 0 (writeFieldMem w 0 _ 0 w (xs₁.length + 1)) 0 w = (xs₁ ++ [v]).length
+    rw [List.length_append, List.length_singleton]
+    exact readField_writeFieldMem_same hw _ le_rfl hn₁_succ
+  · simpa using hn₁_succ
+  · change s₄.bitSize = w + ((xs₁ ++ [v]).length + [].length) * b
+    simpa [hsz_s] using hsz₄
+  · intro i hi
+    rw [List.length_append, List.length_singleton] at hi
+    change readField w 0 (writeFieldMem w 0 (writeFieldMem w 0 s₄.mem (s.bitSize - b) b v)
+        0 w (xs₁.length + 1)) (w + i * b) b = (xs₁ ++ [v])[i]
+    rw [readField_writeFieldMem_of_disjoint hw _ le_rfl hbw (Or.inr (by omega)), hmem₅_eq]
+    rcases Nat.lt_or_eq_of_le (Nat.le_of_lt_succ hi) with hi_lt | rfl
+    · rw [List.getElem_append_left hi_lt]
+      have hdisj : (w + i * b) + b ≤ w + xs₁.length * b := by
+        have := slot_end_le_of_lt b hi_lt
+        omega
+      rw [readField_writeFieldMem_of_disjoint hw _ hbw hbw (Or.inl hdisj)]
+      have hsh := getField_stepFn_shrink (a := w + i * b) hw s b hbw (by omega)
+      exact hsh.trans (hst.items₁ i hi_lt)
+    · rw [List.getElem_append_right (le_rfl)]
+      simp only [Nat.sub_self, List.getElem_singleton]
+      exact readField_writeFieldMem_same hw _ hbw hv_fits
+  · intro j hj
+    simp at hj
+  · have hch_sh : BitMemory.charge w s (.shrink b) = 1 :=
+      BitMemory.charge_shrink_of_le hw hbw s
+    have hch_gr : BitMemory.charge w
+        { mem := clearRangeMem w s.mem (s.bitSize - b) s.bitSize, bitSize := s.bitSize - b }
+        (.grow b) = 1 :=
+      BitMemory.charge_grow_of_le hw hbw _
+    simp only [StateTransitionSpec.totalCostTranscript_cons,
+      StateTransitionSpec.totalCostTranscript_nil, BitMemory.charge_readBits,
+      BitMemory.charge_writeBits, hch_sh, hch_gr]
 
 end Cslib.DataStructure.DynamicArray.BitResizable
