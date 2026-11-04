@@ -51,9 +51,18 @@ example : runEpochInit 8 (emptyDict 4) 0 sampleOps = 1 := by decide
 
 /-! ## Non-Vacuity of Headline Theorems -/
 
+private lemma fit_epochSpace_le_4 : ∀ N ≤ 4, 10 + epochSpace 4 8 64 N < 2 ^ 64 := by
+  intro N hN
+  interval_cases N <;> decide
+
 /-- Non-vacuity of `unbounded_seq_expected_amortized` on `sampleOps` at `(U, V, w) = (4, 8, 64)`. -/
 theorem nonvacuous_unbounded_seq_expected_amortized :
-    ∃ (rebuildUnitCost resizableChargeVal : ℕ),
+    ∃ (r rebuildUnitCost resizableChargeVal C_space C_word : ℕ),
+      r = rResizable ∧
+      rebuildUnitCost = rebuildUnitCostConst ∧
+      resizableChargeVal = resizableChargeValConst ∧
+      C_space = 1227 ∧
+      C_word = 213 ∧
       let s_final := runDict (emptyDict 4) sampleOps
       let n_final := (dictDom s_final).card
       let n_init_final := runEpochInit 8 (emptyDict 4) 0 sampleOps
@@ -62,18 +71,28 @@ theorem nonvacuous_unbounded_seq_expected_amortized :
       N_final ≤ 4 ∧
       (∀ u v, s_final u = some v → v < 8) ∧
       activeEpochWords 4 8 64 N_final n_final ≤
-        succinctWords 1227 213 4 8 64 n_final ∧
+        succinctWords C_space C_word 4 8 64 n_final ∧
       64 * activeEpochWords 4 8 64 N_final n_final ≤
-        optBits 4 8 n_final + 1227 * n_final * logLogFactor n_final + 214 * 64 ∧
+        optBits 4 8 n_final + C_space * n_final * logLogFactor n_final + (C_word + 1) * 64 ∧
       2 * rebuildUnitCost * ((n_final - n_init_final) + (n_init_final - n_final)) ≤
         sampleOps.length * resizableChargeVal := by
-  obtain ⟨rebuildUnitCost, resizableChargeVal, hseq⟩ :=
-    unbounded_seq_expected_amortized 4 8 64 (by decide) (by decide)
-  exact ⟨rebuildUnitCost, resizableChargeVal, hseq sampleOps validDictSeq_sampleOps⟩
+  obtain ⟨r, rebuildUnitCost, resizableChargeVal, C_space, C_word,
+    hr, hreb, hch, hcs, hcw, hseq⟩ := unbounded_seq_expected_amortized
+  let x₀ : RState r := ⟨fun _ => 0, fun _ => 0, 10⟩
+  have hx₀_bdd : RBounded 64 x₀ :=
+    ⟨⟨fun _ => (by decide : 0 < 2 ^ 64), fun _ => (by decide : 0 < 2 ^ 64)⟩,
+      (by decide : 10 < 2 ^ 64), fun _ _ => rfl⟩
+  have h := hseq 4 8 64 10 (by decide) (by decide) (by decide) fit_epochSpace_le_4
+    x₀ hx₀_bdd rfl sampleOps validDictSeq_sampleOps
+  dsimp only at h
+  obtain ⟨hepoch, hN, hval, hwords, hbits, hpot, _⟩ := h
+  exact ⟨r, rebuildUnitCost, resizableChargeVal, C_space, C_word,
+    hr, hreb, hch, hcs, hcw, hepoch, hN, hval, hwords, hbits, hpot⟩
 
 /-- Non-vacuity of `dictionary_client_memory_reuse` at `(U, V, w) = (4, 8, 64)` on `sampleOps`. -/
 theorem nonvacuous_dictionary_client_memory_reuse :
     ∃ (r : ℕ) (x_dict x_dealloc x_reused : RState r),
+      r = rResizable ∧
       RBounded 64 x_dict ∧
       x_dict.frontier = 10 + epochSpace 4 8 64 4 ∧
       RBounded 64 x_dealloc ∧
@@ -81,7 +100,8 @@ theorem nonvacuous_dictionary_client_memory_reuse :
       RBounded 64 x_reused ∧
       x_reused.frontier = 10 + 5 ∧
       (∀ a, 10 ≤ a → a < 10 + 5 → x_reused.mem a = 0) := by
-  obtain ⟨r, _, hsub⟩ := dictionary_client_memory_reuse 4 8 64 (by decide) (by decide) (by decide)
+  obtain ⟨r, hr, hreuse⟩ := dictionary_client_memory_reuse
+  obtain ⟨_, hsub⟩ := hreuse 4 8 64 (by decide) (by decide) (by decide)
   let x₀ : RState r := ⟨fun _ => 0, fun _ => 0, 10⟩
   have hx₀_bdd : RBounded 64 x₀ :=
     ⟨⟨fun _ => (by decide : 0 < 2 ^ 64), fun _ => (by decide : 0 < 2 ^ 64)⟩,
@@ -89,7 +109,7 @@ theorem nonvacuous_dictionary_client_memory_reuse :
   obtain ⟨x_dict, x_dealloc, x_reused, hd_bdd, hd_fr, _, hde_bdd, hde_fr, hre_bdd, hre_fr, _,
     hre_zero⟩ :=
     hsub 10 5 x₀ sampleOps (by decide) (by decide) hx₀_bdd rfl validDictSeq_sampleOps
-  exact ⟨r, x_dict, x_dealloc, x_reused, hd_bdd, hd_fr, hde_bdd, hde_fr, hre_bdd, hre_fr,
+  exact ⟨r, x_dict, x_dealloc, x_reused, hr, hd_bdd, hd_fr, hde_bdd, hde_fr, hre_bdd, hre_fr,
     hre_zero⟩
 
 end ComplexityTests.Abstracts.ResizableSuccinctDictionaryTests

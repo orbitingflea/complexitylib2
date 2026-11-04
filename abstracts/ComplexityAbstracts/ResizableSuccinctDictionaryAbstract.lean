@@ -8,6 +8,7 @@ Authors: Renfei Zhou
 
 import ComplexityAbstracts.Check
 import ComplexityAbstracts.ResizableSuccinctDictionaryBridge
+import Cslib.Probability.PMF
 import Mathlib.Data.Finset.Card
 import Mathlib.Data.Nat.Choose.Basic
 import Mathlib.Data.Nat.Log
@@ -71,7 +72,53 @@ dependency boundary.
 
 namespace ComplexityAbstracts.ResizableSuccinctDictionaryAbstract
 
-/-! ## Word-Granular Resizable Word-RAM Memory Model -/
+open scoped ENNReal
+
+/-! ## Word-Granular Resizable Word-RAM Memory Model & Instruction Set -/
+
+/-- Exact binary ALU operations of the Word-RAM. -/
+inductive AluOp
+  | add | sub | mul | div | mod | and | or | xor | shl | shr
+
+/-- Exact natural-number evaluation of `AluOp`, or `none` on underflow / division by zero. -/
+def AluOp.eval : AluOp → ℕ → ℕ → Option ℕ
+  | .add, x, y => x + y
+  | .sub, x, y => if y ≤ x then x - y else none
+  | .mul, x, y => x * y
+  | .div, x, y => if y = 0 then none else x / y
+  | .mod, x, y => if y = 0 then none else x % y
+  | .and, x, y => x &&& y
+  | .or, x, y => x ||| y
+  | .xor, x, y => x ^^^ y
+  | .shl, x, y => some (x * 2 ^ y)
+  | .shr, x, y => some (x / 2 ^ y)
+
+/-- Instructions of an `r`-register word-granular resizable Word-RAM:
+- Ten standard Word-RAM instructions (with `.load` and `.store` bounds-checked against the active
+  memory frontier `frontier`);
+- `.size d`: load the current active word frontier `frontier` into register `d`;
+- `.grow k`: grow the active frontier by `regs k` words with demonic `w`-bit values (`DemonicGrow`);
+- `.shrink k`: shrink the active frontier by `regs k ≤ frontier` words (`shrinkMem`);
+- `.rand d i`: draw uniformly from `Fin (regs i + 1)`. -/
+inductive RInstr (r : ℕ)
+  | const (d : Fin r) (x : ℕ)
+  | copy (d i : Fin r)
+  | alu (f : AluOp) (d i j : Fin r)
+  | width (d : Fin r)
+  | load (d a : Fin r)
+  | store (a i : Fin r)
+  | size (d : Fin r)
+  | grow (k : Fin r)
+  | shrink (k : Fin r)
+  | jump (t : ℕ)
+  | branchEq (i j : Fin r) (t : ℕ)
+  | branchLt (i j : Fin r) (t : ℕ)
+  | halt (i : Fin r)
+  | rand (d i : Fin r)
+
+/-- A resizable Word-RAM program over `r` registers is a flat list of instructions `List (RInstr r)`
+indexed by `pc : ℕ` from `0`. -/
+abbrev RProgram (r : ℕ) := List (RInstr r)
 
 /-- State of an `r`-register word-granular resizable Word-RAM:
 - `regs : Fin r → ℕ`: register file;
@@ -108,6 +155,66 @@ def shrinkMem (mem : ℕ → ℕ) (s' k : ℕ) (a : ℕ) : ℕ :=
 Word-RAM zero-fill loop after a demonic `.grow`. -/
 def zeroSlice (mem : ℕ → ℕ) (lo hi : ℕ) (a : ℕ) : ℕ :=
   if lo ≤ a ∧ a < hi then 0 else mem a
+
+/-- Running machine configuration (`pc` and `RState r`) or halted / faulted terminal state. -/
+inductive RCfg (r : ℕ)
+  | running (pc : ℕ) (data : RState r)
+  | halted (v : ℕ) (data : RState r)
+  | faulted
+
+/-- Single-step demonic transition relation `stepDemonicRel w p cfg cfg'` of a resizable Word-RAM
+program `p : RProgram r` at word width `w`:
+- `.load d a` and `.store a i` require `data.regs a < data.frontier` (faulting on out-of-bounds
+  access);
+- `.size d` loads `data.frontier` into `d` when `data.frontier < 2 ^ w`;
+- `.grow k` nondeterministically transitions to any `mem'` satisfying
+  `DemonicGrow w data.frontier (data.regs k) data.mem mem'` when
+  `data.frontier + data.regs k < 2 ^ w`;
+- `.shrink k` transitions deterministically to
+  `shrinkMem data.mem (data.frontier - data.regs k) (data.regs k)` when
+  `data.regs k ≤ data.frontier`. -/
+def stepDemonicRel {r : ℕ} (w : ℕ) (p : RProgram r) : RCfg r → RCfg r → Prop
+  | .halted v x, cfg' => cfg' = .halted v x
+  | .faulted, cfg' => cfg' = .faulted
+  | .running pc x, cfg' =>
+    let setReg (d : Fin r) (val : ℕ) : RCfg r :=
+      if val < 2 ^ w then .running (pc + 1) { x with regs := Function.update x.regs d val }
+      else .faulted
+    match p[pc]? with
+    | none => cfg' = .faulted
+    | some (.const d v) => cfg' = setReg d v
+    | some (.copy d i) => cfg' = setReg d (x.regs i)
+    | some (.alu f d i j) =>
+      match f.eval (x.regs i) (x.regs j) with
+      | some v => cfg' = setReg d v
+      | none => cfg' = .faulted
+    | some (.width d) => cfg' = setReg d w
+    | some (.load d a) =>
+      cfg' = if x.regs a < x.frontier then setReg d (x.mem (x.regs a)) else .faulted
+    | some (.store a i) =>
+      cfg' = if x.regs a < x.frontier ∧ x.regs i < 2 ^ w then
+        .running (pc + 1) { x with mem := Function.update x.mem (x.regs a) (x.regs i) }
+      else .faulted
+    | some (.size d) => cfg' = setReg d x.frontier
+    | some (.grow k) =>
+      let delta := x.regs k
+      if x.frontier + delta < 2 ^ w then
+        ∃ mem', DemonicGrow w x.frontier delta x.mem mem' ∧
+          cfg' = .running (pc + 1) ⟨x.regs, mem', x.frontier + delta⟩
+      else cfg' = .faulted
+    | some (.shrink k) =>
+      let delta := x.regs k
+      cfg' = if delta ≤ x.frontier then
+        .running (pc + 1) ⟨x.regs, shrinkMem x.mem (x.frontier - delta) delta, x.frontier - delta⟩
+      else .faulted
+    | some (.jump t) => cfg' = .running t x
+    | some (.branchEq i j t) =>
+      cfg' = .running (if x.regs i = x.regs j then t else pc + 1) x
+    | some (.branchLt i j t) =>
+      cfg' = .running (if x.regs i < x.regs j then t else pc + 1) x
+    | some (.halt i) => cfg' = .halted (x.regs i) x
+    | some (.rand d i) =>
+      ∃ v ≤ x.regs i, cfg' = setReg d v
 
 /-- **Demonic-Grow + Zero-Fill Equivalence (`demonicGrow_zeroSlice_eq`):**
 From any memory `mem` that is zero above the current frontier `s` (`∀ a ≥ s, mem a = 0`), applying
@@ -329,46 +436,107 @@ theorem activeEpochWords_le_four_mul {U V w N n : ℕ}
   ComplexityAbstracts.ResizableSuccinctDictionaryBridge.bridge_activeEpochWords_le_four_mul
     hw hnU hNU hU hnN hN4
 
+/-- Universal register count `9957` (`rSuccinct U V w N = 9957` for all `U, V, w, N`). -/
+def rResizable : ℕ := 9957
+
+/-- Universal single-operation rebuild unit cost `53495843` (`rebuildUnitCost U V w = 53495843`
+for all `U, V, w`). -/
+def rebuildUnitCostConst : ℕ := 53495843
+
+/-- Universal per-operation expected amortized instruction charge `160486391`
+(`resizableChargeVal U V w = 160486391` for all `U, V, w`). -/
+def resizableChargeValConst : ℕ := 160486391
+
 /-- **Stage 2 Headline Theorem — Unbounded-Capacity Resizable Succinct Dictionary
 (`unbounded_seq_expected_amortized`):**
-For every key universe `U`, value range `V`, and word width `w` with `0 < w` and `U < 2 ^ w`, there
-exist uniform `O(1)` instruction-cost constants `rebuildUnitCost, resizableChargeVal : ℕ` (depending
-only on `(U, V, w)`) such that for **any** valid operation sequence `ops : List (DynamicOp U)`
-(`insert`, `delete`, `query`) from `emptyDict U` under `ValidDictSeq V` (**with no capacity cap**),
-at the resulting state `s_final = runDict (emptyDict U) ops` with current live key count
-`n_final = (dictDom s_final).card` and active epoch capacity
+There exist **universal `O(1)` constants** `r = rResizable = 9957`,
+`rebuildUnitCost = rebuildUnitCostConst = 53495843`,
+`resizableChargeVal = resizableChargeValConst = 160486391`, `C_space = 1227`, and `C_word = 213`
+(quantified **outside** `∀ U V w base`) such that for every key universe `U`, value range `V`, word
+width `w`, and base address `base` with `0 < w`, `U < 2 ^ w`, `V < 2 ^ w`, and
+`∀ N ≤ U, base + epochSpace U V w N < 2 ^ w`, every initial caller machine state `x₀ : RState r`
+with `RBounded w x₀` and `x₀.frontier = base`, and **any** valid operation sequence
+`ops : List (DynamicOp U)` (`insert`, `delete`, `query`) from `emptyDict U` under `ValidDictSeq V`
+(**with no capacity cap**), at the resulting state `s_final = runDict (emptyDict U) ops` with
+current live key count `n_final = (dictDom s_final).card` and active epoch capacity
 `N_final = targetCap U (runEpochInit V (emptyDict U) 0 ops)` (and by prefix induction at every
 intermediate step `t`):
 1. **Epoch & value invariants:** `EpochValid n_final N_final` (`n_final ≤ N_final ≤ 4 * n_final`),
    `N_final ≤ U`, and every stored value is `< V`;
 2. **Stepwise `n_t`-tight space in words and bits:**
-   `activeEpochWords U V w N_final n_final ≤ succinctWords 1227 213 U V w n_final`, and in bits
-   `w * activeEpochWords U V w N_final n_final ≤`
-   `optBits U V n_final + 1227 * n_final * logLogFactor n_final + 214 * w`
-   (with explicit word-alignment additive term `214 * w` bits);
-3. **`O(1)` expected amortized potential bound:** the epoch rebuild potential
-   `2 * rebuildUnitCost * ((n_final - n_init_final) + (n_init_final - n_final))` is bounded by
-   `ops.length * resizableChargeVal`. -/
+   `activeEpochWords U V w N_final n_final ≤ succinctWords C_space C_word U V w n_final`, and in
+   bits `w * activeEpochWords U V w N_final n_final ≤`
+   `optBits U V n_final + C_space * n_final * logLogFactor n_final + (C_word + 1) * w`
+   (with explicit word-alignment additive term `(C_word + 1) * w = 214 * w` bits);
+3. **Coupled machine-state `O(1)` expected amortized time & physical frontier contraction:**
+   there exist a final machine-state distribution `ν_final : PMF (RState r)`, cumulative expected
+   operation and rebuild instruction time `T_ops : ℝ≥0∞`, and expected slot potential `E_pot : ℝ≥0∞`
+   satisfying
+   `T_ops + E_pot + 2 * rebuildUnitCost * |n_final - n_init_final| ≤`
+   `ops.length * resizableChargeVal`,
+   where every `x_epoch ∈ ν_final.support` satisfies `RBounded w x_epoch`,
+   `x_epoch.frontier = base + epochSpace U V w N_final`, preserves all caller memory `< base`, and
+   contracts in `2` instructions via `.shrink` to a resting machine state `x_rest : RState r` whose
+   physical frontier `x_rest.frontier` satisfies
+   `x_rest.frontier = base + activeEpochWords U V w N_final n_final`,
+   `x_rest.frontier - base ≤ succinctWords C_space C_word U V w n_final`, and
+   `w * (x_rest.frontier - base) ≤`
+   `optBits U V n_final + C_space * n_final * logLogFactor n_final + (C_word + 1) * w`
+   (and when `n_final = 0`, contracts in `3` instructions via `.shrink` to `x_zero : RState r` with
+   `x_zero.frontier = base`). -/
 theorem unbounded_seq_expected_amortized :
-    ∀ (U V w : ℕ),
-      0 < w →
-      U < 2 ^ w →
-      ∃ (rebuildUnitCost resizableChargeVal : ℕ),
-        ∀ ops : List (DynamicOp U),
-          ValidDictSeq V (emptyDict U) ops →
-          let s_final := runDict (emptyDict U) ops
-          let n_final := (dictDom s_final).card
-          let n_init_final := runEpochInit V (emptyDict U) 0 ops
-          let N_final := targetCap U n_init_final
-          EpochValid n_final N_final ∧
-          N_final ≤ U ∧
-          (∀ u v, s_final u = some v → v < V) ∧
-          activeEpochWords U V w N_final n_final ≤
-            succinctWords 1227 213 U V w n_final ∧
-          w * activeEpochWords U V w N_final n_final ≤
-            optBits U V n_final + 1227 * n_final * logLogFactor n_final + 214 * w ∧
-          2 * rebuildUnitCost * ((n_final - n_init_final) + (n_init_final - n_final)) ≤
-            ops.length * resizableChargeVal :=
+    ∃ (r rebuildUnitCost resizableChargeVal C_space C_word : ℕ),
+      r = rResizable ∧
+      rebuildUnitCost = rebuildUnitCostConst ∧
+      resizableChargeVal = resizableChargeValConst ∧
+      C_space = 1227 ∧
+      C_word = 213 ∧
+      ∀ (U V w base : ℕ),
+        0 < w →
+        U < 2 ^ w →
+        V < 2 ^ w →
+        (∀ N ≤ U, base + epochSpace U V w N < 2 ^ w) →
+        ∀ (x₀ : RState r),
+          RBounded w x₀ →
+          x₀.frontier = base →
+          ∀ ops : List (DynamicOp U),
+            ValidDictSeq V (emptyDict U) ops →
+            let s_final := runDict (emptyDict U) ops
+            let n_final := (dictDom s_final).card
+            let n_init_final := runEpochInit V (emptyDict U) 0 ops
+            let N_final := targetCap U n_init_final
+            EpochValid n_final N_final ∧
+            N_final ≤ U ∧
+            (∀ u v, s_final u = some v → v < V) ∧
+            activeEpochWords U V w N_final n_final ≤
+              succinctWords C_space C_word U V w n_final ∧
+            w * activeEpochWords U V w N_final n_final ≤
+              optBits U V n_final + C_space * n_final * logLogFactor n_final +
+                (C_word + 1) * w ∧
+            2 * rebuildUnitCost * ((n_final - n_init_final) + (n_init_final - n_final)) ≤
+              ops.length * resizableChargeVal ∧
+            ∃ (ν_final : PMF (RState r)) (T_ops E_pot : ℝ≥0∞),
+              T_ops + E_pot +
+                ((2 * rebuildUnitCost *
+                  ((n_final - n_init_final) + (n_init_final - n_final)) : ℕ) : ℝ≥0∞) ≤
+                ((ops.length * resizableChargeVal : ℕ) : ℝ≥0∞) ∧
+              ∀ x_epoch ∈ ν_final.support,
+                RBounded w x_epoch ∧
+                x_epoch.frontier = base + epochSpace U V w N_final ∧
+                (∀ a < base, x_epoch.mem a = x₀.mem a) ∧
+                ∃ x_rest : RState r,
+                  RBounded w x_rest ∧
+                  x_rest.frontier = base + activeEpochWords U V w N_final n_final ∧
+                  x_rest.frontier - base ≤ succinctWords C_space C_word U V w n_final ∧
+                  w * (x_rest.frontier - base) ≤
+                    optBits U V n_final + C_space * n_final * logLogFactor n_final +
+                      (C_word + 1) * w ∧
+                  (∀ a < base, x_rest.mem a = x₀.mem a) ∧
+                  (n_final = 0 →
+                    ∃ x_zero : RState r,
+                      RBounded w x_zero ∧
+                      x_zero.frontier = base ∧
+                      ∀ a < base, x_zero.mem a = x₀.mem a) :=
   ComplexityAbstracts.ResizableSuccinctDictionaryBridge.bridge_unbounded_seq_expected_amortized
     ⟨DynamicOp, @DynamicOp.insert, @DynamicOp.delete, @DynamicOp.query, @DynamicOp.rec,
       @stepDict, @runDict, @ValidDictOp, @ValidDictSeq, @runEpochInit, @activeEpochWords,
@@ -383,7 +551,8 @@ theorem unbounded_seq_expected_amortized :
       fun _ _ => Iff.rfl⟩
 
 /-- **Stage 2 Client Subroutine & Memory-Reuse Theorem (`dictionary_client_memory_reuse`):**
-For every `U, V, w` with `0 < w`, `U < 2 ^ w`, and `V < 2 ^ w`, on the `r`-register word-granular
+With the universal register count `r = rResizable = 9957` quantified **outside** `(U, V, w)`, for
+every `U, V, w` with `0 < w`, `U < 2 ^ w`, and `V < 2 ^ w`, on the `r`-register word-granular
 resizable Word-RAM (`RState r`):
 1. **In-place tail contraction and reuse (`shrink_and_reuse_in_place`):** When deletions reduce the
    dictionary's active item footprint at `[base, base + sp₂ + Δ)` by `Δ` words to `base + sp₂`,
@@ -401,11 +570,12 @@ resizable Word-RAM (`RState r`):
    `[base + epochSpace U V w U, ...)`**), zeroed client memory `[base, base + k_client)`, and
    intact caller prefix `[0, base)`. -/
 theorem dictionary_client_memory_reuse :
-    ∀ (U V w : ℕ),
-      0 < w →
-      U < 2 ^ w →
-      V < 2 ^ w →
-      ∃ r : ℕ,
+    ∃ r : ℕ,
+      r = rResizable ∧
+      ∀ (U V w : ℕ),
+        0 < w →
+        U < 2 ^ w →
+        V < 2 ^ w →
         (∀ (base sp₂ Δ k_client : ℕ) (x : RState r),
           RBounded w x →
           x.frontier = base + sp₂ + Δ →
@@ -450,7 +620,7 @@ theorem dictionary_client_memory_reuse :
 end ComplexityAbstracts.ResizableSuccinctDictionaryAbstract
 
 /--
-info: abstract audit passed for `ComplexityAbstracts.ResizableSuccinctDictionaryAbstract`: 91 root
+info: abstract audit passed for `ComplexityAbstracts.ResizableSuccinctDictionaryAbstract`: 266 root
 declarations
 -/
 #guard_msgs (whitespace := lax) in
