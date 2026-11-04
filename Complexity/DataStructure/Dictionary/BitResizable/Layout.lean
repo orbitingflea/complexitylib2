@@ -890,10 +890,11 @@ theorem dExec_preserve_regsAndMemFit {B : Basis} {r w T : ℕ} {c : BitRAM.Code 
     · simp [BitRAM.Data.set, hi, hx.1 i]
   | seq _ _ hsum ih₁ ih₂ =>
     exact .seq (ih₁ hx) (fun y ⟨hpy, hy_fit⟩ => ih₂ y hpy hy_fit) hsum
-  | branch_pos hc _ hsum ih =>
-    exact .branch_pos hc (ih hx) hsum
-  | branch_neg hc _ hsum ih =>
-    exact .branch_neg hc (ih hx) hsum
+  | branch_pos hc _ hsum ih => exact .branch_pos hc (ih hx) hsum
+  | branch_neg hc _ hsum ih => exact .branch_neg hc (ih hx) hsum
+  | loop_exit hc hp h2 => exact .loop_exit hc ⟨hp, hx⟩ h2
+  | loop_iter hc _ _ hsum ih₁ ih₂ =>
+    exact .loop_iter hc (ih₁ hx) (fun y ⟨hpy, hy_fit⟩ => ih₂ y hpy hy_fit) hsum
 
 /-- Strengthened `writeBitsCode_exec` recording that the post-state `y` is well-formed
 (`y.WellFormed w`). -/
