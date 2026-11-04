@@ -2980,11 +2980,13 @@ public import Complexity.Crypto.Computational.Signature
 public import Complexity.Crypto.Computational.Stretch
 public import Complexity.Crypto.Computational.Stretch.Quantitative
 public import Complexity.Crypto.Computational.TCRSignature
+public import Complexity.Crypto.Computational.TCRSignature.ManyTime
 public import Complexity.Crypto.Computational.TargetCollisionResistant
 public import Complexity.Crypto.Computational.TreeSignature
 public import Complexity.Crypto.Computational.TreeSignature.CoinHybrid
 public import Complexity.Crypto.Computational.TreeSignature.Security
 public import Complexity.Crypto.Computational.UniformChoice
+public import Complexity.Crypto.Computational.WordSignature
 public import Complexity.Crypto.Computational.ZeroKnowledge
 public import Complexity.Crypto.Computational.ZeroKnowledge.Amplification
 public import Complexity.Crypto.Computational.ZeroKnowledge.AuxClock
@@ -3764,6 +3766,7 @@ public import Complexity.Foundations.Probability.HierarchyTasks
 public import Complexity.Foundations.Probability.NormalizedAtomRows.ActualMoment
 public import Complexity.Foundations.Probability.NormalizedAtomRows.BoundedLoss
 public import Complexity.Foundations.Probability.NormalizedAtomRows.ClippedTail
+public import Complexity.Foundations.Probability.NormalizedAtomRows.FirstSignal
 public import Complexity.Foundations.Probability.NormalizedAtomRows.Integrated
 public import Complexity.Foundations.Probability.NormalizedAtomRows.MeanEvent
 public import Complexity.Foundations.Probability.NormalizedAtomRows.MeanTail
@@ -3793,6 +3796,7 @@ public import Complexity.Foundations.Probability.RootMetric.ConditionalWalk
 public import Complexity.Foundations.Probability.RootMetric.Conditioning
 public import Complexity.Foundations.Probability.RootMetric.Minkowski
 public import Complexity.Foundations.Probability.RootMetric.Slices
+public import Complexity.Foundations.Probability.RootMetric.Stationarity
 public import Complexity.Foundations.Probability.RoutedHierarchyBins
 public import Complexity.Foundations.Probability.SamplerPrefix
 public import Complexity.Foundations.Probability.ScheduledFineProductMean
