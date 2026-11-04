@@ -3172,7 +3172,6 @@ public import Complexity.DataStructure.Dictionary.WordRAM.LinearProbing.FiveWise
 public import Complexity.DataStructure.Dictionary.WordRAM.ResizableSuccinct
 public import Complexity.DataStructure.Dictionary.WordRAM.ResizableSuccinctEpoch
 public import Complexity.DataStructure.Dictionary.WordRAM.Succinct
-public import Complexity.DataStructure.Dictionary.WordRAM.SuccinctAccessors
 public import Complexity.DataStructure.Dictionary.WordRAM.SuccinctBucketOps
 public import Complexity.DataStructure.Dictionary.WordRAM.SuccinctChainOps
 public import Complexity.DataStructure.Dictionary.WordRAM.SuccinctDeleteOps
@@ -3188,7 +3187,6 @@ public import Complexity.DataStructure.Dictionary.WordRAM.SuccinctSlabMove
 public import Complexity.DataStructure.Dictionary.WordRAM.SuccinctSlabOps
 public import Complexity.DataStructure.Dictionary.WordRAM.SuccinctSlabPool
 public import Complexity.DataStructure.Dictionary.WordRAM.SuccinctSlotInv
-public import Complexity.DataStructure.Dictionary.WordRAM.SuccinctSlotStore
 public import Complexity.DataStructure.Dictionary.WordRAM.SuccinctTailOps
 public import Complexity.DataStructure.Dictionary.WordRAM.SuccinctValidHistory
 public import Complexity.DataStructure.Dictionary.WordRAM.UniformProbing

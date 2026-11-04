@@ -19,7 +19,7 @@ dictionary with the two-stage universe-reduced 3-wise independent hash family
 (`Cslib.DataStructure.HashFamily.WordRAM.ReducedKWise`) and proves the full dictionary-level state
 transition, space, initialization, and expected probe-excess bounds:
 * `qBits`, `hashB`, `hashSpace`, `space`, `initSteps`, `space_le_succinctWords`, `initSteps_le`:
-  hash parameter instantiation and unconditional space and initialization step bounds;
+  hash parameter instantiation and space and initialization step bounds;
 * `tsum_uniform_probeExcess_reducedPolyHash_le_five`: expected combined probe excess `≤ 5` under a
   uniformly sampled `ReducedPolySeed`;
 * `bucketMapOfState` and `DictStateInv`: coupling between `Dynamic.State U` and `BucketStateInv` via
@@ -68,8 +68,9 @@ dictionary in `w`-bit words. -/
 def space (U V w n_max : ℕ) : ℕ :=
   totalSpace U V w n_max (hashSpace U w n_max)
 
-/-- Exact initialization instruction count: `2` instructions to load `base` and compute `frontier`,
-plus `ReducedKWise.initTableSteps` and `ReducedKWise.resampleSteps`. -/
+/-- Initialization instruction budget (`2` plus `ReducedKWise.initTableSteps` and
+`ReducedKWise.resampleSteps`; with `3` allocation instructions in `allocSpan`, the total
+initialization time is `initTime = initSteps U n_max + 1`). -/
 @[expose]
 def initSteps (U n_max : ℕ) : ℕ :=
   2 + ReducedKWise.initTableSteps (qBits U n_max) (hashB n_max) (totalMicroBits n_max) +
@@ -256,15 +257,15 @@ theorem hashSpace_le {U w n_max : ℕ} (hw : 0 < w) (hnU : n_max ≤ U) (hU : U 
   have ht := tableWords_hash_le hw hnU hU
   omega
 
-/-- **Unconditional succinct word-space bound (`space_le_succinctWords`):**
+/-- **Succinct word-space bound (`space_le_succinctWords`):**
 for every `0 < w`, `n_max ≤ U`, and `U ≤ 2 ^ w` (including `Fits w U`), the total space
 `space U V w n_max` is at most `Dynamic.succinctWords 81 213 U V w n_max`. -/
 theorem space_le_succinctWords {U V w n_max : ℕ}
     (hw : 0 < w) (hnU : n_max ≤ U) (hU : U ≤ 2 ^ w) :
     space U V w n_max ≤ Dynamic.succinctWords 81 213 U V w n_max := by
   have hh := hashSpace_le hw hnU hU
-  have htab := tableArrays_words_le_succinctWords (U := U) (V := V) (w := w) (n_max := n_max)
-    (C_hdr := 0) hnU
+  have htab := totalSpace_le_succinctWords (U := U) (V := V) (w := w) (n_max := n_max)
+    (h_space := hashSpace U w n_max) hnU
   have h12345 := div_add_packedWords_le
     (Dynamic.optBits U V n_max + 79 * n_max * Dynamic.logLogFactor n_max) 35
     (2 * n_max) 1 w
@@ -284,7 +285,7 @@ theorem space_le_succinctWords {U V w n_max : ℕ}
         (2 * n_max) * 1 + w - 1) / w ≤
       (Dynamic.optBits U V n_max + 81 * n_max * Dynamic.logLogFactor n_max + w - 1) / w :=
     Nat.div_le_div_right hnum
-  unfold space totalSpace offGM offLM offVal offQuot lmSubWords
+  unfold space
   unfold Dynamic.succinctWords at htab ⊢
   omega
 
@@ -391,23 +392,6 @@ theorem tsum_uniform_probeExcess_reducedPolyHash_le_five {U n_max : ℕ} (hnU : 
     (qOf := qStage1 U n_max) (H := polyStage2 U n_max) (C_bad := 2)
     (isKWiseIndependentHash_polyStage2 U n_max) S u hS G hG hbad
   simpa using hmain
-
-/-- Affine expectation corollary of `tsum_uniform_probeExcess_reducedPolyHash_le_five`:
-if `T θ ≤ A + B * probeExcess ...`, then the uniform expectation of `T θ` is at most `A + 5 * B`. -/
-theorem tsum_affine_probeExcess_reducedPolyHash_le {U n_max : ℕ} (hnU : n_max ≤ U)
-    (S : Finset (Fin U)) (u : Fin U) (hS : #(S.erase u) ≤ n_max)
-    (A B : ℕ) (T : QuotHashSeed U n_max → ℕ)
-    (hT : ∀ θ : QuotHashSeed U n_max,
-      T θ ≤ A + B * probeExcess n_max (qStage1 U n_max θ.1) (polyStage2 U n_max) θ.2 S u) :
-    (∑' θ : QuotHashSeed U n_max,
-      (PMF.uniformOfFintype (QuotHashSeed U n_max)) θ * (T θ : ℝ≥0∞)) ≤
-        ((A + 5 * B : ℕ) : ℝ≥0∞) :=
-  tsum_affine_probeExcess_of_bound
-    (qOf := fun θ : QuotHashSeed U n_max => qStage1 U n_max θ.1)
-    (H := fun θ : QuotHashSeed U n_max => polyStage2 U n_max θ.2)
-    (tsum_uniform_probeExcess_reducedPolyHash_le_five hnU S u hS)
-    (PMF.uniformOfFintype (QuotHashSeed U n_max))
-    (fun _ => le_rfl) A B T hT
 
 /-! ## Section 3: `bucketMapOfState`, `DictStateInv`, and probe-excess cardinality bounds -/
 
@@ -672,28 +656,17 @@ theorem chain_and_overflow_le_probeExcess {U V w₀ n_max base : ℕ}
 
 /-! ## Section 4: Feistel-dispatched `Memory.Prog` operations realized via `realize` -/
 
-/-- Helper turning a conditionally proved `Realizes` certificate `P → Realizes B p ...` into an
-unconditional `Realizes B p ... (fun w d s => P ∧ safe w d s) work` whose code, scratch size, and
-exchange factor do not depend on a proof of `P`. -/
-theorem realizes_of_imp {n C : ℕ} {B : Basis} {k l : ℕ} {δ α : Type}
-    {p : δ → Memory.Prog α} {input : δ ↪ (Fin k → ℕ)} {output : α ↪ (Fin l → ℕ)}
-    {P : Prop} {safe : ℕ → δ → Memory.State → Prop} {work : δ → Memory.State → ℕ}
-    (h : P → RealizesAt n C B p input output safe work) :
-    RealizesAt n C B p input output (fun w d s => P ∧ safe w d s) work := by
-  by_cases hP : P
-  · exact (h hP).consequence (fun _ _ _ _ _ hs => hs.2) (fun _ _ => le_rfl)
-  · refine ⟨0, Nat.zero_le _, 0, Nat.zero_le _,
-      fun frontier _ _ => .op (.copy frontier frontier), ?_⟩
-    intro r frontier src tmp _ _ _ _
-    refine ⟨by rintro ⟨⟩, ?_⟩
-    intro w d x _ _ hs _
-    exact False.elim (hP hs.1)
-
 /-- Well-formedness condition `0 < w₀ ∧ n_max ≤ U ∧ U < 2 ^ w₀ ∧ V ≤ 2 ^ w₀` on the dictionary
 parameters `(U, V, w₀, n_max)`. -/
 @[expose]
 def DictParamsWf (U V w₀ n_max : ℕ) : Prop :=
   0 < w₀ ∧ n_max ≤ U ∧ U < 2 ^ w₀ ∧ V ≤ 2 ^ w₀
+
+/-- Parameter-free pure `Memory.Prog` extracting the key quotient `keyQuotient (bucketBits n_max) u`
+via right shift `d.2 >>> dpBucketBits d.1`. -/
+@[expose]
+def extractQuotGenProg (d : DictParams × ℕ) : Memory.Prog ℕ :=
+  pure (d.2 >>> dpBucketBits d.1)
 
 /-- Pure `Memory.Prog` extracting the key quotient `keyQuotient (bucketBits n_max) u` via right
 shift `u >>> bucketBits n_max`. -/
@@ -701,23 +674,32 @@ shift `u >>> bucketBits n_max`. -/
 def extractQuotProg (n_max : ℕ) (u : ℕ) : Memory.Prog ℕ :=
   pure (u >>> bucketBits n_max)
 
+@[simp]
+theorem extractQuotGenProg_mk (U V w n_max h_space u : ℕ) :
+    extractQuotGenProg (mkDictParams U V w n_max h_space, u) = extractQuotProg n_max u := rfl
+
 /-- Precondition for `extractQuotProg`. -/
 @[expose]
 def ExtractQuotPre (n_max w u : ℕ) (_s : Memory.State) : Prop :=
   Fits w u ∧ Fits w (bucketBits n_max)
 
-theorem realizes_extractQuot (n_max : ℕ) :
-    RealizesAt 10 50 .exact (extractQuotProg n_max)
+/-- Parameter-free precondition for `extractQuotGenProg`. -/
+@[expose]
+def ExtractQuotGenPre (w : ℕ) (d : DictParams × ℕ) (s : Memory.State) : Prop :=
+  ExtractQuotPre (dpNMax d.1) w d.2 s
+
+@[simp]
+theorem extractQuotGenPre_mk (U V w₀ n_max h_space w u : ℕ) (s : Memory.State) :
+    ExtractQuotGenPre w (mkDictParams U V w₀ n_max h_space, u) s ↔
+      ExtractQuotPre n_max w u s := Iff.rfl
+
+theorem realizes_extractQuotGen :
+    Realizes .exact extractQuotGenProg
+      (WordEncoding.encode (α := DictParams × ℕ))
       (WordEncoding.encode (α := ℕ))
-      (WordEncoding.encode (α := ℕ))
-      (ExtractQuotPre n_max)
+      ExtractQuotGenPre
       (fun _ _ => 0) := by
   realize
-  · exact h.2
-
-theorem validProg_extractQuot {n_max w u : ℕ} {s : Memory.State} :
-    ValidProg w (s.frontier) s (extractQuotProg n_max u) :=
-  validProg_pure _
 
 /-- Helper lemma: `(h_q &&& (2 ^ b - 1)) ^^^ (u &&& (2 ^ b - 1)) = (h_q % 2 ^ b) ^^^ keyLow b u`. -/
 theorem and_mask_xor_eq_feistelBucket (b u h_q : ℕ) :
@@ -726,9 +708,9 @@ theorem and_mask_xor_eq_feistelBucket (b u h_q : ℕ) :
   rfl
 
 /-- Helper lemma: `Fits w (bucketBits n_max)` and `Fits w (2 ^ bucketBits n_max - 1)` from
-`DictEnv`. -/
+`DictEnvGen`. -/
 theorem fits_bucketBits_and_mask {U V w₀ n_max h_space w base : ℕ}
-    (henv : DictEnv U V w₀ n_max h_space w base) (hw : 0 < w₀) (hnU : n_max ≤ U)
+    (henv : DictEnvGen w (mkDictParams U V w₀ n_max h_space) base) (hw : 0 < w₀) (hnU : n_max ≤ U)
     (hU : U < 2 ^ w₀) :
     Fits w (bucketBits n_max) ∧ Fits w (2 ^ bucketBits n_max - 1) := by
   have h2b_le : 2 ^ bucketBits n_max ≤ max n_max 1 :=
@@ -738,9 +720,22 @@ theorem fits_bucketBits_and_mask {U V w₀ n_max h_space w base : ℕ}
     fits_of_le_max_n_one henv hw hnU hU h2b_le
   exact ⟨hfit_2b.of_le (le_of_lt Nat.lt_two_pow_self), hfit_2b.of_le (Nat.sub_le _ _)⟩
 
+/-- Parameter-free Feistel-dispatched `query` in `Memory.Prog` (`d = (dp, ((base, u), h_q))`). -/
+@[expose]
+def queryWithHashGenProg (d : DictParams × ((ℕ × ℕ) × ℕ)) : Memory.Prog (Option ℕ) := do
+  let b_bits ← pure (dpBucketBits d.1)
+  let b_mask ← pure (dpBucketMask d.1)
+  let u_low ← pure (d.2.1.2 &&& b_mask)
+  let h_low ← pure (d.2.2 &&& b_mask)
+  let b ← pure (h_low ^^^ u_low)
+  let q ← pure (d.2.1.2 >>> b_bits)
+  let m ← pure (d.2.2 >>> b_bits)
+  queryBodyGenProg (d.1, (((d.2.1.1, b), q), m))
+
 /-- Feistel-dispatched `query` in `Memory.Prog` (`d = ((base, u), h_q)`): computes
 `b = (h_q &&& (2 ^ b_bits - 1)) ^^^ (u &&& (2 ^ b_bits - 1))`, `q = u >>> b_bits`, and
 `m = h_q >>> b_bits`, then runs `queryBodyProg`. -/
+@[expose]
 def queryWithHashProg (U V w₀ n_max : ℕ) (d : (ℕ × ℕ) × ℕ) : Memory.Prog (Option ℕ) := do
   let b_bits ← pure (bucketBits n_max)
   let b_mask ← pure (2 ^ bucketBits n_max - 1)
@@ -751,7 +746,15 @@ def queryWithHashProg (U V w₀ n_max : ℕ) (d : (ℕ × ℕ) × ℕ) : Memory.
   let m ← pure (d.2 >>> b_bits)
   queryBodyProg U V w₀ n_max (hashSpace U w₀ n_max) (((d.1.1, b), q), m)
 
+@[simp]
+theorem queryWithHashGenProg_mk (U V w₀ n_max : ℕ) (d : (ℕ × ℕ) × ℕ) :
+    queryWithHashGenProg (mkDictParams U V w₀ n_max (hashSpace U w₀ n_max), d) =
+      queryWithHashProg U V w₀ n_max d := by
+  simp only [queryWithHashGenProg, queryWithHashProg, p_bucketBits_mk, p_bucketMask_mk,
+    queryBodyGenProg_mk]
+
 /-- Precondition for `queryWithHashProg` in `Realizes`. -/
+@[expose]
 def QueryWithHashPre (U V w₀ n_max w : ℕ) (d : (ℕ × ℕ) × ℕ) (s : Memory.State) : Prop :=
   let b := (d.2 &&& (2 ^ bucketBits n_max - 1)) ^^^ (d.1.2 &&& (2 ^ bucketBits n_max - 1))
   let q := d.1.2 >>> bucketBits n_max
@@ -761,36 +764,41 @@ def QueryWithHashPre (U V w₀ n_max w : ℕ) (d : (ℕ × ℕ) × ℕ) (s : Mem
   d.2 < 2 ^ totalMicroBits n_max ∧
   SearchMicroChainPre U V w₀ n_max (hashSpace U w₀ n_max) w (((d.1.1, b), q), m) s
 
-theorem realizes_queryWithHash_aux {U V w₀ n_max : ℕ} (hwf : DictParamsWf U V w₀ n_max) :
-    RealizesAt 3000 70000 .exact (queryWithHashProg U V w₀ n_max)
-      (WordEncoding.encode (α := (ℕ × ℕ) × ℕ))
-      (WordEncoding.encode (α := Option ℕ))
-      (fun w d s =>
-        let b := (d.2 &&& (2 ^ bucketBits n_max - 1)) ^^^ (d.1.2 &&& (2 ^ bucketBits n_max - 1))
-        let q := d.1.2 >>> bucketBits n_max
-        let m := d.2 >>> bucketBits n_max
-        d.1.2 < U ∧ d.2 < 2 ^ totalMicroBits n_max ∧
-        SearchMicroChainPre U V w₀ n_max (hashSpace U w₀ n_max) w (((d.1.1, b), q), m) s)
-      (fun _ _ => 0) := by
-  rcases hwf with ⟨hw, hnU, hU, hV⟩
-  have hqb := realizes_queryBody (U := U) (V := V) (w₀ := w₀) (n_max := n_max)
-    (h_space := hashSpace U w₀ n_max) hw hnU hU hV
-  realize
-  · exact (fits_bucketBits_and_mask h.2.2.1 hw hnU hU).1
-  · exact (fits_bucketBits_and_mask h.2.2.1 hw hnU hU).2
-  · rw [and_mask_xor_eq_feistelBucket]
-    exact (fits_bucketBits_and_mask h.2.2.1 hw hnU hU).2.of_le
-      (Nat.le_sub_one_of_lt (feistelBucket_lt (bucketBits n_max) (fun _ => d.2) d.1.2))
-  · exact h.2.2
+/-- Parameter-free precondition for `queryWithHashGenProg` in `Realizes`. -/
+@[expose]
+def QueryWithHashGenPre (w : ℕ) (d : DictParams × ((ℕ × ℕ) × ℕ)) (s : Memory.State) : Prop :=
+  let b := (d.2.2 &&& dpBucketMask d.1) ^^^ (d.2.1.2 &&& dpBucketMask d.1)
+  let q := d.2.1.2 >>> dpBucketBits d.1
+  let m := d.2.2 >>> dpBucketBits d.1
+  DictParamsWf (dpU d.1) (dpV d.1) (dpW d.1) (dpNMax d.1) ∧
+  d.2.1.2 < dpU d.1 ∧
+  d.2.2 < 2 ^ totalMicroBits (dpNMax d.1) ∧
+  SearchMicroChainGenPre w (d.1, (((d.2.1.1, b), q), m)) s
 
-/-- Unconditional `Realizes .exact` certificate for `queryWithHashProg`. -/
-theorem realizes_queryWithHash (U V w₀ n_max : ℕ) :
-    RealizesAt 3000 70000 .exact (queryWithHashProg U V w₀ n_max)
-      (WordEncoding.encode (α := (ℕ × ℕ) × ℕ))
+@[simp]
+theorem queryWithHashGenPre_mk (U V w₀ n_max w : ℕ) (d : (ℕ × ℕ) × ℕ) (s : Memory.State) :
+    QueryWithHashGenPre w (mkDictParams U V w₀ n_max (hashSpace U w₀ n_max), d) s ↔
+      QueryWithHashPre U V w₀ n_max w d s := Iff.rfl
+
+/-- Parameter-free `Realizes .exact` certificate for `queryWithHashGenProg`. -/
+theorem realizes_queryWithHashGen :
+    Realizes .exact queryWithHashGenProg
+      (WordEncoding.encode (α := DictParams × ((ℕ × ℕ) × ℕ)))
       (WordEncoding.encode (α := Option ℕ))
-      (QueryWithHashPre U V w₀ n_max)
-      (fun _ _ => 0) :=
-  realizes_of_imp realizes_queryWithHash_aux
+      QueryWithHashGenPre
+      (fun _ _ => 0) := by
+  have hqb := realizes_queryBodyGen
+  realize
+  all_goals (
+    rcases d with ⟨dp, d⟩
+    obtain ⟨⟨U, V, w₀, n_max, h_space, hw, hnU, hU, hV, rfl⟩, henv⟩ := h.2.2.2.1
+    simpDictParamsWith [queryWithHashGenPre_mk, QueryWithHashPre,
+      searchMicroChainGenPre_mk, SearchMicroChainPre, queryBodyGenProg_mk]
+  )
+  · rw [and_mask_xor_eq_feistelBucket]
+    exact (fits_bucketBits_and_mask h.2.2.2.1 hw hnU hU).2.of_le
+      (Nat.le_sub_one_of_lt (feistelBucket_lt (bucketBits n_max) (fun _ => d.2) d.1.2))
+  · exact h.2.2.2
 
 theorem validProg_queryWithHash {U V w n_max : ℕ}
     {d : (ℕ × ℕ) × ℕ} {s : Memory.State}
@@ -799,7 +807,21 @@ theorem validProg_queryWithHash {U V w n_max : ℕ}
       (queryWithHashProg U V w n_max d) := by
   exact validProg_queryBody hpre.1.1 hpre.2.2.2
 
+/-- Parameter-free Feistel-dispatched `insert` in `Memory.Prog`
+(`d = (dp, (((base, u), v_new), h_q))`). -/
+@[expose]
+def insertWithHashGenProg (d : DictParams × (((ℕ × ℕ) × ℕ) × ℕ)) : Memory.Prog Unit := do
+  let b_bits ← pure (dpBucketBits d.1)
+  let b_mask ← pure (dpBucketMask d.1)
+  let u_low ← pure (d.2.1.1.2 &&& b_mask)
+  let h_low ← pure (d.2.2 &&& b_mask)
+  let b ← pure (h_low ^^^ u_low)
+  let q ← pure (d.2.1.1.2 >>> b_bits)
+  let m ← pure (d.2.2 >>> b_bits)
+  insertBodyGenProg (d.1, ((((d.2.1.1.1, b), q), d.2.1.2), m))
+
 /-- Feistel-dispatched `insert` in `Memory.Prog` (`d = (((base, u), v_new), h_q)`). -/
+@[expose]
 def insertWithHashProg (U V w₀ n_max : ℕ) (d : ((ℕ × ℕ) × ℕ) × ℕ) : Memory.Prog Unit := do
   let b_bits ← pure (bucketBits n_max)
   let b_mask ← pure (2 ^ bucketBits n_max - 1)
@@ -810,7 +832,15 @@ def insertWithHashProg (U V w₀ n_max : ℕ) (d : ((ℕ × ℕ) × ℕ) × ℕ)
   let m ← pure (d.2 >>> b_bits)
   insertBodyProg U V w₀ n_max (hashSpace U w₀ n_max) ((((d.1.1.1, b), q), d.1.2), m)
 
+@[simp]
+theorem insertWithHashGenProg_mk (U V w₀ n_max : ℕ) (d : ((ℕ × ℕ) × ℕ) × ℕ) :
+    insertWithHashGenProg (mkDictParams U V w₀ n_max (hashSpace U w₀ n_max), d) =
+      insertWithHashProg U V w₀ n_max d := by
+  simp only [insertWithHashGenProg, insertWithHashProg, p_bucketBits_mk, p_bucketMask_mk,
+    insertBodyGenProg_mk]
+
 /-- Precondition for `insertWithHashProg` in `Realizes`. -/
+@[expose]
 def InsertWithHashPre (U V w₀ n_max w : ℕ) (d : ((ℕ × ℕ) × ℕ) × ℕ) (s : Memory.State) : Prop :=
   let b := (d.2 &&& (2 ^ bucketBits n_max - 1)) ^^^ (d.1.1.2 &&& (2 ^ bucketBits n_max - 1))
   let q := d.1.1.2 >>> bucketBits n_max
@@ -820,36 +850,41 @@ def InsertWithHashPre (U V w₀ n_max w : ℕ) (d : ((ℕ × ℕ) × ℕ) × ℕ
   d.2 < 2 ^ totalMicroBits n_max ∧
   InsertBodyPre U V w₀ n_max (hashSpace U w₀ n_max) w ((((d.1.1.1, b), q), d.1.2), m) s
 
-theorem realizes_insertWithHash_aux {U V w₀ n_max : ℕ} (hwf : DictParamsWf U V w₀ n_max) :
-    RealizesAt 8500 160000 .exact (insertWithHashProg U V w₀ n_max)
-      (WordEncoding.encode (α := ((ℕ × ℕ) × ℕ) × ℕ))
-      (WordEncoding.encode (α := Unit))
-      (fun w d s =>
-        let b := (d.2 &&& (2 ^ bucketBits n_max - 1)) ^^^ (d.1.1.2 &&& (2 ^ bucketBits n_max - 1))
-        let q := d.1.1.2 >>> bucketBits n_max
-        let m := d.2 >>> bucketBits n_max
-        d.1.1.2 < U ∧ d.2 < 2 ^ totalMicroBits n_max ∧
-        InsertBodyPre U V w₀ n_max (hashSpace U w₀ n_max) w ((((d.1.1.1, b), q), d.1.2), m) s)
-      (fun _ _ => 0) := by
-  rcases hwf with ⟨hw, hnU, hU, hV⟩
-  have hib := realizes_insertBody (U := U) (V := V) (w₀ := w₀) (n_max := n_max)
-    (h_space := hashSpace U w₀ n_max) hw hnU hU hV
-  realize
-  · exact (fits_bucketBits_and_mask h.2.2.1.1 hw hnU hU).1
-  · exact (fits_bucketBits_and_mask h.2.2.1.1 hw hnU hU).2
-  · rw [and_mask_xor_eq_feistelBucket]
-    exact (fits_bucketBits_and_mask h.2.2.1.1 hw hnU hU).2.of_le
-      (Nat.le_sub_one_of_lt (feistelBucket_lt (bucketBits n_max) (fun _ => d.2) d.1.1.2))
-  · exact h.2.2
+/-- Parameter-free precondition for `insertWithHashGenProg` in `Realizes`. -/
+@[expose]
+def InsertWithHashGenPre (w : ℕ) (d : DictParams × (((ℕ × ℕ) × ℕ) × ℕ)) (s : Memory.State) : Prop :=
+  let b := (d.2.2 &&& dpBucketMask d.1) ^^^ (d.2.1.1.2 &&& dpBucketMask d.1)
+  let q := d.2.1.1.2 >>> dpBucketBits d.1
+  let m := d.2.2 >>> dpBucketBits d.1
+  DictParamsWf (dpU d.1) (dpV d.1) (dpW d.1) (dpNMax d.1) ∧
+  d.2.1.1.2 < dpU d.1 ∧
+  d.2.2 < 2 ^ totalMicroBits (dpNMax d.1) ∧
+  InsertBodyGenPre w (d.1, ((((d.2.1.1.1, b), q), d.2.1.2), m)) s
 
-/-- Unconditional `Realizes .exact` certificate for `insertWithHashProg`. -/
-theorem realizes_insertWithHash (U V w₀ n_max : ℕ) :
-    RealizesAt 8500 160000 .exact (insertWithHashProg U V w₀ n_max)
-      (WordEncoding.encode (α := ((ℕ × ℕ) × ℕ) × ℕ))
+@[simp]
+theorem insertWithHashGenPre_mk (U V w₀ n_max w : ℕ) (d : ((ℕ × ℕ) × ℕ) × ℕ) (s : Memory.State) :
+    InsertWithHashGenPre w (mkDictParams U V w₀ n_max (hashSpace U w₀ n_max), d) s ↔
+      InsertWithHashPre U V w₀ n_max w d s := Iff.rfl
+
+/-- Parameter-free `Realizes .exact` certificate for `insertWithHashGenProg`. -/
+theorem realizes_insertWithHashGen :
+    Realizes .exact insertWithHashGenProg
+      (WordEncoding.encode (α := DictParams × (((ℕ × ℕ) × ℕ) × ℕ)))
       (WordEncoding.encode (α := Unit))
-      (InsertWithHashPre U V w₀ n_max)
-      (fun _ _ => 0) :=
-  realizes_of_imp realizes_insertWithHash_aux
+      InsertWithHashGenPre
+      (fun _ _ => 0) := by
+  have hib := realizes_insertBodyGen
+  realize
+  all_goals (
+    rcases d with ⟨dp, d⟩
+    obtain ⟨⟨U, V, w₀, n_max, h_space, hw, hnU, hU, hV, rfl⟩, henv⟩ := h.2.2.2.1.1
+    simpDictParamsWith [insertWithHashGenPre_mk, InsertWithHashPre,
+      insertBodyGenPre_mk, InsertBodyPre, SearchMicroChainPre, insertBodyGenProg_mk]
+  )
+  · rw [and_mask_xor_eq_feistelBucket]
+    exact (fits_bucketBits_and_mask h.2.2.2.1.1 hw hnU hU).2.of_le
+      (Nat.le_sub_one_of_lt (feistelBucket_lt (bucketBits n_max) (fun _ => d.2) d.1.1.2))
+  · exact h.2.2.2
 
 theorem validProg_insertWithHash {U V w n_max : ℕ}
     {d : ((ℕ × ℕ) × ℕ) × ℕ} {s : Memory.State}
@@ -858,8 +893,23 @@ theorem validProg_insertWithHash {U V w n_max : ℕ}
       (insertWithHashProg U V w n_max d) := by
   exact validProg_insertBody hpre.1.1 hpre.1.2.1 hpre.1.2.2.1 hpre.1.2.2.2 hpre.2.2.2
 
+/-- Parameter-free Phase 1 of Feistel-dispatched `delete` in `Memory.Prog`
+(`d = (dp, ((base, u), h_q))`). -/
+@[expose]
+def deletePrepWithHashGenProg (d : DictParams × ((ℕ × ℕ) × ℕ)) :
+    Memory.Prog (((ℕ × ℕ) × ℕ) × ℕ) := do
+  let b_bits ← pure (dpBucketBits d.1)
+  let b_mask ← pure (dpBucketMask d.1)
+  let u_low ← pure (d.2.1.2 &&& b_mask)
+  let h_low ← pure (d.2.2 &&& b_mask)
+  let b ← pure (h_low ^^^ u_low)
+  let q ← pure (d.2.1.2 >>> b_bits)
+  let m ← pure (d.2.2 >>> b_bits)
+  deletePrepGenProg (d.1, (((d.2.1.1, b), q), m))
+
 /-- Phase 1 of Feistel-dispatched `delete` in `Memory.Prog` (`d = ((base, u), h_q)`):
 computes `(b, q, m)` from `(u, h_q)` and runs `deletePrepProg`. -/
+@[expose]
 def deletePrepWithHashProg (U V w₀ n_max : ℕ) (d : (ℕ × ℕ) × ℕ) :
     Memory.Prog (((ℕ × ℕ) × ℕ) × ℕ) := do
   let b_bits ← pure (bucketBits n_max)
@@ -871,36 +921,32 @@ def deletePrepWithHashProg (U V w₀ n_max : ℕ) (d : (ℕ × ℕ) × ℕ) :
   let m ← pure (d.2 >>> b_bits)
   deletePrepProg U V w₀ n_max (hashSpace U w₀ n_max) (((d.1.1, b), q), m)
 
-theorem realizes_deletePrepWithHash_aux {U V w₀ n_max : ℕ} (hwf : DictParamsWf U V w₀ n_max) :
-    RealizesAt 3500 80000 .exact (deletePrepWithHashProg U V w₀ n_max)
-      (WordEncoding.encode (α := (ℕ × ℕ) × ℕ))
-      (WordEncoding.encode (α := ((ℕ × ℕ) × ℕ) × ℕ))
-      (fun w d s =>
-        let b := (d.2 &&& (2 ^ bucketBits n_max - 1)) ^^^ (d.1.2 &&& (2 ^ bucketBits n_max - 1))
-        let q := d.1.2 >>> bucketBits n_max
-        let m := d.2 >>> bucketBits n_max
-        d.1.2 < U ∧ d.2 < 2 ^ totalMicroBits n_max ∧
-        SearchMicroChainPre U V w₀ n_max (hashSpace U w₀ n_max) w (((d.1.1, b), q), m) s)
-      (fun _ _ => 0) := by
-  rcases hwf with ⟨hw, hnU, hU, _⟩
-  have hdp := realizes_deletePrep (U := U) (V := V) (w₀ := w₀) (n_max := n_max)
-    (h_space := hashSpace U w₀ n_max) hw hnU hU
-  realize
-  · exact (fits_bucketBits_and_mask h.2.2.1 hw hnU hU).1
-  · exact (fits_bucketBits_and_mask h.2.2.1 hw hnU hU).2
-  · rw [and_mask_xor_eq_feistelBucket]
-    exact (fits_bucketBits_and_mask h.2.2.1 hw hnU hU).2.of_le
-      (Nat.le_sub_one_of_lt (feistelBucket_lt (bucketBits n_max) (fun _ => d.2) d.1.2))
-  · exact h.2.2
+@[simp]
+theorem deletePrepWithHashGenProg_mk (U V w₀ n_max : ℕ) (d : (ℕ × ℕ) × ℕ) :
+    deletePrepWithHashGenProg (mkDictParams U V w₀ n_max (hashSpace U w₀ n_max), d) =
+      deletePrepWithHashProg U V w₀ n_max d := by
+  simp only [deletePrepWithHashGenProg, deletePrepWithHashProg, p_bucketBits_mk, p_bucketMask_mk,
+    deletePrepGenProg_mk]
 
-/-- Unconditional `Realizes .exact` certificate for `deletePrepWithHashProg`. -/
-theorem realizes_deletePrepWithHash (U V w₀ n_max : ℕ) :
-    RealizesAt 3500 80000 .exact (deletePrepWithHashProg U V w₀ n_max)
-      (WordEncoding.encode (α := (ℕ × ℕ) × ℕ))
+/-- Parameter-free `Realizes .exact` certificate for `deletePrepWithHashGenProg`. -/
+theorem realizes_deletePrepWithHashGen :
+    Realizes .exact deletePrepWithHashGenProg
+      (WordEncoding.encode (α := DictParams × ((ℕ × ℕ) × ℕ)))
       (WordEncoding.encode (α := ((ℕ × ℕ) × ℕ) × ℕ))
-      (QueryWithHashPre U V w₀ n_max)
-      (fun _ _ => 0) :=
-  realizes_of_imp realizes_deletePrepWithHash_aux
+      QueryWithHashGenPre
+      (fun _ _ => 0) := by
+  have hdp := realizes_deletePrepGen
+  realize
+  all_goals (
+    rcases d with ⟨dp, d⟩
+    obtain ⟨⟨U, V, w₀, n_max, h_space, hw, hnU, hU, hV, rfl⟩, henv⟩ := h.2.2.2.1
+    simpDictParamsWith [queryWithHashGenPre_mk, QueryWithHashPre,
+      searchMicroChainGenPre_mk, SearchMicroChainPre, deletePrepGenProg_mk]
+  )
+  · rw [and_mask_xor_eq_feistelBucket]
+    exact (fits_bucketBits_and_mask h.2.2.2.1 hw hnU hU).2.of_le
+      (Nat.le_sub_one_of_lt (feistelBucket_lt (bucketBits n_max) (fun _ => d.2) d.1.2))
+  · exact h.2.2.2
 
 theorem validProg_deletePrepWithHash {U V w n_max : ℕ}
     {d : (ℕ × ℕ) × ℕ} {s : Memory.State}
@@ -909,10 +955,26 @@ theorem validProg_deletePrepWithHash {U V w n_max : ℕ}
       (deletePrepWithHashProg U V w n_max d) := by
   exact validProg_deletePrep hpre.1.1 hpre.2.2.2
 
+/-- Parameter-free Phase 2 of Feistel-dispatched `delete` in `Memory.Prog`
+(`d = (dp, ((((base, u), h_q), ((found, j_del), phys_del)), h_q_last))`). -/
+@[expose]
+def deleteFinishWithHashGenProg
+    (d : DictParams × ((((ℕ × ℕ) × ℕ) × ((ℕ × ℕ) × ℕ)) × ℕ)) : Memory.Prog Unit := do
+  let b_bits ← pure (dpBucketBits d.1)
+  let b_mask ← pure (dpBucketMask d.1)
+  let u_low ← pure (d.2.1.1.1.2 &&& b_mask)
+  let h_low ← pure (d.2.1.1.2 &&& b_mask)
+  let b ← pure (h_low ^^^ u_low)
+  let m ← pure (d.2.1.1.2 >>> b_bits)
+  let m_last ← pure (d.2.2 >>> b_bits)
+  deleteFinishGenProg
+    (d.1, (((((d.2.1.1.1.1, b), d.2.1.2.1), d.2.1.2.2), m), m_last))
+
 /-- Phase 2 of Feistel-dispatched `delete` in `Memory.Prog`
 (`d = ((((base, u), h_q), ((found, j_del), phys_del)), h_q_last)`):
 computes `(b, m)` from `(u, h_q)` and `m_last = h_q_last >>> bucketBits n_max`, then runs
 `deleteFinishProg`. -/
+@[expose]
 def deleteFinishWithHashProg (U V w₀ n_max : ℕ)
     (d : (((ℕ × ℕ) × ℕ) × ((ℕ × ℕ) × ℕ)) × ℕ) : Memory.Prog Unit := do
   let b_bits ← pure (bucketBits n_max)
@@ -925,7 +987,16 @@ def deleteFinishWithHashProg (U V w₀ n_max : ℕ)
   deleteFinishProg U V w₀ n_max (hashSpace U w₀ n_max)
     (((((d.1.1.1.1, b), d.1.2.1), d.1.2.2), m), m_last)
 
+@[simp]
+theorem deleteFinishWithHashGenProg_mk (U V w₀ n_max : ℕ)
+    (d : (((ℕ × ℕ) × ℕ) × ((ℕ × ℕ) × ℕ)) × ℕ) :
+    deleteFinishWithHashGenProg (mkDictParams U V w₀ n_max (hashSpace U w₀ n_max), d) =
+      deleteFinishWithHashProg U V w₀ n_max d := by
+  simp only [deleteFinishWithHashGenProg, deleteFinishWithHashProg, p_bucketBits_mk,
+    p_bucketMask_mk, deleteFinishGenProg_mk]
+
 /-- Precondition for `deleteFinishWithHashProg` in `Realizes`. -/
+@[expose]
 def DeleteFinishWithHashPre (U V w₀ n_max w : ℕ)
     (d : (((ℕ × ℕ) × ℕ) × ((ℕ × ℕ) × ℕ)) × ℕ) (s : Memory.State) : Prop :=
   let b := (d.1.1.2 &&& (2 ^ bucketBits n_max - 1)) ^^^ (d.1.1.1.2 &&& (2 ^ bucketBits n_max - 1))
@@ -937,39 +1008,44 @@ def DeleteFinishWithHashPre (U V w₀ n_max w : ℕ)
   DeleteFinishPre U V w₀ n_max (hashSpace U w₀ n_max) w
     (((((d.1.1.1.1, b), d.1.2.1), d.1.2.2), m), m_last) s
 
-theorem realizes_deleteFinishWithHash_aux {U V w₀ n_max : ℕ} (hwf : DictParamsWf U V w₀ n_max) :
-    RealizesAt 9700 170000 .exact (deleteFinishWithHashProg U V w₀ n_max)
-      (WordEncoding.encode (α := (((ℕ × ℕ) × ℕ) × ((ℕ × ℕ) × ℕ)) × ℕ))
-      (WordEncoding.encode (α := Unit))
-      (fun w d s =>
-        let b := (d.1.1.2 &&& (2 ^ bucketBits n_max - 1)) ^^^
-          (d.1.1.1.2 &&& (2 ^ bucketBits n_max - 1))
-        let m := d.1.1.2 >>> bucketBits n_max
-        let m_last := d.2 >>> bucketBits n_max
-        d.1.1.2 < 2 ^ totalMicroBits n_max ∧
-        d.2 < 2 ^ totalMicroBits n_max ∧
-        DeleteFinishPre U V w₀ n_max (hashSpace U w₀ n_max) w
-          (((((d.1.1.1.1, b), d.1.2.1), d.1.2.2), m), m_last) s)
-      (fun _ _ => 0) := by
-  rcases hwf with ⟨hw, hnU, hU, hV⟩
-  have hdf := realizes_deleteFinish (U := U) (V := V) (w₀ := w₀) (n_max := n_max)
-    (h_space := hashSpace U w₀ n_max) hw hnU hU hV
-  realize
-  · exact (fits_bucketBits_and_mask h.2.2.1 hw hnU hU).1
-  · exact (fits_bucketBits_and_mask h.2.2.1 hw hnU hU).2
-  · rw [and_mask_xor_eq_feistelBucket]
-    exact (fits_bucketBits_and_mask h.2.2.1 hw hnU hU).2.of_le
-      (Nat.le_sub_one_of_lt (feistelBucket_lt (bucketBits n_max) (fun _ => d.1.1.2) d.1.1.1.2))
-  · exact h.2.2
+/-- Parameter-free precondition for `deleteFinishWithHashGenProg` in `Realizes`. -/
+@[expose]
+def DeleteFinishWithHashGenPre (w : ℕ)
+    (d : DictParams × ((((ℕ × ℕ) × ℕ) × ((ℕ × ℕ) × ℕ)) × ℕ)) (s : Memory.State) : Prop :=
+  let b := (d.2.1.1.2 &&& dpBucketMask d.1) ^^^ (d.2.1.1.1.2 &&& dpBucketMask d.1)
+  let m := d.2.1.1.2 >>> dpBucketBits d.1
+  let m_last := d.2.2 >>> dpBucketBits d.1
+  DictParamsWf (dpU d.1) (dpV d.1) (dpW d.1) (dpNMax d.1) ∧
+  d.2.1.1.2 < 2 ^ totalMicroBits (dpNMax d.1) ∧
+  d.2.2 < 2 ^ totalMicroBits (dpNMax d.1) ∧
+  DeleteFinishGenPre w
+    (d.1, (((((d.2.1.1.1.1, b), d.2.1.2.1), d.2.1.2.2), m), m_last)) s
 
-/-- Unconditional `Realizes .exact` certificate for `deleteFinishWithHashProg`. -/
-theorem realizes_deleteFinishWithHash (U V w₀ n_max : ℕ) :
-    RealizesAt 9700 170000 .exact (deleteFinishWithHashProg U V w₀ n_max)
-      (WordEncoding.encode (α := (((ℕ × ℕ) × ℕ) × ((ℕ × ℕ) × ℕ)) × ℕ))
+@[simp]
+theorem deleteFinishWithHashGenPre_mk (U V w₀ n_max w : ℕ)
+    (d : (((ℕ × ℕ) × ℕ) × ((ℕ × ℕ) × ℕ)) × ℕ) (s : Memory.State) :
+    DeleteFinishWithHashGenPre w (mkDictParams U V w₀ n_max (hashSpace U w₀ n_max), d) s ↔
+      DeleteFinishWithHashPre U V w₀ n_max w d s := Iff.rfl
+
+/-- Parameter-free `Realizes .exact` certificate for `deleteFinishWithHashGenProg`. -/
+theorem realizes_deleteFinishWithHashGen :
+    Realizes .exact deleteFinishWithHashGenProg
+      (WordEncoding.encode (α := DictParams × ((((ℕ × ℕ) × ℕ) × ((ℕ × ℕ) × ℕ)) × ℕ)))
       (WordEncoding.encode (α := Unit))
-      (DeleteFinishWithHashPre U V w₀ n_max)
-      (fun _ _ => 0) :=
-  realizes_of_imp realizes_deleteFinishWithHash_aux
+      DeleteFinishWithHashGenPre
+      (fun _ _ => 0) := by
+  have hdf := realizes_deleteFinishGen
+  realize
+  all_goals (
+    rcases d with ⟨dp, d⟩
+    obtain ⟨⟨U, V, w₀, n_max, h_space, hw, hnU, hU, hV, rfl⟩, henv⟩ := h.2.2.2.1
+    simpDictParamsWith [deleteFinishWithHashGenPre_mk, DeleteFinishWithHashPre,
+      deleteFinishGenPre_mk, DeleteFinishPre, DeleteFoundPre, deleteFinishGenProg_mk]
+  )
+  · rw [and_mask_xor_eq_feistelBucket]
+    exact (fits_bucketBits_and_mask h.2.2.2.1 hw hnU hU).2.of_le
+      (Nat.le_sub_one_of_lt (feistelBucket_lt (bucketBits n_max) (fun _ => d.1.1.2) d.1.1.1.2))
+  · exact h.2.2.2
 
 theorem validProg_deleteFinishWithHash {U V w n_max : ℕ}
     {d : (((ℕ × ℕ) × ℕ) × ((ℕ × ℕ) × ℕ)) × ℕ} {s : Memory.State}
@@ -984,7 +1060,7 @@ theorem validProg_deleteFinishWithHash {U V w n_max : ℕ}
 `s` unchanged, returns `s_abs u`, and uses at most `26 + 8 * probeExcess` memory cost. -/
 theorem queryWithHashProg_dict_spec {U V w₀ n_max w base : ℕ}
     (hwf : DictParamsWf U V w₀ n_max)
-    (henv : DictEnv U V w₀ n_max (hashSpace U w₀ n_max) w base)
+    (henv : DictEnvGen w (mkDictParams U V w₀ n_max (hashSpace U w₀ n_max)) base)
     (θ : QuotHashSeed U n_max) {s_abs : Dynamic.State U} {s : Memory.State}
     (hinv : DictStateInv U V w₀ n_max base θ s_abs s) (u : Fin U) :
     let h_q := hValOfSeed U n_max θ (keyQuotient (bucketBits n_max) u.val)
@@ -1038,7 +1114,7 @@ preserves `DictStateInv` for `Function.update s_abs u (some v)`, preserves memor
 dictionary table arrays, and satisfies the amortized `memoryCost + 66 * slotPotential` bound. -/
 theorem insertWithHashProg_dict_spec {U V w₀ n_max w base : ℕ}
     (hwf : DictParamsWf U V w₀ n_max)
-    (henv : DictEnv U V w₀ n_max (hashSpace U w₀ n_max) w base)
+    (henv : DictEnvGen w (mkDictParams U V w₀ n_max (hashSpace U w₀ n_max)) base)
     (θ : QuotHashSeed U n_max) {s_abs : Dynamic.State U} {s : Memory.State}
     (hinv : DictStateInv U V w₀ n_max base θ s_abs s)
     (u : Fin U) (v : ℕ)
@@ -1132,7 +1208,7 @@ private theorem exists_quad_eq (x : ((ℕ × ℕ) × ℕ) × ℕ) :
 combined amortized `memoryCost` by `270 + 8 * probeExcess`. -/
 theorem deleteWithHashProg_dict_spec {U V w₀ n_max w base : ℕ}
     (hwf : DictParamsWf U V w₀ n_max)
-    (henv : DictEnv U V w₀ n_max (hashSpace U w₀ n_max) w base)
+    (henv : DictEnvGen w (mkDictParams U V w₀ n_max (hashSpace U w₀ n_max)) base)
     (θ : QuotHashSeed U n_max) {s_abs : Dynamic.State U} {s : Memory.State}
     (hinv : DictStateInv U V w₀ n_max base θ s_abs s) (u : Fin U) :
     let h_q := hValOfSeed U n_max θ (keyQuotient (bucketBits n_max) u.val)

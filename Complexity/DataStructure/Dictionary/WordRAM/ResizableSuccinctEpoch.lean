@@ -158,7 +158,7 @@ dictionary into epoch capacity `N = targetCap U (Dynamic.dom s).card` from `x : 
    `4 * Succinct.space U V w N + 8` instructions (`RDemonicExec`),
 2. Initializes the hash table and inserts all `(Dynamic.dom s).card` entries of `s` via
    `buildOps s (List.finRange U)` in expected total instruction count at most
-   `31 * N + 1092 + (Dynamic.dom s).card * chargeVal U V w N`,
+   `31 * N + 1092 + (Dynamic.dom s).card * chargeVal`,
 3. Produces a distribution `ν_final` whose support satisfies `ResizableRep U V w N base θ s y`
    with active epoch word footprint `activeEpochWords U V w N (Dynamic.dom s).card ≤
    Dynamic.succinctWords 312 213 U V w (Dynamic.dom s).card`. -/
@@ -166,16 +166,16 @@ theorem rebuild_epoch_expected_amortized {U V w base : ℕ}
     (hw : 0 < w) (hU : Fits w U) (hV : Fits w V)
     {s : Dynamic.State U} (hvb : Dynamic.ValuesBounded V s)
     (hfit : Fits w (base + Succinct.space U V w (targetCap U (Dynamic.dom s).card)))
-    {x : RData (rSuccinct U V w (targetCap U (Dynamic.dom s).card))}
+    {x : RData rSuccinct}
     (hx : x.Bounded w) (hfr : x.frontier = base) :
     let n := (Dynamic.dom s).card
     let N := targetCap U n
-    ∃ (x₁ : RData (rSuccinct U V w N))
+    ∃ (x₁ : RData rSuccinct)
       (ν₀ ν_final : PMF ((Succinct.impl hw (targetCap_le_univ U n) hU hV hfit).Seed ×
-        Data (rSuccinct U V w N)))
+        Data rSuccinct))
       (T_ops : ℝ≥0∞),
       RDemonicExec w (allocSuccinctCode U V w N) x (4 * Succinct.space U V w N + 8) (· = x₁) ∧
-      ExecCodeDist w (subroutineCode U V w N).initFresh (x₁.set (frontierReg U V w N) base).toData
+      ExecCodeDist w (subroutineCode U V w N).initFresh (x₁.set frontierReg base).toData
         (ν₀.map Prod.snd) (Succinct.impl hw (targetCap_le_univ U n) hU hV hfit).initTime ∧
       (Succinct.impl hw (targetCap_le_univ U n) hU hV hfit).ExecStepsOfFn
         (Dynamic.empty U) (buildOps s (List.finRange U)) ν₀ ν_final T_ops ∧
@@ -185,7 +185,7 @@ theorem rebuild_epoch_expected_amortized {U V w base : ℕ}
         Modifies (Block.mk base (Succinct.space U V w N)).footprint x.mem p.2.mem) ∧
       (Succinct.impl hw (targetCap_le_univ U n) hU hV hfit).initTime + T_ops +
         (∑' q, ν_final q * (potential U V w N base q.1 q.2 : ℝ≥0∞)) ≤
-        ((31 * N + 1092 + n * chargeVal U V w N : ℕ) : ℝ≥0∞) ∧
+        ((31 * N + 1092 + n * chargeVal : ℕ) : ℝ≥0∞) ∧
       EpochValid n N ∧
       activeEpochWords U V w N n ≤ Dynamic.succinctWords 312 213 U V w n := by
   intro n N
@@ -195,10 +195,10 @@ theorem rebuild_epoch_expected_amortized {U V w base : ℕ}
   have hN2 : N ≤ 2 * n := targetCap_le_two_mul U n
   obtain ⟨x₁, he_alloc, hx₁_bdd, hx₁_fr, _, _, hx₁_mem, hx₁_zero⟩ :=
     allocSuccinctCode_exec hx hfr hfit
-  let x₁' := x₁.set (frontierReg U V w N) base
+  let x₁' := x₁.set frontierReg base
   have hbase_fits : Fits w base := hfit.of_le (Nat.le_add_right base _)
   have hx₁'_bdd : x₁'.toData.Bounded w := (hx₁_bdd.set hbase_fits).1
-  have hx₁'_fr : x₁'.toData.regs (frontierReg U V w N) = base := by simp [x₁']
+  have hx₁'_fr : x₁'.toData.regs frontierReg = base := by simp [x₁']
   obtain ⟨hrun_b, hvh_b, hlen_b⟩ := buildOps_finRange_spec (N := N) hvb hnN
   obtain ⟨ν₀, ν_final, T_ops, he_init, hex_steps, hseed_final, hsupp_final, hamort⟩ :=
     seq_expected_amortized_modifies hw hNU hU hV hfit (buildOps s (List.finRange U))
@@ -209,16 +209,15 @@ theorem rebuild_epoch_expected_amortized {U V w base : ℕ}
   have hbound :
       (Succinct.impl hw hNU hU hV hfit).initTime + T_ops +
         (∑' q, ν_final q * (potential U V w N base q.1 q.2 : ℝ≥0∞)) ≤
-        ((31 * N + 1092 + n * chargeVal U V w N : ℕ) : ℝ≥0∞) := by
+        ((31 * N + 1092 + n * chargeVal : ℕ) : ℝ≥0∞) := by
     calc (Succinct.impl hw hNU hU hV hfit).initTime + T_ops +
           (∑' q, ν_final q * (potential U V w N base q.1 q.2 : ℝ≥0∞))
-        ≤ (Succinct.impl hw hNU hU hV hfit).initTime + (n * chargeVal U V w N : ℕ) := hamort
-      _ ≤ ((initSteps U N + 1 : ℕ) : ℝ≥0∞) + (n * chargeVal U V w N : ℕ) :=
+        ≤ (Succinct.impl hw hNU hU hV hfit).initTime + (n * chargeVal : ℕ) := hamort
+      _ ≤ ((initSteps U N + 1 : ℕ) : ℝ≥0∞) + (n * chargeVal : ℕ) :=
           add_le_add hinit_le.1 le_rfl
-      _ ≤ ((31 * N + 1092 + n * chargeVal U V w N : ℕ) : ℝ≥0∞) := by
-          norm_cast
-          have := hinit_le.2
-          omega
+      _ ≤ ((31 * N + 1092 + n * chargeVal : ℕ) : ℝ≥0∞) := by
+          rw [← Nat.cast_add]
+          exact Nat.cast_le.mpr (by have := hinit_le.2; omega)
   refine ⟨x₁, ν₀, ν_final, T_ops, he_alloc, he_init, hex_steps, hseed_final, ?_, hbound,
     epochValid_targetCap hnU,
     activeEpochWords_le_succinctWords_of_le_two_mul hw hnU hNU (le_of_lt hU) hnN hN2⟩
@@ -231,34 +230,32 @@ theorem rebuild_epoch_expected_amortized {U V w base : ℕ}
 
 /-! ### Uniform `O(1)` expected amortized charge across all capacities `N ≤ U` -/
 
-/-- Universal within-epoch exchange factor `170000` (`opFactor U V w N = 170000` for all
-`U, V, w, N`). -/
-abbrev opFactorConst : ℕ := 170000
+/-- Universal within-epoch exchange factor `opFactor`. -/
+noncomputable abbrev opFactorConst : ℕ := opFactor
 
-/-- Universal within-epoch expected amortized operation charge `53494689`
-(`313 * 170000 + 284689`). -/
-abbrev chargeValConst : ℕ := 53494689
+/-- Universal within-epoch expected amortized operation charge `chargeVal`
+(`313 * opFactor + 284725`). -/
+noncomputable abbrev chargeValConst : ℕ := chargeVal
 
-/-- Universal per-item epoch rebuild work factor `53495843` (`chargeValConst + 1154`). -/
-abbrev rebuildUnitCostConst : ℕ := 53495843
+/-- Universal per-item epoch rebuild work factor `chargeVal + 1154`. -/
+noncomputable abbrev rebuildUnitCostConst : ℕ := chargeVal + 1154
 
-/-- Universal per-operation expected amortized instruction charge `160486391`
-(`chargeValConst + 2 * rebuildUnitCostConst + 16`) across all `U, V, w`. -/
-abbrev resizableChargeValConst : ℕ := 160486391
+/-- Universal per-operation expected amortized instruction charge
+`chargeVal + 2 * rebuildUnitCostConst + 16` across all `U, V, w`. -/
+noncomputable abbrev resizableChargeValConst : ℕ := chargeVal + 2 * rebuildUnitCostConst + 16
 
-/-- Maximum exchange factor `opFactor U V w N` across all valid epoch capacities `N ∈ [0, U]`. -/
+/-- Maximum exchange factor across all valid epoch capacities `N ∈ [0, U]`. -/
 @[expose]
-noncomputable def maxOpFactor (U V w : ℕ) : ℕ :=
-  (Finset.range (U + 1)).sup fun N => opFactor U V w N
+noncomputable def maxOpFactor (_U _V _w : ℕ) : ℕ :=
+  opFactor
 
-/-- Uniform `O(1)` within-epoch operation charge `313 * maxOpFactor U V w + 284689` dominating
-`chargeVal U V w N` for all `N ≤ U`. -/
+/-- Uniform `O(1)` within-epoch operation charge dominating `chargeVal` for all `N ≤ U`. -/
 @[expose]
-noncomputable def maxChargeVal (U V w : ℕ) : ℕ :=
-  313 * maxOpFactor U V w + 284689
+noncomputable def maxChargeVal (_U _V _w : ℕ) : ℕ :=
+  chargeVal
 
 /-- Per-item epoch rebuild work factor `maxChargeVal U V w + 1154`, dominating
-`31 * N + 1092 + n * chargeVal U V w N ≤ rebuildUnitCost U V w * (n + 1)` whenever `N ≤ 2 * n`. -/
+`31 * N + 1092 + n * chargeVal ≤ rebuildUnitCost U V w * (n + 1)` whenever `N ≤ 2 * n`. -/
 @[expose]
 noncomputable def rebuildUnitCost (U V w : ℕ) : ℕ :=
   maxChargeVal U V w + 1154
@@ -271,52 +268,31 @@ resizable succinct dictionary (`Dynamic.spec U V U`), combining the within-epoch
 noncomputable def resizableChargeVal (U V w : ℕ) : ℕ :=
   maxChargeVal U V w + 2 * rebuildUnitCost U V w + 16
 
-theorem maxOpFactor_eq_const (U V w : ℕ) : maxOpFactor U V w = opFactorConst := by
-  unfold maxOpFactor opFactorConst
-  apply le_antisymm
-  · exact Finset.sup_le fun N _ => le_of_eq (opFactor_eq U V w N)
-  · have h0 : 0 ∈ Finset.range (U + 1) := Finset.mem_range.mpr (Nat.zero_lt_succ U)
-    calc 170000 = opFactor U V w 0 := (opFactor_eq U V w 0).symm
-      _ ≤ (Finset.range (U + 1)).sup fun N => opFactor U V w N :=
-          Finset.le_sup (f := fun N => opFactor U V w N) h0
+theorem maxOpFactor_eq_const (U V w : ℕ) : maxOpFactor U V w = opFactorConst := rfl
 
-theorem maxChargeVal_eq_const (U V w : ℕ) : maxChargeVal U V w = chargeValConst := by
-  unfold maxChargeVal chargeValConst
-  rw [maxOpFactor_eq_const]
-  rfl
+theorem maxChargeVal_eq_const (U V w : ℕ) : maxChargeVal U V w = chargeValConst := rfl
 
-theorem rebuildUnitCost_eq_const (U V w : ℕ) : rebuildUnitCost U V w = rebuildUnitCostConst := by
-  unfold rebuildUnitCost rebuildUnitCostConst
-  rw [maxChargeVal_eq_const]
+theorem rebuildUnitCost_eq_const (U V w : ℕ) : rebuildUnitCost U V w = rebuildUnitCostConst := rfl
 
 theorem resizableChargeVal_eq_const (U V w : ℕ) :
-    resizableChargeVal U V w = resizableChargeValConst := by
-  unfold resizableChargeVal resizableChargeValConst
-  rw [maxChargeVal_eq_const, rebuildUnitCost_eq_const]
-  rfl
+    resizableChargeVal U V w = resizableChargeValConst := rfl
 
-theorem opFactor_le_maxOpFactor {U V w N : ℕ} (hNU : N ≤ U) :
-    opFactor U V w N ≤ maxOpFactor U V w :=
-  Finset.le_sup (f := fun k => opFactor U V w k) (Finset.mem_range.mpr (by omega))
+theorem opFactor_le_maxOpFactor {U V w N : ℕ} (_hNU : N ≤ U) :
+    opFactor ≤ maxOpFactor U V w := le_rfl
 
-theorem chargeVal_le_maxChargeVal {U V w N : ℕ} (hNU : N ≤ U) :
-    chargeVal U V w N ≤ maxChargeVal U V w := by
-  unfold chargeVal maxChargeVal
-  have := opFactor_le_maxOpFactor (V := V) (w := w) hNU
-  omega
+theorem chargeVal_le_maxChargeVal {U V w N : ℕ} (_hNU : N ≤ U) :
+    chargeVal ≤ maxChargeVal U V w := le_rfl
 
-theorem rebuild_cost_le_rebuildUnitCost {U V w n N : ℕ} (hNU : N ≤ U) (hN2 : N ≤ 2 * n) :
-    31 * N + 1092 + n * chargeVal U V w N ≤ rebuildUnitCost U V w * (n + 1) := by
-  have hch := chargeVal_le_maxChargeVal (V := V) (w := w) hNU
-  have hmul : n * chargeVal U V w N ≤ n * maxChargeVal U V w := Nat.mul_le_mul_left n hch
-  unfold rebuildUnitCost
+theorem rebuild_cost_le_rebuildUnitCost {U V w n N : ℕ} (_hNU : N ≤ U) (hN2 : N ≤ 2 * n) :
+    31 * N + 1092 + n * chargeVal ≤ rebuildUnitCost U V w * (n + 1) := by
+  unfold rebuildUnitCost maxChargeVal
   nlinarith
 
 /-- Combined epoch + slot potential at current live key count `n` in an epoch started at `n_init`:
 `potential U V w N base θ x.toData + 2 * rebuildUnitCost U V w * natDist n n_init`. -/
 @[expose]
 noncomputable def epochTotalPotential (U V w N base n n_init : ℕ)
-    (θ : QuotHashSeed U N) (x : RData (rSuccinct U V w N)) : ℕ :=
+    (θ : QuotHashSeed U N) (x : RData rSuccinct) : ℕ :=
   potential U V w N base θ x.toData + 2 * rebuildUnitCost U V w * natDist n n_init
 
 /-- **Unbounded-capacity single-step expected amortized theorem
@@ -354,10 +330,10 @@ theorem unbounded_step_expected_amortized {U V w n_init : ℕ}
     2 * rebuildUnitCost U V w * natDist n' n_init' ≤
       2 * rebuildUnitCost U V w * natDist n n_init + resizableChargeVal U V w ∧
     (if EpochValid n' N then
-      chargeVal U V w N + 16 + 2 * rebuildUnitCost U V w * natDist n' n_init' ≤
+      chargeVal + 16 + 2 * rebuildUnitCost U V w * natDist n' n_init' ≤
         2 * rebuildUnitCost U V w * natDist n n_init + resizableChargeVal U V w
     else
-      31 * N' + 1092 + n' * chargeVal U V w N' +
+      31 * N' + 1092 + n' * chargeVal +
         2 * rebuildUnitCost U V w * natDist n' n_init' ≤
         2 * rebuildUnitCost U V w * natDist n n_init + resizableChargeVal U V w) := by
   intro n N s' n' n_init' N'
@@ -510,21 +486,21 @@ private theorem in_epoch_step_machine_aux {U V w N base : ℕ}
     (hfit : Fits w (base + Succinct.space U V w N))
     {x₀ : RData rResizable}
     {s : Dynamic.State U} (o : Dynamic.Op U) (hv_N : (Dynamic.spec U V N).valid s o)
-    (ν : PMF (QuotHashSeed U N × Data (rSuccinct U V w N)))
+    (ν : PMF (QuotHashSeed U N × Data rSuccinct))
     (hseed : ∀ θ, (ν.map Prod.fst) θ ≤ 1 * (PMF.uniformOfFintype (QuotHashSeed U N)) θ)
     (hsupp : ∀ p ∈ ν.support,
       ResizableRep U V w N base p.1 s
         ⟨p.2.regs, p.2.mem, base + Succinct.space U V w N⟩ ∧
       ∀ a < base, p.2.mem a = x₀.mem a) :
-    ∃ (ν' : PMF (QuotHashSeed U N × Data (rSuccinct U V w N))) (T_step : ℝ≥0∞),
+    ∃ (ν' : PMF (QuotHashSeed U N × Data rSuccinct)) (T_step : ℝ≥0∞),
       (∀ θ, (ν'.map Prod.fst) θ ≤ 1 * (PMF.uniformOfFintype (QuotHashSeed U N)) θ) ∧
       (∀ q ∈ ν'.support,
         ResizableRep U V w N base q.1 ((Dynamic.spec U V U).stepFn s o).1
           ⟨q.2.regs, q.2.mem, base + Succinct.space U V w N⟩ ∧
         (∀ a < base, q.2.mem a = x₀.mem a) ∧
-        decode U V w N o q.2.regs = some ((Dynamic.spec U V N).stepFn s o).2) ∧
+        decode o q.2.regs = some ((Dynamic.spec U V N).stepFn s o).2) ∧
       T_step + (∑' q, ν' q * (potential U V w N base q.1 q.2 : ℝ≥0∞)) ≤
-        ((chargeVal U V w N : ℕ) : ℝ≥0∞) +
+        ((chargeVal : ℕ) : ℝ≥0∞) +
           (∑' p, ν p * (potential U V w N base p.1 p.2 : ℝ≥0∞)) := by
   let C := Succinct.impl hw hNU hU hV hfit
   let mem_ref (a : ℕ) : ℕ := if a < base then x₀.mem a else 0
@@ -544,7 +520,7 @@ private theorem in_epoch_step_machine_aux {U V w N base : ℕ}
   have hdec' := execStepsOfFn_singleton_decode hex_step
   have hrep_N : ∀ q ∈ ν'.support,
       Succinct.Rep U V w N base q.1 ((Dynamic.spec U V U).stepFn s o).1 q.2 := hrep'
-  have hcost_one : (Dynamic.spec U V N).totalCost C.charge s [o] = chargeVal U V w N := by
+  have hcost_one : (Dynamic.spec U V N).totalCost C.charge s [o] = chargeVal := by
     rw [StateTransitionSpec.totalCost_cons, StateTransitionSpec.totalCost_nil, add_zero]
     rfl
   rw [hcost_one] at hamort
@@ -583,7 +559,7 @@ private theorem unbounded_step_machine_aux {U V w base n_init n_init' : ℕ}
     (hn_init' : n_init' =
       if EpochValid (Dynamic.dom ((Dynamic.spec U V U).stepFn s o).1).card (targetCap U n_init)
       then n_init else (Dynamic.dom ((Dynamic.spec U V U).stepFn s o).1).card)
-    (ν : PMF (QuotHashSeed U (targetCap U n_init) × Data (rSuccinct U V w (targetCap U n_init))))
+    (ν : PMF (QuotHashSeed U (targetCap U n_init) × Data rSuccinct))
     (hseed : ∀ θ, (ν.map Prod.fst) θ ≤
       1 * (PMF.uniformOfFintype (QuotHashSeed U (targetCap U n_init))) θ)
     (hsupp : ∀ p ∈ ν.support,
@@ -591,15 +567,14 @@ private theorem unbounded_step_machine_aux {U V w base n_init n_init' : ℕ}
         ⟨p.2.regs, p.2.mem, base + Succinct.space U V w (targetCap U n_init)⟩ ∧
       ∀ a < base, p.2.mem a = x₀.mem a) :
     ∃ (ν' : PMF (QuotHashSeed U (targetCap U n_init') ×
-        Data (rSuccinct U V w (targetCap U n_init')))) (T_step : ℝ≥0∞),
+        Data rSuccinct)) (T_step : ℝ≥0∞),
       (∀ θ, (ν'.map Prod.fst) θ ≤
         1 * (PMF.uniformOfFintype (QuotHashSeed U (targetCap U n_init'))) θ) ∧
       (∀ q ∈ ν'.support,
         ResizableRep U V w (targetCap U n_init') base q.1 ((Dynamic.spec U V U).stepFn s o).1
           ⟨q.2.regs, q.2.mem, base + Succinct.space U V w (targetCap U n_init')⟩ ∧
         (∀ a < base, q.2.mem a = x₀.mem a) ∧
-        LastOpOutputCorrect V s [o]
-          (fun i => q.2.regs (i.cast (rSuccinct_eq_const U V w (targetCap U n_init')).symm))) ∧
+        LastOpOutputCorrect V s [o] q.2.regs) ∧
       T_step + (∑' q, ν' q * (potential U V w (targetCap U n_init') base q.1 q.2 : ℝ≥0∞)) +
         ((2 * rebuildUnitCost U V w *
           natDist (Dynamic.dom ((Dynamic.spec U V U).stepFn s o).1).card n_init' : ℕ) : ℝ≥0∞) ≤
@@ -625,21 +600,20 @@ private theorem unbounded_step_machine_aux {U V w base n_init n_init' : ℕ}
     · obtain ⟨hrep_q, hcaller_q, hdec_q⟩ := hsupp' q hq
       exact ⟨hrep_q, hcaller_q, lastOpOutputCorrect_singleton_of_decode s o q.2.regs hdec_q⟩
     have h_ineq :
-        ((chargeVal U V w N : ℕ) : ℝ≥0∞) +
+        ((chargeVal : ℕ) : ℝ≥0∞) +
           ((2 * rebuildUnitCost U V w * natDist n' n_init : ℕ) : ℝ≥0∞) ≤
           ((2 * rebuildUnitCost U V w * natDist n n_init +
             resizableChargeVal U V w : ℕ) : ℝ≥0∞) := by
-      norm_cast
-      dsimp only [n, N, s', n']
-      omega
+      rw [← Nat.cast_add]
+      exact Nat.cast_le.mpr (by dsimp only [n, N, s', n']; omega)
     calc T_step + (∑' q, ν' q * (potential U V w N base q.1 q.2 : ℝ≥0∞)) +
           ((2 * rebuildUnitCost U V w * natDist n' n_init : ℕ) : ℝ≥0∞)
-        ≤ ((chargeVal U V w N : ℕ) : ℝ≥0∞) +
+        ≤ ((chargeVal : ℕ) : ℝ≥0∞) +
             (∑' p, ν p * (potential U V w N base p.1 p.2 : ℝ≥0∞)) +
             ((2 * rebuildUnitCost U V w * natDist n' n_init : ℕ) : ℝ≥0∞) :=
           add_le_add hamort le_rfl
       _ = (∑' p, ν p * (potential U V w N base p.1 p.2 : ℝ≥0∞)) +
-            (((chargeVal U V w N : ℕ) : ℝ≥0∞) +
+            (((chargeVal : ℕ) : ℝ≥0∞) +
               ((2 * rebuildUnitCost U V w * natDist n' n_init : ℕ) : ℝ≥0∞)) := by ac_rfl
       _ ≤ (∑' p, ν p * (potential U V w N base p.1 p.2 : ℝ≥0∞)) +
             ((2 * rebuildUnitCost U V w * natDist n n_init +
@@ -647,13 +621,8 @@ private theorem unbounded_step_machine_aux {U V w base n_init n_init' : ℕ}
           add_le_add le_rfl h_ineq
   · simp only [hvalid, ↓reduceIte] at hn_init' hbranch_arith
     subst n_init'
-    let x₀_N' : RData (rSuccinct U V w (targetCap U n')) :=
-      castRData (rSuccinct_eq_const U V w (targetCap U n')).symm x₀
-    have hx₀_N'_bdd : x₀_N'.Bounded w :=
-      castRData_bounded (rSuccinct_eq_const U V w (targetCap U n')).symm hx₀
-    have hx₀_N'_fr : x₀_N'.frontier = base := hfr₀
     obtain ⟨_, _, ν_reb, T_reb, _, _, _, hseed_reb, hsupp_reb, hbound_reb, _, _⟩ :=
-      rebuild_epoch_expected_amortized hw hU hV hvb' hfit_N' hx₀_N'_bdd hx₀_N'_fr
+      rebuild_epoch_expected_amortized hw hU hV hvb' hfit_N' hx₀ hfr₀
     refine ⟨ν_reb,
       (Succinct.impl hw (targetCap_le_univ U n') hU hV hfit_N').initTime + T_reb,
       hseed_reb, ?_, ?_⟩
@@ -669,15 +638,16 @@ private theorem unbounded_step_machine_aux {U V w base n_init n_init' : ℕ}
         | delete _ => trivial
         | query _ => exact absurd hepoch hvalid
     · have h_ineq :
-          ((31 * targetCap U n' + 1092 + n' * chargeVal U V w (targetCap U n') : ℕ) : ℝ≥0∞) +
+          ((31 * targetCap U n' + 1092 + n' * chargeVal : ℕ) : ℝ≥0∞) +
             ((2 * rebuildUnitCost U V w * natDist n' n' : ℕ) : ℝ≥0∞) ≤
             ((2 * rebuildUnitCost U V w * natDist n n_init +
               resizableChargeVal U V w : ℕ) : ℝ≥0∞) := by
-        norm_cast
+        rw [← Nat.cast_add]
+        exact Nat.cast_le.mpr hbranch_arith
       calc (Succinct.impl hw (targetCap_le_univ U n') hU hV hfit_N').initTime + T_reb +
             (∑' q, ν_reb q * (potential U V w (targetCap U n') base q.1 q.2 : ℝ≥0∞)) +
             ((2 * rebuildUnitCost U V w * natDist n' n' : ℕ) : ℝ≥0∞)
-          ≤ ((31 * targetCap U n' + 1092 + n' * chargeVal U V w (targetCap U n') : ℕ) : ℝ≥0∞) +
+          ≤ ((31 * targetCap U n' + 1092 + n' * chargeVal : ℕ) : ℝ≥0∞) +
               ((2 * rebuildUnitCost U V w * natDist n' n' : ℕ) : ℝ≥0∞) :=
             add_le_add hbound_reb le_rfl
         _ ≤ ((2 * rebuildUnitCost U V w * natDist n n_init +
@@ -688,30 +658,7 @@ private theorem unbounded_step_machine_aux {U V w base n_init n_init' : ℕ}
             le_add_self
 
 /-- **Coupled Machine-State Unbounded Sequence Theorem
-(`unbounded_seq_machine_expected_amortized`):**
-Starting from any caller state `x₀ : RData rResizable` with `x₀.Bounded w` and `x₀.frontier = base`,
-across any valid unbounded-capacity operation sequence `ops : List (Dynamic.Op U)`
-(`(Dynamic.spec U V U).ValidHistory (Dynamic.empty U) ops`) whose peak epoch capacity
-`maxEpochCap V (Dynamic.empty U) 0 ops` (`≤ min (2 * ops.length) U`) fits in `2 ^ w`:
-1. The dictionary reaches `s_final = ((Dynamic.spec U V U).run (Dynamic.empty U) ops).1` with live
-   key count `n_final = (Dynamic.dom s_final).card` and epoch capacity
-   `N_final = targetCap U n_init_final` satisfying `EpochValid n_final N_final`, `N_final ≤ U`, and
-   `Dynamic.ValuesBounded V s_final`;
-2. The cumulative expected operation and rebuild instruction time `T_ops : ℝ≥0∞` plus the final
-   slot and epoch potentials is bounded by `ops.length * resizableChargeValConst` using the
-   universal constants `rResizable = 9957`, `rebuildUnitCostConst = 53495843`, and
-   `resizableChargeValConst = 160486391`;
-3. For every `(θ, y_data) ∈ ν_final.support`, `x_epoch` satisfies `ResizableRep`,
-   `LastOpOutputCorrect V (Dynamic.empty U) ops` (decoding output registers `252, 253` to `s_pre u`
-   whenever `ops` ends in `.query u`), and contracting the unused item tail via
-   `shrinkTailWordsCode` (`2` instructions via `RDemonicExec`) produces a resting machine state
-   `x_rest : RData rResizable` whose physical frontier `x_rest.frontier` satisfies
-   `x_rest.frontier = base + activeEpochWords U V w N_final n_final`,
-   `x_rest.frontier - base ≤ Dynamic.succinctWords 1227 213 U V w n_final`,
-   `w * (x_rest.frontier - base) ≤ Dynamic.optBits U V n_final + 1227 * n_final *
-   Dynamic.logLogFactor n_final + 214 * w`, and `LastOpOutputCorrect V (Dynamic.empty U) ops
-   x_rest.regs`, while preserving all caller memory `< base` (and when `n_final = 0`,
-   `deallocSuccinctCode` in `3` instructions produces `x_zero` with `x_zero.frontier = base`). -/
+(`unbounded_seq_machine_expected_amortized`):** -/
 theorem unbounded_seq_machine_expected_amortized {U V w base : ℕ}
     (hw : 0 < w) (hU : Fits w U) (hV : Fits w V)
     {x₀ : RData rResizable} (hx₀ : x₀.Bounded w) (hfr₀ : x₀.frontier = base)
@@ -726,26 +673,25 @@ theorem unbounded_seq_machine_expected_amortized {U V w base : ℕ}
     EpochValid n_final N_final ∧
     N_final ≤ U ∧
     Dynamic.ValuesBounded V s_final ∧
-    ∃ (ν_final : PMF (QuotHashSeed U N_final × Data (rSuccinct U V w N_final)))
+    ∃ (ν_final : PMF (QuotHashSeed U N_final × Data rSuccinct))
       (T_ops : ℝ≥0∞),
       (∀ θ, (ν_final.map Prod.fst) θ ≤ 1 * (PMF.uniformOfFintype (QuotHashSeed U N_final)) θ) ∧
       T_ops + (∑' q, ν_final q * (potential U V w N_final base q.1 q.2 : ℝ≥0∞)) +
         ((2 * rebuildUnitCostConst * natDist n_final n_init_final : ℕ) : ℝ≥0∞) ≤
         ((ops.length * resizableChargeValConst : ℕ) : ℝ≥0∞) ∧
       ∀ p ∈ ν_final.support,
-        let x_epoch : RData (rSuccinct U V w N_final) :=
+        let x_epoch : RData rSuccinct :=
           ⟨p.2.regs, p.2.mem, base + Succinct.space U V w N_final⟩
         ResizableRep U V w N_final base p.1 s_final x_epoch ∧
         (∀ a < base, x_epoch.mem a = x₀.mem a) ∧
-        LastOpOutputCorrect V (Dynamic.empty U) ops
-          (castRData (rSuccinct_eq_const U V w N_final) x_epoch).regs ∧
+        LastOpOutputCorrect V (Dynamic.empty U) ops x_epoch.regs ∧
         ∃ x_rest : RData rResizable,
-          (∃ y_rest : RData (rSuccinct U V w N_final),
+          (∃ y_rest : RData rSuccinct,
             RDemonicExec w
               (shrinkTailWordsCode U V w N_final
                 (Succinct.space U V w N_final - activeEpochWords U V w N_final n_final))
               x_epoch 2 (· = y_rest) ∧
-            x_rest = castRData (rSuccinct_eq_const U V w N_final) y_rest) ∧
+            x_rest = y_rest) ∧
           x_rest.Bounded w ∧
           x_rest.frontier = base + activeEpochWords U V w N_final n_final ∧
           x_rest.frontier - base ≤ Dynamic.succinctWords 1227 213 U V w n_final ∧
@@ -756,9 +702,9 @@ theorem unbounded_seq_machine_expected_amortized {U V w base : ℕ}
           (∀ a < base, x_rest.mem a = x₀.mem a) ∧
           (n_final = 0 →
             ∃ x_zero : RData rResizable,
-              (∃ y_zero : RData (rSuccinct U V w N_final),
+              (∃ y_zero : RData rSuccinct,
                 RDemonicExec w (deallocSuccinctCode U V w N_final) x_epoch 3 (· = y_zero) ∧
-                x_zero = castRData (rSuccinct_eq_const U V w N_final) y_zero) ∧
+                x_zero = y_zero) ∧
               x_zero.Bounded w ∧
               x_zero.frontier = base ∧
               ∀ a < base, x_zero.mem a = x₀.mem a) := by
@@ -772,7 +718,7 @@ theorem unbounded_seq_machine_expected_amortized {U V w base : ℕ}
       (hepoch : EpochValid (Dynamic.dom s).card (targetCap U n_init))
       (hfit_l : ∀ N ≤ maxEpochCap V s n_init l, Fits w (base + Succinct.space U V w N))
       (hvh_s : (Dynamic.spec U V U).ValidHistory s l)
-      (ν : PMF (QuotHashSeed U (targetCap U n_init) × Data (rSuccinct U V w (targetCap U n_init))))
+      (ν : PMF (QuotHashSeed U (targetCap U n_init) × Data rSuccinct))
       (hseed : ∀ θ, (ν.map Prod.fst) θ ≤
         1 * (PMF.uniformOfFintype (QuotHashSeed U (targetCap U n_init))) θ)
       (hsupp : ∀ p ∈ ν.support,
@@ -783,13 +729,12 @@ theorem unbounded_seq_machine_expected_amortized {U V w base : ℕ}
       let nf := (Dynamic.dom sf).card
       let n_init_f := runEpochInit V s n_init l
       let Nf := targetCap U n_init_f
-      ∃ (ν_f : PMF (QuotHashSeed U Nf × Data (rSuccinct U V w Nf))) (T_ops : ℝ≥0∞),
+      ∃ (ν_f : PMF (QuotHashSeed U Nf × Data rSuccinct)) (T_ops : ℝ≥0∞),
         (∀ θ, (ν_f.map Prod.fst) θ ≤ 1 * (PMF.uniformOfFintype (QuotHashSeed U Nf)) θ) ∧
         (∀ p ∈ ν_f.support,
           ResizableRep U V w Nf base p.1 sf ⟨p.2.regs, p.2.mem, base + Succinct.space U V w Nf⟩ ∧
           (∀ a < base, p.2.mem a = x₀.mem a) ∧
-          LastOpOutputCorrect V s l
-            (fun i => p.2.regs (i.cast (rSuccinct_eq_const U V w Nf).symm))) ∧
+          LastOpOutputCorrect V s l p.2.regs) ∧
         T_ops + (∑' q, ν_f q * (potential U V w Nf base q.1 q.2 : ℝ≥0∞)) +
           ((2 * rebuildUnitCost U V w * natDist nf n_init_f : ℕ) : ℝ≥0∞) ≤
           (∑' p, ν p * (potential U V w (targetCap U n_init) base p.1 p.2 : ℝ≥0∞)) +
@@ -872,17 +817,11 @@ theorem unbounded_seq_machine_expected_amortized {U V w base : ℕ}
                 ((2 * rebuildUnitCost U V w * natDist (Dynamic.dom s).card n_init +
                   (o :: o₂ :: os').length * resizableChargeVal U V w : ℕ) : ℝ≥0∞) := by
               rw [add_assoc, hlen_eq]
-  let x₀_0 : RData (rSuccinct U V w (targetCap U 0)) :=
-    castRData (rSuccinct_eq_const U V w (targetCap U 0)).symm x₀
-  have hx₀_0_bdd : x₀_0.Bounded w :=
-    castRData_bounded (rSuccinct_eq_const U V w (targetCap U 0)).symm hx₀
-  have hx₀_0_fr : x₀_0.frontier = base := hfr₀
   have hfit0 : Fits w (base + Succinct.space U V w (targetCap U 0)) :=
     hfit (targetCap U 0) (targetCap_le_maxEpochCap V (Dynamic.empty U) 0 ops)
   obtain ⟨_, ν₀_r, _, _, hseed₀_r, hsupp₀_r⟩ :=
-    init_resizable_succinct hw (targetCap_le_univ U 0) hU hV hfit0
-      hx₀_0_bdd hx₀_0_fr
-  let ν₀ : PMF (QuotHashSeed U (targetCap U 0) × Data (rSuccinct U V w (targetCap U 0))) :=
+    init_resizable_succinct hw (targetCap_le_univ U 0) hU hV hfit0 hx₀ hfr₀
+  let ν₀ : PMF (QuotHashSeed U (targetCap U 0) × Data rSuccinct) :=
     ν₀_r.map fun p => (p.1, p.2.toData)
   have hseed₀ : ∀ θ, (ν₀.map Prod.fst) θ ≤
       1 * (PMF.uniformOfFintype (QuotHashSeed U (targetCap U 0))) θ := by
@@ -925,40 +864,24 @@ theorem unbounded_seq_machine_expected_amortized {U V w base : ℕ}
     Nat.zero_add, rebuildUnitCost_eq_const, resizableChargeVal_eq_const] at hbound_f
   refine ⟨ν_final, T_ops, hseed_f, hbound_f, fun p hp => ?_⟩
   obtain ⟨hrep_p, hcaller_p, hout_p⟩ := hsupp_f p hp
-  let x_epoch : RData (rSuccinct U V w N_final) :=
+  let x_epoch : RData rSuccinct :=
     ⟨p.2.regs, p.2.mem, base + Succinct.space U V w N_final⟩
   have hsp_ge : activeEpochWords U V w N_final n_final ≤ Succinct.space U V w N_final :=
     activeEpochWords_le_space hepoch_f.1
   let Δ := Succinct.space U V w N_final - activeEpochWords U V w N_final n_final
   obtain ⟨y_rest, he_sh, hy_rest_bdd, hy_rest_fr, hy_rest_regs, _, hy_rest_mem⟩ :=
-    shrinkTailWordsCode_exec hrep_p.1 (Δ := Δ)
+    shrinkTailWordsCode_exec hrep_p.1 (U := U) (V := V) (N := N_final) (Δ := Δ)
       (by dsimp only [x_epoch, Δ, N_final, n_final, n_init_final, s_final] at hsp_ge ⊢; omega)
   have hfr_rest : y_rest.frontier = base + activeEpochWords U V w N_final n_final := by
     rw [hy_rest_fr]
     dsimp only [x_epoch, Δ, N_final, n_final, n_init_final, s_final] at hsp_ge ⊢
     omega
-  let x_rest : RData rResizable := castRData (rSuccinct_eq_const U V w N_final) y_rest
-  have hout_rest : LastOpOutputCorrect V (Dynamic.empty U) ops x_rest.regs := by
+  have hout_rest : LastOpOutputCorrect V (Dynamic.empty U) ops y_rest.regs := by
     refine (lastOpOutputCorrect_congr V (Dynamic.empty U) ops ?_ ?_).mp hout_p
-    · dsimp only [x_rest, castRData, x_epoch]
-      have hne : (⟨252, by decide⟩ : Fin rResizable).cast
-          (rSuccinct_eq_const U V w N_final).symm ≠ curReg U V w N_final := by
-        intro h
-        have hv := congrArg Fin.val h
-        change 252 = 241 at hv
-        omega
-      exact (hy_rest_regs _ hne).symm
-    · dsimp only [x_rest, castRData, x_epoch]
-      have hne : (⟨253, by decide⟩ : Fin rResizable).cast
-          (rSuccinct_eq_const U V w N_final).symm ≠ curReg U V w N_final := by
-        intro h
-        have hv := congrArg Fin.val h
-        change 253 = 241 at hv
-        omega
-      exact (hy_rest_regs _ hne).symm
-  refine ⟨hrep_p, hcaller_p, hout_p, x_rest, ⟨y_rest, he_sh, rfl⟩,
-    castRData_bounded (rSuccinct_eq_const U V w N_final) hy_rest_bdd, hfr_rest, ?_, ?_,
-    hout_rest, ?_, ?_⟩
+    · exact (hy_rest_regs resTagReg (sReg_ne (by decide))).symm
+    · exact (hy_rest_regs resValReg (sReg_ne (by decide))).symm
+  refine ⟨hrep_p, hcaller_p, hout_p, y_rest, ⟨y_rest, he_sh, rfl⟩,
+    hy_rest_bdd, hfr_rest, ?_, ?_, hout_rest, ?_, ?_⟩
   · change y_rest.frontier - base ≤ Dynamic.succinctWords 1227 213 U V w n_final
     rw [hfr_rest, Nat.add_sub_cancel_left]
     exact hwords_f
@@ -973,57 +896,38 @@ theorem unbounded_seq_machine_expected_amortized {U V w base : ℕ}
   · intro hn0
     obtain ⟨y_zero, he_de, hy_zero_bdd, hy_zero_fr, _, _, _, hy_zero_caller⟩ :=
       deallocSuccinctCode_exec hrep_p.1 rfl hrep_p.2.2.2.1
-    refine ⟨castRData (rSuccinct_eq_const U V w N_final) y_zero, ⟨y_zero, he_de, rfl⟩,
-      castRData_bounded (rSuccinct_eq_const U V w N_final) hy_zero_bdd, hy_zero_fr, fun a ha => ?_⟩
+    refine ⟨y_zero, ⟨y_zero, he_de, rfl⟩, hy_zero_bdd, hy_zero_fr, fun a ha => ?_⟩
     exact (hy_zero_caller a ha).trans (hcaller_p a ha)
 
 /-! ## Section 6: Client Subroutine Theorems and Memory Reuse in `[0, L)` -/
 
-/-- **Client Subroutine Theorem 1 — Full dictionary lifecycle and memory reuse in `[0, L)`
-(`subroutine_client_reuse_released_memory`):**
-In a single linear word-resizable memory `[0, L)` on `RData (rSuccinct U V w N)` where the caller
-already owns a prefix `[0, base)`:
-1. **Demonic-grow allocation & initialization:** `allocSuccinctCode U V w N` (under **demonic**
-   `DemonicGrow`, `4 * Succinct.space U V w N + 8` instructions) and `initFresh` initialize the
-   succinct dictionary at `[base, base + Succinct.space U V w N)` without modifying `[0, base)`;
-2. **Subroutine operation sequence:** any valid sequence `ops : List (Dynamic.Op U)` (`insert`,
-   `delete`, `query`) executes in expected amortized time `ops.length * chargeVal U V w N`,
-   reaching abstract state `((Dynamic.spec U V N).run (Dynamic.empty U) ops).1` while preserving
-   all caller memory `< base`;
-3. **Deallocation via `.shrink` and immediate address reuse:** `deallocSuccinctCode U V w N`
-   shrinks `frontier` from `base + Succinct.space U V w N` back to `base` in `3` instructions, and
-   a subsequent client allocation `allocWordsCode U V w N k_client` under **demonic** `DemonicGrow`
-   (`4 * k_client + 8` instructions) allocates `[base, base + k_client)`—**reusing the exact same
-   memory addresses `[base, ...)` released by the dictionary**—so the final active frontier is
-   `base + k_client` (not `base + Succinct.space U V w N + k_client`) while `[0, base)` remains
-   intact throughout. -/
 theorem subroutine_client_reuse_released_memory {U V w N base k_client : ℕ}
     (hw : 0 < w) (hnU : N ≤ U) (hU : Fits w U) (hV : Fits w V)
     (hfit_dict : Fits w (base + Succinct.space U V w N))
     (hfit_client : Fits w (base + k_client))
-    {x₀ : RData (rSuccinct U V w N)} (ops : List (Dynamic.Op U))
+    {x₀ : RData rSuccinct} (ops : List (Dynamic.Op U))
     (hx₀ : x₀.Bounded w) (hfr₀ : x₀.frontier = base)
     (hv : (Dynamic.spec U V N).ValidHistory (Dynamic.empty U) ops) :
-    ∃ (x_alloc : RData (rSuccinct U V w N))
+    ∃ (x_alloc : RData rSuccinct)
       (ν₀ ν_final : PMF ((Succinct.impl hw hnU hU hV hfit_dict).Seed ×
-        Data (rSuccinct U V w N)))
+        Data rSuccinct))
       (T_ops : ℝ≥0∞),
       RDemonicExec w (allocSuccinctCode U V w N) x₀
         (4 * Succinct.space U V w N + 8) (· = x_alloc) ∧
       ExecCodeDist w (subroutineCode U V w N).initFresh
-        (x_alloc.set (frontierReg U V w N) base).toData (ν₀.map Prod.snd)
+        (x_alloc.set frontierReg base).toData (ν₀.map Prod.snd)
         (Succinct.impl hw hnU hU hV hfit_dict).initTime ∧
       (Succinct.impl hw hnU hU hV hfit_dict).ExecStepsOfFn
         (Dynamic.empty U) ops ν₀ ν_final T_ops ∧
       (Succinct.impl hw hnU hU hV hfit_dict).initTime + T_ops ≤
         (Succinct.impl hw hnU hU hV hfit_dict).initTime +
-          (ops.length * chargeVal U V w N : ℕ) ∧
+          (ops.length * chargeVal : ℕ) ∧
       ∀ p ∈ ν_final.support,
-        let x_dict : RData (rSuccinct U V w N) :=
+        let x_dict : RData rSuccinct :=
           ⟨p.2.regs, p.2.mem, base + Succinct.space U V w N⟩
         ResizableRep U V w N base p.1 ((Dynamic.spec U V N).run (Dynamic.empty U) ops).1 x_dict ∧
         (∀ a < base, x_dict.mem a = x₀.mem a) ∧
-        ∃ x_dealloc x_reused : RData (rSuccinct U V w N),
+        ∃ x_dealloc x_reused : RData rSuccinct,
           RDemonicExec w (deallocSuccinctCode U V w N) x_dict 3 (· = x_dealloc) ∧
           x_dealloc.frontier = base ∧
           RDemonicExec w (allocWordsCode U V w N k_client) x_dealloc
@@ -1034,17 +938,17 @@ theorem subroutine_client_reuse_released_memory {U V w N base k_client : ℕ}
           (∀ a ∈ (Block.mk base k_client).footprint, x_reused.mem a = 0) := by
   obtain ⟨x_alloc, he_alloc, hx_alloc_bdd, hx_alloc_fr, _, _, hx_alloc_mem, hx_alloc_zero⟩ :=
     allocSuccinctCode_exec hx₀ hfr₀ hfit_dict
-  let x_alloc' := x_alloc.set (frontierReg U V w N) base
+  let x_alloc' := x_alloc.set frontierReg base
   have hbase_fits : Fits w base := hfit_dict.of_le (Nat.le_add_right base _)
   have hx_alloc'_bdd : x_alloc'.toData.Bounded w := (hx_alloc_bdd.set hbase_fits).1
-  have hx_alloc'_fr : x_alloc'.toData.regs (frontierReg U V w N) = base := by simp [x_alloc']
+  have hx_alloc'_fr : x_alloc'.toData.regs frontierReg = base := by simp [x_alloc']
   obtain ⟨ν₀, ν_final, T_ops, he_init, hex_steps, _, hsupp_final, hamort⟩ :=
     seq_expected_amortized_modifies hw hnU hU hV hfit_dict ops
       hx_alloc'_bdd hx_alloc'_fr hx_alloc_zero hv
   have htime_le :
       (Succinct.impl hw hnU hU hV hfit_dict).initTime + T_ops ≤
         (Succinct.impl hw hnU hU hV hfit_dict).initTime +
-          (ops.length * chargeVal U V w N : ℕ) :=
+          (ops.length * chargeVal : ℕ) :=
     (le_self_add).trans hamort
   have hw2 : 2 ≤ w := two_le_w_of_fits_space hfit_dict
   have h1 : Fits w 1 :=
@@ -1069,36 +973,29 @@ theorem subroutine_client_reuse_released_memory {U V w N base k_client : ℕ}
     hx_reused_bdd, hx_reused_fr, fun a ha => ?_, hx_reused_zero⟩
   rw [hx_reused_mem, hdealloc_caller a ha, hcaller_preserved a ha]
 
-/-- **Client Subroutine Theorem 2 — Partial contraction via `.shrink` and in-place reuse of
-released tail words (`shrink_and_reuse_in_place`):**
-When deletions reduce the dictionary's active item footprint from `base + sp₁` by `Δ` words to
-`base + sp₂` (`sp₁ = sp₂ + Δ`), executing `shrinkTailWordsCode U V w N Δ` (`2` instructions)
-followed by a client allocation `growTailWordsCode U V w N k_client` (`4 * k_client + 8`
-instructions under **demonic** `DemonicGrow`) places the new client block at
-`[base + sp₂, base + sp₂ + k_client)`—directly reusing the `Δ` released words—while preserving the
-dictionary's live prefix `[0, base + sp₂)` unchanged. -/
 theorem shrink_and_reuse_in_place {U V w N base sp₂ Δ k_client : ℕ}
-    {x : RData (rSuccinct U V w N)}
+    {x : RData rSuccinct}
     (hx : x.Bounded w) (hfr : x.frontier = base + sp₂ + Δ)
     (h1 : Fits w 1) (hfit_client : Fits w (base + sp₂ + k_client)) :
-    ∃ x_shrunk x_reused : RData (rSuccinct U V w N),
+    ∃ x_shrunk x_reused : RData rSuccinct,
       RDemonicExec w (shrinkTailWordsCode U V w N Δ) x 2 (· = x_shrunk) ∧
       x_shrunk.frontier = base + sp₂ ∧
       RDemonicExec w (growTailWordsCode U V w N k_client) x_shrunk
         (4 * k_client + 8) (· = x_reused) ∧
       x_reused.Bounded w ∧
       x_reused.frontier = base + sp₂ + k_client ∧
-      x_reused.regs (baseReg U V w N) = x.regs (baseReg U V w N) ∧
+      x_reused.regs baseReg = x.regs baseReg ∧
       (∀ a < base + sp₂, x_reused.mem a = x.mem a) ∧
       (∀ a ∈ (Block.mk (base + sp₂) k_client).footprint, x_reused.mem a = 0) := by
   obtain ⟨x_shrunk, he_sh, hx_sh_bdd, hx_sh_fr, hx_sh_regs, _, hx_sh_mem⟩ :=
-    shrinkTailWordsCode_exec hx (Δ := Δ) (by omega)
-  have hx_sh_base : x_shrunk.regs (baseReg U V w N) = x.regs (baseReg U V w N) :=
-    hx_sh_regs (baseReg U V w N) (sReg_ne (by decide))
+    shrinkTailWordsCode_exec hx (U := U) (V := V) (N := N) (Δ := Δ) (by omega)
+  have hx_sh_base : x_shrunk.regs baseReg = x.regs baseReg :=
+    hx_sh_regs baseReg (sReg_ne (by decide))
   have hfr2 : x.frontier - Δ = base + sp₂ := by omega
   rw [hfr2] at hx_sh_fr hx_sh_mem
   obtain ⟨x_reused, he_gr, hx_gr_bdd, hx_gr_fr, hx_gr_base, _, hx_gr_mem⟩ :=
-    growTailWordsCode_exec hx_sh_bdd h1 (Δ := k_client) (by rw [hx_sh_fr]; exact hfit_client)
+    growTailWordsCode_exec hx_sh_bdd h1 (U := U) (V := V) (N := N) (Δ := k_client)
+      (by rw [hx_sh_fr]; exact hfit_client)
   rw [hx_sh_fr] at hx_gr_fr
   refine ⟨x_shrunk, x_reused, he_sh, hx_sh_fr, he_gr, hx_gr_bdd, hx_gr_fr,
     hx_gr_base.trans hx_sh_base, fun a ha => ?_, fun a ha => ?_⟩

@@ -590,7 +590,7 @@ theorem bridge_unbounded_seq_expected_amortized
   let n_final := (Dynamic.dom s_final).card
   let n_init_final := runEpochInit V (Dynamic.empty U) 0 ops_lib
   let N_final := targetCap U n_init_final
-  let toAbsState : QuotHashSeed U N_final × Data (rSuccinct U V w N_final) → P.RState rResizable :=
+  let toAbsState : QuotHashSeed U N_final × Data rSuccinct → P.RState rResizable :=
     fun p => P.rStateOf (castRData (rSuccinct_eq_const U V w N_final)
       ⟨p.2.regs, p.2.mem, base + Succinct.space U V w N_final⟩)
   let E_pot : ℝ≥0∞ := ∑' q, ν_lib q * (potential U V w N_final base q.1 q.2 : ℝ≥0∞)
@@ -613,7 +613,7 @@ theorem bridge_unbounded_seq_expected_amortized
   · dsimp only [toAbsState, DynamicDictPresentation.rStateOf, castRData]
     rw [hP.rRegs_mk]
     have h0 : (⟨0, by decide⟩ : Fin rResizable).cast (rSuccinct_eq_const U V w N_final).symm =
-        baseReg U V w N_final := Fin.ext rfl
+        baseReg := Fin.ext rfl
     rw [h0]
     exact hrep_p.2.2.2.1
   · dsimp only [toAbsState, DynamicDictPresentation.rStateOf]
@@ -713,7 +713,7 @@ theorem bridge_dictionary_client_memory_reuse
   refine ⟨rResizable, rfl, fun U V w hw hU hV => ⟨?_, ?_⟩⟩
   · intro base sp₂ Δ k_client x hx hfr h1 hfit_client
     have hx_lib0 : (P.rDataOf x).Bounded w := rBounded_rDataOf hP hx
-    let x_u : RData (rSuccinct U V w U) :=
+    let x_u : RData rSuccinct :=
       castRData (rSuccinct_eq_const U V w U).symm (P.rDataOf x)
     have hx_lib : x_u.Bounded w :=
       castRData_bounded (rSuccinct_eq_const U V w U).symm hx_lib0
@@ -763,7 +763,7 @@ theorem bridge_dictionary_client_memory_reuse
     obtain ⟨hrep_dict, hpre_dict, hout_dict, _⟩ := hsupp_mach p hp
     let n_init_final := runEpochInit V (Dynamic.empty U) 0 ops_lib
     let N_final := targetCap U n_init_final
-    let x_dict : RData (rSuccinct U V w N_final) :=
+    let x_dict : RData rSuccinct :=
       ⟨p.2.regs, p.2.mem, base + Succinct.space U V w N_final⟩
     have hNf_le : N_final ≤ maxEpochCap V (Dynamic.empty U) 0 ops_lib :=
       targetCap_runEpochInit_le_maxEpochCap V (Dynamic.empty U) 0 ops_lib
@@ -793,7 +793,7 @@ theorem bridge_dictionary_client_memory_reuse
     · dsimp only [DynamicDictPresentation.rStateOf, x_dict_r, x_dict, castRData]
       rw [hP.rRegs_mk]
       have h0 : (⟨0, by decide⟩ : Fin rResizable).cast (rSuccinct_eq_const U V w N_final).symm =
-          baseReg U V w N_final := Fin.ext rfl
+          baseReg := Fin.ext rfl
       rw [h0]
       exact hrep_dict.2.2.2.1
     · dsimp only [DynamicDictPresentation.rStateOf]
