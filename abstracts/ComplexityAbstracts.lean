@@ -6,6 +6,8 @@ import ComplexityAbstracts.BQPAbstract
 import ComplexityAbstracts.BQPBridge
 import ComplexityAbstracts.BarringtonAbstract
 import ComplexityAbstracts.BarringtonBridge
+import ComplexityAbstracts.BitResizableDictionaryAbstract
+import ComplexityAbstracts.BitResizableDictionaryBridge
 import ComplexityAbstracts.BravermanAbstract
 import ComplexityAbstracts.BravermanBridge
 import ComplexityAbstracts.Check

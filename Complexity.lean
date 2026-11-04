@@ -3005,13 +3005,17 @@ public import Complexity.DataStructure.CountMin.Basic
 public import Complexity.DataStructure.CountMin.LinearHash
 public import Complexity.DataStructure.CountMin.Probability
 public import Complexity.DataStructure.CountMin.Program
+public import Complexity.DataStructure.Dictionary.BitResizable.Client
 public import Complexity.DataStructure.Dictionary.BitResizable.Companion
+public import Complexity.DataStructure.Dictionary.BitResizable.EpochStep
 public import Complexity.DataStructure.Dictionary.BitResizable.InEpoch
 public import Complexity.DataStructure.Dictionary.BitResizable.Layout
 public import Complexity.DataStructure.Dictionary.BitResizable.Operations
 public import Complexity.DataStructure.Dictionary.BitResizable.Query
 public import Complexity.DataStructure.Dictionary.BitResizable.Spec
 public import Complexity.DataStructure.Dictionary.BitResizable.Sync
+public import Complexity.DataStructure.Dictionary.BitResizable.Transition
+public import Complexity.DataStructure.Dictionary.BitResizable.WindowStep
 public import Complexity.DataStructure.Dictionary.CuckooHashing
 public import Complexity.DataStructure.Dictionary.DoubleHashing
 public import Complexity.DataStructure.Dictionary.Dynamic.Spec
