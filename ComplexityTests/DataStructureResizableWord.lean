@@ -7,7 +7,9 @@ Authors: Renfei Zhou
 module
 -- upstream: local-only (test driver)
 
-public import Complexity.DataStructure.DynamicArray.ResizableWord
+public import Complexity.DataStructure.DynamicArray.ResizableWordCode
+public import Complexity.DataStructure.Dictionary.WordRAM.ResizableSuccinct
+public import Complexity.DataStructure.Dictionary.WordRAM.ResizableSuccinctEpoch
 
 /-!
 # Word-granular resizable memory and packed dynamic array tests
@@ -187,5 +189,125 @@ info: 'Cslib.DataStructure.DynamicArray.ResizableWord.twoArrays_singleTape_reuse
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms ResizableWord.twoArrays_singleTape_reuse
+
+/-! ## Stage 2: Resizable Succinct Dictionary Tests -/
+
+open Cslib.DataStructure.Dictionary
+open Cslib.DataStructure.Dictionary.WordRAM
+open Cslib.DataStructure.Dictionary.WordRAM.ResizableSuccinct
+
+example : targetCap 16 0 = 0 := by decide
+example : targetCap 16 5 = 10 := by decide
+example : targetCap 16 10 = 16 := by decide
+example : EpochValid 0 0 := by decide
+example : EpochValid 5 10 := by decide
+example : ¬EpochValid 9 4 := by decide
+
+/-- Sample unbounded-capacity operation history on `Fin 8` with `V = 16`:
+three inserts (`0 ↦ 5`, `1 ↦ 9`, `2 ↦ 3`), an overwrite (`1 ↦ 12`), a delete (`0`), and two
+queries (`1` and `0`). -/
+def sampleDynamicOps : List (Dynamic.Op 8) :=
+  [ .insert ⟨0, by decide⟩ 5,
+    .insert ⟨1, by decide⟩ 9,
+    .insert ⟨2, by decide⟩ 3,
+    .insert ⟨1, by decide⟩ 12,
+    .delete ⟨0, by decide⟩,
+    .query ⟨1, by decide⟩,
+    .query ⟨0, by decide⟩ ]
+
+lemma validHistory_sampleDynamicOps :
+    (Dynamic.spec 8 16 8).ValidHistory (Dynamic.empty 8) sampleDynamicOps := by
+  refine ⟨⟨Or.inl (by decide), by decide⟩,
+    ⟨Or.inl (by decide), by decide⟩,
+    ⟨Or.inl (by decide), by decide⟩,
+    ⟨Or.inr (by decide), by decide⟩,
+    trivial, trivial, trivial, trivial⟩
+
+example :
+    let s_final := ((Dynamic.spec 8 16 8).run (Dynamic.empty 8) sampleDynamicOps).1
+    let n_final := (Dynamic.dom s_final).card
+    let n_init_final := runEpochInit 16 (Dynamic.empty 8) 0 sampleDynamicOps
+    let N_final := targetCap 8 n_init_final
+    EpochValid n_final N_final ∧
+    N_final ≤ 8 ∧
+    Dynamic.ValuesBounded 16 s_final ∧
+    activeEpochWords 8 16 64 N_final n_final ≤ Dynamic.succinctWords 1227 213 8 16 64 n_final ∧
+    64 * activeEpochWords 8 16 64 N_final n_final ≤
+      Dynamic.optBits 8 16 n_final + 1227 * n_final * Dynamic.logLogFactor n_final + 214 * 64 ∧
+    2 * rebuildUnitCost 8 16 64 * natDist n_final n_init_final ≤
+      sampleDynamicOps.length * resizableChargeVal 8 16 64 :=
+  unbounded_seq_expected_amortized (U := 8) (V := 16) (w := 64)
+    (by decide) (by decide) sampleDynamicOps validHistory_sampleDynamicOps
+
+/--
+info: 'Cslib.DataStructure.Dictionary.WordRAM.ResizableSuccinct.activeEpochWords_le_succinctWords_of_le_four_mul' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms activeEpochWords_le_succinctWords_of_le_four_mul
+
+/--
+info: 'Cslib.DataStructure.Dictionary.WordRAM.ResizableSuccinct.succinctWords_mul_w_le_bits' depends on axioms: [propext,
+ Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms succinctWords_mul_w_le_bits
+
+/--
+info: 'Cslib.DataStructure.Dictionary.WordRAM.ResizableSuccinct.init_resizable_succinct' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms init_resizable_succinct
+
+/--
+info: 'Cslib.DataStructure.Dictionary.WordRAM.ResizableSuccinct.step_resizable_succinct' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms step_resizable_succinct
+
+/--
+info: 'Cslib.DataStructure.Dictionary.WordRAM.ResizableSuccinct.rebuild_epoch_expected_amortized' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms rebuild_epoch_expected_amortized
+
+/--
+info: 'Cslib.DataStructure.Dictionary.WordRAM.ResizableSuccinct.unbounded_step_expected_amortized' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms unbounded_step_expected_amortized
+
+/--
+info: 'Cslib.DataStructure.Dictionary.WordRAM.ResizableSuccinct.unbounded_seq_expected_amortized' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms unbounded_seq_expected_amortized
+
+/--
+info: 'Cslib.DataStructure.Dictionary.WordRAM.ResizableSuccinct.subroutine_client_reuse_released_memory' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms subroutine_client_reuse_released_memory
+
+/--
+info: 'Cslib.DataStructure.Dictionary.WordRAM.ResizableSuccinct.shrink_and_reuse_in_place' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms shrink_and_reuse_in_place
 
 end ComplexityTests.DataStructureResizableWord

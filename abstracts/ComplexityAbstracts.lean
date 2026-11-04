@@ -55,6 +55,8 @@ import ComplexityAbstracts.PrimesBridge
 import ComplexityAbstracts.Randomized
 import ComplexityAbstracts.RandomizedWordRAMAbstract
 import ComplexityAbstracts.RandomizedWordRAMBridge
+import ComplexityAbstracts.ResizableSuccinctDictionaryAbstract
+import ComplexityAbstracts.ResizableSuccinctDictionaryBridge
 import ComplexityAbstracts.ResolutionAbstract
 import ComplexityAbstracts.ResolutionBridge
 import ComplexityAbstracts.SavitchAbstract
