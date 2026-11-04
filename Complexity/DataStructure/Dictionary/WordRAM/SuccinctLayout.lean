@@ -54,6 +54,7 @@ open scoped BigOperators ENNReal
 `Fin (2 ^ totalMicroBits n_max)`, using register `0` as base register, register `1` as key
 register, and register `2` as output register, with expected `probeExcess` bounded by `C_probe` on
 every active set `S` of size at most `n_max`. -/
+@[nolint defsWithUnderscore]
 structure QuotientHashImpl (r_hash : ℕ) [NeZero r_hash] (w base U n_max : ℕ) : Type 1 where
   /-- Underlying Word-RAM hash family implementation on quotients. -/
   impl : Impl .exact r_hash 0 w base (2 ^ quotientBits U n_max) (2 ^ totalMicroBits n_max) Fin.elim0
@@ -79,6 +80,8 @@ structure QuotientHashImpl (r_hash : ℕ) [NeZero r_hash] (w base U n_max : ℕ)
   sum_probeExcess_le : ∀ (S : Finset (Fin U)), S.card ≤ n_max → ∀ u : Fin U,
     (∑ s : impl.Seed, probeExcess n_max (quotientFin U n_max) impl.eval s S u) ≤
       C_probe * Fintype.card impl.Seed
+
+attribute [nolint defsWithUnderscore] QuotientHashImpl.C_probe
 
 /-- Word offset of `Quotients` relative to `base`. -/
 @[expose]

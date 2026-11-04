@@ -76,9 +76,14 @@ noncomputable abbrev epochProbeExcess (U N : ℕ) (θ : Succinct.QuotHashSeed U 
 /-- Companion witness `(s_fix, td, dt)` inducing the single-tape bit-resizable state via
 `buildBitState`. -/
 structure Companion where
+  /-- Underlying fixed-capacity dictionary memory state. -/
   s_fix : Memory.State
+  /-- Tail-to-dense circular compaction mapping. -/
   td : ℕ → ℕ
+  /-- Dense-to-tail circular compaction mapping. -/
   dt : ℕ → ℕ
+
+attribute [nolint defsWithUnderscore] Companion.s_fix
 
 /-- Slab-rebalancing potential `Φ_slot` of a companion at epoch capacity `N`. -/
 def Companion.potential (U V w N : ℕ) (c : Companion) : ℕ :=

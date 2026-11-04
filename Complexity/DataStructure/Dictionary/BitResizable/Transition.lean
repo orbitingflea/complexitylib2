@@ -148,11 +148,6 @@ theorem epochMetaWords_le_linear {U w N : ℕ} (hw : 0 < w) (hNU : N ≤ U) (hU 
       (packedWords_le_add_two_of_le hw hgp_w).trans (by omega)
     omega
 
-/-- The active key count `(Dynamic.dom s_abs).card` never exceeds the universe size `U`. -/
-theorem card_dom_le_univ {U : ℕ} (s_abs : Dynamic.State U) :
-    (Dynamic.dom s_abs).card ≤ U := by
-  simpa using Finset.card_le_univ (Dynamic.dom s_abs)
-
 /-- Target epoch capacity `N'` when rebuilding for `m` active keys: `0` when `m = 0`, and
 `min U (2 * m)` when `0 < m`. -/
 @[expose]
@@ -416,7 +411,7 @@ theorem rebuild_transition {U V w N : ℕ} (hw : 0 < w) (hU : Fits w U) (hV : V 
   intro N'
   let m := (Dynamic.dom s_abs).card
   let m' := (Dynamic.dom s_abs').card
-  have hm'U : m' ≤ U := card_dom_le_univ s_abs'
+  have hm'U : m' ≤ U := Dynamic.card_dom_le_univ s_abs'
   have hepoch' : EpochInv U N' m' := epochInv_targetCap hm'U
   have hN'U : N' ≤ U := targetCap_le_univ U m'
   have hfit' : Fits w (dictBitSize U V w N' N') := hfit_all N' hN'U
@@ -472,7 +467,7 @@ theorem epochInv_nextEpochCap {U N : ℕ} (s_abs : Dynamic.State U) (op : Dynami
   dsimp only
   split_ifs with h
   · exact h
-  · exact epochInv_targetCap (card_dom_le_univ (nextState s_abs op))
+  · exact epochInv_targetCap (Dynamic.card_dom_le_univ (nextState s_abs op))
 
 /-- **In-epoch single-operation transition (`step_transition_inEpoch`):**
 when the post-operation key count still satisfies `EpochInv U N m'`, `op` executes within the
@@ -742,7 +737,7 @@ theorem step_transition {U V w N : ℕ} (hw : 4 ≤ w) (hU : Fits w U) (hV : V �
       step_transition_rebuild hw hU hV hfit_all θ hinv op hval_op hepoch' θ_re
     refine ⟨targetCap U (Dynamic.dom (nextState s_abs op)).card, θ_re, c', code, T, ?_,
       hexec, hcost⟩
-    exact epochInv_targetCap (card_dom_le_univ (nextState s_abs op))
+    exact epochInv_targetCap (Dynamic.card_dom_le_univ (nextState s_abs op))
 
 /-! ## Section 4: Multi-operation execution trace and sequence theorems from empty -/
 
@@ -834,7 +829,7 @@ theorem exists_execTrace {U V w : ℕ} (hw : 4 ≤ w) (hU : Fits w U) (hV : V �
         (targetCap U (Dynamic.dom (nextState s_abs op)).card))
       let N' := targetCap U (Dynamic.dom (nextState s_abs op)).card
       have hepoch_re : EpochInv U N' (Dynamic.dom (nextState s_abs op)).card :=
-        epochInv_targetCap (card_dom_le_univ (nextState s_abs op))
+        epochInv_targetCap (Dynamic.card_dom_le_univ (nextState s_abs op))
       obtain ⟨B_rest, hrest⟩ := ih θ_re hepoch_re hvh_rest
       refine ⟨stepOverhead U N θ s_abs op + B_rest, ?_⟩
       intro c x hinv

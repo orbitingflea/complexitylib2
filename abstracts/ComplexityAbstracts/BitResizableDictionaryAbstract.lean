@@ -71,7 +71,7 @@ and shrink arbitrarily between `0` and `U` across operation sequences of any len
    `epochSeedPMF N` is at most `8034`, and `op` executes in `T` instructions under
    `DemonicExecWithin` satisfying the potential inequality
    `T + totalPotential N' (stepDict s_abs op) c' ≤`
-   `totalPotential N s_abs c + stepOverhead N θ s_abs op`.
+   `totalPotential N s_abs c + stepOverhead N seed s_abs op`.
 3. **Subroutine reuse of released bits**: when `delete u` removes an active key within an epoch,
    `x.bitSize` shrinks by `itemBits U V N` bits via `shrink`, and a client program can immediately
    re-allocate `b ≤ itemBits U V N` of those released bits via `grow` (`clientAllocBitsCode`),
@@ -369,7 +369,7 @@ theorem epochInv_self {U N' : ℕ} (hN' : N' ≤ U) : EpochInv U N' N' := by
   · exact Or.inl ⟨rfl, rfl⟩
   · exact Or.inr ⟨hpos, le_rfl, by omega, hN'⟩
 
-/-- Multi-operation execution trace of `ops : List (DictOp U)` from state `(N, θ, s_abs, c, x)`
+/-- Multi-operation execution trace of `ops : List (DictOp U)` from state `(N, seed, s_abs, c, x)`
 with total amortized instruction budget `B_tot`. At each step `op :: ops`, `DictInv` holds before
 and after `op`, the expected amortized overhead over `epochSeedPMF N` is at most `8034`, `code`
 executes in `T` instructions under `DemonicExecWithin` satisfying the amortized potential
@@ -385,26 +385,26 @@ def ExecTrace (U _V w : ℕ)
     (stepOverhead : ∀ N, EpochSeed N → DictState U → DictOp U → ℕ) :
     List (DictOp U) → ∀ (N : ℕ), EpochSeed N → DictState U →
       Companion → Data 12 → ℕ → Prop
-  | [], N, θ, s_abs, c, x, B_tot =>
-    DictInv N θ s_abs c x ∧ B_tot = 0
-  | op :: ops, N, θ, s_abs, c, x, B_tot =>
-    DictInv N θ s_abs c x ∧
-    (∑' θ₀ : EpochSeed N,
-      (epochSeedPMF N θ₀ : ℝ≥0∞) * ((stepOverhead N θ₀ s_abs op : ℕ) : ℝ≥0∞)) ≤ 8034 ∧
-    ∃ (N' : ℕ) (θ' : EpochSeed N') (c' : Companion)
+  | [], N, seed, s_abs, c, x, B_tot =>
+    DictInv N seed s_abs c x ∧ B_tot = 0
+  | op :: ops, N, seed, s_abs, c, x, B_tot =>
+    DictInv N seed s_abs c x ∧
+    (∑' seed₀ : EpochSeed N,
+      (epochSeedPMF N seed₀ : ℝ≥0∞) * ((stepOverhead N seed₀ s_abs op : ℕ) : ℝ≥0∞)) ≤ 8034 ∧
+    ∃ (N' : ℕ) (seed' : EpochSeed N') (c' : Companion)
       (code : Code 12) (T B_rest : ℕ),
-      B_tot = stepOverhead N θ s_abs op + B_rest ∧
+      B_tot = stepOverhead N seed s_abs op + B_rest ∧
       T + totalPotential N' (stepDict s_abs op) c' ≤
-        totalPotential N s_abs c + stepOverhead N θ s_abs op ∧
+        totalPotential N s_abs c + stepOverhead N seed s_abs op ∧
       (∃ ts_rest : List ℕ,
         ts_rest.length = ops.length ∧
         ts_rest.sum ≤ totalPotential N' (stepDict s_abs op) c' + B_rest) ∧
       DemonicExecWithin w code x
         (fun y =>
-          DictInv N' θ' (stepDict s_abs op) c' y ∧
+          DictInv N' seed' (stepDict s_abs op) c' y ∧
           (∀ u, op = .query u → decodeQueryRegs y = s_abs u) ∧
           ExecTrace U _V w EpochSeed epochSeedPMF Companion DictInv
-            totalPotential stepOverhead ops N' θ' (stepDict s_abs op) c' y B_rest)
+            totalPotential stepOverhead ops N' seed' (stepDict s_abs op) c' y B_rest)
         T
 
 /-- Base-case constructor law for `ExecTrace` on the empty operation sequence `[]`. -/
@@ -413,10 +413,10 @@ theorem execTrace_nil {U V w : ℕ} {EpochSeed : ℕ → Type} {epochSeedPMF : �
     {DictInv : ∀ N, EpochSeed N → DictState U → Companion → Data 12 → Prop}
     {totalPotential : ℕ → DictState U → Companion → ℕ}
     {stepOverhead : ∀ N, EpochSeed N → DictState U → DictOp U → ℕ}
-    {N : ℕ} {θ : EpochSeed N} {s_abs : DictState U} {c : Companion} {x : Data 12}
-    (hinv : DictInv N θ s_abs c x) :
+    {N : ℕ} {seed : EpochSeed N} {s_abs : DictState U} {c : Companion} {x : Data 12}
+    (hinv : DictInv N seed s_abs c x) :
     ExecTrace U V w EpochSeed epochSeedPMF Companion DictInv
-      totalPotential stepOverhead [] N θ s_abs c x 0 :=
+      totalPotential stepOverhead [] N seed s_abs c x 0 :=
   ⟨hinv, rfl⟩
 
 /-- Step constructor law for `ExecTrace` on `op :: ops`. -/
@@ -426,28 +426,28 @@ theorem execTrace_cons {U V w : ℕ} {EpochSeed : ℕ → Type} {epochSeedPMF : 
     {totalPotential : ℕ → DictState U → Companion → ℕ}
     {stepOverhead : ∀ N, EpochSeed N → DictState U → DictOp U → ℕ}
     {op : DictOp U} {ops : List (DictOp U)}
-    {N N' : ℕ} {θ : EpochSeed N} {θ' : EpochSeed N'}
+    {N N' : ℕ} {seed : EpochSeed N} {seed' : EpochSeed N'}
     {s_abs : DictState U} {c c' : Companion}
     {x : Data 12} {code : Code 12} {T B_rest B_tot : ℕ}
-    (hinv : DictInv N θ s_abs c x)
-    (htsum : (∑' θ₀ : EpochSeed N,
-      (epochSeedPMF N θ₀ : ℝ≥0∞) * ((stepOverhead N θ₀ s_abs op : ℕ) : ℝ≥0∞)) ≤ 8034)
-    (hB : B_tot = stepOverhead N θ s_abs op + B_rest)
+    (hinv : DictInv N seed s_abs c x)
+    (htsum : (∑' seed₀ : EpochSeed N,
+      (epochSeedPMF N seed₀ : ℝ≥0∞) * ((stepOverhead N seed₀ s_abs op : ℕ) : ℝ≥0∞)) ≤ 8034)
+    (hB : B_tot = stepOverhead N seed s_abs op + B_rest)
     (hpot : T + totalPotential N' (stepDict s_abs op) c' ≤
-      totalPotential N s_abs c + stepOverhead N θ s_abs op)
+      totalPotential N s_abs c + stepOverhead N seed s_abs op)
     (hts : ∃ ts_rest : List ℕ,
       ts_rest.length = ops.length ∧
       ts_rest.sum ≤ totalPotential N' (stepDict s_abs op) c' + B_rest)
     (hexec : DemonicExecWithin w code x
       (fun y =>
-        DictInv N' θ' (stepDict s_abs op) c' y ∧
+        DictInv N' seed' (stepDict s_abs op) c' y ∧
         (∀ u, op = .query u → decodeQueryRegs y = s_abs u) ∧
         ExecTrace U V w EpochSeed epochSeedPMF Companion DictInv
-          totalPotential stepOverhead ops N' θ' (stepDict s_abs op) c' y B_rest)
+          totalPotential stepOverhead ops N' seed' (stepDict s_abs op) c' y B_rest)
       T) :
     ExecTrace U V w EpochSeed epochSeedPMF Companion DictInv
-      totalPotential stepOverhead (op :: ops) N θ s_abs c x B_tot :=
-  ⟨hinv, htsum, N', θ', c', code, T, B_rest, hB, hpot, hts, hexec⟩
+      totalPotential stepOverhead (op :: ops) N seed s_abs c x B_tot :=
+  ⟨hinv, htsum, N', seed', c', code, T, B_rest, hB, hpot, hts, hexec⟩
 
 /-! ## Headline Theorem -/
 
@@ -467,20 +467,21 @@ client bit-allocation subroutine `clientAllocBitsCode` such that:
      bits),
    - whenever `EpochInv U N n_t` holds,
      `dictBitSize N n_t ≤ optBits U V n_t + 680 * n_t * logLogFactor n_t + 218 * w`, and
-   - at every reachable state satisfying `DictInv N θ s_abs c x` with `n_t = (dictDom s_abs).card`
-     active keys, `x.WellFormed w`, `EpochInv U N n_t`, `x.bitSize = dictBitSize N n_t`, and
+   - at every reachable state satisfying `DictInv N seed s_abs c x` with
+     `n_t = (dictDom s_abs).card` active keys, `x.WellFormed w`, `EpochInv U N n_t`,
+     `x.bitSize = dictBitSize N n_t`, and
      `x.bitSize ≤ optBits U V n_t + 680 * n_t * logLogFactor n_t + 218 * w`.
 2. **Expected `O(1)` amortized step transition**: for every state satisfying
-   `DictInv N θ s_abs c x` and every valid operation `op : DictOp U` (`validDictOp V s_abs op`),
-   the expected amortized instruction overhead over `θ₀ ← epochSeedPMF N` is at most `8034`, and
+   `DictInv N seed s_abs c x` and every valid operation `op : DictOp U` (`validDictOp V s_abs op`),
+   the expected amortized instruction overhead over `seed₀ ← epochSeedPMF N` is at most `8034`, and
    (when `∀ N' ≤ U, dictBitSize N' N' < 2 ^ w`) `op` executes in `T` instructions under
    `DemonicExecWithin` preserving `DictInv`, returning `s_abs u` for every `query u`, and
    satisfying
    `T + totalPotential N' (stepDict s_abs op) c' ≤`
-   `totalPotential N s_abs c + stepOverhead N θ s_abs op`.
+   `totalPotential N s_abs c + stepOverhead N seed s_abs op`.
 3. **Full operation-sequence execution from empty**: from any well-formed initial state
    `x₀ : Data 12` with `x₀.bitSize = 0` and any valid operation sequence `ops : List (DictOp U)` of
-   arbitrary length (`ValidDictHistory V (emptyDict U) ops`), `initCode θ₀` initializes the empty
+   arbitrary length (`ValidDictHistory V (emptyDict U) ops`), `initCode seed₀` initializes the empty
    dictionary in `21` instructions (`y₀.bitSize = 4 * w`) and `ops` executes via `ExecTrace` with
    step instruction counts `ts : List ℕ` (`ts.length = ops.length`, `ts.sum ≤ B_tot`).
 4. **Client subroutine reuse of bits released by `delete`**: when an active key `u`
@@ -513,9 +514,9 @@ theorem bitResizableDictionary {U V w : ℕ} (hw : 4 ≤ w) (hU : U < 2 ^ w) (hV
       (∀ N n_t, EpochInv U N n_t →
         dictBitSize N n_t ≤
           optBits U V n_t + 680 * n_t * logLogFactor n_t + 218 * w) ∧
-      (∀ {N : ℕ} (θ : EpochSeed N) {s_abs : DictState U} {c : Companion}
+      (∀ {N : ℕ} (seed : EpochSeed N) {s_abs : DictState U} {c : Companion}
           {x : Data 12},
-        DictInv N θ s_abs c x →
+        DictInv N seed s_abs c x →
         let n_t := (dictDom s_abs).card
         x.WellFormed w ∧
         EpochInv U N n_t ∧
@@ -523,39 +524,39 @@ theorem bitResizableDictionary {U V w : ℕ} (hw : 4 ≤ w) (hU : U < 2 ^ w) (hV
         x.bitSize ≤
           optBits U V n_t + 680 * n_t * logLogFactor n_t + 218 * w) ∧
       (∀ (_hfit_all : ∀ N' ≤ U, dictBitSize N' N' < 2 ^ w)
-          {N : ℕ} (θ : EpochSeed N) {s_abs : DictState U} {c : Companion}
+          {N : ℕ} (seed : EpochSeed N) {s_abs : DictState U} {c : Companion}
           {x : Data 12},
-        DictInv N θ s_abs c x →
+        DictInv N seed s_abs c x →
         ∀ (op : DictOp U), validDictOp V s_abs op →
-        ∀ (_θ_re : EpochSeed (targetCap U (dictDom (stepDict s_abs op)).card)),
-          (∑' θ₀ : EpochSeed N,
-            (epochSeedPMF N θ₀ : ℝ≥0∞) *
-              ((stepOverhead N θ₀ s_abs op : ℕ) : ℝ≥0∞)) ≤ 8034 ∧
-          ∃ (N' : ℕ) (θ' : EpochSeed N') (c' : Companion)
+        ∀ (_seed_re : EpochSeed (targetCap U (dictDom (stepDict s_abs op)).card)),
+          (∑' seed₀ : EpochSeed N,
+            (epochSeedPMF N seed₀ : ℝ≥0∞) *
+              ((stepOverhead N seed₀ s_abs op : ℕ) : ℝ≥0∞)) ≤ 8034 ∧
+          ∃ (N' : ℕ) (seed' : EpochSeed N') (c' : Companion)
             (code : Code 12) (T : ℕ),
             DemonicExecWithin w code x
               (fun y =>
-                DictInv N' θ' (stepDict s_abs op) c' y ∧
+                DictInv N' seed' (stepDict s_abs op) c' y ∧
                 (∀ u, op = .query u → decodeQueryRegs y = s_abs u)) T ∧
             T + totalPotential N' (stepDict s_abs op) c' ≤
-              totalPotential N s_abs c + stepOverhead N θ s_abs op) ∧
+              totalPotential N s_abs c + stepOverhead N seed s_abs op) ∧
       (∀ (_hfit_all : ∀ N' ≤ U, dictBitSize N' N' < 2 ^ w)
-          (θ₀ : EpochSeed 0) {x₀ : Data 12},
+          (seed₀ : EpochSeed 0) {x₀ : Data 12},
         x₀.WellFormed w → x₀.bitSize = 0 →
         ∀ (ops : List (DictOp U)), ValidDictHistory V (emptyDict U) ops →
           ∃ B_tot : ℕ,
-            DemonicExecWithin w (initCode θ₀) x₀
+            DemonicExecWithin w (initCode seed₀) x₀
               (fun y₀ =>
-                DictInv 0 θ₀ (emptyDict U) emptyCompanion y₀ ∧
+                DictInv 0 seed₀ (emptyDict U) emptyCompanion y₀ ∧
                 y₀.bitSize = 4 * w ∧
                 ExecTrace U V w EpochSeed epochSeedPMF Companion DictInv
-                  totalPotential stepOverhead ops 0 θ₀ (emptyDict U)
+                  totalPotential stepOverhead ops 0 seed₀ (emptyDict U)
                   emptyCompanion y₀ B_tot ∧
                 ∃ ts : List ℕ, ts.length = ops.length ∧ ts.sum ≤ B_tot)
               21) ∧
-      (∀ {N : ℕ} (θ : EpochSeed N) {s_abs : DictState U} {c : Companion}
+      (∀ {N : ℕ} (seed : EpochSeed N) {s_abs : DictState U} {c : Companion}
           {x : Data 12},
-        DictInv N θ s_abs c x →
+        DictInv N seed s_abs c x →
         ∀ (u : Fin U), (s_abs u).isSome →
         EpochInv U N (dictDom (stepDict s_abs (.delete u))).card →
         ∀ {b v_client : ℕ}, b ≤ w → b ≤ itemBits U V N → v_client < 2 ^ b →
@@ -563,14 +564,14 @@ theorem bitResizableDictionary {U V w : ℕ} (hw : 4 ≤ w) (hU : U < 2 ^ w) (hV
           let bit_after_del := x.bitSize - itemBits U V N
           ∃ (c' : Companion) (code_del : Code 12) (T : ℕ),
             T + totalPotential N s_abs' c' ≤
-              totalPotential N s_abs c + stepOverhead N θ s_abs (.delete u) ∧
-            (∑' θ₀ : EpochSeed N,
-              (epochSeedPMF N θ₀ : ℝ≥0∞) *
-                ((stepOverhead N θ₀ s_abs (.delete u) : ℕ) : ℝ≥0∞)) ≤ 8034 ∧
+              totalPotential N s_abs c + stepOverhead N seed s_abs (.delete u) ∧
+            (∑' seed₀ : EpochSeed N,
+              (epochSeedPMF N seed₀ : ℝ≥0∞) *
+                ((stepOverhead N seed₀ s_abs (.delete u) : ℕ) : ℝ≥0∞)) ≤ 8034 ∧
             DemonicExecWithin w (.seq code_del (clientAllocBitsCode b v_client)) x
               (fun z =>
                 ∃ y : Data 12,
-                  DictInv N θ s_abs' c' y ∧
+                  DictInv N seed s_abs' c' y ∧
                   y.bitSize = bit_after_del ∧
                   z.WellFormed w ∧
                   z.bitSize = bit_after_del + b ∧

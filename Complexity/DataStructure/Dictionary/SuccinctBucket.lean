@@ -861,6 +861,7 @@ def probeExcess {U : ℕ} (n_max : ℕ) (qOf : Fin U → Q)
 
 /-- Localized form of `expect_microCollCount_le_two`: requires quotient injectivity of `qOf` only
 on `insert u (S.erase u)`. -/
+@[nolint unusedArguments]
 theorem expect_microCollCount_le_two_on [Nonempty ι] {U n_max : ℕ}
     {qOf : Fin U → Q}
     {H : ι → Q → Fin (2 ^ totalMicroBits n_max)} (hh : IsPairwiseIndependentHash H)

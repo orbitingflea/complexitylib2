@@ -779,8 +779,7 @@ theorem addrSetupCode_execWithin {base offset N k w idx : ℕ} {x : Data 10}
     exec_exactBin (by simp +decide [s13, s12]) hfit_addr1
   set s15 := s14.set 6 (w - bitOffset k w idx)
   have e15 : Exec w (.op (.exactBin .sub 6 8 5) : Code .exact 10) s14 s15 1 :=
-    exec_exactBin (by
-      simp [BinOp.evalExact, s14, s13, s12, s11, s10, hs9_5, hs9_8, hbOff_lt.le])
+    exec_exactBin (by simp [BinOp.evalExact, s14, s13, s12, s11, s10, hs9_5, hs9_8, hbOff_lt.le])
       hfit_sub_b
   have hs15_9 : s15.regs 9 = k := by simp +decide [s15, s14, s13, s12, s11, s10, hs9_9]
   set s16 := s15.set 6 (lowWidth k w idx)

@@ -75,7 +75,7 @@ theorem clientResult_readPackedProg (base offset k w idx : ℕ) (s : Memory.Stat
       readPacked (base + offset) k w s.mem idx :=
   rfl
 
-@[simp]
+@[simp, nolint simpNF]
 theorem clientState_readPackedProg (base offset k w idx : ℕ) (s : Memory.State) :
     (Memory.spec 0).clientState s (readPackedProg base offset k w idx) = s :=
   rfl
@@ -90,7 +90,7 @@ theorem clientResult_writePackedProg (base offset k w idx val : ℕ) (s : Memory
     (Memory.spec 0).clientResult s (writePackedProg base offset k w idx val) = () :=
   rfl
 
-@[simp]
+@[simp, nolint simpNF]
 theorem clientState_writePackedProg (base offset k w idx val : ℕ) (s : Memory.State) :
     (Memory.spec 0).clientState s (writePackedProg base offset k w idx val) =
       { mem := writePacked (base + offset) k w s.mem idx val, frontier := s.frontier } :=
@@ -470,7 +470,7 @@ theorem realizes_writeGM {U V w n_max h_space : ℕ}
   exact ⟨rfl, hw, globalPtrBits_le_of_lt_pow hnU hU, hidx,
     hspace.of_le (by unfold totalSpace; omega)⟩
 
-@[simp]
+@[simp, nolint simpNF]
 theorem clientState_readGMProg (U V w n_max h_space : ℕ) (d : ℕ × ℕ) (s : Memory.State) :
     (Memory.spec 0).clientState s (readGMProg U V w n_max h_space d) = s :=
   rfl
@@ -576,7 +576,7 @@ theorem clientResult_readBucketCountProg {U V w n_max h_space : ℕ}
       clientState_readGMProg, clientResult_readGMProg s hr_lt]
     rfl
 
-@[simp]
+@[simp, nolint simpNF]
 theorem clientState_readBucketCountProg {U V w n_max h_space : ℕ}
     (d : ℕ × ℕ) (s : Memory.State) :
     (Memory.spec 0).clientState s (readBucketCountProg U V w n_max h_space d) = s := by
@@ -650,7 +650,7 @@ def resolveIndexedSlotProg (U V w n_max h_space : ℕ) (d : (ℕ × ℕ) × ℕ)
           (d.2 - q_b * slabSize n_max)))
       pure ((n_max - 1) - t)
 
-@[simp]
+@[simp, nolint simpNF]
 theorem clientState_resolveIndexedSlotProg {U V w n_max h_space : ℕ}
     (d : (ℕ × ℕ) × ℕ) (s : Memory.State) :
     (Memory.spec 0).clientState s (resolveIndexedSlotProg U V w n_max h_space d) = s := by
@@ -680,8 +680,7 @@ theorem clientResult_resolveIndexedSlotProg {U V w n_max h_space : ℕ}
       slotOf n_max (gmAt d.1.1 U V w n_max h_space s.mem) d.1.2 d.2 := by
   unfold resolveIndexedSlotProg slotOf
   by_cases hb0 : bucketBits n_max = 0
-  · simp [hb0]
-    rfl
+  · simp only [hb0, ↓reduceIte]; rfl
   · have hb_pos : 0 < bucketBits n_max := Nat.pos_of_ne_zero hb0
     have hq_lt : 4 + 3 * d.1.2 < globalMetaLen n_max := gmQIdx_lt hb_pos hb
     simp only [hb0, ↓reduceIte]
@@ -891,15 +890,15 @@ theorem realizes_resolveIndexedSlot {U V w₀ n_max h_space : ℕ}
 
 /-! ## Section 4: Pure state effects and costs of `read*Prog` and `write*Prog` -/
 
-@[simp]
+@[simp, nolint simpNF]
 theorem clientState_readQuotProg (U w n_max h_space : ℕ) (d : ℕ × ℕ) (s : Memory.State) :
     (Memory.spec 0).clientState s (readQuotProg U w n_max h_space d) = s := rfl
 
-@[simp]
+@[simp, nolint simpNF]
 theorem clientState_readValProg (U V w n_max h_space : ℕ) (d : ℕ × ℕ) (s : Memory.State) :
     (Memory.spec 0).clientState s (readValProg U V w n_max h_space d) = s := rfl
 
-@[simp]
+@[simp, nolint simpNF]
 theorem clientState_readLMProg (U V w n_max h_space c : ℕ) (d : ℕ × ℕ) (s : Memory.State) :
     (Memory.spec 0).clientState s (readLMProg U V w n_max h_space c d) = s := rfl
 

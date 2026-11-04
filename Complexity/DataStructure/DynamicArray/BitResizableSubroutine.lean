@@ -156,7 +156,7 @@ structure SingleTapeTwoArrays (w b : ℕ) (s : BitMemory.State)
 
 /-- Initialize the single-tape two-array layout `(xs₁ = [], xs₂ = [])` from `BitMemory.empty` by
 growing `w` bits for the header and writing `0` into `[0, w)`. -/
-def initSingleTapeTwoArrays (w : ℕ) : BitMemory.Prog Unit := do
+@[expose] def initSingleTapeTwoArrays (w : ℕ) : BitMemory.Prog Unit := do
   let _ ← BitMemory.grow w
   BitMemory.writeBits 0 w 0
 
@@ -203,7 +203,7 @@ theorem initSingleTapeTwoArrays_demonic (hw : 0 < w)
 /-- Single-tape program that pops the sole item of `xs₂ = [v]` (at bit offset `w + n₁ * b`) by
 calling `shrink b` on the single tape, and then appends `v` to `xs₁` by calling `grow b`, writing
 `v` into `[w + n₁ * b, w + (n₁ + 1) * b)`, and incrementing the header `n₁` in `[0, w)`. -/
-def singleTapePop₂Append₁Prog (w b : ℕ) : BitMemory.Prog ℕ := do
+@[expose] def singleTapePop₂Append₁Prog (w b : ℕ) : BitMemory.Prog ℕ := do
   let n₁ ← BitMemory.readBits 0 w
   let v ← BitMemory.readBits (w + n₁ * b) b
   BitMemory.shrink b
