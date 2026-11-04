@@ -211,7 +211,7 @@ theorem clientResult_resolveOvfStepProg {U V w n_max h_space : ℕ}
 theorem realizes_resolveOvfStep {U V w₀ n_max h_space : ℕ}
     (hw : 0 < w₀) (hnU : n_max ≤ U) (hU : U < 2 ^ w₀)
     (hb_pos : 0 < bucketBits n_max) :
-    Realizes .exact (resolveOvfStepProg U V w₀ n_max h_space)
+    RealizesAt 300 3000 .exact (resolveOvfStepProg U V w₀ n_max h_space)
       (WordEncoding.encode (α := (ℕ × ℕ) × (ℕ × ℕ)))
       (WordEncoding.encode (α := ℕ × ℕ))
       (ResolveOvfStepPre U V w₀ n_max h_space)
@@ -452,7 +452,7 @@ theorem clientResult_ovfStepProg {U V w n_max h_space : ℕ}
 theorem realizes_ovfStep {U V w₀ n_max h_space : ℕ}
     (hw : 0 < w₀) (hnU : n_max ≤ U) (hU : U < 2 ^ w₀)
     (hb_pos : 0 < bucketBits n_max) :
-    Realizes .exact (ovfStepProg U V w₀ n_max h_space)
+    RealizesAt 600 6000 .exact (ovfStepProg U V w₀ n_max h_space)
       (WordEncoding.encode (α := ((ℕ × ℕ) × ℕ) × ((((ℕ × ℕ) × ℕ) × ℕ) × ℕ)))
       (WordEncoding.encode (α := (((ℕ × ℕ) × ℕ) × ℕ) × ℕ))
       (OvfStepPre U V w₀ n_max h_space)
@@ -482,14 +482,14 @@ def ovfLoopProg (U V w n_max h_space : ℕ)
 theorem realizes_ovfLoop {U V w₀ n_max h_space : ℕ}
     (hw : 0 < w₀) (hnU : n_max ≤ U) (hU : U < 2 ^ w₀)
     (hb_pos : 0 < bucketBits n_max) :
-    Realizes .exact (ovfLoopProg U V w₀ n_max h_space)
+    RealizesAt 608 12036 .exact (ovfLoopProg U V w₀ n_max h_space)
       (WordEncoding.encode (α := (((ℕ × ℕ) × ℕ) × ((((ℕ × ℕ) × ℕ) × ℕ) × ℕ)) × ℕ))
       (WordEncoding.encode (α := (((ℕ × ℕ) × ℕ) × ℕ) × ℕ))
       (fun w d s =>
         iterationSafe (ovfStepProg U V w₀ n_max h_space)
           (OvfStepPre U V w₀ n_max h_space) w d.1.1 d.2 d.1.2 s)
       (fun _ _ => 0) :=
-  Realizes.iterate₀
+  RealizesAt.iterate₀
     (WordEncoding.encode (α := (ℕ × ℕ) × ℕ))
     (WordEncoding.encode (α := (((ℕ × ℕ) × ℕ) × ℕ) × ℕ))
     (realizes_ovfStep hw hnU hU hb_pos)
@@ -779,7 +779,7 @@ theorem clientResult_initOvfSearchProg {U V w n_max h_space : ℕ}
 theorem realizes_initOvfSearch {U V w₀ n_max h_space : ℕ}
     (hw : 0 < w₀) (hnU : n_max ≤ U) (hU : U < 2 ^ w₀)
     (hb_pos : 0 < bucketBits n_max) :
-    Realizes .exact (initOvfSearchProg U V w₀ n_max h_space)
+    RealizesAt 400 3000 .exact (initOvfSearchProg U V w₀ n_max h_space)
       (WordEncoding.encode (α := ℕ × ℕ))
       (WordEncoding.encode (α := ℕ × ℕ))
       (fun w d s => DictEnv U V w₀ n_max h_space w d.1 ∧
@@ -1054,13 +1054,13 @@ theorem searchOverflowProg_spec {U V w₀ n_max h_space w : ℕ}
 
 theorem realizes_searchOverflow {U V w₀ n_max h_space : ℕ}
     (hw : 0 < w₀) (hnU : n_max ≤ U) (hU : U < 2 ^ w₀) :
-    Realizes .exact (searchOverflowProg U V w₀ n_max h_space)
+    RealizesAt 1200 20000 .exact (searchOverflowProg U V w₀ n_max h_space)
       (WordEncoding.encode (α := (ℕ × ℕ) × ℕ))
       (WordEncoding.encode (α := (ℕ × ℕ) × ℕ))
       (SearchOverflowPre U V w₀ n_max h_space)
       (fun _ _ => 0) := by
   by_cases hb0 : bucketBits n_max = 0
-  · refine Realizes.congr (p := fun _ : (ℕ × ℕ) × ℕ => do
+  · refine RealizesAt.congr (p := fun _ : (ℕ × ℕ) × ℕ => do
         let z0 ← pure 0
         pure ((z0, z0), z0)) ?_
       (fun d => by simp [searchOverflowProg, hb0])
@@ -1070,7 +1070,7 @@ theorem realizes_searchOverflow {U V w₀ n_max h_space : ℕ}
       (h_space := h_space) hw hnU hU hb_pos
     have hloop := realizes_ovfLoop (U := U) (V := V) (w₀ := w₀) (n_max := n_max)
       (h_space := h_space) hw hnU hU hb_pos
-    refine Realizes.congr (p := fun d : (ℕ × ℕ) × ℕ => do
+    refine RealizesAt.congr (p := fun d : (ℕ × ℕ) × ℕ => do
         let init ← initOvfSearchProg U V w₀ n_max h_space d.1
         let j0 ← pure (min n_max (effBucketCap n_max))
         let z0 ← pure 0
@@ -1229,7 +1229,7 @@ theorem searchBucketProg_spec {U V w₀ n_max h_space w : ℕ}
 
 theorem realizes_searchBucket {U V w₀ n_max h_space : ℕ}
     (hw : 0 < w₀) (hnU : n_max ≤ U) (hU : U < 2 ^ w₀) :
-    Realizes .exact (searchBucketProg U V w₀ n_max h_space)
+    RealizesAt 2200 50000 .exact (searchBucketProg U V w₀ n_max h_space)
       (WordEncoding.encode (α := ((ℕ × ℕ) × ℕ) × ℕ))
       (WordEncoding.encode (α := (ℕ × ℕ) × ℕ))
       (SearchMicroChainPre U V w₀ n_max h_space)
@@ -1380,7 +1380,7 @@ theorem queryBodyProg_spec {U V w₀ n_max h_space w : ℕ}
 
 theorem realizes_queryBody {U V w₀ n_max h_space : ℕ}
     (hw : 0 < w₀) (hnU : n_max ≤ U) (hU : U < 2 ^ w₀) (hV : V ≤ 2 ^ w₀) :
-    Realizes .exact (queryBodyProg U V w₀ n_max h_space)
+    RealizesAt 2500 55000 .exact (queryBodyProg U V w₀ n_max h_space)
       (WordEncoding.encode (α := ((ℕ × ℕ) × ℕ) × ℕ))
       (WordEncoding.encode (α := Option ℕ))
       (SearchMicroChainPre U V w₀ n_max h_space)

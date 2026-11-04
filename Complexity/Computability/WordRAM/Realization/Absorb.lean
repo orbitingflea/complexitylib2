@@ -304,12 +304,12 @@ variable {q : δ × α → Memory.Prog β} {answer : α ↪ (Fin l → ℕ)} {ou
 theorem bind₀ (hP : RealizesAt n₁ C₁ B p input answer safeP (fun _ _ => 0))
     (hQ : RealizesAt n₂ C₂ B q ((input.prodMap answer).trans (Fin.appendEquiv k l).toEmbedding)
       output' safeQ (fun _ _ => 0)) :
-    RealizesAt (n₂ + l + n₁ + 1) (max C₁ C₂ * 2) B
+    RealizesAt (n₂ + l + n₁ + 1) (C₁ + C₂) B
       (fun d => (p d).bind (fun a => q (d, a))) input output'
       (fun w d s => safeP w d s ∧
         safeQ w (d, (Memory.spec 0).clientResult s (p d)) ((Memory.spec 0).clientState s (p d)))
       (fun _ _ => 0) :=
-  (hP.bind hQ).mono_mul 1 (fun _ _ => by omega)
+  hP.bindAdd hQ
 
 /-- Graded sequencing with closed-form reply and next memory. -/
 theorem bind₀_of_run (hP : RealizesAt n₁ C₁ B p input answer safeP (fun _ _ => 0))
@@ -318,7 +318,7 @@ theorem bind₀_of_run (hP : RealizesAt n₁ C₁ B p input answer safeP (fun _ 
     (reply : δ → Memory.State → α) (next : δ → Memory.State → Memory.State)
     (hreply : ∀ d s, (Memory.spec 0).clientResult s (p d) = reply d s)
     (hnext : ∀ d s, (Memory.spec 0).clientState s (p d) = next d s) :
-    RealizesAt (n₂ + l + n₁ + 1) (max C₁ C₂ * 2) B
+    RealizesAt (n₂ + l + n₁ + 1) (C₁ + C₂) B
       (fun d => (p d).bind (fun a => q (d, a))) input output'
       (fun w d s => safeP w d s ∧ safeQ w (d, reply d s) (next d s)) (fun _ _ => 0) :=
   (bind₀ hP hQ).consequence (fun w d s _ _ h => by rw [hreply, hnext]; exact h)
@@ -328,10 +328,10 @@ theorem bind₀_of_run (hP : RealizesAt n₁ C₁ B p input answer safeP (fun _ 
 theorem branch₀ {pos neg : δ → Memory.Prog α} {safePos safeNeg : ℕ → δ → Memory.State → Prop}
     (c : Cond k) (hp : RealizesAt n₁ C₁ B pos input output safePos (fun _ _ => 0))
     (hn : RealizesAt n₂ C₂ B neg input output safeNeg (fun _ _ => 0)) :
-    RealizesAt (n₁ + n₂) ((max C₁ C₂ + 2) * 3) B
+    RealizesAt (max n₁ n₂) (max C₁ C₂ + 2) B
       (fun d => if test c (input d) then pos d else neg d) input output
       (fun w d s => if test c (input d) then safePos w d s else safeNeg w d s) (fun _ _ => 0) :=
-  (branch c hp hn).mono_mul 2 (fun _ _ => by split <;> omega)
+  branchAbsorb c hp hn
 
 /-- Graded `pure₀` from `GlueComputableAt T` coordinates. -/
 theorem pure₀ {T : ℕ} (input : δ ↪ (Fin k → ℕ)) (output : α ↪ (Fin l → ℕ)) (f : δ → α)

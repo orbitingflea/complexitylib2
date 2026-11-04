@@ -1624,4 +1624,24 @@ theorem exec_opCode {U V w n_max base : ℕ}
   | insert u v => exact exec_opCode_insert hwf hfit θ s_abs u v hval hrep harg
   | delete u => exact exec_opCode_delete hwf hfit θ s_abs u hrep harg
 
+theorem scratchSuccinct_eq (U V w n_max : ℕ) : scratchSuccinct U V w n_max = 9701 := by
+  unfold scratchSuccinct
+  rw [RealizesAt.scratchSize_eq, RealizesAt.scratchSize_eq, RealizesAt.scratchSize_eq,
+    RealizesAt.scratchSize_eq, RealizesAt.scratchSize_eq]
+  omega
+
+theorem rSuccinct_eq (U V w n_max : ℕ) : rSuccinct U V w n_max = 9957 := by
+  unfold rSuccinct
+  rw [scratchSuccinct_eq]
+
+theorem opFactor_eq (U V w n_max : ℕ) : opFactor U V w n_max = 170000 := by
+  unfold opFactor
+  rw [RealizesAt.factor_eq, RealizesAt.factor_eq, RealizesAt.factor_eq,
+    RealizesAt.factor_eq, RealizesAt.factor_eq]
+  omega
+
+theorem chargeVal_eq (U V w n_max : ℕ) : chargeVal U V w n_max = 53494689 := by
+  unfold chargeVal
+  rw [opFactor_eq]
+
 end Cslib.DataStructure.Dictionary.WordRAM.Succinct

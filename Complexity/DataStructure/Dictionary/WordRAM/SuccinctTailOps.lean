@@ -1041,7 +1041,7 @@ private theorem appendTailItem_bounds {U V w₀ n_max h_space w : ℕ} {d : ℕ 
 
 theorem realizes_appendTailItem {U V w₀ n_max h_space : ℕ}
     (hw : 0 < w₀) (hnU : n_max ≤ U) (hU : U < 2 ^ w₀) (hb_pos : 0 < bucketBits n_max) :
-    Realizes .exact (appendTailItemProg U V w₀ n_max h_space)
+    RealizesAt 200 1000 .exact (appendTailItemProg U V w₀ n_max h_space)
       (WordEncoding.encode (α := ℕ × ℕ)) (WordEncoding.encode (α := ℕ))
       (fun w d s => DictEnv U V w₀ n_max h_space w d.1 ∧
         TailBijection n_max (gmAt d.1 U V w₀ n_max h_space s.mem)
@@ -1052,7 +1052,7 @@ theorem realizes_appendTailItem {U V w₀ n_max h_space : ℕ}
       (fun _ _ => 0) := by
   have hrg := realizes_readGM (U := U) (V := V) (h_space := h_space) hw hnU hU
   have hwg := realizes_writeGM (U := U) (V := V) (h_space := h_space) hw hnU hU
-  refine Realizes.congr (p := fun d : ℕ × ℕ => do
+  refine RealizesAt.congr (p := fun d : ℕ × ℕ => do
       let r_idx ← pure (4 + 3 * d.2 + 1)
       let r_b ← readGMProg U V w₀ n_max h_space (d.1, r_idx)
       let i1 ← pure 1
@@ -1361,7 +1361,7 @@ private theorem removeLastTailItem_bounds {U V w₀ n_max h_space w : ℕ} {d : 
 theorem realizes_removeLastTailItem {U V w₀ n_max h_space : ℕ}
     (hw : 0 < w₀) (hnU : n_max ≤ U) (hU : U < 2 ^ w₀) (hV : V ≤ 2 ^ w₀)
     (hb_pos : 0 < bucketBits n_max) :
-    Realizes .exact (removeLastTailItemProg U V w₀ n_max h_space)
+    RealizesAt 400 2000 .exact (removeLastTailItemProg U V w₀ n_max h_space)
       (WordEncoding.encode (α := ℕ × ℕ)) (WordEncoding.encode (α := Unit))
       (fun w d s => DictEnv U V w₀ n_max h_space w d.1 ∧
         TailBijection n_max (gmAt d.1 U V w₀ n_max h_space s.mem)
@@ -1380,7 +1380,7 @@ theorem realizes_removeLastTailItem {U V w₀ n_max h_space : ℕ}
     hw hV
   have hwv := realizes_writeVal (U := U) (V := V) (w := w₀) (n_max := n_max) (h_space := h_space)
     hw hV
-  refine Realizes.congr (p := fun d : ℕ × ℕ => do
+  refine RealizesAt.congr (p := fun d : ℕ × ℕ => do
       let r_idx ← pure (4 + 3 * d.2 + 1)
       let r_b ← readGMProg U V w₀ n_max h_space (d.1, r_idx)
       let r_del ← pure (r_b - 1)

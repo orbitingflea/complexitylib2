@@ -263,7 +263,7 @@ def PrependIfIndexedPre (U V w₀ n_max h_space w : ℕ)
 
 theorem realizes_prependIfIndexed {U V w₀ n_max h_space : ℕ}
     (hw : 0 < w₀) (hnU : n_max ≤ U) (hU : U < 2 ^ w₀) :
-    Realizes .exact (prependIfIndexedProg U V w₀ n_max h_space)
+    RealizesAt 1200 15000 .exact (prependIfIndexedProg U V w₀ n_max h_space)
       (WordEncoding.encode (α := ((ℕ × ℕ) × ℕ) × ℕ)) (WordEncoding.encode (α := Unit))
       (PrependIfIndexedPre U V w₀ n_max h_space)
       (fun _ _ => 0) := by
@@ -376,7 +376,7 @@ def UnlinkIfIndexedPre (U V w₀ n_max h_space w : ℕ)
 
 theorem realizes_unlinkIfIndexed {U V w₀ n_max h_space : ℕ}
     (hw : 0 < w₀) (hnU : n_max ≤ U) (hU : U < 2 ^ w₀) :
-    Realizes .exact (unlinkIfIndexedProg U V w₀ n_max h_space)
+    RealizesAt 1700 20000 .exact (unlinkIfIndexedProg U V w₀ n_max h_space)
       (WordEncoding.encode (α := ((ℕ × ℕ) × ℕ) × ℕ)) (WordEncoding.encode (α := Unit))
       (UnlinkIfIndexedPre U V w₀ n_max h_space)
       (fun _ _ => 0) := by
@@ -489,7 +489,7 @@ theorem clientResult_readTotalSlotsProg (U V w n_max h_space : ℕ) (base : ℕ)
 
 theorem realizes_readTotalSlots {U V w₀ n_max h_space : ℕ}
     (hw : 0 < w₀) (hnU : n_max ≤ U) (hU : U < 2 ^ w₀) :
-    Realizes .exact (readTotalSlotsProg U V w₀ n_max h_space)
+    RealizesAt 200 2000 .exact (readTotalSlotsProg U V w₀ n_max h_space)
       (WordEncoding.encode (α := ℕ)) (WordEncoding.encode (α := ℕ))
       (fun w base s => DictEnv U V w₀ n_max h_space w base ∧
         SlotStoreInv n_max (gmAt base U V w₀ n_max h_space s.mem))
@@ -499,7 +499,7 @@ theorem realizes_readTotalSlots {U V w₀ n_max h_space : ℕ}
     unfold globalMetaLen
     exact Nat.lt_of_lt_of_le (by decide : 0 < 4) (Nat.le_add_right 4 _)
   by_cases hb0 : bucketBits n_max = 0
-  · refine Realizes.congr (p := fun base : ℕ => do
+  · refine RealizesAt.congr (p := fun base : ℕ => do
         let i0 ← pure 0
         readGMProg U V w₀ n_max h_space (base, i0)) ?_
       (fun base => by simp [readTotalSlotsProg, hb0])
@@ -510,7 +510,7 @@ theorem realizes_readTotalSlots {U V w₀ n_max h_space : ℕ}
     have h1_lt : 1 < globalMetaLen n_max := by
       unfold globalMetaLen
       exact Nat.lt_of_lt_of_le (by decide : 1 < 4) (Nat.le_add_right 4 _)
-    refine Realizes.congr (p := fun base : ℕ => do
+    refine RealizesAt.congr (p := fun base : ℕ => do
         let i0 ← pure 0
         let i1 ← pure 1
         let n_slabs ← readGMProg U V w₀ n_max h_space (base, i0)
@@ -560,7 +560,7 @@ def CopyLastPayloadPre (U V w₀ n_max h_space w : ℕ)
 
 theorem realizes_copyLastPayload {U V w₀ n_max h_space : ℕ}
     (hw : 0 < w₀) (hnU : n_max ≤ U) (hU : U < 2 ^ w₀) (hV : V ≤ 2 ^ w₀) :
-    Realizes .exact (copyLastPayloadProg U V w₀ n_max h_space)
+    RealizesAt 500 8000 .exact (copyLastPayloadProg U V w₀ n_max h_space)
       (WordEncoding.encode (α := (ℕ × ℕ) × ℕ)) (WordEncoding.encode (α := Unit))
       (CopyLastPayloadPre U V w₀ n_max h_space)
       (fun _ _ => 0) := by

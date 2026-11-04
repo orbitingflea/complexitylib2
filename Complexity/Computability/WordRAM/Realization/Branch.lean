@@ -58,14 +58,14 @@ theorem branchWith {np Cp nn Cn : ℕ} {pos neg : δ → Memory.Prog α}
     {workPos workNeg : δ → Memory.State → ℕ} (c : Cond k)
     (hp : RealizesWith np Cp B pos input output safePos workPos)
     (hn : RealizesWith nn Cn B neg input output safeNeg workNeg) :
-    RealizesWith (np + nn) (max Cp Cn + 2) B
+    RealizesWith (max np nn) (max Cp Cn + 2) B
       (fun d => if test c (input d) then pos d else neg d) input output
       (fun w d s => if test c (input d) then safePos w d s else safeNeg w d s)
       (fun d s => (if test c (input d) then workPos d s else workNeg d s) + 2) := by
   obtain ⟨ep, hep⟩ := hp
   obtain ⟨en, hen⟩ := hn
-  let ip : Fin (l + np + 1) → Fin (l + (np + nn) + 1) := Fin.castLE (by omega)
-  let ineg : Fin (l + nn + 1) → Fin (l + (np + nn) + 1) := Fin.castLE (by omega)
+  let ip : Fin (l + np + 1) → Fin (l + max np nn + 1) := Fin.castLE (by omega)
+  let ineg : Fin (l + nn + 1) → Fin (l + max np nn + 1) := Fin.castLE (by omega)
   refine ⟨fun frontier src tmp =>
     .branch (c.rename src) (ep frontier src (tmp ∘ ip))
       (en frontier src (tmp ∘ ineg)), ?_⟩
@@ -73,11 +73,11 @@ theorem branchWith {np Cp nn Cn : ℕ} {pos neg : δ → Memory.Prog α}
   have hip : Function.Injective (tmp ∘ ip) := by
     intro a b hab
     apply Fin.ext
-    exact congrArg (fun z : Fin (l + (np + nn) + 1) => z.val) (hi hab)
+    exact congrArg (fun z : Fin (l + max np nn + 1) => z.val) (hi hab)
   have hin : Function.Injective (tmp ∘ ineg) := by
     intro a b hab
     apply Fin.ext
-    exact congrArg (fun z : Fin (l + (np + nn) + 1) => z.val) (hi hab)
+    exact congrArg (fun z : Fin (l + max np nn + 1) => z.val) (hi hab)
   obtain ⟨hnp, hrp⟩ := hep frontier src (tmp ∘ ip) hip
     (fun i j => hd i (ip j)) (fun j => hf (ip j)) hs
   obtain ⟨hnn, hrn⟩ := hen frontier src (tmp ∘ ineg) hin
@@ -101,7 +101,7 @@ theorem branchWith {np Cp nn Cn : ℕ} {pos neg : δ → Memory.Prog α}
               (max Cp Cn + 2) * 2 := by omega
         _ = _ := by ring
     · intro i
-      have heq : Fin.castAdd (np + nn + 1) i = ip (Fin.castAdd (np + 1) i) := Fin.ext rfl
+      have heq : Fin.castAdd (max np nn + 1) i = ip (Fin.castAdd (np + 1) i) := Fin.ext rfl
       rw [heq]
       exact hout i
     · intro i hif htmp
@@ -121,7 +121,78 @@ theorem branchWith {np Cp nn Cn : ℕ} {pos neg : δ → Memory.Prog α}
               (max Cp Cn + 2) * 2 := by omega
         _ = _ := by ring
     · intro i
-      have heq : Fin.castAdd (np + nn + 1) i = ineg (Fin.castAdd (nn + 1) i) := Fin.ext rfl
+      have heq : Fin.castAdd (max np nn + 1) i = ineg (Fin.castAdd (nn + 1) i) := Fin.ext rfl
+      rw [heq]
+      exact hout i
+    · intro i hif htmp
+      exact hframe i hif (fun j => htmp (ineg j))
+
+/-- Fixed-witness zero-work branch realization with test and jump absorbed into `max Cp Cn + 2`. -/
+theorem branch₀With {np Cp nn Cn : ℕ} {pos neg : δ → Memory.Prog α}
+    {input : δ ↪ (Fin k → ℕ)} {output : α ↪ (Fin l → ℕ)}
+    {safePos safeNeg : ℕ → δ → Memory.State → Prop} (c : Cond k)
+    (hp : RealizesWith np Cp B pos input output safePos (fun _ _ => 0))
+    (hn : RealizesWith nn Cn B neg input output safeNeg (fun _ _ => 0)) :
+    RealizesWith (max np nn) (max Cp Cn + 2) B
+      (fun d => if test c (input d) then pos d else neg d) input output
+      (fun w d s => if test c (input d) then safePos w d s else safeNeg w d s)
+      (fun _ _ => 0) := by
+  obtain ⟨ep, hep⟩ := hp
+  obtain ⟨en, hen⟩ := hn
+  let ip : Fin (l + np + 1) → Fin (l + max np nn + 1) := Fin.castLE (by omega)
+  let ineg : Fin (l + nn + 1) → Fin (l + max np nn + 1) := Fin.castLE (by omega)
+  refine ⟨fun frontier src tmp =>
+    .branch (c.rename src) (ep frontier src (tmp ∘ ip))
+      (en frontier src (tmp ∘ ineg)), ?_⟩
+  intro r frontier src tmp hi hd hf hs
+  have hip : Function.Injective (tmp ∘ ip) := by
+    intro a b hab
+    apply Fin.ext
+    exact congrArg (fun z : Fin (l + max np nn + 1) => z.val) (hi hab)
+  have hin : Function.Injective (tmp ∘ ineg) := by
+    intro a b hab
+    apply Fin.ext
+    exact congrArg (fun z : Fin (l + max np nn + 1) => z.val) (hi hab)
+  obtain ⟨hnp, hrp⟩ := hep frontier src (tmp ∘ ip) hip
+    (fun i j => hd i (ip j)) (fun j => hf (ip j)) hs
+  obtain ⟨hnn, hrn⟩ := hen frontier src (tmp ∘ ineg) hin
+    (fun i j => hd i (ineg j)) (fun j => hf (ineg j)) hs
+  refine ⟨fun h => h.elim hnp hnn, ?_⟩
+  intro w d x hx hin hsafe hv
+  have hc := test_rename c src x (input d) hin
+  by_cases ht : test c (input d)
+  · simp only [ite_eq_left ht] at hsafe hv ⊢
+    obtain ⟨y, hy, hm, hout, hframe⟩ := hrp w d x hx hin hsafe hv
+    refine ⟨y, (hy.branch_pos (hc.mpr ht)).mono ?_, hm, ?_, ?_⟩
+    · have hC : Cp ≤ max Cp Cn := le_max_left Cp Cn
+      have hmul := Nat.mul_le_mul_right
+        (memoryCost (pos d) (memoryState frontier x) + 0 + 1) hC
+      calc
+        Cp * (memoryCost (pos d) (memoryState frontier x) + 0 + 1) + 1
+          ≤ max Cp Cn * (memoryCost (pos d) (memoryState frontier x) + 0 + 1) +
+            2 * (memoryCost (pos d) (memoryState frontier x) + 0 + 1) := by omega
+        _ = (max Cp Cn + 2) *
+            (memoryCost (pos d) (memoryState frontier x) + 0 + 1) := by ring
+    · intro i
+      have heq : Fin.castAdd (max np nn + 1) i = ip (Fin.castAdd (np + 1) i) := Fin.ext rfl
+      rw [heq]
+      exact hout i
+    · intro i hif htmp
+      exact hframe i hif (fun j => htmp (ip j))
+  · simp only [ite_eq_right ht] at hsafe hv ⊢
+    obtain ⟨y, hy, hm, hout, hframe⟩ := hrn w d x hx hin hsafe hv
+    refine ⟨y, (hy.branch_neg (fun h => ht (hc.mp h))).mono ?_, hm, ?_, ?_⟩
+    · have hC : Cn ≤ max Cp Cn := le_max_right Cp Cn
+      have hmul := Nat.mul_le_mul_right
+        (memoryCost (neg d) (memoryState frontier x) + 0 + 1) hC
+      calc
+        Cn * (memoryCost (neg d) (memoryState frontier x) + 0 + 1) + 2
+          ≤ max Cp Cn * (memoryCost (neg d) (memoryState frontier x) + 0 + 1) +
+            2 * (memoryCost (neg d) (memoryState frontier x) + 0 + 1) := by omega
+        _ = (max Cp Cn + 2) *
+            (memoryCost (neg d) (memoryState frontier x) + 0 + 1) := by ring
+    · intro i
+      have heq : Fin.castAdd (max np nn + 1) i = ineg (Fin.castAdd (nn + 1) i) := Fin.ext rfl
       rw [heq]
       exact hout i
     · intro i hif htmp
@@ -153,13 +224,27 @@ theorem branch {np Cp nn Cn : ℕ} {pos neg : δ → Memory.Prog α}
     {workPos workNeg : δ → Memory.State → ℕ} (c : Cond k)
     (hp : RealizesAt np Cp B pos input output safePos workPos)
     (hn : RealizesAt nn Cn B neg input output safeNeg workNeg) :
-    RealizesAt (np + nn) (max Cp Cn + 2) B
+    RealizesAt (max np nn) (max Cp Cn + 2) B
       (fun d => if test c (input d) then pos d else neg d) input output
       (fun w d s => if test c (input d) then safePos w d s else safeNeg w d s)
       (fun d s => (if test c (input d) then workPos d s else workNeg d s) + 2) := by
   obtain ⟨np₀, hnp, Cp₀, hCp, hp⟩ := hp
   obtain ⟨nn₀, hnn, Cn₀, hCn, hn⟩ := hn
-  exact ⟨np₀ + nn₀, by omega, max Cp₀ Cn₀ + 2, by omega, Realizes.branchWith c hp hn⟩
+  exact ⟨max np₀ nn₀, by omega, max Cp₀ Cn₀ + 2, by omega, Realizes.branchWith c hp hn⟩
+
+/-- Graded zero-work conditional realization with test and jump absorbed into `max Cp Cn + 2`. -/
+theorem branchAbsorb {np Cp nn Cn : ℕ} {pos neg : δ → Memory.Prog α}
+    {input : δ ↪ (Fin k → ℕ)} {output : α ↪ (Fin l → ℕ)}
+    {safePos safeNeg : ℕ → δ → Memory.State → Prop} (c : Cond k)
+    (hp : RealizesAt np Cp B pos input output safePos (fun _ _ => 0))
+    (hn : RealizesAt nn Cn B neg input output safeNeg (fun _ _ => 0)) :
+    RealizesAt (max np nn) (max Cp Cn + 2) B
+      (fun d => if test c (input d) then pos d else neg d) input output
+      (fun w d s => if test c (input d) then safePos w d s else safeNeg w d s)
+      (fun _ _ => 0) := by
+  obtain ⟨np₀, hnp, Cp₀, hCp, hp⟩ := hp
+  obtain ⟨nn₀, hnn, Cn₀, hCn, hn⟩ := hn
+  exact ⟨max np₀ nn₀, by omega, max Cp₀ Cn₀ + 2, by omega, Realizes.branch₀With c hp hn⟩
 
 end RealizesAt
 

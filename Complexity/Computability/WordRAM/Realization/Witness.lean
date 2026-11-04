@@ -77,20 +77,43 @@ variable {B : Basis} {δ α : Type} {n C k l : ℕ}
   {p : δ → Memory.Prog α} {input : δ ↪ (Fin k → ℕ)} {output : α ↪ (Fin l → ℕ)}
   {safe : ℕ → δ → Memory.State → Prop} {work : δ → Memory.State → ℕ}
 
-/-- Pad the `l + n₀ + 1` witness register bank into the uniform `l + n + 1` bank. -/
-noncomputable def padSlot (h : RealizesAt n C B p input output safe work) :
-    Fin (l + h.choose + 1) → Fin (l + n + 1) :=
-  Fin.castLE (by have := h.choose_spec.1; omega)
+theorem exists_scratchSize (_h : RealizesAt n C B p input output safe work) :
+    ∃ s : ℕ, s = n := ⟨n, rfl⟩
 
-/-- Select the native emitter padded to the explicit scratch size `n`. -/
+/-- Explicit scratch register bank size `n` of a `RealizesAt n C` certificate. -/
+noncomputable def scratchSize (h : RealizesAt n C B p input output safe work) : ℕ :=
+  (exists_scratchSize h).choose
+
+theorem scratchSize_eq (h : RealizesAt n C B p input output safe work) :
+    h.scratchSize = n :=
+  (exists_scratchSize h).choose_spec
+
+theorem exists_factor (_h : RealizesAt n C B p input output safe work) :
+    ∃ f : ℕ, f = C := ⟨C, rfl⟩
+
+/-- Explicit exchange factor `C` of a `RealizesAt n C` certificate. -/
+noncomputable def factor (h : RealizesAt n C B p input output safe work) : ℕ :=
+  (exists_factor h).choose
+
+theorem factor_eq (h : RealizesAt n C B p input output safe work) :
+    h.factor = C :=
+  (exists_factor h).choose_spec
+
+/-- Pad the `l + n₀ + 1` witness register bank into the uniform `l + h.scratchSize + 1` bank. -/
+noncomputable def padSlot (h : RealizesAt n C B p input output safe work) :
+    Fin (l + h.choose + 1) → Fin (l + h.scratchSize + 1) :=
+  Fin.castLE (by have := h.choose_spec.1; have := h.scratchSize_eq; omega)
+
+/-- Select the native emitter padded to the explicit scratch size `h.scratchSize`. -/
 noncomputable def code (h : RealizesAt n C B p input output safe work) {r : ℕ}
-    (frontier : Fin r) (src : Fin k → Fin r) (tmp : Fin (l + n + 1) → Fin r) : Code B r :=
+    (frontier : Fin r) (src : Fin k → Fin r)
+    (tmp : Fin (l + h.scratchSize + 1) → Fin r) : Code B r :=
   h.choose_spec.2.choose_spec.2.choose frontier src (tmp ∘ h.padSlot)
 
-/-- The selected `RealizesAt` emitter executes with explicit scratch size `n` and exchange factor
-`C`. -/
+/-- The selected `RealizesAt` emitter executes with explicit scratch size `h.scratchSize` and
+exchange factor `h.factor`. -/
 theorem code_spec (h : RealizesAt n C B p input output safe work) {r : ℕ}
-    (frontier : Fin r) (src : Fin k → Fin r) (tmp : Fin (l + n + 1) → Fin r)
+    (frontier : Fin r) (src : Fin k → Fin r) (tmp : Fin (l + h.scratchSize + 1) → Fin r)
     (hi : Function.Injective tmp) (hd : ∀ i j, src i ≠ tmp j)
     (hf : ∀ j, tmp j ≠ frontier) (hs : ∀ i, src i ≠ frontier) :
     ¬(h.code frontier src tmp).ReadsWidth ∧
@@ -99,10 +122,10 @@ theorem code_spec (h : RealizesAt n C B p input output safe work) {r : ℕ}
       (Memory.spec w).ValidHistory (memoryState frontier x)
         ((Memory.spec w).clientHistory (memoryState frontier x) (p d)) →
       ∃ y, ExecWithin w (h.code frontier src tmp) x y
-          (C * (memoryCost (p d) (memoryState frontier x) +
+          (h.factor * (memoryCost (p d) (memoryState frontier x) +
             work d (memoryState frontier x) + 1)) ∧
         memoryState frontier y = (Memory.spec w).clientState (memoryState frontier x) (p d) ∧
-        (∀ i : Fin l, y.regs (tmp (Fin.castAdd (n + 1) i)) =
+        (∀ i : Fin l, y.regs (tmp (Fin.castAdd (h.scratchSize + 1) i)) =
           output ((Memory.spec w).clientResult (memoryState frontier x) (p d)) i) ∧
         ∀ i, i ≠ frontier → (∀ j, tmp j ≠ i) → y.regs i = x.regs i := by
   have hi' : Function.Injective (tmp ∘ h.padSlot) :=
@@ -112,9 +135,12 @@ theorem code_spec (h : RealizesAt n C B p input output safe work) {r : ℕ}
       (fun i j => hd i (h.padSlot j)) (fun j => hf (h.padSlot j)) hs
   refine ⟨hnw, fun w d x hx hin hsafe hv => ?_⟩
   obtain ⟨y, hy, hm, hout, hframe⟩ := hrun w d x hx hin hsafe hv
-  have hC₀ : h.choose_spec.2.choose ≤ C := h.choose_spec.2.choose_spec.1
+  have hC₀ : h.choose_spec.2.choose ≤ h.factor := by
+    rw [h.factor_eq]
+    exact h.choose_spec.2.choose_spec.1
   refine ⟨y, hy.mono (Nat.mul_le_mul_right _ hC₀), hm, fun i => ?_, fun i hif htmp => ?_⟩
-  · have hcast : h.padSlot (Fin.castAdd (h.choose + 1) i) = Fin.castAdd (n + 1) i :=
+  · have hcast : h.padSlot (Fin.castAdd (h.choose + 1) i) =
+        Fin.castAdd (h.scratchSize + 1) i :=
       Fin.ext rfl
     simpa only [Function.comp_apply, hcast] using hout i
   · exact hframe i hif (fun j => htmp (h.padSlot j))

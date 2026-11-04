@@ -52,22 +52,22 @@ variable {B : Basis} {δ α β : Type} {k l m : ℕ}
   {safeP : ℕ → δ → Memory.State → Prop} {safeQ : ℕ → δ × α → Memory.State → Prop}
   {workP : δ → Memory.State → ℕ} {workQ : δ × α → Memory.State → ℕ}
 
-/-- Fixed-witness sequential realization. -/
-theorem bindWith {n₁ C₁ n₂ C₂ : ℕ}
+/-- Fixed-witness sequential realization with additive factor `C₁ + C₂` and exact work sum. -/
+theorem bindAddWith {n₁ C₁ n₂ C₂ : ℕ}
     (hP : RealizesWith n₁ C₁ B p input answer safeP workP)
     (hQ : RealizesWith n₂ C₂ B q (appendWords input answer) output safeQ workQ) :
-    RealizesWith (n₂ + l + n₁ + 1) (max C₁ C₂) B
+    RealizesWith (n₂ + l + n₁ + 1) (C₁ + C₂) B
       (fun d => (p d).bind (fun a => q (d, a))) input output
       (fun w d s => safeP w d s ∧
         safeQ w (d, (Memory.spec 0).clientResult s (p d))
           ((Memory.spec 0).clientState s (p d)))
       (fun d s => workP d s +
         workQ (d, (Memory.spec 0).clientResult s (p d))
-          ((Memory.spec 0).clientState s (p d)) + 1) := by
+          ((Memory.spec 0).clientState s (p d))) := by
   obtain ⟨emitP, heP⟩ := hP
   obtain ⟨emitQ, heQ⟩ := hQ
   let N := n₂ + l + n₁ + 1
-  let C := max C₁ C₂
+  let C := C₁ + C₂
   let left : Fin (m + n₂ + 1) → Fin (m + N + 1) := bindLeft
   let right : Fin (l + n₁ + 1) → Fin (m + N + 1) := bindRight
   let emit : ∀ {r : ℕ}, (frontier : Fin r) → (Fin k → Fin r) →
@@ -151,18 +151,13 @@ theorem bindWith {n₁ C₁ n₂ C₂ : ℕ}
       C₂ * (memoryCost (q (d, a)) (memoryState frontier z) +
         workQ (d, a) (memoryState frontier z) + 1) ≤
         C * (memoryCost ((p d).bind (fun a => q (d, a))) s +
-          (workP d s + workQ (d, a) s' + 1) + 1)
+          (workP d s + workQ (d, a) s') + 1)
     rw [hmP, memoryCost_bind]
-    calc
-      _ ≤ C * (memoryCost (p d) s + workP d s + 1) +
-          C * (memoryCost (q (d, a)) s' + workQ (d, a) s' + 1) :=
-        Nat.add_le_add (Nat.mul_le_mul_right _ (Nat.le_max_left _ _))
-          (Nat.mul_le_mul_right _ (Nat.le_max_right _ _))
-      _ = _ := by
-        rw [← Nat.mul_add]
-        congr 1
-        dsimp only [a, s']
-        omega
+    dsimp only [C, a, s']
+    rw [Nat.right_distrib]
+    exact Nat.add_le_add
+      (Nat.mul_le_mul_left C₁ (by omega))
+      (Nat.mul_le_mul_left C₂ (by omega))
   · rw [hmP] at hmQ
     exact hmQ.trans (by
       simp only [StateTransitionSpec.clientState, StateTransitionSpec.runClient_bind]
@@ -190,7 +185,8 @@ theorem bind (hP : Realizes B p input answer safeP workP)
           ((Memory.spec 0).clientState s (p d)) + 1) := by
   obtain ⟨n₁, C₁, hP⟩ := hP
   obtain ⟨n₂, C₂, hQ⟩ := hQ
-  exact ⟨_, _, bindWith hP hQ⟩
+  exact Realizes.consequence ⟨_, _, bindAddWith hP hQ⟩
+    (fun _ _ _ _ _ h => h) (fun _ _ => by omega)
 
 end Realizes
 
@@ -203,20 +199,33 @@ variable {B : Basis} {δ α β : Type} {n₁ C₁ n₂ C₂ k l m : ℕ}
   {safeP : ℕ → δ → Memory.State → Prop} {safeQ : ℕ → δ × α → Memory.State → Prop}
   {workP : δ → Memory.State → ℕ} {workQ : δ × α → Memory.State → ℕ}
 
-/-- Graded sequential realization with explicit scratch and factor bounds. -/
-theorem bind (hP : RealizesAt n₁ C₁ B p input answer safeP workP)
+/-- Graded sequential realization with additive factor `C₁ + C₂` and exact work sum. -/
+theorem bindAdd (hP : RealizesAt n₁ C₁ B p input answer safeP workP)
     (hQ : RealizesAt n₂ C₂ B q (appendWords input answer) output safeQ workQ) :
-    RealizesAt (n₂ + l + n₁ + 1) (max C₁ C₂) B
+    RealizesAt (n₂ + l + n₁ + 1) (C₁ + C₂) B
       (fun d => (p d).bind (fun a => q (d, a))) input output
       (fun w d s => safeP w d s ∧
         safeQ w (d, (Memory.spec 0).clientResult s (p d))
           ((Memory.spec 0).clientState s (p d)))
       (fun d s => workP d s +
         workQ (d, (Memory.spec 0).clientResult s (p d))
-          ((Memory.spec 0).clientState s (p d)) + 1) := by
+          ((Memory.spec 0).clientState s (p d))) := by
   obtain ⟨n₀₁, hn₁, C₀₁, hC₁, hP⟩ := hP
   obtain ⟨n₀₂, hn₂, C₀₂, hC₂, hQ⟩ := hQ
-  exact ⟨_, by omega, _, by omega, Realizes.bindWith hP hQ⟩
+  exact ⟨_, by omega, _, by omega, Realizes.bindAddWith hP hQ⟩
+
+/-- Graded sequential realization with explicit scratch and factor bounds. -/
+theorem bind (hP : RealizesAt n₁ C₁ B p input answer safeP workP)
+    (hQ : RealizesAt n₂ C₂ B q (appendWords input answer) output safeQ workQ) :
+    RealizesAt (n₂ + l + n₁ + 1) (C₁ + C₂) B
+      (fun d => (p d).bind (fun a => q (d, a))) input output
+      (fun w d s => safeP w d s ∧
+        safeQ w (d, (Memory.spec 0).clientResult s (p d))
+          ((Memory.spec 0).clientState s (p d)))
+      (fun d s => workP d s +
+        workQ (d, (Memory.spec 0).clientResult s (p d))
+          ((Memory.spec 0).clientState s (p d)) + 1) :=
+  (bindAdd hP hQ).consequence (fun _ _ _ _ _ h => h) (fun _ _ => by omega)
 
 end RealizesAt
 

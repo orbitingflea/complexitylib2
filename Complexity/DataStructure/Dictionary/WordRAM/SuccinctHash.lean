@@ -675,14 +675,15 @@ theorem chain_and_overflow_le_probeExcess {U V w₀ n_max base : ℕ}
 /-- Helper turning a conditionally proved `Realizes` certificate `P → Realizes B p ...` into an
 unconditional `Realizes B p ... (fun w d s => P ∧ safe w d s) work` whose code, scratch size, and
 exchange factor do not depend on a proof of `P`. -/
-theorem realizes_of_imp {B : Basis} {k l : ℕ} {δ α : Type}
+theorem realizes_of_imp {n C : ℕ} {B : Basis} {k l : ℕ} {δ α : Type}
     {p : δ → Memory.Prog α} {input : δ ↪ (Fin k → ℕ)} {output : α ↪ (Fin l → ℕ)}
     {P : Prop} {safe : ℕ → δ → Memory.State → Prop} {work : δ → Memory.State → ℕ}
-    (h : P → Realizes B p input output safe work) :
-    Realizes B p input output (fun w d s => P ∧ safe w d s) work := by
+    (h : P → RealizesAt n C B p input output safe work) :
+    RealizesAt n C B p input output (fun w d s => P ∧ safe w d s) work := by
   by_cases hP : P
   · exact (h hP).consequence (fun _ _ _ _ _ hs => hs.2) (fun _ _ => le_rfl)
-  · refine ⟨0, 0, fun frontier _ _ => .op (.copy frontier frontier), ?_⟩
+  · refine ⟨0, Nat.zero_le _, 0, Nat.zero_le _,
+      fun frontier _ _ => .op (.copy frontier frontier), ?_⟩
     intro r frontier src tmp _ _ _ _
     refine ⟨by rintro ⟨⟩, ?_⟩
     intro w d x _ _ hs _
@@ -706,7 +707,7 @@ def ExtractQuotPre (n_max w u : ℕ) (_s : Memory.State) : Prop :=
   Fits w u ∧ Fits w (bucketBits n_max)
 
 theorem realizes_extractQuot (n_max : ℕ) :
-    Realizes .exact (extractQuotProg n_max)
+    RealizesAt 10 50 .exact (extractQuotProg n_max)
       (WordEncoding.encode (α := ℕ))
       (WordEncoding.encode (α := ℕ))
       (ExtractQuotPre n_max)
@@ -761,7 +762,7 @@ def QueryWithHashPre (U V w₀ n_max w : ℕ) (d : (ℕ × ℕ) × ℕ) (s : Mem
   SearchMicroChainPre U V w₀ n_max (hashSpace U w₀ n_max) w (((d.1.1, b), q), m) s
 
 theorem realizes_queryWithHash_aux {U V w₀ n_max : ℕ} (hwf : DictParamsWf U V w₀ n_max) :
-    Realizes .exact (queryWithHashProg U V w₀ n_max)
+    RealizesAt 3000 70000 .exact (queryWithHashProg U V w₀ n_max)
       (WordEncoding.encode (α := (ℕ × ℕ) × ℕ))
       (WordEncoding.encode (α := Option ℕ))
       (fun w d s =>
@@ -784,7 +785,7 @@ theorem realizes_queryWithHash_aux {U V w₀ n_max : ℕ} (hwf : DictParamsWf U 
 
 /-- Unconditional `Realizes .exact` certificate for `queryWithHashProg`. -/
 theorem realizes_queryWithHash (U V w₀ n_max : ℕ) :
-    Realizes .exact (queryWithHashProg U V w₀ n_max)
+    RealizesAt 3000 70000 .exact (queryWithHashProg U V w₀ n_max)
       (WordEncoding.encode (α := (ℕ × ℕ) × ℕ))
       (WordEncoding.encode (α := Option ℕ))
       (QueryWithHashPre U V w₀ n_max)
@@ -820,7 +821,7 @@ def InsertWithHashPre (U V w₀ n_max w : ℕ) (d : ((ℕ × ℕ) × ℕ) × ℕ
   InsertBodyPre U V w₀ n_max (hashSpace U w₀ n_max) w ((((d.1.1.1, b), q), d.1.2), m) s
 
 theorem realizes_insertWithHash_aux {U V w₀ n_max : ℕ} (hwf : DictParamsWf U V w₀ n_max) :
-    Realizes .exact (insertWithHashProg U V w₀ n_max)
+    RealizesAt 8500 160000 .exact (insertWithHashProg U V w₀ n_max)
       (WordEncoding.encode (α := ((ℕ × ℕ) × ℕ) × ℕ))
       (WordEncoding.encode (α := Unit))
       (fun w d s =>
@@ -843,7 +844,7 @@ theorem realizes_insertWithHash_aux {U V w₀ n_max : ℕ} (hwf : DictParamsWf U
 
 /-- Unconditional `Realizes .exact` certificate for `insertWithHashProg`. -/
 theorem realizes_insertWithHash (U V w₀ n_max : ℕ) :
-    Realizes .exact (insertWithHashProg U V w₀ n_max)
+    RealizesAt 8500 160000 .exact (insertWithHashProg U V w₀ n_max)
       (WordEncoding.encode (α := ((ℕ × ℕ) × ℕ) × ℕ))
       (WordEncoding.encode (α := Unit))
       (InsertWithHashPre U V w₀ n_max)
@@ -871,7 +872,7 @@ def deletePrepWithHashProg (U V w₀ n_max : ℕ) (d : (ℕ × ℕ) × ℕ) :
   deletePrepProg U V w₀ n_max (hashSpace U w₀ n_max) (((d.1.1, b), q), m)
 
 theorem realizes_deletePrepWithHash_aux {U V w₀ n_max : ℕ} (hwf : DictParamsWf U V w₀ n_max) :
-    Realizes .exact (deletePrepWithHashProg U V w₀ n_max)
+    RealizesAt 3500 80000 .exact (deletePrepWithHashProg U V w₀ n_max)
       (WordEncoding.encode (α := (ℕ × ℕ) × ℕ))
       (WordEncoding.encode (α := ((ℕ × ℕ) × ℕ) × ℕ))
       (fun w d s =>
@@ -894,7 +895,7 @@ theorem realizes_deletePrepWithHash_aux {U V w₀ n_max : ℕ} (hwf : DictParams
 
 /-- Unconditional `Realizes .exact` certificate for `deletePrepWithHashProg`. -/
 theorem realizes_deletePrepWithHash (U V w₀ n_max : ℕ) :
-    Realizes .exact (deletePrepWithHashProg U V w₀ n_max)
+    RealizesAt 3500 80000 .exact (deletePrepWithHashProg U V w₀ n_max)
       (WordEncoding.encode (α := (ℕ × ℕ) × ℕ))
       (WordEncoding.encode (α := ((ℕ × ℕ) × ℕ) × ℕ))
       (QueryWithHashPre U V w₀ n_max)
@@ -937,7 +938,7 @@ def DeleteFinishWithHashPre (U V w₀ n_max w : ℕ)
     (((((d.1.1.1.1, b), d.1.2.1), d.1.2.2), m), m_last) s
 
 theorem realizes_deleteFinishWithHash_aux {U V w₀ n_max : ℕ} (hwf : DictParamsWf U V w₀ n_max) :
-    Realizes .exact (deleteFinishWithHashProg U V w₀ n_max)
+    RealizesAt 9700 170000 .exact (deleteFinishWithHashProg U V w₀ n_max)
       (WordEncoding.encode (α := (((ℕ × ℕ) × ℕ) × ((ℕ × ℕ) × ℕ)) × ℕ))
       (WordEncoding.encode (α := Unit))
       (fun w d s =>
@@ -963,7 +964,7 @@ theorem realizes_deleteFinishWithHash_aux {U V w₀ n_max : ℕ} (hwf : DictPara
 
 /-- Unconditional `Realizes .exact` certificate for `deleteFinishWithHashProg`. -/
 theorem realizes_deleteFinishWithHash (U V w₀ n_max : ℕ) :
-    Realizes .exact (deleteFinishWithHashProg U V w₀ n_max)
+    RealizesAt 9700 170000 .exact (deleteFinishWithHashProg U V w₀ n_max)
       (WordEncoding.encode (α := (((ℕ × ℕ) × ℕ) × ((ℕ × ℕ) × ℕ)) × ℕ))
       (WordEncoding.encode (α := Unit))
       (DeleteFinishWithHashPre U V w₀ n_max)

@@ -278,13 +278,13 @@ private theorem gmPushSlab_bounds {U V w₀ n_max h_space w : ℕ} {d : ℕ × �
 theorem realizes_gmPushSlab {U V w₀ n_max h_space : ℕ}
     (hw : 0 < w₀) (hnU : n_max ≤ U) (hU : U < 2 ^ w₀)
     (hb_pos : 0 < bucketBits n_max) :
-    Realizes .exact (gmPushSlabProg U V w₀ n_max h_space)
+    RealizesAt 300 2000 .exact (gmPushSlabProg U V w₀ n_max h_space)
       (WordEncoding.encode (α := ℕ × ℕ)) (WordEncoding.encode (α := Unit))
       (fun w d s => GmPushSlabPre U V w₀ n_max h_space w d.1 d.2 s)
       (fun _ _ => 0) := by
   have hrg := realizes_readGM (U := U) (V := V) (h_space := h_space) hw hnU hU
   have hwg := realizes_writeGM (U := U) (V := V) (h_space := h_space) hw hnU hU
-  refine Realizes.congr (p := fun d : ℕ × ℕ => do
+  refine RealizesAt.congr (p := fun d : ℕ × ℕ => do
       let q_idx ← pure (4 + 3 * d.2)
       let q_b ← readGMProg U V w₀ n_max h_space (d.1, q_idx)
       let i0 ← pure 0
@@ -480,13 +480,13 @@ private theorem gmUnlinkTopSlab_bounds {U V w₀ n_max h_space w : ℕ} {d : ℕ
 theorem realizes_gmUnlinkTopSlab {U V w₀ n_max h_space : ℕ}
     (hw : 0 < w₀) (hnU : n_max ≤ U) (hU : U < 2 ^ w₀)
     (hb_pos : 0 < bucketBits n_max) :
-    Realizes .exact (gmUnlinkTopSlabProg U V w₀ n_max h_space)
+    RealizesAt 200 1000 .exact (gmUnlinkTopSlabProg U V w₀ n_max h_space)
       (WordEncoding.encode (α := ℕ × ℕ)) (WordEncoding.encode (α := ℕ))
       (fun w d s => GmPopSlabPre U V w₀ n_max h_space w d.1 d.2 s)
       (fun _ _ => 0) := by
   have hrg := realizes_readGM (U := U) (V := V) (h_space := h_space) hw hnU hU
   have hwg := realizes_writeGM (U := U) (V := V) (h_space := h_space) hw hnU hU
-  refine Realizes.congr (p := fun d : ℕ × ℕ => do
+  refine RealizesAt.congr (p := fun d : ℕ × ℕ => do
       let q_idx ← pure (4 + 3 * d.2)
       let q_b ← readGMProg U V w₀ n_max h_space (d.1, q_idx)
       let top_idx ← pure (4 + 3 * d.2 + 2)
@@ -760,13 +760,13 @@ private theorem gmRelinkMovedSlab_bounds {U V w₀ n_max h_space w : ℕ}
 theorem realizes_gmRelinkMovedSlab {U V w₀ n_max h_space : ℕ}
     (hw : 0 < w₀) (hnU : n_max ≤ U) (hU : U < 2 ^ w₀)
     (hb_pos : 0 < bucketBits n_max) :
-    Realizes .exact (gmRelinkMovedSlabProg U V w₀ n_max h_space)
+    RealizesAt 300 2000 .exact (gmRelinkMovedSlabProg U V w₀ n_max h_space)
       (WordEncoding.encode (α := (ℕ × ℕ) × ℕ)) (WordEncoding.encode (α := Unit))
       (fun w d s => GmMovedSlabPre U V w₀ n_max h_space w d.1.1 d.1.2 d.2 s)
       (fun _ _ => 0) := by
   have hrg := realizes_readGM (U := U) (V := V) (h_space := h_space) hw hnU hU
   have hwg := realizes_writeGM (U := U) (V := V) (h_space := h_space) hw hnU hU
-  refine Realizes.congr (p := fun d : (ℕ × ℕ) × ℕ => do
+  refine RealizesAt.congr (p := fun d : (ℕ × ℕ) × ℕ => do
       let ownB_idx ← pure (gmSlabMetaBase n_max + 4 * d.2)
       let b_last ← readGMProg U V w₀ n_max h_space (d.1.1, ownB_idx)
       let ownS_idx ← pure (gmSlabMetaBase n_max + 4 * d.2 + 1)
@@ -1034,13 +1034,13 @@ private theorem gmLinkMovedNeighbors_bounds {U V w₀ n_max h_space w : ℕ}
 theorem realizes_gmLinkMovedNeighbors {U V w₀ n_max h_space : ℕ}
     (hw : 0 < w₀) (hnU : n_max ≤ U) (hU : U < 2 ^ w₀)
     (hb_pos : 0 < bucketBits n_max) :
-    Realizes .exact (gmLinkMovedNeighborsProg U V w₀ n_max h_space)
+    RealizesAt 300 2000 .exact (gmLinkMovedNeighborsProg U V w₀ n_max h_space)
       (WordEncoding.encode (α := (ℕ × ℕ) × ℕ)) (WordEncoding.encode (α := Unit))
       (fun w d s => GmMovedSlabPre U V w₀ n_max h_space w d.1.1 d.1.2 d.2 s)
       (fun _ _ => 0) := by
   have hrg := realizes_readGM (U := U) (V := V) (h_space := h_space) hw hnU hU
   have hwg := realizes_writeGM (U := U) (V := V) (h_space := h_space) hw hnU hU
-  refine Realizes.congr (p := fun d : (ℕ × ℕ) × ℕ => do
+  refine RealizesAt.congr (p := fun d : (ℕ × ℕ) × ℕ => do
       let ownB_last_idx ← pure (gmSlabMetaBase n_max + 4 * d.2)
       let b_last ← readGMProg U V w₀ n_max h_space (d.1.1, ownB_last_idx)
       let ownS_last_idx ← pure (gmSlabMetaBase n_max + 4 * d.2 + 1)
@@ -1265,7 +1265,7 @@ theorem gmCompactSlabProg_effect {U V w n_max h_space base p_del : ℕ}
 theorem realizes_gmCompactSlab {U V w₀ n_max h_space : ℕ}
     (hw : 0 < w₀) (hnU : n_max ≤ U) (hU : U < 2 ^ w₀)
     (hb_pos : 0 < bucketBits n_max) :
-    Realizes .exact (gmCompactSlabProg U V w₀ n_max h_space)
+    RealizesAt 700 5000 .exact (gmCompactSlabProg U V w₀ n_max h_space)
       (WordEncoding.encode (α := ℕ × ℕ)) (WordEncoding.encode (α := Unit))
       (fun w d s => GmCompactSlabPre U V w₀ n_max h_space w d.1 d.2 s)
       (fun _ _ => 0) := by
@@ -1274,7 +1274,7 @@ theorem realizes_gmCompactSlab {U V w₀ n_max h_space : ℕ}
   have hrel := realizes_gmRelinkMovedSlab (U := U) (V := V) (h_space := h_space) hw hnU hU hb_pos
   have hlnk := realizes_gmLinkMovedNeighbors (U := U) (V := V) (h_space := h_space) hw hnU hU hb_pos
   have h0_lt : 0 < globalMetaLen n_max := by unfold globalMetaLen; omega
-  refine Realizes.congr (p := fun d : ℕ × ℕ => do
+  refine RealizesAt.congr (p := fun d : ℕ × ℕ => do
       let i0 ← pure 0
       let n_slabs ← readGMProg U V w₀ n_max h_space (d.1, i0)
       let p_last ← pure (n_slabs - 1)
@@ -1421,7 +1421,7 @@ theorem gmPopSlabProg_effect {U V w n_max h_space base b : ℕ}
 theorem realizes_gmPopSlab {U V w₀ n_max h_space : ℕ}
     (hw : 0 < w₀) (hnU : n_max ≤ U) (hU : U < 2 ^ w₀)
     (hb_pos : 0 < bucketBits n_max) :
-    Realizes .exact (gmPopSlabProg U V w₀ n_max h_space)
+    RealizesAt 902 7000 .exact (gmPopSlabProg U V w₀ n_max h_space)
       (WordEncoding.encode (α := ℕ × ℕ)) (WordEncoding.encode (α := Unit))
       (fun w d s => GmPopSlabPre U V w₀ n_max h_space w d.1 d.2 s)
       (fun _ _ => 0) := by

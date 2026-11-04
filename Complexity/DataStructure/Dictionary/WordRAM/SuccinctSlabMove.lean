@@ -334,7 +334,7 @@ private theorem promoteStep_bounds {U V w₀ n_max h_space w : ℕ} {x : (ℕ ×
 theorem realizes_promoteStep {U V w₀ n_max h_space : ℕ}
     (hw : 0 < w₀) (hnU : n_max ≤ U) (hU : U < 2 ^ w₀) (hV : V ≤ 2 ^ w₀)
     (hb_pos : 0 < bucketBits n_max) :
-    Realizes .exact (promoteStepProg U V w₀ n_max h_space)
+    RealizesAt 1000 10000 .exact (promoteStepProg U V w₀ n_max h_space)
       (WordEncoding.encode (α := (ℕ × ℕ) × ℕ)) (WordEncoding.encode (α := ℕ))
       (fun w x s => PromoteStepPre U V w₀ n_max h_space w x.1.1 x.1.2 x.2 s)
       (fun _ _ => 0) := by
@@ -349,7 +349,7 @@ theorem realizes_promoteStep {U V w₀ n_max h_space : ℕ}
     hw hV
   have hrem := realizes_removeLastTailItem (U := U) (V := V) (h_space := h_space)
     hw hnU hU hV hb_pos
-  refine Realizes.congr (p := fun x : (ℕ × ℕ) × ℕ => do
+  refine RealizesAt.congr (p := fun x : (ℕ × ℕ) × ℕ => do
       let u ← pure ((slabSize n_max - 1) - x.2)
       let r_top ← pure (slabSize n_max + u)
       let ptr_u_idx ← pure (gmTailPtrBase n_max + (x.1.2 * tailCapPerBucket n_max + u))
@@ -756,14 +756,14 @@ def promoteLoopProg (U V w n_max h_space : ℕ) (d : ((ℕ × ℕ) × ℕ) × �
 theorem realizes_promoteLoop {U V w₀ n_max h_space : ℕ}
     (hw : 0 < w₀) (hnU : n_max ≤ U) (hU : U < 2 ^ w₀) (hV : V ≤ 2 ^ w₀)
     (hb_pos : 0 < bucketBits n_max) :
-    Realizes .exact (promoteLoopProg U V w₀ n_max h_space)
+    RealizesAt 1004 20020 .exact (promoteLoopProg U V w₀ n_max h_space)
       (WordEncoding.encode (α := ((ℕ × ℕ) × ℕ) × ℕ)) (WordEncoding.encode (α := ℕ))
       (fun w d s =>
         iterationSafe (promoteStepProg U V w₀ n_max h_space)
           (fun w x s => PromoteStepPre U V w₀ n_max h_space w x.1.1 x.1.2 x.2 s)
           w d.1.1 d.2 d.1.2 s)
       (fun _ _ => 0) :=
-  Realizes.iterate₀ (WordEncoding.encode (α := ℕ × ℕ)) (WordEncoding.encode (α := ℕ))
+  RealizesAt.iterate₀ (WordEncoding.encode (α := ℕ × ℕ)) (WordEncoding.encode (α := ℕ))
     (realizes_promoteStep hw hnU hU hV hb_pos)
     (one_le_memoryCost_promoteStepProg U V w₀ n_max h_space)
 
@@ -1044,13 +1044,13 @@ theorem promoteSlabProg_effect {U V w n_max h_space base b : ℕ}
 theorem realizes_promoteSlab {U V w₀ n_max h_space : ℕ}
     (hw : 0 < w₀) (hnU : n_max ≤ U) (hU : U < 2 ^ w₀) (hV : V ≤ 2 ^ w₀)
     (hb_pos : 0 < bucketBits n_max) :
-    Realizes .exact (promoteSlabProg U V w₀ n_max h_space)
+    RealizesAt 2000 30000 .exact (promoteSlabProg U V w₀ n_max h_space)
       (WordEncoding.encode (α := ℕ × ℕ)) (WordEncoding.encode (α := Unit))
       (fun w d s => PromoteSlabPre U V w₀ n_max h_space w d.1 d.2 s)
       (fun _ _ => 0) := by
   have hloop := realizes_promoteLoop (U := U) (V := V) (h_space := h_space) hw hnU hU hV hb_pos
   have hpush := realizes_gmPushSlab (U := U) (V := V) (h_space := h_space) hw hnU hU hb_pos
-  refine Realizes.congr (p := fun d : ℕ × ℕ => do
+  refine RealizesAt.congr (p := fun d : ℕ × ℕ => do
       let k0 ← pure 0
       let n_iter ← pure (slabSize n_max)
       let _ ← promoteLoopProg U V w₀ n_max h_space ((d, k0), n_iter)

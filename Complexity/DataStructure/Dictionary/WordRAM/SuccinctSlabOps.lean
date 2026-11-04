@@ -362,7 +362,7 @@ theorem clientResult_lastSlotOfProg {U V w n_max h_space : ℕ} (d : ℕ × ℕ)
 
 theorem realizes_lastSlotOf {U V w₀ n_max h_space : ℕ}
     (hw : 0 < w₀) (hnU : n_max ≤ U) (hU : U < 2 ^ w₀) :
-    Realizes .exact (lastSlotOfProg U V w₀ n_max h_space)
+    RealizesAt 200 5000 .exact (lastSlotOfProg U V w₀ n_max h_space)
       (WordEncoding.encode (α := ℕ × ℕ)) (WordEncoding.encode (α := ℕ))
       (fun w d s => DictEnv U V w₀ n_max h_space w d.1 ∧
         SlotStoreInv n_max (gmAt d.1 U V w₀ n_max h_space s.mem) ∧
@@ -371,7 +371,7 @@ theorem realizes_lastSlotOf {U V w₀ n_max h_space : ℕ}
       (fun _ _ => 0) := by
   have hrg := realizes_readGM (U := U) (V := V) (h_space := h_space) hw hnU hU
   by_cases hb0 : bucketBits n_max = 0
-  · refine Realizes.congr (p := fun d : ℕ × ℕ => do
+  · refine RealizesAt.congr (p := fun d : ℕ × ℕ => do
         let i0 ← pure 0
         let c ← readGMProg U V w₀ n_max h_space (d.1, i0)
         pure (c - 1)) ?_
@@ -390,7 +390,7 @@ theorem realizes_lastSlotOf {U V w₀ n_max h_space : ℕ}
       simp only [hb0, ↓reduceIte, hd2] at hbc
       exact hbc
   · have hb_pos : 0 < bucketBits n_max := Nat.pos_of_ne_zero hb0
-    refine Realizes.congr (p := fun d : ℕ × ℕ => do
+    refine RealizesAt.congr (p := fun d : ℕ × ℕ => do
         let r_idx ← pure (4 + 3 * d.2 + 1)
         let r_b ← readGMProg U V w₀ n_max h_space (d.1, r_idx)
         let ptr_idx ← pure (gmTailPtrBase n_max + (d.2 * tailCapPerBucket n_max + (r_b - 1)))
@@ -654,7 +654,7 @@ private theorem appendTailItem_sub_lt_n_max {U V w₀ n_max h_space w : ℕ}
 theorem realizes_pushBackTailWrite {U V w₀ n_max h_space : ℕ}
     (hw : 0 < w₀) (hnU : n_max ≤ U) (hU : U < 2 ^ w₀) (hV : V ≤ 2 ^ w₀)
     (hb_pos : 0 < bucketBits n_max) :
-    Realizes .exact (pushBackTailWriteProg U V w₀ n_max h_space)
+    RealizesAt 500 5000 .exact (pushBackTailWriteProg U V w₀ n_max h_space)
       (WordEncoding.encode (α := ((ℕ × ℕ) × ℕ) × ℕ)) (WordEncoding.encode (α := ℕ))
       (PushBackSlotPre U V w₀ n_max h_space)
       (fun _ _ => 0) := by
@@ -664,7 +664,7 @@ theorem realizes_pushBackTailWrite {U V w₀ n_max h_space : ℕ}
   have hwv := realizes_writeVal (U := U) (V := V) (w := w₀) (n_max := n_max) (h_space := h_space)
     hw hV
   have hrg := realizes_readGM (U := U) (V := V) (h_space := h_space) hw hnU hU
-  refine Realizes.congr (p := fun d : ((ℕ × ℕ) × ℕ) × ℕ => do
+  refine RealizesAt.congr (p := fun d : ((ℕ × ℕ) × ℕ) × ℕ => do
       let t_new ← appendTailItemProg U V w₀ n_max h_space d.1.1
       let g_new ← pure ((n_max - 1) - t_new)
       writeQuotProg U w₀ n_max h_space ((d.1.1.1, g_new), d.1.2)
@@ -971,7 +971,7 @@ theorem pushBackSlotProg_effect {U V w n_max h_space base b q_val v_val : ℕ}
 
 theorem realizes_pushBackSlot {U V w₀ n_max h_space : ℕ}
     (hw : 0 < w₀) (hnU : n_max ≤ U) (hU : U < 2 ^ w₀) (hV : V ≤ 2 ^ w₀) :
-    Realizes .exact (pushBackSlotProg U V w₀ n_max h_space)
+    RealizesAt 3000 50000 .exact (pushBackSlotProg U V w₀ n_max h_space)
       (WordEncoding.encode (α := ((ℕ × ℕ) × ℕ) × ℕ)) (WordEncoding.encode (α := Unit))
       (PushBackSlotPre U V w₀ n_max h_space)
       (fun _ _ => 0) := by
@@ -982,7 +982,7 @@ theorem realizes_pushBackSlot {U V w₀ n_max h_space : ℕ}
     have hwv := realizes_writeVal (U := U) (V := V) (w := w₀) (n_max := n_max) (h_space := h_space)
       hw hV
     have hwg := realizes_writeGM (U := U) (V := V) (h_space := h_space) hw hnU hU
-    refine Realizes.congr (p := fun d : ((ℕ × ℕ) × ℕ) × ℕ => do
+    refine RealizesAt.congr (p := fun d : ((ℕ × ℕ) × ℕ) × ℕ => do
         let i0 ← pure 0
         let c ← readGMProg U V w₀ n_max h_space (d.1.1.1, i0)
         writeQuotProg U w₀ n_max h_space ((d.1.1.1, c), d.1.2)
@@ -1010,7 +1010,7 @@ theorem realizes_pushBackSlot {U V w₀ n_max h_space : ℕ}
     have htw :=
       realizes_pushBackTailWrite (U := U) (V := V) (h_space := h_space) hw hnU hU hV hb_pos
     have hprom := realizes_promoteSlab (U := U) (V := V) (h_space := h_space) hw hnU hU hV hb_pos
-    refine Realizes.congr (p := fun d : ((ℕ × ℕ) × ℕ) × ℕ => do
+    refine RealizesAt.congr (p := fun d : ((ℕ × ℕ) × ℕ) × ℕ => do
         let r_b_new ← pushBackTailWriteProg U V w₀ n_max h_space d
         let twoK ← pure (2 * slabSize n_max)
         if r_b_new = twoK then
@@ -1373,14 +1373,14 @@ theorem popBackSlotProg_effect {U V w n_max h_space base b : ℕ}
 
 theorem realizes_popBackSlot {U V w₀ n_max h_space : ℕ}
     (hw : 0 < w₀) (hnU : n_max ≤ U) (hU : U < 2 ^ w₀) (hV : V ≤ 2 ^ w₀) :
-    Realizes .exact (popBackSlotProg U V w₀ n_max h_space)
+    RealizesAt 3000 50000 .exact (popBackSlotProg U V w₀ n_max h_space)
       (WordEncoding.encode (α := ℕ × ℕ)) (WordEncoding.encode (α := Unit))
       (PopBackSlotPre U V w₀ n_max h_space)
       (fun _ _ => 0) := by
   by_cases hb0 : bucketBits n_max = 0
   · have hrg := realizes_readGM (U := U) (V := V) (h_space := h_space) hw hnU hU
     have hwg := realizes_writeGM (U := U) (V := V) (h_space := h_space) hw hnU hU
-    refine Realizes.congr (p := fun d : ℕ × ℕ => do
+    refine RealizesAt.congr (p := fun d : ℕ × ℕ => do
         let i0 ← pure 0
         let c ← readGMProg U V w₀ n_max h_space (d.1, i0)
         let c_sub ← pure (c - 1)
@@ -1404,7 +1404,7 @@ theorem realizes_popBackSlot {U V w₀ n_max h_space : ℕ}
       hw hnU hU hV hb_pos
     have hrg := realizes_readGM (U := U) (V := V) (h_space := h_space) hw hnU hU
     have hdem := realizes_demoteSlab (U := U) (V := V) (h_space := h_space) hw hnU hU hV hb_pos
-    refine Realizes.congr (p := fun d : ℕ × ℕ => do
+    refine RealizesAt.congr (p := fun d : ℕ × ℕ => do
         removeLastTailItemProg U V w₀ n_max h_space d
         let r_idx ← pure (4 + 3 * d.2 + 1)
         let r_b_new ← readGMProg U V w₀ n_max h_space (d.1, r_idx)

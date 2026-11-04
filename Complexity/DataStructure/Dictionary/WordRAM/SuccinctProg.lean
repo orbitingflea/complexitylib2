@@ -182,15 +182,15 @@ private theorem writePackedCode_not_readsWidth (offset k w : ℕ) :
   simp [writePackedCode, addrSetupCode, offsetSetupCode, maskSetupCode, writePackedFinishCode,
     Code.ReadsWidth, Op.ReadsWidth, Op.exactBin]
 
-/-- Uniform `Realizes .exact` certificate for `readPackedProg`. -/
+/-- Uniform `RealizesAt 8 38 .exact` certificate for `readPackedProg`. -/
 theorem realizes_readPacked (offset N k w₀ : ℕ) :
-    Realizes .exact (fun d : ℕ × ℕ => readPackedProg d.1 offset k w₀ d.2)
+    RealizesAt 8 38 .exact (fun d : ℕ × ℕ => readPackedProg d.1 offset k w₀ d.2)
       (WordEncoding.encode (α := ℕ × ℕ)) (WordEncoding.encode (α := ℕ))
       (fun w d _ => w = w₀ ∧ 0 < w₀ ∧ k ≤ w₀ ∧ d.2 < N ∧
         Fits w₀ (d.1 + offset + packedWords N k w₀))
       (fun _ _ => 0) := by
   let perm : Fin 10 ≃ Fin 10 := Equiv.swap 0 2
-  refine ⟨8, 38, fun _ src tmp =>
+  refine ⟨8, le_rfl, 38, le_rfl, fun _ src tmp =>
     .seq (.op (.copy (tmp 2) (src 0)))
       (.seq (.op (.copy (tmp 1) (src 1)))
         ((readPackedCode offset k w₀).rename (tmp ∘ perm))), ?_⟩
@@ -255,14 +255,14 @@ theorem realizes_readPacked (offset N k w₀ : ℕ) :
       dsimp only [x₂, x₁, Data.set]
       rw [Function.update_of_ne (htmp 1).symm, Function.update_of_ne (htmp 2).symm]
 
-/-- Uniform `Realizes .exact` certificate for `writePackedProg`. -/
+/-- Uniform `RealizesAt 9 50 .exact` certificate for `writePackedProg`. -/
 theorem realizes_writePacked (offset N k w₀ : ℕ) :
-    Realizes .exact (fun d : (ℕ × ℕ) × ℕ => writePackedProg d.1.1 offset k w₀ d.1.2 d.2)
+    RealizesAt 9 50 .exact (fun d : (ℕ × ℕ) × ℕ => writePackedProg d.1.1 offset k w₀ d.1.2 d.2)
       (WordEncoding.encode (α := (ℕ × ℕ) × ℕ)) (WordEncoding.encode (α := Unit))
       (fun w d _ => w = w₀ ∧ 0 < w₀ ∧ k ≤ w₀ ∧ d.1.2 < N ∧
         Fits w₀ (d.1.1 + offset + packedWords N k w₀))
       (fun _ _ => 0) := by
-  refine ⟨9, 50, fun _ src tmp =>
+  refine ⟨9, le_rfl, 50, le_rfl, fun _ src tmp =>
     .seq (.op (.copy (tmp 0) (src 0)))
       (.seq (.op (.copy (tmp 1) (src 1)))
         (.seq (.op (.copy (tmp 2) (src 2)))
@@ -363,7 +363,7 @@ def writeGMProg (U V w n_max h_space : ℕ) (d : (ℕ × ℕ) × ℕ) : Memory.P
   writePackedProg d.1.1 (offGM U V w n_max h_space) (globalPtrBits n_max) w d.1.2 d.2
 
 theorem realizes_readQuot {U V w n_max h_space : ℕ} (hw : 0 < w) (hU : U ≤ 2 ^ w) :
-    Realizes .exact (readQuotProg U w n_max h_space)
+    RealizesAt 8 38 .exact (readQuotProg U w n_max h_space)
       (WordEncoding.encode (α := ℕ × ℕ)) (WordEncoding.encode (α := ℕ))
       (fun w' d _ => DictEnv U V w n_max h_space w' d.1 ∧ d.2 < n_max)
       (fun _ _ => 0) := by
@@ -374,7 +374,7 @@ theorem realizes_readQuot {U V w n_max h_space : ℕ} (hw : 0 < w) (hU : U ≤ 2
     hspace.of_le (by unfold totalSpace offGM offLM offVal offQuot; omega)⟩
 
 theorem realizes_writeQuot {U V w n_max h_space : ℕ} (hw : 0 < w) (hU : U ≤ 2 ^ w) :
-    Realizes .exact (writeQuotProg U w n_max h_space)
+    RealizesAt 9 50 .exact (writeQuotProg U w n_max h_space)
       (WordEncoding.encode (α := (ℕ × ℕ) × ℕ)) (WordEncoding.encode (α := Unit))
       (fun w' d _ => DictEnv U V w n_max h_space w' d.1.1 ∧ d.1.2 < n_max)
       (fun _ _ => 0) := by
@@ -385,7 +385,7 @@ theorem realizes_writeQuot {U V w n_max h_space : ℕ} (hw : 0 < w) (hU : U ≤ 
     hspace.of_le (by unfold totalSpace offGM offLM offVal offQuot; omega)⟩
 
 theorem realizes_readVal {U V w n_max h_space : ℕ} (hw : 0 < w) (hV : V ≤ 2 ^ w) :
-    Realizes .exact (readValProg U V w n_max h_space)
+    RealizesAt 8 38 .exact (readValProg U V w n_max h_space)
       (WordEncoding.encode (α := ℕ × ℕ)) (WordEncoding.encode (α := ℕ))
       (fun w' d _ => DictEnv U V w n_max h_space w' d.1 ∧ d.2 < n_max)
       (fun _ _ => 0) := by
@@ -396,7 +396,7 @@ theorem realizes_readVal {U V w n_max h_space : ℕ} (hw : 0 < w) (hV : V ≤ 2 
     hspace.of_le (by unfold totalSpace offGM offLM offVal; omega)⟩
 
 theorem realizes_writeVal {U V w n_max h_space : ℕ} (hw : 0 < w) (hV : V ≤ 2 ^ w) :
-    Realizes .exact (writeValProg U V w n_max h_space)
+    RealizesAt 9 50 .exact (writeValProg U V w n_max h_space)
       (WordEncoding.encode (α := (ℕ × ℕ) × ℕ)) (WordEncoding.encode (α := Unit))
       (fun w' d _ => DictEnv U V w n_max h_space w' d.1.1 ∧ d.1.2 < n_max)
       (fun _ _ => 0) := by
@@ -408,7 +408,7 @@ theorem realizes_writeVal {U V w n_max h_space : ℕ} (hw : 0 < w) (hV : V ≤ 2
 
 theorem realizes_readLM {U V w n_max h_space c : ℕ}
     (hw : 0 < w) (hnU : n_max ≤ U) (hU : U < 2 ^ w) (hc : c < 9) :
-    Realizes .exact (readLMProg U V w n_max h_space c)
+    RealizesAt 8 38 .exact (readLMProg U V w n_max h_space c)
       (WordEncoding.encode (α := ℕ × ℕ)) (WordEncoding.encode (α := ℕ))
       (fun w' d _ => DictEnv U V w n_max h_space w' d.1 ∧ d.2 < totalMicroBuckets n_max)
       (fun _ _ => 0) := by
@@ -427,7 +427,7 @@ theorem realizes_readLM {U V w n_max h_space c : ℕ}
 
 theorem realizes_writeLM {U V w n_max h_space c : ℕ}
     (hw : 0 < w) (hnU : n_max ≤ U) (hU : U < 2 ^ w) (hc : c < 9) :
-    Realizes .exact (writeLMProg U V w n_max h_space c)
+    RealizesAt 9 50 .exact (writeLMProg U V w n_max h_space c)
       (WordEncoding.encode (α := (ℕ × ℕ) × ℕ)) (WordEncoding.encode (α := Unit))
       (fun w' d _ => DictEnv U V w n_max h_space w' d.1.1 ∧ d.1.2 < totalMicroBuckets n_max)
       (fun _ _ => 0) := by
@@ -446,7 +446,7 @@ theorem realizes_writeLM {U V w n_max h_space c : ℕ}
 
 theorem realizes_readGM {U V w n_max h_space : ℕ}
     (hw : 0 < w) (hnU : n_max ≤ U) (hU : U < 2 ^ w) :
-    Realizes .exact (readGMProg U V w n_max h_space)
+    RealizesAt 8 38 .exact (readGMProg U V w n_max h_space)
       (WordEncoding.encode (α := ℕ × ℕ)) (WordEncoding.encode (α := ℕ))
       (fun w' d _ => DictEnv U V w n_max h_space w' d.1 ∧ d.2 < globalMetaLen n_max)
       (fun _ _ => 0) := by
@@ -459,7 +459,7 @@ theorem realizes_readGM {U V w n_max h_space : ℕ}
 
 theorem realizes_writeGM {U V w n_max h_space : ℕ}
     (hw : 0 < w) (hnU : n_max ≤ U) (hU : U < 2 ^ w) :
-    Realizes .exact (writeGMProg U V w n_max h_space)
+    RealizesAt 9 50 .exact (writeGMProg U V w n_max h_space)
       (WordEncoding.encode (α := (ℕ × ℕ) × ℕ)) (WordEncoding.encode (α := Unit))
       (fun w' d _ => DictEnv U V w n_max h_space w' d.1.1 ∧ d.1.2 < globalMetaLen n_max)
       (fun _ _ => 0) := by
@@ -593,7 +593,7 @@ theorem memoryCost_readBucketCountProg_le {U V w n_max h_space : ℕ}
 
 theorem realizes_readBucketCount {U V w₀ n_max h_space : ℕ}
     (hw : 0 < w₀) (hnU : n_max ≤ U) (hU : U < 2 ^ w₀) :
-    Realizes .exact (readBucketCountProg U V w₀ n_max h_space)
+    RealizesAt 50 608 .exact (readBucketCountProg U V w₀ n_max h_space)
       (WordEncoding.encode (α := ℕ × ℕ)) (WordEncoding.encode (α := ℕ))
       (fun w d s => DictEnv U V w₀ n_max h_space w d.1 ∧
         SlotStoreInv n_max (gmAt d.1 U V w₀ n_max h_space s.mem) ∧
@@ -601,7 +601,7 @@ theorem realizes_readBucketCount {U V w₀ n_max h_space : ℕ}
       (fun _ _ => 0) := by
   have hrg := realizes_readGM (U := U) (V := V) (h_space := h_space) hw hnU hU
   by_cases hb0 : bucketBits n_max = 0
-  · refine Realizes.congr (p := fun d : ℕ × ℕ => do
+  · refine RealizesAt.congr (p := fun d : ℕ × ℕ => do
         let i0 ← pure 0
         readGMProg U V w₀ n_max h_space (d.1, i0)) ?_
       (fun d => by simp [readBucketCountProg, hb0])
@@ -609,7 +609,7 @@ theorem realizes_readBucketCount {U V w₀ n_max h_space : ℕ}
     · exact h.1
     · unfold globalMetaLen; omega
   · have hb_pos : 0 < bucketBits n_max := Nat.pos_of_ne_zero hb0
-    refine Realizes.congr (p := fun d : ℕ × ℕ => do
+    refine RealizesAt.congr (p := fun d : ℕ × ℕ => do
         let q_idx ← pure (4 + 3 * d.2)
         let q_b ← readGMProg U V w₀ n_max h_space (d.1, q_idx)
         let r_idx ← pure (q_idx + 1)
@@ -827,7 +827,7 @@ private theorem resolveIndexedSlot_tail_le {U V w₀ n_max h_space : ℕ}
 
 theorem realizes_resolveIndexedSlot {U V w₀ n_max h_space : ℕ}
     (hw : 0 < w₀) (hnU : n_max ≤ U) (hU : U < 2 ^ w₀) :
-    Realizes .exact (resolveIndexedSlotProg U V w₀ n_max h_space)
+    RealizesAt 114 3696 .exact (resolveIndexedSlotProg U V w₀ n_max h_space)
       (WordEncoding.encode (α := (ℕ × ℕ) × ℕ)) (WordEncoding.encode (α := ℕ))
       (fun w d s => DictEnv U V w₀ n_max h_space w d.1.1 ∧
         SlotStoreInv n_max (gmAt d.1.1 U V w₀ n_max h_space s.mem) ∧
@@ -837,11 +837,11 @@ theorem realizes_resolveIndexedSlot {U V w₀ n_max h_space : ℕ}
       (fun _ _ => 0) := by
   have hrg := realizes_readGM (U := U) (V := V) (h_space := h_space) hw hnU hU
   by_cases hb0 : bucketBits n_max = 0
-  · refine Realizes.congr (p := fun d : (ℕ × ℕ) × ℕ => pure d.2) ?_
+  · refine RealizesAt.congr (p := fun d : (ℕ × ℕ) × ℕ => pure d.2) ?_
       (fun d => by simp [resolveIndexedSlotProg, hb0])
     realize
   · have hb_pos : 0 < bucketBits n_max := Nat.pos_of_ne_zero hb0
-    refine Realizes.congr (p := fun d : (ℕ × ℕ) × ℕ => do
+    refine RealizesAt.congr (p := fun d : (ℕ × ℕ) × ℕ => do
         let q_idx ← pure (4 + 3 * d.1.2)
         let q_b ← readGMProg U V w₀ n_max h_space (d.1.1, q_idx)
         let qK ← pure (q_b * slabSize n_max)

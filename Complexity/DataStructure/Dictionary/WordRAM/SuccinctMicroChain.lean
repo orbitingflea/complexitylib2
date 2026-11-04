@@ -117,14 +117,14 @@ theorem clientResult_readLMHeadProg {U V w n_max h_space base b m : ℕ} (s : Me
 
 theorem realizes_readLMHead {U V w₀ n_max h_space : ℕ}
     (hw : 0 < w₀) (hnU : n_max ≤ U) (hU : U < 2 ^ w₀) :
-    Realizes .exact (readLMHeadProg U V w₀ n_max h_space)
+    RealizesAt 50 300 .exact (readLMHeadProg U V w₀ n_max h_space)
       (WordEncoding.encode (α := (ℕ × ℕ) × ℕ)) (WordEncoding.encode (α := ℕ))
       (fun w d _ => DictEnv U V w₀ n_max h_space w d.1.1 ∧
         d.1.2 < numBuckets n_max ∧ d.2 < numMicroPerBucket n_max)
       (fun _ _ => 0) := by
   have hrl := realizes_readLM (U := U) (V := V) (w := w₀) (n_max := n_max) (h_space := h_space)
     (c := 0) hw hnU hU (by decide)
-  refine Realizes.congr (p := fun d : (ℕ × ℕ) × ℕ => do
+  refine RealizesAt.congr (p := fun d : (ℕ × ℕ) × ℕ => do
       let idx ← pure (d.1.2 * numMicroPerBucket n_max + d.2)
       readLMProg U V w₀ n_max h_space 0 (d.1.1, idx)) ?_
     (fun _ => rfl)
@@ -136,14 +136,14 @@ theorem realizes_readLMHead {U V w₀ n_max h_space : ℕ}
 
 theorem realizes_writeLMHead {U V w₀ n_max h_space : ℕ}
     (hw : 0 < w₀) (hnU : n_max ≤ U) (hU : U < 2 ^ w₀) :
-    Realizes .exact (writeLMHeadProg U V w₀ n_max h_space)
+    RealizesAt 50 300 .exact (writeLMHeadProg U V w₀ n_max h_space)
       (WordEncoding.encode (α := ((ℕ × ℕ) × ℕ) × ℕ)) (WordEncoding.encode (α := Unit))
       (fun w d _ => DictEnv U V w₀ n_max h_space w d.1.1.1 ∧
         d.1.1.2 < numBuckets n_max ∧ d.1.2 < numMicroPerBucket n_max)
       (fun _ _ => 0) := by
   have hwl := realizes_writeLM (U := U) (V := V) (w := w₀) (n_max := n_max) (h_space := h_space)
     (c := 0) hw hnU hU (by decide)
-  refine Realizes.congr (p := fun d : ((ℕ × ℕ) × ℕ) × ℕ => do
+  refine RealizesAt.congr (p := fun d : ((ℕ × ℕ) × ℕ) × ℕ => do
       let idx ← pure (d.1.1.2 * numMicroPerBucket n_max + d.1.2)
       writeLMProg U V w₀ n_max h_space 0 ((d.1.1.1, idx), d.2)) ?_
     (fun _ => rfl)
@@ -289,7 +289,7 @@ theorem clientResult_readLMNextProg {U V w n_max h_space base b j : ℕ} (s : Me
 
 theorem realizes_readLMMod4 {U V w₀ n_max h_space c_base : ℕ}
     (hw : 0 < w₀) (hnU : n_max ≤ U) (hU : U < 2 ^ w₀) (hc : c_base + 3 < 9) :
-    Realizes .exact (readLMMod4Prog U V w₀ n_max h_space c_base)
+    RealizesAt 150 1000 .exact (readLMMod4Prog U V w₀ n_max h_space c_base)
       (WordEncoding.encode (α := (ℕ × ℕ) × ℕ)) (WordEncoding.encode (α := ℕ))
       (fun w d _ => DictEnv U V w₀ n_max h_space w d.1.1 ∧
         d.1.2 < numBuckets n_max ∧ d.2 < effBucketCap n_max)
@@ -302,7 +302,7 @@ theorem realizes_readLMMod4 {U V w₀ n_max h_space c_base : ℕ}
     (c := c_base + 2) hw hnU hU (by omega)
   have hrl3 := realizes_readLM (U := U) (V := V) (w := w₀) (n_max := n_max) (h_space := h_space)
     (c := c_base + 3) hw hnU hU (by omega)
-  refine Realizes.congr (p := fun d : (ℕ × ℕ) × ℕ => do
+  refine RealizesAt.congr (p := fun d : (ℕ × ℕ) × ℕ => do
       let idx ← pure (d.1.2 * numMicroPerBucket n_max + d.2 / 4)
       let r ← pure (d.2 % 4)
       let c0 ← pure 0
@@ -335,7 +335,7 @@ theorem realizes_readLMMod4 {U V w₀ n_max h_space c_base : ℕ}
 
 theorem realizes_writeLMMod4 {U V w₀ n_max h_space c_base : ℕ}
     (hw : 0 < w₀) (hnU : n_max ≤ U) (hU : U < 2 ^ w₀) (hc : c_base + 3 < 9) :
-    Realizes .exact (writeLMMod4Prog U V w₀ n_max h_space c_base)
+    RealizesAt 150 1000 .exact (writeLMMod4Prog U V w₀ n_max h_space c_base)
       (WordEncoding.encode (α := ((ℕ × ℕ) × ℕ) × ℕ)) (WordEncoding.encode (α := Unit))
       (fun w d _ => DictEnv U V w₀ n_max h_space w d.1.1.1 ∧
         d.1.1.2 < numBuckets n_max ∧ d.1.2 < effBucketCap n_max)
@@ -348,7 +348,7 @@ theorem realizes_writeLMMod4 {U V w₀ n_max h_space c_base : ℕ}
     (c := c_base + 2) hw hnU hU (by omega)
   have hwl3 := realizes_writeLM (U := U) (V := V) (w := w₀) (n_max := n_max) (h_space := h_space)
     (c := c_base + 3) hw hnU hU (by omega)
-  refine Realizes.congr (p := fun d : ((ℕ × ℕ) × ℕ) × ℕ => do
+  refine RealizesAt.congr (p := fun d : ((ℕ × ℕ) × ℕ) × ℕ => do
       let idx ← pure (d.1.1.2 * numMicroPerBucket n_max + d.1.2 / 4)
       let r ← pure (d.1.2 % 4)
       let c0 ← pure 0
@@ -381,7 +381,7 @@ theorem realizes_writeLMMod4 {U V w₀ n_max h_space c_base : ℕ}
 
 theorem realizes_readLMPrev {U V w₀ n_max h_space : ℕ}
     (hw : 0 < w₀) (hnU : n_max ≤ U) (hU : U < 2 ^ w₀) :
-    Realizes .exact (readLMPrevProg U V w₀ n_max h_space)
+    RealizesAt 150 1000 .exact (readLMPrevProg U V w₀ n_max h_space)
       (WordEncoding.encode (α := (ℕ × ℕ) × ℕ)) (WordEncoding.encode (α := ℕ))
       (fun w d _ => DictEnv U V w₀ n_max h_space w d.1.1 ∧
         d.1.2 < numBuckets n_max ∧ d.2 < effBucketCap n_max)
@@ -390,7 +390,7 @@ theorem realizes_readLMPrev {U V w₀ n_max h_space : ℕ}
 
 theorem realizes_writeLMPrev {U V w₀ n_max h_space : ℕ}
     (hw : 0 < w₀) (hnU : n_max ≤ U) (hU : U < 2 ^ w₀) :
-    Realizes .exact (writeLMPrevProg U V w₀ n_max h_space)
+    RealizesAt 150 1000 .exact (writeLMPrevProg U V w₀ n_max h_space)
       (WordEncoding.encode (α := ((ℕ × ℕ) × ℕ) × ℕ)) (WordEncoding.encode (α := Unit))
       (fun w d _ => DictEnv U V w₀ n_max h_space w d.1.1.1 ∧
         d.1.1.2 < numBuckets n_max ∧ d.1.2 < effBucketCap n_max)
@@ -399,7 +399,7 @@ theorem realizes_writeLMPrev {U V w₀ n_max h_space : ℕ}
 
 theorem realizes_readLMNext {U V w₀ n_max h_space : ℕ}
     (hw : 0 < w₀) (hnU : n_max ≤ U) (hU : U < 2 ^ w₀) :
-    Realizes .exact (readLMNextProg U V w₀ n_max h_space)
+    RealizesAt 150 1000 .exact (readLMNextProg U V w₀ n_max h_space)
       (WordEncoding.encode (α := (ℕ × ℕ) × ℕ)) (WordEncoding.encode (α := ℕ))
       (fun w d _ => DictEnv U V w₀ n_max h_space w d.1.1 ∧
         d.1.2 < numBuckets n_max ∧ d.2 < effBucketCap n_max)
@@ -408,7 +408,7 @@ theorem realizes_readLMNext {U V w₀ n_max h_space : ℕ}
 
 theorem realizes_writeLMNext {U V w₀ n_max h_space : ℕ}
     (hw : 0 < w₀) (hnU : n_max ≤ U) (hU : U < 2 ^ w₀) :
-    Realizes .exact (writeLMNextProg U V w₀ n_max h_space)
+    RealizesAt 150 1000 .exact (writeLMNextProg U V w₀ n_max h_space)
       (WordEncoding.encode (α := ((ℕ × ℕ) × ℕ) × ℕ)) (WordEncoding.encode (α := Unit))
       (fun w d _ => DictEnv U V w₀ n_max h_space w d.1.1.1 ∧
         d.1.1.2 < numBuckets n_max ∧ d.1.2 < effBucketCap n_max)
@@ -989,7 +989,7 @@ theorem IsDLChain.length_le {n_max head : ℕ} {prev next : ℕ → ℕ} {L : Li
 
 theorem realizes_lmPrepend {U V w₀ n_max h_space : ℕ}
     (hw : 0 < w₀) (hnU : n_max ≤ U) (hU : U < 2 ^ w₀) :
-    Realizes .exact (lmPrependProg U V w₀ n_max h_space)
+    RealizesAt 1000 10000 .exact (lmPrependProg U V w₀ n_max h_space)
       (WordEncoding.encode (α := ((ℕ × ℕ) × ℕ) × ℕ)) (WordEncoding.encode (α := Unit))
       (LMPrependPre U V w₀ n_max h_space)
       (fun _ _ => 0) := by
@@ -1229,7 +1229,7 @@ def LMUnlinkPre (U V w₀ n_max h_space w : ℕ) (d : ((ℕ × ℕ) × ℕ) × �
 
 theorem realizes_lmUnlink {U V w₀ n_max h_space : ℕ}
     (hw : 0 < w₀) (hnU : n_max ≤ U) (hU : U < 2 ^ w₀) :
-    Realizes .exact (lmUnlinkProg U V w₀ n_max h_space)
+    RealizesAt 1500 15000 .exact (lmUnlinkProg U V w₀ n_max h_space)
       (WordEncoding.encode (α := ((ℕ × ℕ) × ℕ) × ℕ)) (WordEncoding.encode (α := Unit))
       (LMUnlinkPre U V w₀ n_max h_space)
       (fun _ _ => 0) := by
@@ -1560,7 +1560,7 @@ def MicroStepPre (U V w₀ n_max h_space w : ℕ)
 
 theorem realizes_microStep {U V w₀ n_max h_space : ℕ}
     (hw : 0 < w₀) (hnU : n_max ≤ U) (hU : U < 2 ^ w₀) :
-    Realizes .exact (microStepProg U V w₀ n_max h_space)
+    RealizesAt 600 10000 .exact (microStepProg U V w₀ n_max h_space)
       (WordEncoding.encode (α := (((ℕ × ℕ) × ℕ) × ℕ) × (((ℕ × ℕ) × ℕ) × ℕ)))
       (WordEncoding.encode (α := ((ℕ × ℕ) × ℕ) × ℕ))
       (MicroStepPre U V w₀ n_max h_space)
@@ -1610,13 +1610,13 @@ def microLoopProg (U V w n_max h_space : ℕ)
 
 theorem realizes_microLoop {U V w₀ n_max h_space : ℕ}
     (hw : 0 < w₀) (hnU : n_max ≤ U) (hU : U < 2 ^ w₀) :
-    Realizes .exact (microLoopProg U V w₀ n_max h_space)
+    RealizesAt 605 20024 .exact (microLoopProg U V w₀ n_max h_space)
       (WordEncoding.encode (α := (((ℕ × ℕ) × ℕ) × ℕ) × (((ℕ × ℕ) × ℕ) × ℕ)))
       (WordEncoding.encode (α := ((ℕ × ℕ) × ℕ) × ℕ))
       (fun w x s => whileSafe microLoopGuard (microStepProg U V w₀ n_max h_space)
         (MicroStepPre U V w₀ n_max h_space) w x.1 (effBucketCap n_max) x.2 s)
       (fun _ _ => 0) :=
-  Realizes.while₀
+  RealizesAt.while₀
     (WordEncoding.encode (α := ((ℕ × ℕ) × ℕ) × ℕ))
     (WordEncoding.encode (α := ((ℕ × ℕ) × ℕ) × ℕ))
     (Cond.lt (3 : Fin 8) (4 : Fin 8))
@@ -1849,7 +1849,7 @@ theorem searchMicroChainProg_spec {U V w₀ n_max h_space w : ℕ}
 
 theorem realizes_searchMicroChain {U V w₀ n_max h_space : ℕ}
     (hw : 0 < w₀) (hnU : n_max ≤ U) (hU : U < 2 ^ w₀) :
-    Realizes .exact (searchMicroChainProg U V w₀ n_max h_space)
+    RealizesAt 800 25000 .exact (searchMicroChainProg U V w₀ n_max h_space)
       (WordEncoding.encode (α := ((ℕ × ℕ) × ℕ) × ℕ))
       (WordEncoding.encode (α := ((ℕ × ℕ) × ℕ) × ℕ))
       (SearchMicroChainPre U V w₀ n_max h_space)

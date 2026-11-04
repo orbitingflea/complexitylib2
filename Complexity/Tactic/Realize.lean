@@ -341,7 +341,7 @@ private def bindRun (ctx : Ctx) (hP hQ : Out) (l : Nat) (reply next : Expr) :
     lambdaBoundedTelescope f 2 fun xs b => do mkLambdaFVars xs (← mkEqRefl b)
   let fn := if ctx.graded then ``RealizesAt.bind₀_of_run else ``Realizes.bind₀_of_run
   let pf ← mkAppM fn #[hP.proof, hQ.proof, reply, next, ← refl reply, ← refl next]
-  return (hQ.n + l + hP.n + 1, max hP.c hQ.c * 2, pf)
+  return (hQ.n + l + hP.n + 1, hP.c + hQ.c, pf)
 
 /-- Expose pair projections to unification when a certificate packages curried arguments.
 Other types remain whole metavariables: no data constructor or runtime value is guessed. -/
@@ -520,7 +520,7 @@ private partial def realizeBody (ctx : Ctx) (env : Env) (d : Expr) (atoms : Arra
       withLocalDeclD `s (mkConst ``Memory.State) fun s => do
         mkLambdaFVars #[w, d, s] (mkApp5 (mkConst ``ite [Level.one]) (mkSort Level.zero) c inst
           (hp.safe.beta #[w, d, s]) (hn.safe.beta #[w, d, s]))
-    return { n := hp.n + hn.n, c := (max hp.c hn.c + 2) * 3, proof, output := out, safe }
+    return { n := max hp.n hn.n, c := max hp.c hn.c + 2, proof, output := out, safe }
   -- a guarded loop
   if body.isAppOfArity ``boundedWhile 8 then
     return ← realizeWhile ctx env d atoms body output?

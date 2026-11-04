@@ -237,7 +237,7 @@ def InsertNewPre (U V w₀ n_max h_space w : ℕ)
 
 theorem realizes_insertNew {U V w₀ n_max h_space : ℕ}
     (hw : 0 < w₀) (hnU : n_max ≤ U) (hU : U < 2 ^ w₀) (hV : V ≤ 2 ^ w₀) :
-    Realizes .exact (insertNewProg U V w₀ n_max h_space)
+    RealizesAt 5000 80000 .exact (insertNewProg U V w₀ n_max h_space)
       (WordEncoding.encode (α := (((ℕ × ℕ) × ℕ) × ℕ) × ℕ))
       (WordEncoding.encode (α := Unit))
       (InsertNewPre U V w₀ n_max h_space)
@@ -292,7 +292,7 @@ def InsertBodyPre (U V w₀ n_max h_space w : ℕ)
 
 theorem realizes_insertBody {U V w₀ n_max h_space : ℕ}
     (hw : 0 < w₀) (hnU : n_max ≤ U) (hU : U < 2 ^ w₀) (hV : V ≤ 2 ^ w₀) :
-    Realizes .exact (insertBodyProg U V w₀ n_max h_space)
+    RealizesAt 8000 150000 .exact (insertBodyProg U V w₀ n_max h_space)
       (WordEncoding.encode (α := (((ℕ × ℕ) × ℕ) × ℕ) × ℕ))
       (WordEncoding.encode (α := Unit))
       (InsertBodyPre U V w₀ n_max h_space)

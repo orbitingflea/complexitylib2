@@ -80,7 +80,7 @@ private theorem searchBucketProg_found_imp_pos_bCount {U V w₀ n_max h_space w 
 
 theorem realizes_deletePrep {U V w₀ n_max h_space : ℕ}
     (hw : 0 < w₀) (hnU : n_max ≤ U) (hU : U < 2 ^ w₀) :
-    Realizes .exact (deletePrepProg U V w₀ n_max h_space)
+    RealizesAt 3000 70000 .exact (deletePrepProg U V w₀ n_max h_space)
       (WordEncoding.encode (α := ((ℕ × ℕ) × ℕ) × ℕ))
       (WordEncoding.encode (α := ((ℕ × ℕ) × ℕ) × ℕ))
       (SearchMicroChainPre U V w₀ n_max h_space)
@@ -277,7 +277,7 @@ def DeleteSwapPre (U V w₀ n_max h_space w : ℕ)
 
 theorem realizes_deleteSwap {U V w₀ n_max h_space : ℕ}
     (hw : 0 < w₀) (hnU : n_max ≤ U) (hU : U < 2 ^ w₀) (hV : V ≤ 2 ^ w₀) :
-    Realizes .exact (deleteSwapProg U V w₀ n_max h_space)
+    RealizesAt 4000 60000 .exact (deleteSwapProg U V w₀ n_max h_space)
       (WordEncoding.encode (α := (((ℕ × ℕ) × ℕ) × ℕ) × (ℕ × ℕ)))
       (WordEncoding.encode (α := Unit))
       (DeleteSwapPre U V w₀ n_max h_space)
@@ -359,7 +359,7 @@ def DeleteFoundPre (U V w₀ n_max h_space w : ℕ)
 
 theorem realizes_deleteFound {U V w₀ n_max h_space : ℕ}
     (hw : 0 < w₀) (hnU : n_max ≤ U) (hU : U < 2 ^ w₀) (hV : V ≤ 2 ^ w₀) :
-    Realizes .exact (deleteFoundProg U V w₀ n_max h_space)
+    RealizesAt 9000 150000 .exact (deleteFoundProg U V w₀ n_max h_space)
       (WordEncoding.encode (α := (((ℕ × ℕ) × ℕ) × ℕ) × (ℕ × ℕ)))
       (WordEncoding.encode (α := Unit))
       (DeleteFoundPre U V w₀ n_max h_space)
@@ -509,7 +509,7 @@ def DeleteFinishPre (U V w₀ n_max h_space w : ℕ)
 
 theorem realizes_deleteFinish {U V w₀ n_max h_space : ℕ}
     (hw : 0 < w₀) (hnU : n_max ≤ U) (hU : U < 2 ^ w₀) (hV : V ≤ 2 ^ w₀) :
-    Realizes .exact (deleteFinishProg U V w₀ n_max h_space)
+    RealizesAt 9200 160000 .exact (deleteFinishProg U V w₀ n_max h_space)
       (WordEncoding.encode (α := ((((ℕ × ℕ) × (ℕ × ℕ)) × ℕ) × ℕ) × ℕ))
       (WordEncoding.encode (α := Unit))
       (DeleteFinishPre U V w₀ n_max h_space)

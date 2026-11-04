@@ -355,7 +355,7 @@ private theorem demoteStep_bounds {U V w₀ n_max h_space w : ℕ}
 theorem realizes_demoteStep {U V w₀ n_max h_space : ℕ}
     (hw : 0 < w₀) (hnU : n_max ≤ U) (hU : U < 2 ^ w₀) (hV : V ≤ 2 ^ w₀)
     (hb_pos : 0 < bucketBits n_max) :
-    Realizes .exact (demoteStepProg U V w₀ n_max h_space)
+    RealizesAt 1000 10000 .exact (demoteStepProg U V w₀ n_max h_space)
       (WordEncoding.encode (α := (ℕ × ℕ) × ℕ)) (WordEncoding.encode (α := ℕ))
       (fun w x s => DemoteStepPre U V w₀ n_max h_space w x.1.1 x.1.2 x.2 s)
       (fun _ _ => 0) := by
@@ -370,7 +370,7 @@ theorem realizes_demoteStep {U V w₀ n_max h_space : ℕ}
     hw hV
   have happ := realizes_appendTailItem (U := U) (V := V) (h_space := h_space)
     hw hnU hU hb_pos
-  refine Realizes.congr (p := fun x : (ℕ × ℕ) × ℕ => do
+  refine RealizesAt.congr (p := fun x : (ℕ × ℕ) × ℕ => do
       let u ← pure ((slabSize n_max - 1) - x.2)
       let top_idx ← pure (4 + 3 * x.1.2 + 2)
       let p_del ← readGMProg U V w₀ n_max h_space (x.1.1, top_idx)
@@ -749,14 +749,14 @@ theorem iterate_demoteStepProg_spec {U V w₀ n_max h_space base b w : ℕ} {s�
 theorem realizes_demoteLoop {U V w₀ n_max h_space : ℕ}
     (hw : 0 < w₀) (hnU : n_max ≤ U) (hU : U < 2 ^ w₀) (hV : V ≤ 2 ^ w₀)
     (hb_pos : 0 < bucketBits n_max) :
-    Realizes .exact (demoteLoopProg U V w₀ n_max h_space)
+    RealizesAt 1004 20020 .exact (demoteLoopProg U V w₀ n_max h_space)
       (WordEncoding.encode (α := ((ℕ × ℕ) × ℕ) × ℕ)) (WordEncoding.encode (α := ℕ))
       (fun w d s =>
         iterationSafe (demoteStepProg U V w₀ n_max h_space)
           (fun w x s => DemoteStepPre U V w₀ n_max h_space w x.1.1 x.1.2 x.2 s)
           w d.1.1 d.2 d.1.2 s)
       (fun _ _ => 0) :=
-  Realizes.iterate₀ (WordEncoding.encode (α := ℕ × ℕ)) (WordEncoding.encode (α := ℕ))
+  RealizesAt.iterate₀ (WordEncoding.encode (α := ℕ × ℕ)) (WordEncoding.encode (α := ℕ))
     (realizes_demoteStep hw hnU hU hV hb_pos)
     (one_le_memoryCost_demoteStepProg U V w₀ n_max h_space)
 
@@ -1050,13 +1050,13 @@ theorem demoteSlabProg_effect {U V w n_max h_space base b : ℕ}
 theorem realizes_demoteSlab {U V w₀ n_max h_space : ℕ}
     (hw : 0 < w₀) (hnU : n_max ≤ U) (hU : U < 2 ^ w₀) (hV : V ≤ 2 ^ w₀)
     (hb_pos : 0 < bucketBits n_max) :
-    Realizes .exact (demoteSlabProg U V w₀ n_max h_space)
+    RealizesAt 2200 35000 .exact (demoteSlabProg U V w₀ n_max h_space)
       (WordEncoding.encode (α := ℕ × ℕ)) (WordEncoding.encode (α := Unit))
       (fun w d s => DemoteSlabPre U V w₀ n_max h_space w d.1 d.2 s)
       (fun _ _ => 0) := by
   have hloop := realizes_demoteLoop (U := U) (V := V) (h_space := h_space) hw hnU hU hV hb_pos
   have hpop := realizes_gmPopSlab (U := U) (V := V) (h_space := h_space) hw hnU hU hb_pos
-  refine Realizes.congr (p := fun d : ℕ × ℕ => do
+  refine RealizesAt.congr (p := fun d : ℕ × ℕ => do
       let k0 ← pure 0
       let n_iter ← pure (slabSize n_max)
       let _ ← demoteLoopProg U V w₀ n_max h_space ((d, k0), n_iter)
