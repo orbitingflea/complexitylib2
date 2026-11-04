@@ -643,7 +643,7 @@ theorem shrinkTailWordsCode_exec {U V w N Δ : ℕ} {x : RData (rSuccinct U V w 
       RDemonicExec w (shrinkTailWordsCode U V w N Δ) x 2 (· = y) ∧
       y.Bounded w ∧
       y.frontier = x.frontier - Δ ∧
-      y.regs (baseReg U V w N) = x.regs (baseReg U V w N) ∧
+      (∀ r : Fin (rSuccinct U V w N), r ≠ curReg U V w N → y.regs r = x.regs r) ∧
       y.mem = clear x.mem (x.frontier - Δ) Δ ∧
       ∀ a < x.frontier - Δ, y.mem a = x.mem a := by
   have hΔ_fits : Fits w Δ := hx.frontier_fits.of_le hΔ
@@ -659,8 +659,9 @@ theorem shrinkTailWordsCode_exec {U V w N Δ : ℕ} {x : RData (rSuccinct U V w 
   have hy_bdd : y.Bounded w := by
     simpa [y, x₁] using hx₁_bdd.shrink hΔ
   refine ⟨y, (e₁.seq_eq e₂).mono le_rfl (fun _ h => h), hy_bdd, rfl, ?_, rfl, fun a ha => ?_⟩
-  · dsimp only [y, x₁, baseReg, curReg]
-    simp only [RData.set_regs, Function.update_apply, sReg_inj, Fin.reduceEq, ↓reduceIte]
+  · intro r hr
+    dsimp only [y, x₁]
+    simp only [RData.set_regs, Function.update_apply, hr, ↓reduceIte]
   · exact clear_of_not_owns (by simp only [Block.Owns]; omega)
 
 /-! ## Section 3: Resizable Succinct Representation on `RData` and Single-Epoch Lifecycle -/
@@ -735,6 +736,25 @@ theorem execStepsOfFn_outside {B : Basis} {r_ds k_init : ℕ}
     rw [PMF.mem_support_bind_iff] at hq
     obtain ⟨p, hp, hq_step⟩ := hq
     exact (((hstep p hp).2 q hq_step).2.2 a ha).trans (h₀ p hp)
+
+/-- Single-step `ExecStepsOfFn` over `[o]` ensures `C.decode o q.2.regs = some (D.stepFn s o).2`
+on the output support. -/
+theorem execStepsOfFn_singleton_decode {B : Basis} {r_ds k_init : ℕ}
+    {P : SubroutineCode B r_ds k_init} {D : StateTransitionSpec}
+    {w base : ℕ} {params : Fin k_init → ℕ} {s₀ : D.State}
+    {C : Randomized.StateTransitionImpl P D w base params s₀}
+    {stepFn : (s : D.State) → (o : D.Op) → D.State × D.Result o} [D.HasStepFn stepFn]
+    {s : D.State} {o : D.Op} {ν₀ ν_final : PMF (C.Seed × Data r_ds)}
+    {T_ops : ℝ≥0∞}
+    (hex : C.ExecStepsOfFn s [o] ν₀ ν_final T_ops) :
+    ∀ q ∈ ν_final.support, C.decode o q.2.regs = some (D.stepFn s o).2 := by
+  cases hex with
+  | @cons _ _ _ _ _ μ_step _ _ hstep hex_nil =>
+    cases hex_nil
+    intro q hq
+    rw [PMF.mem_support_bind_iff] at hq
+    obtain ⟨p, hp, hq_step⟩ := hq
+    exact ((hstep p hp).2 q hq_step).1
 
 /-- **Demonic-grow initialization on `RData` (`init_resizable_succinct`):**
 Starting from `x : RData (rSuccinct U V w N)` with `x.Bounded w` and `x.frontier = base`:
@@ -878,5 +898,281 @@ theorem seq_expected_amortized_modifies {U V w n_max base : ℕ}
   calc C.initTime + T_ops + ∑' q, ν_final q * (potential U V w n_max base q.1 q.2 : ℝ≥0∞)
       = C.initTime + (T_ops + ∑' q, ν_final q * (C.potential q.1 q.2 : ℝ≥0∞)) := by ac_rfl
     _ ≤ C.initTime + (ops.length * chargeVal U V w n_max : ℕ) := add_le_add le_rfl hamort
+
+/-! ## Section 4: Epoch Capacity Schedule, Peak Epoch Capacity, and Output Register ABI -/
+
+/-- Epoch capacity invariant: live key count `n` lies in `[⌈N / 4⌉, N]`. -/
+@[expose]
+def EpochValid (n N : ℕ) : Prop :=
+  n ≤ N ∧ N ≤ 4 * n
+
+instance (n N : ℕ) : Decidable (EpochValid n N) := by
+  unfold EpochValid; infer_instance
+
+/-- Target capacity parameter when building an epoch at live key count `n` in universe `Fin U`. -/
+@[expose]
+def targetCap (U n : ℕ) : ℕ :=
+  min (2 * n) U
+
+/-- Symmetric natural-number distance `|a - b| = (a - b) + (b - a)`. -/
+@[expose]
+def natDist (a b : ℕ) : ℕ :=
+  (a - b) + (b - a)
+
+theorem targetCap_le_univ (U n : ℕ) : targetCap U n ≤ U :=
+  min_le_right (2 * n) U
+
+theorem targetCap_le_two_mul (U n : ℕ) : targetCap U n ≤ 2 * n :=
+  min_le_left (2 * n) U
+
+theorem targetCap_mono {U a b : ℕ} (h : a ≤ b) : targetCap U a ≤ targetCap U b := by
+  unfold targetCap
+  omega
+
+theorem le_targetCap {U n : ℕ} (hnU : n ≤ U) : n ≤ targetCap U n :=
+  le_min (by omega) hnU
+
+theorem epochValid_targetCap {U n : ℕ} (hnU : n ≤ U) :
+    EpochValid n (targetCap U n) := by
+  unfold EpochValid targetCap
+  omega
+
+@[simp]
+theorem natDist_self (n : ℕ) : natDist n n = 0 := by
+  unfold natDist; omega
+
+theorem natDist_step_le {n n' n_init : ℕ} (h1 : n' ≤ n + 1) (h2 : n ≤ n' + 1) :
+    natDist n' n_init ≤ natDist n n_init + 1 := by
+  unfold natDist; omega
+
+/-- **Epoch-rebuild amortization lemma (`add_one_le_two_mul_natDist_of_not_epochValid`):**
+Whenever an epoch started at `n_init` with capacity `N = targetCap U n_init = min (2 * n_init) U`
+and a new live count `n' ≤ U` (with `n' ≤ N + 1`) violates `EpochValid n' N`, at least
+`(n' + 1) / 2` insertions or deletions have occurred since `n_init`:
+`n' + 1 ≤ 2 * natDist n' n_init`. -/
+theorem add_one_le_two_mul_natDist_of_not_epochValid {U n_init n' N : ℕ}
+    (hN : N = targetCap U n_init) (hn'U : n' ≤ U) (hn'N : n' ≤ N + 1)
+    (hbad : ¬EpochValid n' N) :
+    n' + 1 ≤ 2 * natDist n' n_init := by
+  unfold EpochValid targetCap natDist at *
+  omega
+
+/-- Any single dynamic dictionary operation changes `(Dynamic.dom s).card` by at most `1`. -/
+theorem card_dom_step_diff_le_one {U V n_max : ℕ} (s : Dynamic.State U) (o : Dynamic.Op U) :
+    let s' := ((Dynamic.spec U V n_max).stepFn s o).1
+    (Dynamic.dom s').card ≤ (Dynamic.dom s).card + 1 ∧
+      (Dynamic.dom s).card ≤ (Dynamic.dom s').card + 1 := by
+  intro s'
+  cases o with
+  | query u =>
+    change (Dynamic.dom s).card ≤ (Dynamic.dom s).card + 1 ∧
+      (Dynamic.dom s).card ≤ (Dynamic.dom s).card + 1
+    omega
+  | insert u v =>
+    change (Dictionary.dom (Function.update s u (some v))).card ≤ (Dictionary.dom s).card + 1 ∧
+      (Dictionary.dom s).card ≤ (Dictionary.dom (Function.update s u (some v))).card + 1
+    have hle := Dictionary.card_dom_insert_le s u v
+    by_cases his : (s u).isSome
+    · rw [Dictionary.card_dom_insert_eq_of_isSome his]
+      omega
+    · have hnone : s u = none := Option.not_isSome_iff_eq_none.mp his
+      rw [Dictionary.card_dom_insert_eq_of_eq_none hnone]
+      omega
+  | delete u =>
+    change (Dynamic.dom (Function.update s u none)).card ≤ (Dynamic.dom s).card + 1 ∧
+      (Dynamic.dom s).card ≤ (Dynamic.dom (Function.update s u none)).card + 1
+    by_cases his : (s u).isSome
+    · rw [Dynamic.card_dom_delete_eq_of_isSome his]
+      omega
+    · have hnone : s u = none := Option.not_isSome_iff_eq_none.mp his
+      rw [Dynamic.card_dom_delete_eq_of_eq_none hnone]
+      omega
+
+/-- If `o` is admissible in the unbounded specification `Dynamic.spec U V U` and the resulting
+state `s'` has `(Dynamic.dom s').card ≤ N`, then `o` is also admissible in `Dynamic.spec U V N`. -/
+theorem valid_of_card_step_le {U V N : ℕ} {s : Dynamic.State U} {o : Dynamic.Op U}
+    (hval : (Dynamic.spec U V U).valid s o)
+    (hcard' : (Dynamic.dom ((Dynamic.spec U V U).stepFn s o).1).card ≤ N) :
+    (Dynamic.spec U V N).valid s o := by
+  cases o with
+  | query u => trivial
+  | delete u => trivial
+  | insert u v =>
+    refine ⟨?_, hval.2⟩
+    by_cases his : (s u).isSome
+    · exact Or.inr his
+    · refine Or.inl ?_
+      have hnone : s u = none := Option.not_isSome_iff_eq_none.mp his
+      change (Dictionary.dom (Function.update s u (some v))).card ≤ N at hcard'
+      rw [Dictionary.card_dom_insert_eq_of_eq_none hnone] at hcard'
+      change (Dictionary.dom s).card < N
+      omega
+
+/-- Epoch configuration trace across an operation sequence `ops : List (Dynamic.Op U)` starting
+from `(s, n_init)`. -/
+@[expose]
+def runEpochInit {U : ℕ} (V : ℕ) : Dynamic.State U → ℕ → List (Dynamic.Op U) → ℕ
+  | _, n_init, [] => n_init
+  | s, n_init, o :: os =>
+    let s' := ((Dynamic.spec U V U).stepFn s o).1
+    let n' := (Dynamic.dom s').card
+    let N := targetCap U n_init
+    let n_init' := if EpochValid n' N then n_init else n'
+    runEpochInit V s' n_init' os
+
+/-- Maximum epoch capacity `N = targetCap U n_init` encountered while executing `ops` starting from
+abstract state `s` and initial epoch anchor `n_init`. -/
+@[expose]
+def maxEpochCap {U : ℕ} (V : ℕ) : Dynamic.State U → ℕ → List (Dynamic.Op U) → ℕ
+  | _, n_init, [] => targetCap U n_init
+  | s, n_init, o :: os =>
+    let s' := ((Dynamic.spec U V U).stepFn s o).1
+    let n' := (Dynamic.dom s').card
+    let N := targetCap U n_init
+    let n_init' := if EpochValid n' N then n_init else n'
+    max N (maxEpochCap V s' n_init' os)
+
+theorem targetCap_le_maxEpochCap {U : ℕ} (V : ℕ) (s : Dynamic.State U) (n_init : ℕ)
+    (ops : List (Dynamic.Op U)) :
+    targetCap U n_init ≤ maxEpochCap V s n_init ops := by
+  cases ops with
+  | nil => exact le_rfl
+  | cons _ _ => exact le_max_left _ _
+
+theorem maxEpochCap_tail_le {U : ℕ} (V : ℕ) (s : Dynamic.State U) (n_init : ℕ)
+    (o : Dynamic.Op U) (os : List (Dynamic.Op U)) :
+    let s' := ((Dynamic.spec U V U).stepFn s o).1
+    let n' := (Dynamic.dom s').card
+    let N := targetCap U n_init
+    let n_init' := if EpochValid n' N then n_init else n'
+    maxEpochCap V s' n_init' os ≤ maxEpochCap V s n_init (o :: os) :=
+  le_max_right _ _
+
+theorem targetCap_runEpochInit_le_maxEpochCap {U : ℕ} (V : ℕ) (s : Dynamic.State U) (n_init : ℕ)
+    (ops : List (Dynamic.Op U)) :
+    targetCap U (runEpochInit V s n_init ops) ≤ maxEpochCap V s n_init ops := by
+  induction ops generalizing s n_init with
+  | nil => exact le_rfl
+  | cons _ _ ih => exact (ih _ _).trans (le_max_right _ _)
+
+theorem maxEpochCap_le_univ {U : ℕ} (V : ℕ) (s : Dynamic.State U) (n_init : ℕ)
+    (ops : List (Dynamic.Op U)) :
+    maxEpochCap V s n_init ops ≤ U := by
+  induction ops generalizing s n_init with
+  | nil => exact targetCap_le_univ U n_init
+  | cons _ _ ih => exact max_le (targetCap_le_univ U n_init) (ih _ _)
+
+theorem maxEpochCap_le_targetCap_add_length {U : ℕ} (V : ℕ) (s : Dynamic.State U) (n_init : ℕ)
+    (ops : List (Dynamic.Op U)) :
+    maxEpochCap V s n_init ops ≤
+      targetCap U (max n_init (Dynamic.dom s).card + ops.length) := by
+  induction ops generalizing s n_init with
+  | nil =>
+    simp only [maxEpochCap, List.length_nil, Nat.add_zero]
+    exact targetCap_mono (le_max_left _ _)
+  | cons o os ih =>
+    simp only [maxEpochCap, List.length_cons]
+    refine max_le (targetCap_mono (by omega)) ?_
+    have hdiff := (card_dom_step_diff_le_one (V := V) (n_max := U) s o).1
+    refine (ih _ _).trans (targetCap_mono ?_)
+    split_ifs <;> omega
+
+/-- Starting from `Dynamic.empty U` and `n_init = 0`, the peak epoch capacity `maxEpochCap` across
+`ops` is at most `targetCap U ops.length = min (2 * ops.length) U ≤ 2 * ops.length`. -/
+theorem maxEpochCap_empty_le_targetCap_length {U : ℕ} (V : ℕ) (ops : List (Dynamic.Op U)) :
+    maxEpochCap V (Dynamic.empty U) 0 ops ≤ targetCap U ops.length := by
+  have h := maxEpochCap_le_targetCap_add_length V (Dynamic.empty U) 0 ops
+  simpa only [Dynamic.dom, Dynamic.empty, Dictionary.dom_empty, Finset.card_empty,
+    max_self, Nat.zero_add] using h
+
+/-- Universal register count `9957` (`rSuccinct U V w N = 9957` for all `U, V, w, N`). -/
+abbrev rResizable : ℕ := 9957
+
+theorem rSuccinct_eq_const (U V w N : ℕ) : rSuccinct U V w N = rResizable :=
+  rSuccinct_eq U V w N
+
+/-- Re-index an `RData r₁` state along a register-count equality `h : r₁ = r₂`. -/
+@[expose]
+def castRData {r₁ r₂ : ℕ} (h : r₁ = r₂) (x : RData r₁) : RData r₂ :=
+  ⟨fun i => x.regs (i.cast h.symm), x.mem, x.frontier⟩
+
+@[simp]
+theorem castRData_mem {r₁ r₂ : ℕ} (h : r₁ = r₂) (x : RData r₁) :
+    (castRData h x).mem = x.mem := rfl
+
+@[simp]
+theorem castRData_frontier {r₁ r₂ : ℕ} (h : r₁ = r₂) (x : RData r₁) :
+    (castRData h x).frontier = x.frontier := rfl
+
+theorem castRData_bounded {r₁ r₂ w : ℕ} (h : r₁ = r₂) {x : RData r₁} (hx : x.Bounded w) :
+    (castRData h x).Bounded w :=
+  ⟨⟨fun i => hx.1.1 (i.cast h.symm), hx.1.2⟩, hx.2.1, hx.2.2⟩
+
+/-- Output-register correctness of a register file `regs : Fin rResizable → ℕ` after executing the
+last operation of `ops : List (Dynamic.Op U)` from initial dictionary state `s : Dynamic.State U`:
+when `ops` ends in `.query u` at pre-query dictionary state `s_pre`, registers `252` (`resTagReg`)
+and `253` (`resValReg`) decode to `s_pre u : Option ℕ`
+(`if regs 252 = 0 then none else some (regs 253)`). -/
+@[expose]
+def LastOpOutputCorrect {U : ℕ} (V : ℕ) :
+    Dynamic.State U → List (Dynamic.Op U) → (Fin rResizable → ℕ) → Prop
+  | _, [], _ => True
+  | s, [o], regs =>
+    match o with
+    | .query u =>
+      (if regs ⟨252, by decide⟩ = 0 then none else some (regs ⟨253, by decide⟩)) = s u
+    | .insert _ _ => True
+    | .delete _ => True
+  | s, o :: o₂ :: os, regs =>
+    LastOpOutputCorrect V ((Dynamic.spec U V U).stepFn s o).1 (o₂ :: os) regs
+
+theorem lastOpOutputCorrect_append_singleton {U : ℕ} (V : ℕ) (s : Dynamic.State U)
+    (ops : List (Dynamic.Op U)) (o : Dynamic.Op U) (regs : Fin rResizable → ℕ) :
+    LastOpOutputCorrect V s (ops ++ [o]) regs ↔
+      LastOpOutputCorrect V ((Dynamic.spec U V U).run s ops).1 [o] regs := by
+  induction ops generalizing s with
+  | nil => rfl
+  | cons o₁ os ih =>
+    cases os with
+    | nil => rfl
+    | cons _ _ => exact ih ((Dynamic.spec U V U).stepFn s o₁).1
+
+theorem lastOpOutputCorrect_singleton_of_decode {U V w N : ℕ} (s : Dynamic.State U)
+    (o : Dynamic.Op U) (regs : Fin (rSuccinct U V w N) → ℕ)
+    (hdec : decode U V w N o regs = some ((Dynamic.spec U V N).stepFn s o).2) :
+    LastOpOutputCorrect V s [o]
+      (fun i => regs (i.cast (rSuccinct_eq_const U V w N).symm)) := by
+  cases o with
+  | insert _ _ => trivial
+  | delete _ => trivial
+  | query u =>
+    dsimp only [LastOpOutputCorrect]
+    dsimp only [decode] at hdec
+    have h252 : (⟨252, by decide⟩ : Fin rResizable).cast (rSuccinct_eq_const U V w N).symm =
+        resTagReg U V w N := Fin.ext rfl
+    have h253 : (⟨253, by decide⟩ : Fin rResizable).cast (rSuccinct_eq_const U V w N).symm =
+        resValReg U V w N := Fin.ext rfl
+    simp only [h252, h253]
+    split_ifs at hdec ⊢ with h0
+    · exact Option.some.inj hdec
+    · exact Option.some.inj hdec
+
+theorem lastOpOutputCorrect_congr {U : ℕ} (V : ℕ) (s : Dynamic.State U)
+    (ops : List (Dynamic.Op U)) {regs₁ regs₂ : Fin rResizable → ℕ}
+    (h252 : regs₁ ⟨252, by decide⟩ = regs₂ ⟨252, by decide⟩)
+    (h253 : regs₁ ⟨253, by decide⟩ = regs₂ ⟨253, by decide⟩) :
+    LastOpOutputCorrect V s ops regs₁ ↔ LastOpOutputCorrect V s ops regs₂ := by
+  induction ops generalizing s with
+  | nil => rfl
+  | cons o os ih =>
+    cases os with
+    | nil =>
+      cases o with
+      | insert _ _ => rfl
+      | delete _ => rfl
+      | query _ =>
+        dsimp only [LastOpOutputCorrect]
+        simp only [h252, h253]
+    | cons _ _ => exact ih ((Dynamic.spec U V U).stepFn s o).1
 
 end Cslib.DataStructure.Dictionary.WordRAM.ResizableSuccinct

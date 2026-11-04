@@ -230,6 +230,8 @@ structure DynamicDictPresentation where
   ValidDictOp {U : ℕ} : ℕ → (Fin U → Option ℕ) → DynamicOp U → Prop
   ValidDictSeq {U : ℕ} : ℕ → (Fin U → Option ℕ) → List (DynamicOp U) → Prop
   runEpochInit {U : ℕ} : ℕ → (Fin U → Option ℕ) → ℕ → List (DynamicOp U) → ℕ
+  maxEpochCap {U : ℕ} : ℕ → (Fin U → Option ℕ) → ℕ → List (DynamicOp U) → ℕ
+  SeqOutputCorrect {U : ℕ} : ℕ → (Fin U → Option ℕ) → List (DynamicOp U) → (Fin 9957 → ℕ) → Prop
   activeEpochWords : ℕ → ℕ → ℕ → ℕ → ℕ → ℕ
   RState : ℕ → Type
   mkRState {r : ℕ} : (Fin r → ℕ) → (ℕ → ℕ) → ℕ → RState r
@@ -296,6 +298,32 @@ structure DynamicDictLaws (P : DynamicDictPresentation) : Prop where
       let N := min (2 * n_init) U
       let n_init' := if n' ≤ N ∧ N ≤ 4 * n' then n_init else n'
       P.runEpochInit V s' n_init' os
+  maxEpochCap_nil : ∀ {U : ℕ} (V : ℕ) (s : Fin U → Option ℕ) (n_init : ℕ),
+    P.maxEpochCap V s n_init [] = min (2 * n_init) U
+  maxEpochCap_cons : ∀ {U : ℕ} (V : ℕ) (s : Fin U → Option ℕ) (n_init : ℕ)
+    (o : P.DynamicOp U) (os : List (P.DynamicOp U)),
+    P.maxEpochCap V s n_init (o :: os) =
+      let s' := P.stepDict s o
+      let n' := (Finset.univ.filter fun u => (s' u).isSome).card
+      let N := min (2 * n_init) U
+      let n_init' := if n' ≤ N ∧ N ≤ 4 * n' then n_init else n'
+      max N (P.maxEpochCap V s' n_init' os)
+  seqOutputCorrect_nil : ∀ {U : ℕ} (V : ℕ) (s : Fin U → Option ℕ) (regs : Fin 9957 → ℕ),
+    P.SeqOutputCorrect V s [] regs ↔ True
+  seqOutputCorrect_singleton_insert : ∀ {U : ℕ} (V : ℕ) (s : Fin U → Option ℕ)
+    (u : Fin U) (v : ℕ) (regs : Fin 9957 → ℕ),
+    P.SeqOutputCorrect V s [P.insert u v] regs ↔ True
+  seqOutputCorrect_singleton_delete : ∀ {U : ℕ} (V : ℕ) (s : Fin U → Option ℕ)
+    (u : Fin U) (regs : Fin 9957 → ℕ),
+    P.SeqOutputCorrect V s [P.delete u] regs ↔ True
+  seqOutputCorrect_singleton_query : ∀ {U : ℕ} (V : ℕ) (s : Fin U → Option ℕ)
+    (u : Fin U) (regs : Fin 9957 → ℕ),
+    P.SeqOutputCorrect V s [P.query u] regs ↔
+      (if regs ⟨252, by decide⟩ = 0 then none else some (regs ⟨253, by decide⟩)) = s u
+  seqOutputCorrect_cons_cons : ∀ {U : ℕ} (V : ℕ) (s : Fin U → Option ℕ)
+    (o₁ o₂ : P.DynamicOp U) (os : List (P.DynamicOp U)) (regs : Fin 9957 → ℕ),
+    P.SeqOutputCorrect V s (o₁ :: o₂ :: os) regs ↔
+      P.SeqOutputCorrect V (P.stepDict s o₁) (o₂ :: os) regs
   activeEpochWords_eq : ∀ U V w N n,
     P.activeEpochWords U V w N n = absActiveEpochWords U V w N n
   rRegs_mk : ∀ {r : ℕ} (regs : Fin r → ℕ) (mem : ℕ → ℕ) (frontier : ℕ),
@@ -375,6 +403,48 @@ private theorem runEpochInit_map_dynamicOpOf {P : DynamicDictPresentation}
     rw [List.map_cons, hP.runEpochInit_cons, stepDict_dynamicOpOf hP (V := V) (n_max := U)]
     exact ih _ _
 
+private theorem maxEpochCap_map_dynamicOpOf {P : DynamicDictPresentation}
+    (hP : DynamicDictLaws P) {U V : ℕ} (s : Fin U → Option ℕ) (n_init : ℕ)
+    (ops : List (Dynamic.Op U)) :
+    P.maxEpochCap V s n_init (ops.map P.dynamicOpOf) = maxEpochCap V s n_init ops := by
+  induction ops generalizing s n_init with
+  | nil => exact hP.maxEpochCap_nil V s n_init
+  | cons o os ih =>
+    rw [List.map_cons, hP.maxEpochCap_cons, stepDict_dynamicOpOf hP (V := V) (n_max := U)]
+    dsimp only
+    rw [ih]
+    rfl
+
+private theorem seqOutputCorrect_map_dynamicOpOf {P : DynamicDictPresentation}
+    (hP : DynamicDictLaws P) {U V : ℕ} (s : Fin U → Option ℕ)
+    (ops : List (Dynamic.Op U)) (regs : Fin rResizable → ℕ) :
+    P.SeqOutputCorrect V s (ops.map P.dynamicOpOf) regs ↔
+      LastOpOutputCorrect V s ops regs := by
+  induction ops generalizing s with
+  | nil => exact hP.seqOutputCorrect_nil V s regs
+  | cons o os ih =>
+    cases os with
+    | nil =>
+      cases o with
+      | insert u v => exact hP.seqOutputCorrect_singleton_insert V s u v regs
+      | delete u => exact hP.seqOutputCorrect_singleton_delete V s u regs
+      | query u => exact hP.seqOutputCorrect_singleton_query V s u regs
+    | cons o₂ os' =>
+      simp only [List.map_cons, hP.seqOutputCorrect_cons_cons,
+        stepDict_dynamicOpOf hP (V := V) (n_max := U)]
+      exact ih ((Dynamic.spec U V U).stepFn s o).1
+
+/-- Peak epoch capacity `maxEpochCap` from the empty dictionary is at most
+`min (2 * ops.length) U`. -/
+theorem bridge_maxEpochCap_empty_le_targetCap_length
+    (P : DynamicDictPresentation) (hP : DynamicDictLaws P) {U : ℕ} (V : ℕ)
+    (ops : List (P.DynamicOp U)) :
+    P.maxEpochCap V (DynamicDictPresentation.emptyDict U) 0 ops ≤
+      min (2 * ops.length) U := by
+  obtain ⟨ops_lib, rfl⟩ := dynamicOps_surjective P ops
+  rw [maxEpochCap_map_dynamicOpOf hP, List.length_map]
+  exact maxEpochCap_empty_le_targetCap_length V ops_lib
+
 private theorem rBounded_rDataOf {P : DynamicDictPresentation} (hP : DynamicDictLaws P)
     {r w : ℕ} {x : P.RState r} (hx : P.RBounded w x) :
     (P.rDataOf x).Bounded w := by
@@ -396,12 +466,13 @@ There exist universal `O(1)` constants `r = rResizable = 9957`,
 `rebuildUnitCost = rebuildUnitCostConst = 53495843`,
 `resizableChargeVal = resizableChargeValConst = 160486391`, `C_space = 1227`, and `C_word = 213`
 (quantified **outside** `U, V, w, base`) such that for every universe `U`, value bound `V`, word
-width `w`, and base address `base` with `0 < w`, `U < 2 ^ w`, `V < 2 ^ w`, and
-`∀ N ≤ U, base + P.activeEpochWords U V w N N < 2 ^ w`, and every initial machine state
-`x₀ : P.RState r` with `P.RBounded w x₀` and `P.rFrontier x₀ = base`, and any operation sequence
-`ops : List (P.DynamicOp U)` satisfying `P.ValidDictSeq V (emptyDict U) ops` (no capacity cap
-`n_max`), at the resulting state `s_final = P.runDict (emptyDict U) ops` with live key count
-`n_final` and epoch capacity `N_final = min (2 * n_init_final) U`:
+width `w`, and base address `base` with `0 < w`, `U < 2 ^ w`, and `V < 2 ^ w`, every initial
+machine state `x₀ : P.RState r` with `P.RBounded w x₀` and `P.rFrontier x₀ = base`, and any
+operation sequence `ops : List (P.DynamicOp U)` satisfying
+`P.ValidDictSeq V (emptyDict U) ops` (no capacity cap `n_max`) whose peak epoch capacity
+`P.maxEpochCap V (emptyDict U) 0 ops` (`≤ min (2 * ops.length) U`) fits in `2 ^ w`, at the
+resulting state `s_final = P.runDict (emptyDict U) ops` with live key count `n_final` and epoch
+capacity `N_final = min (2 * n_init_final) U`:
 1. `n_final ≤ N_final ≤ 4 * n_final` (`EpochValid`), `N_final ≤ U`, and all stored values are
    `< V`;
 2. The active word footprint `P.activeEpochWords U V w N_final n_final` is at most
@@ -413,10 +484,12 @@ width `w`, and base address `base` with `0 < w`, `U < 2 ^ w`, `V < 2 ^ w`, and
    `T_ops + E_pot + 2 * rebuildUnitCost * |n_final - n_init_final| ≤`
    `ops.length * resizableChargeVal`,
    where every `x_epoch ∈ ν_final.support` has physical frontier `base + epochSpace U V w N_final`,
+   `P.rRegs x_epoch ⟨0, by decide⟩ = base`,
+   `P.SeqOutputCorrect V (emptyDict U) ops (P.rRegs x_epoch)`,
    preserves caller memory `< base`, and contracts in `2` instructions via `.shrink` to a resting
    machine state `x_rest : P.RState r` with physical frontier
-   `P.rFrontier x_rest = base + P.activeEpochWords U V w N_final n_final` (and to `base` in `3`
-   instructions when `n_final = 0`). -/
+   `P.rFrontier x_rest = base + P.activeEpochWords U V w N_final n_final` and
+   `P.SeqOutputCorrect V (emptyDict U) ops (P.rRegs x_rest)`. -/
 theorem bridge_unbounded_seq_expected_amortized
     (P : DynamicDictPresentation) (hP : DynamicDictLaws P) :
     ∃ (r rebuildUnitCost resizableChargeVal C_space C_word : ℕ),
@@ -429,11 +502,12 @@ theorem bridge_unbounded_seq_expected_amortized
         0 < w →
         U < 2 ^ w →
         V < 2 ^ w →
-        (∀ N ≤ U, base + P.activeEpochWords U V w N N < 2 ^ w) →
-        ∀ (x₀ : P.RState r),
+        ∀ (x₀ : P.RState 9957),
           P.RBounded w x₀ →
           P.rFrontier x₀ = base →
           ∀ ops : List (P.DynamicOp U),
+            (∀ N ≤ P.maxEpochCap V (DynamicDictPresentation.emptyDict U) 0 ops,
+              base + P.activeEpochWords U V w N N < 2 ^ w) →
             P.ValidDictSeq V (DynamicDictPresentation.emptyDict U) ops →
             let s_final := P.runDict (DynamicDictPresentation.emptyDict U) ops
             let n_final := (Finset.univ.filter fun u => (s_final u).isSome).card
@@ -452,7 +526,7 @@ theorem bridge_unbounded_seq_expected_amortized
                 (C_word + 1) * w ∧
             2 * rebuildUnitCost * ((n_final - n_init_final) + (n_init_final - n_final)) ≤
               ops.length * resizableChargeVal ∧
-            ∃ (ν_final : PMF (P.RState r)) (T_ops E_pot : ℝ≥0∞),
+            ∃ (ν_final : PMF (P.RState 9957)) (T_ops E_pot : ℝ≥0∞),
               T_ops + E_pot +
                 ((2 * rebuildUnitCost *
                   ((n_final - n_init_final) + (n_init_final - n_final)) : ℕ) : ℝ≥0∞) ≤
@@ -460,8 +534,11 @@ theorem bridge_unbounded_seq_expected_amortized
               ∀ x_epoch ∈ ν_final.support,
                 P.RBounded w x_epoch ∧
                 P.rFrontier x_epoch = base + P.activeEpochWords U V w N_final N_final ∧
+                P.rRegs x_epoch ⟨0, by decide⟩ = base ∧
+                P.SeqOutputCorrect V (DynamicDictPresentation.emptyDict U) ops
+                  (P.rRegs x_epoch) ∧
                 (∀ a < base, P.rMem x_epoch a = P.rMem x₀ a) ∧
-                ∃ x_rest : P.RState r,
+                ∃ x_rest : P.RState 9957,
                   P.RBounded w x_rest ∧
                   P.rFrontier x_rest = base + P.activeEpochWords U V w N_final n_final ∧
                   P.rFrontier x_rest - base ≤
@@ -472,32 +549,36 @@ theorem bridge_unbounded_seq_expected_amortized
                     (Nat.clog 2 (U.choose n_final) + n_final * Nat.clog 2 V) +
                       C_space * n_final * Nat.clog 2 (Nat.clog 2 (max n_final 4)) +
                       (C_word + 1) * w ∧
+                  P.SeqOutputCorrect V (DynamicDictPresentation.emptyDict U) ops
+                    (P.rRegs x_rest) ∧
                   (∀ a < base, P.rMem x_rest a = P.rMem x₀ a) ∧
                   (n_final = 0 →
-                    ∃ x_zero : P.RState r,
+                    ∃ x_zero : P.RState 9957,
                       P.RBounded w x_zero ∧
                       P.rFrontier x_zero = base ∧
                       ∀ a < base, P.rMem x_zero a = P.rMem x₀ a) := by
   refine ⟨rResizable, rebuildUnitCostConst, resizableChargeValConst, 1227, 213,
     rfl, rfl, rfl, rfl, rfl, ?_⟩
-  intro U V w base hw hU hV hfit_abs x₀ hx₀ hfr₀ ops hv_abs
+  intro U V w base hw hU hV x₀ hx₀ hfr₀ ops hfit_abs hv_abs
   obtain ⟨ops_lib, rfl⟩ := dynamicOps_surjective P ops
   have hv_lib : (Dynamic.spec U V U).ValidHistory (Dynamic.empty U) ops_lib :=
     (validDictSeq_map_dynamicOpOf_unbounded hP (DynamicDictPresentation.emptyDict U) ops_lib).mp
       hv_abs
   have hx₀_lib : (P.rDataOf x₀).Bounded w := rBounded_rDataOf hP hx₀
   have hfr₀_lib : (P.rDataOf x₀).frontier = base := hfr₀
-  have hfit_lib : ∀ N ≤ U, Fits w (base + Succinct.space U V w N) := by
-    intro N hNU
-    have h1 := hfit_abs N hNU
+  have hfit_lib : ∀ N ≤ maxEpochCap V (Dynamic.empty U) 0 ops_lib,
+      Fits w (base + Succinct.space U V w N) := by
+    intro N hN
+    rw [← maxEpochCap_map_dynamicOpOf hP] at hN
+    have h1 := hfit_abs N hN
     rw [hP.activeEpochWords_eq, absActiveEpochWords_eq, activeEpochWords_eq_space] at h1
     exact h1
   have hmain_arith := unbounded_seq_expected_amortized (V := V) hw hU ops_lib hv_lib
   dsimp only at hmain_arith
-  rw [ ← rebuildUnitCost_eq_const U V w, ← resizableChargeVal_eq_const U V w]
+  rw [← rebuildUnitCost_eq_const U V w, ← resizableChargeVal_eq_const U V w]
   obtain ⟨hepoch_f, hN_fU, hvb_f, hwords_f, hbits_f, hpot_f⟩ := hmain_arith
-  have hmach := unbounded_seq_machine_expected_amortized hw hU hV hfit_lib hx₀_lib hfr₀_lib
-    ops_lib hv_lib
+  have hmach := unbounded_seq_machine_expected_amortized hw hU hV hx₀_lib hfr₀_lib
+    ops_lib hfit_lib hv_lib
   dsimp only at hmach
   obtain ⟨_, _, _, ν_lib, T_ops, _, hbound_mach, hsupp_mach⟩ := hmach
   dsimp only
@@ -518,17 +599,26 @@ theorem bridge_unbounded_seq_expected_amortized
   intro x_epoch hx_epoch
   rw [PMF.mem_support_map_iff] at hx_epoch
   obtain ⟨p, hp, rfl⟩ := hx_epoch
-  obtain ⟨hrep_p, hcaller_p, x_rest, _, hx_rest_bdd, hx_rest_fr, hx_rest_words, hx_rest_bits,
-    hx_rest_caller, hx_zero_fn⟩ := hsupp_mach p hp
+  obtain ⟨hrep_p, hcaller_p, hout_p, x_rest, _, hx_rest_bdd, hx_rest_fr, hx_rest_words,
+    hx_rest_bits, hout_rest, hx_rest_caller, hx_zero_fn⟩ := hsupp_mach p hp
   have hx_epoch_bdd :
       (castRData (rSuccinct_eq_const U V w N_final)
         ⟨p.2.regs, p.2.mem, base + Succinct.space U V w N_final⟩).Bounded w :=
     castRData_bounded (rSuccinct_eq_const U V w N_final) hrep_p.1
-  refine ⟨rBounded_rStateOf hP hx_epoch_bdd, ?_, ?_, P.rStateOf x_rest,
-    rBounded_rStateOf hP hx_rest_bdd, ?_, ?_, ?_, ?_, ?_⟩
+  refine ⟨rBounded_rStateOf hP hx_epoch_bdd, ?_, ?_, ?_, ?_, P.rStateOf x_rest,
+    rBounded_rStateOf hP hx_rest_bdd, ?_, ?_, ?_, ?_, ?_, ?_⟩
   · dsimp only [toAbsState, DynamicDictPresentation.rStateOf, castRData]
     rw [hP.rFrontier_mk, hP.activeEpochWords_eq, absActiveEpochWords_eq, activeEpochWords_eq_space]
     rfl
+  · dsimp only [toAbsState, DynamicDictPresentation.rStateOf, castRData]
+    rw [hP.rRegs_mk]
+    have h0 : (⟨0, by decide⟩ : Fin rResizable).cast (rSuccinct_eq_const U V w N_final).symm =
+        baseReg U V w N_final := Fin.ext rfl
+    rw [h0]
+    exact hrep_p.2.2.2.1
+  · dsimp only [toAbsState, DynamicDictPresentation.rStateOf]
+    rw [hP.rRegs_mk, seqOutputCorrect_map_dynamicOpOf hP]
+    exact hout_p
   · intro a ha
     dsimp only [toAbsState, DynamicDictPresentation.rStateOf, castRData]
     rw [hP.rMem_mk]
@@ -542,6 +632,9 @@ theorem bridge_unbounded_seq_expected_amortized
   · dsimp only [DynamicDictPresentation.rStateOf]
     rw [hP.rFrontier_mk]
     exact hx_rest_bits
+  · dsimp only [DynamicDictPresentation.rStateOf]
+    rw [hP.rRegs_mk, seqOutputCorrect_map_dynamicOpOf hP]
+    exact hout_rest
   · intro a ha
     dsimp only [DynamicDictPresentation.rStateOf]
     rw [hP.rMem_mk]
@@ -567,14 +660,16 @@ With the universal register count `r = rResizable = 9957` quantified **outside**
    `P.rFrontier x_shrunk = base + sp₂`, `P.rFrontier x_reused = base + sp₂ + k_client` (reusing the
    released addresses `[base + sp₂, ...)`), `P.RBounded w x_reused`, preserved prefix
    `[0, base + sp₂)`, and zeroed client slice `[base + sp₂, base + sp₂ + k_client)`.
-2. **Full dictionary lifecycle and memory reuse (`subroutine_client_reuse_released_memory`):**
-   Executing the dictionary over any valid sequence `ops` at `[base, base + absEpochSpace U V w U)`,
-   deallocating via `deallocSuccinctCode` (`3` instructions, `.shrink`), and allocating `k_client`
-   words for a subsequent client via `allocWordsCode` (`4 * k_client + 8` instructions under
-   demonic `DemonicGrow`) produces `x_dict, x_dealloc, x_reused` with
-   `P.rFrontier x_dict = base + absEpochSpace U V w U`, `P.rFrontier x_dealloc = base`, and
-   `P.rFrontier x_reused = base + k_client`—reusing `[base, base + k_client)` while preserving all
-   caller memory `< base`. -/
+2. **Full dictionary lifecycle and memory reuse:**
+   Executing the dictionary over any valid sequence `ops` whose peak epoch capacity
+   `P.maxEpochCap V (emptyDict U) 0 ops` fits in `2 ^ w`, deallocating via `deallocSuccinctCode`
+   (`3` instructions, `.shrink`), and allocating `k_client` words for a subsequent client via
+   `allocWordsCode` (`4 * k_client + 8` instructions under demonic `DemonicGrow`) produces
+   `x_dict, x_dealloc, x_reused` with
+   `P.rFrontier x_dict = base + P.activeEpochWords U V w N_final N_final`,
+   `P.SeqOutputCorrect V (emptyDict U) ops (P.rRegs x_dict)`,
+   `P.rFrontier x_dealloc = base`, and `P.rFrontier x_reused = base + k_client`—reusing
+   `[base, base + k_client)` while preserving all caller memory `< base`. -/
 theorem bridge_dictionary_client_memory_reuse
     (P : DynamicDictPresentation) (hP : DynamicDictLaws P) :
     ∃ r : ℕ,
@@ -583,27 +678,31 @@ theorem bridge_dictionary_client_memory_reuse
         0 < w →
         U < 2 ^ w →
         V < 2 ^ w →
-        (∀ (base sp₂ Δ k_client : ℕ) (x : P.RState r),
+        (∀ (base sp₂ Δ k_client : ℕ) (x : P.RState 9957),
           P.RBounded w x →
           P.rFrontier x = base + sp₂ + Δ →
           1 < 2 ^ w →
           base + sp₂ + k_client < 2 ^ w →
-          ∃ x_shrunk x_reused : P.RState r,
+          ∃ x_shrunk x_reused : P.RState 9957,
             P.RBounded w x_shrunk ∧
             P.rFrontier x_shrunk = base + sp₂ ∧
             P.RBounded w x_reused ∧
             P.rFrontier x_reused = base + sp₂ + k_client ∧
             (∀ a < base + sp₂, P.rMem x_reused a = P.rMem x a) ∧
             (∀ a, base + sp₂ ≤ a → a < base + sp₂ + k_client → P.rMem x_reused a = 0)) ∧
-        (∀ (base k_client : ℕ) (x₀ : P.RState r) (ops : List (P.DynamicOp U)),
-          base + P.activeEpochWords U V w U U < 2 ^ w →
+        (∀ (base k_client : ℕ) (x₀ : P.RState 9957) (ops : List (P.DynamicOp U)),
+          (∀ N ≤ P.maxEpochCap V (DynamicDictPresentation.emptyDict U) 0 ops,
+            base + P.activeEpochWords U V w N N < 2 ^ w) →
           base + k_client < 2 ^ w →
           P.RBounded w x₀ →
           P.rFrontier x₀ = base →
           P.ValidDictSeq V (DynamicDictPresentation.emptyDict U) ops →
-          ∃ x_dict x_dealloc x_reused : P.RState r,
+          let N_final := min (2 * P.runEpochInit V (DynamicDictPresentation.emptyDict U) 0 ops) U
+          ∃ x_dict x_dealloc x_reused : P.RState 9957,
             P.RBounded w x_dict ∧
-            P.rFrontier x_dict = base + P.activeEpochWords U V w U U ∧
+            P.rFrontier x_dict = base + P.activeEpochWords U V w N_final N_final ∧
+            P.rRegs x_dict ⟨0, by decide⟩ = base ∧
+            P.SeqOutputCorrect V (DynamicDictPresentation.emptyDict U) ops (P.rRegs x_dict) ∧
             (∀ a < base, P.rMem x_dict a = P.rMem x₀ a) ∧
             P.RBounded w x_dealloc ∧
             P.rFrontier x_dealloc = base ∧
@@ -642,37 +741,64 @@ theorem bridge_dictionary_client_memory_reuse
       dsimp only [DynamicDictPresentation.rStateOf, x_re_r, castRData]
       rw [hP.rMem_mk]
       exact hx_re_zero a (by simp only [Block.mem_footprint, Block.Owns]; omega)
-  · intro base k_client x₀ ops hfit_dict hfit_client hx₀ hfr₀ hv_abs
-    rw [hP.activeEpochWords_eq, absActiveEpochWords_eq, activeEpochWords_eq_space] at hfit_dict ⊢
+  · intro base k_client x₀ ops hfit_abs hfit_client hx₀ hfr₀ hv_abs
     obtain ⟨ops_lib, rfl⟩ := dynamicOps_surjective P ops
     have hv_lib : (Dynamic.spec U V U).ValidHistory (Dynamic.empty U) ops_lib :=
       (validDictSeq_map_dynamicOpOf_unbounded hP (DynamicDictPresentation.emptyDict U) ops_lib).mp
         hv_abs
-    have hx₀_lib0 : (P.rDataOf x₀).Bounded w := rBounded_rDataOf hP hx₀
-    let x₀_u : RData (rSuccinct U V w U) :=
-      castRData (rSuccinct_eq_const U V w U).symm (P.rDataOf x₀)
-    have hx₀_lib : x₀_u.Bounded w :=
-      castRData_bounded (rSuccinct_eq_const U V w U).symm hx₀_lib0
-    have hfr₀_u : x₀_u.frontier = base := hfr₀
-    obtain ⟨x_alloc, ν₀, ν_final, T_ops, _, _, _, _, hsupp⟩ :=
-      subroutine_client_reuse_released_memory hw le_rfl hU hV hfit_dict hfit_client ops_lib
-        hx₀_lib hfr₀_u hv_lib
-    obtain ⟨p, hp⟩ := ν_final.support_nonempty
-    obtain ⟨hrep_dict, hpre_dict, x_dealloc, x_reused, he_de, hfr_de, _, hx_re_bdd, hfr_re,
-      hpre_re, hzero_re⟩ := hsupp p hp
-    let x_dict : RData (rSuccinct U V w U) :=
-      ⟨p.2.regs, p.2.mem, base + Succinct.space U V w U⟩
-    obtain ⟨y_de, _, hy_de_bdd, hy_de_fr, _, _, _, _⟩ :=
+    have hx₀_lib : (P.rDataOf x₀).Bounded w := rBounded_rDataOf hP hx₀
+    have hfr₀_lib : (P.rDataOf x₀).frontier = base := hfr₀
+    have hfit_lib : ∀ N ≤ maxEpochCap V (Dynamic.empty U) 0 ops_lib,
+        Fits w (base + Succinct.space U V w N) := by
+      intro N hN
+      rw [← maxEpochCap_map_dynamicOpOf hP] at hN
+      have h1 := hfit_abs N hN
+      rw [hP.activeEpochWords_eq, absActiveEpochWords_eq, activeEpochWords_eq_space] at h1
+      exact h1
+    have hmach := unbounded_seq_machine_expected_amortized hw hU hV hx₀_lib hfr₀_lib
+      ops_lib hfit_lib hv_lib
+    dsimp only at hmach
+    obtain ⟨_, _, _, ν_lib, _, _, _, hsupp_mach⟩ := hmach
+    obtain ⟨p, hp⟩ := ν_lib.support_nonempty
+    obtain ⟨hrep_dict, hpre_dict, hout_dict, _⟩ := hsupp_mach p hp
+    let n_init_final := runEpochInit V (Dynamic.empty U) 0 ops_lib
+    let N_final := targetCap U n_init_final
+    let x_dict : RData (rSuccinct U V w N_final) :=
+      ⟨p.2.regs, p.2.mem, base + Succinct.space U V w N_final⟩
+    have hNf_le : N_final ≤ maxEpochCap V (Dynamic.empty U) 0 ops_lib :=
+      targetCap_runEpochInit_le_maxEpochCap V (Dynamic.empty U) 0 ops_lib
+    have hfit_Nf : Fits w (base + Succinct.space U V w N_final) := hfit_lib N_final hNf_le
+    have hw2 : 2 ≤ w := two_le_w_of_fits_space hfit_Nf
+    have h1 : Fits w 1 :=
+      lt_of_lt_of_le (by decide : 1 < 2 ^ 2) (Nat.pow_le_pow_right two_pos hw2)
+    obtain ⟨y_de, _, hy_de_bdd, hy_de_fr, _, _, _, hde_caller⟩ :=
       deallocSuccinctCode_exec hrep_dict.1 rfl hrep_dict.2.2.2.1
-    let x_dict_r : RData rResizable := castRData (rSuccinct_eq_const U V w U) x_dict
-    let y_de_r : RData rResizable := castRData (rSuccinct_eq_const U V w U) y_de
-    let x_re_r : RData rResizable := castRData (rSuccinct_eq_const U V w U) x_reused
+    obtain ⟨x_reused, _, hx_re_bdd, hfr_re, _, _, hx_re_mem, hzero_re⟩ :=
+      allocWordsCode_exec hy_de_bdd hy_de_fr h1 hfit_client
+    let x_dict_r : RData rResizable := castRData (rSuccinct_eq_const U V w N_final) x_dict
+    let y_de_r : RData rResizable := castRData (rSuccinct_eq_const U V w N_final) y_de
+    let x_re_r : RData rResizable := castRData (rSuccinct_eq_const U V w N_final) x_reused
+    dsimp only
+    rw [runEpochInit_map_dynamicOpOf hP (V := V)]
     refine ⟨P.rStateOf x_dict_r, P.rStateOf y_de_r, P.rStateOf x_re_r,
-      rBounded_rStateOf hP (castRData_bounded (rSuccinct_eq_const U V w U) hrep_dict.1), ?_, ?_,
-      rBounded_rStateOf hP (castRData_bounded (rSuccinct_eq_const U V w U) hy_de_bdd), ?_,
-      rBounded_rStateOf hP (castRData_bounded (rSuccinct_eq_const U V w U) hx_re_bdd), ?_, ?_, ?_⟩
+      rBounded_rStateOf hP (castRData_bounded (rSuccinct_eq_const U V w N_final) hrep_dict.1),
+      ?_, ?_, ?_, ?_,
+      rBounded_rStateOf hP (castRData_bounded (rSuccinct_eq_const U V w N_final) hy_de_bdd), ?_,
+      rBounded_rStateOf hP (castRData_bounded (rSuccinct_eq_const U V w N_final) hx_re_bdd),
+      ?_, ?_, ?_⟩
     · dsimp only [DynamicDictPresentation.rStateOf, x_dict_r, x_dict, castRData]
-      rw [hP.rFrontier_mk]
+      rw [hP.rFrontier_mk, hP.activeEpochWords_eq, absActiveEpochWords_eq,
+        activeEpochWords_eq_space]
+      rfl
+    · dsimp only [DynamicDictPresentation.rStateOf, x_dict_r, x_dict, castRData]
+      rw [hP.rRegs_mk]
+      have h0 : (⟨0, by decide⟩ : Fin rResizable).cast (rSuccinct_eq_const U V w N_final).symm =
+          baseReg U V w N_final := Fin.ext rfl
+      rw [h0]
+      exact hrep_dict.2.2.2.1
+    · dsimp only [DynamicDictPresentation.rStateOf]
+      rw [hP.rRegs_mk, seqOutputCorrect_map_dynamicOpOf hP]
+      exact hout_dict
     · intro a ha
       dsimp only [DynamicDictPresentation.rStateOf, x_dict_r, x_dict, castRData]
       rw [hP.rMem_mk]
@@ -683,8 +809,8 @@ theorem bridge_dictionary_client_memory_reuse
       rw [hP.rFrontier_mk, hfr_re]
     · intro a ha
       dsimp only [DynamicDictPresentation.rStateOf, x_re_r, castRData]
-      rw [hP.rMem_mk]
-      exact hpre_re a ha
+      rw [hP.rMem_mk, hx_re_mem, hde_caller a ha]
+      exact hpre_dict a ha
     · intro a ha1 ha2
       dsimp only [DynamicDictPresentation.rStateOf, x_re_r, castRData]
       rw [hP.rMem_mk]

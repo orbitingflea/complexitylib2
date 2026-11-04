@@ -216,6 +216,33 @@ def stepDemonicRel {r : ℕ} (w : ℕ) (p : RProgram r) : RCfg r → RCfg r → 
     | some (.rand d i) =>
       ∃ v ≤ x.regs i, cfg' = setReg d v
 
+/-- Deterministic-length demonic execution relation `ExecRProgramCfg w p k cfg P`:
+from configuration `cfg`, every demonic choice (`DemonicGrow` on `.grow`) reaches a configuration
+satisfying `P` in `k` steps of `stepDemonicRel w p`. -/
+inductive ExecRProgramCfg {r : ℕ} (w : ℕ) (p : RProgram r) :
+    ℕ → RCfg r → (RCfg r → Prop) → Prop
+  | refl (cfg : RCfg r) (P : RCfg r → Prop) (h : P cfg) :
+      ExecRProgramCfg w p 0 cfg P
+  | step (k : ℕ) (cfg : RCfg r) (Q P : RCfg r → Prop)
+      (h1 : (∃ cfg', stepDemonicRel w p cfg cfg') ∧
+        ∀ cfg', stepDemonicRel w p cfg cfg' → Q cfg')
+      (h2 : ∀ cfg', Q cfg' → ExecRProgramCfg w p k cfg' P) :
+      ExecRProgramCfg w p (k + 1) cfg P
+
+/-- `k`-step program execution `ExecRProgramDemonic w p x x' k`: starting from `.running 0 x`,
+every demonic transition path of length `k` under `stepDemonicRel w p` reaches `.running k x'`. -/
+def ExecRProgramDemonic {r : ℕ} (w : ℕ) (p : RProgram r) (x x' : RState r) (k : ℕ) : Prop :=
+  ExecRProgramCfg w p k (.running 0 x) (fun cfg => cfg = .running k x')
+
+private theorem execRProgramCfg_step_eq {r : ℕ} {w k : ℕ} {p : RProgram r}
+    {cfg cfg₁ : RCfg r} {P : RCfg r → Prop}
+    (hstep : ∀ cfg', stepDemonicRel w p cfg cfg' ↔ cfg' = cfg₁)
+    (hnext : ExecRProgramCfg w p k cfg₁ P) :
+    ExecRProgramCfg w p (k + 1) cfg P :=
+  ExecRProgramCfg.step k cfg (fun cfg' => cfg' = cfg₁) P
+    ⟨⟨cfg₁, (hstep cfg₁).mpr rfl⟩, fun cfg' h => (hstep cfg').mp h⟩
+    (fun _ h => h ▸ hnext)
+
 /-- **Demonic-Grow + Zero-Fill Equivalence (`demonicGrow_zeroSlice_eq`):**
 From any memory `mem` that is zero above the current frontier `s` (`∀ a ≥ s, mem a = 0`), applying
 any demonic growth transition `DemonicGrow w s delta mem mem'` followed by
@@ -401,7 +428,103 @@ def runEpochInit {U : ℕ} (V : ℕ) : (Fin U → Option ℕ) → ℕ → List (
     let n_init' := if n' ≤ N ∧ N ≤ 4 * n' then n_init else n'
     runEpochInit V s' n_init' os
 
-/-- **Word-to-Bit Space Conversion (`succinctWords_mul_w_le_bits`):**
+/-- Maximum epoch capacity `N_t = targetCap U n_init_t` reached at any step `t` along an operation
+sequence `ops : List (DynamicOp U)` starting from `(s, n_init)`. -/
+def maxEpochCap {U : ℕ} (V : ℕ) : (Fin U → Option ℕ) → ℕ → List (DynamicOp U) → ℕ
+  | _, n_init, [] => targetCap U n_init
+  | s, n_init, o :: os =>
+    let s' := stepDict s o
+    let n' := (dictDom s').card
+    let N := targetCap U n_init
+    let n_init' := if n' ≤ N ∧ N ≤ 4 * n' then n_init else n'
+    max N (maxEpochCap V s' n_init' os)
+
+/-- Load an operation `o : DynamicOp U` into input registers `regs[250..252]` according to
+Track B's calling convention (`regs[250]` = opcode `0/1/2`, `regs[251]` = key `u.val`,
+`regs[252]` = value `v` for `insert`). -/
+def prepareDynDictRegs {U : ℕ} (o : DynamicOp U) (regs : Fin 9957 → ℕ) : Fin 9957 → ℕ :=
+  match o with
+  | .insert u v =>
+    Function.update
+      (Function.update (Function.update regs ⟨250, by decide⟩ 0) ⟨251, by decide⟩ u.val)
+      ⟨252, by decide⟩ v
+  | .delete u =>
+    Function.update
+      (Function.update (Function.update regs ⟨250, by decide⟩ 1) ⟨251, by decide⟩ u.val)
+      ⟨252, by decide⟩ 0
+  | .query u =>
+    Function.update
+      (Function.update (Function.update regs ⟨250, by decide⟩ 2) ⟨251, by decide⟩ u.val)
+      ⟨252, by decide⟩ 0
+
+/-- Decode a `query` result `Option ℕ` from the output registers `(regs[252], regs[253])`:
+`regs[252] = 0` encodes `none`, and `regs[252] ≠ 0` encodes `some regs[253]`. -/
+def decodeOptionRegs (regs : Fin 9957 → ℕ) : Option ℕ :=
+  if regs ⟨252, by decide⟩ = 0 then none else some (regs ⟨253, by decide⟩)
+
+/-- Single-operation output-register correctness on machine registers `regs : Fin 9957 → ℕ`
+against abstract dictionary state `s : Fin U → Option ℕ`:
+for `o = .query u`, `decodeOptionRegs regs = s u`; for `insert` and `delete` (`PUnit` output),
+`True`. -/
+def OpOutputCorrect {U : ℕ} (_V : ℕ) (s : Fin U → Option ℕ) (o : DynamicOp U)
+    (regs : Fin 9957 → ℕ) : Prop :=
+  match o with
+  | .insert _ _ => True
+  | .delete _ => True
+  | .query u => decodeOptionRegs regs = s u
+
+/-- Output-register correctness at the end of an operation sequence `ops : List (DynamicOp U)`
+starting from abstract dictionary state `s : Fin U → Option ℕ`: if the last operation in `ops` is
+`.query u`, then `decodeOptionRegs regs` equals the dictionary value `(runDict s init) u`
+immediately before that query. -/
+def SeqOutputCorrect {U : ℕ} (V : ℕ) :
+    (Fin U → Option ℕ) → List (DynamicOp U) → (Fin 9957 → ℕ) → Prop
+  | _, [], _ => True
+  | s, [o], regs => OpOutputCorrect V s o regs
+  | s, o₁ :: o₂ :: os, regs => SeqOutputCorrect V (stepDict s o₁) (o₂ :: os) regs
+
+/-- **Any-Step Query Output Correctness (`seqOutputCorrect_append_singleton`):**
+At any step `ops = init ++ [DynamicOp.query u]` whose final operation is `.query u`,
+`SeqOutputCorrect V s (init ++ [DynamicOp.query u]) regs` is equivalent to
+`decodeOptionRegs regs = (runDict s init) u`. -/
+theorem seqOutputCorrect_append_singleton {U : ℕ} (V : ℕ) (s : Fin U → Option ℕ)
+    (init : List (DynamicOp U)) (u : Fin U) (regs : Fin 9957 → ℕ) :
+    SeqOutputCorrect V s (init ++ [DynamicOp.query u]) regs ↔
+      decodeOptionRegs regs = (runDict s init) u := by
+  induction init generalizing s with
+  | nil => rfl
+  | cons o₁ os ih =>
+    cases os with
+    | nil => exact ih (stepDict s o₁)
+    | cons o₂ rest => exact ih (stepDict s o₁)
+
+/-- **Peak Epoch Capacity Bound (`maxEpochCap_empty_le_targetCap_length`):**
+Starting from `(emptyDict U, 0)`, the maximum epoch capacity `maxEpochCap V (emptyDict U) 0 ops`
+along `ops` never exceeds `targetCap U ops.length = min (2 * ops.length) U` (and is always `≤ U`).
+In particular, machine word-size admissibility requires only that the peak epoch reached along
+`ops` fits in `2 ^ w`, not `epochSpace U V w U < 2 ^ w`. -/
+theorem maxEpochCap_empty_le_targetCap_length {U : ℕ} (V : ℕ) (ops : List (DynamicOp U)) :
+    maxEpochCap V (emptyDict U) 0 ops ≤ targetCap U ops.length :=
+  ComplexityAbstracts.ResizableSuccinctDictionaryBridge.bridge_maxEpochCap_empty_le_targetCap_length
+    ⟨DynamicOp, @DynamicOp.insert, @DynamicOp.delete, @DynamicOp.query, @DynamicOp.rec,
+      @stepDict, @runDict, @ValidDictOp, @ValidDictSeq, @runEpochInit, @maxEpochCap,
+      @SeqOutputCorrect, @activeEpochWords,
+      RState, @RState.mk, @RState.regs, @RState.mem, @RState.frontier, @RBounded⟩
+    ⟨fun _ _ _ => rfl, fun _ _ => rfl, fun _ _ => rfl,
+      fun _ => rfl, fun _ _ _ => rfl,
+      fun _ _ _ _ => Iff.rfl, fun _ _ _ => Iff.rfl, fun _ _ _ => Iff.rfl,
+      fun _ _ => Iff.rfl, fun _ _ _ _ => Iff.rfl,
+      fun _ _ _ => rfl, fun _ _ _ _ _ => rfl,
+      fun _ _ _ => rfl, fun _ _ _ _ _ => rfl,
+      fun _ _ _ => Iff.rfl, fun _ _ _ _ _ => Iff.rfl,
+      fun _ _ _ _ => Iff.rfl, fun _ _ _ _ => Iff.rfl,
+      fun _ _ _ _ _ _ => Iff.rfl,
+      fun _ _ _ _ _ => rfl,
+      fun _ _ _ => rfl, fun _ _ _ => rfl, fun _ _ _ => rfl,
+      fun _ _ => Iff.rfl⟩
+    V ops
+
+/-- **Word- to Bit-Space Conversion (`succinctWords_mul_w_le_bits`):**
 Converting `succinctWords C₁ C₀ U V w n` words to bits adds at most `(C₀ + 1) * w` bits (`C₀ * w`
 for the `C₀` constant words plus `w` bits from ceiling division). -/
 theorem succinctWords_mul_w_le_bits (C₁ C₀ U V w n : ℕ) :
@@ -436,16 +559,200 @@ theorem activeEpochWords_le_four_mul {U V w N n : ℕ}
   ComplexityAbstracts.ResizableSuccinctDictionaryBridge.bridge_activeEpochWords_le_four_mul
     hw hnU hNU hU hnN hN4
 
+private theorem activeEpochWords_le_epochSpace {U V w N n : ℕ} (hn : n ≤ N) :
+    activeEpochWords U V w N n ≤ epochSpace U V w N := by
+  unfold epochSpace activeEpochWords itemWords
+  dsimp only
+  have h1 := Nat.div_le_div_right (c := w)
+    (Nat.sub_le_sub_right
+      (Nat.add_le_add_right
+        (Nat.mul_le_mul_right
+          (Nat.clog 2 U - (Nat.log 2 N - 3 * Nat.clog 2 (Nat.clog 2 (max N 4)))) hn) w) 1)
+  have h2 := Nat.div_le_div_right (c := w)
+    (Nat.sub_le_sub_right
+      (Nat.add_le_add_right (Nat.mul_le_mul_right (Nat.clog 2 V) hn) w) 1)
+  omega
+
 /-- Universal register count `9957` (`rSuccinct U V w N = 9957` for all `U, V, w, N`). -/
-def rResizable : ℕ := 9957
+abbrev rResizable : ℕ := 9957
 
 /-- Universal single-operation rebuild unit cost `53495843` (`rebuildUnitCost U V w = 53495843`
 for all `U, V, w`). -/
-def rebuildUnitCostConst : ℕ := 53495843
+abbrev rebuildUnitCostConst : ℕ := 53495843
 
 /-- Universal per-operation expected amortized instruction charge `160486391`
 (`resizableChargeVal U V w = 160486391` for all `U, V, w`). -/
-def resizableChargeValConst : ℕ := 160486391
+abbrev resizableChargeValConst : ℕ := 160486391
+
+/-- `2`-instruction resizable Word-RAM program (`RProgram r`) that contracts the physical frontier
+by `Δ` words via `.shrink`: loads `Δ` into `r_cur` and executes `.shrink r_cur`. -/
+def shrinkTailProgram {r : ℕ} (r_cur : Fin r) (Δ : ℕ) : RProgram r :=
+  [.const r_cur Δ,
+   .shrink r_cur]
+
+/-- `3`-instruction resizable Word-RAM program (`RProgram r`) that deallocates an entire structure
+at `regs[r_base]` via `.shrink`: queries `.size r_cur`, computes `r_tmp = frontier - base`, and
+executes `.shrink r_tmp`. -/
+def deallocProgram {r : ℕ} (r_base r_cur r_tmp : Fin r) : RProgram r :=
+  [.size r_cur,
+   .alu .sub r_tmp r_cur r_base,
+   .shrink r_tmp]
+
+private theorem shrinkTailProgram_exec {r w : ℕ} (r_cur : Fin r) (Δ : ℕ) (x : RState r)
+    (hΔ_lt : Δ < 2 ^ w) (hΔ_le : Δ ≤ x.frontier) :
+    ExecRProgramDemonic w (shrinkTailProgram r_cur Δ) x
+      ⟨Function.update x.regs r_cur Δ,
+        shrinkMem x.mem (x.frontier - Δ) Δ,
+        x.frontier - Δ⟩ 2 := by
+  let x₁ : RState r := ⟨Function.update x.regs r_cur Δ, x.mem, x.frontier⟩
+  let x₂ : RState r :=
+    ⟨x₁.regs, shrinkMem x.mem (x.frontier - Δ) Δ, x.frontier - Δ⟩
+  refine execRProgramCfg_step_eq (cfg₁ := .running 1 x₁) (fun cfg' => ?_) ?_
+  · simp [stepDemonicRel, shrinkTailProgram, hΔ_lt, x₁]
+  · refine execRProgramCfg_step_eq (cfg₁ := .running 2 x₂) (fun cfg' => ?_)
+      (ExecRProgramCfg.refl _ _ rfl)
+    simp [stepDemonicRel, shrinkTailProgram, x₁, x₂, hΔ_le]
+
+private theorem deallocProgram_exec {r w base : ℕ} (r_base r_cur r_tmp : Fin r) (x : RState r)
+    (hne : r_base ≠ r_cur) (hfr_lt : x.frontier < 2 ^ w)
+    (hr_base : x.regs r_base = base) (hle : base ≤ x.frontier) :
+    ExecRProgramDemonic w (deallocProgram r_base r_cur r_tmp) x
+      ⟨Function.update (Function.update x.regs r_cur x.frontier) r_tmp (x.frontier - base),
+        shrinkMem x.mem base (x.frontier - base),
+        base⟩ 3 := by
+  let z₁ : RState r := ⟨Function.update x.regs r_cur x.frontier, x.mem, x.frontier⟩
+  let z₂ : RState r := ⟨Function.update z₁.regs r_tmp (x.frontier - base), x.mem, x.frontier⟩
+  let z₃ : RState r := ⟨z₂.regs, shrinkMem x.mem base (x.frontier - base), base⟩
+  have hsub_lt : x.frontier - base < 2 ^ w := lt_of_le_of_lt (Nat.sub_le _ _) hfr_lt
+  have hsub_le : x.frontier - base ≤ x.frontier := Nat.sub_le _ _
+  have hfr_sub : x.frontier - (x.frontier - base) = base := by omega
+  refine execRProgramCfg_step_eq (cfg₁ := .running 1 z₁) (fun cfg' => ?_) ?_
+  · simp [stepDemonicRel, deallocProgram, hfr_lt, z₁]
+  · refine execRProgramCfg_step_eq (cfg₁ := .running 2 z₂) (fun cfg' => ?_) ?_
+    · simp only [stepDemonicRel, deallocProgram, List.getElem?_cons_succ, List.getElem?_cons_zero,
+        AluOp.eval, z₁, z₂]
+      rw [Function.update_of_ne hne, hr_base, Function.update_self]
+      simp [hle, hsub_lt]
+    · refine execRProgramCfg_step_eq (cfg₁ := .running 3 z₃) (fun cfg' => ?_)
+        (ExecRProgramCfg.refl _ _ rfl)
+      simp only [stepDemonicRel, deallocProgram, List.getElem?_cons_succ, List.getElem?_cons_zero,
+        z₂, z₃]
+      rw [Function.update_self]
+      simp [hsub_le, hfr_sub]
+
+private theorem rBounded_shrinkTail {r w : ℕ} (r_cur : Fin r) (Δ : ℕ) {x : RState r}
+    (hx : RBounded w x) (hΔ_lt : Δ < 2 ^ w) :
+    RBounded w
+      ⟨Function.update x.regs r_cur Δ,
+        shrinkMem x.mem (x.frontier - Δ) Δ,
+        x.frontier - Δ⟩ := by
+  refine ⟨⟨fun i => ?_, fun a => ?_⟩, lt_of_le_of_lt (Nat.sub_le _ _) hx.2.1, fun a ha => ?_⟩
+  · dsimp only
+    by_cases hi : i = r_cur
+    · subst hi; simp [hΔ_lt]
+    · simp [hi, hx.1.1 i]
+  · dsimp only [shrinkMem]
+    split_ifs
+    · exact Nat.two_pow_pos w
+    · exact hx.1.2 a
+  · dsimp only [shrinkMem] at ha ⊢
+    split_ifs with h
+    · rfl
+    · exact hx.2.2 a (by omega)
+
+private theorem rBounded_dealloc {r w base : ℕ} (r_cur r_tmp : Fin r) {x : RState r}
+    (hx : RBounded w x) (hle : base ≤ x.frontier) :
+    RBounded w
+      ⟨Function.update (Function.update x.regs r_cur x.frontier) r_tmp (x.frontier - base),
+        shrinkMem x.mem base (x.frontier - base),
+        base⟩ := by
+  refine ⟨⟨fun i => ?_, fun a => ?_⟩, lt_of_le_of_lt hle hx.2.1, fun a ha => ?_⟩
+  · dsimp only
+    by_cases hi2 : i = r_tmp
+    · subst hi2
+      simp only [Function.update_self]
+      exact lt_of_le_of_lt (Nat.sub_le _ _) hx.2.1
+    · rw [Function.update_of_ne hi2]
+      by_cases hi1 : i = r_cur
+      · subst hi1
+        simp only [Function.update_self]
+        exact hx.2.1
+      · rw [Function.update_of_ne hi1]
+        exact hx.1.1 i
+  · dsimp only [shrinkMem]
+    split_ifs
+    · exact Nat.two_pow_pos w
+    · exact hx.1.2 a
+  · dsimp only [shrinkMem] at ha ⊢
+    split_ifs with h
+    · rfl
+    · exact hx.2.2 a (by omega)
+
+private def r0Resizable : Fin rResizable := ⟨0, by decide⟩
+private def r1Resizable : Fin rResizable := ⟨1, by decide⟩
+private def r2Resizable : Fin rResizable := ⟨2, by decide⟩
+private theorem r0_ne_r1 : r0Resizable ≠ r1Resizable := by decide
+
+private theorem shrinkTail_delta_le {fr base ep act : ℕ} (hfr : fr = base + ep) :
+    ep - act ≤ fr := by omega
+
+private theorem shrinkTail_frontier_eq {fr base ep act : ℕ}
+    (hfr : fr = base + ep) (hle : act ≤ ep) :
+    fr - (ep - act) = base + act := by omega
+
+private theorem shrinkTail_preserve_lt {mem mem₀ : ℕ → ℕ} {fr base ep act : ℕ}
+    (hfr : fr = base + ep) (hmem : ∀ a < base, mem a = mem₀ a) :
+    ∀ a < base, shrinkMem mem (fr - (ep - act)) (ep - act) a = mem₀ a := by
+  intro a ha
+  dsimp only [shrinkMem]
+  split_ifs with h
+  · omega
+  · exact hmem a ha
+
+private theorem dealloc_preserve_lt {mem mem₀ : ℕ → ℕ} {fr base : ℕ}
+    (hmem : ∀ a < base, mem a = mem₀ a) :
+    ∀ a < base, shrinkMem mem base (fr - base) a = mem₀ a := by
+  intro a ha
+  dsimp only [shrinkMem]
+  split_ifs with h
+  · omega
+  · exact hmem a ha
+
+private theorem seqOutputCorrect_shrinkTail {U V : ℕ} (ops : List (DynamicOp U))
+    (x : RState rResizable) (Δ : ℕ)
+    (hout : SeqOutputCorrect V (emptyDict U) ops x.regs) :
+    SeqOutputCorrect V (emptyDict U) ops (Function.update x.regs r1Resizable Δ) := by
+  have hdec :
+      decodeOptionRegs (Function.update x.regs r1Resizable Δ) = decodeOptionRegs x.regs := by
+    have h252 : ∀ (h : 252 < rResizable),
+        Function.update x.regs r1Resizable Δ ⟨252, h⟩ = x.regs ⟨252, h⟩ :=
+      fun h => Function.update_of_ne
+        (fun heq : (⟨252, h⟩ : Fin rResizable) = r1Resizable =>
+          nomatch (congrArg Fin.val heq : 252 = 1))
+        Δ x.regs
+    have h253 : ∀ (h : 253 < rResizable),
+        Function.update x.regs r1Resizable Δ ⟨253, h⟩ = x.regs ⟨253, h⟩ :=
+      fun h => Function.update_of_ne
+        (fun heq : (⟨253, h⟩ : Fin rResizable) = r1Resizable =>
+          nomatch (congrArg Fin.val heq : 253 = 1))
+        Δ x.regs
+    simp only [decodeOptionRegs, h252, h253]
+  have hcongr : ∀ {s : Fin U → Option ℕ} (l : List (DynamicOp U)),
+      SeqOutputCorrect V s l (Function.update x.regs r1Resizable Δ) ↔
+        SeqOutputCorrect V s l x.regs := by
+    intro s l
+    induction l generalizing s with
+    | nil => rfl
+    | cons o os ih =>
+      cases os with
+      | nil =>
+        cases o with
+        | insert _ _ => rfl
+        | delete _ => rfl
+        | query _ =>
+          simp only [SeqOutputCorrect, OpOutputCorrect, hdec]
+      | cons _ _ => exact ih
+  exact (hcongr ops).mpr hout
 
 /-- **Stage 2 Headline Theorem — Unbounded-Capacity Resizable Succinct Dictionary
 (`unbounded_seq_expected_amortized`):**
@@ -453,12 +760,13 @@ There exist **universal `O(1)` constants** `r = rResizable = 9957`,
 `rebuildUnitCost = rebuildUnitCostConst = 53495843`,
 `resizableChargeVal = resizableChargeValConst = 160486391`, `C_space = 1227`, and `C_word = 213`
 (quantified **outside** `∀ U V w base`) such that for every key universe `U`, value range `V`, word
-width `w`, and base address `base` with `0 < w`, `U < 2 ^ w`, `V < 2 ^ w`, and
-`∀ N ≤ U, base + epochSpace U V w N < 2 ^ w`, every initial caller machine state `x₀ : RState r`
-with `RBounded w x₀` and `x₀.frontier = base`, and **any** valid operation sequence
-`ops : List (DynamicOp U)` (`insert`, `delete`, `query`) from `emptyDict U` under `ValidDictSeq V`
-(**with no capacity cap**), at the resulting state `s_final = runDict (emptyDict U) ops` with
-current live key count `n_final = (dictDom s_final).card` and active epoch capacity
+width `w`, and base address `base` with `0 < w`, `U < 2 ^ w`, `V < 2 ^ w`, every initial caller
+machine state `x₀ : RState r` with `RBounded w x₀` and `x₀.frontier = base`, and **any** valid
+operation sequence `ops : List (DynamicOp U)` (`insert`, `delete`, `query`) from `emptyDict U` under
+`ValidDictSeq V` (**with no capacity cap**) whose peak reached epoch capacity
+`maxEpochCap V (emptyDict U) 0 ops` (`≤ min (2 * ops.length) U`) fits in `2 ^ w`, at the resulting
+state `s_final = runDict (emptyDict U) ops` with current live key count
+`n_final = (dictDom s_final).card` and active epoch capacity
 `N_final = targetCap U (runEpochInit V (emptyDict U) 0 ops)` (and by prefix induction at every
 intermediate step `t`):
 1. **Epoch & value invariants:** `EpochValid n_final N_final` (`n_final ≤ N_final ≤ 4 * n_final`),
@@ -468,21 +776,27 @@ intermediate step `t`):
    bits `w * activeEpochWords U V w N_final n_final ≤`
    `optBits U V n_final + C_space * n_final * logLogFactor n_final + (C_word + 1) * w`
    (with explicit word-alignment additive term `(C_word + 1) * w = 214 * w` bits);
-3. **Coupled machine-state `O(1)` expected amortized time & physical frontier contraction:**
+3. **Coupled machine-state `O(1)` expected amortized time, query output correctness, & physical
+   frontier contraction:**
    there exist a final machine-state distribution `ν_final : PMF (RState r)`, cumulative expected
    operation and rebuild instruction time `T_ops : ℝ≥0∞`, and expected slot potential `E_pot : ℝ≥0∞`
    satisfying
    `T_ops + E_pot + 2 * rebuildUnitCost * |n_final - n_init_final| ≤`
    `ops.length * resizableChargeVal`,
    where every `x_epoch ∈ ν_final.support` satisfies `RBounded w x_epoch`,
-   `x_epoch.frontier = base + epochSpace U V w N_final`, preserves all caller memory `< base`, and
-   contracts in `2` instructions via `.shrink` to a resting machine state `x_rest : RState r` whose
-   physical frontier `x_rest.frontier` satisfies
+   `x_epoch.frontier = base + epochSpace U V w N_final`, `x_epoch.regs ⟨0, _⟩ = base`,
+   `SeqOutputCorrect V (emptyDict U) ops x_epoch.regs` (so if the last operation in `ops` is
+   `.query u`, `decodeOptionRegs x_epoch.regs` decodes the queried value `(runDict ... init) u`),
+   preserves all caller memory `< base`, and contracts in `2` instructions via
+   `ExecRProgramDemonic w (shrinkTailProgram ...)` to a resting machine state `x_rest : RState r`
+   that preserves `SeqOutputCorrect V (emptyDict U) ops x_rest.regs` and whose physical frontier
+   `x_rest.frontier` satisfies
    `x_rest.frontier = base + activeEpochWords U V w N_final n_final`,
    `x_rest.frontier - base ≤ succinctWords C_space C_word U V w n_final`, and
    `w * (x_rest.frontier - base) ≤`
    `optBits U V n_final + C_space * n_final * logLogFactor n_final + (C_word + 1) * w`
-   (and when `n_final = 0`, contracts in `3` instructions via `.shrink` to `x_zero : RState r` with
+   (and when `n_final = 0`, contracts in `3` instructions via
+   `ExecRProgramDemonic w (deallocProgram ...)` to `x_zero : RState r` with
    `x_zero.frontier = base`). -/
 theorem unbounded_seq_expected_amortized :
     ∃ (r rebuildUnitCost resizableChargeVal C_space C_word : ℕ),
@@ -495,11 +809,11 @@ theorem unbounded_seq_expected_amortized :
         0 < w →
         U < 2 ^ w →
         V < 2 ^ w →
-        (∀ N ≤ U, base + epochSpace U V w N < 2 ^ w) →
-        ∀ (x₀ : RState r),
+        ∀ (x₀ : RState rResizable),
           RBounded w x₀ →
           x₀.frontier = base →
           ∀ ops : List (DynamicOp U),
+            (∀ N ≤ maxEpochCap V (emptyDict U) 0 ops, base + epochSpace U V w N < 2 ^ w) →
             ValidDictSeq V (emptyDict U) ops →
             let s_final := runDict (emptyDict U) ops
             let n_final := (dictDom s_final).card
@@ -515,7 +829,7 @@ theorem unbounded_seq_expected_amortized :
                 (C_word + 1) * w ∧
             2 * rebuildUnitCost * ((n_final - n_init_final) + (n_init_final - n_final)) ≤
               ops.length * resizableChargeVal ∧
-            ∃ (ν_final : PMF (RState r)) (T_ops E_pot : ℝ≥0∞),
+            ∃ (ν_final : PMF (RState rResizable)) (T_ops E_pot : ℝ≥0∞),
               T_ops + E_pot +
                 ((2 * rebuildUnitCost *
                   ((n_final - n_init_final) + (n_init_final - n_final)) : ℕ) : ℝ≥0∞) ≤
@@ -523,32 +837,110 @@ theorem unbounded_seq_expected_amortized :
               ∀ x_epoch ∈ ν_final.support,
                 RBounded w x_epoch ∧
                 x_epoch.frontier = base + epochSpace U V w N_final ∧
+                x_epoch.regs ⟨0, by decide⟩ = base ∧
+                SeqOutputCorrect V (emptyDict U) ops x_epoch.regs ∧
                 (∀ a < base, x_epoch.mem a = x₀.mem a) ∧
-                ∃ x_rest : RState r,
+                ∃ x_rest : RState rResizable,
+                  ExecRProgramDemonic w
+                    (shrinkTailProgram ⟨1, by decide⟩
+                      (epochSpace U V w N_final - activeEpochWords U V w N_final n_final))
+                    x_epoch x_rest 2 ∧
                   RBounded w x_rest ∧
                   x_rest.frontier = base + activeEpochWords U V w N_final n_final ∧
                   x_rest.frontier - base ≤ succinctWords C_space C_word U V w n_final ∧
                   w * (x_rest.frontier - base) ≤
                     optBits U V n_final + C_space * n_final * logLogFactor n_final +
                       (C_word + 1) * w ∧
+                  SeqOutputCorrect V (emptyDict U) ops x_rest.regs ∧
                   (∀ a < base, x_rest.mem a = x₀.mem a) ∧
                   (n_final = 0 →
-                    ∃ x_zero : RState r,
+                    ∃ x_zero : RState rResizable,
+                      ExecRProgramDemonic w
+                        (deallocProgram ⟨0, by decide⟩ ⟨1, by decide⟩ ⟨2, by decide⟩)
+                        x_epoch x_zero 3 ∧
                       RBounded w x_zero ∧
                       x_zero.frontier = base ∧
-                      ∀ a < base, x_zero.mem a = x₀.mem a) :=
-  ComplexityAbstracts.ResizableSuccinctDictionaryBridge.bridge_unbounded_seq_expected_amortized
-    ⟨DynamicOp, @DynamicOp.insert, @DynamicOp.delete, @DynamicOp.query, @DynamicOp.rec,
-      @stepDict, @runDict, @ValidDictOp, @ValidDictSeq, @runEpochInit, @activeEpochWords,
-      RState, @RState.mk, @RState.regs, @RState.mem, @RState.frontier, @RBounded⟩
-    ⟨fun _ _ _ => rfl, fun _ _ => rfl, fun _ _ => rfl,
-      fun _ => rfl, fun _ _ _ => rfl,
-      fun _ _ _ _ => Iff.rfl, fun _ _ _ => Iff.rfl, fun _ _ _ => Iff.rfl,
-      fun _ _ => Iff.rfl, fun _ _ _ _ => Iff.rfl,
-      fun _ _ _ => rfl, fun _ _ _ _ _ => rfl,
-      fun _ _ _ _ _ => rfl,
-      fun _ _ _ => rfl, fun _ _ _ => rfl, fun _ _ _ => rfl,
-      fun _ _ => Iff.rfl⟩
+                      ∀ a < base, x_zero.mem a = x₀.mem a) := by
+  obtain ⟨_, _, _, _, _, rfl, rfl, rfl, rfl, rfl, hbridge⟩ :=
+    ComplexityAbstracts.ResizableSuccinctDictionaryBridge.bridge_unbounded_seq_expected_amortized
+      ⟨DynamicOp, @DynamicOp.insert, @DynamicOp.delete, @DynamicOp.query, @DynamicOp.rec,
+        @stepDict, @runDict, @ValidDictOp, @ValidDictSeq, @runEpochInit, @maxEpochCap,
+        @SeqOutputCorrect, @activeEpochWords,
+        RState, @RState.mk, @RState.regs, @RState.mem, @RState.frontier, @RBounded⟩
+      ⟨fun _ _ _ => rfl, fun _ _ => rfl, fun _ _ => rfl,
+        fun _ => rfl, fun _ _ _ => rfl,
+        fun _ _ _ _ => Iff.rfl, fun _ _ _ => Iff.rfl, fun _ _ _ => Iff.rfl,
+        fun _ _ => Iff.rfl, fun _ _ _ _ => Iff.rfl,
+        fun _ _ _ => rfl, fun _ _ _ _ _ => rfl,
+        fun _ _ _ => rfl, fun _ _ _ _ _ => rfl,
+        fun _ _ _ => Iff.rfl, fun _ _ _ _ _ => Iff.rfl,
+        fun _ _ _ _ => Iff.rfl, fun _ _ _ _ => Iff.rfl,
+        fun _ _ _ _ _ _ => Iff.rfl,
+        fun _ _ _ _ _ => rfl,
+        fun _ _ _ => rfl, fun _ _ _ => rfl, fun _ _ _ => rfl,
+        fun _ _ => Iff.rfl⟩
+  dsimp only [
+    ComplexityAbstracts.ResizableSuccinctDictionaryBridge.DynamicDictPresentation.emptyDict
+  ] at hbridge
+  refine ⟨rResizable, rebuildUnitCostConst, resizableChargeValConst, 1227, 213,
+    rfl, rfl, rfl, rfl, rfl, ?_⟩
+  intro U V w base hw hU hV x₀ hx₀ hfr₀ ops hfit hv
+  have hmain := hbridge U V w base hw hU hV x₀ hx₀ hfr₀ ops hfit hv
+  clear hbridge
+  dsimp only at hmain ⊢
+  obtain ⟨hepoch, hNU, hvb, hwords, hbits, hpot, ν_final, T_ops, E_pot, hbound, hsupp⟩ := hmain
+  refine ⟨hepoch, hNU, hvb, hwords, hbits, hpot, ν_final, T_ops, E_pot, hbound, ?_⟩
+  intro x_epoch hx_epoch
+  obtain ⟨hbdd_ep, hfr_ep, hreg0_ep, hout_ep, hmem_ep,
+    _, _, hfr_rest, hwords_rest, hbits_rest, _, _, _⟩ :=
+    hsupp x_epoch hx_epoch
+  clear hsupp
+  let s_final := runDict (emptyDict U) ops
+  let n_final := (dictDom s_final).card
+  let n_init_final := runEpochInit V (emptyDict U) 0 ops
+  let N_final := targetCap U n_init_final
+  let Δ := epochSpace U V w N_final - activeEpochWords U V w N_final n_final
+  have hle_ep : activeEpochWords U V w N_final n_final ≤ epochSpace U V w N_final :=
+    activeEpochWords_le_epochSpace hepoch.1
+  have hfr_ep' : x_epoch.frontier = base + epochSpace U V w N_final := hfr_ep
+  have hΔ_le : Δ ≤ x_epoch.frontier := shrinkTail_delta_le hfr_ep'
+  have hΔ_lt : Δ < 2 ^ w := lt_of_le_of_lt hΔ_le hbdd_ep.2.1
+  let x_rest' : RState rResizable :=
+    ⟨Function.update x_epoch.regs r1Resizable Δ,
+      shrinkMem x_epoch.mem (x_epoch.frontier - Δ) Δ,
+      x_epoch.frontier - Δ⟩
+  have hexec_sh : ExecRProgramDemonic w (shrinkTailProgram r1Resizable Δ) x_epoch x_rest' 2 :=
+    shrinkTailProgram_exec r1Resizable Δ x_epoch hΔ_lt hΔ_le
+  have hbdd_rest' : RBounded w x_rest' :=
+    rBounded_shrinkTail r1Resizable Δ hbdd_ep hΔ_lt
+  have hfr_rest' : x_rest'.frontier = base + activeEpochWords U V w N_final n_final :=
+    shrinkTail_frontier_eq hfr_ep' hle_ep
+  have hout_rest' : SeqOutputCorrect V (emptyDict U) ops x_rest'.regs :=
+    seqOutputCorrect_shrinkTail ops x_epoch Δ hout_ep
+  refine ⟨hbdd_ep, hfr_ep, hreg0_ep, hout_ep, hmem_ep,
+    x_rest', hexec_sh, hbdd_rest', hfr_rest', ?_, ?_, hout_rest',
+    shrinkTail_preserve_lt hfr_ep' hmem_ep, ?_⟩
+  · rw [hfr_rest']
+    rw [hfr_rest] at hwords_rest
+    exact hwords_rest
+  · rw [hfr_rest']
+    rw [hfr_rest] at hbits_rest
+    exact hbits_rest
+  · intro _
+    let x_zero' : RState rResizable :=
+      ⟨Function.update (Function.update x_epoch.regs r1Resizable x_epoch.frontier)
+        r2Resizable (x_epoch.frontier - base),
+        shrinkMem x_epoch.mem base (x_epoch.frontier - base),
+        base⟩
+    have hbase_le_fr : base ≤ x_epoch.frontier := hfr_ep' ▸ Nat.le_add_right base _
+    have hexec_de :
+        ExecRProgramDemonic w (deallocProgram r0Resizable r1Resizable r2Resizable)
+          x_epoch x_zero' 3 :=
+      deallocProgram_exec r0Resizable r1Resizable r2Resizable x_epoch
+        r0_ne_r1 hbdd_ep.2.1 hreg0_ep hbase_le_fr
+    have hbdd_zero' : RBounded w x_zero' :=
+      rBounded_dealloc r1Resizable r2Resizable hbdd_ep hbase_le_fr
+    exact ⟨x_zero', hexec_de, hbdd_zero', rfl, dealloc_preserve_lt hmem_ep⟩
 
 /-- **Stage 2 Client Subroutine & Memory-Reuse Theorem (`dictionary_client_memory_reuse`):**
 With the universal register count `r = rResizable = 9957` quantified **outside** `(U, V, w)`, for
@@ -556,18 +948,19 @@ every `U, V, w` with `0 < w`, `U < 2 ^ w`, and `V < 2 ^ w`, on the `r`-register 
 resizable Word-RAM (`RState r`):
 1. **In-place tail contraction and reuse (`shrink_and_reuse_in_place`):** When deletions reduce the
    dictionary's active item footprint at `[base, base + sp₂ + Δ)` by `Δ` words to `base + sp₂`,
-   executing the `2`-instruction `.shrink` tail-contraction code followed by a client's
+   executing `shrinkTailProgram` (`2` instructions via `ExecRProgramDemonic`) followed by a client's
    `4 * k_client + 8`-instruction demonic `.grow` + zero-fill allocation places the client's new
    block at `[base + sp₂, base + sp₂ + k_client)`—**reusing the `Δ` released words**—while
    preserving the dictionary's live prefix `[0, base + sp₂)` unchanged.
 2. **Full subroutine lifecycle and address reuse (`subroutine_client_reuse_released_memory`):**
    Starting from any caller state `x₀` with `x₀.frontier = base`, executing any valid dictionary
-   operation sequence `ops : List (DynamicOp U)` at `[base, base + epochSpace U V w U)`,
-   deallocating the dictionary via `.shrink` (`3` instructions, returning `frontier` to `base`),
-   and allocating `k_client` words for a subsequent client under demonic `DemonicGrow`
-   (`4 * k_client + 8` instructions) produces a final state `x_reused` with
+   operation sequence `ops : List (DynamicOp U)` whose peak epoch capacity
+   `maxEpochCap V (emptyDict U) 0 ops` (`≤ min (2 * ops.length) U`) fits in `2 ^ w`, deallocating
+   the dictionary via `deallocProgram` (`3` instructions via `ExecRProgramDemonic`, returning
+   `frontier` to `base`), and allocating `k_client` words for a subsequent client under demonic
+   `DemonicGrow` (`4 * k_client + 8` instructions) produces a final state `x_reused` with
    `x_reused.frontier = base + k_client` (**reusing `[base, base + k_client)` instead of
-   `[base + epochSpace U V w U, ...)`**), zeroed client memory `[base, base + k_client)`, and
+   `[base + epochSpace U V w N_final, ...)`**), zeroed client memory `[base, base + k_client)`, and
    intact caller prefix `[0, base)`. -/
 theorem dictionary_client_memory_reuse :
     ∃ r : ℕ,
@@ -576,51 +969,116 @@ theorem dictionary_client_memory_reuse :
         0 < w →
         U < 2 ^ w →
         V < 2 ^ w →
-        (∀ (base sp₂ Δ k_client : ℕ) (x : RState r),
+        (∀ (base sp₂ Δ k_client : ℕ) (x : RState rResizable),
           RBounded w x →
           x.frontier = base + sp₂ + Δ →
           1 < 2 ^ w →
           base + sp₂ + k_client < 2 ^ w →
-          ∃ x_shrunk x_reused : RState r,
+          ∃ x_shrunk x_reused : RState rResizable,
+            ExecRProgramDemonic w (shrinkTailProgram ⟨1, by decide⟩ Δ) x x_shrunk 2 ∧
             RBounded w x_shrunk ∧
             x_shrunk.frontier = base + sp₂ ∧
             RBounded w x_reused ∧
             x_reused.frontier = base + sp₂ + k_client ∧
             (∀ a < base + sp₂, x_reused.mem a = x.mem a) ∧
             (∀ a, base + sp₂ ≤ a → a < base + sp₂ + k_client → x_reused.mem a = 0)) ∧
-        (∀ (base k_client : ℕ) (x₀ : RState r) (ops : List (DynamicOp U)),
-          base + epochSpace U V w U < 2 ^ w →
+        (∀ (base k_client : ℕ) (x₀ : RState rResizable) (ops : List (DynamicOp U)),
+          (∀ N ≤ maxEpochCap V (emptyDict U) 0 ops, base + epochSpace U V w N < 2 ^ w) →
           base + k_client < 2 ^ w →
           RBounded w x₀ →
           x₀.frontier = base →
           ValidDictSeq V (emptyDict U) ops →
-          ∃ x_dict x_dealloc x_reused : RState r,
+          let N_final := targetCap U (runEpochInit V (emptyDict U) 0 ops)
+          ∃ x_dict x_dealloc x_reused : RState rResizable,
             RBounded w x_dict ∧
-            x_dict.frontier = base + epochSpace U V w U ∧
+            x_dict.frontier = base + epochSpace U V w N_final ∧
+            x_dict.regs ⟨0, by decide⟩ = base ∧
+            SeqOutputCorrect V (emptyDict U) ops x_dict.regs ∧
             (∀ a < base, x_dict.mem a = x₀.mem a) ∧
+            ExecRProgramDemonic w
+              (deallocProgram ⟨0, by decide⟩ ⟨1, by decide⟩ ⟨2, by decide⟩)
+              x_dict x_dealloc 3 ∧
             RBounded w x_dealloc ∧
             x_dealloc.frontier = base ∧
             RBounded w x_reused ∧
             x_reused.frontier = base + k_client ∧
             (∀ a < base, x_reused.mem a = x₀.mem a) ∧
-            (∀ a, base ≤ a → a < base + k_client → x_reused.mem a = 0)) :=
-  ComplexityAbstracts.ResizableSuccinctDictionaryBridge.bridge_dictionary_client_memory_reuse
-    ⟨DynamicOp, @DynamicOp.insert, @DynamicOp.delete, @DynamicOp.query, @DynamicOp.rec,
-      @stepDict, @runDict, @ValidDictOp, @ValidDictSeq, @runEpochInit, @activeEpochWords,
-      RState, @RState.mk, @RState.regs, @RState.mem, @RState.frontier, @RBounded⟩
-    ⟨fun _ _ _ => rfl, fun _ _ => rfl, fun _ _ => rfl,
-      fun _ => rfl, fun _ _ _ => rfl,
-      fun _ _ _ _ => Iff.rfl, fun _ _ _ => Iff.rfl, fun _ _ _ => Iff.rfl,
-      fun _ _ => Iff.rfl, fun _ _ _ _ => Iff.rfl,
-      fun _ _ _ => rfl, fun _ _ _ _ _ => rfl,
-      fun _ _ _ _ _ => rfl,
-      fun _ _ _ => rfl, fun _ _ _ => rfl, fun _ _ _ => rfl,
-      fun _ _ => Iff.rfl⟩
+            (∀ a, base ≤ a → a < base + k_client → x_reused.mem a = 0)) := by
+  obtain ⟨_, rfl, hbridge⟩ :=
+    ComplexityAbstracts.ResizableSuccinctDictionaryBridge.bridge_dictionary_client_memory_reuse
+      ⟨DynamicOp, @DynamicOp.insert, @DynamicOp.delete, @DynamicOp.query, @DynamicOp.rec,
+        @stepDict, @runDict, @ValidDictOp, @ValidDictSeq, @runEpochInit, @maxEpochCap,
+        @SeqOutputCorrect, @activeEpochWords,
+        RState, @RState.mk, @RState.regs, @RState.mem, @RState.frontier, @RBounded⟩
+      ⟨fun _ _ _ => rfl, fun _ _ => rfl, fun _ _ => rfl,
+        fun _ => rfl, fun _ _ _ => rfl,
+        fun _ _ _ _ => Iff.rfl, fun _ _ _ => Iff.rfl, fun _ _ _ => Iff.rfl,
+        fun _ _ => Iff.rfl, fun _ _ _ _ => Iff.rfl,
+        fun _ _ _ => rfl, fun _ _ _ _ _ => rfl,
+        fun _ _ _ => rfl, fun _ _ _ _ _ => rfl,
+        fun _ _ _ => Iff.rfl, fun _ _ _ _ _ => Iff.rfl,
+        fun _ _ _ _ => Iff.rfl, fun _ _ _ _ => Iff.rfl,
+        fun _ _ _ _ _ _ => Iff.rfl,
+        fun _ _ _ _ _ => rfl,
+        fun _ _ _ => rfl, fun _ _ _ => rfl, fun _ _ _ => rfl,
+        fun _ _ => Iff.rfl⟩
+  dsimp only [
+    ComplexityAbstracts.ResizableSuccinctDictionaryBridge.DynamicDictPresentation.emptyDict
+  ] at hbridge
+  refine ⟨rResizable, rfl, fun U V w hw hU hV => ?_⟩
+  obtain ⟨hpart1, hpart2⟩ := hbridge U V w hw hU hV
+  clear hbridge
+  refine ⟨?_, ?_⟩
+  · clear hpart2
+    intro base sp₂ Δ k_client x hx hfr h1 hfit_client
+    obtain ⟨_, x_reused, _, _, hre_bdd, hre_fr, hre_pre, hre_zero⟩ :=
+      hpart1 base sp₂ Δ k_client x hx hfr h1 hfit_client
+    clear hpart1
+    let x_shrunk' : RState rResizable :=
+      ⟨Function.update x.regs r1Resizable Δ,
+        shrinkMem x.mem (x.frontier - Δ) Δ,
+        x.frontier - Δ⟩
+    have hfr' : x.frontier = base + sp₂ + Δ := hfr
+    have hΔ_le : Δ ≤ x.frontier := hfr' ▸ Nat.le_add_left Δ (base + sp₂)
+    have hΔ_lt : Δ < 2 ^ w := lt_of_le_of_lt hΔ_le hx.2.1
+    have hexec_sh : ExecRProgramDemonic w (shrinkTailProgram r1Resizable Δ) x x_shrunk' 2 :=
+      shrinkTailProgram_exec r1Resizable Δ x hΔ_lt hΔ_le
+    have hbdd_sh' : RBounded w x_shrunk' :=
+      rBounded_shrinkTail r1Resizable Δ hx hΔ_lt
+    have hfr_sh' : x_shrunk'.frontier = base + sp₂ :=
+      (congrArg (· - Δ) hfr').trans (Nat.add_sub_cancel (base + sp₂) Δ)
+    exact ⟨x_shrunk', x_reused, hexec_sh, hbdd_sh', hfr_sh', hre_bdd, hre_fr, hre_pre, hre_zero⟩
+  · clear hpart1
+    intro base k_client x₀ ops hfit hfit_client hx₀ hfr₀ hv
+    obtain ⟨x_dict, _, x_reused, hdict_bdd, hdict_fr, hdict_r0, hdict_out, hdict_pre,
+      _, _, hre_bdd, hre_fr, hre_pre, hre_zero⟩ :=
+      hpart2 base k_client x₀ ops hfit hfit_client hx₀ hfr₀ hv
+    clear hpart2
+    let x_dealloc' : RState rResizable :=
+      ⟨Function.update (Function.update x_dict.regs r1Resizable x_dict.frontier)
+        r2Resizable (x_dict.frontier - base),
+        shrinkMem x_dict.mem base (x_dict.frontier - base),
+        base⟩
+    have hdict_fr' :
+        x_dict.frontier =
+          base + epochSpace U V w (targetCap U (runEpochInit V (emptyDict U) 0 ops)) := hdict_fr
+    have hbase_le_fr : base ≤ x_dict.frontier := hdict_fr' ▸ Nat.le_add_right base _
+    have hexec_de :
+        ExecRProgramDemonic w (deallocProgram r0Resizable r1Resizable r2Resizable)
+          x_dict x_dealloc' 3 :=
+      deallocProgram_exec r0Resizable r1Resizable r2Resizable x_dict
+        r0_ne_r1 hdict_bdd.2.1 hdict_r0 hbase_le_fr
+    have hbdd_de' : RBounded w x_dealloc' :=
+      rBounded_dealloc r1Resizable r2Resizable hdict_bdd hbase_le_fr
+    exact ⟨x_dict, x_dealloc', x_reused,
+      hdict_bdd, hdict_fr, hdict_r0, hdict_out, hdict_pre,
+      hexec_de, hbdd_de', rfl,
+      hre_bdd, hre_fr, hre_pre, hre_zero⟩
 
 end ComplexityAbstracts.ResizableSuccinctDictionaryAbstract
 
 /--
-info: abstract audit passed for `ComplexityAbstracts.ResizableSuccinctDictionaryAbstract`: 266 root
+info: abstract audit passed for `ComplexityAbstracts.ResizableSuccinctDictionaryAbstract`: 352 root
 declarations
 -/
 #guard_msgs (whitespace := lax) in
