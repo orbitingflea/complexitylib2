@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.WordRAM.GhostLoop
-public import Complexity.Computability.WordRAM.Realization.Basic
+public import Complexity.Computability.WordRAM.Realization.Witness
 public import Complexity.Computability.WordRAM.RegisterCopy
 
 /-!
@@ -28,7 +28,9 @@ uses one fixed body emitter and static registers for the mutable state and count
 ## Main results
 
 * `iterationSum_eq`: the native grading rule's semantic sum is memory charge plus local work.
-* `Realizes.iterateRuntime`: one uniform body certificate realizes a runtime-bounded loop.
+* `Realizes.Witness.loopEmit_spec`: the loop emitter with additive per-iteration overhead.
+* `Realizes.Witness.iterateRuntime`, `Realizes.iterateRuntime`: one uniform body witness or
+  certificate realizes a runtime-bounded loop.
 
 The iteration grading and realization are original infrastructure over the existing free monad
 and structured Word-RAM code. No additional program syntax or memory model is introduced.
@@ -162,22 +164,43 @@ def loopEmit {n : ℕ} (emit : ∀ {r : ℕ}, Fin r → (Fin (k + l) → Fin r) 
 
 namespace Realizes
 
-/-- Fixed-witness runtime-bounded loop realization. -/
-theorem iterateRuntimeWith {n C : ℕ} (input : δ ↪ (Fin k → ℕ)) (output : σ ↪ (Fin l → ℕ))
+/-- The existing loop emitter retains the complete realization postcondition while paying
+body charges and state/control overhead separately. This bounds that supplied emitter, not a
+classically reselected implementation. -/
+theorem Witness.loopEmit_spec (input : δ ↪ (Fin k → ℕ)) (output : σ ↪ (Fin l → ℕ))
     {body : δ × σ → Memory.Prog σ}
     {safe : ℕ → (δ × σ) → Memory.State → Prop}
     {work : (δ × σ) → Memory.State → ℕ}
-    (h : RealizesWith n C .exact body
-      (appendWords input output) output safe work) :
-    RealizesWith (l + n + 3) (C + 2 * l + 8) .exact
-      (fun ((d, a), fuel) => iterate body d fuel a)
-      (((appendWords input output).prodMap
-        (Equiv.funUnique (Fin 1) ℕ).symm.toEmbedding).trans
-          (Fin.appendEquiv (k + l) 1).toEmbedding) output
-      (fun w ((d, a), fuel) s => iterationSafe body safe w d fuel a s)
-      (fun ((d, a), fuel) s => iterationWork body work d fuel a s) := by
-  obtain ⟨emit, he⟩ := h
-  refine ⟨loopEmit emit, ?_⟩
+    (h : Witness .exact body (appendWords input output) output safe work) :
+    ∀ {r : ℕ} (frontier : Fin r) (src : Fin (k + l + 1) → Fin r)
+      (tmp : Fin (l + (l + h.scratchSize + 3) + 1) → Fin r),
+      Function.Injective tmp → (∀ i j, src i ≠ tmp j) →
+      (∀ j, tmp j ≠ frontier) → (∀ i, src i ≠ frontier) →
+      ¬(loopEmit h.code frontier src tmp).ReadsWidth ∧
+      ∀ (w : ℕ) (d : (δ × σ) × ℕ) (x : Data r), x.Bounded w →
+        x.regs ∘ src = (((appendWords input output).prodMap
+            (Equiv.funUnique (Fin 1) ℕ).symm.toEmbedding).trans
+          (Fin.appendEquiv (k + l) 1).toEmbedding) d →
+        iterationSafe body safe w d.1.1 d.2 d.1.2 (memoryState frontier x) →
+        (Memory.spec w).ValidHistory (memoryState frontier x)
+          ((Memory.spec w).clientHistory (memoryState frontier x)
+            (iterate body d.1.1 d.2 d.1.2)) →
+        ∃ y, ExecWithin w (loopEmit h.code frontier src tmp) x y
+            (h.factor * (memoryCost (iterate body d.1.1 d.2 d.1.2) (memoryState frontier x) +
+              iterationWork body work d.1.1 d.2 d.1.2 (memoryState frontier x)) +
+                (l + 5) * (d.2 + 1)) ∧
+          memoryState frontier y = (Memory.spec w).clientState (memoryState frontier x)
+            (iterate body d.1.1 d.2 d.1.2) ∧
+          (∀ i : Fin l, y.regs (tmp (Fin.castAdd ((l + h.scratchSize + 3) + 1) i)) =
+            output ((Memory.spec w).clientResult (memoryState frontier x)
+              (iterate body d.1.1 d.2 d.1.2)) i) ∧
+          ∀ i, i ≠ frontier → (∀ j, tmp j ≠ i) → y.regs i = x.regs i := by
+  let n := h.scratchSize
+  let C := h.factor
+  let emit : ∀ {r : ℕ}, Fin r → (Fin (k + l) → Fin r) →
+      (Fin (l + n + 1) → Fin r) → Code .exact r := h.code
+  have he : Realizes.Spec .exact body (appendWords input output) output safe work n C emit :=
+    h.code_spec
   intro r frontier src tmp hi hd hf hs
   let st : Fin l → Fin r := fun i => tmp (stateSlot i)
   let ctr := tmp (counterSlot l n)
@@ -404,15 +427,16 @@ theorem iterateRuntimeWith {n C : ℕ} (input : δ ↪ (Fin k → ℕ)) (output 
           rw [Function.update_of_ne (htmp _).symm, Function.update_of_ne (htmp _).symm,
             hvf _ (fun _ => htmp _), huf _ hif (fun _ => htmp _)]
           exact hyframe i hif htmp
-    obtain ⟨y, hy, hIy⟩ := ExecWithin.loop_invariant_state_charged I (iterationStep body d₀)
+    obtain ⟨y, hy, hIy⟩ := ExecWithin.loop_invariant_state_additive I (iterationStep body d₀)
       (fun q => memoryCost (body (d₀, q.1)) q.2 + work (d₀, q.1) q.2)
       (fun q y hI => by simp [Cond.Holds, hI.2.2.2.2.1, hI.2.2.2.2.2.1]) hbody hIz
-    rw [iterationSum_eq] at hy
+    have hsum := iterationSum_eq body work d₀ fuel a₀ s₀
+    have hsumC := congrArg (C * ·) hsum
     have hfinal := iterate_result_state body d₀ fuel a₀ s₀
     rw [← hfinal] at hIy
     obtain ⟨_, hym, _, hys, _, _, _, _, hyf⟩ := hIy
     refine ⟨y, (ha.seq (hc.seq (hz.seq hy))).mono ?_, ?_, ?_, hyf⟩
-    · nlinarith
+    · nlinarith [hsumC]
     · change memoryState frontier y = (Memory.spec w).clientState s₀ (iterate body d₀ fuel a₀)
       rw [clientState_width w]
       exact hym
@@ -421,8 +445,55 @@ theorem iterateRuntimeWith {n C : ℕ} (input : δ ↪ (Fin k → ℕ)) (output 
       rw [clientResult_width w]
       exact hys i
 
-/-- A runtime-bounded loop reuses one fixed body emitter, including iterations without queries.
-The visible domain is precisely the body domains along the actual semantic states. -/
+/-- Retain the supplied body and the existing loop emitter as data. Its original coarse
+realization contract follows from the sharper same-emitter `loopEmit_spec`. -/
+def Witness.iterateRuntime (input : δ ↪ (Fin k → ℕ)) (output : σ ↪ (Fin l → ℕ))
+    {body : δ × σ → Memory.Prog σ}
+    {safe : ℕ → (δ × σ) → Memory.State → Prop}
+    {work : (δ × σ) → Memory.State → ℕ}
+    (h : Witness .exact body
+      (appendWords input output) output safe work) :
+    Witness .exact (fun ((d, a), fuel) => iterate body d fuel a)
+      (((appendWords input output).prodMap
+        (Equiv.funUnique (Fin 1) ℕ).symm.toEmbedding).trans
+          (Fin.appendEquiv (k + l) 1).toEmbedding) output
+      (fun w ((d, a), fuel) s => iterationSafe body safe w d fuel a s)
+      (fun ((d, a), fuel) s => iterationWork body work d fuel a s) where
+  scratchSize := l + h.scratchSize + 3
+  factor := h.factor + 2 * l + 8
+  code := loopEmit h.code
+  code_spec := by
+    intro r frontier src tmp hi hd hf hs
+    obtain ⟨hnw, hrun⟩ := h.loopEmit_spec input output frontier src tmp hi hd hf hs
+    refine ⟨hnw, ?_⟩
+    intro w d x hx hin hsafe hv
+    obtain ⟨y, hy, hm, hout, hframe⟩ := hrun w d x hx hin hsafe hv
+    refine ⟨y, hy.mono ?_, hm, hout, hframe⟩
+    have hsum := iterationSum_eq body work d.1.1 d.2 d.1.2 (memoryState frontier x)
+    have hcount : d.2 ≤ memoryCost (iterate body d.1.1 d.2 d.1.2) (memoryState frontier x) +
+        iterationWork body work d.1.1 d.2 d.1.2 (memoryState frontier x) := by omega
+    have hscaled := Nat.mul_le_mul_left (l + 5) (Nat.add_le_add_right hcount 1)
+    nlinarith [hscaled]
+
+/-- Fixed-witness runtime-bounded loop realization. -/
+theorem iterateRuntimeWith {n C : ℕ} (input : δ ↪ (Fin k → ℕ)) (output : σ ↪ (Fin l → ℕ))
+    {body : δ × σ → Memory.Prog σ}
+    {safe : ℕ → (δ × σ) → Memory.State → Prop}
+    {work : (δ × σ) → Memory.State → ℕ}
+    (h : RealizesWith n C .exact body
+      (appendWords input output) output safe work) :
+    RealizesWith (l + n + 3) (C + 2 * l + 8) .exact
+      (fun ((d, a), fuel) => iterate body d fuel a)
+      (((appendWords input output).prodMap
+        (Equiv.funUnique (Fin 1) ℕ).symm.toEmbedding).trans
+          (Fin.appendEquiv (k + l) 1).toEmbedding) output
+      (fun w ((d, a), fuel) s => iterationSafe body safe w d fuel a s)
+      (fun ((d, a), fuel) s => iterationWork body work d fuel a s) := by
+  obtain ⟨emit, he⟩ := h
+  let w := Witness.iterateRuntime input output ⟨n, C, emit, he⟩
+  exact ⟨w.code, w.code_spec⟩
+
+/-- The existential runtime-loop realization erases the retained supplied emitter. -/
 theorem iterateRuntime (input : δ ↪ (Fin k → ℕ)) (output : σ ↪ (Fin l → ℕ))
     {body : δ × σ → Memory.Prog σ}
     {safe : ℕ → (δ × σ) → Memory.State → Prop}
@@ -434,9 +505,8 @@ theorem iterateRuntime (input : δ ↪ (Fin k → ℕ)) (output : σ ↪ (Fin l 
         (Equiv.funUnique (Fin 1) ℕ).symm.toEmbedding).trans
           (Fin.appendEquiv (k + l) 1).toEmbedding) output
       (fun w ((d, a), fuel) s => iterationSafe body safe w d fuel a s)
-      (fun ((d, a), fuel) s => iterationWork body work d fuel a s) := by
-  obtain ⟨n, C, h⟩ := h
-  exact ⟨_, _, iterateRuntimeWith input output h⟩
+      (fun ((d, a), fuel) s => iterationWork body work d fuel a s) :=
+  (Witness.iterateRuntime input output (Witness.ofRealizes h)).toRealizes
 
 end Realizes
 
