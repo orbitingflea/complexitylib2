@@ -1847,6 +1847,7 @@ public import Complexity.Computability.Complexity.Reduction.Autoreducibility
 public import Complexity.Computability.Complexity.Reduction.Isomorphism
 public import Complexity.Computability.Complexity.Reduction.Levin
 public import Complexity.Computability.Complexity.Reduction.LocalSelfReducibility
+public import Complexity.Computability.Complexity.Reduction.LocalSelfReducibility.RuntimeAccess
 public import Complexity.Computability.Complexity.Reduction.LocalSelfReducibility.VirtualWord
 public import Complexity.Computability.Complexity.Reduction.LogSpaceAutoreducibility
 public import Complexity.Computability.Complexity.Reduction.LogSpaceBoundedAutoreducibility
@@ -1955,6 +1956,7 @@ public import Complexity.Computability.Machines.ReadMachine.Basic
 public import Complexity.Computability.Machines.ReadMachine.StepMachine
 public import Complexity.Computability.Machines.ReadMachine.Tidy
 public import Complexity.Computability.Machines.ReadMachine.VirtualWord
+public import Complexity.Computability.Machines.ReadMachine.VirtualWord.Runtime
 public import Complexity.Computability.Machines.Turing.MultiTape.Alternating
 public import Complexity.Computability.Machines.Turing.MultiTape.Alternating.Game
 public import Complexity.Computability.Machines.Turing.MultiTape.Alternating.GuessVerify
@@ -3882,6 +3884,7 @@ public import Complexity.Foundations.Probability.HierarchySourceSampling
 public import Complexity.Foundations.Probability.HierarchyTaskData
 public import Complexity.Foundations.Probability.HierarchyTaskMeans
 public import Complexity.Foundations.Probability.HierarchyTasks
+public import Complexity.Foundations.Probability.InitialPilotDetector
 public import Complexity.Foundations.Probability.InitialPilotScore
 public import Complexity.Foundations.Probability.NormalizedAtomRows.ActualMoment
 public import Complexity.Foundations.Probability.NormalizedAtomRows.BoundedLoss
