@@ -49,15 +49,15 @@ bit-resizable item primitives (`appendDenseItemProg`, `popDenseItemProg`, `readD
   field extractors for dense items `d < n_t`.
 * `denseOfCirc`, `TailDenseInv`, `denseOfPhys`: circular tail-to-dense bijection mapping active
   physical slots in `[0, N)` bijectively onto dense item indices `[0, n_t)`.
-* `virtualMem`, `Rep`: virtual fixed-capacity projection and full representation invariant on
-  `BitMemory.State`.
+* `virtualQuotAt`, `virtualValAt`, `Rep`: virtual fixed-capacity projections and full
+  representation invariant on `BitMemory.State`.
 * `appendDenseItemProg`, `popDenseItemProg`, `readDenseItemProg`, `writeDenseItemProg`:
   demonic `BitMemory.Prog` operations for growing, shrinking, reading, and writing dense items.
-* `appendDenseItemCode`, `popDenseItemCode`, `readDenseItemCode`, `writeDenseItemCode`:
+* `appendDenseItemCode`, `popDenseItemCode`:
   concrete `BitRAM.Code .standard 12` programs with `DemonicExecWithin` instruction bounds.
 -/
 
-@[expose] public section
+public section
 
 namespace Cslib.DataStructure.Dictionary.BitResizable
 
@@ -74,26 +74,26 @@ open Cslib.DataStructure.HashFamily.WordRAM
 /-! ## Section 1: Single-tape bit-resizable memory offsets and field accessors -/
 
 /-- Word offset `4` of the quotient hash family inside the epoch metadata prefix. -/
-def offHash : ℕ := 4
+@[expose] def offHash : ℕ := 4
 
 /-- Word offset of `LocalMeta` inside the epoch metadata prefix. -/
-def offLM (U w N : ℕ) : ℕ :=
+@[expose] def offLM (U w N : ℕ) : ℕ :=
   offHash + Succinct.hashSpace U w N
 
 /-- Word offset of the `c`-th `LocalMeta` sub-array (`c < 9`). -/
-def offLMSub (U w N c : ℕ) : ℕ :=
+@[expose] def offLMSub (U w N c : ℕ) : ℕ :=
   offLM U w N + c * Succinct.lmSubWords N w
 
 /-- Word offset of `GlobalMeta` inside the epoch metadata prefix. -/
-def offGM (U w N : ℕ) : ℕ :=
+@[expose] def offGM (U w N : ℕ) : ℕ :=
   offLM U w N + 9 * Succinct.lmSubWords N w
 
 /-- Word offset of `TailDense` inside the epoch metadata prefix. -/
-def offTD (U w N : ℕ) : ℕ :=
+@[expose] def offTD (U w N : ℕ) : ℕ :=
   offGM U w N + packedWords (globalMetaLen N) (globalPtrBits N) w
 
 /-- Word offset of `DenseTail` inside the epoch metadata prefix. -/
-def offDT (U w N : ℕ) : ℕ :=
+@[expose] def offDT (U w N : ℕ) : ℕ :=
   offTD U w N + packedWords (maxTailItems N) (globalPtrBits N) w
 
 /-- When `N > 0`, `offDT U w N + packedWords (maxTailItems N) (globalPtrBits N) w` equals
@@ -107,15 +107,15 @@ theorem offDT_add_eq_epochMetaWords {U w N : ℕ} (hN : 0 < N) :
   ring
 
 /-- Bit offset of dense item `d` inside the bit-resizable memory `s_bit`. -/
-def itemBitOff (U V w N d : ℕ) : ℕ :=
+@[expose] def itemBitOff (U V w N d : ℕ) : ℕ :=
   epochMetaBits U w N + d * itemBits U V N
 
 /-- Bit offset of the `(quotientBits U N)`-bit quotient field of dense item `d`. -/
-def itemQuotBitOff (U V w N d : ℕ) : ℕ :=
+@[expose] def itemQuotBitOff (U V w N d : ℕ) : ℕ :=
   itemBitOff U V w N d
 
 /-- Bit offset of the `(valBits V)`-bit value field of dense item `d`. -/
-def itemValBitOff (U V w N d : ℕ) : ℕ :=
+@[expose] def itemValBitOff (U V w N d : ℕ) : ℕ :=
   itemBitOff U V w N d + quotientBits U N
 
 @[simp]
@@ -138,33 +138,33 @@ theorem itemBitOff_eq_dictBitSize (U V w N n_t : ℕ) :
   rfl
 
 /-- Extract the quotient of dense item `d` from `s_bit : BitMemory.State`. -/
-def denseQuotAt (U V w N : ℕ) (s_bit : BitMemory.State) (d : ℕ) : ℕ :=
+@[expose] def denseQuotAt (U V w N : ℕ) (s_bit : BitMemory.State) (d : ℕ) : ℕ :=
   s_bit.getField w (itemQuotBitOff U V w N d) (quotientBits U N)
 
 /-- Extract the value of dense item `d` from `s_bit : BitMemory.State`. -/
-def denseValAt (U V w N : ℕ) (s_bit : BitMemory.State) (d : ℕ) : ℕ :=
+@[expose] def denseValAt (U V w N : ℕ) (s_bit : BitMemory.State) (d : ℕ) : ℕ :=
   s_bit.getField w (itemValBitOff U V w N d) (valBits V)
 
 /-- Extract `LocalMeta` entry `(c, idx)` from `mem : ℕ → ℕ`. -/
-def lmAtBit (U w N : ℕ) (mem : ℕ → ℕ) (p : ℕ × ℕ) : ℕ :=
+@[expose] def lmAtBit (U w N : ℕ) (mem : ℕ → ℕ) (p : ℕ × ℕ) : ℕ :=
   if p.1 < 9 ∧ p.2 < totalMicroBuckets N then
     readPacked (offLMSub U w N p.1) (effBucketPosBits N) w mem p.2
   else 0
 
 /-- Extract `GlobalMeta` entry `idx` from `mem : ℕ → ℕ`. -/
-def gmAtBit (U w N : ℕ) (mem : ℕ → ℕ) (idx : ℕ) : ℕ :=
+@[expose] def gmAtBit (U w N : ℕ) (mem : ℕ → ℕ) (idx : ℕ) : ℕ :=
   if idx < globalMetaLen N then
     readPacked (offGM U w N) (globalPtrBits N) w mem idx
   else 0
 
 /-- Extract `TailDense` entry `t < maxTailItems N` from `mem : ℕ → ℕ`. -/
-def tdAtBit (U w N : ℕ) (mem : ℕ → ℕ) (t : ℕ) : ℕ :=
+@[expose] def tdAtBit (U w N : ℕ) (mem : ℕ → ℕ) (t : ℕ) : ℕ :=
   if t < maxTailItems N then
     readPacked (offTD U w N) (globalPtrBits N) w mem t
   else 0
 
 /-- Extract `DenseTail` entry `c < maxTailItems N` from `mem : ℕ → ℕ`. -/
-def dtAtBit (U w N : ℕ) (mem : ℕ → ℕ) (c : ℕ) : ℕ :=
+@[expose] def dtAtBit (U w N : ℕ) (mem : ℕ → ℕ) (c : ℕ) : ℕ :=
   if c < maxTailItems N then
     readPacked (offDT U w N) (globalPtrBits N) w mem c
   else 0
@@ -183,7 +183,7 @@ theorem denseValAt_lt (U V w N : ℕ) (s_bit : BitMemory.State) (d : ℕ) :
 `0 < M` and `c < M`). Because `d` depends only on `c = d % M` and `base_tail`, advancing
 `base_tail` by `+K` on slab promotion or `-K` on slab demotion leaves `d % M` invariant for all
 unmoved tail items. -/
-def denseOfCirc (M base_tail c : ℕ) : ℕ :=
+@[expose] def denseOfCirc (M base_tail c : ℕ) : ℕ :=
   if M = 0 then base_tail
   else base_tail + (c + M - base_tail % M) % M
 
@@ -274,7 +274,7 @@ theorem tailDenseInv_zero (N n_slabs : ℕ) (td dt : ℕ → ℕ) :
   * if `phys < gm 0 * slabSize N` (an active full-slab slot), `phys`;
   * otherwise (an active tail slot `t = N - 1 - phys < gm 1`),
     `denseOfCirc (maxTailItems N) (gm 0 * slabSize N) (td (N - 1 - phys))`. -/
-def denseOfPhys (N : ℕ) (gm td : ℕ → ℕ) (phys : ℕ) : ℕ :=
+@[expose] def denseOfPhys (N : ℕ) (gm td : ℕ → ℕ) (phys : ℕ) : ℕ :=
   if bucketBits N = 0 then phys
   else if phys < gm 0 * slabSize N then phys
   else denseOfCirc (maxTailItems N) (gm 0 * slabSize N) (td (N - 1 - phys))
@@ -428,7 +428,7 @@ theorem denseOfPhys_slotOf_lt_and_injective {N : ℕ} {gm td dt : ℕ → ℕ}
 /-- Virtual quotient array `ℕ → ℕ` induced on physical slots `phys < N` by composing
 `denseQuotAt U V w N s_bit` with
 `denseOfPhys N (gmAtBit U w N s_bit.mem) (tdAtBit U w N s_bit.mem)`. -/
-def virtualQuotAt (U V w N : ℕ) (s_bit : BitMemory.State) (phys : ℕ) : ℕ :=
+@[expose] def virtualQuotAt (U V w N : ℕ) (s_bit : BitMemory.State) (phys : ℕ) : ℕ :=
   if phys < N then
     denseQuotAt U V w N s_bit
       (denseOfPhys N (gmAtBit U w N s_bit.mem) (tdAtBit U w N s_bit.mem) phys)
@@ -437,7 +437,7 @@ def virtualQuotAt (U V w N : ℕ) (s_bit : BitMemory.State) (phys : ℕ) : ℕ :
 /-- Virtual value array `ℕ → ℕ` induced on physical slots `phys < N` by composing
 `denseValAt U V w N s_bit` with
 `denseOfPhys N (gmAtBit U w N s_bit.mem) (tdAtBit U w N s_bit.mem)`. -/
-def virtualValAt (U V w N : ℕ) (s_bit : BitMemory.State) (phys : ℕ) : ℕ :=
+@[expose] def virtualValAt (U V w N : ℕ) (s_bit : BitMemory.State) (phys : ℕ) : ℕ :=
   if phys < N then
     denseValAt U V w N s_bit
       (denseOfPhys N (gmAtBit U w N s_bit.mem) (tdAtBit U w N s_bit.mem) phys)
@@ -548,7 +548,7 @@ theorem word_eq_of_readBit_eq {w : ℕ} (hw : 0 < w) {mem₁ mem₂ : ℕ → �
 `quotientBits U N` bits and writing `q`, then growing by `valBits V` bits and writing `v`.
 Because both `quotientBits U N ≤ w` and `valBits V ≤ w`, each resize is a single-step admissible
 operation under `BitMemory.dirtySpec w`. -/
-def appendDenseItemProg (U V N q v : ℕ) : BitMemory.Prog Unit := do
+@[expose] def appendDenseItemProg (U V N q v : ℕ) : BitMemory.Prog Unit := do
   let off_q ← BitMemory.grow (quotientBits U N)
   BitMemory.writeBits off_q (quotientBits U N) q
   let off_v ← BitMemory.grow (valBits V)
@@ -557,7 +557,7 @@ def appendDenseItemProg (U V N q v : ℕ) : BitMemory.Prog Unit := do
 /-- Pop the last dense `(quotient, value)` item from the end of `s_bit`, shrinking `s_bit.bitSize`
 first by `valBits V` bits and then by `quotientBits U N` bits, releasing `itemBits U V N` bits back
 to the unallocated suffix `[s_bit.bitSize, ∞)`. -/
-def popDenseItemProg (U V N : ℕ) : BitMemory.Prog (ℕ × ℕ) := do
+@[expose] def popDenseItemProg (U V N : ℕ) : BitMemory.Prog (ℕ × ℕ) := do
   let sz₁ ← BitMemory.getSize
   let v ← BitMemory.readBits (sz₁ - valBits V) (valBits V)
   BitMemory.shrink (valBits V)
@@ -567,18 +567,18 @@ def popDenseItemProg (U V N : ℕ) : BitMemory.Prog (ℕ × ℕ) := do
   pure (q, v)
 
 /-- Read dense item `d` (`(quotient, value)`) in `BitMemory.Prog`. -/
-def readDenseItemProg (U V w N d : ℕ) : BitMemory.Prog (ℕ × ℕ) := do
+@[expose] def readDenseItemProg (U V w N d : ℕ) : BitMemory.Prog (ℕ × ℕ) := do
   let q ← BitMemory.readBits (itemQuotBitOff U V w N d) (quotientBits U N)
   let v ← BitMemory.readBits (itemValBitOff U V w N d) (valBits V)
   pure (q, v)
 
 /-- Write `(q, v)` into dense item `d` in `BitMemory.Prog`. -/
-def writeDenseItemProg (U V w N d q v : ℕ) : BitMemory.Prog Unit := do
+@[expose] def writeDenseItemProg (U V w N d q v : ℕ) : BitMemory.Prog Unit := do
   BitMemory.writeBits (itemQuotBitOff U V w N d) (quotientBits U N) q
   BitMemory.writeBits (itemValBitOff U V w N d) (valBits V) v
 
 /-- Deterministic post-state of `appendDenseItemProg` under `BitMemory.spec w`. -/
-def appendDenseItemState (U V w N q v : ℕ) (s : BitMemory.State) : BitMemory.State :=
+@[expose] def appendDenseItemState (U V w N q v : ℕ) (s : BitMemory.State) : BitMemory.State :=
   (BitMemory.spec w).clientState s (appendDenseItemProg U V N q v)
 
 theorem appendDenseItemState_eq (U V w N q v : ℕ) (s : BitMemory.State) :
@@ -803,7 +803,7 @@ theorem denseQuotAt_ValAt_appendDenseItemState {U V w N n_t q v : ℕ} {s : BitM
 
 /-- Predicate asserting that every register and every memory word of `x : BitRAM.Data r` fits in
 `w` bits (`< 2 ^ w`). -/
-def RegsAndMemFit {r : ℕ} (w : ℕ) (x : BitRAM.Data r) : Prop :=
+@[expose] def RegsAndMemFit {r : ℕ} (w : ℕ) (x : BitRAM.Data r) : Prop :=
   (∀ i : Fin r, Fits w (x.regs i)) ∧ (∀ q : ℕ, Fits w (x.mem q))
 
 theorem evalOp_preserve_regsAndMemFit {B : Basis} {r w : ℕ} {o : Cslib.WordRAM.Op B r}
@@ -915,7 +915,7 @@ theorem writeBitsCode_exec_wf {w : ℕ} (hw : 0 < w) {x : BitRAM.Data 12} (hx : 
    `q` into `r3`, loads `quotientBits U N` into `r2`, and runs `BitRAM.writeBitsCode`.
 2. Loads `valBits V` into `r1`, runs `.grow 1 1` (putting `bitSize + quotientBits U N` in `r1`),
    loads `v` into `r3`, loads `valBits V` into `r2`, and runs `BitRAM.writeBitsCode`. -/
-def appendDenseItemCode (U V N q v : ℕ) : BitRAM.Code .standard 12 :=
+@[expose] def appendDenseItemCode (U V N q v : ℕ) : BitRAM.Code .standard 12 :=
   .seq (.op (.const 1 (quotientBits U N)))
     (.seq (.grow 1 1)
       (.seq (.op (.const 3 q))
@@ -1073,13 +1073,13 @@ theorem readBitsCode_exec_wf {w : ℕ} (hw : 0 < w) {x : BitRAM.Data 12} (hx : x
 
 /-- Deterministic `BitMemory.State` transformer popping one dense item of `itemBits U V N` bits
 from the tail of `s` via two bit-level `.shrink` steps (`valBits V` then `quotientBits U N`). -/
-def popDenseItemState (U V w N : ℕ) (s : BitMemory.State) : BitMemory.State :=
+@[expose] def popDenseItemState (U V w N : ℕ) (s : BitMemory.State) : BitMemory.State :=
   (BitMemory.stepFn w (BitMemory.stepFn w s (.shrink (valBits V))).1
     (.shrink (quotientBits U N))).1
 
 /-- Concrete `BitRAM.Code .standard 12` program popping one dense item (`itemBits U V N` bits) from
 the bit-resizable tail in 4 instructions. -/
-def popDenseItemCode (U V N : ℕ) : BitRAM.Code .standard 12 :=
+@[expose] def popDenseItemCode (U V N : ℕ) : BitRAM.Code .standard 12 :=
   .seq (.op (.const 1 (valBits V)))
     (.seq (.shrink 1)
       (.seq (.op (.const 1 (quotientBits U N)))

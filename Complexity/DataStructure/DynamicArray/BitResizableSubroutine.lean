@@ -49,7 +49,7 @@ bit-resizable memory state `s : BitMemory.State` (`[0, s.bitSize)`):
 * [T. Hagerup, *Sorting and Searching on the Word RAM*][Hagerup1998]
 -/
 
-@[expose] public section
+public section
 
 namespace Cslib.DataStructure.DynamicArray.BitResizable
 

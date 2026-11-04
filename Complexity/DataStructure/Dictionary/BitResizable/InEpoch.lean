@@ -43,8 +43,6 @@ rebuilds.
 * `Cslib.DataStructure.Dictionary.BitResizable.inEpoch_insert_step`,
   `Cslib.DataStructure.Dictionary.BitResizable.inEpoch_delete_step`: in-epoch companion transitions
   with `T + 1008 * slotPotential N gm' ≤ 1008 * slotPotential N gm + 2349 + 24 * probeExcess`.
-* `Cslib.DataStructure.Dictionary.BitResizable.canonCompanion_valid`: canonical companion
-  construction for epoch rebuilds.
 -/
 
 public section

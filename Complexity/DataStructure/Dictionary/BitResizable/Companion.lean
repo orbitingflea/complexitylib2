@@ -40,7 +40,7 @@ and metadata words modified during an in-epoch `insert` or `delete`.
   whenever `s_fix` satisfies `Succinct.DictStateInv` and `(td, dt)` satisfies `TailDenseInv`.
 -/
 
-@[expose] public section
+public section
 
 namespace Cslib.DataStructure.Dictionary.BitResizable
 
@@ -57,11 +57,11 @@ open Cslib.Probability
 /-! ## Section 1: Difference counting (`diffCount`, `diffCount2`) and `memoryCost` word bound -/
 
 /-- Number of elements `x ∈ L` where `f x ≠ g x`. -/
-def diffCount (L : List ℕ) (f g : ℕ → ℕ) : ℕ :=
+@[expose] def diffCount (L : List ℕ) (f g : ℕ → ℕ) : ℕ :=
   (L.filter (fun x => decide (f x ≠ g x))).length
 
 /-- Number of elements `x ∈ L` where `f₁ x ≠ g₁ x ∨ f₂ x ≠ g₂ x`. -/
-def diffCount2 (L : List ℕ) (f₁ f₂ g₁ g₂ : ℕ → ℕ) : ℕ :=
+@[expose] def diffCount2 (L : List ℕ) (f₁ f₂ g₁ g₂ : ℕ → ℕ) : ℕ :=
   (L.filter (fun x => decide (f₁ x ≠ g₁ x ∨ f₂ x ≠ g₂ x))).length
 
 @[simp]
@@ -293,7 +293,7 @@ theorem changedWords_le_memoryCost {α : Type} {L : List ℕ} (hnodup : L.Nodup)
 
 /-- Pack `len` entries of `f : ℕ → ℕ` (width `k` bits each) starting at word `base` on a `w`-bit
 machine via `BitPackedArray.writePacked`. -/
-def packArray (base k w : ℕ) (f : ℕ → ℕ) : ℕ → (ℕ → ℕ) → (ℕ → ℕ)
+@[expose] def packArray (base k w : ℕ) (f : ℕ → ℕ) : ℕ → (ℕ → ℕ) → (ℕ → ℕ)
   | 0, mem => mem
   | i + 1, mem => writePacked base k w (packArray base k w f i mem) i (f i)
 
@@ -388,7 +388,7 @@ theorem diffCount_packArray_update_le {L : List ℕ} (hnodup : L.Nodup) (base k 
 
 /-- Pack `m` dense `(quotient, value)` items `(qFn d, vFn d)` (`d < m`) into
 `[epochMetaBits U w N, dictBitSize U V w N m)`. -/
-def packDenseItems (U V w N : ℕ) (qFn vFn : ℕ → ℕ) : ℕ → (ℕ → ℕ) → (ℕ → ℕ)
+@[expose] def packDenseItems (U V w N : ℕ) (qFn vFn : ℕ → ℕ) : ℕ → (ℕ → ℕ) → (ℕ → ℕ)
   | 0, mem => mem
   | d + 1, mem =>
       let mem₁ := writeFieldMem w 0 (packDenseItems U V w N qFn vFn d mem)
@@ -529,7 +529,7 @@ theorem denseQuotAt_ValAt_packDenseItems {U V w N : ℕ} (hw : 0 < w) (hU : U �
 
 /-- Canonical Four-Russians carryless multiplication table memory at `offHash = 4` for `(U, w, N)`.
 Uses `ReducedKWise.initTableCode_execWithin` when parameters fit in `w` bits. -/
-noncomputable def canonTableMem (U w N : ℕ) : ℕ → ℕ :=
+@[expose] noncomputable def canonTableMem (U w N : ℕ) : ℕ → ℕ :=
   let w₀ := Succinct.qBits U N
   let b := Succinct.hashB N
   let b' := totalMicroBits N
@@ -544,7 +544,7 @@ noncomputable def canonTableMem (U w N : ℕ) : ℕ → ℕ :=
 
 /-- Canonical hash region memory `[offHash, offLM U w N)` representing seed `θ` and the
 Four-Russians table at `offHash = 4`. -/
-noncomputable def canonHashMem (U w N : ℕ) (θ : Succinct.QuotHashSeed U N) (a : ℕ) : ℕ :=
+@[expose] noncomputable def canonHashMem (U w N : ℕ) (θ : Succinct.QuotHashSeed U N) (a : ℕ) : ℕ :=
   let w₀ := Succinct.qBits U N
   let b := Succinct.hashB N
   let b' := totalMicroBits N
@@ -652,7 +652,7 @@ theorem canonHashMem_rep {U w N : ℕ} (hN : N ≤ U) (hU : U ≤ 2 ^ w)
 /-- Base metadata word memory on `[0, offTD U w N)` before packing `TailDense` and `DenseTail`:
 stores the 4-word header at `0 .. 3`, `canonHashMem` at `[offHash, offLM U w N)` when `0 < N`,
 and copies `LocalMeta ++ GlobalMeta` from `fixMem` at `[offLM U w N, offTD U w N)` when `0 < N`. -/
-noncomputable def baseMetaMem (U V w N m : ℕ) (θ : Succinct.QuotHashSeed U N)
+@[expose] noncomputable def baseMetaMem (U V w N m : ℕ) (θ : Succinct.QuotHashSeed U N)
     (fixMem : ℕ → ℕ) (a : ℕ) : ℕ :=
   if a = 0 then m % 2 ^ w
   else if a = 1 then N % 2 ^ w
@@ -675,7 +675,7 @@ theorem baseMetaMem_fits (U V w N m : ℕ) (θ : Succinct.QuotHashSeed U N)
 /-- Full epoch metadata word memory on `[0, epochMetaWords U w N)`: when `N = 0`, equals
 `baseMetaMem`; when `0 < N`, packs `td` into `[offTD U w N, offDT U w N)` and `dt` into
 `[offDT U w N, epochMetaWords U w N)` on top of `baseMetaMem`. -/
-noncomputable def epochMetaMem (U V w N m : ℕ) (θ : Succinct.QuotHashSeed U N)
+@[expose] noncomputable def epochMetaMem (U V w N m : ℕ) (θ : Succinct.QuotHashSeed U N)
     (fixMem td dt : ℕ → ℕ) : ℕ → ℕ :=
   let m₀ := baseMetaMem U V w N m θ fixMem
   if N = 0 then m₀
@@ -787,7 +787,7 @@ theorem epochMetaMem_eq_pack_zero_of_ge_offTD {U V w N m : ℕ} (hN : 0 < N)
 
 /-- Build the canonical single-tape `BitMemory.State` from a fixed-capacity state `s_fix`,
 key count `m`, epoch capacity `N`, hash seed `θ`, and circular compaction arrays `(td, dt)`. -/
-noncomputable def buildBitState (U V w N m : ℕ) (θ : Succinct.QuotHashSeed U N)
+@[expose] noncomputable def buildBitState (U V w N m : ℕ) (θ : Succinct.QuotHashSeed U N)
     (s_fix : Memory.State) (td dt : ℕ → ℕ) : BitMemory.State :=
   let h_space := Succinct.hashSpace U w N
   let gm := Succinct.gmAt 0 U V w N h_space s_fix.mem
