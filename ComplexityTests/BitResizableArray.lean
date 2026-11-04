@@ -8,6 +8,7 @@ module
 -- upstream: local-only (test driver)
 
 public import Complexity.DataStructure.DynamicArray.BitResizable
+public import Complexity.DataStructure.DynamicArray.BitResizableSubroutine
 
 /-!
 # Bit-resizable word-RAM and `b`-bit resizable array tests

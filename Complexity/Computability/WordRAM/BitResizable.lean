@@ -543,6 +543,18 @@ def extractSliceCode (lenReg dst : Fin 12) : Code .standard 12 :=
             (.seq (.op (.bin .sub 9 9 10))
               (.op (.bin .and dst dst 9)))))))
 
+private theorem shl_one_fits {w k : ℕ} (hlt : k < w) : Fits w (1 <<< k) := by
+  rw [Fits, Nat.shiftLeft_eq, one_mul]
+  exact Nat.pow_lt_pow_right Nat.one_lt_two hlt
+
+private theorem and_bitMask_shl_fits {w val lo len : ℕ} (hbound : lo + len ≤ w) :
+    Fits w ((val &&& bitMask len) <<< lo) := by
+  have hm : (val &&& bitMask len) * 2 ^ lo < 2 ^ len * 2 ^ lo :=
+    Nat.mul_lt_mul_of_pos_right (Nat.and_lt_two_pow _ (bitMask_lt _)) (Nat.two_pow_pos _)
+  rw [← Nat.pow_add, Nat.add_comm] at hm
+  exact lt_of_lt_of_le (by simpa [Nat.shiftLeft_eq] using hm)
+    (Nat.pow_le_pow_right Nat.two_pos hbound)
+
 /-- `extractSliceCode 6 0` (for `lowLen` in `r6`, `lo` in `r5`, `word` in `r8`, output in `r0`)
 executes in at most `8` instructions and sets `r0` to
 `extractSlice (x.regs 8) (x.regs 5) (x.regs 6)` while preserving registers `1..8`, `mem`, and
@@ -564,21 +576,13 @@ theorem extractSliceCode_low_exec {w : ℕ} (hw : 0 < w) {x : Data 12}
     change x.regs 8 = extractSlice (x.regs 8) (x.regs 5) (x.regs 6)
     rw [hlo, hlen, extractSlice_zero_self hword]
   · have hlt : x.regs 6 < w := by omega
-    refine .branch_neg (T₀ := 5) hlen ?_ (by omega)
-    have hshr : Fits w (x.regs 8 >>> x.regs 5) :=
-      Fits.of_le hword (Nat.shiftRight_le _ _)
-    have h1 : Fits w 1 := fits_one (Nat.ne_of_gt hw)
-    have hshl : Fits w (1 <<< x.regs 6) := by
-      rw [Fits, Nat.shiftLeft_eq, one_mul]
-      exact Nat.pow_lt_pow_right Nat.one_lt_two hlt
     have hsub : Fits w ((1 <<< x.regs 6) - 1) := bitMask_fits (Nat.le_of_lt hlt)
-    have hand : Fits w ((x.regs 8 >>> x.regs 5) &&& ((1 <<< x.regs 6) - 1)) :=
-      Fits.of_le hsub (Nat.and_le_right)
-    refine DemonicExecWithin.step_bin (T := 4) hshr ?_
-    refine DemonicExecWithin.step_const (T := 3) h1 ?_
-    refine DemonicExecWithin.step_bin (T := 2) hshl ?_
+    refine .branch_neg (T₀ := 5) hlen ?_ (by omega)
+    refine DemonicExecWithin.step_bin (T := 4) (Fits.of_le hword (Nat.shiftRight_le _ _)) ?_
+    refine DemonicExecWithin.step_const (T := 3) (fits_one (Nat.ne_of_gt hw)) ?_
+    refine DemonicExecWithin.step_bin (T := 2) (shl_one_fits hlt) ?_
     refine DemonicExecWithin.step_bin (T := 1) hsub ?_
-    exact DemonicExecWithin.bin hand
+    exact DemonicExecWithin.bin (Fits.of_le hsub Nat.and_le_right)
       ⟨rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl⟩
 
 /-- `extractSliceCode 7 3` (for `highLen` in `r7`, `lo` in `r5`, `word` in `r8`, output in `r3`)
@@ -602,21 +606,13 @@ theorem extractSliceCode_high_exec {w : ℕ} (hw : 0 < w) {x : Data 12}
     change x.regs 8 = extractSlice (x.regs 8) (x.regs 5) (x.regs 7)
     rw [hlo, hlen, extractSlice_zero_self hword]
   · have hlt : x.regs 7 < w := by omega
-    refine .branch_neg (T₀ := 5) hlen ?_ (by omega)
-    have hshr : Fits w (x.regs 8 >>> x.regs 5) :=
-      Fits.of_le hword (Nat.shiftRight_le _ _)
-    have h1 : Fits w 1 := fits_one (Nat.ne_of_gt hw)
-    have hshl : Fits w (1 <<< x.regs 7) := by
-      rw [Fits, Nat.shiftLeft_eq, one_mul]
-      exact Nat.pow_lt_pow_right Nat.one_lt_two hlt
     have hsub : Fits w ((1 <<< x.regs 7) - 1) := bitMask_fits (Nat.le_of_lt hlt)
-    have hand : Fits w ((x.regs 8 >>> x.regs 5) &&& ((1 <<< x.regs 7) - 1)) :=
-      Fits.of_le hsub (Nat.and_le_right)
-    refine DemonicExecWithin.step_bin (T := 4) hshr ?_
-    refine DemonicExecWithin.step_const (T := 3) h1 ?_
-    refine DemonicExecWithin.step_bin (T := 2) hshl ?_
+    refine .branch_neg (T₀ := 5) hlen ?_ (by omega)
+    refine DemonicExecWithin.step_bin (T := 4) (Fits.of_le hword (Nat.shiftRight_le _ _)) ?_
+    refine DemonicExecWithin.step_const (T := 3) (fits_one (Nat.ne_of_gt hw)) ?_
+    refine DemonicExecWithin.step_bin (T := 2) (shl_one_fits hlt) ?_
     refine DemonicExecWithin.step_bin (T := 1) hsub ?_
-    exact DemonicExecWithin.bin hand
+    exact DemonicExecWithin.bin (Fits.of_le hsub Nat.and_le_right)
       ⟨rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl⟩
 
 /-- `extractSliceCode 2 0` (for single-word `len` in `r2`, `lo` in `r5`, `word` in `r8`, output in
@@ -640,21 +636,13 @@ theorem extractSliceCode_single_exec {w : ℕ} (hw : 0 < w) {x : Data 12}
     change x.regs 8 = extractSlice (x.regs 8) (x.regs 5) (x.regs 2)
     rw [hlo, hlen, extractSlice_zero_self hword]
   · have hlt : x.regs 2 < w := by omega
-    refine .branch_neg (T₀ := 5) hlen ?_ (by omega)
-    have hshr : Fits w (x.regs 8 >>> x.regs 5) :=
-      Fits.of_le hword (Nat.shiftRight_le _ _)
-    have h1 : Fits w 1 := fits_one (Nat.ne_of_gt hw)
-    have hshl : Fits w (1 <<< x.regs 2) := by
-      rw [Fits, Nat.shiftLeft_eq, one_mul]
-      exact Nat.pow_lt_pow_right Nat.one_lt_two hlt
     have hsub : Fits w ((1 <<< x.regs 2) - 1) := bitMask_fits (Nat.le_of_lt hlt)
-    have hand : Fits w ((x.regs 8 >>> x.regs 5) &&& ((1 <<< x.regs 2) - 1)) :=
-      Fits.of_le hsub (Nat.and_le_right)
-    refine DemonicExecWithin.step_bin (T := 4) hshr ?_
-    refine DemonicExecWithin.step_const (T := 3) h1 ?_
-    refine DemonicExecWithin.step_bin (T := 2) hshl ?_
+    refine .branch_neg (T₀ := 5) hlen ?_ (by omega)
+    refine DemonicExecWithin.step_bin (T := 4) (Fits.of_le hword (Nat.shiftRight_le _ _)) ?_
+    refine DemonicExecWithin.step_const (T := 3) (fits_one (Nat.ne_of_gt hw)) ?_
+    refine DemonicExecWithin.step_bin (T := 2) (shl_one_fits hlt) ?_
     refine DemonicExecWithin.step_bin (T := 1) hsub ?_
-    exact DemonicExecWithin.bin hand
+    exact DemonicExecWithin.bin (Fits.of_le hsub Nat.and_le_right)
       ⟨rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl⟩
 
 /-- Write the low `sliceLen` bits (in `lenReg ∈ {2, 6, 7}`) of `r3` (`val`) into bit offset `r5`
@@ -696,37 +684,17 @@ theorem writeSliceCode_low_exec {w : ℕ} (hw : 0 < w) {x : Data 12}
     change x.regs 3 = writeSlice (x.regs 8) (x.regs 5) (x.regs 6) (x.regs 3)
     rw [hlo, hlen, writeSlice_zero_self hword hval]
   · have hlt : x.regs 6 < w := by omega
-    refine .branch_neg (T₀ := 9) hlen ?_ (by omega)
-    have h1 : Fits w 1 := fits_one (Nat.ne_of_gt hw)
-    have hshl : Fits w (1 <<< x.regs 6) := by
-      rw [Fits, Nat.shiftLeft_eq, one_mul]
-      exact Nat.pow_lt_pow_right Nat.one_lt_two hlt
     have hsub : Fits w (bitMask (x.regs 6)) := bitMask_fits (Nat.le_of_lt hlt)
-    have hslice : Fits w (sliceMask (x.regs 5) (x.regs 6)) := sliceMask_fits hbound
-    have hand1 : Fits w (x.regs 8 &&& sliceMask (x.regs 5) (x.regs 6)) :=
-      Fits.of_le hword Nat.and_le_left
-    have hclear : Fits w (clearMask (x.regs 8) (sliceMask (x.regs 5) (x.regs 6))) :=
-      clearMask_fits hword _
-    have hand2 : Fits w (x.regs 3 &&& bitMask (x.regs 6)) :=
-      Fits.of_le hsub Nat.and_le_right
-    have hval_shl : Fits w ((x.regs 3 &&& bitMask (x.regs 6)) <<< x.regs 5) := by
-      have hm : (x.regs 3 &&& bitMask (x.regs 6)) * 2 ^ (x.regs 5) <
-          2 ^ (x.regs 6) * 2 ^ (x.regs 5) :=
-        Nat.mul_lt_mul_of_pos_right (Nat.and_lt_two_pow _ (bitMask_lt _)) (Nat.two_pow_pos _)
-      rw [← Nat.pow_add, Nat.add_comm] at hm
-      exact lt_of_lt_of_le (by simpa [Nat.shiftLeft_eq] using hm)
-        (Nat.pow_le_pow_right Nat.two_pos hbound)
-    have hor : Fits w (writeSlice (x.regs 8) (x.regs 5) (x.regs 6) (x.regs 3)) :=
-      writeSlice_fits hword hbound
-    refine DemonicExecWithin.step_const (T := 8) h1 ?_
-    refine DemonicExecWithin.step_bin (T := 7) hshl ?_
+    refine .branch_neg (T₀ := 9) hlen ?_ (by omega)
+    refine DemonicExecWithin.step_const (T := 8) (fits_one (Nat.ne_of_gt hw)) ?_
+    refine DemonicExecWithin.step_bin (T := 7) (shl_one_fits hlt) ?_
     refine DemonicExecWithin.step_bin (T := 6) hsub ?_
-    refine DemonicExecWithin.step_bin (T := 5) hslice ?_
-    refine DemonicExecWithin.step_bin (T := 4) hand1 ?_
-    refine DemonicExecWithin.step_bin (T := 3) hclear ?_
-    refine DemonicExecWithin.step_bin (T := 2) hand2 ?_
-    refine DemonicExecWithin.step_bin (T := 1) hval_shl ?_
-    exact DemonicExecWithin.bin hor
+    refine DemonicExecWithin.step_bin (T := 5) (sliceMask_fits hbound) ?_
+    refine DemonicExecWithin.step_bin (T := 4) (Fits.of_le hword Nat.and_le_left) ?_
+    refine DemonicExecWithin.step_bin (T := 3) (clearMask_fits hword _) ?_
+    refine DemonicExecWithin.step_bin (T := 2) (Fits.of_le hsub Nat.and_le_right) ?_
+    refine DemonicExecWithin.step_bin (T := 1) (and_bitMask_shl_fits hbound) ?_
+    exact DemonicExecWithin.bin (writeSlice_fits hword hbound)
       ⟨rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl⟩
 
 /-- `writeSliceCode 7` (`highLen` in `r7`) executes in at most `12` instructions and sets `r0` to
@@ -750,37 +718,17 @@ theorem writeSliceCode_high_exec {w : ℕ} (hw : 0 < w) {x : Data 12}
     change x.regs 3 = writeSlice (x.regs 8) (x.regs 5) (x.regs 7) (x.regs 3)
     rw [hlo, hlen, writeSlice_zero_self hword hval]
   · have hlt : x.regs 7 < w := by omega
-    refine .branch_neg (T₀ := 9) hlen ?_ (by omega)
-    have h1 : Fits w 1 := fits_one (Nat.ne_of_gt hw)
-    have hshl : Fits w (1 <<< x.regs 7) := by
-      rw [Fits, Nat.shiftLeft_eq, one_mul]
-      exact Nat.pow_lt_pow_right Nat.one_lt_two hlt
     have hsub : Fits w (bitMask (x.regs 7)) := bitMask_fits (Nat.le_of_lt hlt)
-    have hslice : Fits w (sliceMask (x.regs 5) (x.regs 7)) := sliceMask_fits hbound
-    have hand1 : Fits w (x.regs 8 &&& sliceMask (x.regs 5) (x.regs 7)) :=
-      Fits.of_le hword Nat.and_le_left
-    have hclear : Fits w (clearMask (x.regs 8) (sliceMask (x.regs 5) (x.regs 7))) :=
-      clearMask_fits hword _
-    have hand2 : Fits w (x.regs 3 &&& bitMask (x.regs 7)) :=
-      Fits.of_le hsub Nat.and_le_right
-    have hval_shl : Fits w ((x.regs 3 &&& bitMask (x.regs 7)) <<< x.regs 5) := by
-      have hm : (x.regs 3 &&& bitMask (x.regs 7)) * 2 ^ (x.regs 5) <
-          2 ^ (x.regs 7) * 2 ^ (x.regs 5) :=
-        Nat.mul_lt_mul_of_pos_right (Nat.and_lt_two_pow _ (bitMask_lt _)) (Nat.two_pow_pos _)
-      rw [← Nat.pow_add, Nat.add_comm] at hm
-      exact lt_of_lt_of_le (by simpa [Nat.shiftLeft_eq] using hm)
-        (Nat.pow_le_pow_right Nat.two_pos hbound)
-    have hor : Fits w (writeSlice (x.regs 8) (x.regs 5) (x.regs 7) (x.regs 3)) :=
-      writeSlice_fits hword hbound
-    refine DemonicExecWithin.step_const (T := 8) h1 ?_
-    refine DemonicExecWithin.step_bin (T := 7) hshl ?_
+    refine .branch_neg (T₀ := 9) hlen ?_ (by omega)
+    refine DemonicExecWithin.step_const (T := 8) (fits_one (Nat.ne_of_gt hw)) ?_
+    refine DemonicExecWithin.step_bin (T := 7) (shl_one_fits hlt) ?_
     refine DemonicExecWithin.step_bin (T := 6) hsub ?_
-    refine DemonicExecWithin.step_bin (T := 5) hslice ?_
-    refine DemonicExecWithin.step_bin (T := 4) hand1 ?_
-    refine DemonicExecWithin.step_bin (T := 3) hclear ?_
-    refine DemonicExecWithin.step_bin (T := 2) hand2 ?_
-    refine DemonicExecWithin.step_bin (T := 1) hval_shl ?_
-    exact DemonicExecWithin.bin hor
+    refine DemonicExecWithin.step_bin (T := 5) (sliceMask_fits hbound) ?_
+    refine DemonicExecWithin.step_bin (T := 4) (Fits.of_le hword Nat.and_le_left) ?_
+    refine DemonicExecWithin.step_bin (T := 3) (clearMask_fits hword _) ?_
+    refine DemonicExecWithin.step_bin (T := 2) (Fits.of_le hsub Nat.and_le_right) ?_
+    refine DemonicExecWithin.step_bin (T := 1) (and_bitMask_shl_fits hbound) ?_
+    exact DemonicExecWithin.bin (writeSlice_fits hword hbound)
       ⟨rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl⟩
 
 /-- `writeSliceCode 2` (single-word `len` in `r2`) executes in at most `12` instructions and sets
@@ -804,37 +752,17 @@ theorem writeSliceCode_single_exec {w : ℕ} (hw : 0 < w) {x : Data 12}
     change x.regs 3 = writeSlice (x.regs 8) (x.regs 5) (x.regs 2) (x.regs 3)
     rw [hlo, hlen, writeSlice_zero_self hword hval]
   · have hlt : x.regs 2 < w := by omega
-    refine .branch_neg (T₀ := 9) hlen ?_ (by omega)
-    have h1 : Fits w 1 := fits_one (Nat.ne_of_gt hw)
-    have hshl : Fits w (1 <<< x.regs 2) := by
-      rw [Fits, Nat.shiftLeft_eq, one_mul]
-      exact Nat.pow_lt_pow_right Nat.one_lt_two hlt
     have hsub : Fits w (bitMask (x.regs 2)) := bitMask_fits (Nat.le_of_lt hlt)
-    have hslice : Fits w (sliceMask (x.regs 5) (x.regs 2)) := sliceMask_fits hbound
-    have hand1 : Fits w (x.regs 8 &&& sliceMask (x.regs 5) (x.regs 2)) :=
-      Fits.of_le hword Nat.and_le_left
-    have hclear : Fits w (clearMask (x.regs 8) (sliceMask (x.regs 5) (x.regs 2))) :=
-      clearMask_fits hword _
-    have hand2 : Fits w (x.regs 3 &&& bitMask (x.regs 2)) :=
-      Fits.of_le hsub Nat.and_le_right
-    have hval_shl : Fits w ((x.regs 3 &&& bitMask (x.regs 2)) <<< x.regs 5) := by
-      have hm : (x.regs 3 &&& bitMask (x.regs 2)) * 2 ^ (x.regs 5) <
-          2 ^ (x.regs 2) * 2 ^ (x.regs 5) :=
-        Nat.mul_lt_mul_of_pos_right (Nat.and_lt_two_pow _ (bitMask_lt _)) (Nat.two_pow_pos _)
-      rw [← Nat.pow_add, Nat.add_comm] at hm
-      exact lt_of_lt_of_le (by simpa [Nat.shiftLeft_eq] using hm)
-        (Nat.pow_le_pow_right Nat.two_pos hbound)
-    have hor : Fits w (writeSlice (x.regs 8) (x.regs 5) (x.regs 2) (x.regs 3)) :=
-      writeSlice_fits hword hbound
-    refine DemonicExecWithin.step_const (T := 8) h1 ?_
-    refine DemonicExecWithin.step_bin (T := 7) hshl ?_
+    refine .branch_neg (T₀ := 9) hlen ?_ (by omega)
+    refine DemonicExecWithin.step_const (T := 8) (fits_one (Nat.ne_of_gt hw)) ?_
+    refine DemonicExecWithin.step_bin (T := 7) (shl_one_fits hlt) ?_
     refine DemonicExecWithin.step_bin (T := 6) hsub ?_
-    refine DemonicExecWithin.step_bin (T := 5) hslice ?_
-    refine DemonicExecWithin.step_bin (T := 4) hand1 ?_
-    refine DemonicExecWithin.step_bin (T := 3) hclear ?_
-    refine DemonicExecWithin.step_bin (T := 2) hand2 ?_
-    refine DemonicExecWithin.step_bin (T := 1) hval_shl ?_
-    exact DemonicExecWithin.bin hor
+    refine DemonicExecWithin.step_bin (T := 5) (sliceMask_fits hbound) ?_
+    refine DemonicExecWithin.step_bin (T := 4) (Fits.of_le hword Nat.and_le_left) ?_
+    refine DemonicExecWithin.step_bin (T := 3) (clearMask_fits hword _) ?_
+    refine DemonicExecWithin.step_bin (T := 2) (Fits.of_le hsub Nat.and_le_right) ?_
+    refine DemonicExecWithin.step_bin (T := 1) (and_bitMask_shl_fits hbound) ?_
+    exact DemonicExecWithin.bin (writeSlice_fits hword hbound)
       ⟨rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl⟩
 
 /-- Concrete `BitRAM.Code .standard 12` program for `BitMemory.Op.readBits`:
