@@ -253,4 +253,117 @@ theorem iterate₀ {σ : Type} (input : δ ↪ (Fin k → ℕ)) (output : σ ↪
 
 end Realizes
 
+namespace RealizesAt
+
+variable {n C n₁ C₁ n₂ C₂ : ℕ} {p : δ → Memory.Prog α} {input : δ ↪ (Fin k → ℕ)}
+  {output : α ↪ (Fin l → ℕ)} {safe : ℕ → δ → Memory.State → Prop}
+  {work work' : δ → Memory.State → ℕ}
+
+/-- Absorb local work dominated by `K * (memoryCost + work' + 1)` into `C * (K + 1)`. -/
+theorem mono_mul (h : RealizesAt n C B p input output safe work) (K : ℕ)
+    (hwork : ∀ d s, work d s ≤ K * (memoryCost (p d) s + work' d s + 1)) :
+    RealizesAt n (C * (K + 1)) B p input output safe work' := by
+  obtain ⟨n₀, hn₀, C₀, hC₀, emit, he⟩ := h
+  refine ⟨n₀, hn₀, C₀ * (K + 1), Nat.mul_le_mul_right (K + 1) hC₀, emit,
+    fun frontier src tmp hi hd hf hs => ?_⟩
+  obtain ⟨hnw, hrun⟩ := he frontier src tmp hi hd hf hs
+  refine ⟨hnw, fun w d x hx hin hsafe hv => ?_⟩
+  obtain ⟨y, hy, hm, hout, hframe⟩ := hrun w d x hx hin hsafe hv
+  refine ⟨y, hy.mono ?_, hm, hout, hframe⟩
+  have hw := hwork d (memoryState frontier x)
+  rw [Nat.mul_assoc]
+  apply Nat.mul_le_mul_left
+  have hexpand : (K + 1) * (memoryCost (p d) (memoryState frontier x) +
+      work' d (memoryState frontier x) + 1) =
+      K * (memoryCost (p d) (memoryState frontier x) + work' d (memoryState frontier x) + 1) +
+        (memoryCost (p d) (memoryState frontier x) + work' d (memoryState frontier x) + 1) := by
+    ring
+  omega
+
+/-- Pointwise equal programs share the same `RealizesAt` certificates. -/
+theorem congr {p' : δ → Memory.Prog α} (h : RealizesAt n C B p input output safe work)
+    (hp : ∀ d, p d = p' d) : RealizesAt n C B p' input output safe work :=
+  funext hp ▸ h
+
+/-- Strengthen the visible domain under the client's valid history, preserving `(n, C)`. -/
+theorem consequence_valid (safe' : ℕ → δ → Memory.State → Prop)
+    (h : RealizesAt n C B p input output safe work)
+    (hsafe : ∀ w d s, (∀ i, Fits w (input d i)) → Memory.WellFormed w s →
+      (Memory.spec w).ValidHistory s ((Memory.spec w).clientHistory s (p d)) →
+      safe' w d s → safe w d s) : RealizesAt n C B p input output safe' work := by
+  obtain ⟨n₀, hn₀, C₀, hC₀, emit, he⟩ := h
+  refine ⟨n₀, hn₀, C₀, hC₀, emit, fun frontier src tmp hi hd hf hs => ?_⟩
+  obtain ⟨hnw, hrun⟩ := he frontier src tmp hi hd hf hs
+  refine ⟨hnw, fun w d x hx hin hsafe' hv => hrun w d x hx hin ?_ hv⟩
+  exact hsafe w d _ (fun i => congrFun hin i ▸ hx.1 (src i)) (wellFormed_memoryState hx) hv hsafe'
+
+variable {q : δ × α → Memory.Prog β} {answer : α ↪ (Fin l → ℕ)} {output' : β ↪ (Fin m → ℕ)}
+  {safeP : ℕ → δ → Memory.State → Prop} {safeQ : ℕ → δ × α → Memory.State → Prop}
+
+/-- Graded sequencing with the bind's control unit absorbed. -/
+theorem bind₀ (hP : RealizesAt n₁ C₁ B p input answer safeP (fun _ _ => 0))
+    (hQ : RealizesAt n₂ C₂ B q ((input.prodMap answer).trans (Fin.appendEquiv k l).toEmbedding)
+      output' safeQ (fun _ _ => 0)) :
+    RealizesAt (n₂ + l + n₁ + 1) (max C₁ C₂ * 2) B
+      (fun d => (p d).bind (fun a => q (d, a))) input output'
+      (fun w d s => safeP w d s ∧
+        safeQ w (d, (Memory.spec 0).clientResult s (p d)) ((Memory.spec 0).clientState s (p d)))
+      (fun _ _ => 0) :=
+  (hP.bind hQ).mono_mul 1 (fun _ _ => by omega)
+
+/-- Graded sequencing with closed-form reply and next memory. -/
+theorem bind₀_of_run (hP : RealizesAt n₁ C₁ B p input answer safeP (fun _ _ => 0))
+    (hQ : RealizesAt n₂ C₂ B q ((input.prodMap answer).trans (Fin.appendEquiv k l).toEmbedding)
+      output' safeQ (fun _ _ => 0))
+    (reply : δ → Memory.State → α) (next : δ → Memory.State → Memory.State)
+    (hreply : ∀ d s, (Memory.spec 0).clientResult s (p d) = reply d s)
+    (hnext : ∀ d s, (Memory.spec 0).clientState s (p d) = next d s) :
+    RealizesAt (n₂ + l + n₁ + 1) (max C₁ C₂ * 2) B
+      (fun d => (p d).bind (fun a => q (d, a))) input output'
+      (fun w d s => safeP w d s ∧ safeQ w (d, reply d s) (next d s)) (fun _ _ => 0) :=
+  (bind₀ hP hQ).consequence (fun w d s _ _ h => by rw [hreply, hnext]; exact h)
+    (fun _ _ => le_rfl)
+
+/-- Graded branching with the test and jump absorbed. -/
+theorem branch₀ {pos neg : δ → Memory.Prog α} {safePos safeNeg : ℕ → δ → Memory.State → Prop}
+    (c : Cond k) (hp : RealizesAt n₁ C₁ B pos input output safePos (fun _ _ => 0))
+    (hn : RealizesAt n₂ C₂ B neg input output safeNeg (fun _ _ => 0)) :
+    RealizesAt (n₁ + n₂) ((max C₁ C₂ + 2) * 3) B
+      (fun d => if test c (input d) then pos d else neg d) input output
+      (fun w d s => if test c (input d) then safePos w d s else safeNeg w d s) (fun _ _ => 0) :=
+  (branch c hp hn).mono_mul 2 (fun _ _ => by split <;> omega)
+
+/-- Graded `pure₀` from `GlueComputableAt T` coordinates. -/
+theorem pure₀ {T : ℕ} (input : δ ↪ (Fin k → ℕ)) (output : α ↪ (Fin l → ℕ)) (f : δ → α)
+    (g : Fin l → (Fin k → ℕ) → ℕ) {P : (Fin k → ℕ) → Prop} {bound : (Fin k → ℕ) → ℕ}
+    (need : ℕ → (Fin k → ℕ) → Prop)
+    (hresult : ∀ d i, output (f d) i = g i (input d))
+    (hcoord : ∀ i, GlueComputableAt T B (g i) P bound)
+    (hneed : ∀ w v, (∀ i, Fits w (v i)) → P v → need w v → Fits w (bound v)) :
+    RealizesAt (2 * l * T) (1 * (l * T + l + 1)) B (fun d => pure (f d)) input output
+      (fun w d _ => P (input d) ∧ need w (input d)) (fun _ _ => 0) := by
+  refine ((glueVector input output f g (fun _ => bound) hresult hcoord).consequence
+    (fun w d _ hwords _ h => ⟨h.1, fun _ => hneed w _ hwords h.1 h.2⟩)
+    (fun _ _ => le_rfl)).mono_mul (l * T + l) (fun _ _ => ?_)
+  exact Nat.le_mul_of_pos_right _ (by omega)
+
+/-- Graded runtime-bounded loop whose body begins with a query. -/
+theorem iterate₀ {σ : Type} (input : δ ↪ (Fin k → ℕ)) (output : σ ↪ (Fin l → ℕ))
+    {body : δ × σ → Memory.Prog σ} {safe : ℕ → (δ × σ) → Memory.State → Prop}
+    (h : RealizesAt n C .exact body ((input.prodMap output).trans (Fin.appendEquiv k l).toEmbedding)
+      output safe (fun _ _ => 0))
+    (hquery : ∀ x s, 1 ≤ memoryCost (body x) s) :
+    RealizesAt (l + n + 3) ((C + 2 * l + 8) * 2) .exact
+      (fun d : (δ × σ) × ℕ => iterate body d.1.1 d.2 d.1.2)
+      ((((input.prodMap output).trans (Fin.appendEquiv k l).toEmbedding).prodMap
+        (Equiv.funUnique (Fin 1) ℕ).symm.toEmbedding).trans
+          (Fin.appendEquiv (k + l) 1).toEmbedding) output
+      (fun w d s => iterationSafe body safe w d.1.1 d.2 d.1.2 s) (fun _ _ => 0) :=
+  (iterateRuntime input output h).mono_mul 1 fun ((d, a), fuel) s => by
+    have := iterationWork_zero_le body hquery d fuel a s
+    dsimp only
+    omega
+
+end RealizesAt
+
 end Cslib.WordRAM.Realization

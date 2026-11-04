@@ -52,3 +52,29 @@ theorem reindex {p : δ → Memory.Prog α} {input : δ ↪ (Fin k → ℕ)}
   exact hrun w (f e) x hx hin' hsafe hv
 
 end Cslib.WordRAM.Realization.Realizes
+
+namespace Cslib.WordRAM.Realization.RealizesAt
+
+open Cslib.DataStructure
+
+variable {B : Basis} {ε δ α : Type} {n C k m l : ℕ}
+
+/-- Static input-register wiring preserves `(n, C)`. -/
+theorem reindex {p : δ → Memory.Prog α} {input : δ ↪ (Fin k → ℕ)}
+    {output : α ↪ (Fin l → ℕ)} {safe : ℕ → δ → Memory.State → Prop}
+    {work : δ → Memory.State → ℕ} (h : RealizesAt n C B p input output safe work)
+    (f : ε → δ) (env : ε ↪ (Fin m → ℕ)) (ix : Fin k → Fin m)
+    (hw : ∀ e i, input (f e) i = env e (ix i)) :
+    RealizesAt n C B (fun e => p (f e)) env output
+      (fun w e s => safe w (f e) s) (fun e s => work (f e) s) := by
+  obtain ⟨n₀, hn₀, C₀, hC₀, emit, he⟩ := h
+  refine ⟨n₀, hn₀, C₀, hC₀, fun frontier src tmp => emit frontier (src ∘ ix) tmp, ?_⟩
+  intro r frontier src tmp hi hd hf hs
+  obtain ⟨hnw, hrun⟩ := he frontier (src ∘ ix) tmp hi
+    (fun i j => hd (ix i) j) hf (fun i => hs (ix i))
+  refine ⟨hnw, fun w e x hx hin hsafe hv => ?_⟩
+  have hin' : x.regs ∘ (src ∘ ix) = input (f e) :=
+    funext fun i => (congrFun hin (ix i)).trans (hw e i).symm
+  exact hrun w (f e) x hx hin' hsafe hv
+
+end Cslib.WordRAM.Realization.RealizesAt

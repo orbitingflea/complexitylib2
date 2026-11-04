@@ -315,4 +315,127 @@ theorem returnSome {δ : Type} {k : ℕ} (input : δ ↪ (Fin k → ℕ)) (j : F
   · exact hv
 
 end Realizes
+
+namespace RealizesAt
+
+/-- Graded `glueVector` from `GlueComputableAt T` coordinate certificates, bounding total auxiliary
+registers by `2 * l * T` and exchange factor by `1`. -/
+theorem glueVector {T : ℕ} (input : δ ↪ (Fin k → ℕ)) (output : α ↪ (Fin l → ℕ))
+    (f : δ → α) (g bound : Fin l → (Fin k → ℕ) → ℕ)
+    {P : (Fin k → ℕ) → Prop}
+    (hresult : ∀ d i, output (f d) i = g i (input d))
+    (hcoord : ∀ i, GlueComputableAt T B (g i) P (bound i)) :
+    RealizesAt (2 * l * T) 1 B (fun d => pure (f d)) input output
+      (fun w d _ => P (input d) ∧ ∀ i, Fits w (bound i (input d)))
+      (fun _ _ => l * T + l) := by
+  classical
+  choose n hn t ht emit he using fun i => (hcoord i).2
+  let N := ∑ i, n i
+  have hn_le (i : Fin l) : n i ≤ N :=
+    Finset.single_le_sum (fun j _ => Nat.zero_le (n j)) (Finset.mem_univ i)
+  have hN_le : N ≤ 2 * l * T := by
+    calc N = ∑ i : Fin l, n i := rfl
+      _ ≤ ∑ _i : Fin l, (2 * T) := Finset.sum_le_sum (fun i _ => hn i)
+      _ = l * (2 * T) := by simp
+      _ = 2 * l * T := by ring
+  refine ⟨N, hN_le, 1, le_rfl, fun _ src tmp =>
+    coordinateSeq (fun i => .seq
+      (emit i src (fun j => tmp ⟨l + j.val, by have := hn_le i; omega⟩))
+      (.op (.copy (tmp (Fin.castAdd (N + 1) i)) (tmp ⟨l, by omega⟩))))
+      (tmp ⟨l, by omega⟩) (List.finRange l), ?_⟩
+  intro r frontier src tmp hi hd hf hs
+  let dst : Fin l → Fin r := fun i => tmp (Fin.castAdd (N + 1) i)
+  let aux : ∀ i : Fin l, Fin (n i + 1) → Fin r :=
+    fun i j => tmp ⟨l + j.val, by have := hn_le i; omega⟩
+  let scratch : Fin (N + 1) → Fin r := fun j => tmp ⟨l + j.val, by omega⟩
+  let coord : Fin l → Code B r := fun i =>
+    .seq (emit i src (aux i)) (.op (.copy (dst i) (scratch 0)))
+  have hdsti : Function.Injective dst := by
+    intro i j hij
+    apply Fin.ext
+    exact congrArg (fun a : Fin (l + N + 1) => a.val) (hi hij)
+  have hauxi (i : Fin l) : Function.Injective (aux i) := by
+    intro a b hab
+    apply Fin.ext
+    have h := congrArg (fun a : Fin (l + N + 1) => a.val) (hi hab)
+    dsimp only [aux] at h
+    omega
+  have had (i : Fin l) (j : Fin k) (a : Fin (n i + 1)) : src j ≠ aux i a := hd _ _
+  have hcglue (i : Fin l) : (coord i).IsGlue :=
+    ⟨(he i src (aux i) (hauxi i) (had i)).1, trivial⟩
+  refine ⟨(coordinateSeq_glue coord (scratch 0) hcglue _).not_readsWidth, ?_⟩
+  intro w d x hx hin hsafe hv
+  have hruni (i : Fin l) (a : Data r) (ha : a.regs ∘ src = input d) :
+      ∃ b, ExecWithin w (coord i) a b (T + 1) ∧ b.mem = a.mem ∧
+        b.regs ∘ src = input d ∧ b.regs (dst i) = output (f d) i ∧
+        ∀ j, (∀ z, scratch z ≠ j) → dst i ≠ j → b.regs j = a.regs j := by
+    obtain ⟨b, hb, hbo, hbm, hbf⟩ :=
+      (he i src (aux i) (hauxi i) (had i)).2 w a (ha.symm ▸ hsafe.1)
+        (ha.symm ▸ hsafe.2 i)
+    let c := b.set (dst i) (g i (input d))
+    have ho : b.regs (scratch 0) = g i (input d) := by
+      have hz : aux i 0 = scratch 0 := congrArg tmp (Fin.ext rfl)
+      rw [← hz]
+      simpa only [ha] using hbo
+    have hc : ExecWithin (B := B) w (.op (.copy (dst i) (scratch 0))) b c 1 := by
+      simpa only [ho] using
+        (ExecWithin.copy (B := B) (w := w) (d := dst i) (s := scratch 0) (x := b))
+    refine ⟨c, (hb.seq hc).mono (by have := ht i; omega), hbm, ?_, ?_, ?_⟩
+    · funext j
+      change c.regs (src j) = input d j
+      rw [show c.regs (src j) = b.regs (src j) from Function.update_of_ne (hd _ _) _ _,
+        hbf _ (fun a => (had i j a).symm)]
+      exact congrFun ha j
+    · change (b.set (dst i) _).regs (dst i) = _
+      simp [Data.set, hresult]
+    · intro j hsj hdj
+      rw [show c.regs j = b.regs j from Function.update_of_ne hdj.symm _ _,
+        hbf j (fun z => ?_)]
+      exact hsj ⟨z.val, by have := hn_le i; omega⟩
+  have hseq (is : List (Fin l)) (hnodup : is.Nodup) (a : Data r)
+      (ha : a.regs ∘ src = input d) :
+      ∃ b, ExecWithin w (coordinateSeq coord (scratch 0) is) a b
+          ((is.map fun _ => T + 1).sum + 1) ∧
+        b.mem = a.mem ∧ b.regs ∘ src = input d ∧
+        (∀ i ∈ is, b.regs (dst i) = output (f d) i) ∧
+        ∀ j, (∀ z, scratch z ≠ j) → (∀ i ∈ is, dst i ≠ j) → b.regs j = a.regs j := by
+    induction is generalizing a with
+    | nil =>
+      have hself : ExecWithin (B := B) w (.op (.copy (scratch 0) (scratch 0))) a a 1 := by
+        convert (ExecWithin.copy (B := B) (w := w) (d := scratch 0) (s := scratch 0)
+          (x := a)) using 1
+        apply Data.ext <;> simp [Data.set]
+      exact ⟨a, hself, rfl, ha, by simp, fun _ _ _ => rfl⟩
+    | cons i is ih =>
+      obtain ⟨b, hb, hbm, hbs, hbo, hbf⟩ := hruni i a ha
+      obtain ⟨c, hc, hcm, hcs, hco, hcf⟩ := ih hnodup.of_cons b hbs
+      refine ⟨c, (hb.seq hc).mono (by simp; omega), hcm.trans hbm, hcs, ?_, ?_⟩
+      · intro j hj
+        rcases List.mem_cons.mp hj with rfl | hj
+        · rw [hcf _ (fun z => ?_) (fun j hj h => ?_)]
+          · exact hbo
+          · intro hh
+            have hval := congrArg (fun a : Fin (l + N + 1) => a.val) (hi hh)
+            dsimp only [scratch, dst] at hval
+            simp only [Fin.val_castAdd] at hval
+            omega
+          · exact (List.nodup_cons.mp hnodup).1 (hdsti h ▸ hj)
+        · exact hco j hj
+      · intro j hsj hdj
+        rw [hcf j hsj (fun i hi => hdj i (by simp [hi]))]
+        exact hbf j hsj (hdj i (by simp))
+  obtain ⟨y, hy, hym, _, hyo, hyf⟩ := hseq (List.finRange l) (List.nodup_finRange l) x hin
+  refine ⟨y, hy.mono ?_, ?_, fun i => hyo i (by simp), ?_⟩
+  · change ((List.finRange l).map fun _ => T + 1).sum + 1 ≤
+      1 * (0 + (l * T + l) + 1)
+    rw [List.map_const', List.sum_replicate, List.length_finRange, smul_eq_mul]
+    ring_nf
+    omega
+  · apply Memory.State.ext
+    · exact hym
+    · exact hyf frontier (fun _ => hf _) (fun _ _ => hf _)
+  · intro i hif htmp
+    exact hyf i (fun _ => htmp _) (fun _ _ => htmp _)
+
+end RealizesAt
 end Cslib.WordRAM.Realization

@@ -110,6 +110,30 @@ theorem memoryCost_bind {β : Type} (p : Memory.Prog α) (q : α → Memory.Prog
   simp only [StateTransitionSpec.clientHistory, StateTransitionSpec.runClient_bind]
   rw [StateTransitionSpec.totalCost_append, StateTransitionSpec.run_runClient]
 
+/-- Fixed-witness body of `Realizes` at explicit auxiliary register count `n` and exchange factor
+`C`. -/
+def RealizesWith (n C : ℕ) (B : Basis) (p : δ → Memory.Prog α)
+    (input : δ ↪ (Fin k → ℕ)) (output : α ↪ (Fin l → ℕ))
+    (safe : ℕ → δ → Memory.State → Prop) (work : δ → Memory.State → ℕ) : Prop :=
+  ∃ emit : ∀ {r : ℕ}, (frontier : Fin r) → (Fin k → Fin r) →
+      (Fin (l + n + 1) → Fin r) → Code B r,
+    ∀ {r : ℕ} (frontier : Fin r) (src : Fin k → Fin r)
+      (tmp : Fin (l + n + 1) → Fin r),
+      Function.Injective tmp → (∀ i j, src i ≠ tmp j) →
+      (∀ j, tmp j ≠ frontier) → (∀ i, src i ≠ frontier) →
+      ¬(emit frontier src tmp).ReadsWidth ∧
+      ∀ (w : ℕ) (d : δ) (x : Data r), x.Bounded w → x.regs ∘ src = input d →
+        safe w d (memoryState frontier x) →
+        (Memory.spec w).ValidHistory (memoryState frontier x)
+          ((Memory.spec w).clientHistory (memoryState frontier x) (p d)) →
+        ∃ y, ExecWithin w (emit frontier src tmp) x y
+            (C * (memoryCost (p d) (memoryState frontier x) +
+              work d (memoryState frontier x) + 1)) ∧
+          memoryState frontier y = (Memory.spec w).clientState (memoryState frontier x) (p d) ∧
+          (∀ i : Fin l, y.regs (tmp (Fin.castAdd (n + 1) i)) =
+            output ((Memory.spec w).clientResult (memoryState frontier x) (p d)) i) ∧
+          ∀ i, i ≠ frontier → (∀ j, tmp j ≠ i) → y.regs i = x.regs i
+
 /-- Existing `Memory.Prog` clients have a fixed emitter and a combined charge. The explicit
 `safe` predicate may contain glue domains and fit envelopes; it is never existentially chosen.
 The existing valid-history premise supplies memory admissibility. The extra one pays uniform
@@ -122,25 +146,14 @@ from the functional representation. -/
 def Realizes (B : Basis) (p : δ → Memory.Prog α)
     (input : δ ↪ (Fin k → ℕ)) (output : α ↪ (Fin l → ℕ))
     (safe : ℕ → δ → Memory.State → Prop) (work : δ → Memory.State → ℕ) : Prop :=
-  ∃ n C : ℕ,
-    ∃ emit : ∀ {r : ℕ}, (frontier : Fin r) → (Fin k → Fin r) →
-        (Fin (l + n + 1) → Fin r) → Code B r,
-      ∀ {r : ℕ} (frontier : Fin r) (src : Fin k → Fin r)
-        (tmp : Fin (l + n + 1) → Fin r),
-        Function.Injective tmp → (∀ i j, src i ≠ tmp j) →
-        (∀ j, tmp j ≠ frontier) → (∀ i, src i ≠ frontier) →
-        ¬(emit frontier src tmp).ReadsWidth ∧
-        ∀ (w : ℕ) (d : δ) (x : Data r), x.Bounded w → x.regs ∘ src = input d →
-          safe w d (memoryState frontier x) →
-          (Memory.spec w).ValidHistory (memoryState frontier x)
-            ((Memory.spec w).clientHistory (memoryState frontier x) (p d)) →
-          ∃ y, ExecWithin w (emit frontier src tmp) x y
-              (C * (memoryCost (p d) (memoryState frontier x) +
-                work d (memoryState frontier x) + 1)) ∧
-            memoryState frontier y = (Memory.spec w).clientState (memoryState frontier x) (p d) ∧
-            (∀ i : Fin l, y.regs (tmp (Fin.castAdd (n + 1) i)) =
-              output ((Memory.spec w).clientResult (memoryState frontier x) (p d)) i) ∧
-            ∀ i, i ≠ frontier → (∀ j, tmp j ≠ i) → y.regs i = x.regs i
+  ∃ n C : ℕ, RealizesWith n C B p input output safe work
+
+/-- Graded realization certificate with explicit upper bounds `n` on the auxiliary register count
+and `C` on the exchange factor. -/
+def RealizesAt (n C : ℕ) (B : Basis) (p : δ → Memory.Prog α)
+    (input : δ ↪ (Fin k → ℕ)) (output : α ↪ (Fin l → ℕ))
+    (safe : ℕ → δ → Memory.State → Prop) (work : δ → Memory.State → ℕ) : Prop :=
+  ∃ n₀ ≤ n, ∃ C₀ ≤ C, RealizesWith n₀ C₀ B p input output safe work
 
 namespace Realizes
 
@@ -205,5 +218,43 @@ theorem exists_refines (h : Realizes B p input output safe work) :
   exact ⟨hv, y, hy, hm, hout⟩
 
 end Realizes
+
+namespace RealizesAt
+
+variable {n n₁ n₂ C C₁ C₂ : ℕ} {p : δ → Memory.Prog α} {input : δ ↪ (Fin k → ℕ)}
+  {output : α ↪ (Fin l → ℕ)} {safe : ℕ → δ → Memory.State → Prop}
+  {work : δ → Memory.State → ℕ}
+
+/-- Monotonicity of `RealizesAt` in the scratch-size bound `n` and exchange-factor bound `C`. -/
+theorem mono (hn : n₁ ≤ n₂) (hC : C₁ ≤ C₂) (h : RealizesAt n₁ C₁ B p input output safe work) :
+    RealizesAt n₂ C₂ B p input output safe work := by
+  obtain ⟨n₀, hn₀, C₀, hC₀, he⟩ := h
+  exact ⟨n₀, hn₀.trans hn, C₀, hC₀.trans hC, he⟩
+
+/-- Forget the explicit bounds `n` and `C` to `Realizes`. -/
+theorem toRealizes (h : RealizesAt n C B p input output safe work) :
+    Realizes B p input output safe work := by
+  obtain ⟨n₀, _, C₀, _, he⟩ := h
+  exact ⟨n₀, C₀, he⟩
+
+/-- Strengthen the visible entry domain or enlarge the local-work charge, preserving `(n, C)`. -/
+theorem consequence {safe' : ℕ → δ → Memory.State → Prop} {work' : δ → Memory.State → ℕ}
+    (h : RealizesAt n C B p input output safe work)
+    (hsafe : ∀ w d s, (∀ i, Fits w (input d i)) → Memory.WellFormed w s →
+      safe' w d s → safe w d s)
+    (hwork : ∀ d s, work d s ≤ work' d s) : RealizesAt n C B p input output safe' work' := by
+  obtain ⟨n₀, hn₀, C₀, hC₀, emit, he⟩ := h
+  refine ⟨n₀, hn₀, C₀, hC₀, emit, ?_⟩
+  intro r frontier src tmp hi hd hf hs
+  obtain ⟨hnw, hrun⟩ := he frontier src tmp hi hd hf hs
+  refine ⟨hnw, ?_⟩
+  intro w d x hx hin hsafe' hv
+  have hwords (i : Fin k) : Fits w (input d i) := congrFun hin i ▸ hx.1 (src i)
+  obtain ⟨y, hy, hm, hout, hframe⟩ :=
+    hrun w d x hx hin (hsafe w d _ hwords (wellFormed_memoryState hx) hsafe') hv
+  exact ⟨y, hy.mono (Nat.mul_le_mul_left C₀ (by have := hwork d (memoryState frontier x); omega)),
+    hm, hout, hframe⟩
+
+end RealizesAt
 
 end Cslib.WordRAM.Realization

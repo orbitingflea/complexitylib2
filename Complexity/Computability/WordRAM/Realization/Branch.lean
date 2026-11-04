@@ -51,22 +51,22 @@ theorem test_rename {r : ℕ} (c : Cond k) (src : Fin k → Fin r)
 
 namespace Realizes
 
-/-- Both branch emitters precede all runtime values. Shared result slots and disjointness from
-live inputs are synthesized internally; the entry domain and work charge select the actual path. -/
-theorem branch {pos neg : δ → Memory.Prog α}
+/-- Fixed-witness branch realization. -/
+theorem branchWith {np Cp nn Cn : ℕ} {pos neg : δ → Memory.Prog α}
     {input : δ ↪ (Fin k → ℕ)} {output : α ↪ (Fin l → ℕ)}
     {safePos safeNeg : ℕ → δ → Memory.State → Prop}
     {workPos workNeg : δ → Memory.State → ℕ} (c : Cond k)
-    (hp : Realizes B pos input output safePos workPos)
-    (hn : Realizes B neg input output safeNeg workNeg) :
-    Realizes B (fun d => if test c (input d) then pos d else neg d) input output
+    (hp : RealizesWith np Cp B pos input output safePos workPos)
+    (hn : RealizesWith nn Cn B neg input output safeNeg workNeg) :
+    RealizesWith (np + nn) (max Cp Cn + 2) B
+      (fun d => if test c (input d) then pos d else neg d) input output
       (fun w d s => if test c (input d) then safePos w d s else safeNeg w d s)
       (fun d s => (if test c (input d) then workPos d s else workNeg d s) + 2) := by
-  obtain ⟨np, Cp, ep, hep⟩ := hp
-  obtain ⟨nn, Cn, en, hen⟩ := hn
+  obtain ⟨ep, hep⟩ := hp
+  obtain ⟨en, hen⟩ := hn
   let ip : Fin (l + np + 1) → Fin (l + (np + nn) + 1) := Fin.castLE (by omega)
   let ineg : Fin (l + nn + 1) → Fin (l + (np + nn) + 1) := Fin.castLE (by omega)
-  refine ⟨np + nn, max Cp Cn + 2, fun frontier src tmp =>
+  refine ⟨fun frontier src tmp =>
     .branch (c.rename src) (ep frontier src (tmp ∘ ip))
       (en frontier src (tmp ∘ ineg)), ?_⟩
   intro r frontier src tmp hi hd hf hs
@@ -127,6 +127,40 @@ theorem branch {pos neg : δ → Memory.Prog α}
     · intro i hif htmp
       exact hframe i hif (fun j => htmp (ineg j))
 
+/-- Both branch emitters precede all runtime values. Shared result slots and disjointness from
+live inputs are synthesized internally; the entry domain and work charge select the actual path. -/
+theorem branch {pos neg : δ → Memory.Prog α}
+    {input : δ ↪ (Fin k → ℕ)} {output : α ↪ (Fin l → ℕ)}
+    {safePos safeNeg : ℕ → δ → Memory.State → Prop}
+    {workPos workNeg : δ → Memory.State → ℕ} (c : Cond k)
+    (hp : Realizes B pos input output safePos workPos)
+    (hn : Realizes B neg input output safeNeg workNeg) :
+    Realizes B (fun d => if test c (input d) then pos d else neg d) input output
+      (fun w d s => if test c (input d) then safePos w d s else safeNeg w d s)
+      (fun d s => (if test c (input d) then workPos d s else workNeg d s) + 2) := by
+  obtain ⟨np, Cp, hp⟩ := hp
+  obtain ⟨nn, Cn, hn⟩ := hn
+  exact ⟨_, _, branchWith c hp hn⟩
+
 end Realizes
+
+namespace RealizesAt
+
+/-- Graded conditional realization with explicit scratch and factor bounds. -/
+theorem branch {np Cp nn Cn : ℕ} {pos neg : δ → Memory.Prog α}
+    {input : δ ↪ (Fin k → ℕ)} {output : α ↪ (Fin l → ℕ)}
+    {safePos safeNeg : ℕ → δ → Memory.State → Prop}
+    {workPos workNeg : δ → Memory.State → ℕ} (c : Cond k)
+    (hp : RealizesAt np Cp B pos input output safePos workPos)
+    (hn : RealizesAt nn Cn B neg input output safeNeg workNeg) :
+    RealizesAt (np + nn) (max Cp Cn + 2) B
+      (fun d => if test c (input d) then pos d else neg d) input output
+      (fun w d s => if test c (input d) then safePos w d s else safeNeg w d s)
+      (fun d s => (if test c (input d) then workPos d s else workNeg d s) + 2) := by
+  obtain ⟨np₀, hnp, Cp₀, hCp, hp⟩ := hp
+  obtain ⟨nn₀, hnn, Cn₀, hCn, hn⟩ := hn
+  exact ⟨np₀ + nn₀, by omega, max Cp₀ Cn₀ + 2, by omega, Realizes.branchWith c hp hn⟩
+
+end RealizesAt
 
 end Cslib.WordRAM.Realization

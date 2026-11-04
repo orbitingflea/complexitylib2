@@ -220,17 +220,17 @@ private def whileEmit {B : Basis} {n : ℕ} (cond : Cond (k + l))
 
 namespace Realizes
 
-/-- One native while emitter genuinely exits on the existing encoded condition. The pure source
-cutoff depends only on explicit initial input and is not computed or stored by this emitter.
-The domain excludes truncation; every executed guard/body/copy/control and final exit is charged. -/
-theorem whileBounded {B : Basis} (input : δ ↪ (Fin k → ℕ)) (output : σ ↪ (Fin l → ℕ))
+/-- Fixed-witness native while realization. -/
+theorem whileBoundedWith {B : Basis} {n C : ℕ} (input : δ ↪ (Fin k → ℕ))
+    (output : σ ↪ (Fin l → ℕ))
     (cond : Cond (k + l)) (cutoff : δ × σ → ℕ)
     {body : δ × σ → Memory.Prog σ}
     {safe : ℕ → (δ × σ) → Memory.State → Prop}
     {work : (δ × σ) → Memory.State → ℕ}
-    (h : Realizes B body (appendWords input output) output safe work) :
-    Realizes B (fun (d, a) => boundedWhile
-      (fun d a => test cond ((appendWords input output) (d, a))) body d (cutoff (d, a)) a)
+    (h : RealizesWith n C B body (appendWords input output) output safe work) :
+    RealizesWith (l + n + 1) (C + 2 * l + 4) B
+      (fun (d, a) => boundedWhile
+        (fun d a => test cond ((appendWords input output) (d, a))) body d (cutoff (d, a)) a)
       (appendWords input output) output
       (fun w (d, a) s => whileSafe
         (fun d a => test cond ((appendWords input output) (d, a))) body safe w d
@@ -238,8 +238,8 @@ theorem whileBounded {B : Basis} (input : δ ↪ (Fin k → ℕ)) (output : σ �
       (fun (d, a) s => whileWork
         (fun d a => test cond ((appendWords input output) (d, a))) body work d
         (cutoff (d, a)) a s) := by
-  obtain ⟨n, C, emit, he⟩ := h
-  refine ⟨l + n + 1, C + 2 * l + 4, whileEmit cond emit, ?_⟩
+  obtain ⟨emit, he⟩ := h
+  refine ⟨whileEmit cond emit, ?_⟩
   intro r frontier src tmp hi hd hf hs
   let st : Fin l → Fin r := fun i => tmp (whileStateSlot i)
   let bt : Fin (l + n + 1) → Fin r := fun i => tmp (whileBodySlot i)
@@ -395,6 +395,27 @@ theorem whileBounded {B : Basis} (input : δ ↪ (Fin k → ℕ)) (output : σ �
       rw [clientResult_width w]
       exact hys i
 
+/-- One native while emitter genuinely exits on the existing encoded condition. The pure source
+cutoff depends only on explicit initial input and is not computed or stored by this emitter.
+The domain excludes truncation; every executed guard/body/copy/control and final exit is charged. -/
+theorem whileBounded {B : Basis} (input : δ ↪ (Fin k → ℕ)) (output : σ ↪ (Fin l → ℕ))
+    (cond : Cond (k + l)) (cutoff : δ × σ → ℕ)
+    {body : δ × σ → Memory.Prog σ}
+    {safe : ℕ → (δ × σ) → Memory.State → Prop}
+    {work : (δ × σ) → Memory.State → ℕ}
+    (h : Realizes B body (appendWords input output) output safe work) :
+    Realizes B (fun (d, a) => boundedWhile
+      (fun d a => test cond ((appendWords input output) (d, a))) body d (cutoff (d, a)) a)
+      (appendWords input output) output
+      (fun w (d, a) s => whileSafe
+        (fun d a => test cond ((appendWords input output) (d, a))) body safe w d
+        (cutoff (d, a)) a s)
+      (fun (d, a) s => whileWork
+        (fun d a => test cond ((appendWords input output) (d, a))) body work d
+        (cutoff (d, a)) a s) := by
+  obtain ⟨n, C, h⟩ := h
+  exact ⟨_, _, whileBoundedWith input output cond cutoff h⟩
+
 /-- Semantic invariants and a decreasing rank establish the native while's complete reached-state
 domain. The rank/cutoff comparison is proof data; the emitted code still tests only `cond`. -/
 theorem whileMeasure {B : Basis} (input : δ ↪ (Fin k → ℕ)) (output : σ ↪ (Fin l → ℕ))
@@ -431,5 +452,30 @@ theorem whileMeasure {B : Basis} (input : δ ↪ (Fin k → ℕ)) (output : σ �
       (hzero w d) (hstep w d) hI hr hv) hv
 
 end Realizes
+
+namespace RealizesAt
+
+/-- Graded native while realization with explicit scratch and factor bounds. -/
+theorem whileBounded {B : Basis} {n C : ℕ} (input : δ ↪ (Fin k → ℕ))
+    (output : σ ↪ (Fin l → ℕ))
+    (cond : Cond (k + l)) (cutoff : δ × σ → ℕ)
+    {body : δ × σ → Memory.Prog σ}
+    {safe : ℕ → (δ × σ) → Memory.State → Prop}
+    {work : (δ × σ) → Memory.State → ℕ}
+    (h : RealizesAt n C B body (appendWords input output) output safe work) :
+    RealizesAt (l + n + 1) (C + 2 * l + 4) B
+      (fun (d, a) => boundedWhile
+        (fun d a => test cond ((appendWords input output) (d, a))) body d (cutoff (d, a)) a)
+      (appendWords input output) output
+      (fun w (d, a) s => whileSafe
+        (fun d a => test cond ((appendWords input output) (d, a))) body safe w d
+        (cutoff (d, a)) a s)
+      (fun (d, a) s => whileWork
+        (fun d a => test cond ((appendWords input output) (d, a))) body work d
+        (cutoff (d, a)) a s) := by
+  obtain ⟨n₀, hn, C₀, hC, h⟩ := h
+  exact ⟨_, by omega, _, by omega, Realizes.whileBoundedWith input output cond cutoff h⟩
+
+end RealizesAt
 
 end Cslib.WordRAM.Realization

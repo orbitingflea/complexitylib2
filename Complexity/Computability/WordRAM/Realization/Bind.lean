@@ -52,21 +52,20 @@ variable {B : Basis} {δ α β : Type} {k l m : ℕ}
   {safeP : ℕ → δ → Memory.State → Prop} {safeQ : ℕ → δ × α → Memory.State → Prop}
   {workP : δ → Memory.State → ℕ} {workQ : δ × α → Memory.State → ℕ}
 
-/-- One uniform continuation emitter consumes the original environment and the first runtime
-answer. Its domain and work charge are evaluated at the deterministic intermediate state.
-All emitted code, register banks and the exchange constant precede runtime answers. -/
-theorem bind (hP : Realizes B p input answer safeP workP)
-    (hQ : Realizes B q (appendWords input answer)
-      output safeQ workQ) :
-    Realizes B (fun d => (p d).bind (fun a => q (d, a))) input output
+/-- Fixed-witness sequential realization. -/
+theorem bindWith {n₁ C₁ n₂ C₂ : ℕ}
+    (hP : RealizesWith n₁ C₁ B p input answer safeP workP)
+    (hQ : RealizesWith n₂ C₂ B q (appendWords input answer) output safeQ workQ) :
+    RealizesWith (n₂ + l + n₁ + 1) (max C₁ C₂) B
+      (fun d => (p d).bind (fun a => q (d, a))) input output
       (fun w d s => safeP w d s ∧
         safeQ w (d, (Memory.spec 0).clientResult s (p d))
           ((Memory.spec 0).clientState s (p d)))
       (fun d s => workP d s +
         workQ (d, (Memory.spec 0).clientResult s (p d))
           ((Memory.spec 0).clientState s (p d)) + 1) := by
-  obtain ⟨n₁, C₁, emitP, heP⟩ := hP
-  obtain ⟨n₂, C₂, emitQ, heQ⟩ := hQ
+  obtain ⟨emitP, heP⟩ := hP
+  obtain ⟨emitQ, heQ⟩ := hQ
   let N := n₂ + l + n₁ + 1
   let C := max C₁ C₂
   let left : Fin (m + n₂ + 1) → Fin (m + N + 1) := bindLeft
@@ -76,7 +75,7 @@ theorem bind (hP : Realizes B p input answer safeP workP)
     .seq (emitP frontier src (tmp ∘ right))
       (emitQ frontier
         (Fin.append src (fun i => tmp (right (Fin.castAdd (n₁ + 1) i)))) (tmp ∘ left))
-  refine ⟨N, C, emit, ?_⟩
+  refine ⟨emit, ?_⟩
   intro r frontier src tmp hi hd hf hs
   have hleft : Function.Injective (tmp ∘ left) := by
     intro a b hab
@@ -177,6 +176,48 @@ theorem bind (hP : Realizes B p input answer safeP workP)
     exact (hframeQ i hif (fun j => htmp (left j))).trans
       (hframeP i hif (fun j => htmp (right j)))
 
+/-- One uniform continuation emitter consumes the original environment and the first runtime
+answer. Its domain and work charge are evaluated at the deterministic intermediate state.
+All emitted code, register banks and the exchange constant precede runtime answers. -/
+theorem bind (hP : Realizes B p input answer safeP workP)
+    (hQ : Realizes B q (appendWords input answer) output safeQ workQ) :
+    Realizes B (fun d => (p d).bind (fun a => q (d, a))) input output
+      (fun w d s => safeP w d s ∧
+        safeQ w (d, (Memory.spec 0).clientResult s (p d))
+          ((Memory.spec 0).clientState s (p d)))
+      (fun d s => workP d s +
+        workQ (d, (Memory.spec 0).clientResult s (p d))
+          ((Memory.spec 0).clientState s (p d)) + 1) := by
+  obtain ⟨n₁, C₁, hP⟩ := hP
+  obtain ⟨n₂, C₂, hQ⟩ := hQ
+  exact ⟨_, _, bindWith hP hQ⟩
+
 end Realizes
+
+namespace RealizesAt
+
+variable {B : Basis} {δ α β : Type} {n₁ C₁ n₂ C₂ k l m : ℕ}
+  {p : δ → Memory.Prog α} {q : δ × α → Memory.Prog β}
+  {input : δ ↪ (Fin k → ℕ)} {answer : α ↪ (Fin l → ℕ)}
+  {output : β ↪ (Fin m → ℕ)}
+  {safeP : ℕ → δ → Memory.State → Prop} {safeQ : ℕ → δ × α → Memory.State → Prop}
+  {workP : δ → Memory.State → ℕ} {workQ : δ × α → Memory.State → ℕ}
+
+/-- Graded sequential realization with explicit scratch and factor bounds. -/
+theorem bind (hP : RealizesAt n₁ C₁ B p input answer safeP workP)
+    (hQ : RealizesAt n₂ C₂ B q (appendWords input answer) output safeQ workQ) :
+    RealizesAt (n₂ + l + n₁ + 1) (max C₁ C₂) B
+      (fun d => (p d).bind (fun a => q (d, a))) input output
+      (fun w d s => safeP w d s ∧
+        safeQ w (d, (Memory.spec 0).clientResult s (p d))
+          ((Memory.spec 0).clientState s (p d)))
+      (fun d s => workP d s +
+        workQ (d, (Memory.spec 0).clientResult s (p d))
+          ((Memory.spec 0).clientState s (p d)) + 1) := by
+  obtain ⟨n₀₁, hn₁, C₀₁, hC₁, hP⟩ := hP
+  obtain ⟨n₀₂, hn₂, C₀₂, hC₂, hQ⟩ := hQ
+  exact ⟨_, by omega, _, by omega, Realizes.bindWith hP hQ⟩
+
+end RealizesAt
 
 end Cslib.WordRAM.Realization

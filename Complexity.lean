@@ -4119,6 +4119,7 @@ public import Complexity.Tactic.PPT
 public import Complexity.Tactic.PolyTime
 public import Complexity.Tactic.PolyTime.Init
 public import Complexity.Tactic.Realize
+public import Complexity.Tactic.RealizeGlue
 public import Complexity.Tactic.Stateful
 public import Complexity.Tactic.Stateful.Init
 public import Complexity.Tactic.Synthesis

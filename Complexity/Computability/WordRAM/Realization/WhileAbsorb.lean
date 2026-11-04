@@ -178,4 +178,29 @@ theorem while₀ (input : δ ↪ (Fin k → ℕ)) (output : σ ↪ (Fin l → �
 
 end Realizes
 
+namespace RealizesAt
+
+variable {B : Basis} {n C k l : ℕ}
+
+/-- Graded while loop whose body begins with a query. -/
+theorem while₀ (input : δ ↪ (Fin k → ℕ)) (output : σ ↪ (Fin l → ℕ)) (cond : Cond (k + l))
+    (cutoff : δ × σ → ℕ) {body : δ × σ → Memory.Prog σ}
+    {safe : ℕ → (δ × σ) → Memory.State → Prop}
+    (h : RealizesAt n C B body (appendWords input output) output safe (fun _ _ => 0))
+    (hquery : ∀ x s, 1 ≤ memoryCost (body x) s) :
+    RealizesAt (l + n + 1) ((C + 2 * l + 4) * 2) B (fun (d, a) => boundedWhile
+      (fun d a => test cond ((appendWords input output) (d, a))) body d (cutoff (d, a)) a)
+      (appendWords input output) output
+      (fun w (d, a) s => whileSafe
+        (fun d a => test cond ((appendWords input output) (d, a))) body safe w d
+        (cutoff (d, a)) a s)
+      (fun _ _ => 0) :=
+  (whileBounded input output cond cutoff h).mono_mul 1 fun (d, a) s => by
+    have := whileWork_zero_le (fun d a => test cond ((appendWords input output) (d, a))) body
+      hquery d (cutoff (d, a)) a s
+    dsimp only
+    omega
+
+end RealizesAt
+
 end Cslib.WordRAM.Realization

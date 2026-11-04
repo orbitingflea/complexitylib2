@@ -173,27 +173,27 @@ theorem const (z : ℕ) (hb : ∀ v, P v → z ≤ bound v) :
   · intro j hj
     exact Function.update_of_ne (hj 0).symm _ _
 
-private def left {a b : ℕ} (j : Fin (a + 1)) : Fin (a + b + 3) :=
+def left {a b : ℕ} (j : Fin (a + 1)) : Fin (a + b + 3) :=
   ⟨j.val + 1, by omega⟩
 
-private def right {a b : ℕ} (j : Fin (b + 1)) : Fin (a + b + 3) :=
+def right {a b : ℕ} (j : Fin (b + 1)) : Fin (a + b + 3) :=
   ⟨j.val + a + 2, by omega⟩
 
-private theorem left_injective {a b : ℕ} : Function.Injective (@left a b) := by
+theorem left_injective {a b : ℕ} : Function.Injective (@left a b) := by
   intro i j h
   apply Fin.ext
   have := congrArg Fin.val h
   simp only [left] at this
   omega
 
-private theorem right_injective {a b : ℕ} : Function.Injective (@right a b) := by
+theorem right_injective {a b : ℕ} : Function.Injective (@right a b) := by
   intro i j h
   apply Fin.ext
   have := congrArg Fin.val h
   simp only [right] at this
   omega
 
-private theorem left_ne_right {a b : ℕ} (i : Fin (a + 1)) (j : Fin (b + 1)) :
+theorem left_ne_right {a b : ℕ} (i : Fin (a + 1)) (j : Fin (b + 1)) :
     left i ≠ right j := by
   intro h
   have := congrArg Fin.val h
@@ -720,5 +720,327 @@ theorem shiftRight_standard (hf : GlueComputable .standard f P bound)
   bin_standard hf hg .shiftRight hb
 
 end GlueComputable
+
+/-- Graded register-word glue certificate with an explicit upper bound `time` on the instruction
+budget and `2 * time` on the auxiliary register count. -/
+@[expose]
+def GlueComputableAt (time : ℕ) (B : Basis) (f : (Fin k → ℕ) → ℕ) (P : (Fin k → ℕ) → Prop)
+    (bound : (Fin k → ℕ) → ℕ) : Prop :=
+  (∀ v, P v → f v ≤ bound v) ∧
+  ∃ n₀ ≤ 2 * time, ∃ t₀ ≤ time,
+    ∃ emit : ∀ {r : ℕ}, (Fin k → Fin r) → (Fin (n₀ + 1) → Fin r) → Code B r,
+      ∀ {r : ℕ} (src : Fin k → Fin r) (tmp : Fin (n₀ + 1) → Fin r),
+        Function.Injective tmp → (∀ i j, src i ≠ tmp j) →
+        (emit src tmp).IsGlue ∧
+        ∀ (w : ℕ) (x : Data r), P (x.regs ∘ src) → Fits w (bound (x.regs ∘ src)) →
+          ∃ y, ExecWithin w (emit src tmp) x y t₀ ∧
+            y.regs (tmp 0) = f (x.regs ∘ src) ∧ y.mem = x.mem ∧
+            ∀ i, (∀ j, tmp j ≠ i) → y.regs i = x.regs i
+
+namespace GlueComputableAt
+
+variable {t₁ : ℕ} {P : (Fin k → ℕ) → Prop} {bound : (Fin k → ℕ) → ℕ}
+  {f g : (Fin k → ℕ) → ℕ} {tf tg t₂ : ℕ}
+
+/-- Monotonicity of `GlueComputableAt` in the instruction budget `time`. -/
+theorem mono (ht : t₁ ≤ t₂) (h : GlueComputableAt t₁ B f P bound) :
+    GlueComputableAt t₂ B f P bound := by
+  obtain ⟨hb, n₀, hn₀, t₀, ht₀, emit, he⟩ := h
+  exact ⟨hb, n₀, hn₀.trans (by omega), t₀, ht₀.trans ht, emit, he⟩
+
+/-- Forget the explicit budget bound to `GlueComputable`. -/
+theorem toGlueComputable (h : GlueComputableAt t₁ B f P bound) :
+    GlueComputable B f P bound := by
+  obtain ⟨hb, n₀, _, t₀, _, emit, he⟩ := h
+  exact ⟨t₀, hb, n₀, emit, he⟩
+
+/-- Register projections use `0` auxiliary registers and `1` instruction. -/
+theorem proj (i : Fin k) (hb : ∀ v, P v → v i ≤ bound v) :
+    GlueComputableAt 1 B (fun v => v i) P bound := by
+  refine ⟨hb, 0, by omega, 1, le_rfl, fun src tmp => .op (.copy (tmp 0) (src i)), ?_⟩
+  intro r src tmp _ _
+  refine ⟨trivial, fun w x _ _ => ⟨x.set (tmp 0) (x.regs (src i)), ExecWithin.copy, ?_, rfl, ?_⟩⟩
+  · simp [Data.set]
+  · intro j hj
+    exact Function.update_of_ne (hj 0).symm _ _
+
+/-- Constants use `0` auxiliary registers and `1` instruction. -/
+theorem const (z : ℕ) (hb : ∀ v, P v → z ≤ bound v) :
+    GlueComputableAt 1 B (fun _ => z) P bound := by
+  refine ⟨hb, 0, by omega, 1, le_rfl, fun _ tmp => .op (.const (tmp 0) z), ?_⟩
+  intro r src tmp _ _
+  refine ⟨trivial, fun w x hx hw => ⟨x.set (tmp 0) z,
+    ExecWithin.const (hw.of_le (hb _ hx)), ?_, rfl, ?_⟩⟩
+  · simp [Data.set]
+  · intro j hj
+    exact Function.update_of_ne (hj 0).symm _ _
+
+/-- Indexing a finite tuple at a uniform budget `t₁`. -/
+theorem vec_cons {m : ℕ} {g : (Fin k → ℕ) → Fin m → ℕ}
+    (hf : GlueComputableAt t₁ B f P bound)
+    (hg : ∀ i, GlueComputableAt t₁ B (fun v => g v i) P bound) (i : Fin (m + 1)) :
+    GlueComputableAt t₁ B (fun v => Matrix.vecCons (f v) (g v) i) P bound := by
+  refine Fin.cases ?_ (fun j => ?_) i
+  · exact hf
+  · exact hg j
+
+/-- A singleton tuple at budget `t₁`. -/
+theorem vec_single (hf : GlueComputableAt t₁ B f P bound) (i : Fin 1) :
+    GlueComputableAt t₁ B (fun v => ![f v] i) P bound := by
+  have hi : i = 0 := Subsingleton.elim _ _
+  subst i
+  exact hf
+
+/-- Apply a basis operation to two graded computed words. -/
+theorem binary {h : (Fin k → ℕ) → ℕ}
+    (hf : GlueComputableAt tf B f P bound) (hg : GlueComputableAt tg B g P bound)
+    (op : B.Op) (args : Fin (B.Arity op) → Fin 2) (hop : ¬B.ReadsWidth op)
+    (heval : ∀ v, P v → ∀ w, B.interp w op (fun i => ![f v, g v] (args i)) = some (h v))
+    (hb : ∀ v, P v → h v ≤ bound v) :
+    GlueComputableAt (tf + tg + 1) B h P bound := by
+  obtain ⟨_, a, ha, tfa, htfa, ea, hea⟩ := hf
+  obtain ⟨_, b, hb', tgb, htgb, eb, heb⟩ := hg
+  let emit : ∀ {r : ℕ}, (Fin k → Fin r) → (Fin (a + b + 2 + 1) → Fin r) → Code B r :=
+    fun src tmp => .seq (ea src (tmp ∘ GlueComputes.left))
+      (.seq (eb src (tmp ∘ GlueComputes.right))
+        (.op (.alu op (tmp 0)
+          (fun i => if args i = 0 then tmp (GlueComputes.left 0) else tmp (GlueComputes.right 0)))))
+  refine ⟨hb, a + b + 2, by omega, tfa + tgb + 1, by omega, emit, ?_⟩
+  intro r src tmp hi hd
+  obtain ⟨hga, hra⟩ := hea src (tmp ∘ GlueComputes.left)
+    (hi.comp GlueComputes.left_injective) (fun i j => hd i (GlueComputes.left j))
+  obtain ⟨hgb, hrb⟩ := heb src (tmp ∘ GlueComputes.right)
+    (hi.comp GlueComputes.right_injective) (fun i j => hd i (GlueComputes.right j))
+  refine ⟨⟨hga, hgb, hop⟩, ?_⟩
+  intro w x hx hw
+  obtain ⟨y, hy, hyo, hym, hyf⟩ := hra w x hx hw
+  have hys : y.regs ∘ src = x.regs ∘ src := by
+    funext i
+    exact hyf (src i) (fun j => (hd i (GlueComputes.left j)).symm)
+  obtain ⟨z, hz, hzo, hzm, hzf⟩ := hrb w y (hys.symm ▸ hx) (hys.symm ▸ hw)
+  have hleft : z.regs (tmp (GlueComputes.left 0)) = f (x.regs ∘ src) :=
+    (hzf _ (fun j h => GlueComputes.left_ne_right (0 : Fin (a + 1)) j (hi h).symm)).trans hyo
+  have hright : z.regs (tmp (GlueComputes.right 0)) = g (x.regs ∘ src) := by
+    change z.regs (tmp (GlueComputes.right 0)) = g (y.regs ∘ src) at hzo
+    exact hys ▸ hzo
+  have hargs : (z.regs ∘ (fun i =>
+      if args i = 0 then tmp (GlueComputes.left 0) else tmp (GlueComputes.right 0))) =
+      (fun i => ![f (x.regs ∘ src), g (x.regs ∘ src)] (args i)) := by
+    funext i
+    by_cases h : args i = 0
+    · simp [h, hleft]
+    · have h' : args i = 1 := by apply Fin.ext; have := (args i).isLt; omega
+      simp [h', hright]
+  have he : ExecWithin w (.op (.alu op (tmp 0)
+      (fun i => if args i = 0 then tmp (GlueComputes.left 0) else tmp (GlueComputes.right 0)))) z
+      (z.set (tmp 0) (h (x.regs ∘ src))) 1 := by
+    apply ExecWithin.alu _ (hw.of_le (hb _ hx))
+    rw [hargs]
+    exact heval _ hx w
+  refine ⟨z.set (tmp 0) (h (x.regs ∘ src)), hy.seq (hz.seq he), ?_, hzm.trans hym, ?_⟩
+  · simp [Data.set]
+  · intro i hne
+    change Function.update z.regs (tmp 0) (h (x.regs ∘ src)) i = x.regs i
+    rw [Function.update_of_ne (hne 0).symm]
+    exact (hzf i (fun j => hne (GlueComputes.right j))).trans
+      (hyf i (fun j => hne (GlueComputes.left j)))
+
+/-- Select between two graded computations by an existing register condition. -/
+theorem select (cond : Cond k)
+    (hf : GlueComputableAt tf B f (fun v => P v ∧ cond.Holds ⟨v, fun _ => 0⟩) bound)
+    (hg : GlueComputableAt tg B g (fun v => P v ∧ ¬cond.Holds ⟨v, fun _ => 0⟩) bound) :
+    GlueComputableAt (tf + tg + 3) B
+      (fun v => if cond.Holds ⟨v, fun _ => 0⟩ then f v else g v) P bound := by
+  obtain ⟨hfo, a, ha, tfa, htfa, ea, hea⟩ := hf
+  obtain ⟨hgo, b, hb', tgb, htgb, eb, heb⟩ := hg
+  let emit : ∀ {r : ℕ}, (Fin k → Fin r) → (Fin (a + b + 2 + 1) → Fin r) → Code B r :=
+    fun src tmp => .branch (cond.rename src)
+      (.seq (ea src (tmp ∘ GlueComputes.left)) (.op (.copy (tmp 0) (tmp (GlueComputes.left 0)))))
+      (.seq (eb src (tmp ∘ GlueComputes.right)) (.op (.copy (tmp 0) (tmp (GlueComputes.right 0)))))
+  refine ⟨?_, a + b + 2, by omega, max tfa tgb + 3, by omega, emit, ?_⟩
+  · intro v hv
+    dsimp only
+    split
+    · exact hfo v ⟨hv, by assumption⟩
+    · exact hgo v ⟨hv, by assumption⟩
+  intro r src tmp hi hd
+  obtain ⟨hga, hra⟩ := hea src (tmp ∘ GlueComputes.left)
+    (hi.comp GlueComputes.left_injective) (fun i j => hd i (GlueComputes.left j))
+  obtain ⟨hgb, hrb⟩ := heb src (tmp ∘ GlueComputes.right)
+    (hi.comp GlueComputes.right_injective) (fun i j => hd i (GlueComputes.right j))
+  refine ⟨⟨⟨hga, trivial⟩, hgb, trivial⟩, ?_⟩
+  intro w x hx hw
+  have hc : (cond.rename src).Holds x ↔ cond.Holds ⟨x.regs ∘ src, fun _ => 0⟩ := by
+    cases cond <;> rfl
+  by_cases h : cond.Holds ⟨x.regs ∘ src, fun _ => 0⟩
+  · obtain ⟨y, hy, hyo, hym, hyf⟩ := hra w x ⟨hx, h⟩ hw
+    refine ⟨y.set (tmp 0) (y.regs (tmp (GlueComputes.left 0))),
+      ((hy.seq ExecWithin.copy).branch_pos (hc.mpr h)).mono (by omega), ?_, hym, ?_⟩
+    · simpa [Data.set, h] using hyo
+    · intro i hne
+      change Function.update y.regs (tmp 0) _ i = x.regs i
+      rw [Function.update_of_ne (hne 0).symm]
+      exact hyf i (fun j => hne (GlueComputes.left j))
+  · obtain ⟨y, hy, hyo, hym, hyf⟩ := hrb w x ⟨hx, h⟩ hw
+    refine ⟨y.set (tmp 0) (y.regs (tmp (GlueComputes.right 0))),
+      ((hy.seq ExecWithin.copy).branch_neg (fun h' => h (hc.mp h'))).mono (by omega),
+      ?_, hym, ?_⟩
+    · simpa [Data.set, h] using hyo
+    · intro i hne
+      change Function.update y.regs (tmp 0) _ i = x.regs i
+      rw [Function.update_of_ne (hne 0).symm]
+      exact hyf i (fun j => hne (GlueComputes.right j))
+
+theorem ite_eq (i j : Fin k)
+    (hf : GlueComputableAt tf B f (fun v => P v ∧ v i = v j) bound)
+    (hg : GlueComputableAt tg B g (fun v => P v ∧ ¬v i = v j) bound) :
+    GlueComputableAt (tf + tg + 3) B (fun v => if v i = v j then f v else g v) P bound :=
+  select (.eq i j) hf hg
+
+theorem ite_lt (i j : Fin k)
+    (hf : GlueComputableAt tf B f (fun v => P v ∧ v i < v j) bound)
+    (hg : GlueComputableAt tg B g (fun v => P v ∧ ¬v i < v j) bound) :
+    GlueComputableAt (tf + tg + 3) B (fun v => if v i < v j then f v else g v) P bound :=
+  select (.lt i j) hf hg
+
+/-- Standard-basis binary operation with explicit budget `tf + tg + 1`. -/
+theorem bin_standard (hf : GlueComputableAt tf .standard f P bound)
+    (hg : GlueComputableAt tg .standard g P bound) (op : BinOp)
+    (hb : ∀ v, P v → op.eval (f v) (g v) ≤ bound v) :
+    GlueComputableAt (tf + tg + 1) .standard (fun v => op.eval (f v) (g v)) P bound :=
+  binary hf hg (.bin op) id (by simp) (fun _ _ _ => rfl) hb
+
+/-- Exact-basis binary operation with explicit budget `tf + tg + 1`. -/
+theorem bin_exact (hf : GlueComputableAt tf .exact f P bound)
+    (hg : GlueComputableAt tg .exact g P bound) (op : BinOp)
+    (hv : ∀ v, P v → op.evalExact (f v) (g v) = some (op.eval (f v) (g v)))
+    (hb : ∀ v, P v → op.eval (f v) (g v) ≤ bound v) :
+    GlueComputableAt (tf + tg + 1) .exact (fun v => op.eval (f v) (g v)) P bound :=
+  binary hf hg (.bin op) id (by simp) (fun v hp _ => hv v hp) hb
+
+theorem add (hf : GlueComputableAt tf .exact f P bound)
+    (hg : GlueComputableAt tg .exact g P bound)
+    (hb : ∀ v, P v → f v + g v ≤ bound v) :
+    GlueComputableAt (tf + tg + 1) .exact (fun v => f v + g v) P bound :=
+  bin_exact hf hg .add (fun _ _ => rfl) hb
+
+theorem sub (hf : GlueComputableAt tf .exact f P bound)
+    (hg : GlueComputableAt tg .exact g P bound)
+    (hv : ∀ v, P v → g v ≤ f v)
+    (hb : ∀ v, P v → f v - g v ≤ bound v) :
+    GlueComputableAt (tf + tg + 1) .exact (fun v => f v - g v) P bound :=
+  bin_exact hf hg .sub (fun v hp => by simp [hv v hp]) hb
+
+theorem mul (hf : GlueComputableAt tf .exact f P bound)
+    (hg : GlueComputableAt tg .exact g P bound)
+    (hb : ∀ v, P v → f v * g v ≤ bound v) :
+    GlueComputableAt (tf + tg + 1) .exact (fun v => f v * g v) P bound :=
+  bin_exact hf hg .mul (fun _ _ => rfl) hb
+
+theorem div (hf : GlueComputableAt tf .exact f P bound)
+    (hg : GlueComputableAt tg .exact g P bound)
+    (hv : ∀ v, P v → g v ≠ 0)
+    (hb : ∀ v, P v → f v / g v ≤ bound v) :
+    GlueComputableAt (tf + tg + 1) .exact (fun v => f v / g v) P bound :=
+  bin_exact hf hg .div (fun v hp => by simp [hv v hp]) hb
+
+theorem mod (hf : GlueComputableAt tf .exact f P bound)
+    (hg : GlueComputableAt tg .exact g P bound)
+    (hv : ∀ v, P v → g v ≠ 0)
+    (hb : ∀ v, P v → f v % g v ≤ bound v) :
+    GlueComputableAt (tf + tg + 1) .exact (fun v => f v % g v) P bound :=
+  bin_exact hf hg .mod (fun v hp => by simp [hv v hp]) hb
+
+theorem and (hf : GlueComputableAt tf .exact f P bound)
+    (hg : GlueComputableAt tg .exact g P bound)
+    (hb : ∀ v, P v → f v &&& g v ≤ bound v) :
+    GlueComputableAt (tf + tg + 1) .exact (fun v => f v &&& g v) P bound :=
+  bin_exact hf hg .and (fun _ _ => rfl) hb
+
+theorem or (hf : GlueComputableAt tf .exact f P bound)
+    (hg : GlueComputableAt tg .exact g P bound)
+    (hb : ∀ v, P v → f v ||| g v ≤ bound v) :
+    GlueComputableAt (tf + tg + 1) .exact (fun v => f v ||| g v) P bound :=
+  bin_exact hf hg .or (fun _ _ => rfl) hb
+
+theorem xor (hf : GlueComputableAt tf .exact f P bound)
+    (hg : GlueComputableAt tg .exact g P bound)
+    (hb : ∀ v, P v → f v ^^^ g v ≤ bound v) :
+    GlueComputableAt (tf + tg + 1) .exact (fun v => f v ^^^ g v) P bound :=
+  bin_exact hf hg .xor (fun _ _ => rfl) hb
+
+theorem shiftLeft (hf : GlueComputableAt tf .exact f P bound)
+    (hg : GlueComputableAt tg .exact g P bound)
+    (hb : ∀ v, P v → f v <<< g v ≤ bound v) :
+    GlueComputableAt (tf + tg + 1) .exact (fun v => f v <<< g v) P bound :=
+  bin_exact hf hg .shiftLeft (fun _ _ => rfl) hb
+
+theorem shiftRight (hf : GlueComputableAt tf .exact f P bound)
+    (hg : GlueComputableAt tg .exact g P bound)
+    (hb : ∀ v, P v → f v >>> g v ≤ bound v) :
+    GlueComputableAt (tf + tg + 1) .exact (fun v => f v >>> g v) P bound :=
+  bin_exact hf hg .shiftRight (fun _ _ => rfl) hb
+
+theorem add_standard (hf : GlueComputableAt tf .standard f P bound)
+    (hg : GlueComputableAt tg .standard g P bound)
+    (hb : ∀ v, P v → f v + g v ≤ bound v) :
+    GlueComputableAt (tf + tg + 1) .standard (fun v => f v + g v) P bound :=
+  bin_standard hf hg .add hb
+
+theorem sub_standard (hf : GlueComputableAt tf .standard f P bound)
+    (hg : GlueComputableAt tg .standard g P bound)
+    (hb : ∀ v, P v → f v - g v ≤ bound v) :
+    GlueComputableAt (tf + tg + 1) .standard (fun v => f v - g v) P bound :=
+  bin_standard hf hg .sub hb
+
+theorem mul_standard (hf : GlueComputableAt tf .standard f P bound)
+    (hg : GlueComputableAt tg .standard g P bound)
+    (hb : ∀ v, P v → f v * g v ≤ bound v) :
+    GlueComputableAt (tf + tg + 1) .standard (fun v => f v * g v) P bound :=
+  bin_standard hf hg .mul hb
+
+theorem div_standard (hf : GlueComputableAt tf .standard f P bound)
+    (hg : GlueComputableAt tg .standard g P bound)
+    (hb : ∀ v, P v → f v / g v ≤ bound v) :
+    GlueComputableAt (tf + tg + 1) .standard (fun v => f v / g v) P bound :=
+  bin_standard hf hg .div hb
+
+theorem mod_standard (hf : GlueComputableAt tf .standard f P bound)
+    (hg : GlueComputableAt tg .standard g P bound)
+    (hb : ∀ v, P v → f v % g v ≤ bound v) :
+    GlueComputableAt (tf + tg + 1) .standard (fun v => f v % g v) P bound :=
+  bin_standard hf hg .mod hb
+
+theorem and_standard (hf : GlueComputableAt tf .standard f P bound)
+    (hg : GlueComputableAt tg .standard g P bound)
+    (hb : ∀ v, P v → f v &&& g v ≤ bound v) :
+    GlueComputableAt (tf + tg + 1) .standard (fun v => f v &&& g v) P bound :=
+  bin_standard hf hg .and hb
+
+theorem or_standard (hf : GlueComputableAt tf .standard f P bound)
+    (hg : GlueComputableAt tg .standard g P bound)
+    (hb : ∀ v, P v → f v ||| g v ≤ bound v) :
+    GlueComputableAt (tf + tg + 1) .standard (fun v => f v ||| g v) P bound :=
+  bin_standard hf hg .or hb
+
+theorem xor_standard (hf : GlueComputableAt tf .standard f P bound)
+    (hg : GlueComputableAt tg .standard g P bound)
+    (hb : ∀ v, P v → f v ^^^ g v ≤ bound v) :
+    GlueComputableAt (tf + tg + 1) .standard (fun v => f v ^^^ g v) P bound :=
+  bin_standard hf hg .xor hb
+
+theorem shiftLeft_standard (hf : GlueComputableAt tf .standard f P bound)
+    (hg : GlueComputableAt tg .standard g P bound)
+    (hb : ∀ v, P v → f v <<< g v ≤ bound v) :
+    GlueComputableAt (tf + tg + 1) .standard (fun v => f v <<< g v) P bound :=
+  bin_standard hf hg .shiftLeft hb
+
+theorem shiftRight_standard (hf : GlueComputableAt tf .standard f P bound)
+    (hg : GlueComputableAt tg .standard g P bound)
+    (hb : ∀ v, P v → f v >>> g v ≤ bound v) :
+    GlueComputableAt (tf + tg + 1) .standard (fun v => f v >>> g v) P bound :=
+  bin_standard hf hg .shiftRight hb
+
+end GlueComputableAt
 
 end Cslib.WordRAM

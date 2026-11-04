@@ -162,22 +162,22 @@ def loopEmit {n : ℕ} (emit : ∀ {r : ℕ}, Fin r → (Fin (k + l) → Fin r) 
 
 namespace Realizes
 
-/-- A runtime-bounded loop reuses one fixed body emitter, including iterations without queries.
-The visible domain is precisely the body domains along the actual semantic states. -/
-theorem iterateRuntime (input : δ ↪ (Fin k → ℕ)) (output : σ ↪ (Fin l → ℕ))
+/-- Fixed-witness runtime-bounded loop realization. -/
+theorem iterateRuntimeWith {n C : ℕ} (input : δ ↪ (Fin k → ℕ)) (output : σ ↪ (Fin l → ℕ))
     {body : δ × σ → Memory.Prog σ}
     {safe : ℕ → (δ × σ) → Memory.State → Prop}
     {work : (δ × σ) → Memory.State → ℕ}
-    (h : Realizes .exact body
+    (h : RealizesWith n C .exact body
       (appendWords input output) output safe work) :
-    Realizes .exact (fun ((d, a), fuel) => iterate body d fuel a)
+    RealizesWith (l + n + 3) (C + 2 * l + 8) .exact
+      (fun ((d, a), fuel) => iterate body d fuel a)
       (((appendWords input output).prodMap
         (Equiv.funUnique (Fin 1) ℕ).symm.toEmbedding).trans
           (Fin.appendEquiv (k + l) 1).toEmbedding) output
       (fun w ((d, a), fuel) s => iterationSafe body safe w d fuel a s)
       (fun ((d, a), fuel) s => iterationWork body work d fuel a s) := by
-  obtain ⟨n, C, emit, he⟩ := h
-  refine ⟨l + n + 3, C + 2 * l + 8, loopEmit emit, ?_⟩
+  obtain ⟨emit, he⟩ := h
+  refine ⟨loopEmit emit, ?_⟩
   intro r frontier src tmp hi hd hf hs
   let st : Fin l → Fin r := fun i => tmp (stateSlot i)
   let ctr := tmp (counterSlot l n)
@@ -421,5 +421,44 @@ theorem iterateRuntime (input : δ ↪ (Fin k → ℕ)) (output : σ ↪ (Fin l 
       rw [clientResult_width w]
       exact hys i
 
+/-- A runtime-bounded loop reuses one fixed body emitter, including iterations without queries.
+The visible domain is precisely the body domains along the actual semantic states. -/
+theorem iterateRuntime (input : δ ↪ (Fin k → ℕ)) (output : σ ↪ (Fin l → ℕ))
+    {body : δ × σ → Memory.Prog σ}
+    {safe : ℕ → (δ × σ) → Memory.State → Prop}
+    {work : (δ × σ) → Memory.State → ℕ}
+    (h : Realizes .exact body
+      (appendWords input output) output safe work) :
+    Realizes .exact (fun ((d, a), fuel) => iterate body d fuel a)
+      (((appendWords input output).prodMap
+        (Equiv.funUnique (Fin 1) ℕ).symm.toEmbedding).trans
+          (Fin.appendEquiv (k + l) 1).toEmbedding) output
+      (fun w ((d, a), fuel) s => iterationSafe body safe w d fuel a s)
+      (fun ((d, a), fuel) s => iterationWork body work d fuel a s) := by
+  obtain ⟨n, C, h⟩ := h
+  exact ⟨_, _, iterateRuntimeWith input output h⟩
+
 end Realizes
+
+namespace RealizesAt
+
+/-- Graded runtime-bounded loop realization with explicit scratch and factor bounds. -/
+theorem iterateRuntime {n C : ℕ} (input : δ ↪ (Fin k → ℕ)) (output : σ ↪ (Fin l → ℕ))
+    {body : δ × σ → Memory.Prog σ}
+    {safe : ℕ → (δ × σ) → Memory.State → Prop}
+    {work : (δ × σ) → Memory.State → ℕ}
+    (h : RealizesAt n C .exact body
+      (appendWords input output) output safe work) :
+    RealizesAt (l + n + 3) (C + 2 * l + 8) .exact
+      (fun ((d, a), fuel) => iterate body d fuel a)
+      (((appendWords input output).prodMap
+        (Equiv.funUnique (Fin 1) ℕ).symm.toEmbedding).trans
+          (Fin.appendEquiv (k + l) 1).toEmbedding) output
+      (fun w ((d, a), fuel) s => iterationSafe body safe w d fuel a s)
+      (fun ((d, a), fuel) s => iterationWork body work d fuel a s) := by
+  obtain ⟨n₀, hn, C₀, hC, h⟩ := h
+  exact ⟨_, by omega, _, by omega, Realizes.iterateRuntimeWith input output h⟩
+
+end RealizesAt
+
 end Cslib.WordRAM.Realization
