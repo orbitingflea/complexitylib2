@@ -186,6 +186,12 @@ theorem itemWords_mono {U V w N n₁ n₂ : ℕ} (h : n₁ ≤ n₂) :
       (Nat.add_le_add_right (Nat.mul_le_mul_right _ h) w) 1)
   omega
 
+/-- Whenever `n ≤ N`, `activeEpochWords U V w N n ≤ Succinct.space U V w N`. -/
+theorem activeEpochWords_le_space {U V w N n : ℕ} (hnN : n ≤ N) :
+    activeEpochWords U V w N n ≤ Succinct.space U V w N := by
+  rw [← activeEpochWords_eq_space U V w N]
+  exact Nat.add_le_add_left (itemWords_mono hnN) (metaWords U w N)
+
 /-- Adding `1` live item increases `itemWords` by at most `2` words when `U, V ≤ 2 ^ w`. -/
 theorem itemWords_succ_sub_le_two {U V w N n : ℕ} (hw : 0 < w)
     (hU : U ≤ 2 ^ w) (hV : V ≤ 2 ^ w) :
@@ -709,6 +715,27 @@ theorem execStepsOfFn_modifies {B : Basis} {r_ds k_init : ℕ}
     obtain ⟨p, hp, hq_step⟩ := hq
     exact fun a ha => (((hstep p hp).2 q hq_step).2.2 a ha).trans (h₀ p hp a ha)
 
+/-- Multi-step `ExecStepsOfFn` preserves any memory value `p.2.mem a = v` at an address
+`a ∉ (Block.mk base C.space).footprint`. -/
+theorem execStepsOfFn_outside {B : Basis} {r_ds k_init : ℕ}
+    {P : SubroutineCode B r_ds k_init} {D : StateTransitionSpec}
+    {w base : ℕ} {params : Fin k_init → ℕ} {s₀ : D.State}
+    {C : Randomized.StateTransitionImpl P D w base params s₀}
+    {stepFn : (s : D.State) → (o : D.Op) → D.State × D.Result o} [D.HasStepFn stepFn]
+    {s : D.State} {ops : List D.Op} {ν₀ ν_final : PMF (C.Seed × Data r_ds)}
+    {T_ops : ℝ≥0∞} {a v : ℕ}
+    (ha : a ∉ (Block.mk base C.space).footprint)
+    (hex : C.ExecStepsOfFn s ops ν₀ ν_final T_ops)
+    (h₀ : ∀ p ∈ ν₀.support, p.2.mem a = v) :
+    ∀ q ∈ ν_final.support, q.2.mem a = v := by
+  induction hex with
+  | nil _ _ => exact h₀
+  | @cons _ _ _ ν _ μ_step _ _ hstep _ ih =>
+    refine ih fun q hq => ?_
+    rw [PMF.mem_support_bind_iff] at hq
+    obtain ⟨p, hp, hq_step⟩ := hq
+    exact (((hstep p hp).2 q hq_step).2.2 a ha).trans (h₀ p hp)
+
 /-- **Demonic-grow initialization on `RData` (`init_resizable_succinct`):**
 Starting from `x : RData (rSuccinct U V w N)` with `x.Bounded w` and `x.frontier = base`:
 1. `allocSuccinctCode U V w N` executes in `4 * Succinct.space U V w N + 8` instructions under
@@ -812,6 +839,7 @@ theorem seq_expected_amortized_modifies {U V w n_max base : ℕ}
     ∃ (ν₀ ν_final : PMF (C.Seed × Data (rSuccinct U V w n_max))) (T_ops : ℝ≥0∞),
       ExecCodeDist w (subroutineCode U V w n_max).initFresh x (ν₀.map Prod.snd) C.initTime ∧
       C.ExecStepsOfFn (Dynamic.empty U) ops ν₀ ν_final T_ops ∧
+      (∀ θ, (ν_final.map Prod.fst) θ ≤ 1 * (PMF.uniformOfFintype (QuotHashSeed U n_max)) θ) ∧
       (∀ p ∈ ν_final.support,
         Succinct.Rep U V w n_max base p.1
           ((Dynamic.spec U V n_max).run (Dynamic.empty U) ops).1 p.2 ∧
@@ -821,7 +849,7 @@ theorem seq_expected_amortized_modifies {U V w n_max base : ℕ}
         C.initTime + (ops.length * chargeVal U V w n_max : ℕ) := by
   intro C
   obtain ⟨ν₀, he_init, hseed₀, hsupp₀⟩ := C.initFresh_exec hx hfr (fun j => Fin.elim0 j) hz
-  obtain ⟨ν_final, T_ops, hex_steps, _, hrep_final, hamort⟩ :=
+  obtain ⟨ν_final, T_ops, hex_steps, hseed_final, hrep_final, hamort⟩ :=
     C.steps_expected_amortized_ofFn ops ν₀ hv hseed₀ fun p hp => (hsupp₀ p hp).2.1
   have hmod_final := execStepsOfFn_modifies hex_steps fun p hp => (hsupp₀ p hp).2.2.2
   have hpot₀ : (∑' p, ν₀ p * (C.potential p.1 p.2 : ℝ≥0∞)) = 0 := by
@@ -844,7 +872,7 @@ theorem seq_expected_amortized_modifies {U V w n_max base : ℕ}
       simp only [List.length_cons]
       ring
   have hcost_eq := hcost_gen ops (Dynamic.empty U)
-  refine ⟨ν₀, ν_final, T_ops, he_init, hex_steps,
+  refine ⟨ν₀, ν_final, T_ops, he_init, hex_steps, hseed_final,
     fun p hp => ⟨hrep_final p hp, hmod_final p hp⟩, ?_⟩
   rw [hpot₀, add_zero, hcost_eq] at hamort
   calc C.initTime + T_ops + ∑' q, ν_final q * (potential U V w n_max base q.1 q.2 : ℝ≥0∞)

@@ -438,6 +438,31 @@ def size : RCode B r → ℕ
   | .grow _ _ => 1
   | .shrink _ => 1
 
+/-- Assemble a structured resizable Word-RAM program `RCode B r` at instruction index `pc`. -/
+def assemble : RCode B r → ℕ → RProgram B r
+  | .op o, _ => [.op o]
+  | .seq c₁ c₂, pc => c₁.assemble pc ++ c₂.assemble (pc + c₁.size)
+  | .branch c pos neg, pc =>
+    .branch c (pc + neg.size + 2) :: neg.assemble (pc + 1) ++
+      .jump (pc + neg.size + pos.size + 2) :: pos.assemble (pc + neg.size + 2)
+  | .loop c body, pc =>
+    .branch c (pc + 2) :: .jump (pc + body.size + 3) :: body.assemble (pc + 2) ++ [.jump pc]
+  | .rand dst src, _ => [.rand dst src]
+  | .grow dst kReg, _ => [.grow dst kReg]
+  | .shrink kReg, _ => [.shrink kReg]
+
+/-- Assembling `c : RCode B r` at any base index produces `c.size` flat instructions. -/
+@[simp]
+theorem length_assemble (c : RCode B r) (pc : ℕ) : (c.assemble pc).length = c.size := by
+  induction c generalizing pc with
+  | branch _ _ _ ihp ihn =>
+    simp only [assemble, List.length_append, List.length_cons, ihp, ihn, size]
+    omega
+  | _ => simp_all [assemble]
+
+/-- Complete flat resizable Word-RAM program: `c.assemble 0` followed by `halt out`. -/
+def program (c : RCode B r) (out : Fin r) : RProgram B r := c.assemble 0 ++ [.halt out]
+
 end RCode
 
 /-- Whether a structured `WordRAM.Code B r` uses only register instructions (no `load`, `store`, or
