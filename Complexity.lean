@@ -3156,6 +3156,7 @@ public import Complexity.Crypto.Protocols.SigmaProtocol.Lyubashevsky
 public import Complexity.Crypto.Protocols.SigmaProtocol.Lyubashevsky.Efficient
 public import Complexity.Crypto.Protocols.SigmaProtocol.Lyubashevsky.NativeExtract
 public import Complexity.Crypto.Protocols.SigmaProtocol.Lyubashevsky.Signature
+public import Complexity.Crypto.Protocols.SigmaProtocol.Lyubashevsky.Signature.Efficient
 public import Complexity.Crypto.Protocols.SigmaProtocol.SchnorrIdentification
 public import Complexity.Crypto.Protocols.SigmaProtocol.SchnorrSignature
 public import Complexity.Crypto.Protocols.Signature.RandomOracle
@@ -4021,6 +4022,7 @@ public import Complexity.Languages.Probabilistic.Traverse
 public import Complexity.Languages.Probabilistic.UniformNat
 public import Complexity.Languages.Probabilistic.UniformNat.Support
 public import Complexity.Languages.Probabilistic.UntilBad
+public import Complexity.Languages.Probabilistic.UntilBad.TwoCost
 public import Complexity.Languages.Probabilistic.Vector
 public import Complexity.Logics.FirstOrder.Basic
 public import Complexity.Logics.FirstOrder.Encoding
