@@ -46,6 +46,25 @@ Module-SIS zero equation. The source function type retains pointwise multiplicat
 `negacyclicMul` for polynomial multiplication. Dimension zero is excluded because its quotient
 is `R/(2)`. This algebraic bridge adds no hardness or runtime claim.
 
+The pure coefficient identity `negacyclicMul_eq_coeff_mul` is available separately in
+[SIS/Polynomial/Coefficients.lean](../../Complexity/Crypto/Computational/SIS/Polynomial/Coefficients.lean),
+so algebra clients need not import native computation certificates. For native multiplication, import
+[SIS/Native.lean](../../Complexity/Crypto/Computational/SIS/Native.lean).
+`negacyclicMulResidues n q a b` truncates two natural-coefficient lists to `n`, computes the
+existing integer `mulZJet (2*n)`, and reduces each lower coefficient minus its wrapped upper
+coefficient modulo `q`. Short lists are zero-padded and the output has exactly `n` entries.
+The plain certificate charges unary `n`, binary `q`, and both complete framed binary input
+lists. It imposes no coefficient-size bound. For `q > 0`, `negacyclicMulResidues_ofFn` identifies
+the output with the canonical coefficients of the existing `negacyclicMul`; neither primality
+nor positive dimension is needed. At `q = 0`, the total operation instead truncates each
+signed result at zero, with no canonical-residue interpretation claimed.
+The [checked clients](../../ComplexityTests/Crypto/NegacyclicNative.lean) include `X² = -1`
+modulo six, modulus one, empty and irregular inputs, a 128-bit modulus, and the actual
+rank-one `moduleLWEKeyGen` coefficient computation. Full key generation, encryption and
+decryption still need variable-rank traversal and canonical key/ciphertext packing and parsing.
+This arithmetic certificate does not remove the existing restrictions on exact native samplers
+or imply small-secret security.
+
 These are implications from hardness assumptions. They do not prove that a concrete OWF, DDH group, LWE family or SIS parameter choice is hard. The LWE interface exposes only the serialized public matrix `[B*t+e | B]`, with independent errors and one shared uniform secret; in [`SIS/Module.lean`](../../Complexity/Crypto/Computational/SIS/Module.lean), `expandModuleMatrix` and `flattenPolyVec` embed negacyclic `ModuleSIS` and `ModuleLWE` instances over `ℤ_q[X]/(X^n+1)` into unstructured `(d * n) × (k * n)` matrices over `ℤ_q` (checked with concrete evaluations and nonvacuity proofs in [`ComplexityTests/Crypto/ModuleSIS.lean`](../../ComplexityTests/Crypto/ModuleSIS.lean)), and [`SIS/ModuleEncryption.lean`](../../Complexity/Crypto/Computational/SIS/ModuleEncryption.lean) builds dual-Regev public-key encryption (`moduleLWEKeyGen`, `moduleLWEEncrypt`, `moduleLWEDecrypt`), bounded-noise decryption correctness (`moduleLWEDecrypt_moduleLWEEncrypt_eq`), and two-hop public-key/ciphertext reductions to `ModuleLWE.sampleLaw` (`advantage_realEncryptionView_uniform_le`, `advantage_realEncryptionView_msg_le`, checked in [`ComplexityTests/Crypto/ModuleEncryption.lean`](../../ComplexityTests/Crypto/ModuleEncryption.lean)); no worst-case lattice reduction is asserted there.
 
 The Module-LWE sampling APIs now accept explicit distributions: `moduleLWEPublicKeyLaw` has an
@@ -141,6 +160,24 @@ giving an upper bound `3/8`; a supported error triple produces target phase 12 a
 actual failure. These are original sufficient correctness bounds for the supplied laws. They add
 no small-secret security reduction, Gaussian sampler or native certificate for the entire scheme.
 
+For a concrete growing family, [ModulusSwitch/CenteredBinomial.lean](../../Complexity/Crypto/Computational/SIS/ModulusSwitch/CenteredBinomial.lean)
+sets `t = l+1`, rank and degree `t`, CBD1 secret/ephemeral coefficients, and CBD(8t) error
+coefficients with good radius `4t`. Put `Q = 8t³+4t`, `Bp = floor((Q+t²+2)/2)`,
+`w = Nat.size(4Bp+2)`, target `p = 2^w` and source `q = 2^(w+1)`.
+The proved bounds are `p ≤ 68t³`, `q ≤ 136t³`, strict no-wrap `16t < q`, and target
+margin `4Bp+2 < p`. Half scaling and even moduli make the message-scale mismatch zero.
+The actual retained-secret experiment fails with probability at most `4(2t+1)t exp(-t)`,
+which is negligible for every message family. The extra factor `t` counts coefficients inside
+each noise polynomial; the shared coefficient bound lives in
+[Sampling/Concentration.lean](../../Complexity/Crypto/Computational/SIS/ModuleEncryption/Sampling/Concentration.lean).
+The [checked clients](../../ComplexityTests/Crypto/ModulusSwitchCenteredBinomial.lean)
+certify growing native CBD rows and power-of-two uniform matrix-entry samples, with unary
+parameters and binary outputs, and check their semantic modular laws. They also prove positive
+actual failure at `t=1`: `q=64`, `p=32`, errors all eight and supported secrets produce phase 29
+and decode a true message incorrectly. The displayed bound is below one at `t=10`.
+This is correctness for explicit laws, not a small-secret security reduction. Complete native
+key generation, encryption and decryption certificates remain separate.
+
 ## Encryption and chosen-message attacks
 
 [AdversaryOf](https://github.com/cslib-community/complexitylib/blob/13e6a31951bf1c89a1a6258c44f9444aecbbefd8/Complexity/Crypto/Computational/Encryption/Basic.lean#L73) has a first stage choosing two messages and a saved word from the public key, and a second stage guessing from that saved state and the challenge ciphertext. Each stage has a native certificate. `INDCPAOn` explicitly constrains admissible message pairs. `WordINDCPA` requires equal lengths; the general `INDCPAOf` with all pairs is stronger for variable-length word messages. Invalid challenges are made independent of the hidden experiment bit.
@@ -158,6 +195,16 @@ Starting with the imports and local context in [`ComplexityTests/Crypto/HybridEn
 For adaptive decapsulation security, import [`KEMFromPKE/CCA.lean`](../../Complexity/Crypto/Computational/Encryption/KEMFromPKE/CCA.lean) and apply `WordINDCCA2.indistinguishable_encryptKeyEncaps` (Boneh–Shoup v0.6, Exercise 12.5(f), p. 514 [bs23][bs23]). The result uses `Game.Indistinguishable` over `kemCCARealGame` and `kemCCAIdealGame`, with the existing `IsOraclePPT` adversaries. Both games share the CPA sampling continuations and use `cca2Phase2Oracle` to reject the exact challenge word. The reduction preserves advantage exactly, samples two equal-length keys, and forwards postchallenge queries unchanged. It requires a unary polynomial-time `keyLen`; honest algorithm certificates and supported-output correctness are separate. Here the original option-valued decryptor is retained, so `some []` denotes successful empty-key decapsulation and `none` denotes rejection.
 
 The [checked CCA KEM clients](../../ComplexityTests/Crypto/KEMFromPKECCA.lean) instantiate doubled key length, an unconditional correct zero-width KEM, and a reply-dependent tag-flipping attack with advantage `1 - 2^(-keyLen n)`. The attack fixture is correctly decryptable but insecure; it makes no CPA-security claim. Its native oracle certificate bounds reply reading, and the honest-game certificate charges decryption. This endpoint covers one encapsulation followed by adaptive queries; full KEM–DEM CCA composition, prechallenge KEM queries and multiple encapsulation challenges remain separate objectives.
+
+The canonical `hybridDecrypt` now takes Option-valued decapsulation and symmetric decryption,
+rejects noncanonical ciphertext-pair encodings, and propagates component failures. Its supported
+correctness theorem concludes `some msg`, preserving accepted empty keys and messages. The
+native certificate charges the framing test and both callbacks. This repairs the representation
+boundary needed by CCA composition, without changing `hybridEncrypt` or its CPA security
+theorems. The [next DEM milestone](https://github.com/cslib-community/complexitylib/issues/2694)
+uses the existing one-time symmetric CCA games; the two KEM steps and key-distribution
+compatibility remain open. In particular, encoded Encrypt-then-MAC keys cannot be treated as
+uniform words merely by matching their encoded length.
 
 ## Authentication, signatures, and state
 
