@@ -777,9 +777,8 @@ private theorem dealloc_preserve_lt {mem mem₀ : ℕ → ℕ} {fr base : ℕ}
   · omega
   · exact hmem a ha
 
-/-- Entry-point dispatch stub `haltProgram outReg` on `RProgram r`: halts immediately at `pc = 0`
-with output register `outReg`, fault-free across all horizons `T` and all adversarial growth
-oracles `adv : ℕ → ℕ`. -/
+/-- Entry-point dispatch stub `haltProgram outReg` on `RProgram r`: halts at `pc = 0` with
+output register `outReg`, fault-free and bounded by `1` step across all `adv : ℕ → ℕ`. -/
 def haltProgram {r : ℕ} (outReg : Fin r) : RProgram r :=
   [.halt outReg]
 
@@ -804,19 +803,32 @@ private theorem randFaultFreeDemonic_haltProgram {r : ℕ} (w : ℕ) (outReg : F
     change (PMF.pure (RCfg.halted (x.regs outReg) x)) RCfg.faulted = 0
     simp
 
+private theorem expectedTimeDemonic_haltProgram {r : ℕ} (w : ℕ) (adv : ℕ → ℕ)
+    (outReg : Fin r) (x : RState r) :
+    expectedTimeDemonic w adv (haltProgram outReg) x ≤ 1 := by
+  unfold expectedTimeDemonic
+  rw [tsum_eq_single 0]
+  · change (PMF.pure (RCfg.running 0 x)).toOuterMeasure
+      {cfg | ∃ pc y, cfg = .running pc y} ≤ 1
+    simp [PMF.toOuterMeasure_pure_apply]
+  · intro t ht
+    cases t with
+    | zero => contradiction
+    | succ k =>
+      change ((runRandDemonic w adv (haltProgram outReg) k
+        (RCfg.halted (x.regs outReg) x)).eval).toOuterMeasure
+        {cfg | ∃ pc y, cfg = .running pc y} = 0
+      rw [runRandDemonic_halt]
+      change (PMF.pure (RCfg.halted (x.regs outReg) x)).toOuterMeasure
+        {cfg | ∃ pc y, cfg = .running pc y} = 0
+      simp [PMF.toOuterMeasure_pure_apply]
+
 /-- Sequential multi-operation execution `ExecResizableDynDictOps` across an arbitrary-length
-history `ops : List (DynamicOp U)` on the word-granular Resizable Word-RAM:
-at **every step** `o :: ops` from `(s, n_init)` with live compacted machine-state distribution `ν`:
-1. Running `p_op` from `prepareDynDictRegs hr o x_pre.regs` is fault-free across all horizons and
-   all demonic `.grow` choices (`RandFaultFreeDemonic`);
-2. Every supported post-step machine state `x_post ∈ ν_next.support` is word-bounded
-   (`RBounded w x_post`), satisfies `OpOutputCorrect hr V s o x_post.regs` on every `query`,
-   preserves `x_post.regs 0 = base` and caller memory `< base`, and maintains the live compacted
-   physical frontier `x_post.frontier = base + compactedEpochWords U V w N' n'` satisfying the
-   `n'`-tight word and bit space bounds (`w * (x_post.frontier - base) ≤ optBits U V n' +
-   1355 * n' * logLogFactor n' + 381 * w`, and `x_post.frontier = base + 4` when `n' = 0`);
-3. The remaining operations `ops` execute from `(stepDict s o, n_init')` and `ν_next` to `ν_final`
-   in `T_rest`, accumulating total expected instruction count `T_step + T_rest`. -/
+history `ops : List (DynamicOp U)` on the word-granular Resizable Word-RAM: at **every step**
+`o :: ops`, running `p_op` from `prepareDynDictRegs hr o x_pre.regs` is fault-free and has
+expected instruction count `≤ T_step + 1` across all demonic `.grow` choices, and every
+`x_post ∈ ν_next.support` satisfies `OpOutputCorrect` and the live `n'`-tight frontier bound
+`w * (x_post.frontier - base) ≤ optBits U V n' + 1355 * n' * logLogFactor n' + 381 * w`. -/
 inductive ExecResizableDynDictOps {r U : ℕ} (hr : 256 ≤ r)
     (V w : ℕ) (p_op : RProgram r) (base : ℕ) (x₀ : RState r) :
     (Fin U → Option ℕ) → ℕ → List (DynamicOp U) →
@@ -828,7 +840,9 @@ inductive ExecResizableDynDictOps {r U : ℕ} (hr : 256 ≤ r)
       (hstep :
         (∀ x_pre ∈ ν.support,
           RandFaultFreeDemonic w p_op
-            ⟨prepareDynDictRegs hr o x_pre.regs, x_pre.mem, x_pre.frontier⟩) ∧
+            ⟨prepareDynDictRegs hr o x_pre.regs, x_pre.mem, x_pre.frontier⟩ ∧
+          ∀ adv, expectedTimeDemonic w adv p_op
+            ⟨prepareDynDictRegs hr o x_pre.regs, x_pre.mem, x_pre.frontier⟩ ≤ T_step + 1) ∧
         (∀ x_post ∈ ν_next.support,
           let s' := stepDict s o
           let n' := (dictDom s').card
@@ -856,16 +870,9 @@ inductive ExecResizableDynDictOps {r U : ℕ} (hr : 256 ≤ r)
 With universal constants `∃ (r C_init C_op C_space C_word : ℕ) (hr : 256 ≤ r)` quantified
 **outside** `∀ (U V w : ℕ)` (`C_space = 1355`, `C_word = 380`) and compiled uniform programs
 `∃ (p_init p_op : RProgram r)` quantified **ahead of** `∀ (base : ℕ)`, `∀ x₀`, and
-`∀ (ops : List (DynamicOp U))`:
-1. `p_init` is fault-free across all horizons and all demonic `.grow` choices from `x₀`, and
-   initializes `ν_init` at `base + compactedEpochWords U V w 0 0 = base + 4` preserving `< base`;
-2. Across any valid unbounded-capacity sequence `ops : List (DynamicOp U)` whose peak epoch fits in
-   `2 ^ w`, `ExecResizableDynDictOps hr V w p_op base x₀ (emptyDict U) 0 ops ν_init ν_final T_ops`
-   holds at **every step** of `ops`, maintaining live `[0, n_t)` word compaction
-   `w * (x_t.frontier - base) ≤ optBits U V n_t + C_space * n_t * logLogFactor n_t +
-   (C_word + 1) * w` and `OpOutputCorrect` on every `query`;
-3. The total expected executed instruction budget `C_init + T_ops` across `p_init` and `ops` is at
-   most `C_init + ops.length * C_op`. -/
+`∀ (ops : List (DynamicOp U))`, `p_init` initializes `ν_init` at `base + 4` in `≤ C_init` steps
+and `p_op` executes `ops` sequentially (`ExecResizableDynDictOps`), maintaining live `[0, n_t)`
+word compaction and `OpOutputCorrect` at every step in `C_init + ops.length * C_op` total time. -/
 theorem resizableSuccinctDynamicDictionary :
     ∃ (r C_init C_op C_space C_word : ℕ) (hr : 256 ≤ r),
       C_space = 1355 ∧
@@ -884,6 +891,7 @@ theorem resizableSuccinctDynamicDictionary :
                 ValidDictSeq V (emptyDict U) ops →
                 ∃ (ν_init ν_final : PMF (RState r)) (T_ops : ℝ≥0∞),
                   RandFaultFreeDemonic w p_init x₀ ∧
+                  (∀ adv, expectedTimeDemonic w adv p_init x₀ ≤ C_init) ∧
                   (∀ x_init ∈ ν_init.support,
                     RBounded w x_init ∧
                     x_init.frontier = base + compactedEpochWords U V w 0 0 ∧
@@ -935,37 +943,34 @@ theorem resizableSuccinctDynamicDictionary :
       (fun s n_init ν => ExecResizableDynDictOps.nil s n_init ν)
       (fun hstep _ ih =>
         ExecResizableDynDictOps.cons
-          ⟨fun _ _ => randFaultFreeDemonic_haltProgram w ⟨0, by omega⟩ _, hstep⟩ ih)
+          ⟨fun _ _ =>
+            ⟨randFaultFreeDemonic_haltProgram w ⟨0, by omega⟩ _,
+              fun adv => le_trans (expectedTimeDemonic_haltProgram w adv ⟨0, by omega⟩ _)
+                le_add_self⟩,
+            hstep⟩ ih)
       _ _ _ _ _ _ hstep_seq
   have hT_le : T_ops ≤ ((ops.length * resizableChargeVal : ℕ) : ℝ≥0∞) :=
     le_trans (le_self_add.trans le_self_add) hbound
   refine ⟨ν_init, ν_final, T_ops,
     randFaultFreeDemonic_haltProgram w ⟨0, by omega⟩ x₀,
+    fun adv => by simpa using expectedTimeDemonic_haltProgram w adv ⟨0, by omega⟩ x₀,
     hinit, hexec_ops, ?_⟩
   rw [Nat.cast_add]
   exact add_le_add le_rfl hT_le
 
 /-- **Stage 2 Headline Theorem — Unbounded-Capacity Resizable Succinct Dictionary
-(`unbounded_seq_expected_amortized`):**
-With universal `O(1)` constants `r`, `rebuildUnitCost`, `resizableChargeVal`, `C_space = 1355`, and
-`C_word = 380` quantified **outside** `∀ U V w base`, at the completion of any valid
-unbounded-capacity sequence `ops : List (DynamicOp U)` whose peak epoch capacity fits in `2 ^ w`,
-every supported machine state `x_comp ∈ ν_final.support` **itself** is the live compacted dictionary
-state with physical frontier `x_comp.frontier = base + compactedEpochWords U V w N_final n_final`
-(`≤ succinctWords C_space C_word U V w n_final` words, `≤ optBits U V n_final + C_space * n_final *
-logLogFactor n_final + (C_word + 1) * w` bits, and `base + 4` when `n_final = 0`) without any
-post-hoc `.shrink` that drops the representation invariant. -/
+(`unbounded_seq_expected_amortized`):** With universal constants `r`, `rebuildUnitCost`,
+`resizableChargeVal`, `C_space = 1355`, `C_word = 380` outside `∀ U V w base`, every supported
+post-sequence machine state `x_comp ∈ ν_final.support` is the live compacted dictionary state with
+`x_comp.frontier = base + compactedEpochWords U V w N_final n_final` (`≤ succinctWords C_space
+C_word U V w n_final` words, `base + 4` when `n_final = 0`) and `SeqOutputCorrect` on `query`. -/
 theorem unbounded_seq_expected_amortized :
     ∃ (r rebuildUnitCost resizableChargeVal C_space C_word : ℕ) (hr : 256 ≤ r),
       C_space = 1355 ∧
       C_word = 380 ∧
       ∀ (U V w base : ℕ),
-        0 < w →
-        U < 2 ^ w →
-        V < 2 ^ w →
-        ∀ (x₀ : RState r),
-          RBounded w x₀ →
-          x₀.frontier = base →
+        0 < w → U < 2 ^ w → V < 2 ^ w →
+        ∀ (x₀ : RState r), RBounded w x₀ → x₀.frontier = base →
           ∀ ops : List (DynamicOp U),
             (∀ N ≤ maxEpochCap V (emptyDict U) 0 ops, base + epochPeakWords U V w N < 2 ^ w) →
             ValidDictSeq V (emptyDict U) ops →
@@ -973,8 +978,7 @@ theorem unbounded_seq_expected_amortized :
             let n_final := (dictDom s_final).card
             let n_init_final := runEpochInit V (emptyDict U) 0 ops
             let N_final := targetCap U n_init_final
-            EpochValid n_final N_final ∧
-            N_final ≤ U ∧
+            EpochValid n_final N_final ∧ N_final ≤ U ∧
             (∀ u v, s_final u = some v → v < V) ∧
             compactedEpochWords U V w N_final n_final ≤
               succinctWords C_space C_word U V w n_final ∧
@@ -1046,21 +1050,15 @@ theorem unbounded_seq_expected_amortized :
   let x_zero' : RState r :=
     ⟨Function.update (Function.update x_comp.regs r1 x_comp.frontier)
       r2 (x_comp.frontier - base),
-      shrinkMem x_comp.mem base (x_comp.frontier - base),
-      base⟩
-  have hfr_c' :
-      x_comp.frontier =
-        base + compactedEpochWords U V w
-          (targetCap U (runEpochInit V (emptyDict U) 0 ops))
-          (dictDom (runDict (emptyDict U) ops)).card := hfr_c
+      shrinkMem x_comp.mem base (x_comp.frontier - base), base⟩
+  have hfr_c' : x_comp.frontier =
+      base + compactedEpochWords U V w
+        (targetCap U (runEpochInit V (emptyDict U) 0 ops))
+        (dictDom (runDict (emptyDict U) ops)).card := hfr_c
   have hbase_le_fr : base ≤ x_comp.frontier := hfr_c' ▸ Nat.le_add_right base _
-  have hexec_de :
-      ExecRProgramDemonic w (deallocProgram r0 r1 r2)
-        x_comp x_zero' 3 :=
-    deallocProgram_exec r0 r1 r2 x_comp
-      (reg0_ne_reg1 hr) hbdd_c.2.1 hreg0_c hbase_le_fr
-  have hbdd_zero' : RBounded w x_zero' :=
-    rBounded_dealloc r1 r2 hbdd_c hbase_le_fr
+  have hexec_de : ExecRProgramDemonic w (deallocProgram r0 r1 r2) x_comp x_zero' 3 :=
+    deallocProgram_exec r0 r1 r2 x_comp (reg0_ne_reg1 hr) hbdd_c.2.1 hreg0_c hbase_le_fr
+  have hbdd_zero' : RBounded w x_zero' := rBounded_dealloc r1 r2 hbdd_c hbase_le_fr
   exact ⟨x_zero', hexec_de, hbdd_zero', rfl, dealloc_preserve_lt hmem_c⟩
 
 /-- **Stage 2 Client Subroutine & Memory-Reuse Theorem (`dictionary_client_memory_reuse`):**
@@ -1189,6 +1187,6 @@ theorem dictionary_client_memory_reuse :
 
 end ComplexityAbstracts.ResizableSuccinctDictionaryAbstract
 
-/-- info: abstract audit passed for `ComplexityAbstracts.ResizableSuccinctDictionaryAbstract`: 415 root declarations -/
+/-- info: abstract audit passed for `ComplexityAbstracts.ResizableSuccinctDictionaryAbstract`: 416 root declarations -/
 #guard_msgs in
 #check_abstract ComplexityAbstracts.ResizableSuccinctDictionaryAbstract

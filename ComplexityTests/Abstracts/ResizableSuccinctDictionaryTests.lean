@@ -67,6 +67,7 @@ theorem nonvacuous_resizableSuccinctDynamicDictionary :
       C_space = 1355 ∧
       C_word = 380 ∧
       RandFaultFreeDemonic 64 p_init ⟨fun _ => 0, fun _ => 0, 10⟩ ∧
+      (∀ adv, expectedTimeDemonic 64 adv p_init ⟨fun _ => 0, fun _ => 0, 10⟩ ≤ C_init) ∧
       (∀ x_init ∈ ν_init.support,
         RBounded 64 x_init ∧
         x_init.frontier = 10 + compactedEpochWords 4 8 64 0 0 ∧
@@ -81,11 +82,12 @@ theorem nonvacuous_resizableSuccinctDynamicDictionary :
   have hx₀_bdd : RBounded 64 x₀ :=
     ⟨⟨fun _ => (by decide : 0 < 2 ^ 64), fun _ => (by decide : 0 < 2 ^ 64)⟩,
       (by decide : 10 < 2 ^ 64), fun _ _ => rfl⟩
-  obtain ⟨ν_init, ν_final, T_ops, hff, hinit, hexec, htime⟩ :=
+  obtain ⟨ν_init, ν_final, T_ops, hff, hinit_time, hinit, hexec, htime⟩ :=
     hbase 10 (by decide) (by decide) (by decide)
       x₀ hx₀_bdd rfl sampleOps fit_epochPeakWords_sampleOps validDictSeq_sampleOps
   exact ⟨r, C_init, C_op, C_space, C_word, hr, p_init, p_op, ν_init, ν_final, T_ops,
-    hcs, hcw, hff, fun x hx => ⟨(hinit x hx).1, (hinit x hx).2.1, (hinit x hx).2.2.1⟩,
+    hcs, hcw, hff, hinit_time,
+    fun x hx => ⟨(hinit x hx).1, (hinit x hx).2.1, (hinit x hx).2.2.1⟩,
     hexec, htime⟩
 
 /-- Non-vacuity of `unbounded_seq_expected_amortized` on `sampleOps` at `(U, V, w) = (4, 8, 64)`. -/
