@@ -1921,6 +1921,7 @@ public import Complexity.Computability.Interactive.GKR.Summand
 public import Complexity.Computability.Interactive.Plain
 public import Complexity.Computability.Interactive.RbrKnowledge
 public import Complexity.Computability.Interactive.Security
+public import Complexity.Computability.Interactive.Security.Repeat
 public import Complexity.Computability.Interactive.Sequential
 public import Complexity.Computability.Interactive.Sumcheck
 public import Complexity.Computability.Interactive.ToIP
@@ -2897,6 +2898,7 @@ public import Complexity.Crypto.Computational.ElGamal.ProbComp
 public import Complexity.Crypto.Computational.Encryption.Authenticated
 public import Complexity.Crypto.Computational.Encryption.Basic
 public import Complexity.Crypto.Computational.Encryption.CCA
+public import Complexity.Crypto.Computational.Encryption.CCA.Interleaved
 public import Complexity.Crypto.Computational.Encryption.Circular
 public import Complexity.Crypto.Computational.Encryption.EncryptThenMAC
 public import Complexity.Crypto.Computational.Encryption.Hybrid
