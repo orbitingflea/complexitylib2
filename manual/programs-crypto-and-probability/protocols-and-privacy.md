@@ -175,8 +175,11 @@ The same module instantiates `schnorrFamilyROMScheme` with `m`-bit challenges wh
 EUF-CMA bounds account for both signing queries and random-oracle queries. The asymptotic theorem
 `negligible_eufCmaGame_schnorrFamilyROMScheme` assumes negligible success of the specified forking
 reduction. Applying the strict-PPT discrete-logarithm assumption still requires an efficient
-realization of that reduction, with encoded oracle access and polynomial private-coin replay.
-See the checked algorithms and typed-ROM examples in
+realization of that reduction, with encoded adaptive signing/hash access and final-message
+freshness. The private-coin prerequisite is supplied by `IsOraclePPTOn.exists_savedCoins` in
+[`Oracle/Replay.lean`](../../Complexity/Computability/Probabilistic/Oracle/Replay.lean), which charges
+full-input replay and retains external state; connecting it to the signature ROM reduction remains
+open. See the checked algorithms and typed-ROM examples in
 [`ComplexityTests/Crypto/SchnorrSignature.lean`](../../ComplexityTests/Crypto/SchnorrSignature.lean).
 
 For strict-PPT **identification** under discrete log, use `SchnorrImpersonator`,
@@ -233,10 +236,49 @@ Keep receiver choices and selected values private; giving either to the sender c
 [OT commitment tests](../../ComplexityTests/Crypto/OTCommitment.lean) demonstrate rejection of an
 inconsistent opening, a tight one-call attack with success `1/2`, and the zero-call bound `1`.
 
-This is a fixed-schedule information-theoretic commitment construction, with honest correctness
-and double-opening binding. It has no polynomial-time certificate or ideal commitment
-realization. The malicious MPC compiler and real/ideal simulation remain open in
+To extract a bit before opening, import
+[`OTCommitment.Extraction`](../../Complexity/Crypto/Protocols/MPC/OTCommitment/Extraction.lean).
+`extract` takes the strict majority of the actual OT input pair parities, choosing false on a tie.
+Only the simulator receives these corrupted sender inputs; this is not extraction from a public
+commitment string. `simulatedOpening_coupled` couples `realOpening` with `simulatedOpening` within
+`2⁻⌈k/2⌉`, jointly preserving the sender's state at the commit boundary and any auxiliary output
+from its opening continuation. The simulator fixes the bit before that continuation runs and
+releases only the stored bit or abort. Apply the coupling's `toOuterMeasure_le` for any event of
+this joint output. With two mixed-parity rows, extraction error can be `1/2` even though the
+double-opening bound is `1/4`; the
+[checked examples](../../ComplexityTests/Crypto/OTCommitmentExtraction.lean) attain both bounds.
+
+For native computation, import
+[`OTCommitment.PolyTime`](../../Complexity/Crypto/Protocols/MPC/OTCommitment/PolyTime.lean).
+`extractPairs_polyTime` certifies the deterministic extractor with input encoding
+`encList (encPair encBool encBool)` and output `encBool`. `extractPairs_ofFn` connects the explicit
+list algorithm to the OT table extractor. This certificate applies only to the extractor.
+
+These fixed-schedule experiments do not provide full ideal commitment realization, corrupt-receiver
+simulation, composition, or a polynomial-time simulator. The malicious MPC compiler and its
+real/ideal simulation remain open in
 [#1212](https://github.com/cslib-community/complexitylib/issues/1212).
+
+For a stateful functionality with separate commit and open phases, import
+[`Complexity.Crypto.Protocols.Commitment.World`](../../Complexity/Crypto/Protocols/Commitment/World.lean)
+and open `Cslib.Crypto.Protocols.Commitment.Phased`. `world` implements the existing
+`Interactive.World`: sender queries are `Sum.inl (Command.commit b)`, `Sum.inl Command.open`,
+and `Sum.inl Command.abort`; the receiver can only query `Sum.inr ()` to poll. Use
+`ProbOracleComp.query (spec := senderSpec ⊕ₒ receiverSpec)` to make these calls and
+`world.eval` to observe a program's result. The private `Store` is available for proofs, but is
+excluded from that observation. Polling returns `Observation.receipt` while a bit is committed,
+then `Observation.opened b` after opening.
+
+This original single-session abort variant ignores early opening and repeated commitments.
+Abort before opening is terminal; abort after opening cannot retract the released bit.
+`polling_secrecy` handles arbitrary receiver-only programs with private sampling before opening;
+it does not assert secrecy when sender commands interleave and open the commitment.
+`committed_invariant` preserves the committed bit or abort under arbitrary supported joint
+executions. The [checked world clients](../../ComplexityTests/Crypto/CommitmentWorld.lean)
+show honest opening, early opening followed by commitment, attempted overwrite, both abort
+orders, and adaptive private polling. These are functionality laws, not an OT realization,
+UC security, or a simulator runtime certificate. Connecting OT extraction and equivocation to
+these phases is a separate milestone; full malicious MPC remains open.
 
 ## Upstream perfect secrecy and sharing
 

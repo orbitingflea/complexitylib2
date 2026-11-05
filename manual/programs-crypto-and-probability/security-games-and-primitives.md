@@ -50,6 +50,24 @@ ties, composite moduli, modulus one, nonadditivity, and a ciphertext with nonzer
 This nearest-integer phase bound is original supporting algebra; it does not assert Boolean
 plaintext preservation, parity-preserving switching, a security reduction, or a runtime bound.
 
+For its native implementation, import
+[`SIS/ModulusSwitch/Native.lean`](../../Complexity/Crypto/Computational/SIS/ModulusSwitch/Native.lean).
+`ZMod.modulusSwitchResidue q p x` computes the rounded integer by signed Euclidean division
+`(2*p*x + q) / (2*q)`, then reduces it to a natural residue modulo `p`.
+`modulusSwitchResidue_eq_val` identifies that result with the existing coefficient switch for
+positive moduli, including negative half ties. The plain `intBin_roundScale` and
+`ComputableInPolyTime.modulusSwitchResidue` certificates use binary `encNat` moduli and signed
+binary `encIntBin` representatives; they reuse the existing signed division and remainder
+certificates. `computableInPolyTime_modulusSwitchRows` lifts the implementation to arbitrary
+runtime nested rows in `encList (encList encNat)`. Dimensions vary through the actual list
+structure, and the polynomial bound counts the complete encoded input. The
+`modulusSwitchRows_encodeMatrix_extendCiphertext` theorem identifies the output with
+`GeneralSIS.encodeMatrix (extendCiphertext (moduleLWEModulusSwitch p ct))`, so there is no
+separate ciphertext format. The [native tests](../../ComplexityTests/Crypto/ModulusSwitchNative.lean)
+exercise a 128-bit modulus, negative representatives, modulus one, ragged/empty rows, the
+existing ciphertext encoding, and composition of two certified conversions. This runtime
+certificate adds no decoding or security guarantee.
+
 ## Encryption and chosen-message attacks
 
 [AdversaryOf](https://github.com/cslib-community/complexitylib/blob/13e6a31951bf1c89a1a6258c44f9444aecbbefd8/Complexity/Crypto/Computational/Encryption/Basic.lean#L73) has a first stage choosing two messages and a saved word from the public key, and a second stage guessing from that saved state and the challenge ciphertext. Each stage has a native certificate. `INDCPAOn` explicitly constrains admissible message pairs. `WordINDCPA` requires equal lengths; the general `INDCPAOf` with all pairs is stronger for variable-length word messages. Invalid challenges are made independent of the hidden experiment bit.
@@ -61,6 +79,8 @@ The endpoint [DDH.indcca2On_cramerShoup](https://github.com/cslib-community/comp
 The canonical [`KEMINDCPA keyLen keyGen encaps`](../../Complexity/Crypto/Computational/Encryption/Hybrid.lean) compares the real encapsulated key with an independent uniform `keyLen n`-bit word. Use `fun n => n` for normalized keys, or another schedule such as `fun n => 2 * n`. The composition methods `KEMINDCPA.hybrid_indcpa` and `KEMINDCPA.hybrid_indcpaOn` consume `DEMOneTimeKeyINDCPAOf` and `DEMOneTimeKeyINDCPAOn` at the same schedule; the latter requires a polynomial-time admissibility predicate independent of the public key. The exact bound is twice the hidden-bit KEM distinguisher's advantage plus the DEM adversary's advantage (Boneh–Shoup v0.6, Exercise 11.9(b), pp. 460–461 [bs23][bs23]). The native ideal-game certificate `isPPTOn_kemIdealGame` additionally takes `ComputableInPolyTime keyLen encUnary encUnary`. The reductions do not sample ideal keys, so the security implication itself does not need that certificate.
 
 Starting with the imports and local context in [`ComplexityTests/Crypto/HybridEncryption.lean`](../../ComplexityTests/Crypto/HybridEncryption.lean), `indcpaOf_hybridEncrypt_doubleKey_otp` shows the doubled-key composition; adjacent examples check native sampling, supported key lengths, correct decryption and the zero-width boundary. The unconditional security fixture discards its key and is explicitly not decryptable; decryption correctness is checked separately on a leaking KEM. Security does not bundle correctness, and the zero-width pad recovers only the empty message. For an actual cryptographic client, [`DDH.wordINDCPA_hybrid_hashedElGamal`](../../Complexity/Crypto/Computational/ElGamal/ProbComp.lean) now accepts a `SecureKDF` and a standalone DEM at arbitrary `keyLen`; [`ComplexityTests/Crypto/DiffieHellman.lean`](../../ComplexityTests/Crypto/DiffieHellman.lean) instantiates the bridge with doubled key length. The security parameter controlling its modular-sampling error remains `n`, independently of the key length.
+
+[`encryptKeyEncaps keyLen encrypt`](../../Complexity/Crypto/Computational/Encryption/KEMFromPKE.lean) constructs a KEM from word public-key encryption by sampling a key and encrypting it (Boneh–Shoup v0.6, Exercise 11.9(e), p. 461 [bs23][bs23]). Apply `WordINDCPA.kemINDCPA_encryptKeyEncaps` with a native unary polynomial-time certificate for `keyLen`; the reduction chooses two equal-length keys, saves the public key and the first key, and preserves advantage exactly. The separate `isPPTOn_encryptKeyEncaps` certificate also needs native encryption, while `decrypt_encryptKeyEncaps` reuses the original total decryptor and its supported-ciphertext correctness. [`ComplexityTests/Crypto/KEMFromPKE.lean`](../../ComplexityTests/Crypto/KEMFromPKE.lean) provides complete checked clients, including composition of this constructor with the existing doubled-width one-time pad DEM, exact zero-width sampling, and a correctly decryptable but insecure key-revealing encryptor. No new failure/rejection behavior is added.
 
 ## Authentication, signatures, and state
 

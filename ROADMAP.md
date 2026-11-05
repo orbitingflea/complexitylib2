@@ -21,7 +21,7 @@ the FHE industrial context, the first-order design decisions and the repository'
 | Metacomplexity: time-bounded Kolmogorov complexity, partial MCSP, hardness magnification | [#798], audit [#884] |
 | Plain computability: delete the tidy calculus, keeping a machine-level kernel | [#862], from [#456] |
 | Consolidation: duplicates, accurate statements and docs, less churn | [#949], [#939] |
-| Fully homomorphic encryption: follow-ups to the instantiated bootstrapping theorem, then modern schemes | [#1104] |
+| Fully homomorphic encryption: follow-ups to the instantiated bootstrapping theorem, then modern schemes | [#2585] |
 | Boneh–Shoup cryptography tracks; zero-knowledge architecture | [#640], [#643] |
 | Crypto frontier track: Kilian's succinct arguments | [#999] |
 | OpenAI math TCS results: review Fortnow's rewrites and extract in-scope results | [#1002] |
@@ -50,17 +50,27 @@ Priorities live in this list and in the tiers of [#897].
   real/ideal simulation and abort, under the standard communication assumptions.
   `Crypto/Protocols/MPC/OTCommitment` supplies the Crépeau commitment ingredient: perfect hiding
   against adaptive receiver queries and a `2⁻ᵏ` malicious double-opening bound in ideal OT.
-  This fixed-schedule, information-theoretic commitment game has no efficiency certificate or
-  ideal-functionality realization; the malicious compiler and MPC simulation remain open in
+  `OTCommitment/Extraction` adds a stand-alone corrupted-sender output/state simulation with
+  majority extraction error `2⁻⌈k/2⌉`; `OTCommitment/PolyTime` certifies only the deterministic
+  extractor on explicitly encoded bit-pair lists. Full ideal commitment realization, efficient
+  simulation, composition, the malicious compiler, and MPC simulation remain open in
   [#1212](https://github.com/cslib-community/complexitylib/issues/1212).
+  `Crypto/Protocols/Commitment/World` supplies an original single-session phased abort
+  functionality with receiver-poll secrecy and an immutable committed bit. Its OT simulation
+  consumer is tracked separately in [#2647](https://github.com/cslib-community/complexitylib/issues/2647);
+  arbitrary scheduling, composition and efficient simulation remain open.
 - **Regev's worst-case to average-case reduction.** For suitable `q` and Gaussian noise rate
   `α` with `αq > 2√n`, an efficient search-LWE algorithm yields a quantum polynomial-time
   algorithm for worst-case GapSVP and SIVP within `Õ(n/α)`. The noise distribution, modulus
   restrictions and quantum reduction are part of the theorem.
   The discrete Gaussian foundation proves convergence, positive normalization and translation
-  laws on shifted discrete lattices ([#2573](https://github.com/cslib-community/complexitylib/issues/2573));
-  smoothing estimates, efficient sampling and the quantum reduction remain open in
-  [#1213](https://github.com/cslib-community/complexitylib/issues/1213).
+  laws on shifted discrete lattices ([#2573](https://github.com/cslib-community/complexitylib/issues/2573)).
+  `Foundations/Analysis/Lattice/Fourier` identifies the unnormalized Fourier coefficients of
+  integrable lattice periodizations at dual frequencies, including arbitrary sheared bases.
+  Fourier-series reconstruction, covolume normalization, smoothing estimates, efficient sampling
+  and the quantum reduction remain open in
+  [#1213](https://github.com/cslib-community/complexitylib/issues/1213); the unfolding identity
+  does not prove Poisson summation.
 - **Kilian's succinct arguments** ([#999]). If collision-resistant hash families exist, every
   language in NP has an interactive argument with polylogarithmic communication, by committing
   to a PCP with Merkle trees; Micali's CS proofs and the BCS transform give the random-oracle
@@ -71,8 +81,11 @@ Priorities live in this list and in the tiers of [#897].
 Gentry's bootstrapping is instantiated with GSW ([#486];
 [theorems](Complexity/Crypto/Computational/Homomorphic/GSW/FullyHomomorphic.lean)), including
 uniform compactness for the leveled wrapper decryption circuits and level-indexed multi-hop
-evaluation. Its remaining follow-up ([#1104]) is Gentry's exact concrete-security loss together
-with the `poly(ℓ, d)` running-time clause of his Theorem 4. Then develop these in reviewable
+evaluation. After the bounded unified reduction in [#1104], the remaining objective ([#2585])
+is Gentry's exact concrete-security loss together with the `poly(ℓ, d)` running-time clause
+of his Theorem 4. The actual modular link choice and guessing stages have exact saved-tape
+laws and native replay certificates; the unified reduction's remaining branches and the
+literal source loss/runtime comparison still need execution-level proofs. Develop these in reviewable
 milestones, reusing the finite sampling, gadget algebra, native certificates and game reductions
 where their hypotheses match. The [pre-rewrite FHE section][archive-fhe] maps the schemes to
 current libraries and workloads.
@@ -83,7 +96,9 @@ current libraries and workloads.
    experiment separately; an ordinary-LWE reduction does not give them. Nearest-integer
    coefficient conversion and the Module-LWE phase-error bound are available in
    `SIS/ModulusSwitch`; decoding preservation under modulus changes, parity-preserving
-   variants and native certificates remain open.
+   variants remain open. `SIS/ModulusSwitch/Native` certifies exact coefficient conversion
+   uniformly over binary moduli and framed runtime row lists; subsequent scheme operations
+   still need native certificates.
 2. **FHEW/TFHE programmable bootstrapping**
    ([Ducas–Micciancio](https://eprint.iacr.org/2014/816);
    [Chillotti–Gama–Georgieva–Izabachène](https://eprint.iacr.org/2016/870)). Ring-GSW external
@@ -116,9 +131,9 @@ families and full-input native runtime.
   log against strict PPT forgers. The arithmetic algorithms and exact typed ROM reduction are
   proved; strict-PPT identification and eavesdropping results do not discharge this signature
   endpoint. Remaining work includes shared encoded signing/hash access, final-message freshness,
-  and a polynomial-time private-coin replay/forking realization ([#2568]). The native saved-coin
-  controller preserves external oracle channels in `2 * coins.length + 1` transitions; its full
-  encoded-input certificate must still charge tape preparation ([#2579]).
+  and an efficient realization of the full forking reduction ([#2568]). The private-coin replay
+  prerequisite now includes a full-input oracle-PPT certificate, tape preparation, and joint
+  external-state preservation ([#2579]).
 - **Lattices**: Fiat–Shamir with aborts and signatures from SIS (Lyubashevsky 2009,
   2012); strict-PPT samplers for integer boxes; identification security under SIS; efficiency
   certificates for the simulator and extractor; full interactive-view simulation;
@@ -902,3 +917,4 @@ not planned, not as proved.
 [#2568]: https://github.com/cslib-community/complexitylib/issues/2568
 
 [#2579]: https://github.com/cslib-community/complexitylib/issues/2579
+[#2585]: https://github.com/cslib-community/complexitylib/issues/2585
