@@ -60,14 +60,16 @@ private lemma fit_epochPeakWords_sampleOps :
   interval_cases N <;> decide
 
 /-- Non-vacuity of `resizableSuccinctDynamicDictionary` on `sampleOps` at
-`(U, V, w) = (4, 8, 64)`. -/
+`(U, V, w) = (4, 8, 64)`, including `ExecRProgramDist` for `p_init` and rejection of
+`[.halt ⟨0, by omega⟩]` via `not_execRProgramDist_halt`. -/
 theorem nonvacuous_resizableSuccinctDynamicDictionary :
     ∃ (r C_init C_op C_space C_word : ℕ) (hr : 256 ≤ r) (p_init p_op : RProgram r)
       (ν_init ν_final : PMF (RState r)) (T_ops : ℝ≥0∞),
       C_space = 1355 ∧
       C_word = 380 ∧
-      RandFaultFreeDemonic 64 p_init ⟨fun _ => 0, fun _ => 0, 10⟩ ∧
-      (∀ adv, expectedTimeDemonic 64 adv p_init ⟨fun _ => 0, fun _ => 0, 10⟩ ≤ C_init) ∧
+      ExecRProgramDist 64 p_init ⟨0, by omega⟩ ⟨fun _ => 0, fun _ => 0, 10⟩ ν_init C_init ∧
+      ¬ ExecRProgramDist 64 [.halt ⟨0, by omega⟩] ⟨0, by omega⟩
+          ⟨fun _ => 0, fun _ => 0, 10⟩ ν_init C_init ∧
       (∀ x_init ∈ ν_init.support,
         RBounded 64 x_init ∧
         x_init.frontier = 10 + compactedEpochWords 4 8 64 0 0 ∧
@@ -82,11 +84,15 @@ theorem nonvacuous_resizableSuccinctDynamicDictionary :
   have hx₀_bdd : RBounded 64 x₀ :=
     ⟨⟨fun _ => (by decide : 0 < 2 ^ 64), fun _ => (by decide : 0 < 2 ^ 64)⟩,
       (by decide : 10 < 2 ^ 64), fun _ _ => rfl⟩
-  obtain ⟨ν_init, ν_final, T_ops, hff, hinit_time, hinit, hexec, htime⟩ :=
+  obtain ⟨ν_init, ν_final, T_ops, hexec_init, hinit, hexec, htime⟩ :=
     hbase 10 (by decide) (by decide) (by decide)
       x₀ hx₀_bdd rfl sampleOps fit_epochPeakWords_sampleOps validDictSeq_sampleOps
+  have hnot_halt :
+      ¬ ExecRProgramDist 64 [.halt ⟨0, by omega⟩] ⟨0, by omega⟩ x₀ ν_init C_init :=
+    not_execRProgramDist_halt 64 10 ⟨0, by omega⟩ x₀ ν_init C_init rfl
+      (fun x hx => (hinit x hx).2.2.1)
   exact ⟨r, C_init, C_op, C_space, C_word, hr, p_init, p_op, ν_init, ν_final, T_ops,
-    hcs, hcw, hff, hinit_time,
+    hcs, hcw, hexec_init, hnot_halt,
     fun x hx => ⟨(hinit x hx).1, (hinit x hx).2.1, (hinit x hx).2.2.1⟩,
     hexec, htime⟩
 
