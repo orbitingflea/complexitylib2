@@ -1921,6 +1921,7 @@ public import Complexity.Computability.Interactive.GKR.Summand
 public import Complexity.Computability.Interactive.Plain
 public import Complexity.Computability.Interactive.RbrKnowledge
 public import Complexity.Computability.Interactive.Security
+public import Complexity.Computability.Interactive.Security.Oracle
 public import Complexity.Computability.Interactive.Security.Repeat
 public import Complexity.Computability.Interactive.Sequential
 public import Complexity.Computability.Interactive.StrategyEffect
@@ -3012,6 +3013,7 @@ public import Complexity.Crypto.Computational.Homomorphic.Leveled.Compactness
 public import Complexity.Crypto.Computational.Homomorphic.Leveled.Correctness
 public import Complexity.Crypto.Computational.Homomorphic.Leveled.Encoding
 public import Complexity.Crypto.Computational.Homomorphic.Leveled.ExactSecurity
+public import Complexity.Crypto.Computational.Homomorphic.Leveled.FlatSecurity
 public import Complexity.Crypto.Computational.Homomorphic.Leveled.GameCoinTape
 public import Complexity.Crypto.Computational.Homomorphic.Leveled.GameOverhead
 public import Complexity.Crypto.Computational.Homomorphic.Leveled.GuessCoinTape
@@ -3229,6 +3231,9 @@ public import Complexity.Crypto.Protocols.Signature.RandomOracle.Simulation
 public import Complexity.Crypto.Protocols.VOLE.AdaptiveMulCheck
 public import Complexity.Crypto.Protocols.VOLE.Basic
 public import Complexity.Crypto.Protocols.VOLE.BatchMulCheck
+public import Complexity.Crypto.Protocols.VOLE.Circuit
+public import Complexity.Crypto.Protocols.VOLE.CircuitPrivacy
+public import Complexity.Crypto.Protocols.VOLE.CircuitSound
 public import Complexity.Crypto.Protocols.VOLE.MaskedMulCheck
 public import Complexity.Crypto.Protocols.VOLE.MulCheck
 public import Complexity.Crypto.Protocols.VOLE.World
@@ -3925,6 +3930,7 @@ public import Complexity.Foundations.Logic.Function.Iterate
 public import Complexity.Foundations.MeasureTheory.Constructions.BorelSpace.Order
 public import Complexity.Foundations.MeasureTheory.Group.ConvolutionDensity
 public import Complexity.Foundations.MeasureTheory.Group.QuotientDensity
+public import Complexity.Foundations.MeasureTheory.Measure.TotalVariation.Map
 public import Complexity.Foundations.NumberTheory.AKS.Coefficients
 public import Complexity.Foundations.NumberTheory.AKS.Correctness
 public import Complexity.Foundations.NumberTheory.AKS.Criterion
@@ -3963,9 +3969,11 @@ public import Complexity.Foundations.Probability.EstimatorSchedule
 public import Complexity.Foundations.Probability.FineOmission
 public import Complexity.Foundations.Probability.FineProductMean
 public import Complexity.Foundations.Probability.FourthRootHierarchyParams
+public import Complexity.Foundations.Probability.Gaussian.CenteredTail
 public import Complexity.Foundations.Probability.Gaussian.Discrete
 public import Complexity.Foundations.Probability.Gaussian.DiscreteTail
 public import Complexity.Foundations.Probability.Gaussian.Fourier
+public import Complexity.Foundations.Probability.Gaussian.MassBounds
 public import Complexity.Foundations.Probability.Gaussian.Multivariate
 public import Complexity.Foundations.Probability.Gaussian.Periodization
 public import Complexity.Foundations.Probability.Gaussian.Poisson

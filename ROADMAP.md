@@ -43,6 +43,12 @@ Priorities live in this list and in the tiers of [#897].
 
 ## Cryptography
 
+Shared statistical infrastructure now propagates all-state, joint reply/state replacement
+bounds through an adaptive oracle program using its existing query-cost budget
+([#2724](https://github.com/cslib-community/complexitylib/issues/2724)). Zero-cost cache operations
+retain their state effects. Applying this composition law to the actual Schnorr signing game,
+transporting key-generation error, and realizing the efficient forking reduction remain [#2568].
+
 ### Cryptographic landmarks
 
 - **Completeness of oblivious transfer.** In the ideal OT-hybrid model, every polynomial-time
@@ -89,8 +95,10 @@ Priorities live in this list and in the tiers of [#897].
   Full arbitrary-lattice Poisson summation for Schwartz functions and shifted positive-width
   Gaussians, including the covolume normalization, is proved in
   [#2624](https://github.com/cslib-community/complexitylib/issues/2624).
-  Uniform control of Gaussian mass ratios, smoothing estimates, efficient sampling and the
-  quantum reduction remain open in
+  Centered Gaussian mass scaling and the strict radius-`s√n` tail bound of Regev’s
+  Lemmas 2.4–2.5 are proved in
+  [#2646](https://github.com/cslib-community/complexitylib/issues/2646). Uniform off-center
+  estimates, smoothing, efficient sampling and the quantum reduction remain open in
   [#1213](https://github.com/cslib-community/complexitylib/issues/1213).
   `Foundations/MeasureTheory/Group/QuotientDensity` folds arbitrary measurable nonnegative
   densities onto countable subgroup quotients, with no finite-mass assumption. Its Gaussian
@@ -119,8 +127,11 @@ from strict-PPT components. Its original selector bias, message swap, tagged sta
 fallback are preserved; supports are derived inside the game. Bit-encryption replay also retains
 linear dependence on participating callback time, with independent workspace and supported
 ciphertext-size bounds and a callback-independent preparation polynomial. This component bound
-does not compare primitive costs with adversary runtime. The literal source loss mapping and
-multiplicative machine-runtime comparison remain open. Develop these in reviewable
+does not compare primitive costs with adversary runtime. A separate
+[flattened reduction](Complexity/Crypto/Computational/Homomorphic/Leveled/FlatSecurity.lean)
+uses a finite-attempt selector over `2 * depth * capacity + 1` signed hybrid steps, retaining
+failure mass and improving the original selector loss without additive error. The literal
+source loss mapping and multiplicative machine-runtime comparison remain open. Develop these in reviewable
 milestones, reusing the finite sampling, gadget algebra, native certificates and game reductions
 where their hypotheses match. The [pre-rewrite FHE section][archive-fhe] maps the schemes to
 current libraries and workloads.
@@ -177,6 +188,10 @@ families and full-input native runtime.
 
 ### Public-key, lattice and symmetric constructions ([#640])
 
+- **Fiat–Shamir query representations**: the finite theorem permits an injective hash-point
+  embedding into an arbitrary query domain, retaining every out-of-image query and the same bound
+  ([#2684](https://github.com/cslib-community/complexitylib/issues/2684)). Concrete word Schnorr
+  specialization and explicit key-generation/signing approximation transport remain open.
 - **Sigma protocols and Fiat–Shamir** ([#581]): computational Schnorr signatures under discrete
   log against strict PPT forgers. Word verification now enforces canonical commitments for canonical
   public keys ([#2672](https://github.com/cslib-community/complexitylib/issues/2672)).
@@ -238,8 +253,13 @@ In order:
   completeness and exact simulation of the full honest receiver view (private key/tags and
   public transcript). `VOLE/AdaptiveMulCheck.lean` extends the exact full-view law to arbitrary
   receivers in that fixed schedule, retaining private coins, state and repeated setup reads.
-  Scalar-challenge batching, adversarial setup and scheduling, full zero-knowledge protocol
-  security, certified efficient realizations and the full VOLE-in-the-head transform remain (#643);
+  `VOLE/Circuit.lean`, `CircuitSound.lean` and `CircuitPrivacy.lean` bind the session to the existing
+  arithmetic-circuit relation `∃ w, C.eval (x ++ w) = y`: public input/output, constant and addition
+  rows join the multiplication batch. Actual role-local soundness has the same mixture bound
+  (5/8 over the fixed F4), and satisfying traces retain exact full-view simulation. Fresh-session
+  amplification, scalar-challenge batching, a complete native circuit prover/verifier certificate,
+  growing-field arithmetic, adversarial setup and scheduling, full zero-knowledge protocol security
+  and VOLE-in-the-head remain (#643);
 - libzk's compositional structure as a composition of these components, without ciphersuites.
 
 ### Concurrent and quantum security
@@ -732,8 +752,8 @@ reusing graph and matroid foundations and the shared data-structure interfaces.
 - **Exact fixed-field sampling:** `Languages/Probabilistic/Sampling/F4.lean` samples Mathlib's
   four-element quadratic field using two fair bits, with encoded arithmetic and sampler
   certificates in `Computability/Probabilistic/Sampling/F4.lean`. Uniform growing extension-field
-  arithmetic remains open. Public circuit binding for VOLE (#2688) and fresh-session soundness
-  amplification remain separate from this scalar prerequisite.
+  arithmetic remains open. The public circuit-bound VOLE session (#2688) consumes its field and
+  gives single-copy error 5/8; fresh-session amplification remains separate.
 - **Markov-chain sampling:** finite kernels, stationarity, reversibility and total-variation
   mixing; coupling, path coupling, conductance and canonical-path arguments. Implement
   Metropolis sampling for encoded rational target weights, charging initialization, arithmetic
@@ -878,6 +898,11 @@ library. Use a growing, source-pinned sample of papers, including some chosen af
 designed, as demanding clients, and promote recurring obligations into shared APIs only after
 reuse is demonstrated.
 
+- **Measure postprocessing.** Canonical full-L1 total variation contracts under measurable
+  maps of arbitrary finite measures, including unequal masses
+  ([#2732](https://github.com/cslib-community/complexitylib/issues/2732)). The actual Gaussian
+  projection/mod-one consumer remains separate in
+  [#2734](https://github.com/cslib-community/complexitylib/issues/2734).
 - **One sensitivity API.** Define the sensitivity measures over any `Fintype` in CSLib and drop
   the separate measures of the sensitivity-separation development.
 - **CNF evaluation certificates:** `fun_prop` certificates for evaluating literals, clauses and
