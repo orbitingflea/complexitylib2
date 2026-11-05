@@ -48,10 +48,19 @@ Priorities live in this list and in the tiers of [#897].
 - **Completeness of oblivious transfer.** In the ideal OT-hybrid model, every polynomial-time
   multiparty functionality admits a protocol secure against static malicious corruptions, with
   real/ideal simulation and abort, under the standard communication assumptions.
+  `Crypto/Protocols/MPC/OTCommitment` supplies the Crépeau commitment ingredient: perfect hiding
+  against adaptive receiver queries and a `2⁻ᵏ` malicious double-opening bound in ideal OT.
+  This fixed-schedule, information-theoretic commitment game has no efficiency certificate or
+  ideal-functionality realization; the malicious compiler and MPC simulation remain open in
+  [#1212](https://github.com/cslib-community/complexitylib/issues/1212).
 - **Regev's worst-case to average-case reduction.** For suitable `q` and Gaussian noise rate
   `α` with `αq > 2√n`, an efficient search-LWE algorithm yields a quantum polynomial-time
   algorithm for worst-case GapSVP and SIVP within `Õ(n/α)`. The noise distribution, modulus
   restrictions and quantum reduction are part of the theorem.
+  The discrete Gaussian foundation proves convergence, positive normalization and translation
+  laws on shifted discrete lattices ([#2573](https://github.com/cslib-community/complexitylib/issues/2573));
+  smoothing estimates, efficient sampling and the quantum reduction remain open in
+  [#1213](https://github.com/cslib-community/complexitylib/issues/1213).
 - **Kilian's succinct arguments** ([#999]). If collision-resistant hash families exist, every
   language in NP has an interactive argument with polylogarithmic communication, by committing
   to a PCP with Merkle trees; Micali's CS proofs and the BCS transform give the random-oracle
@@ -71,7 +80,10 @@ current libraries and workloads.
 1. **Ring arithmetic and RLWE.** Polynomial-ring operations over `(Z/qZ)[X]/(X^d + 1)`, RNS/CRT
    conversions, rounding and modulus-switching error bounds, and negacyclic NTTs implementing
    ring multiplication, with native certificates. Define the RLWE secret and error laws and
-   experiment separately; an ordinary-LWE reduction does not give them.
+   experiment separately; an ordinary-LWE reduction does not give them. Nearest-integer
+   coefficient conversion and the Module-LWE phase-error bound are available in
+   `SIS/ModulusSwitch`; decoding preservation under modulus changes, parity-preserving
+   variants and native certificates remain open.
 2. **FHEW/TFHE programmable bootstrapping**
    ([Ducas–Micciancio](https://eprint.iacr.org/2014/816);
    [Chillotti–Gama–Georgieva–Izabachène](https://eprint.iacr.org/2016/870)). Ring-GSW external
@@ -129,7 +141,10 @@ In order:
   `Reduction.EfficientAuxHVZK`, `Reduction.ComputationalAuxHVZK` in `Interactive/AuxZK.lean`);
 - polynomial commitment and evaluation-query reductions, and the Ligero IOP;
 - the BCS transform to non-interactive arguments in the random-oracle model;
-- VOLE as an ideal functionality, and VOLE-in-the-head;
+- VOLE constraint reductions and VOLE-in-the-head: `VOLE/Basic.lean` supplies ideal correlations,
+  and `VOLE/MulCheck.lean` bounds arbitrary single-gate affine claims by `2 / |F|` with an
+  independent secret key. Batched constraints, zero knowledge, efficient protocol realizations,
+  and the full VOLE-in-the-head transform remain;
 - libzk's compositional structure as a composition of these components, without ciphersuites.
 
 ### Concurrent and quantum security

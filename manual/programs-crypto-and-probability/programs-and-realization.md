@@ -33,9 +33,22 @@ An ideal full random function table and its lazy cache can have the same transcr
 
 Encodings are embeddings into bit lists. This gives faithful representations but does not by itself supply an efficient decoder. The `length_le` theorem derives a polynomial bound on every supported output's encoded length. Congruence transfers the property through equality of laws. Deterministic `ComputableInPolyTime.isPPTOn` embeds ordinary native computation.
 
+For a common coin and output budget, import [CoinTape.Bounds](../../Complexity/Computability/Probabilistic/CoinTape/Bounds.lean). `IsPPTOn.exists_total_seeded_evaluator_with_length` gives one polynomial envelope in the complete encoded input length. Every uniform tape at least that long replays the program exactly, and every supported encoded output fits the same envelope. The native evaluator returns a supported result even on shorter tapes; that support guarantee does not claim the correct distribution for a short tape. [Checked examples](../../ComplexityTests/SeededEvaluatorBounds.lean) use a random word sampler to exercise empty input, short tapes, longer uniform tapes and genuinely different supported outputs.
+
 [IsPPT](https://github.com/cslib-community/complexitylib/blob/13e6a31951bf1c89a1a6258c44f9444aecbbefd8/Complexity/Computability/Probabilistic/Parameter.lean#L48) passes security parameter `n` in unary together with an auxiliary bit string. The clock is polynomial in the combined encoded input, not only in `n`. This is why a security claim over arbitrarily long samples is not automatically the same as a conventional polynomial-length ensemble statement.
 
 The inspectable abstract uses a finite random tape and a deterministic polynomial-time evaluator: [StrictPPT](https://github.com/cslib-community/complexitylib/blob/13e6a31951bf1c89a1a6258c44f9444aecbbefd8/abstracts/ComplexityAbstracts/Randomized.lean#L36). [strictPPT_iff](https://github.com/cslib-community/complexitylib/blob/13e6a31951bf1c89a1a6258c44f9444aecbbefd8/abstracts/ComplexityAbstracts/CryptographyBridge.lean#L59) relates that presentation to the library's native predicate. It is an equivalent presentation with an explicit bridge, not a second unconnected efficiency convention.
+
+For a list traversal with known component seed laws, import
+[Languages.Probabilistic.Traverse.CoinTape](../../Complexity/Languages/Probabilistic/Traverse/CoinTape.lean).
+`ProbComp.eval_mapM_of_uniformList` realizes the original `list.mapM program` by splitting
+`list.length * width` uniform bits into rows and applying `List.zipWith evaluate` to inputs
+and rows. The component law is required only for values in the supplied list. Repeated input
+values still receive independent blocks; empty lists and width zero are allowed. This semantic
+law supplies an explicit seed allocation, while native efficiency remains a separate obligation.
+The existing `IsPPTOn.mapM` certificate uses this same law. The
+[checked examples](../../ComplexityTests/TraversalCoinTape.lean) show distinct seeds at repeated
+inputs and a component law that deliberately fails outside the input list.
 
 ## Open oracle polynomial time
 
