@@ -21,11 +21,11 @@ The adjacent modules supply different semantic tools, not alternative machines:
 | Pathwise query/cost bounds | [Complexity/Languages/Probabilistic/QueryCount.lean](https://github.com/cslib-community/complexitylib/blob/13e6a31951bf1c89a1a6258c44f9444aecbbefd8/Complexity/Languages/Probabilistic/QueryCount.lean) | Bound every branch by an explicit request charge |
 | Transcripts | [Complexity/Languages/Probabilistic/Transcript.lean](https://github.com/cslib-community/complexitylib/blob/13e6a31951bf1c89a1a6258c44f9444aecbbefd8/Complexity/Languages/Probabilistic/Transcript.lean) | Retain dependent request/reply pairs |
 | Memoization and random oracles | [Complexity/Languages/Probabilistic/RandomOracle.lean](https://github.com/cslib-community/complexitylib/blob/13e6a31951bf1c89a1a6258c44f9444aecbbefd8/Complexity/Languages/Probabilistic/RandomOracle.lean) | Repeated calls receive the same cached random answer |
-| Bidirectional random permutations | [Complexity/Languages/Probabilistic/RandomPermutation.lean](https://github.com/cslib-community/complexitylib/blob/13e6a31951bf1c89a1a6258c44f9444aecbbefd8/Complexity/Languages/Probabilistic/RandomPermutation.lean) | Forward/inverse consistency and sampling without replacement |
+| Bidirectional random permutations | [Complexity/Languages/Probabilistic/RandomPermutation.lean](../../Complexity/Languages/Probabilistic/RandomPermutation.lean) | Forward/inverse consistency, `bidirDedup` query deduplication, and sampling without replacement |
 | Coupled simulation and until-bad | [Complexity/Languages/Probabilistic/UntilBad.lean](https://github.com/cslib-community/complexitylib/blob/13e6a31951bf1c89a1a6258c44f9444aecbbefd8/Complexity/Languages/Probabilistic/UntilBad.lean) | Transfer probability bounds until a designated bad event |
 | Replay/forking | [Complexity/Languages/Probabilistic/Forking.lean](https://github.com/cslib-community/complexitylib/blob/13e6a31951bf1c89a1a6258c44f9444aecbbefd8/Complexity/Languages/Probabilistic/Forking.lean) | Explicit tapes and reply lists permit repeatable adversary runs |
 
-An ideal full random function table and its lazy cache can have the same transcript distribution while radically different representation costs. Their semantic equivalence does not, by itself, prove efficient materialization of the full table.
+An ideal full random function table and its lazy cache can have the same transcript distribution while radically different representation costs. Their semantic equivalence does not, by itself, prove efficient materialization of the full table. At the open `OracleComp` level, forward-only query deduplication wraps a program with `memoize OracleComp.query` ([Memoize.lean](../../Complexity/Foundations/Control/Monad/Memoize.lean)), while bidirectional permutation reductions wrap `PermOracleSpec α` programs with `RandomPermutation.bidirDedupStep` / `RandomPermutation.bidirDedup` ([RandomPermutation.lean](../../Complexity/Languages/Probabilistic/RandomPermutation.lean), checked in [RandomPermutationSwitching.lean](../../ComplexityTests/RandomPermutationSwitching.lean)) so both forward hits in `dom(cache)` and inverse hits in `ran(cache)` reuse cached answers without repeating underlying oracle calls, preserving `evalPerm π` output laws, pathwise query bounds, and pairwise-distinct domain/range cache invariants.
 
 ## Closed strict polynomial time
 
@@ -77,6 +77,20 @@ The dotted arrows are obligations of [IsOraclePPTOn](https://github.com/cslib-co
 Request construction, tape-head movement and reply inspection are charged machine operations. The external handler's own computation is outside the oracle machine's cost. A reply may be arbitrarily long; the machine cannot return an arbitrarily long output for free, as the native `length_le` theorem records. Typed oracle interfaces need explicit word encodings and realization certificates before this native predicate applies.
 
 [Complexity/Computability/Probabilistic/Oracle/Substitution.lean](https://github.com/cslib-community/complexitylib/blob/13e6a31951bf1c89a1a6258c44f9444aecbbefd8/Complexity/Computability/Probabilistic/Oracle/Substitution.lean) closes an efficient open program under efficient stateful oracle replacement. The principal endpoint `IsOraclePPTOn.run_interpret_preprocess_open` includes an invariant and controlled growth of replies and encoded handler state. Merely saying that each call is polynomial time would permit iterated state doubling and does not imply a polynomial total run. The underlying [Complexity/Computability/Probabilistic/Realization/OpenOracleSimulation.lean](https://github.com/cslib-community/complexitylib/blob/13e6a31951bf1c89a1a6258c44f9444aecbbefd8/Complexity/Computability/Probabilistic/Realization/OpenOracleSimulation.lean) supplies a machine-configuration simulation; the public theorem is supported by that realization.
+
+Saved-coin execution reuses `MultiTapePTM.runConfigFromCoins` from
+[`CoinTape.lean`](../../Complexity/Computability/Machines/Turing/MultiTape/Probabilistic/CoinTape.lean).
+The native [`Replay/WithOracle.lean`](../../Complexity/Computability/Machines/Turing/MultiTape/Probabilistic/Replay/WithOracle.lean)
+controller reads a supplied bit before executing the source instruction, so a query retains that
+bit's branch and the original request/reply channels. `ReplayWithOracle.run_coins` equates the
+complete programs in `2 * coins.length + 1` transitions, including the final stop. The controller's
+own private samples may be discarded only under a stateless coin law. Its auxiliary-tape operations
+are shared with the native clock in
+[`Machine/AuxiliaryTape.lean`](../../Complexity/Computability/Machines/Turing/MultiTape/Machine/AuxiliaryTape.lean).
+This bound assumes the saved-coin and input tapes are already prepared. The full encoded-input
+`IsOraclePPTOn` certificate must additionally charge decoding and preparation; that obligation
+remains [#2579](https://github.com/cslib-community/complexitylib/issues/2579), before the Schnorr ROM
+replay/forking bridge can use it.
 
 ## Exact versus approximate randomness
 
