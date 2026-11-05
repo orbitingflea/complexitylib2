@@ -310,4 +310,44 @@ info: 'Cslib.DataStructure.Dictionary.WordRAM.ResizableSuccinct.shrink_and_reuse
 #guard_msgs (whitespace := lax) in
 #print axioms shrink_and_reuse_in_place
 
+/--
+info: 'Cslib.DataStructure.Dictionary.WordRAM.ResizableSuccinct.compactedEpochWords_le_succinctWords' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms compactedEpochWords_le_succinctWords
+
+/--
+info: 'Cslib.DataStructure.Dictionary.WordRAM.ResizableSuccinct.w_mul_compactedEpochWords_le_bits' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms w_mul_compactedEpochWords_le_bits
+
+/--
+info: 'Cslib.DataStructure.Dictionary.WordRAM.ResizableSuccinct.dictionary_client_memory_reuse' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms dictionary_client_memory_reuse
+
+/--
+info: 'Cslib.DataStructure.Dictionary.WordRAM.ResizableSuccinct.extractStepRebuildOps_spec' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms extractStepRebuildOps_spec
+
+/--
+info: 'Cslib.DataStructure.Dictionary.WordRAM.ResizableSuccinct.unbounded_seq_machine_expected_amortized' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms unbounded_seq_machine_expected_amortized
+
 end ComplexityTests.DataStructureResizableWord

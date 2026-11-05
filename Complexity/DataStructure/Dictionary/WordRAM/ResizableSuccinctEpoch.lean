@@ -681,7 +681,7 @@ theorem unbounded_seq_expected_amortized {U V w : ℕ}
     omega
 
 /-- Single-step machine-level execution within a valid epoch (`N ≤ U`). -/
-private theorem in_epoch_step_machine_aux {U V w N base : ℕ}
+theorem in_epoch_step_machine_aux {U V w N base : ℕ}
     (hw : 0 < w) (hNU : N ≤ U) (hU : Fits w U) (hV : Fits w V)
     (hfit : Fits w (base + Succinct.space U V w N))
     {x₀ : RData rResizable}
@@ -748,7 +748,7 @@ private theorem in_epoch_step_machine_aux {U V w N base : ℕ}
 /-- Coupled single-step machine execution for an unbounded-capacity dynamic dictionary operation
 `o : Dynamic.Op U`, handling both in-place execution (`EpochValid n' N`) and full epoch rebuilds
 (`¬EpochValid n' N`). -/
-private theorem unbounded_step_machine_aux {U V w base n_init n_init' : ℕ}
+theorem unbounded_step_machine_aux {U V w base n_init n_init' : ℕ}
     (hw : 0 < w) (hU : Fits w U) (hV : Fits w V)
     (hfit_N : Fits w (base + epochPeakWords U V w (targetCap U n_init)))
     (hfit_N' : Fits w (base + epochPeakWords U V w (targetCap U n_init')))
