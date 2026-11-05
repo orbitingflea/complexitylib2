@@ -1923,6 +1923,7 @@ public import Complexity.Computability.Interactive.RbrKnowledge
 public import Complexity.Computability.Interactive.Security
 public import Complexity.Computability.Interactive.Security.Repeat
 public import Complexity.Computability.Interactive.Sequential
+public import Complexity.Computability.Interactive.StrategyEffect
 public import Complexity.Computability.Interactive.Sumcheck
 public import Complexity.Computability.Interactive.ToIP
 public import Complexity.Computability.Kolmogorov.AverageCase
@@ -2910,7 +2911,9 @@ public import Complexity.Crypto.Computational.Encryption.CCA.Interleaved
 public import Complexity.Crypto.Computational.Encryption.Circular
 public import Complexity.Crypto.Computational.Encryption.EncryptThenMAC
 public import Complexity.Crypto.Computational.Encryption.Hybrid
+public import Complexity.Crypto.Computational.Encryption.Hybrid.CCA
 public import Complexity.Crypto.Computational.Encryption.KEMFromPKE
+public import Complexity.Crypto.Computational.Encryption.KEMFromPKE.CCA
 public import Complexity.Crypto.Computational.Encryption.PolyTime
 public import Complexity.Crypto.Computational.Encryption.PublicKeyReplacement
 public import Complexity.Crypto.Computational.EvenMansour
@@ -3110,7 +3113,9 @@ public import Complexity.Crypto.Computational.SIS.Basic
 public import Complexity.Crypto.Computational.SIS.Module
 public import Complexity.Crypto.Computational.SIS.ModuleEncryption
 public import Complexity.Crypto.Computational.SIS.ModulusSwitch
+public import Complexity.Crypto.Computational.SIS.ModulusSwitch.Correctness
 public import Complexity.Crypto.Computational.SIS.ModulusSwitch.Native
+public import Complexity.Crypto.Computational.SIS.Polynomial
 public import Complexity.Crypto.Computational.SchnorrEavesdrop
 public import Complexity.Crypto.Computational.SchnorrIdentification
 public import Complexity.Crypto.Computational.SchnorrProtocol
@@ -3158,12 +3163,14 @@ public import Complexity.Crypto.Protocols.MPC.Basic
 public import Complexity.Crypto.Protocols.MPC.CircuitEval
 public import Complexity.Crypto.Protocols.MPC.Composition
 public import Complexity.Crypto.Protocols.MPC.OTCommitment
+public import Complexity.Crypto.Protocols.MPC.OTCommitment.Equivocation
 public import Complexity.Crypto.Protocols.MPC.OTCommitment.Extraction
 public import Complexity.Crypto.Protocols.MPC.OTCommitment.PolyTime
 public import Complexity.Crypto.Protocols.MPC.PolyTime
 public import Complexity.Crypto.Protocols.MPC.SharedMul
 public import Complexity.Crypto.Protocols.PolynomialCommitment.Basic
 public import Complexity.Crypto.Protocols.SigmaProtocol.Abort
+public import Complexity.Crypto.Protocols.SigmaProtocol.Abort.FiatShamir
 public import Complexity.Crypto.Protocols.SigmaProtocol.Basic
 public import Complexity.Crypto.Protocols.SigmaProtocol.Composition
 public import Complexity.Crypto.Protocols.SigmaProtocol.Computational
@@ -3183,6 +3190,7 @@ public import Complexity.Crypto.Protocols.SigmaProtocol.SchnorrIdentification
 public import Complexity.Crypto.Protocols.SigmaProtocol.SchnorrSignature
 public import Complexity.Crypto.Protocols.Signature.RandomOracle
 public import Complexity.Crypto.Protocols.VOLE.Basic
+public import Complexity.Crypto.Protocols.VOLE.BatchMulCheck
 public import Complexity.Crypto.Protocols.VOLE.MulCheck
 public import Complexity.DataStructure.AVLTree.Basic
 public import Complexity.DataStructure.AVLTree.Erase
@@ -3907,6 +3915,7 @@ public import Complexity.Foundations.Probability.FineOmission
 public import Complexity.Foundations.Probability.FineProductMean
 public import Complexity.Foundations.Probability.FourthRootHierarchyParams
 public import Complexity.Foundations.Probability.Gaussian.Discrete
+public import Complexity.Foundations.Probability.Gaussian.DiscreteTail
 public import Complexity.Foundations.Probability.Gaussian.Multivariate
 public import Complexity.Foundations.Probability.Gaussian.Real
 public import Complexity.Foundations.Probability.Gaussian.Sheppard

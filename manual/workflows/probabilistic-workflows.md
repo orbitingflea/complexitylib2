@@ -20,6 +20,18 @@ zero lattice. This is a mathematical distribution, with no efficient sampler or 
 bound. Regev's quantum worst-case/average-case reduction remains open in
 [issue #1213](https://github.com/cslib-community/complexitylib/issues/1213).
 
+For a quantitative radius estimate, import
+[Gaussian/DiscreteTail.lean](../../Complexity/Foundations/Probability/Gaussian/DiscreteTail.lean).
+Choose a second width `t > s` and a radius `R ≥ 0`.
+`summable_discreteGaussian_mul_exp` proves that the exponential norm-square moment is finite;
+`tsum_toReal_discreteGaussian_mul_exp` identifies it with `gaussianMass L t c / gaussianMass L s c`.
+Writing `κ = π * (1 / s² - 1 / t²) > 0`, `discreteGaussian_norm_ge_le` bounds the probability
+of `R ≤ ‖z - c‖` by `exp (-κ * R²)` times that same ratio. The checked integer-lattice
+client uses `s = 1`, `t = 2`, center `1/2` and radius `2`, giving the decay factor `exp (-3π)`.
+The ratio remains explicit; these results supply neither the dimension-uniform lattice tail
+bound nor the sampling algorithm used in Regev's bootstrapping lemma. Controlling the ratio
+and proving multidimensional lattice Poisson summation remain open.
+
 ## Certify a closed randomized routine
 
 Use `IsPPTOn input output program` when the required conclusion is a uniform, strict polynomial-time implementation on encoded types. The encodings are embeddings into bit lists. One finite-control fair-coin machine and one polynomial clock must work for every input, with exact equality of encoded output laws. Output writing is charged. This is the contract to request before proving a probabilistic routine efficient.
@@ -100,6 +112,14 @@ Use `adaptive_isOraclePPTOn.query_bounds` to obtain polynomial bounds on externa
 <!-- /worked-example -->
 
 When replacing the external handler with an implementation, open [Oracle/Substitution.lean](../../Complexity/Computability/Probabilistic/Oracle/Substitution.lean). The plain-certificate variant `IsOraclePPTOn.run_interpret_preprocess_open'` requires efficient preparation, initialization and handling, plus an invariant and bounds on reply length and added encoded state. Its `hresources` premise also certifies a uniform unary computation of the resource allowance from the original caller and request; an abstract polynomial bound alone does not supply this certificate. Repeated state doubling explains why “each call is polynomial time” is insufficient.
+
+## Derive adaptive decapsulation security
+
+Import [`KEMFromPKE/CCA.lean`](../../Complexity/Crypto/Computational/Encryption/KEMFromPKE/CCA.lean) when the starting assumption is `WordINDCCA2 keyGen encrypt decrypt`. Apply `WordINDCCA2.indistinguishable_encryptKeyEncaps` with the unary polynomial-time certificate for `keyLen`. It proves security of the actual `encryptKeyEncaps` constructor against adaptive postchallenge queries, with exact loss one. The [complete checked client](../../ComplexityTests/Crypto/KEMFromPKECCA.lean) uses `keyLen n = 2 * n` and keeps `n` as the security parameter.
+
+For a runtime conclusion, use `isPPTOn_kemCCAGames_encryptKeyEncaps` with native key generation, encryption, decryption and adversary certificates. For correctness, apply `decrypt_encryptKeyEncaps_some` to a supported encapsulation and the original encryptor's supported-output correctness. These are separate contracts. The same test file checks a correct empty-key instance and distinguishes `none` from `some []`.
+
+Check freshness against raw ciphertext words. The test's native `adaptiveTagDistinguisher` first observes rejection of the exact challenge, then flips a redundant tag and queries again. Because the malformed scheme ignores that tag, the distinct word reveals the key. Its exact advantage is `1 - 2^(-keyLen n)`; the comparison uses a bounded reply prefix, so its strict oracle runtime certificate holds even for arbitrarily long external replies.
 
 ## Certify a list accumulator
 
