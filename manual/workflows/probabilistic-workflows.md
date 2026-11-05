@@ -32,6 +32,45 @@ The ratio remains explicit; these results supply neither the dimension-uniform l
 bound nor the sampling algorithm used in Regev's bootstrapping lemma. Controlling the ratio
 and proving multidimensional lattice Poisson summation remain open.
 
+To vary the center continuously, import
+[Gaussian/Periodization.lean](../../Complexity/Foundations/Probability/Gaussian/Periodization.lean).
+`ZLattice.continuous_gaussianMass L s hs` proves continuity of the normalizer for `hs : 0 < s`.
+The proof establishes summable sup norms of the lattice translates on every compact set, so
+the continuous sum comes from local uniform convergence.
+
+For other decaying functions, import
+[Lattice/Periodization.lean](../../Complexity/Foundations/Analysis/Lattice/Periodization.lean).
+Supply a bundled continuous map `f : C(E, F)` into a complete normed additive group, a real exponent
+`b > Module.finrank ℤ L`, and `f =O[cocompact E] (fun x ↦ ‖x‖ ^ (-b))`.
+`ZLattice.continuous_tsum_translate` proves continuity of `x ↦ ∑' z : L, f (x + z)`;
+`continuous_automorphize` proves continuity of Mathlib's existing `QuotientAddGroup.automorphize`
+on the quotient of `E` by `L.toAddSubgroup`. For a Schwartz function, import
+[Lattice/Schwartz.lean](../../Complexity/Foundations/Analysis/Lattice/Schwartz.lean) and use
+`SchwartzMap.continuous_automorphize` directly. The
+[checked clients](../../ComplexityTests/LatticePeriodization.lean) include a nonzero Schwartz
+bump, an infinite integer lattice, a skew two-dimensional basis, and a rank-zero lattice on
+an off-center compact interval. For Fourier coefficient identification, see
+[the quotient-integral workflow below](#unfold-a-lattice-fourier-coefficient). Covolume normalization
+and full lattice Poisson summation remain separate work.
+
+## Fold a density onto a quotient
+
+Import [QuotientDensity.lean](../../Complexity/Foundations/MeasureTheory/Group/QuotientDensity.lean)
+to push a nonnegative density through a countable additive-subgroup quotient. Given a measurable
+`f : G → ℝ≥0∞`, measurable subgroup translations, an invariant ambient measure `μ`, and
+`hF : IsAddFundamentalDomain Γ.op F μ`, apply
+`QuotientAddGroup.map_withDensity_eq_withDensity_automorphize hF hf`. It identifies the image of
+`μ.withDensity f` with the density `QuotientAddGroup.automorphize f` relative to the image of
+`μ.restrict F`. At the coset of `x`, that density sums `f (x + γ)` over subgroup elements.
+
+The theorem derives measurability on the canonical quotient measurable space and allows infinite
+values and infinite total mass. It does not require a measurable fundamental domain beyond the
+null-measurability already in `hF`. The [checked clients](../../ComplexityTests/QuotientDensity.lean)
+cover bottom and top subgroups, a two-element group, infinite densities on a null measure, and
+the Borel measurable space of a discrete lattice quotient. Gaussian quotient normalization and
+distance estimates are a separate consumer in
+[issue #2681](https://github.com/cslib-community/complexitylib/issues/2681).
+
 ## Certify a closed randomized routine
 
 Use `IsPPTOn input output program` when the required conclusion is a uniform, strict polynomial-time implementation on encoded types. The encodings are embeddings into bit lists. One finite-control fair-coin machine and one polynomial clock must work for every input, with exact equality of encoded output laws. Output writing is charged. This is the contract to request before proving a probabilistic routine efficient.
@@ -73,6 +112,22 @@ example (test : List Bool × Bool × ℕ → Bool)
 <!-- /worked-example -->
 
 Also check the sampler itself. `ProbComp.uniform (Fin 3)` has exact uniform semantics, but a strictly bounded fair-coin machine cannot give each outcome probability one third. The client deliberately tests that `ppt` does not certify it for free. Use an applicable dyadic sampler or the library's approximate-sampling results, carrying the approximation error into the later probability proof.
+
+## Bound a centered-binomial sampler tail
+
+[CenteredBinomial/Concentration.lean](../../Complexity/Languages/Probabilistic/CenteredBinomial/Concentration.lean)
+bounds the law of the existing `sampleCenteredBinomial η` program. For `η > 0` and real
+`B ≥ 0`, `sampleCenteredBinomial_tail_le` gives
+`Pr[B ≤ |z|] ≤ 4 exp(-B²/(2η))`; `sampleCenteredBinomial_strict_tail_le` gives the same
+bound for `B < |z|`. This original two-count union bound is not optimal. Width zero remains
+`pure 0`, so its strict and non-strict zero cutoffs differ.
+
+The [checked clients](../../ComplexityTests/CenteredBinomialConcentration.lean) show positive
+mass at both width-eight endpoints, an empty strict tail above eight, and a non-strict tail
+bound below one. They also certify the actual growing program with `η = 8(l+1)` as
+`IsPPTOn encUnary encIntBin` and bound its strict tail above `4(l+1)` by `4 exp(-(l+1))`.
+The native certificate charges unary width and signed binary output; this scalar result
+supplies neither encryption correctness nor a security reduction.
 
 ## Certify an adaptive oracle client
 
