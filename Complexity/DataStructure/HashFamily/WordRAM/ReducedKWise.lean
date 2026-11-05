@@ -1237,37 +1237,37 @@ private theorem seqAsc_exec {w : ℕ} (f : ℕ → Code .exact 240) (step : ℕ)
     rw [show (n + 1) * step + 1 = (n * step + 1) + step by ring]
     exact hy_exec.seq hz_exec
 
-private theorem and_two_pow_sub_one_lt (a n : ℕ) : a &&& (2 ^ n - 1) < 2 ^ n := by
+theorem and_two_pow_sub_one_lt (a n : ℕ) : a &&& (2 ^ n - 1) < 2 ^ n := by
   rw [Nat.and_two_pow_sub_one_eq_mod]
   exact Nat.mod_lt a (Nat.two_pow_pos n)
 
-private theorem xReg_ne_low (m : ℕ) {r : Fin 240} (hr : r.val < 20) : xReg m ≠ r := by
+theorem xReg_ne_low (m : ℕ) {r : Fin 240} (hr : r.val < 20) : xReg m ≠ r := by
   intro h; have := congrArg Fin.val h; dsimp only [xReg] at this; omega
 
-private theorem accReg_ne_low (m : ℕ) {r : Fin 240} (hr : r.val < 20) : accReg m ≠ r := by
+theorem accReg_ne_low (m : ℕ) {r : Fin 240} (hr : r.val < 20) : accReg m ≠ r := by
   intro h; have := congrArg Fin.val h; dsimp only [accReg] at this; omega
 
-private theorem prodReg_ne_low (d : ℕ) {r : Fin 240} (hr : r.val < 20) : prodReg d ≠ r := by
+theorem prodReg_ne_low (d : ℕ) {r : Fin 240} (hr : r.val < 20) : prodReg d ≠ r := by
   intro h; have := congrArg Fin.val h; dsimp only [prodReg] at this; omega
 
-private theorem xReg_ne_accReg (m₁ m₂ : ℕ) : xReg m₁ ≠ accReg m₂ := by
+theorem xReg_ne_accReg (m₁ m₂ : ℕ) : xReg m₁ ≠ accReg m₂ := by
   intro h; have := congrArg Fin.val h; dsimp only [xReg, accReg] at this; omega
 
-private theorem xReg_ne_prodReg (m d : ℕ) : xReg m ≠ prodReg d := by
+theorem xReg_ne_prodReg (m d : ℕ) : xReg m ≠ prodReg d := by
   intro h; have := congrArg Fin.val h; dsimp only [xReg, prodReg] at this; omega
 
-private theorem accReg_ne_prodReg (m d : ℕ) : accReg m ≠ prodReg d := by
+theorem accReg_ne_prodReg (m d : ℕ) : accReg m ≠ prodReg d := by
   intro h; have := congrArg Fin.val h; dsimp only [accReg, prodReg] at this; omega
 
-private theorem xReg_ne_of_ne {m₁ m₂ : ℕ} (h1 : m₁ < 54) (h2 : m₂ < 54) (hne : m₁ ≠ m₂) :
+theorem xReg_ne_of_ne {m₁ m₂ : ℕ} (h1 : m₁ < 54) (h2 : m₂ < 54) (hne : m₁ ≠ m₂) :
     xReg m₁ ≠ xReg m₂ := by
   intro h; have := congrArg Fin.val h; dsimp only [xReg] at this; omega
 
-private theorem accReg_ne_of_ne {m₁ m₂ : ℕ} (h1 : m₁ < 54) (h2 : m₂ < 54) (hne : m₁ ≠ m₂) :
+theorem accReg_ne_of_ne {m₁ m₂ : ℕ} (h1 : m₁ < 54) (h2 : m₂ < 54) (hne : m₁ ≠ m₂) :
     accReg m₁ ≠ accReg m₂ := by
   intro h; have := congrArg Fin.val h; dsimp only [accReg] at this; omega
 
-private theorem prodReg_ne_of_ne {d₁ d₂ : ℕ} (h1 : d₁ < 108) (h2 : d₂ < 108) (hne : d₁ ≠ d₂) :
+theorem prodReg_ne_of_ne {d₁ d₂ : ℕ} (h1 : d₁ < 108) (h2 : d₂ < 108) (hne : d₁ ≠ d₂) :
     prodReg d₁ ≠ prodReg d₂ := by
   intro h; have := congrArg Fin.val h; dsimp only [prodReg] at this; omega
 
@@ -1329,7 +1329,7 @@ shifts in `regs 5..10`, and splits `α` and `x' = x.regs 1 &&& (2 ^ m - 1)` into
   .seq (halfMulSetupCode (w₀ - 1))
   (.seq halfMulCombineCode (finishReduceCode w₀ b))
 
-private theorem shiftRight_lt_pow_sub {m h a : ℕ} (hle : h ≤ m) (ha : a < 2 ^ m) :
+theorem shiftRight_lt_pow_sub {m h a : ℕ} (hle : h ≤ m) (ha : a < 2 ^ m) :
     a >>> h < 2 ^ (m - h) := by
   rw [Nat.shiftRight_eq_div_pow]
   apply Nat.div_lt_of_lt_mul
@@ -1418,7 +1418,7 @@ private theorem halfMulSetupCode_exec {w m : ℕ} (hm : m < w) (x : Data 240)
   refine ⟨s12, hexec, ?_⟩
   simp +decide [s12, s11, s10, s9, s8, s7, s6, s5, s4, s3, s2, s1]
 
-private theorem halfMulCombineCode_exec {w m α x' : ℕ} (hm : m < w)
+theorem halfMulCombineCode_exec {w m α x' : ℕ} (hm : m < w)
     (hα : α < 2 ^ m) (hx' : x' < 2 ^ m) (x : Data 240)
     (h5 : x.regs 5 = 2 ^ m - 1)
     (h6 : x.regs 6 = m / 2)
@@ -1986,7 +1986,7 @@ private theorem packLimbs_zero_fn (c n : ℕ) : packLimbs c n (fun _ => 0) = 0 :
   | zero => rfl
   | succ n ih => simp [packLimbs, ih]
 
-private theorem zeroProdCode_exec {base w w₀ b b' k r_val acc_val : ℕ}
+theorem zeroProdCode_exec {base w w₀ b b' k r_val acc_val : ℕ}
     (x : Data 240) (hinv : ClmulInv base w w₀ b b' k r_val acc_val x) :
     let t := reducedTrinomialStep w₀ b b'
     let c := reducedChunkBits t
@@ -2048,7 +2048,7 @@ bit-packed Four-Russians table and XORs its low and high `c`-bit halves into `pr
 @[expose] def clmulLimbsCode (L : ℕ) : Code .exact 240 :=
   seqAsc (outerClmulStep L) L
 
-private theorem pair_index_props {c u v : ℕ} (hu : u < 2 ^ c) (hv : v < 2 ^ c) :
+theorem pair_index_props {c u v : ℕ} (hu : u < 2 ^ c) (hv : v < 2 ^ c) :
     (u <<< c) + v < 2 ^ (2 * c) ∧
     ((u <<< c) + v) >>> c = u ∧
     ((u <<< c) + v) &&& (2 ^ c - 1) = v := by
@@ -2066,7 +2066,7 @@ private theorem pair_index_props {c u v : ℕ} (hu : u < 2 ^ c) (hv : v < 2 ^ c)
       Nat.mul_add_mod, Nat.mod_eq_of_lt hv]
   exact ⟨hlt, hdiv, hmod⟩
 
-private theorem innerClmulStep_exec {base w w₀ b b' k r_val acc_val i m : ℕ}
+theorem innerClmulStep_exec {base w w₀ b b' k r_val acc_val i m : ℕ}
     (hc_lt : 2 * reducedChunkBits (reducedTrinomialStep w₀ b b') < w)
     (hfit_space : Fits w (base + space w w₀ b b' k))
     (hi : i < reducedLimbCount (reducedTrinomialStep w₀ b b'))
@@ -2381,7 +2381,7 @@ modulo `X ^ (2 * 3 ^ t) + X ^ (3 ^ t) + 1`, and writes the XOR into `accReg m`. 
 @[expose] def reduceAddCode (L₀ coeffIdx : ℕ) : Code .exact 240 :=
   seqAsc (reduceAddStep L₀ coeffIdx) (2 * L₀)
 
-private theorem reduceAddStep_exec {base w w₀ b b' k r_val P_val : ℕ}
+theorem reduceAddStep_exec {base w w₀ b b' k r_val P_val : ℕ}
     (hc_lt : 2 * reducedChunkBits (reducedTrinomialStep w₀ b b') < w)
     (hfit_space : Fits w (base + space w w₀ b b' k))
     (hP_lt : P_val < 2 ^ (2 * reducedLimbCount (reducedTrinomialStep w₀ b b') *
