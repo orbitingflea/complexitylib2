@@ -3172,6 +3172,7 @@ public import Complexity.DataStructure.Dictionary.WordRAM.LinearProbing.FiveWise
 public import Complexity.DataStructure.Dictionary.WordRAM.ResizableSuccinct
 public import Complexity.DataStructure.Dictionary.WordRAM.ResizableSuccinctCompaction
 public import Complexity.DataStructure.Dictionary.WordRAM.ResizableSuccinctEpoch
+public import Complexity.DataStructure.Dictionary.WordRAM.ResizableSuccinctRebuild
 public import Complexity.DataStructure.Dictionary.WordRAM.Succinct
 public import Complexity.DataStructure.Dictionary.WordRAM.SuccinctBucketOps
 public import Complexity.DataStructure.Dictionary.WordRAM.SuccinctChainOps

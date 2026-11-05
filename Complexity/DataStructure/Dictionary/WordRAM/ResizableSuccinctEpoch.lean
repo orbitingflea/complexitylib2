@@ -8,48 +8,57 @@ module
 -- upstream: candidate
 
 public import Complexity.DataStructure.Dictionary.WordRAM.ResizableSuccinct
+public import Complexity.DataStructure.Dictionary.WordRAM.ResizableSuccinctRebuild
 
 /-!
-# Unbounded-Capacity Epoch Schedule and Client Composition for the Resizable Succinct Dictionary
+# Unbounded-Capacity Epoch Schedule and Machine-Level Rebuild for the Resizable Succinct Dictionary
 
 This module completes the unbounded-capacity word-granular resizable succinct dynamic dictionary
 (`Dynamic.spec U V U`, supporting arbitrary key and value universes `U, V < 2 ^ w` without any
-capacity cap) on top of `Cslib.DataStructure.Dictionary.WordRAM.ResizableSuccinct`.
+capacity cap) on top of `Cslib.DataStructure.Dictionary.WordRAM.ResizableSuccinct` and
+`Cslib.DataStructure.Dictionary.WordRAM.ResizableSuccinctRebuild`.
 
 ## Design choices and architecture
 
 1. **Epoch-based doubling/halving capacity schedule (`EpochValid`, `targetCap`)**:
    To support an unbounded number of insertions and deletions (`Dynamic.spec U V U`) while keeping
-   space tight in the **current** live key count `n_t = (Dynamic.dom s_t).card` at every step `t`
-   and maintaining `O(1)` expected amortized time:
+   the live compacted footprint tight in the **current** live key count
+   `n_t = (Dynamic.dom s_t).card` at every step `t` (`CompactedRep`) and maintaining `O(1)`
+   expected amortized time:
    - An epoch built at key count `n_init ≤ U` chooses capacity parameter
      `N = targetCap U n_init = min (2 * n_init) U`, maintaining the epoch invariant
      `EpochValid n_t N` (`n_t ≤ N ∧ N ≤ 4 * n_t`) and `N ≤ U`.
    - When `n_{t+1}` leaves `[⌈N / 4⌉, N]`, the dictionary rebuilds into a fresh epoch of capacity
-     `N' = targetCap U n_{t+1}` by executing `deallocSuccinctCode`, `allocSuccinctCode` (under
-     demonic `DemonicGrow`), `initFresh`, and `buildOps s_{t+1} (List.finRange U)`. The epoch
-     potential `2 * C_reb * natDist n_t n_init` is `0` immediately after every rebuild, changes by
-     at most `2 * C_reb = O(1)` per operation, and drops by at least `C_reb * (n_{t+1} + 1)` on
-     every rebuild (`add_one_le_two_mul_natDist_of_not_epochValid`).
+     `N' = targetCap U n_{t+1}` by extracting the active `(u, v)` pairs from the `n_t` dense slots
+     `[0, n_t)` of compacted memory via one-round Feistel inversion (`extractStepRebuildOps`,
+     `extractRebuildOps`), executing `allocSuccinctCode` (under demonic `DemonicGrow`), `initFresh`,
+     and inserting the `n_{t+1}` extracted entries. The epoch potential
+     `2 * C_reb * natDist n_t n_init` is `0` immediately after every rebuild, changes by at most
+     `2 * C_reb = O(1)` per operation, and drops by at least `C_reb * (n_{t+1} + 1)` on every
+     rebuild (`add_one_le_two_mul_natDist_of_not_epochValid`).
 2. **Client composition and immediate reuse of released memory
-   (`subroutine_client_reuse_released_memory`, `shrink_and_reuse_in_place`)**:
+   (`dictionary_client_memory_reuse`, `subroutine_client_reuse_released_memory`,
+   `shrink_and_reuse_in_place`)**:
    In a single linear word-resizable memory `[0, L)` (`RData`), shrinking the dictionary via
    `RCode.shrink` returns released words to the unallocated suffix `[x.frontier, ∞)` so subsequent
-   client allocations under demonic `DemonicGrow` reuse the exact same addresses `[base, ...)`.
+   client allocations under demonic `DemonicGrow` reuse the exact same addresses while preserving
+   `CompactedRep` on `[base, x.frontier)`.
 
 ## Main definitions
 
 * `Cslib.DataStructure.Dictionary.WordRAM.ResizableSuccinct.EpochValid`, `targetCap`, `natDist`,
-  `buildOps`, `maxOpFactor`, `maxChargeVal`, `rebuildUnitCost`, `resizableChargeVal`,
-  `epochTotalPotential`, `runEpochInit`: unbounded-capacity epoch schedule, rebuild operation list,
-  and uniform `O(1)` per-operation expected amortized charge.
+  `extractStepRebuildOps`, `epochPeakWords`, `maxOpFactor`, `maxChargeVal`, `rebuildUnitCost`,
+  `resizableChargeVal`, `epochTotalPotential`, `runEpochInit`: unbounded-capacity epoch schedule,
+  machine-extracted rebuild operation list, and uniform `O(1)` per-operation expected amortized
+  charge.
 
 ## Main results
 
-* `Cslib.DataStructure.Dictionary.WordRAM.ResizableSuccinct.rebuild_epoch_expected_amortized`,
-  `unbounded_step_expected_amortized`, `unbounded_seq_expected_amortized`: end-to-end `O(1)`
-  expected amortized time and stepwise `n_t`-tight space across any valid operation sequence under
-  `Dynamic.spec U V U` (no capacity cap).
+* `Cslib.DataStructure.Dictionary.WordRAM.ResizableSuccinct.extractStepRebuildOps_spec`,
+  `rebuild_epoch_expected_amortized`, `unbounded_step_expected_amortized`,
+  `unbounded_seq_expected_amortized`, `unbounded_seq_machine_expected_amortized`: end-to-end `O(1)`
+  expected amortized time and stepwise `n_t`-tight `CompactedRep` space across any valid operation
+  sequence under `Dynamic.spec U V U` (no capacity cap).
 * `Cslib.DataStructure.Dictionary.WordRAM.ResizableSuccinct.shrink_and_reuse_in_place`,
   `subroutine_client_reuse_released_memory`: client theorems demonstrating subroutine composition
   and reuse of released memory in a single linear word-resizable memory `[0, L)`.
@@ -73,158 +82,349 @@ open scoped BigOperators ENNReal
 
 /-! ## Section 5: Unbounded-Capacity Doubling/Halving Epoch Schedule (`Dynamic.spec U V U`) -/
 
-/-! ### Rebuilding an epoch from `Dynamic.empty U` via `buildOps` -/
+/-! ### Rebuilding an epoch from `CompactedRep` via `extractStepRebuildOps` -/
 
-/-- Construct the list of `.insert u v` operations for all keys `u ∈ L` present in `s`. -/
+/-- Peak word footprint of an epoch of capacity `N`: covers both the virtual workspace
+`Succinct.space U V w N` and the compacted layout `compactedEpochWords U V w N n` (`n ≤ N`). -/
 @[expose]
-def buildOps {U : ℕ} (s : Dynamic.State U) : List (Fin U) → List (Dynamic.Op U)
-  | [] => []
-  | u :: us =>
-    match s u with
-    | none => buildOps s us
-    | some v => .insert u v :: buildOps s us
+def epochPeakWords (U V w N : ℕ) : ℕ :=
+  max (Succinct.space U V w N) (compactedEpochWords U V w N N)
 
-/-- Agreement invariant for `buildOps`: `s₀` is `none` on `L` and agrees with `s` outside `L`. -/
-def RestrictOut {U : ℕ} (L : List (Fin U)) (s₀ s : Dynamic.State U) : Prop :=
-  (∀ u ∈ L, s₀ u = none) ∧ (∀ u, u ∉ L → s₀ u = s u)
+theorem space_le_epochPeakWords (U V w N : ℕ) :
+    Succinct.space U V w N ≤ epochPeakWords U V w N :=
+  Nat.le_max_left _ _
 
-private theorem buildOps_spec_aux {U V N : ℕ} {s : Dynamic.State U}
-    (hvb : Dynamic.ValuesBounded V s) (hcard : (Dynamic.dom s).card ≤ N) :
-    ∀ (L : List (Fin U)) (_hnd : L.Nodup) (s₀ : Dynamic.State U)
-      (_hro : RestrictOut L s₀ s),
-      ((Dynamic.spec U V N).run s₀ (buildOps s L)).1 = s ∧
-      (Dynamic.spec U V N).ValidHistory s₀ (buildOps s L) ∧
-      (Dynamic.dom s₀).card + (buildOps s L).length = (Dynamic.dom s).card
-  | [], _, s₀, hro => by
-    have heq : s₀ = s := funext fun u => hro.2 u (List.not_mem_nil)
-    subst heq
-    exact ⟨rfl, trivial, by simp [buildOps]⟩
-  | u :: us, hnd, s₀, hro => by
-    obtain ⟨hu_not, hnd_us⟩ := List.nodup_cons.mp hnd
-    have hs₀_u : s₀ u = none := hro.1 u (List.mem_cons_self)
-    unfold buildOps
-    cases hsu : s u with
-    | none =>
-      have hro' : RestrictOut us s₀ s := by
-        refine ⟨fun x hx => hro.1 x (List.mem_cons_of_mem u hx), fun x hx => ?_⟩
-        by_cases hxu : x = u
-        · subst hxu; rw [hs₀_u, hsu]
-        · exact hro.2 x (by simp [hxu, hx])
-      exact buildOps_spec_aux hvb hcard us hnd_us s₀ hro'
-    | some v =>
-      let s₁ : Dynamic.State U := Function.update s₀ u (some v)
-      have hro₁ : RestrictOut us s₁ s := by
-        refine ⟨fun x hx => ?_, fun x hx => ?_⟩
-        · have hxu : x ≠ u := fun h => hu_not (h ▸ hx)
-          dsimp only [s₁]
-          rw [Function.update_of_ne hxu]
-          exact hro.1 x (List.mem_cons_of_mem u hx)
-        · by_cases hxu : x = u
-          · subst hxu; simp [s₁, hsu]
-          · dsimp only [s₁]
-            rw [Function.update_of_ne hxu]
-            exact hro.2 x (by simp [hxu, hx])
-      have hv_lt : v < V := hvb u v hsu
-      have hdom₁ : (Dynamic.dom s₁).card = (Dynamic.dom s₀).card + 1 :=
-        Dictionary.card_dom_insert_eq_of_eq_none hs₀_u v
-      obtain ⟨hrun, hvh, hlen⟩ := buildOps_spec_aux hvb hcard us hnd_us s₁ hro₁
-      have hlt_N : (Dynamic.dom s₀).card < N := by omega
-      have hval_u : (Dynamic.spec U V N).valid s₀ (.insert u v) := ⟨Or.inl hlt_N, hv_lt⟩
-      refine ⟨hrun, ⟨hval_u, hvh⟩, ?_⟩
-      simp only [List.length_cons]
+theorem compactedEpochWords_le_epochPeakWords {U V w N n : ℕ} (hnN : n ≤ N) :
+    compactedEpochWords U V w N n ≤ epochPeakWords U V w N := by
+  refine le_trans ?_ (Nat.le_max_right _ _)
+  rcases Nat.eq_zero_or_pos n with rfl | hn_pos
+  · rcases Nat.eq_zero_or_pos N with rfl | hN_pos
+    · rfl
+    · simp only [compactedEpochWords, ite_true, hN_pos.ne', ite_false, offCompItems,
+        offDenseToTail, offTailToDense, offCompGM, offCompLM, epochHdrWords]
       omega
+  · have hN_pos : 0 < N := lt_of_lt_of_le hn_pos hnN
+    simp only [compactedEpochWords, hn_pos.ne', hN_pos.ne', ite_false]
+    have hitem_le : (n * (quotientBits U N + valBits V) + w - 1) / w ≤
+        (N * (quotientBits U N + valBits V) + w - 1) / w :=
+      Nat.div_le_div_right
+        (by have := Nat.mul_le_mul_right (quotientBits U N + valBits V) hnN; omega)
+    unfold compactedItemWords
+    omega
 
-/-- **Correctness, validity, and exact length of `buildOps s (List.finRange U)`:**
-For any `s : Dynamic.State U` with `ValuesBounded V s` and `(Dynamic.dom s).card ≤ N`,
-`buildOps s (List.finRange U)` has length `(Dynamic.dom s).card`, is a valid history from
-`Dynamic.empty U` under `Dynamic.spec U V N`, and reaches `s`. -/
-theorem buildOps_finRange_spec {U V N : ℕ} {s : Dynamic.State U}
-    (hvb : Dynamic.ValuesBounded V s) (hcard : (Dynamic.dom s).card ≤ N) :
-    ((Dynamic.spec U V N).run (Dynamic.empty U) (buildOps s (List.finRange U))).1 = s ∧
-    (Dynamic.spec U V N).ValidHistory (Dynamic.empty U) (buildOps s (List.finRange U)) ∧
-    (buildOps s (List.finRange U)).length = (Dynamic.dom s).card := by
-  have hro : RestrictOut (List.finRange U) (Dynamic.empty U) s :=
-    ⟨fun _ _ => rfl, fun u hu => absurd (List.mem_finRange u) hu⟩
+/-- **Unified compaction theorem (`compactedRep_of_epochValid`):**
+For any `n, N` satisfying `EpochValid n N` and `N ≤ U`, and any virtual state `y : Data rSuccinct`
+satisfying `Succinct.Rep U V w N base θ s y`, the compacted machine state
+`x_comp := compactedOfVirt U V w N n base y` satisfies `CompactedRep U V w N n base s x_comp`,
+has `x_comp.regs = y.regs`, and preserves caller memory `< base`. -/
+theorem compactedRep_of_epochValid {U V w N n base : ℕ}
+    (hw : 0 < w) (hU : Fits w U) (hV : Fits w V)
+    (hepoch : EpochValid n N) (hNU : N ≤ U)
+    (hfit : Fits w (base + compactedEpochWords U V w N n))
+    {s : Dynamic.State U} (hcard : (Dynamic.dom s).card = n)
+    (hvals : Dynamic.ValuesBounded V s)
+    {θ : QuotHashSeed U N} {y : Data rSuccinct}
+    (hrep_y : Succinct.Rep U V w N base θ s y) :
+    let x_comp := compactedOfVirt U V w N n base y
+    CompactedRep U V w N n base s x_comp ∧
+    x_comp.regs = y.regs ∧
+    (∀ a < base, x_comp.mem a = y.mem a) := by
+  rcases Nat.eq_zero_or_pos n with rfl | hn_pos
+  · have hN0 : N = 0 := by have := hepoch.2; omega
+    subst hN0
+    exact compactedRep_of_zero hrep_y.1 hfit hcard
+  · exact compactedRep_of_succinctRep hw hU hV hn_pos hepoch.1 hepoch.2 hNU hfit hcard hvals hrep_y
+
+/-- Machine-extracted rebuild sequence after applying operation `o` to a compacted state `mem`
+with `n` active items in epoch `N_old`: scans `d ∈ List.range n` in `mem`, reconstructs each
+key `u_d` via Feistel inversion (`reconstructKeyAt`) and value `v_d` (`reconstructValAt`), skips
+any slot matching the modified key of `o`, and appends `.insert u v` when `o = .insert u v`. -/
+@[expose]
+noncomputable def extractStepRebuildOps (U V w N_old n base : ℕ) (θ : QuotHashSeed U N_old)
+    (mem : ℕ → ℕ) (o : Dynamic.Op U) : List (Dynamic.Op U) :=
+  if hU : 0 < U then
+    let uFn : ℕ → Fin U := fun d =>
+      ⟨reconstructKeyAt U V w N_old n base θ mem d % U, Nat.mod_lt _ hU⟩
+    let vFn : ℕ → ℕ := reconstructValAt U V w N_old n base mem
+    match o with
+    | .query _ => extractOpsAux uFn vFn (List.range n)
+    | .delete u =>
+      extractOpsAux uFn vFn ((List.range n).filter (fun d => decide (uFn d ≠ u)))
+    | .insert u v =>
+      extractOpsAux uFn vFn ((List.range n).filter (fun d => decide (uFn d ≠ u))) ++
+        [.insert u v]
+  else []
+
+private theorem run_snoc_insert {U V N' : ℕ} {s₀ s₁ : Dynamic.State U}
+    {ops : List (Dynamic.Op U)} (u : Fin U) (v : ℕ)
+    (hrun : ((Dynamic.spec U V N').run s₀ ops).1 = s₁)
+    (hvh : (Dynamic.spec U V N').ValidHistory s₀ ops)
+    (hval : (Dynamic.spec U V N').valid s₁ (.insert u v)) :
+    ((Dynamic.spec U V N').run s₀ (ops ++ [.insert u v])).1 =
+      Function.update s₁ u (some v) ∧
+    (Dynamic.spec U V N').ValidHistory s₀ (ops ++ [.insert u v]) := by
+  induction ops generalizing s₀ with
+  | nil =>
+    subst hrun
+    exact ⟨rfl, ⟨hval, trivial⟩⟩
+  | cons op ops ih =>
+    exact ⟨(ih hrun hvh.2).1, ⟨hvh.1, (ih hrun hvh.2).2⟩⟩
+
+private theorem extractOpsAux_filter_spec {U V N' n : ℕ} {s_abs : Dynamic.State U}
+    {uFn : ℕ → Fin U} {vFn : ℕ → ℕ}
+    (hspec : ∀ d < n, s_abs (uFn d) = some (vFn d) ∧ vFn d < V)
+    (hinj : ∀ d₁ < n, ∀ d₂ < n, uFn d₁ = uFn d₂ → d₁ = d₂)
+    (hsurj : ∀ u ∈ Dynamic.dom s_abs, ∃ d < n, uFn d = u)
+    (u_del : Fin U)
+    (hcard_del : (Dynamic.dom (Function.update s_abs u_del none)).card ≤ N') :
+    let L := (List.range n).filter (fun d => decide (uFn d ≠ u_del))
+    let s_del := Function.update s_abs u_del none
+    ((Dynamic.spec U V N').run (Dynamic.empty U) (extractOpsAux uFn vFn L)).1 = s_del ∧
+    (Dynamic.spec U V N').ValidHistory (Dynamic.empty U) (extractOpsAux uFn vFn L) ∧
+    (extractOpsAux uFn vFn L).length = (Dynamic.dom s_del).card := by
+  intro L s_del
+  have hnd : L.Nodup := List.Nodup.filter _ List.nodup_range
+  have hlt : ∀ d ∈ L, d < n := fun d hd => List.mem_range.mp (List.mem_filter.mp hd).1
+  have hne_del : ∀ d ∈ L, uFn d ≠ u_del :=
+    fun d hd => of_decide_eq_true (List.mem_filter.mp hd).2
+  have hspec_L : ∀ d ∈ L, s_del (uFn d) = some (vFn d) ∧ vFn d < V := by
+    intro d hd
+    dsimp only [s_del]
+    rw [Function.update_of_ne (hne_del d hd)]
+    exact hspec d (hlt d hd)
+  have hro : DenseRestrictOut uFn L (Dynamic.empty U) s_del := by
+    refine And.intro (fun _ _ => rfl) fun u hu => ?_
+    dsimp only [s_del]
+    by_cases hu_del : u = u_del
+    · subst hu_del
+      simp [Dynamic.empty, Dictionary.empty]
+    · rw [Function.update_of_ne hu_del]
+      rcases hsu : s_abs u with _ | v
+      · rfl
+      · obtain ⟨d, hd_lt, hd_eq⟩ :=
+          hsurj u (Finset.mem_filter.mpr ⟨Finset.mem_univ u, by simp [hsu]⟩)
+        have hd_L : d ∈ L :=
+          List.mem_filter.mpr ⟨List.mem_range.mpr hd_lt, decide_eq_true (hd_eq ▸ hu_del)⟩
+        exact absurd hd_eq (hu d hd_L)
   obtain ⟨hrun, hvh, hlen⟩ :=
-    buildOps_spec_aux hvb hcard (List.finRange U) (List.nodup_finRange U) (Dynamic.empty U) hro
+    extractOpsAux_spec_aux hinj hcard_del L hnd hlt hspec_L (Dynamic.empty U) hro
   simp only [Dictionary.dom_empty, Finset.card_empty, Nat.zero_add] at hlen
-  exact ⟨hrun, hvh, hlen⟩
+  exact ⟨hrun, hvh, by rw [extractOpsAux_length, hlen]⟩
+
+/-- **Specification of `extractStepRebuildOps` (`extractStepRebuildOps_spec`):**
+Given any compacted machine state `x` satisfying `CompactedRep U V w N_old n base s_abs x`, any
+valid operation `o : Dynamic.Op U`, and any target capacity `N' ≥ n'`, there exists a seed
+`θ : QuotHashSeed U N_old` such that `extractStepRebuildOps U V w N_old n base θ x.mem o`
+reconstructs `s' = ((Dynamic.spec U V U).stepFn s_abs o).1` from `Dynamic.empty U`, is a valid
+operation history under `Dynamic.spec U V N'`, and has exact length `n' = (Dynamic.dom s').card`. -/
+theorem extractStepRebuildOps_spec {r U V w N_old N' n base : ℕ}
+    {s_abs : Dynamic.State U} {x : RData r}
+    (hrep : CompactedRep U V w N_old n base s_abs x)
+    (o : Dynamic.Op U) (hval : (Dynamic.spec U V U).valid s_abs o)
+    (hn'N' : (Dynamic.dom ((Dynamic.spec U V U).stepFn s_abs o).1).card ≤ N') :
+    ∃ θ : QuotHashSeed U N_old,
+      let ops_reb := extractStepRebuildOps U V w N_old n base θ x.mem o
+      ((Dynamic.spec U V N').run (Dynamic.empty U) ops_reb).1 =
+        ((Dynamic.spec U V U).stepFn s_abs o).1 ∧
+      (Dynamic.spec U V N').ValidHistory (Dynamic.empty U) ops_reb ∧
+      ops_reb.length = (Dynamic.dom ((Dynamic.spec U V U).stepFn s_abs o).1).card := by
+  have hU : 0 < U := match o with | .insert u _ | .delete u | .query u => u.pos
+  rcases hrep.epoch_inv with ⟨rfl, rfl⟩ | ⟨_, _, _, hNU, x_virt, θ, hinv, _, _, hgm, hST,
+    hbij, hq, hv⟩
+  · -- Empty old epoch (`n = 0, N_old = 0`): `s_abs = Dynamic.empty U`
+    have hempty : s_abs = Dynamic.empty U := by
+      have hdom0 : Dynamic.dom s_abs = ∅ := Finset.card_eq_zero.mp hrep.card_eq
+      funext u
+      rcases hsu : s_abs u with _ | v
+      · rfl
+      · have hu_mem : u ∈ Dynamic.dom s_abs :=
+          Finset.mem_filter.mpr ⟨Finset.mem_univ u, by simp [hsu]⟩
+        rw [hdom0] at hu_mem
+        exact absurd hu_mem (Finset.notMem_empty u)
+    subst hempty
+    refine ⟨default, ?_⟩
+    cases o with
+    | query u =>
+      dsimp only
+      simp only [extractStepRebuildOps, hU, dite_true, List.range_zero, extractOpsAux]
+      exact ⟨rfl, trivial, by simp [Dictionary.dom_empty]⟩
+    | delete u =>
+      have hup : Function.update (Dynamic.empty U) u none = Dynamic.empty U := by
+        funext x
+        by_cases hx : x = u <;> simp [hx, Dynamic.empty, Dictionary.empty]
+      dsimp only
+      simp only [extractStepRebuildOps, hU, dite_true, List.range_zero, List.filter_nil,
+        extractOpsAux]
+      exact ⟨hup.symm, trivial, by rw [hup]; simp [Dictionary.dom_empty]⟩
+    | insert u v =>
+      have hcard_ins :
+          (Dynamic.dom ((Dynamic.spec U V U).stepFn (Dynamic.empty U) (.insert u v)).1).card =
+            1 := by
+        have h1 := Dictionary.card_dom_insert_eq_of_eq_none (rfl : (Dynamic.empty U) u = none) v
+        simp only [Dictionary.dom_empty, Finset.card_empty, Nat.zero_add] at h1
+        exact h1
+      have hval_N' : (Dynamic.spec U V N').valid (Dynamic.empty U) (.insert u v) := by
+        refine ⟨Or.inl ?_, hval.2⟩
+        simp only [Dictionary.dom_empty, Finset.card_empty]
+        omega
+      dsimp only
+      simp only [extractStepRebuildOps, hU, dite_true, List.range_zero, List.filter_nil,
+        extractOpsAux, List.nil_append]
+      exact ⟨rfl, ⟨hval_N', trivial⟩, hcard_ins.symm⟩
+  · -- Active old epoch (`1 ≤ n ≤ N_old ≤ 4 * n, N_old ≤ U`)
+    refine ⟨θ, ?_⟩
+    obtain ⟨h1, hinj, hsurj⟩ :=
+      reconstructKeyAt_spec hrep.vals_lt hinv hgm hST hbij hq hv hNU
+    let uFn : ℕ → Fin U := fun d =>
+      ⟨reconstructKeyAt U V w N_old n base θ x.mem d % U, Nat.mod_lt _ hU⟩
+    let vFn : ℕ → ℕ := reconstructValAt U V w N_old n base x.mem
+    have huFn_val : ∀ d < n, (uFn d).val = reconstructKeyAt U V w N_old n base θ x.mem d := by
+      intro d hd
+      exact Nat.mod_eq_of_lt (h1 d hd).1
+    have hspec : ∀ d < n, s_abs (uFn d) = some (vFn d) ∧ vFn d < V := by
+      intro d hd
+      obtain ⟨hu_lt, hs_eq, hv_lt⟩ := h1 d hd
+      have hfin : uFn d = ⟨reconstructKeyAt U V w N_old n base θ x.mem d, hu_lt⟩ :=
+        Fin.ext (Nat.mod_eq_of_lt hu_lt)
+      rw [hfin]
+      exact ⟨hs_eq, hv_lt⟩
+    have hinj' : ∀ d₁ < n, ∀ d₂ < n, uFn d₁ = uFn d₂ → d₁ = d₂ := by
+      intro d₁ hd₁ d₂ hd₂ heq
+      have hval_eq := congrArg Fin.val heq
+      rw [huFn_val d₁ hd₁, huFn_val d₂ hd₂] at hval_eq
+      exact hinj d₁ hd₁ d₂ hd₂ hval_eq
+    have hsurj' : ∀ u ∈ Dynamic.dom s_abs, ∃ d < n, uFn d = u := by
+      intro u hu
+      obtain ⟨d, hd_lt, hd_eq⟩ := hsurj u (Finset.mem_filter.mp hu).2
+      exact ⟨d, hd_lt, Fin.ext (by rw [huFn_val d hd_lt, hd_eq])⟩
+    cases o with
+    | query u =>
+      have hro : DenseRestrictOut uFn (List.range n) (Dynamic.empty U) s_abs := by
+        refine And.intro (fun _ _ => rfl) fun u' hu' => ?_
+        rcases hsu : s_abs u' with _ | v
+        · rfl
+        · obtain ⟨d, hd_lt, hd_eq⟩ :=
+            hsurj' u' (Finset.mem_filter.mpr ⟨Finset.mem_univ u', by simp [hsu]⟩)
+          exact absurd hd_eq (hu' d (List.mem_range.mpr hd_lt))
+      obtain ⟨hrun, hvh, hlen⟩ :=
+        extractOpsAux_spec_aux hinj' hn'N' (List.range n) List.nodup_range
+          (fun _ hd => List.mem_range.mp hd) (fun d hd => hspec d (List.mem_range.mp hd))
+          (Dynamic.empty U) hro
+      simp only [Dictionary.dom_empty, Finset.card_empty, Nat.zero_add] at hlen
+      simp only [extractStepRebuildOps, hU, dite_true]
+      exact ⟨hrun, hvh, by rw [extractOpsAux_length, List.length_range, hrep.card_eq]⟩
+    | delete u =>
+      simp only [extractStepRebuildOps, hU, dite_true]
+      exact extractOpsAux_filter_spec hspec hinj' hsurj' u hn'N'
+    | insert u v =>
+      let s_del := Function.update s_abs u none
+      let s_ins := Function.update s_abs u (some v)
+      have h_idem : Function.update s_del u (some v) = s_ins := by
+        simp [s_del, s_ins]
+      have hs_del_u : s_del u = none := Function.update_self u none s_abs
+      have hcard_ins : (Dynamic.dom s_ins).card = (Dynamic.dom s_del).card + 1 := by
+        rw [← h_idem]
+        exact Dictionary.card_dom_insert_eq_of_eq_none hs_del_u v
+      have hstep_eq : ((Dynamic.spec U V U).stepFn s_abs (.insert u v)).1 = s_ins := rfl
+      rw [hstep_eq] at hn'N'
+      have hcard_del_lt : (Dynamic.dom s_del).card < N' := by omega
+      obtain ⟨hrun_del, hvh_del, hlen_del⟩ :=
+        extractOpsAux_filter_spec hspec hinj' hsurj' u (le_of_lt hcard_del_lt)
+      have hval_ins : (Dynamic.spec U V N').valid s_del (.insert u v) :=
+        ⟨Or.inl hcard_del_lt, hval.2⟩
+      obtain ⟨hrun_ins, hvh_ins⟩ := run_snoc_insert u v hrun_del hvh_del hval_ins
+      rw [h_idem] at hrun_ins
+      simp only [extractStepRebuildOps, hU, dite_true]
+      refine ⟨hrun_ins, hvh_ins, ?_⟩
+      rw [List.length_append, List.length_singleton, hlen_del]
+      exact hcard_ins.symm
 
 /-- **Epoch rebuild theorem on `RData` (`rebuild_epoch_expected_amortized`):**
-Given any target state `s : Dynamic.State U` with `ValuesBounded V s`, rebuilding the succinct
-dictionary into epoch capacity `N = targetCap U (Dynamic.dom s).card` from `x : RData` with
-`x.frontier = base` under **demonic** `DemonicGrow`:
-1. Allocates and zeroes `[base, base + Succinct.space U V w N)` via `allocSuccinctCode` in
-   `4 * Succinct.space U V w N + 8` instructions (`RDemonicExec`),
-2. Initializes the hash table and inserts all `(Dynamic.dom s).card` entries of `s` via
-   `buildOps s (List.finRange U)` in expected total instruction count at most
-   `31 * N + 1092 + (Dynamic.dom s).card * chargeVal`,
-3. Produces a distribution `ν_final` whose support satisfies `ResizableRep U V w N base θ s y`
-   with active epoch word footprint `activeEpochWords U V w N (Dynamic.dom s).card ≤
-   Dynamic.succinctWords 312 213 U V w (Dynamic.dom s).card`. -/
-theorem rebuild_epoch_expected_amortized {U V w base : ℕ}
+Given a compacted machine state `x_prev` satisfying
+`CompactedRep U V w N_old (Dynamic.dom s).card base s x_prev` and a valid operation
+`o : Dynamic.Op U`, rebuilding the post-step state `s' = ((Dynamic.spec U V U).stepFn s o).1` into
+epoch capacity `N' = targetCap U (Dynamic.dom s').card` from `x : RData` with `x.frontier = base`
+under **demonic** `DemonicGrow`:
+1. Extracts the `n' = (Dynamic.dom s').card` operations `extractStepRebuildOps` from `x_prev.mem`
+   and `o` by scanning active dense slots `d ∈ List.range n` and inverting `feistelBucket` /
+   `keyQuotient`,
+2. Allocates and zeroes `[base, base + Succinct.space U V w N')` via `allocSuccinctCode` in
+   `4 * Succinct.space U V w N' + 8` instructions (`RDemonicExec`),
+3. Initializes the hash table and inserts all `n'` extracted entries via `extractStepRebuildOps`
+   in expected total instruction count at most `31 * N' + 1092 + n' * chargeVal`,
+4. Produces a distribution `ν_final` whose support satisfies `ResizableRep U V w N' base θ s' y`
+   and packs to `CompactedRep U V w N' n' base s' (compactedOfVirt U V w N' n' base y)`. -/
+theorem rebuild_epoch_expected_amortized {r_prev U V w N_old base : ℕ}
     (hw : 0 < w) (hU : Fits w U) (hV : Fits w V)
-    {s : Dynamic.State U} (hvb : Dynamic.ValuesBounded V s)
-    (hfit : Fits w (base + Succinct.space U V w (targetCap U (Dynamic.dom s).card)))
+    {s : Dynamic.State U} {x_prev : RData r_prev}
+    (hrep_prev : CompactedRep U V w N_old (Dynamic.dom s).card base s x_prev)
+    (o : Dynamic.Op U) (hval : (Dynamic.spec U V U).valid s o)
+    (hfit : Fits w (base + Succinct.space U V w
+      (targetCap U (Dynamic.dom ((Dynamic.spec U V U).stepFn s o).1).card)))
     {x : RData rSuccinct}
     (hx : x.Bounded w) (hfr : x.frontier = base) :
-    let n := (Dynamic.dom s).card
-    let N := targetCap U n
-    ∃ (x₁ : RData rSuccinct)
-      (ν₀ ν_final : PMF ((Succinct.impl hw (targetCap_le_univ U n) hU hV hfit).Seed ×
+    let s' := ((Dynamic.spec U V U).stepFn s o).1
+    let n' := (Dynamic.dom s').card
+    let N' := targetCap U n'
+    ∃ (θ_old : QuotHashSeed U N_old) (x₁ : RData rSuccinct)
+      (ν₀ ν_final : PMF ((Succinct.impl hw (targetCap_le_univ U n') hU hV hfit).Seed ×
         Data rSuccinct))
       (T_ops : ℝ≥0∞),
-      RDemonicExec w (allocSuccinctCode U V w N) x (4 * Succinct.space U V w N + 8) (· = x₁) ∧
-      ExecCodeDist w (subroutineCode U V w N).initFresh (x₁.set frontierReg base).toData
-        (ν₀.map Prod.snd) (Succinct.impl hw (targetCap_le_univ U n) hU hV hfit).initTime ∧
-      (Succinct.impl hw (targetCap_le_univ U n) hU hV hfit).ExecStepsOfFn
-        (Dynamic.empty U) (buildOps s (List.finRange U)) ν₀ ν_final T_ops ∧
-      (∀ θ, (ν_final.map Prod.fst) θ ≤ 1 * (PMF.uniformOfFintype (QuotHashSeed U N)) θ) ∧
+      RDemonicExec w (allocSuccinctCode U V w N') x (4 * Succinct.space U V w N' + 8) (· = x₁) ∧
+      ExecCodeDist w (subroutineCode U V w N').initFresh (x₁.set frontierReg base).toData
+        (ν₀.map Prod.snd) (Succinct.impl hw (targetCap_le_univ U n') hU hV hfit).initTime ∧
+      (Succinct.impl hw (targetCap_le_univ U n') hU hV hfit).ExecStepsOfFn
+        (Dynamic.empty U)
+        (extractStepRebuildOps U V w N_old (Dynamic.dom s).card base θ_old x_prev.mem o)
+        ν₀ ν_final T_ops ∧
+      (∀ θ, (ν_final.map Prod.fst) θ ≤ 1 * (PMF.uniformOfFintype (QuotHashSeed U N')) θ) ∧
       (∀ p ∈ ν_final.support,
-        ResizableRep U V w N base p.1 s ⟨p.2.regs, p.2.mem, base + Succinct.space U V w N⟩ ∧
-        Modifies (Block.mk base (Succinct.space U V w N)).footprint x.mem p.2.mem) ∧
-      (Succinct.impl hw (targetCap_le_univ U n) hU hV hfit).initTime + T_ops +
-        (∑' q, ν_final q * (potential U V w N base q.1 q.2 : ℝ≥0∞)) ≤
-        ((31 * N + 1092 + n * chargeVal : ℕ) : ℝ≥0∞) ∧
-      EpochValid n N ∧
-      activeEpochWords U V w N n ≤ Dynamic.succinctWords 312 213 U V w n := by
-  intro n N
-  have hnU : n ≤ U := Dynamic.card_dom_le_univ s
-  have hNU : N ≤ U := targetCap_le_univ U n
-  have hnN : n ≤ N := le_targetCap hnU
-  have hN2 : N ≤ 2 * n := targetCap_le_two_mul U n
+        ResizableRep U V w N' base p.1 s' ⟨p.2.regs, p.2.mem, base + Succinct.space U V w N'⟩ ∧
+        Modifies (Block.mk base (Succinct.space U V w N')).footprint x.mem p.2.mem) ∧
+      (Succinct.impl hw (targetCap_le_univ U n') hU hV hfit).initTime + T_ops +
+        (∑' q, ν_final q * (potential U V w N' base q.1 q.2 : ℝ≥0∞)) ≤
+        ((31 * N' + 1092 + n' * chargeVal : ℕ) : ℝ≥0∞) ∧
+      EpochValid n' N' ∧
+      activeEpochWords U V w N' n' ≤ Dynamic.succinctWords 312 213 U V w n' := by
+  intro s' n' N'
+  have hn'U : n' ≤ U := Dynamic.card_dom_le_univ s'
+  have hN'U : N' ≤ U := targetCap_le_univ U n'
+  have hn'N' : n' ≤ N' := le_targetCap hn'U
+  have hN'2 : N' ≤ 2 * n' := targetCap_le_two_mul U n'
   obtain ⟨x₁, he_alloc, hx₁_bdd, hx₁_fr, _, _, hx₁_mem, hx₁_zero⟩ :=
     allocSuccinctCode_exec hx hfr hfit
   let x₁' := x₁.set frontierReg base
   have hbase_fits : Fits w base := hfit.of_le (Nat.le_add_right base _)
   have hx₁'_bdd : x₁'.toData.Bounded w := (hx₁_bdd.set hbase_fits).1
   have hx₁'_fr : x₁'.toData.regs frontierReg = base := by simp [x₁']
-  obtain ⟨hrun_b, hvh_b, hlen_b⟩ := buildOps_finRange_spec (N := N) hvb hnN
+  obtain ⟨θ_old, hrun_b, hvh_b, hlen_b⟩ :=
+    extractStepRebuildOps_spec (N' := N') hrep_prev o hval hn'N'
+  let ops_reb := extractStepRebuildOps U V w N_old (Dynamic.dom s).card base θ_old x_prev.mem o
   obtain ⟨ν₀, ν_final, T_ops, he_init, hex_steps, hseed_final, hsupp_final, hamort⟩ :=
-    seq_expected_amortized_modifies hw hNU hU hV hfit (buildOps s (List.finRange U))
+    seq_expected_amortized_modifies hw hN'U hU hV hfit ops_reb
       hx₁'_bdd hx₁'_fr hx₁_zero hvh_b
   rw [hrun_b] at hsupp_final
   rw [hlen_b] at hamort
-  have hinit_le := Succinct.initTime_impl_le hw hNU hU hV hfit
+  have hinit_le := Succinct.initTime_impl_le hw hN'U hU hV hfit
   have hbound :
-      (Succinct.impl hw hNU hU hV hfit).initTime + T_ops +
-        (∑' q, ν_final q * (potential U V w N base q.1 q.2 : ℝ≥0∞)) ≤
-        ((31 * N + 1092 + n * chargeVal : ℕ) : ℝ≥0∞) := by
-    calc (Succinct.impl hw hNU hU hV hfit).initTime + T_ops +
-          (∑' q, ν_final q * (potential U V w N base q.1 q.2 : ℝ≥0∞))
-        ≤ (Succinct.impl hw hNU hU hV hfit).initTime + (n * chargeVal : ℕ) := hamort
-      _ ≤ ((initSteps U N + 1 : ℕ) : ℝ≥0∞) + (n * chargeVal : ℕ) :=
+      (Succinct.impl hw hN'U hU hV hfit).initTime + T_ops +
+        (∑' q, ν_final q * (potential U V w N' base q.1 q.2 : ℝ≥0∞)) ≤
+        ((31 * N' + 1092 + n' * chargeVal : ℕ) : ℝ≥0∞) := by
+    calc (Succinct.impl hw hN'U hU hV hfit).initTime + T_ops +
+          (∑' q, ν_final q * (potential U V w N' base q.1 q.2 : ℝ≥0∞))
+        ≤ (Succinct.impl hw hN'U hU hV hfit).initTime + (n' * chargeVal : ℕ) := hamort
+      _ ≤ ((initSteps U N' + 1 : ℕ) : ℝ≥0∞) + (n' * chargeVal : ℕ) :=
           add_le_add hinit_le.1 le_rfl
-      _ ≤ ((31 * N + 1092 + n * chargeVal : ℕ) : ℝ≥0∞) := by
+      _ ≤ ((31 * N' + 1092 + n' * chargeVal : ℕ) : ℝ≥0∞) := by
           rw [← Nat.cast_add]
           exact Nat.cast_le.mpr (by have := hinit_le.2; omega)
-  refine ⟨x₁, ν₀, ν_final, T_ops, he_alloc, he_init, hex_steps, hseed_final, ?_, hbound,
-    epochValid_targetCap hnU,
-    activeEpochWords_le_succinctWords_of_le_two_mul hw hnU hNU (le_of_lt hU) hnN hN2⟩
+  refine ⟨θ_old, x₁, ν₀, ν_final, T_ops, he_alloc, he_init, hex_steps, hseed_final, ?_, hbound,
+    epochValid_targetCap hn'U,
+    activeEpochWords_le_succinctWords_of_le_two_mul hw hn'U hN'U (le_of_lt hU) hn'N' hN'2⟩
   intro p hp
   obtain ⟨hrep_p, hmod_p⟩ := hsupp_final p hp
-  have hmod_x : Modifies (Block.mk base (Succinct.space U V w N)).footprint x.mem p.2.mem := by
-    change Modifies (Block.mk base (Succinct.space U V w N)).footprint x₁.mem p.2.mem at hmod_p
+  have hmod_x : Modifies (Block.mk base (Succinct.space U V w N')).footprint x.mem p.2.mem := by
+    change Modifies (Block.mk base (Succinct.space U V w N')).footprint x₁.mem p.2.mem at hmod_p
     rwa [hx₁_mem] at hmod_p
   exact ⟨⟨rData_bounded_of_rep_modifies hx₁_bdd hx₁_fr hrep_p hmod_p, rfl, hrep_p⟩, hmod_x⟩
 
@@ -550,8 +750,8 @@ private theorem in_epoch_step_machine_aux {U V w N base : ℕ}
 (`¬EpochValid n' N`). -/
 private theorem unbounded_step_machine_aux {U V w base n_init n_init' : ℕ}
     (hw : 0 < w) (hU : Fits w U) (hV : Fits w V)
-    (hfit_N : Fits w (base + Succinct.space U V w (targetCap U n_init)))
-    (hfit_N' : Fits w (base + Succinct.space U V w (targetCap U n_init')))
+    (hfit_N : Fits w (base + epochPeakWords U V w (targetCap U n_init)))
+    (hfit_N' : Fits w (base + epochPeakWords U V w (targetCap U n_init')))
     {x₀ : RData rResizable} (hx₀ : x₀.Bounded w) (hfr₀ : x₀.frontier = base)
     {s : Dynamic.State U} (hvb : Dynamic.ValuesBounded V s)
     (o : Dynamic.Op U) (hval : (Dynamic.spec U V U).valid s o)
@@ -583,11 +783,13 @@ private theorem unbounded_step_machine_aux {U V w base n_init n_init' : ℕ}
             resizableChargeVal U V w : ℕ) : ℝ≥0∞) := by
   have hstep_arith := unbounded_step_expected_amortized hw hU hvb o hval hepoch
   dsimp only at hstep_arith
-  obtain ⟨_, hN'U, hvb', _, _, _, hbranch_arith⟩ := hstep_arith
+  obtain ⟨_, hN'U, _, _, _, _, hbranch_arith⟩ := hstep_arith
   let n := (Dynamic.dom s).card
   let N := targetCap U n_init
   let s' := ((Dynamic.spec U V U).stepFn s o).1
   let n' := (Dynamic.dom s').card
+  have hfit_sp_N : Fits w (base + Succinct.space U V w N) :=
+    hfit_N.of_le (Nat.add_le_add_left (space_le_epochPeakWords U V w N) base)
   by_cases hvalid :
       EpochValid (Dynamic.dom ((Dynamic.spec U V U).stepFn s o).1).card (targetCap U n_init)
   · simp only [hvalid, ↓reduceIte] at hn_init' hbranch_arith
@@ -595,7 +797,7 @@ private theorem unbounded_step_machine_aux {U V w base n_init n_init' : ℕ}
     have hNU : N ≤ U := targetCap_le_univ U n_init
     have hv_N : (Dynamic.spec U V N).valid s o := valid_of_card_step_le hval hvalid.1
     obtain ⟨ν', T_step, hseed', hsupp', hamort⟩ :=
-      in_epoch_step_machine_aux hw hNU hU hV hfit_N o hv_N ν hseed hsupp
+      in_epoch_step_machine_aux hw hNU hU hV hfit_sp_N o hv_N ν hseed hsupp
     refine ⟨ν', T_step, hseed', fun q hq => ?_, ?_⟩
     · obtain ⟨hrep_q, hcaller_q, hdec_q⟩ := hsupp' q hq
       exact ⟨hrep_q, hcaller_q, lastOpOutputCorrect_singleton_of_decode s o q.2.regs hdec_q⟩
@@ -621,10 +823,18 @@ private theorem unbounded_step_machine_aux {U V w base n_init n_init' : ℕ}
           add_le_add le_rfl h_ineq
   · simp only [hvalid, ↓reduceIte] at hn_init' hbranch_arith
     subst n_init'
-    obtain ⟨_, _, ν_reb, T_reb, _, _, _, hseed_reb, hsupp_reb, hbound_reb, _, _⟩ :=
-      rebuild_epoch_expected_amortized hw hU hV hvb' hfit_N' hx₀ hfr₀
+    obtain ⟨p₀, hp₀⟩ := ν.support_nonempty
+    have hfit_comp_N : Fits w (base + compactedEpochWords U V w N n) :=
+      hfit_N.of_le (Nat.add_le_add_left (compactedEpochWords_le_epochPeakWords hepoch.1) base)
+    have hrep_prev : CompactedRep U V w N n base s (compactedOfVirt U V w N n base p₀.2) :=
+      (compactedRep_of_epochValid hw hU hV hepoch (targetCap_le_univ U n_init)
+        hfit_comp_N rfl hvb (hsupp p₀ hp₀).1.2.2).1
+    have hfit_sp_N' : Fits w (base + Succinct.space U V w (targetCap U n')) :=
+      hfit_N'.of_le (Nat.add_le_add_left (space_le_epochPeakWords U V w (targetCap U n')) base)
+    obtain ⟨_, _, _, ν_reb, T_reb, _, _, _, hseed_reb, hsupp_reb, hbound_reb, _, _⟩ :=
+      rebuild_epoch_expected_amortized hw hU hV hrep_prev o hval hfit_sp_N' hx₀ hfr₀
     refine ⟨ν_reb,
-      (Succinct.impl hw (targetCap_le_univ U n') hU hV hfit_N').initTime + T_reb,
+      (Succinct.impl hw (targetCap_le_univ U n') hU hV hfit_sp_N').initTime + T_reb,
       hseed_reb, ?_, ?_⟩
     · intro q hq
       obtain ⟨hrep_q, hmod_q⟩ := hsupp_reb q hq
@@ -644,7 +854,7 @@ private theorem unbounded_step_machine_aux {U V w base n_init n_init' : ℕ}
               resizableChargeVal U V w : ℕ) : ℝ≥0∞) := by
         rw [← Nat.cast_add]
         exact Nat.cast_le.mpr hbranch_arith
-      calc (Succinct.impl hw (targetCap_le_univ U n') hU hV hfit_N').initTime + T_reb +
+      calc (Succinct.impl hw (targetCap_le_univ U n') hU hV hfit_sp_N').initTime + T_reb +
             (∑' q, ν_reb q * (potential U V w (targetCap U n') base q.1 q.2 : ℝ≥0∞)) +
             ((2 * rebuildUnitCost U V w * natDist n' n' : ℕ) : ℝ≥0∞)
           ≤ ((31 * targetCap U n' + 1092 + n' * chargeVal : ℕ) : ℝ≥0∞) +
@@ -658,13 +868,17 @@ private theorem unbounded_step_machine_aux {U V w base n_init n_init' : ℕ}
             le_add_self
 
 /-- **Coupled Machine-State Unbounded Sequence Theorem
-(`unbounded_seq_machine_expected_amortized`):** -/
+(`unbounded_seq_machine_expected_amortized`):**
+At completion of `ops` (and by prefix induction at every step `t`), every supported post-step
+state packs to `x_comp = compactedOfVirt U V w N_final n_final base p.2` satisfying
+`CompactedRep U V w N_final n_final base s_final x_comp`, with live frontier
+`x_comp.frontier = base + compactedEpochWords U V w N_final n_final` without post-hoc `.shrink`. -/
 theorem unbounded_seq_machine_expected_amortized {U V w base : ℕ}
     (hw : 0 < w) (hU : Fits w U) (hV : Fits w V)
     {x₀ : RData rResizable} (hx₀ : x₀.Bounded w) (hfr₀ : x₀.frontier = base)
     (ops : List (Dynamic.Op U))
     (hfit : ∀ N ≤ maxEpochCap V (Dynamic.empty U) 0 ops,
-      Fits w (base + Succinct.space U V w N))
+      Fits w (base + epochPeakWords U V w N))
     (hvh : (Dynamic.spec U V U).ValidHistory (Dynamic.empty U) ops) :
     let s_final := ((Dynamic.spec U V U).run (Dynamic.empty U) ops).1
     let n_final := (Dynamic.dom s_final).card
@@ -682,41 +896,30 @@ theorem unbounded_seq_machine_expected_amortized {U V w base : ℕ}
       ∀ p ∈ ν_final.support,
         let x_epoch : RData rSuccinct :=
           ⟨p.2.regs, p.2.mem, base + Succinct.space U V w N_final⟩
+        let x_comp : RData rSuccinct :=
+          compactedOfVirt U V w N_final n_final base p.2
         ResizableRep U V w N_final base p.1 s_final x_epoch ∧
         (∀ a < base, x_epoch.mem a = x₀.mem a) ∧
         LastOpOutputCorrect V (Dynamic.empty U) ops x_epoch.regs ∧
-        ∃ x_rest : RData rResizable,
-          (∃ y_rest : RData rSuccinct,
-            RDemonicExec w
-              (shrinkTailWordsCode U V w N_final
-                (Succinct.space U V w N_final - activeEpochWords U V w N_final n_final))
-              x_epoch 2 (· = y_rest) ∧
-            x_rest = y_rest) ∧
-          x_rest.Bounded w ∧
-          x_rest.frontier = base + activeEpochWords U V w N_final n_final ∧
-          x_rest.frontier - base ≤ Dynamic.succinctWords 1227 213 U V w n_final ∧
-          w * (x_rest.frontier - base) ≤
-            Dynamic.optBits U V n_final + 1227 * n_final * Dynamic.logLogFactor n_final +
-              214 * w ∧
-          LastOpOutputCorrect V (Dynamic.empty U) ops x_rest.regs ∧
-          (∀ a < base, x_rest.mem a = x₀.mem a) ∧
-          (n_final = 0 →
-            ∃ x_zero : RData rResizable,
-              (∃ y_zero : RData rSuccinct,
-                RDemonicExec w (deallocSuccinctCode U V w N_final) x_epoch 3 (· = y_zero) ∧
-                x_zero = y_zero) ∧
-              x_zero.Bounded w ∧
-              x_zero.frontier = base ∧
-              ∀ a < base, x_zero.mem a = x₀.mem a) := by
+        CompactedRep U V w N_final n_final base s_final x_comp ∧
+        x_comp.Bounded w ∧
+        x_comp.frontier = base + compactedEpochWords U V w N_final n_final ∧
+        x_comp.frontier - base ≤ Dynamic.succinctWords 1355 380 U V w n_final ∧
+        w * (x_comp.frontier - base) ≤
+          Dynamic.optBits U V n_final + 1355 * n_final * Dynamic.logLogFactor n_final +
+            381 * w ∧
+        LastOpOutputCorrect V (Dynamic.empty U) ops x_comp.regs ∧
+        (∀ a < base, x_comp.mem a = x₀.mem a) ∧
+        (n_final = 0 → x_comp.frontier = base + 4) := by
   intro s_final n_final n_init_final N_final
   have hmain := unbounded_seq_expected_amortized (V := V) hw hU ops hvh
   dsimp only at hmain
-  obtain ⟨hepoch_f, hN_fU, hvb_f, hwords_f, hbits_f, _⟩ := hmain
+  obtain ⟨hepoch_f, hN_fU, hvb_f, _, _, _⟩ := hmain
   refine ⟨hepoch_f, hN_fU, hvb_f, ?_⟩
   have hgen : ∀ (l : List (Dynamic.Op U)) (s : Dynamic.State U) (n_init : ℕ)
       (hvb : Dynamic.ValuesBounded V s)
       (hepoch : EpochValid (Dynamic.dom s).card (targetCap U n_init))
-      (hfit_l : ∀ N ≤ maxEpochCap V s n_init l, Fits w (base + Succinct.space U V w N))
+      (hfit_l : ∀ N ≤ maxEpochCap V s n_init l, Fits w (base + epochPeakWords U V w N))
       (hvh_s : (Dynamic.spec U V U).ValidHistory s l)
       (ν : PMF (QuotHashSeed U (targetCap U n_init) × Data rSuccinct))
       (hseed : ∀ θ, (ν.map Prod.fst) θ ≤
@@ -730,6 +933,7 @@ theorem unbounded_seq_machine_expected_amortized {U V w base : ℕ}
       let n_init_f := runEpochInit V s n_init l
       let Nf := targetCap U n_init_f
       ∃ (ν_f : PMF (QuotHashSeed U Nf × Data rSuccinct)) (T_ops : ℝ≥0∞),
+        Fits w (base + epochPeakWords U V w Nf) ∧
         (∀ θ, (ν_f.map Prod.fst) θ ≤ 1 * (PMF.uniformOfFintype (QuotHashSeed U Nf)) θ) ∧
         (∀ p ∈ ν_f.support,
           ResizableRep U V w Nf base p.1 sf ⟨p.2.regs, p.2.mem, base + Succinct.space U V w Nf⟩ ∧
@@ -743,8 +947,9 @@ theorem unbounded_seq_machine_expected_amortized {U V w base : ℕ}
     intro l
     induction l with
     | nil =>
-      intro s n_init _ _ _ _ ν hseed hsupp
-      refine ⟨ν, 0, hseed, fun p hp => ⟨(hsupp p hp).1, (hsupp p hp).2, trivial⟩, ?_⟩
+      intro s n_init _ _ hfit_l _ ν hseed hsupp
+      refine ⟨ν, 0, hfit_l _ (targetCap_le_maxEpochCap V s n_init []), hseed,
+        fun p hp => ⟨(hsupp p hp).1, (hsupp p hp).2, trivial⟩, ?_⟩
       simp only [runEpochInit, List.length_nil, Nat.zero_mul, Nat.add_zero, zero_add]
       exact le_rfl
     | cons o os ih =>
@@ -755,26 +960,26 @@ theorem unbounded_seq_machine_expected_amortized {U V w base : ℕ}
       let s₁ := ((Dynamic.spec U V U).stepFn s o).1
       let n₁ := (Dynamic.dom s₁).card
       let n_init₁ := if EpochValid n₁ (targetCap U n_init) then n_init else n₁
-      have hfit_N : Fits w (base + Succinct.space U V w (targetCap U n_init)) :=
+      have hfit_N : Fits w (base + epochPeakWords U V w (targetCap U n_init)) :=
         hfit_l (targetCap U n_init) (targetCap_le_maxEpochCap V s n_init (o :: os))
-      have hfit_os : ∀ N ≤ maxEpochCap V s₁ n_init₁ os, Fits w (base + Succinct.space U V w N) :=
+      have hfit_os : ∀ N ≤ maxEpochCap V s₁ n_init₁ os, Fits w (base + epochPeakWords U V w N) :=
         fun N hN => hfit_l N (hN.trans (maxEpochCap_tail_le V s n_init o os))
-      have hfit_N₁ : Fits w (base + Succinct.space U V w (targetCap U n_init₁)) :=
+      have hfit_N₁ : Fits w (base + epochPeakWords U V w (targetCap U n_init₁)) :=
         hfit_os (targetCap U n_init₁) (targetCap_le_maxEpochCap V s₁ n_init₁ os)
       obtain ⟨ν₁, T₁, hseed₁, hsupp₁, hbound₁⟩ :=
         unbounded_step_machine_aux (n_init' := n_init₁)
           hw hU hV hfit_N hfit_N₁ hx₀ hfr₀ hvb o hval hepoch rfl ν hseed hsupp
       cases os with
       | nil =>
-        refine ⟨ν₁, T₁, hseed₁, hsupp₁, ?_⟩
+        refine ⟨ν₁, T₁, hfit_N₁, hseed₁, hsupp₁, ?_⟩
         simp only [runEpochInit, StateTransitionSpec.run_cons, StateTransitionSpec.run_nil,
           List.length_cons, List.length_nil, Nat.zero_add, Nat.one_mul]
         exact hbound₁
       | cons o₂ os' =>
-        obtain ⟨ν_f, T_rest, hseed_f, hsupp_f, hbound_rest⟩ :=
+        obtain ⟨ν_f, T_rest, hfit_f, hseed_f, hsupp_f, hbound_rest⟩ :=
           ih s₁ n_init₁ hvb₁ hepoch₁ hfit_os hvh_os ν₁ hseed₁
             (fun q hq => ⟨(hsupp₁ q hq).1, (hsupp₁ q hq).2.1⟩)
-        refine ⟨ν_f, T₁ + T_rest, hseed_f, hsupp_f, ?_⟩
+        refine ⟨ν_f, T₁ + T_rest, hfit_f, hseed_f, hsupp_f, ?_⟩
         dsimp only [runEpochInit, StateTransitionSpec.run_cons, s₁, n₁, n_init₁] at hbound_rest ⊢
         have hlen_eq :
             ((2 * rebuildUnitCost U V w * natDist (Dynamic.dom s).card n_init +
@@ -818,7 +1023,8 @@ theorem unbounded_seq_machine_expected_amortized {U V w base : ℕ}
                   (o :: o₂ :: os').length * resizableChargeVal U V w : ℕ) : ℝ≥0∞) := by
               rw [add_assoc, hlen_eq]
   have hfit0 : Fits w (base + Succinct.space U V w (targetCap U 0)) :=
-    hfit (targetCap U 0) (targetCap_le_maxEpochCap V (Dynamic.empty U) 0 ops)
+    (hfit (targetCap U 0) (targetCap_le_maxEpochCap V (Dynamic.empty U) 0 ops)).of_le
+      (Nat.add_le_add_left (space_le_epochPeakWords U V w (targetCap U 0)) base)
   obtain ⟨_, ν₀_r, _, _, hseed₀_r, hsupp₀_r⟩ :=
     init_resizable_succinct hw (targetCap_le_univ U 0) hU hV hfit0 hx₀ hfr₀
   let ν₀ : PMF (QuotHashSeed U (targetCap U 0) × Data rSuccinct) :=
@@ -855,7 +1061,7 @@ theorem unbounded_seq_machine_expected_amortized {U V w base : ℕ}
       obtain ⟨q, hq, rfl⟩ := hp
       rw [(hsupp₀_r q hq).2.1, Nat.cast_zero, mul_zero]
     · rw [(PMF.apply_eq_zero_iff _ _).mpr hp, zero_mul]
-  obtain ⟨ν_final, T_ops, hseed_f, hsupp_f, hbound_f⟩ :=
+  obtain ⟨ν_final, T_ops, hfit_f, hseed_f, hsupp_f, hbound_f⟩ :=
     hgen ops (Dynamic.empty U) 0 (Dictionary.valuesBounded_empty U V)
       (by simp [EpochValid, targetCap]) hfit hvh ν₀ hseed₀ hsupp₀
   have hdom0 : (Dynamic.dom (Dynamic.empty U)).card = 0 := by
@@ -864,40 +1070,19 @@ theorem unbounded_seq_machine_expected_amortized {U V w base : ℕ}
     Nat.zero_add, rebuildUnitCost_eq_const, resizableChargeVal_eq_const] at hbound_f
   refine ⟨ν_final, T_ops, hseed_f, hbound_f, fun p hp => ?_⟩
   obtain ⟨hrep_p, hcaller_p, hout_p⟩ := hsupp_f p hp
-  let x_epoch : RData rSuccinct :=
-    ⟨p.2.regs, p.2.mem, base + Succinct.space U V w N_final⟩
-  have hsp_ge : activeEpochWords U V w N_final n_final ≤ Succinct.space U V w N_final :=
-    activeEpochWords_le_space hepoch_f.1
-  let Δ := Succinct.space U V w N_final - activeEpochWords U V w N_final n_final
-  obtain ⟨y_rest, he_sh, hy_rest_bdd, hy_rest_fr, hy_rest_regs, _, hy_rest_mem⟩ :=
-    shrinkTailWordsCode_exec hrep_p.1 (U := U) (V := V) (N := N_final) (Δ := Δ)
-      (by dsimp only [x_epoch, Δ, N_final, n_final, n_init_final, s_final] at hsp_ge ⊢; omega)
-  have hfr_rest : y_rest.frontier = base + activeEpochWords U V w N_final n_final := by
-    rw [hy_rest_fr]
-    dsimp only [x_epoch, Δ, N_final, n_final, n_init_final, s_final] at hsp_ge ⊢
-    omega
-  have hout_rest : LastOpOutputCorrect V (Dynamic.empty U) ops y_rest.regs := by
-    refine (lastOpOutputCorrect_congr V (Dynamic.empty U) ops ?_ ?_).mp hout_p
-    · exact (hy_rest_regs resTagReg (sReg_ne (by decide))).symm
-    · exact (hy_rest_regs resValReg (sReg_ne (by decide))).symm
-  refine ⟨hrep_p, hcaller_p, hout_p, y_rest, ⟨y_rest, he_sh, rfl⟩,
-    hy_rest_bdd, hfr_rest, ?_, ?_, hout_rest, ?_, ?_⟩
-  · change y_rest.frontier - base ≤ Dynamic.succinctWords 1227 213 U V w n_final
-    rw [hfr_rest, Nat.add_sub_cancel_left]
-    exact hwords_f
-  · change w * (y_rest.frontier - base) ≤ _
-    rw [hfr_rest, Nat.add_sub_cancel_left]
-    exact hbits_f
-  · intro a ha
-    have ha_lt : a < x_epoch.frontier - Δ := by
-      dsimp only [x_epoch, Δ, N_final, n_final, n_init_final, s_final] at hsp_ge ⊢
-      omega
-    exact (hy_rest_mem a ha_lt).trans (hcaller_p a ha)
-  · intro hn0
-    obtain ⟨y_zero, he_de, hy_zero_bdd, hy_zero_fr, _, _, _, hy_zero_caller⟩ :=
-      deallocSuccinctCode_exec hrep_p.1 rfl hrep_p.2.2.2.1
-    refine ⟨y_zero, ⟨y_zero, he_de, rfl⟩, hy_zero_bdd, hy_zero_fr, fun a ha => ?_⟩
-    exact (hy_zero_caller a ha).trans (hcaller_p a ha)
+  have hfit_comp_f : Fits w (base + compactedEpochWords U V w N_final n_final) :=
+    hfit_f.of_le (Nat.add_le_add_left (compactedEpochWords_le_epochPeakWords hepoch_f.1) base)
+  have hrep_p_virt : Succinct.Rep U V w N_final base p.1 s_final p.2 := hrep_p.2.2
+  obtain ⟨hcomp_rep, hcomp_regs, hcomp_caller⟩ :=
+    compactedRep_of_epochValid (n := n_final) hw hU hV hepoch_f hN_fU hfit_comp_f rfl hvb_f
+      hrep_p_virt
+  have hout_comp : LastOpOutputCorrect V (Dynamic.empty U) ops
+      (compactedOfVirt U V w N_final n_final base p.2).regs := hcomp_regs ▸ hout_p
+  refine ⟨hrep_p, hcaller_p, hout_p, hcomp_rep, hcomp_rep.bounded, hcomp_rep.frontier_eq,
+    hcomp_rep.frontier_sub_base_le_succinctWords hw (le_of_lt hU),
+    hcomp_rep.w_mul_frontier_sub_base_le_bits hw (le_of_lt hU), hout_comp,
+    fun a ha => (hcomp_caller a ha).trans (hcaller_p a ha),
+    fun hn0 => by rw [hcomp_rep.frontier_eq, hn0]; simp [compactedEpochWords]⟩
 
 /-! ## Section 6: Client Subroutine Theorems and Memory Reuse in `[0, L)` -/
 

@@ -943,16 +943,16 @@ structure CompactedRep {r : ℕ} (U V w N n base : ℕ) (s_abs : Dynamic.State U
         lmAt base U V w N (hashSpace U w N) x_virt.mem = compLmAt base U w N x.mem ∧
         gmAt base U V w N (hashSpace U w N) x_virt.mem = compGmAt base U w N x.mem ∧
         let gm := compGmAt base U w N x.mem
-        let S := if bucketBits N = 0 then gm 3 else gm 0 * slabSize N
+        let S := if bucketBits N = 0 then gm 0 else gm 0 * slabSize N
         let T := if bucketBits N = 0 then 0 else gm 1
         S + T = n ∧
         TailDenseBijection N S T (compT2DAt base U w N x.mem) (compD2TAt base U w N x.mem) ∧
-        (∀ g < N, quotAt base U w N (hashSpace U w N) x_virt.mem g =
-          compQuotAt (base + offCompItems U w N) U V w N n x.mem
-            (denseOfVirt N S T (compT2DAt base U w N x.mem) g)) ∧
-        (∀ g < N, valAt base U V w N (hashSpace U w N) x_virt.mem g =
-          compValAt (base + offCompItems U w N) U V w N n x.mem
-            (denseOfVirt N S T (compT2DAt base U w N x.mem) g)))
+        (∀ d < n, compQuotAt (base + offCompItems U w N) U V w N n x.mem d =
+          quotAt base U w N (hashSpace U w N) x_virt.mem
+            (virtOfDense N S T (compD2TAt base U w N x.mem) d)) ∧
+        (∀ d < n, compValAt (base + offCompItems U w N) U V w N n x.mem d =
+          valAt base U V w N (hashSpace U w N) x_virt.mem
+            (virtOfDense N S T (compD2TAt base U w N x.mem) d)))
 
 /-- **Live `n_t`-tight word-space bound for `CompactedRep`:**
 Every machine state `x` satisfying `CompactedRep U V w N n base s_abs x` has live frontier
