@@ -3170,6 +3170,7 @@ public import Complexity.DataStructure.Dictionary.WordRAM.CuckooHashing.HashFami
 public import Complexity.DataStructure.Dictionary.WordRAM.LinearProbing
 public import Complexity.DataStructure.Dictionary.WordRAM.LinearProbing.FiveWise
 public import Complexity.DataStructure.Dictionary.WordRAM.ResizableSuccinct
+public import Complexity.DataStructure.Dictionary.WordRAM.ResizableSuccinctCompaction
 public import Complexity.DataStructure.Dictionary.WordRAM.ResizableSuccinctEpoch
 public import Complexity.DataStructure.Dictionary.WordRAM.Succinct
 public import Complexity.DataStructure.Dictionary.WordRAM.SuccinctBucketOps
