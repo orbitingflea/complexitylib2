@@ -1563,6 +1563,7 @@ public import Complexity.Computability.Complexity.Classes.SharpP.GapMachine
 public import Complexity.Computability.Complexity.Classes.SharpP.Lowness
 public import Complexity.Computability.Complexity.Classes.SharpP.Machine
 public import Complexity.Computability.Complexity.Classes.SharpP.Oracle
+public import Complexity.Computability.Complexity.Classes.SharpP.OracleReplay
 public import Complexity.Computability.Complexity.Classes.SharpP.PaddedCount
 public import Complexity.Computability.Complexity.Classes.SharpP.PolyTime
 public import Complexity.Computability.Complexity.Classes.SharpP.Power
@@ -2196,6 +2197,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Poly
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Configuration
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.DPi
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.EraseDupsBy
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Families
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Finite
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Fold
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Int
@@ -2277,6 +2279,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Decod
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Finite
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Frame
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Frame.Basic
+public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Frame.Lookup
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.IntBinary
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.IntBinary.Decode
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Length
@@ -2920,6 +2923,7 @@ public import Complexity.Crypto.Computational.CollisionResistant
 public import Complexity.Crypto.Computational.Commitment
 public import Complexity.Crypto.Computational.Commitment.Basic
 public import Complexity.Crypto.Computational.Commitment.PublicOperations
+public import Complexity.Crypto.Computational.CompositeResiduosity
 public import Complexity.Crypto.Computational.CramerShoup
 public import Complexity.Crypto.Computational.CramerShoup.ProjectiveHash
 public import Complexity.Crypto.Computational.CramerShoup.Reductions
@@ -3102,6 +3106,8 @@ public import Complexity.Crypto.Computational.OneWayToPRF
 public import Complexity.Crypto.Computational.OneWayToPRG
 public import Complexity.Crypto.Computational.OneWayToSignature
 public import Complexity.Crypto.Computational.PRGToOneWay
+public import Complexity.Crypto.Computational.Paillier
+public import Complexity.Crypto.Computational.Paillier.Algebra
 public import Complexity.Crypto.Computational.PedersenCommitment
 public import Complexity.Crypto.Computational.PedersenCommitment.ProbComp
 public import Complexity.Crypto.Computational.PedersenCommitment.PublicOperations
@@ -3410,6 +3416,7 @@ public import Complexity.DataStructure.PriorityQueue.FibonacciHeap.Consolidation
 public import Complexity.DataStructure.PriorityQueue.FibonacciHeap.DecreaseKey
 public import Complexity.DataStructure.PriorityQueue.FibonacciHeap.ExtractMin
 public import Complexity.DataStructure.PriorityQueue.FibonacciHeap.Memory
+public import Complexity.DataStructure.PriorityQueue.FibonacciHeap.MinPQ
 public import Complexity.DataStructure.PriorityQueue.FibonacciHeap.Native.Backend
 public import Complexity.DataStructure.PriorityQueue.FibonacciHeap.Native.Cascade
 public import Complexity.DataStructure.PriorityQueue.FibonacciHeap.Native.Consolidate
