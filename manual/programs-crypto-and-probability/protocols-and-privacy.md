@@ -256,7 +256,7 @@ runtime, or zero-knowledge simulation.
 
 [Complexity/Crypto/Protocols/Signature/RandomOracle.lean](https://github.com/cslib-community/complexitylib/blob/13e6a31951bf1c89a1a6258c44f9444aecbbefd8/Complexity/Crypto/Protocols/Signature/RandomOracle.lean) defines a typed random-oracle signature experiment. Signer, verifier and forger share one lazy hash cache. The forger's coins are drawn explicitly before deterministic oracle interaction, enabling replay. Signing and hash queries have separate bounds. Key generation can be an arbitrary PMF, so this finite experiment is not identical to the native `SignatureScheme` interface.
 
-[Complexity/Crypto/Protocols/SigmaProtocol/FiatShamir.lean](https://github.com/cslib-community/complexitylib/blob/13e6a31951bf1c89a1a6258c44f9444aecbbefd8/Complexity/Crypto/Protocols/SigmaProtocol/FiatShamir.lean) hashes `(message, commitment)` to the challenge and proves correctness and a quantitative EUF-CMA bound using special soundness, special HVZK, commitment unpredictability and the generic forking lemma. The bound includes signing/programming collisions, challenge guessing and the square-root forking term. It is a finite exact-security reduction; an asymptotic machine claim additionally needs the encoded efficiency bridges. The module cites Bellare–Neven and Boneh–Shoup and labels its comparison with their constants [bs23][bs23]. Over a `PrimeOrderGroupFamily`,
+[Complexity/Crypto/Protocols/SigmaProtocol/FiatShamir.lean](../../Complexity/Crypto/Protocols/SigmaProtocol/FiatShamir.lean) hashes `(message, commitment)` to the challenge and proves correctness and a quantitative EUF-CMA bound using special soundness, special HVZK, commitment unpredictability and the generic forking lemma. The bound includes signing/programming collisions, challenge guessing and the square-root forking term. It is a finite exact-security reduction; an asymptotic machine claim additionally needs the encoded efficiency bridges. The module cites Bellare–Neven and Boneh–Shoup and labels its comparison with their constants [bs23][bs23]. Over a `PrimeOrderGroupFamily`,
 [`Complexity/Crypto/Computational/SchnorrSignature.lean`](../../Complexity/Crypto/Computational/SchnorrSignature.lean)
 provides bit-encoded key generation, commitment, response, signing from supplied coins and challenge,
 verification and commitment recovery, with polynomial-time certificates. The supplied challenge
@@ -281,6 +281,13 @@ This representation generalization ([#2684](https://github.com/cslib-community/c
 preserves the quantitative bound. It does not certify a native implementation of `hashPoint` or
 complete the concrete word Schnorr reduction and its key-generation/signing approximation hops.
 
+`FiatShamir.reduction` now takes an explicit `fallback` output for a failed fork. The existing
+quantitative theorem holds for every such value, with no requirement that it satisfy the witness
+relation. The Schnorr reduction wrappers use zero. This removes the hidden choice of the failure
+output ([#2774](https://github.com/cslib-community/complexitylib/issues/2774)); it does not certify
+the reduction's native runtime or its ideal scalar sampling. Replacing the transcript and answer
+defaults in a native implementation still requires a bounded-execution nonexhaustion proof.
+
 [`SchnorrSignature/WordROM.lean`](../../Complexity/Crypto/Computational/SchnorrSignature/WordROM.lean)
 instantiates that theorem with the actual native word verifier. `schnorrWordSigma` keeps statements
 as group elements, so the public key is canonical, but permits arbitrary commitment and response
@@ -294,7 +301,7 @@ challenges when `2 ^ m ≤ F.order d`, retaining all other hash words in the sam
 bound is `Qs*(Qs+Qro)/F.order d + (Qro+1)/2^m + sqrt((Qro+1)*ε')`, where `ε'` is the displayed
 forking reduction's discrete-log success. Key and signing scalars use ideal uniform laws. This
 completes the representation milestone [#2696](https://github.com/cslib-community/complexitylib/issues/2696);
-native saved-forger composition, the actual key-generation/signing `CloseTo` hops and efficient
+native saved-forger composition, adaptive key-generation/signing `CloseTo` game hops and efficient
 forking remain open. No guarantee is asserted for malformed public keys, and no group decoder is
 assumed. Concrete scalar-alias extraction, rejected commitments, and distinct/repeated junk hash
 queries are checked in
@@ -312,10 +319,29 @@ full-input replay and retains external state.
 [`Signature/WordRandomOracle.lean`](../../Complexity/Crypto/Computational/Signature/WordRandomOracle.lean)
 also gives a key-independent saved-coin adapter for actual Boolean-channel word forgers, with
 full-input native replay and equality of the existing shared-world and EUF-CMA games. All word
-hash payloads stay distinct. Applying that adapter to Schnorr's concrete query encoding, realizing
+hash payloads stay distinct. Applying that adapter to Schnorr's concrete query encoding, composing
 the signer/hash handlers, and certifying the complete forking reduction remain open. See the
 checked algorithms and typed-ROM examples in
 [`ComplexityTests/Crypto/SchnorrSignature.lean`](../../ComplexityTests/Crypto/SchnorrSignature.lean).
+
+[`SchnorrSignature/NativeROM.lean`](../../Complexity/Crypto/Computational/SchnorrSignature/NativeROM.lean)
+provides the actual `schnorrROMSign` and `schnorrROMVerify` oracle programs. The signer samples
+`sampleExp n d`, normalizes the nonce modulo the group order, and hashes the same encoded pair.
+The verifier uses the existing total outer-signature decoder and canonical commitment verifier.
+Both read at most `m` reply bits with `query_take'`; their `IsOraclePPTOn` certificates charge
+all inputs, including unary accuracy `n`, unary width `m`, description and message/signature words.
+These runtime guarantees apply even to empty or arbitrarily long external replies.
+
+Their joint semantic laws use a stateful handler returning `BitString m`, so every cached answer
+has the required width. They preserve the complete signature/cache law; verification is exact,
+and actual signing differs from the ideal word-ROM signer by at most `2⁻ⁿ` per call. This error
+comes from the proved `sampleExp` law using `n + binaryLength(q)` fair coins, without an assumed
+coupling. The separate actual key-generation law `closeTo_schnorrSigKeyGen` also costs at most
+`2⁻ⁿ`. The milestone [#2708](https://github.com/cslib-community/complexitylib/issues/2708) does not
+compose these errors across adaptive signing requests or certify the full forking reduction.
+Checks in [`Crypto/SchnorrNativeROM.lean`](../../ComplexityTests/Crypto/SchnorrNativeROM.lean)
+cover bounded reply prefixes, aliases, malformed outer signatures, a cache hit retaining junk
+entries, and preservation of external state through private nonce sampling.
 
 For strict-PPT **identification** under discrete log, use `SchnorrImpersonator`,
 `schnorrDirectGame` and `negligible_schnorrDirectGame`; for an adversary given independent honest
