@@ -168,8 +168,11 @@ transporting key-generation error, and realizing the efficient forking reduction
   This is a precise quotient consequence of Claim 3.8. The actual arbitrary-width
   coset discrete-Gaussian convolution density and Claim 3.9 full-L1 bound, with a sufficient
   dual-gap width criterion, are proved in
-  [#2707](https://github.com/cslib-community/complexitylib/issues/2707). An attained minimum
-  smoothing parameter, the projected/mod-one law, arbitrary-modulus search-LWE sampling
+  [#2707](https://github.com/cslib-community/complexitylib/issues/2707). The actual scalar and
+  canonical mod-one pushforward bounds of Corollary 3.10, including a discharged dual-gap
+  criterion and the exact zero-projection case, are proved in
+  [#2734](https://github.com/cslib-community/complexitylib/issues/2734). An attained minimum
+  smoothing parameter, the periodic-density series, arbitrary-modulus search-LWE sampling
   experiment, efficient finite-precision sampling and quantum reduction remain open in
   [#1213](https://github.com/cslib-community/complexitylib/issues/1213).
   `Foundations/MeasureTheory/Group/ConvolutionDensity` proves the convolution density formula
@@ -234,8 +237,10 @@ modular-game time/space assembly and prepared-metadata accounting remain
    coefficients, uniformly in unary dimensions/width. `SIS/Module/ApproximateSampling` uses the
    existing bounded modular sampler for arbitrary positive binary moduli, with actual structured
    law error at most `d*k*n*q/2^width`, or `d*k*n/2^precision` at width `q.size+precision`.
-   Independent uniform scalar entries do not give this law. Full CBD randomized key generation,
-   encryption/decryption and seed codecs remain open.
+   Independent uniform scalar entries do not give this law. `ModuleEncryption/Sampling/Native`
+   composes exact CBD secret/error draws with the matrix sampler and existing keygen, returning
+   the same signed secret and public key with ideal joint/public-law error `k*k*n/2^precision`.
+   Native encryption/decryption and seed codecs remain open.
    `SIS/ModulusSwitch/Failure` bounds randomized switched-decryption failure by the actual noise
    tail under explicit secret-support and decoding margins; small-secret security remains open.
    Nearest-integer coefficient conversion and the Module-LWE phase-error bound are available in
@@ -314,10 +319,22 @@ families and full-input native runtime.
   ([#2712](https://github.com/cslib-community/complexitylib/issues/2712)), for ideal uniform
   prime-modulus matrices and histories sampled before fresh masks. The one-call all-attempt
   read-to-program hop ([#2750](https://github.com/cslib-community/complexitylib/issues/2750))
-  retains the complete cache, with an unconditional finite sum of collision bounds. Adaptive
-  multiple-call replacement, visible-law programmed-to-simulated signing with abort-query
-  accounting, an efficient secret-free simulator, paired same-coins fork equality, native
-  shared-oracle reduction and a security parameter family remain open. Other endpoints include
+  retains the complete cache, with an unconditional finite sum of collision bounds. The one-attempt
+  visible simulation milestone ([#2788](https://github.com/cslib-community/complexitylib/issues/2788))
+  bounds the statistical distance between the one-attempt programmed signing hybrid (which prepends
+  a fresh challenge even on an abort) and simulated signing with accepted-transcript caching under
+  any query-bounded visible continuation by `R / q^n + sqrt(q^n / (2γ + 1)^m) / 2`, with exact
+  visible equality for zero-read continuations. Full executions retaining the final cache
+  verify the 0 vs 24/49 empty-cache divergence on the canonical q=17 counterexample.
+  The all-attempt visible simulation milestone
+  ([#2798](https://github.com/cslib-community/complexitylib/issues/2798)) establishes the
+  multi-attempt visible simulation framework (`lyubashevskySimAttempts`,
+  `lyubashevskySignAttemptsVisibleProg`, `lyubashevskySignAttemptsVisibleSim`), proves exact
+  visible distribution equality for zero attempts and pure continuations (`K ≤ 1`), and bounds the
+  visible simulation distance for `K ≤ 1` (`closeTo_lyubashevskySignAttempts_simulate_le_one`);
+  extending the induction to general `K ≥ 2`, adaptive multiple-call replacement, an efficient
+  secret-free simulator, paired same-coins fork equality, native shared-oracle reduction and a
+  security parameter family remain open. Other endpoints include
   identification security under SIS and Dilithium-style
   signature schemes over module SIS and module LWE, as theory.
 - **Hybrid encryption:** the `n`-bit-message modular KEM–DEM adaptive CCA endpoint
@@ -478,15 +495,18 @@ index links to canonical definitions rather than keeping a second set.
   induction and native logarithmic workspace/class equality remain required.
 - **Reingold:** a symmetric-machine model of SL, and the edge-list encoding of USTCON by a
   logspace reduction.
-- **Williams's `TIME[t] ⊆ SPACE[√(t log t)]`** ([#888]): implicit Tree Evaluation with the
-  fan-in-`d` space bound and the native block-tree evaluator are developed in the stacked
-  work tracked by the issue. The full `DTIME_subset_DSPACE_sqrt` inclusion is proved in
-  `Complexity/Computability/Complexity/Classes/TimeSpace/Williams.lean` for arbitrary
-  injective input encodings and every `t(n) ≥ n`, without time constructibility. Its fixed
-  driver scans the original input, searches schedules and increases balanced time guesses.
-  The stacked development still needs final CI and integration; the broad issue remains
-  open until it lands. For Cook–Mertz itself: malformed-input handling
-  and the refined `O(ℓ + H log(ℓ + 2))` parameter bound.
+- **Williams's `TIME[t] ⊆ SPACE[√(t log t)]`** ([#888]): the native implicit
+  Tree Evaluation/block-tree evaluator, complete HPV driver and final
+  [`DTIME_subset_DSPACE_sqrt`](Complexity/Computability/Complexity/Classes/TimeSpace/Williams.lean)
+  inclusion have landed, together with the [checked registry entry](ComplexityResults/Entries.lean)
+  ([#2142](https://github.com/cslib-community/complexitylib/pull/2142),
+  [#2143](https://github.com/cslib-community/complexitylib/pull/2143)). The inclusion covers
+  arbitrary injective input encodings and every `t(n) ≥ n`, without time constructibility;
+  its fixed driver scans the original input, searches schedules and increases balanced time
+  guesses. M4's separation corollaries and curated abstract with independent review remain
+  open in [#888]; landing the inclusion and registry does not complete that broader scope.
+  For Cook–Mertz itself: malformed-input handling and the refined
+  `O(ℓ + H log(ℓ + 2))` parameter bound remain open.
 - Alternating time and space classes and bounded-alternation characterizations of PH; sharp
   bounds for sublinear space, distinct from polynomial-space simulation.
 - **Deeper consequences of a Boolean-hierarchy collapse:** Kadin's sparse `S` with
@@ -1035,7 +1055,7 @@ reuse is demonstrated.
 - **Measure postprocessing.** Canonical full-L1 total variation contracts under measurable
   maps of arbitrary finite measures, including unequal masses
   ([#2732](https://github.com/cslib-community/complexitylib/issues/2732)). The actual Gaussian
-  projection/mod-one consumer remains separate in
+  projection/mod-one consumer is proved in
   [#2734](https://github.com/cslib-community/complexitylib/issues/2734).
 - **Finite weighted measure mixtures.** `Foundations/MeasureTheory/Measure/TotalVariation/Mixture`
   bounds the existing full-L1 distance when both finite component measures and their nonnegative
@@ -1047,7 +1067,7 @@ reuse is demonstrated.
 - **Gaussian density and projection laws (available):** the positive-width normalized
   Gaussian weight is proved equal to a scaled standard Gaussian, and its actual scalar
   projection has variance `(s ‖z‖)² / (2π)`, including the zero vector and dimension zero
-  (#2733). The discrete-coset convolution projection and mod-one bound remain #2734;
+  (#2733). The discrete-coset convolution projection and mod-one bound are proved in #2734;
   efficient sampling and the quantum reduction remain #1213.
 - **One sensitivity API.** Define the sensitivity measures over any `Fintype` in CSLib and drop
   the separate measures of the sensitivity-separation development.
