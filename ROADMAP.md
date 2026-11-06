@@ -237,8 +237,10 @@ modular-game time/space assembly and prepared-metadata accounting remain
    coefficients, uniformly in unary dimensions/width. `SIS/Module/ApproximateSampling` uses the
    existing bounded modular sampler for arbitrary positive binary moduli, with actual structured
    law error at most `d*k*n*q/2^width`, or `d*k*n/2^precision` at width `q.size+precision`.
-   Independent uniform scalar entries do not give this law. Full CBD randomized key generation,
-   encryption/decryption and seed codecs remain open.
+   Independent uniform scalar entries do not give this law. `ModuleEncryption/Sampling/Native`
+   composes exact CBD secret/error draws with the matrix sampler and existing keygen, returning
+   the same signed secret and public key with ideal joint/public-law error `k*k*n/2^precision`.
+   Native encryption/decryption and seed codecs remain open.
    `SIS/ModulusSwitch/Failure` bounds randomized switched-decryption failure by the actual noise
    tail under explicit secret-support and decoding margins; small-secret security remains open.
    Nearest-integer coefficient conversion and the Module-LWE phase-error bound are available in
@@ -317,8 +319,15 @@ families and full-input native runtime.
   ([#2712](https://github.com/cslib-community/complexitylib/issues/2712)), for ideal uniform
   prime-modulus matrices and histories sampled before fresh masks. The one-call all-attempt
   read-to-program hop ([#2750](https://github.com/cslib-community/complexitylib/issues/2750))
-  retains the complete cache, with an unconditional finite sum of collision bounds. Adaptive
-  multiple-call replacement, visible-law programmed-to-simulated signing with abort-query
+  retains the complete cache, with an unconditional finite sum of collision bounds. The
+  one-attempt visible simulation milestone
+  ([#2788](https://github.com/cslib-community/complexitylib/issues/2788))
+  bounds the statistical distance between the one-attempt programmed signing hybrid (which prepends
+  a fresh challenge even on an abort) and simulated signing with accepted-transcript caching under
+  any query-bounded visible continuation by `R / q^n + sqrt(q^n / (2γ + 1)^m) / 2`, with exact
+  visible equality for zero-read continuations. Full executions retaining the final cache verify
+  the 0 vs 24/49 empty-cache divergence on the canonical q=17 counterexample. Adaptive
+  multiple-call replacement, full multiple-attempt visible simulation transport with abort-query
   accounting, an efficient secret-free simulator, paired same-coins fork equality, native
   shared-oracle reduction and a security parameter family remain open. Other endpoints include
   identification security under SIS and Dilithium-style
