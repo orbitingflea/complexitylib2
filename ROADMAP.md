@@ -80,9 +80,13 @@ transporting key-generation error, and realizing the efficient forking reduction
   unary `k`; actual OT rows, seal-time ideal commitment, terminal first opening attempts and abort
   retain the same majority-extraction coupling, including `2^-n` at `k = 2n`. A globally polynomial
   private-buffer client lies outside the old constant-growth premise. This does not supply a
-  universal two-sided realization: a global receiver-program adapter and common honest execution
-  with role-local corruption adapters and uniform observation/phase/input contracts still need
-  to connect both real experiments. Arbitrary two-sided scheduling and composition remain open.
+  universal two-sided realization. `OTCommitment/Serial` supplies a common role-local OT world:
+  one pending row is consumed once, and the first terminal attempt freezes further selections.
+  Its explicit honest-party schedulers reproduce both existing real experiments, retaining the
+  receiver's raw opening as well as transcript, state and continuation. This connects those
+  executions under their stated serial schedules; a global receiver-program adapter, uniform
+  native contracts for the common execution, arbitrary two-sided scheduling and composition
+  remain open.
 - **Regev's worst-case to average-case reduction.** For suitable `q` and Gaussian noise rate
   `α` with `αq > 2√n`, an efficient search-LWE algorithm yields a quantum polynomial-time
   algorithm for worst-case GapSVP and SIVP within `Õ(n/α)`. The noise distribution, modulus
@@ -815,9 +819,11 @@ reusing graph and matroid foundations and the shared data-structure interfaces.
   `Circuit/Arithmetic/EvaluationTime.lean` certifies the full existing code trace uniformly in the
   runtime circuit and input over any fixed finite semiring, with binary indices and an F4 client.
   The public circuit-bound VOLE session (#2688) consumes F4 and gives single-copy error 5/8.
-  Growing extension-field arithmetic, complete native circuit-bound VOLE execution (#2765; #643;
-  prerequisite #2738), raw-bit adversarial transport (#2744) and fresh-session amplification
-  remain separate endpoints.
+  The shared `Circuit/Encoding/Check.lean` validates the existing gate-code predicate with
+  certified binary arity, including arithmetic codes and malformed huge indices/arity (#2770).
+  Output/count validation and complete native circuit-bound VOLE execution (#2765; #643;
+  prerequisite #2738), growing extension-field arithmetic, raw-bit adversarial transport (#2744)
+  and fresh-session amplification remain separate endpoints.
 - **Markov-chain sampling:** finite kernels, stationarity, reversibility and total-variation
   mixing; coupling, path coupling, conductance and canonical-path arguments. Implement
   Metropolis sampling for encoded rational target weights, charging initialization, arithmetic
