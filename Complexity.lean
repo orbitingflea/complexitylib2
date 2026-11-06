@@ -2104,6 +2104,8 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO.TwoPow
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigOLe
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Degree
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Degree.BitString
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Degree.BitString.Cut
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Degree.Bounds
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Degree.Primitives
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Doubled
@@ -3248,6 +3250,9 @@ public import Complexity.Crypto.Protocols.SigmaProtocol.SchnorrIdentification
 public import Complexity.Crypto.Protocols.SigmaProtocol.SchnorrSignature
 public import Complexity.Crypto.Protocols.Signature.RandomOracle
 public import Complexity.Crypto.Protocols.Signature.RandomOracle.Simulation
+public import Complexity.Crypto.Protocols.UC.Emulation
+public import Complexity.Crypto.Protocols.UC.Execution
+public import Complexity.Crypto.Protocols.UC.Machine
 public import Complexity.Crypto.Protocols.VOLE.AdaptiveMulCheck
 public import Complexity.Crypto.Protocols.VOLE.Basic
 public import Complexity.Crypto.Protocols.VOLE.BatchMulCheck
