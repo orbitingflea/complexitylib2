@@ -2920,9 +2920,11 @@ public import Complexity.Crypto.Computational.Encryption.Basic
 public import Complexity.Crypto.Computational.Encryption.CCA
 public import Complexity.Crypto.Computational.Encryption.CCA.Interleaved
 public import Complexity.Crypto.Computational.Encryption.Circular
+public import Complexity.Crypto.Computational.Encryption.DecryptionBound
 public import Complexity.Crypto.Computational.Encryption.EncryptThenMAC
 public import Complexity.Crypto.Computational.Encryption.Hybrid
 public import Complexity.Crypto.Computational.Encryption.Hybrid.CCA
+public import Complexity.Crypto.Computational.Encryption.Hybrid.CompositionCCA
 public import Complexity.Crypto.Computational.Encryption.Hybrid.DEMCCA
 public import Complexity.Crypto.Computational.Encryption.KEMFromPKE
 public import Complexity.Crypto.Computational.Encryption.KEMFromPKE.CCA
@@ -3154,6 +3156,7 @@ public import Complexity.Crypto.Computational.Signature
 public import Complexity.Crypto.Computational.Signature.RandomOracle
 public import Complexity.Crypto.Computational.Signature.WordRandomOracle
 public import Complexity.Crypto.Computational.Stretch
+public import Complexity.Crypto.Computational.Stretch.Prefix
 public import Complexity.Crypto.Computational.Stretch.Quantitative
 public import Complexity.Crypto.Computational.TCRSignature
 public import Complexity.Crypto.Computational.TCRSignature.ManyTime
@@ -3197,6 +3200,8 @@ public import Complexity.Crypto.Protocols.MPC.Basic
 public import Complexity.Crypto.Protocols.MPC.CircuitEval
 public import Complexity.Crypto.Protocols.MPC.Composition
 public import Complexity.Crypto.Protocols.MPC.OTCommitment
+public import Complexity.Crypto.Protocols.MPC.OTCommitment.CompleteSender
+public import Complexity.Crypto.Protocols.MPC.OTCommitment.CompleteSender.PolyTime
 public import Complexity.Crypto.Protocols.MPC.OTCommitment.Equivocation
 public import Complexity.Crypto.Protocols.MPC.OTCommitment.Extraction
 public import Complexity.Crypto.Protocols.MPC.OTCommitment.Opening

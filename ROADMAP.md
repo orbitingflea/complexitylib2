@@ -75,10 +75,14 @@ transporting key-generation error, and realizing the efficient forking reduction
   the unary count, initial state and all list outputs are charged.
   `OTCommitment/SenderProgram/PolyTime` gives the corrupted-sender counterpart under combined
   supported round-growth bounds, with actual-world coupling and negligible error at `k = 2n`.
-  These are two restricted efficient simulations, not universal realization for all globally PPT
-  adversaries. A common honest protocol execution with role-local corruption adapters and uniform
-  observation/phase/input contracts is still needed to connect both real experiments. Removing
-  the growth restrictions, arbitrary scheduling and composition also remain open.
+  `OTCommitment/CompleteSender/PolyTime` removes callback growth assumptions for one complete
+  globally oracle-PPT sender over an explicit single-session command interface. Its input charges
+  unary `k`; actual OT rows, seal-time ideal commitment, terminal first opening attempts and abort
+  retain the same majority-extraction coupling, including `2^-n` at `k = 2n`. A globally polynomial
+  private-buffer client lies outside the old constant-growth premise. This does not supply a
+  universal two-sided realization: a global receiver-program adapter and common honest execution
+  with role-local corruption adapters and uniform observation/phase/input contracts still need
+  to connect both real experiments. Arbitrary two-sided scheduling and composition remain open.
 - **Regev's worst-case to average-case reduction.** For suitable `q` and Gaussian noise rate
   `α` with `αq > 2√n`, an efficient search-LWE algorithm yields a quantum polynomial-time
   algorithm for worst-case GapSVP and SIVP within `Õ(n/α)`. The noise distribution, modulus
@@ -237,15 +241,17 @@ families and full-input native runtime.
   same-coins fork equality, native approximation and a security parameter family remain open.
   Other endpoints include identification security under SIS and Dilithium-style
   signature schemes over module SIS and module LWE, as theory.
-- **Hybrid encryption:** prove modular KEM–DEM CCA composition (Boneh–Shoup Exercise 12.5(a)).
-  Canonical `hybridDecrypt` rejects malformed pair encodings and propagates Option-valued
-  component failures ([#2692](https://github.com/cslib-community/complexitylib/issues/2692)).
-  The exact DEM leg ([#2694](https://github.com/cslib-community/complexitylib/issues/2694)) now
-  uses the symmetric cipher's actual key sampler and its existing one-time CCA game, with
-  a native loss-one reduction for `n`-bit messages and prechallenge decryption queries.
-  Two KEM hops and compatible key distributions/key postprocessing remain open; encoded
-  Encrypt-then-MAC keys are not uniform over all words of their encoded length. Adaptive
-  decapsulation security of a KEM alone does not supply the composition.
+- **Hybrid encryption:** the `n`-bit-message modular KEM–DEM adaptive CCA endpoint
+  ([#2725](https://github.com/cslib-community/complexitylib/issues/2725), Boneh–Shoup
+  Exercise 12.5(a)) now proves both KEM hops and the factor-two bound with native reductions
+  into the existing KEM and one-time symmetric CCA games. It reuses canonical Option-valued
+  decryption ([#2692](https://github.com/cslib-community/complexitylib/issues/2692)) and the
+  actual-key DEM leg ([#2694](https://github.com/cslib-community/complexitylib/issues/2694)).
+  A native key postprocessor must map uniform seeds exactly to the actual DEM key sampler;
+  saved-coins and PRF Encrypt-then-MAC `3*n`-bit clients are checked. Perfect correctness
+  separately requires supported postprocessed real keys. Arbitrary message-space extension,
+  prechallenge KEM queries and multiple encapsulation challenges remain open; this endpoint
+  does not claim unrestricted word-message CCA security.
 - **Canonical word Schnorr ROM** ([#2696](https://github.com/cslib-community/complexitylib/issues/2696)):
   completeness, special soundness on all word transcripts, perfect HVZK, commitment
   unpredictability and the finite ROM bound retain every word hash query. Public keys remain
@@ -826,7 +832,11 @@ reusing graph and matroid foundations and the shared data-structure interfaces.
   cache and nested-loop invariants where clients need them; keep separate time, workspace and
   output-size bounds through composition; apply cumulative streaming contracts to captured
   iteration and nested loops; certify PRG stretching with seed length, rounds and generator cost
-  kept separate; and develop general open-program composition. Use Cook–Levin and GGM as
+  kept separate; and develop general open-program composition. Emitted PRG prefixes now have
+  exact length, prefix consistency, a full-input native certificate and security at every native
+  polynomial output schedule ([#2784](https://github.com/cslib-community/complexitylib/issues/2784)).
+  The adaptive arbitrary-word cipher and hash-then-MAC/EtM construction remains open
+  ([#2749](https://github.com/cslib-community/complexitylib/issues/2749)). Use Cook–Levin and GGM as
   regression clients. Improve configuration views, tape partitions and handoff identities only
   where several clients benefit, keeping machine transitions out of global simp.
 - **Mathlib TM2:** sublinear work-space comparisons and a linear-space forward simulation.

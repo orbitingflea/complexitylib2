@@ -384,9 +384,27 @@ The native reduction certificate charges both adaptive phases and bounds every e
 The [checked clients](../../ComplexityTests/Crypto/HybridDEMCCA.lean) apply the result to the
 existing PRF Encrypt-then-MAC cipher, expose an insecure echo cipher, and run a zero-width
 prechallenge/challenge/postchallenge trace. They distinguish an empty encryption reply from an
-encoded successful empty plaintext. This is an intermediate-game result: the two KEM hops and
-ideal-key distribution compatibility still remain. In particular, the Encrypt-then-MAC sampler
-frames an `n`-bit encryption key with a `2*n`-bit MAC key; its `4*n+1` encoded bits are not uniform.
+encoded successful empty plaintext.
+
+For the complete `n`-bit-message composition, import
+[`Hybrid/CompositionCCA.lean`](../../Complexity/Crypto/Computational/Encryption/Hybrid/CompositionCCA.lean)
+and apply `hybrid_indcca2On`. Supply the existing KEM CCA indistinguishability assumption,
+`E.OneTimeINDCCA`, native algorithms, supported KEM correctness, and a native postprocessor
+`F` satisfying `(uniformList (keyLen n)).map (F n) = eval (E.keyGen n)` for every `n`.
+Postprocess every successful decapsulation with `Option.map (F n)` too. The conclusion uses
+`INDCCA2On` with both challenge lengths equal to `n`, not unrestricted `WordINDCCA2`.
+`exists_hybridCCA_reductions` returns native KEM and symmetric adversaries and the exact
+`2 * KEM advantage + symmetric advantage` bound. Reply caps are derived from supported
+secret-key lengths and the native decryptor; external replies need no assumed length bound.
+
+The [complete composition clients](../../ComplexityTests/Crypto/HybridCompositionCCA.lean)
+use `IsPPTOn.exists_total_seeded_evaluator` for arbitrary actual key generators and split `3*n`
+uniform bits into the PRF Encrypt-then-MAC cipher's actual framed keys. Those keys have encoded
+length `4*n+1` and are not uniform words of that length. For perfect correctness, apply
+`hybridDecrypt_postprocessed_hybridEncrypt` with a supported-real-key premise: the total evaluator
+provides it for every seed, while the simple split map needs real keys of length `3*n`.
+The clients also distinguish failed decapsulation from accepted empty keys, detect omitted
+postprocessing on forwarded replies, and exhibit a failed real hop without KEM correctness.
 
 ## Certify a list accumulator
 
@@ -803,6 +821,22 @@ For a coarser source, `source_incoming_cost_le` quantifies the generic incoming 
 inflated budget. Arbitrary coarser sampling sources, a fully assembled recursive hierarchy,
 lower-child budget induction, native realization and RL=L remain in
 [issue #1721](https://github.com/cslib-community/complexitylib/issues/1721).
+
+## Extract an emitted pseudorandom prefix
+
+Import [Stretch/Prefix.lean](../../Complexity/Crypto/Computational/Stretch/Prefix.lean).
+Use `PRGStretch.length_take_forwardIterate` and `take_forwardIterate_prefix` with the global
+one-bit length promise. The latter compares `ℓ ≤ L` rounds only after discarding the final
+seed: take `ℓ` bits from either run. Do not apply it to the complete retained-seed output.
+
+`polyTime_take_forwardIterate` certifies the map from a complete seed and unary round count
+to the emitted prefix. Compose its round count with the plaintext length to obtain a native
+XOR pad computation; the [checked PRGStretch client](../../ComplexityTests/PRGStretch.lean)
+proves actual encryption/recovery and distinguishes emission order from its reversal.
+For security, apply `indistinguishable_take_forwardIterate` to the existing one-bit
+`PseudorandomGenerator` assumption and a native unary length schedule `L`. The seed law stays
+`uniformList n`; the output law is compared with `uniformList (L n)`. This covers `L n = 0`
+and seed width zero, but does not yet supply adaptive-message cipher security.
 
 ## Carry the certificate into a security proof
 

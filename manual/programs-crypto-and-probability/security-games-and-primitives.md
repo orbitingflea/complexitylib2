@@ -27,6 +27,18 @@ Pinned cslib also has the finite [Generator](https://github.com/leanprover/cslib
 | Discrete logarithm and DDH | [Complexity/Crypto/Computational/DiscreteLog.lean](https://github.com/cslib-community/complexitylib/blob/13e6a31951bf1c89a1a6258c44f9444aecbbefd8/Complexity/Crypto/Computational/DiscreteLog.lean), [Complexity/Crypto/Computational/DiffieHellman.lean](https://github.com/cslib-community/complexitylib/blob/13e6a31951bf1c89a1a6258c44f9444aecbbefd8/Complexity/Crypto/Computational/DiffieHellman.lean) | Encoded prime-order group families, exact ideal group laws; public operations and samplers require separate certificates |
 | LWE, SIS, and module lattices | [Complexity/Crypto/Computational/LWE/Basic.lean](https://github.com/cslib-community/complexitylib/blob/13e6a31951bf1c89a1a6258c44f9444aecbbefd8/Complexity/Crypto/Computational/LWE/Basic.lean), [Complexity/Crypto/Computational/SIS/Basic.lean](https://github.com/cslib-community/complexitylib/blob/13e6a31951bf1c89a1a6258c44f9444aecbbefd8/Complexity/Crypto/Computational/SIS/Basic.lean), [Complexity/Crypto/Computational/SIS/Module.lean](../../Complexity/Crypto/Computational/SIS/Module.lean), [Complexity/Crypto/Computational/SIS/ModuleEncryption.lean](../../Complexity/Crypto/Computational/SIS/ModuleEncryption.lean) | Explicit dimensions, modulus and noise/norm parameters (`2^w` binary matrix words in `Basic.lean`, arbitrary `[NeZero (q security)]` moduli, Ajtai collision extraction, negacyclic `R_q = ℤ_q[X]/(X^n+1)` block-anticirculant expansion `expandModuleMatrix`, `ModuleSIS`, `RingSIS`, and `DecisionModuleLWE` in `SIS/Module.lean`, and dual-Regev `ModuleLWE` public-key encryption in `SIS/ModuleEncryption.lean`); classical uniform-PPT hardness hypotheses |
 
+For a one-bit expanding PRG, [Stretch/Prefix.lean](../../Complexity/Crypto/Computational/Stretch/Prefix.lean)
+proves that `(forwardIterate g ℓ seed).take ℓ` has length `ℓ` and agrees with the first `ℓ`
+emitted bits of every longer run. The premise is global: `length (g seed) = length seed + 1`
+for every seed, including the empty word. The complete `forwardIterate` output also retains a
+reversed final seed and is not prefix-consistent. Native computation charges both the seed and
+unary `ℓ`; for each uniform native length schedule `L n`, the emitted `L n`-bit prefix from a
+uniform `n`-bit seed is computationally indistinguishable from `uniformList (L n)`, by existing
+stretch security and reverse/take postprocessing. [PRGStretch clients](../../ComplexityTests/PRGStretch.lean)
+check zero widths, order-sensitive output, and native XOR encryption/recovery. This is the emitted-pad
+prerequisite for the stream-cipher route of Boneh–Shoup §3.2 [bs23][bs23]; adaptive arbitrary-word
+one-time encryption and hash-then-MAC/EtM remain open in [#2749](https://github.com/cslib-community/complexitylib/issues/2749).
+
 Several independently keyed copies of a pseudorandom function are again pseudorandom: [`PseudorandomFunction.multiKey`](../../Complexity/Crypto/Computational/PseudorandomFunction/MultiKey.lean) answers `t` word channels with the `n`-bit blocks of one `t * n`-bit key, against `t` independent random functions, for every fixed `t`. Its hybrid reduction `prfMultiReduction` simulates the already random channels with a lazy list cache and is itself oracle PPT; the concrete bound sums `t` PRF advantages (Boneh–Shoup, Exercise 4.26). The number of keys is a constant, not a function of the security parameter; the exercise also allows a polynomially bounded number of keys, which this theorem does not cover.
 
 Unconditionally, any pseudorandom function on `n`-bit inputs requires at least `2 * n - 2` binary gates over the full binary Boolean basis `B₂` (`fullInterpretation (k := 2)`) on all but a negligible fraction of keys (Fan–Li–Yang §§4.2, 7.1, Theorem 7.5 [fly22][fly22]): [`CircuitLowerBound.lean`](../../Complexity/Crypto/Computational/PseudorandomFunction/CircuitLowerBound.lean) proves the bound both for arbitrary `BooleanPRF` ensembles (which impose no efficient sampling or evaluation condition) and for word-valued `PseudorandomFunction` families via deterministic `BitString.lowBits`-encoded restriction queries. The underlying wire out-degree, syntactic dead-gate elimination (`Circuit.NoDeadGates`), critical-path `2 * n - 2 * m` gate bound, and `B₂` intersection bottleneck live in [`Complexity/Computability/Circuit/CriticalPath.lean`](../../Complexity/Computability/Circuit/CriticalPath.lean) and [`Complexity/Computability/Circuit/Boolean/CriticalPath.lean`](../../Complexity/Computability/Circuit/Boolean/CriticalPath.lean). Tightness at `2 * n - 2`, distinguisher completeness, refutation of bitwise XOR, unconditional `BooleanPRF` non-vacuity on random functions, and conditional `OneWay` non-vacuity are checked in [`ComplexityTests/Crypto/PRFCircuitLowerBound.lean`](../../ComplexityTests/Crypto/PRFCircuitLowerBound.lean).
@@ -198,7 +210,7 @@ Starting with the imports and local context in [`ComplexityTests/Crypto/HybridEn
 
 For adaptive decapsulation security, import [`KEMFromPKE/CCA.lean`](../../Complexity/Crypto/Computational/Encryption/KEMFromPKE/CCA.lean) and apply `WordINDCCA2.indistinguishable_encryptKeyEncaps` (Boneh–Shoup v0.6, Exercise 12.5(f), p. 514 [bs23][bs23]). The result uses `Game.Indistinguishable` over `kemCCARealGame` and `kemCCAIdealGame`, with the existing `IsOraclePPT` adversaries. Both games share the CPA sampling continuations and use `cca2Phase2Oracle` to reject the exact challenge word. The reduction preserves advantage exactly, samples two equal-length keys, and forwards postchallenge queries unchanged. It requires a unary polynomial-time `keyLen`; honest algorithm certificates and supported-output correctness are separate. Here the original option-valued decryptor is retained, so `some []` denotes successful empty-key decapsulation and `none` denotes rejection.
 
-The [checked CCA KEM clients](../../ComplexityTests/Crypto/KEMFromPKECCA.lean) instantiate doubled key length, an unconditional correct zero-width KEM, and a reply-dependent tag-flipping attack with advantage `1 - 2^(-keyLen n)`. The attack fixture is correctly decryptable but insecure; it makes no CPA-security claim. Its native oracle certificate bounds reply reading, and the honest-game certificate charges decryption. This endpoint covers one encapsulation followed by adaptive queries; full KEM–DEM CCA composition, prechallenge KEM queries and multiple encapsulation challenges remain separate objectives.
+The [checked CCA KEM clients](../../ComplexityTests/Crypto/KEMFromPKECCA.lean) instantiate doubled key length, an unconditional correct zero-width KEM, and a reply-dependent tag-flipping attack with advantage `1 - 2^(-keyLen n)`. The attack fixture is correctly decryptable but insecure; it makes no CPA-security claim. Its native oracle certificate bounds reply reading, and the honest-game certificate charges decryption. This KEM endpoint covers one encapsulation followed by adaptive queries. The composition below uses this schedule; prechallenge KEM queries and multiple encapsulation challenges remain separate objectives.
 
 The canonical `hybridDecrypt` now takes Option-valued decapsulation and symmetric decryption,
 rejects noncanonical ciphertext-pair encodings, and propagates component failures. Its supported
@@ -218,10 +230,26 @@ Canonical framing makes component-level challenge rejection agree with exact wor
 
 The [checked clients](../../ComplexityTests/Crypto/HybridDEMCCA.lean) include the existing PRF
 Encrypt-then-MAC construction, a full-advantage echo-cipher counterexample, and a zero-width
-adaptive trace distinguishing `none` from `some []`. The full composition bound still requires
-two KEM steps and key-distribution compatibility. Encoded Encrypt-then-MAC keys are framed
-pairs with `3*n` random bits and encoded length `4*n+1`, so they cannot be replaced by uniform
-words of that encoded length.
+adaptive trace distinguishing `none` from `some []`.
+
+[`Hybrid/CompositionCCA.lean`](../../Complexity/Crypto/Computational/Encryption/Hybrid/CompositionCCA.lean)
+completes both KEM hops and Exercise 12.5(a)'s concrete bound for this `n`-bit-message model:
+`exists_hybridCCA_reductions` supplies native adversaries with hybrid advantage at most twice
+the KEM advantage plus the actual symmetric CCA advantage. The hidden-bit reduction's signed
+probability identities precede the absolute-value bound. `hybrid_indcca2On` gives the asymptotic
+endpoint using existing `INDCCA2On`, and `isPPTOn_hybridCCAGame` certifies the honest experiment.
+No new encryption scheme or security predicate is introduced.
+
+The postprocessor `F` must take uniform `keyLen n`-bit seeds to exactly the distribution of
+`E.keyGen n`, with one native algorithm for all parameters. The
+[checked clients](../../ComplexityTests/Crypto/HybridCompositionCCA.lean) instantiate an actual
+CCA-secure PKE's encrypted-key KEM with the PRF Encrypt-then-MAC cipher. Its `3*n` random bits
+produce framed keys of encoded length `4*n+1`, not uniform encoded words. A general total
+saved-coins client uses the existing evaluator theorem and returns supported keys on every seed.
+Supported KEM correctness justifies the real-hop sampling commutation; perfect hybrid correctness
+additionally checks support of the postprocessed real key. Tests expose the failure without that
+KEM premise, and show that a perfect zero-width KEM with the insecure echo DEM remains insecure.
+Arbitrary message-space extension and stronger KEM query schedules remain separate.
 
 ## Authentication, signatures, and state
 
