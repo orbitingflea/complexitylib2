@@ -104,13 +104,15 @@ transporting key-generation error, and realizing the efficient forking reduction
   [#2646](https://github.com/cslib-community/complexitylib/issues/2646). Uniform shifted-mass
   control by the actual nonzero dual Gaussian mass, with a quantitative sufficient width
   criterion and eventual satisfiability, is proved in
-  [#2659](https://github.com/cslib-community/complexitylib/issues/2659). Quotient-distribution
-  consequences, convolution bounds, efficient sampling and the quantum reduction remain open in
-  [#1213](https://github.com/cslib-community/complexitylib/issues/1213).
+  [#2659](https://github.com/cslib-community/complexitylib/issues/2659).
   `Foundations/MeasureTheory/Group/QuotientDensity` folds arbitrary measurable nonnegative
-  densities onto countable subgroup quotients, with no finite-mass assumption. Its Gaussian
-  quotient normalization and distance consumer remains separate in
-  [#2681](https://github.com/cslib-community/complexitylib/issues/2681).
+  densities onto countable subgroup quotients, with no finite-mass assumption. The actual
+  normalized continuous Gaussian and fundamental-domain quotient measures are probabilities;
+  their density identity gives full-L1 distance at most the actual nonzero dual Gaussian mass,
+  with eventual small error, in [#2681](https://github.com/cslib-community/complexitylib/issues/2681).
+  This is a precise quotient consequence of Claim 3.8. An attained minimum smoothing parameter,
+  Claim 3.9 convolution bounds, efficient sampling and the quantum reduction remain open in
+  [#1213](https://github.com/cslib-community/complexitylib/issues/1213).
   `Foundations/MeasureTheory/Group/ConvolutionDensity` proves the convolution density formula
   for an arbitrary s-finite first measure, including singular inputs. Its actual shifted
   discrete-Gaussian convolution consumer is tracked separately in
@@ -168,8 +170,11 @@ modular-game time/space assembly and prepared-metadata accounting remain
    permits explicit small-secret laws, with a native centered-binomial instance.
    `SIS/ModuleEncryption/Native` realizes the existing deterministic key-generation/sample codec
    uniformly with unary rank/degree and binary modulus/coefficients, given the expanded structured
-   matrix word. Native construction of that matrix from polynomial samples, encryption/decryption
-   and seed codecs remain open; independent uniform scalar entries do not give the module law.
+   matrix word. `SIS/Module/MatrixSampling` natively constructs the existing rectangular rotation
+   blocks and exactly samples their encoded law from independent power-of-two polynomial
+   coefficients, uniformly in unary dimensions/width. Independent uniform scalar entries do not
+   give this law. Full CBD randomized key generation, encryption/decryption and seed codecs
+   remain open.
    `SIS/ModulusSwitch/Failure` bounds randomized switched-decryption failure by the actual noise
    tail under explicit secret-support and decoding margins; small-secret security remains open.
    Nearest-integer coefficient conversion and the Module-LWE phase-error bound are available in

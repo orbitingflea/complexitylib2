@@ -1315,6 +1315,7 @@ public import Complexity.Computability.Communication.Newman
 public import Complexity.Computability.Communication.Nondeterministic.Basic
 public import Complexity.Computability.Communication.Nondeterministic.Functions
 public import Complexity.Computability.Communication.Operations
+public import Complexity.Computability.Communication.PartitionJoin
 public import Complexity.Computability.Communication.Protocol
 public import Complexity.Computability.Communication.Randomized
 public import Complexity.Computability.Communication.Rank
@@ -3141,6 +3142,7 @@ public import Complexity.Crypto.Computational.PseudorandomPermutation
 public import Complexity.Crypto.Computational.Rompel
 public import Complexity.Crypto.Computational.SIS.Basic
 public import Complexity.Crypto.Computational.SIS.Module
+public import Complexity.Crypto.Computational.SIS.Module.MatrixSampling
 public import Complexity.Crypto.Computational.SIS.ModuleEncryption
 public import Complexity.Crypto.Computational.SIS.ModuleEncryption.Native
 public import Complexity.Crypto.Computational.SIS.ModuleEncryption.Sampling
@@ -3484,6 +3486,7 @@ public import Complexity.Foundations.Analysis.Lattice.Dual
 public import Complexity.Foundations.Analysis.Lattice.Fourier
 public import Complexity.Foundations.Analysis.Lattice.Periodization
 public import Complexity.Foundations.Analysis.Lattice.Poisson
+public import Complexity.Foundations.Analysis.Lattice.QuotientMeasure
 public import Complexity.Foundations.Analysis.Lattice.Schwartz
 public import Complexity.Foundations.Analysis.LpNorm
 public import Complexity.Foundations.Analysis.LpNormMeasure
@@ -3674,6 +3677,7 @@ public import Complexity.Foundations.Combinatorics.PartialLabelScores
 public import Complexity.Foundations.Combinatorics.PowersetTail
 public import Complexity.Foundations.Combinatorics.ReplacementCounting
 public import Complexity.Foundations.Combinatorics.ReplacementDesignBridge
+public import Complexity.Foundations.Combinatorics.SetPartition.JoinMatrix
 public import Complexity.Foundations.Combinatorics.SharedSummaries
 public import Complexity.Foundations.Combinatorics.SimpleGraph.Metric
 public import Complexity.Foundations.Combinatorics.SmallSubsets
@@ -4004,9 +4008,11 @@ public import Complexity.Foundations.Probability.Gaussian.Discrete
 public import Complexity.Foundations.Probability.Gaussian.DiscreteTail
 public import Complexity.Foundations.Probability.Gaussian.Fourier
 public import Complexity.Foundations.Probability.Gaussian.MassBounds
+public import Complexity.Foundations.Probability.Gaussian.Measure
 public import Complexity.Foundations.Probability.Gaussian.Multivariate
 public import Complexity.Foundations.Probability.Gaussian.Periodization
 public import Complexity.Foundations.Probability.Gaussian.Poisson
+public import Complexity.Foundations.Probability.Gaussian.Quotient
 public import Complexity.Foundations.Probability.Gaussian.Real
 public import Complexity.Foundations.Probability.Gaussian.Sheppard
 public import Complexity.Foundations.Probability.Gaussian.ShiftBounds
