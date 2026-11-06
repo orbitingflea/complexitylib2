@@ -729,7 +729,9 @@ theorem microStepRegCode_exec {U V w N b q_target j : ℕ} {x : BitRAM.Data 280}
     simp +decide [s3, BitRAM.Data.set, hy2_regs 30 (by decide), hs2_30]
   have hy3_31 : y3.regs 31 = next_ptr := by
     rw [hy3_regs 31 (by decide) (by decide)]
-    simp +decide [s3, s2, BitRAM.Data.set, hy2_regs 31 (by decide), hy1_0, next_ptr, lm]
+    dsimp only [s3, s2, BitRAM.Data.set]
+    rw [Function.update_of_ne (by decide), Function.update_of_ne (by decide),
+      hy2_regs 31 (by decide), Function.update_self, hy1_0]
     rfl
   have hy3_32 : y3.regs 32 = 0 := by
     rw [hy3_regs 32 (by decide) (by decide)]

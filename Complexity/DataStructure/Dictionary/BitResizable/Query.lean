@@ -450,7 +450,8 @@ theorem ovfStepRegCode_exec {U V w N b q_target j : ℕ} {x : BitRAM.Data 280}
   have hy2_41 : j + 1 < qK → y2.regs 41 = Succinct.slabPtrOf N gm b ((j + 1) / slabSize N) :=
     fun hj1 => by
       rw [hy2_regs 41 (by decide) (by decide)]
-      simp +decide [s2, BitRAM.Data.set, hy1_41 hj1]
+      dsimp only [s2, BitRAM.Data.set]
+      rw [Function.update_of_ne (by decide), Function.update_of_ne (by decide), hy1_41 hj1]
       rfl
   have hy2_hi : ∀ r : Fin 280, 45 ≤ r.val → y2.regs r = x.regs r := by
     intro r hr
@@ -1120,8 +1121,8 @@ theorem queryRegCode_exec {U V w N u : ℕ}
         (s_bit := x.toBitMemoryState) hslot hb_lt hy2_33_lt).symm
     have hy3_33 : y3.regs 33 = j_found := by
       rw [hy3_regs 33 (by decide) (by decide)]
-      simp +decide [s3, s2, BitRAM.Data.set]
-      rfl
+      dsimp only [s3, s2, BitRAM.Data.set]
+      rw [Function.update_of_ne (by decide), Function.update_of_ne (by decide)]
     refine DemonicExecWithin.const hfit_1 ?_
     refine ⟨hy3_st_x, wf_set 0 hy3_wf hfit_1,
       hy3_er.congr_regs (fun r hr1 _ => by
