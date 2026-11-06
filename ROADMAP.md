@@ -166,6 +166,10 @@ modular-game time/space assembly and prepared-metadata accounting remain
    ring multiplication, with native certificates. Define the RLWE secret and error laws and
    experiment separately; an ordinary-LWE reduction does not give them. Module-LWE sampling now
    permits explicit small-secret laws, with a native centered-binomial instance.
+   `SIS/ModuleEncryption/Native` realizes the existing deterministic key-generation/sample codec
+   uniformly with unary rank/degree and binary modulus/coefficients, given the expanded structured
+   matrix word. Native construction of that matrix from polynomial samples, encryption/decryption
+   and seed codecs remain open; independent uniform scalar entries do not give the module law.
    `SIS/ModulusSwitch/Failure` bounds randomized switched-decryption failure by the actual noise
    tail under explicit secret-support and decoding margins; small-secret security remains open.
    Nearest-integer coefficient conversion and the Module-LWE phase-error bound are available in
@@ -232,14 +236,16 @@ families and full-input native runtime.
   and an arbitrary kernel receiving only `(A,T)`. This joint-law extraction uses the sampled
   secret; an `A`-only native reduction and the actual signing/fork distribution bridge remain
   open. Full-view witness invariance ([#2642]) retains aborted commitments for common
-  commitment-dependent challenges and finite independent attempt histories. Average-key cache-hit
-  bounds for actual box commitments and the simulator's published commitments follow from matrix
+  commitment-dependent challenges and finite independent attempt histories. The canonical ROM
+  bridge ([#2661]) extends this to sequential shared-cache signing and adaptive forger views,
+  retaining abort queries and later attempts after success. Average-key cache-hit bounds for
+  actual box commitments and the simulator's published commitments follow from matrix
   universality and the joint leftover-hash bound
   ([#2712](https://github.com/cslib-community/complexitylib/issues/2712)), for ideal uniform
   prime-modulus matrices and histories sampled before fresh masks. An efficient secret-free
-  simulator, adaptive oracle-cache simulation accounting for aborted hash queries, paired
-  same-coins fork equality, native approximation and a security parameter family remain open.
-  Other endpoints include identification security under SIS and Dilithium-style
+  simulator, corrected abort-query simulation, paired same-coins fork equality, native
+  shared-oracle reduction and a security parameter family remain open. Other endpoints include
+  identification security under SIS and Dilithium-style
   signature schemes over module SIS and module LWE, as theory.
 - **Hybrid encryption:** the `n`-bit-message modular KEM–DEM adaptive CCA endpoint
   ([#2725](https://github.com/cslib-community/complexitylib/issues/2725), Boneh–Shoup
@@ -289,6 +295,8 @@ In order:
   receivers in that fixed schedule, retaining private coins, state and repeated setup reads.
   `VOLE/NativePPT.lean` certifies a list simulator for variable-size batches and supplied encoded-state
   receiver callbacks over one fixed ring with a certified exact-uniform sampler (with an F2 client).
+  Its generalized input/first-message adapters charge the full encoded public input, layout and
+  conversion; the raw-view law alone does not assert sender realizability of transformed messages.
   `VOLE/Circuit.lean`, `CircuitSound.lean` and `CircuitPrivacy.lean` bind the session to the existing
   arithmetic-circuit relation `∃ w, C.eval (x ++ w) = y`: public input/output, constant and addition
   rows join the multiplication batch. Actual role-local soundness has the same mixture bound
@@ -788,9 +796,13 @@ reusing graph and matroid foundations and the shared data-structure interfaces.
 
 - **Exact fixed-field sampling:** `Languages/Probabilistic/Sampling/F4.lean` samples Mathlib's
   four-element quadratic field using two fair bits, with encoded arithmetic and sampler
-  certificates in `Computability/Probabilistic/Sampling/F4.lean`. Uniform growing extension-field
-  arithmetic remains open. The public circuit-bound VOLE session (#2688) consumes its field and
-  gives single-copy error 5/8; fresh-session amplification remains separate.
+  certificates in `Computability/Probabilistic/Sampling/F4.lean`.
+  `Circuit/Arithmetic/EvaluationTime.lean` certifies the full existing code trace uniformly in the
+  runtime circuit and input over any fixed finite semiring, with binary indices and an F4 client.
+  The public circuit-bound VOLE session (#2688) consumes F4 and gives single-copy error 5/8.
+  Growing extension-field arithmetic, complete native circuit-bound VOLE execution (#2765; #643;
+  prerequisite #2738), raw-bit adversarial transport (#2744) and fresh-session amplification
+  remain separate endpoints.
 - **Markov-chain sampling:** finite kernels, stationarity, reversibility and total-variation
   mixing; coupling, path coupling, conductance and canonical-path arguments. Implement
   Metropolis sampling for encoded rational target weights, charging initialization, arithmetic
@@ -1079,3 +1091,5 @@ not planned, not as proved.
 [#2636]: https://github.com/cslib-community/complexitylib/issues/2636
 [#2642]: https://github.com/cslib-community/complexitylib/issues/2642
 [#2652]: https://github.com/cslib-community/complexitylib/issues/2652
+
+[#2661]: https://github.com/cslib-community/complexitylib/issues/2661
