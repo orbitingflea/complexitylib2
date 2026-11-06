@@ -2129,6 +2129,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO.Constructible
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO.FunProp
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO.FunPropLists
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO.ListHead
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO.Lists
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO.NatPolynomial
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO.Option
@@ -2140,6 +2141,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO.Preprocess
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO.Sum
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO.TwoPow
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO.ZipFold
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigOLe
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Degree
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Degree.BitString
@@ -2313,6 +2315,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Lengt
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.List
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.List.Index
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.List.Size
+public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.ListOption
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.MultiPass
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Nat
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Nat.Arithmetic
@@ -2947,6 +2950,7 @@ public import Complexity.Computability.WordRAM.Turing.Overhead
 public import Complexity.Computability.WordRAM.Width
 public import Complexity.Crypto.Computational.Basic
 public import Complexity.Crypto.Computational.CollisionResistant
+public import Complexity.Crypto.Computational.CollisionResistantToOneWay
 public import Complexity.Crypto.Computational.Commitment
 public import Complexity.Crypto.Computational.Commitment.Basic
 public import Complexity.Crypto.Computational.Commitment.PublicOperations
@@ -4075,6 +4079,7 @@ public import Complexity.Foundations.Probability.Gaussian.Measure
 public import Complexity.Foundations.Probability.Gaussian.Multivariate
 public import Complexity.Foundations.Probability.Gaussian.Periodization
 public import Complexity.Foundations.Probability.Gaussian.Poisson
+public import Complexity.Foundations.Probability.Gaussian.Projection
 public import Complexity.Foundations.Probability.Gaussian.Quotient
 public import Complexity.Foundations.Probability.Gaussian.Real
 public import Complexity.Foundations.Probability.Gaussian.Sheppard
@@ -4528,6 +4533,7 @@ public import Complexity.Probability.StatisticalDistance.UniformMod
 public import Complexity.Probability.Uniform
 public import Complexity.Probability.UniformNat
 public import Complexity.Probability.UniversalHash
+public import Complexity.Tactic.EncLen
 public import Complexity.Tactic.FOOperator
 public import Complexity.Tactic.FOOperator.Init
 public import Complexity.Tactic.FirstOrder
