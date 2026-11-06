@@ -46,6 +46,23 @@ supplies their component bounds. Run `scripts/build.sh ComplexityTests.TotalVari
 The [Regev joint experiment](https://github.com/cslib-community/complexitylib/issues/2767) still
 has to discharge those bounds for its actual Gaussian laws and residue marginal.
 
+## Project a continuous Gaussian density
+
+Import [Gaussian/Standard.lean](../../Complexity/Foundations/Probability/Gaussian/Standard.lean)
+when a calculation starts from the density `exp (-π * ‖x‖² / s²) / s^dim` relative to
+ambient volume. For `s > 0`, `gaussianWeight_withDensity_eq_map_stdGaussian` identifies
+this actual measure with `stdGaussian E` scaled by `s / √(2π)`. It reuses the normalized
+`Measure.withDensity` construction; it does not introduce another Gaussian measure.
+
+Apply `gaussianWeight_withDensity_map_inner s hs z` to identify the law of `⟪z, x⟫`
+as `gaussianReal 0 (((s * ‖z‖)^2 / (2 * Real.pi)).toNNReal)`. The theorem includes
+`z = 0` and dimension zero, where the law is a point mass. The
+[checked clients](../../ComplexityTests/GaussianStandard.lean) recover the standard law
+at width `√(2π)` and compute variance `32/π` at width `4` with scalar projection `2`.
+These are analytic measure identities. Projection of a discrete-coset Gaussian convolution
+and its mod-one error bound remain [#2734](https://github.com/cslib-community/complexitylib/issues/2734);
+no sampler or runtime certificate follows from this identification.
+
 ## Describe a discrete Gaussian law
 
 Import [Gaussian/Discrete.lean](../../Complexity/Foundations/Probability/Gaussian/Discrete.lean)
@@ -295,8 +312,44 @@ Gaussian by an atom and recover the variance-two Gaussian from two variance-one 
 A noncommutative permutation-group example checks the order of translation; infinite-density
 and zero-input cases check the absence of hidden finiteness premises. Run
 `scripts/build.sh ComplexityTests.ConvolutionDensity` from the repository root.
-The later [lattice Gaussian convolution bound](https://github.com/cslib-community/complexitylib/issues/2707)
-still needs its actual discrete weights, completion of the square and quantitative error proof.
+The [lattice Gaussian convolution bound](https://github.com/cslib-community/complexitylib/issues/2707)
+below supplies its actual discrete weights, completion of the square and quantitative error proof.
+
+## Add continuous Gaussian noise to a coset Gaussian
+
+Import [Gaussian/Convolution.lean](../../Complexity/Foundations/Probability/Gaussian/Convolution.lean).
+Take a discrete full-rank lattice `L`, an arbitrary translate `u`, positive widths `r`, `s`,
+and positive `t` with `t² = r² + s²`. Thus `t` is the positive square root of the sum.
+The coset law on `L + u` samples `discreteGaussian L r hr (-u)` and maps `z` to `z + u`.
+The continuous noise measure is
+`volume.withDensity (fun x => ENNReal.ofReal (gaussianWeight s x / s^n))`,
+where `n = Module.finrank ℝ E`. The experiment is their actual `Measure.conv`.
+
+Write `h = r*s/t` and `A_w(c) = covolume L / w^n * gaussianMass L w c` for this paragraph.
+`ZLattice.conv_discreteGaussian_eq_withDensity` identifies the experiment's density relative
+to the normalized continuous Gaussian of width `t` as
+`A_h((r/t)² • x - u) / A_r(-u)`.
+The proof completes the square and integrates the actual countable mixture; it does not
+assume a convolution or smoothing conclusion. The denominator is strictly positive.
+
+With `D` the existing dual submodule and `δ_w = gaussianMass D (1/w) 0 - 1`,
+`tvDist_conv_discreteGaussian_le` proves the unconditional bound
+`(δ_h + δ_r) / A_r(-u)`. Both measures are probability measures and the relative density is
+integrable. `tvDist` here is the full-L1 distance, matching Regev's convention and ranging
+from `0` to `2`; there is no factor of one half in this theorem.
+
+For the source's `4ε` conclusion, `tvDist_conv_discreteGaussian_le_of_dual_mass_le` accepts
+`0 ≤ ε < 1/2` and the actual sum bound `δ_h ≤ ε`.
+`tvDist_conv_discreteGaussian_le_of_gap` proves that premise from a positive lower bound
+`a` on nonzero dual norms and `2^n * exp(-3πh²a²/4) ≤ ε/(1+ε)`, with `ε > 0`.
+The [checked clients](../../ComplexityTests/DiscreteGaussianConvolution.lean) use `L = 2ℤ`,
+`u = 1/2`, `r = 3`, `s = 4`, `t = 5`, `a = 1/2`, and a proved numerical criterion giving
+distance at most `4/7`. They also prove equality of the actual measures in dimension zero.
+Run `scripts/build.sh ComplexityTests.DiscreteGaussianConvolution` to check them.
+
+This proves the bounded analytic Claim 3.9 consequence with an explicit sufficient width
+criterion. The minimum smoothing parameter, projected/mod-one law, search-LWE experiment,
+efficient finite-precision sampling and quantum implementation remain separate.
 
 ## Certify a closed randomized routine
 
