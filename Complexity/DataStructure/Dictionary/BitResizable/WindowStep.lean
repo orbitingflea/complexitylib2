@@ -8,49 +8,41 @@ module
 -- upstream: candidate
 
 public import Complexity.DataStructure.Dictionary.BitResizable.InEpoch
-import all Complexity.DataStructure.Dictionary.BitResizable.Layout
-import all Complexity.DataStructure.Dictionary.BitResizable.InEpoch
-import all Complexity.DataStructure.Dictionary.WordRAM.SuccinctSlotStore
-import all Complexity.DataStructure.Dictionary.WordRAM.SuccinctTailOps
-import all Complexity.DataStructure.Dictionary.WordRAM.SuccinctSlabPool
-import all Complexity.DataStructure.Dictionary.WordRAM.SuccinctSlabMove
-import all Complexity.DataStructure.Dictionary.WordRAM.SuccinctSlabDemote
-import all Complexity.DataStructure.Dictionary.WordRAM.SuccinctSlabOps
-import all Complexity.DataStructure.Dictionary.WordRAM.SuccinctChainOps
-import all Complexity.DataStructure.Dictionary.WordRAM.SuccinctBucketOps
-import all Complexity.DataStructure.Dictionary.WordRAM.SuccinctDeleteOps
-import all Complexity.DataStructure.Dictionary.WordRAM.SuccinctValidHistory
+public import Complexity.DataStructure.Dictionary.BitResizable.Query
+public import Complexity.DataStructure.Dictionary.WordRAM.SuccinctHash
 import all Complexity.DataStructure.Dictionary.WordRAM.SuccinctHash
 
 /-!
-# Window and `diffCount` Transitions for the Bit-Resizable Dictionary
+# Uniform `BitRAM` Programs for In-Epoch `insert` and `delete`
 
-This module proves the window-bijection (`TailDenseInv`) and changed-word (`diffCount` /
-`diffCount2`) transitions for `pushBackSlotProg`, `popBackSlotProg`, `insertWithHashProg`, and
-`deleteFinishWithHashProg` on the fixed-capacity companion state, as well as the unconditional
-footprint inequality `succinctSpace_le_dictBitSize`.
+This module implements uniform `BitRAM.Code .standard 280` programs (`inEpochInsertRegCode` and
+`inEpochDeleteRegCode`) for in-epoch insertions and deletions on the single-tape bit-resizable
+succinct dictionary, proving that they maintain `FixedCoupled U V w N s_fix y.toBitMemoryState`
+in lockstep with `Succinct.insertWithHashProg` and `Succinct.deleteFinishWithHashProg` with
+`O(1)` amortized instruction count against `1967 * Succinct.slotPotential` plus `O(probeExcess)`.
 
 ## Main definitions
 
-* `Cslib.DataStructure.Dictionary.BitResizable.WindowStepPost`: bundled postcondition for a
-  companion window and `diffCount` transition from `(s₀, td, dt)` to `(s', td', dt')` with
-  slab-rebalancing work `W`.
+* `Cslib.DataStructure.Dictionary.BitResizable.inEpochInsertRegCode`: uniform `BitRAM` program
+  executing an in-epoch insertion (`r270 = u`, `r274 = v_new`).
+* `Cslib.DataStructure.Dictionary.BitResizable.inEpochDeleteRegCode`: uniform `BitRAM` program
+  executing an in-epoch deletion (`r270 = u`).
 
 ## Main results
 
 * `Cslib.DataStructure.Dictionary.BitResizable.succinctSpace_le_dictBitSize`: unconditional space
   inequality `Succinct.space U V w N ≤ dictBitSize U V w N N` for `0 < w` and `0 < N`.
-* `Cslib.DataStructure.Dictionary.BitResizable.insertWithHashProg_window`: window and `diffCount`
-  transition for `Succinct.insertWithHashProg`.
-* `Cslib.DataStructure.Dictionary.BitResizable.deleteFinishWithHashProg_window`: window and
-  `diffCount` transition for `Succinct.deleteFinishWithHashProg`.
+* `Cslib.DataStructure.Dictionary.BitResizable.inEpochInsertRegCode_exec`: couples
+  `inEpochInsertRegCode` with `Succinct.insertWithHashProg`.
+* `Cslib.DataStructure.Dictionary.BitResizable.inEpochDeleteRegCode_exec`: couples
+  `inEpochDeleteRegCode` with `Succinct.deleteFinishWithHashProg`.
 -/
 
 public section
 
 namespace Cslib.DataStructure.Dictionary.BitResizable
 
-open Cslib.WordRAM Cslib.WordRAM.BitRAM Cslib.WordRAM.Realization
+open Cslib.WordRAM Cslib.WordRAM.BitRAM
 open Cslib.DataStructure Cslib.DataStructure.Memory Cslib.DataStructure.Memory.BitPacking
 open Cslib.DataStructure.Dictionary
 open Cslib.DataStructure.Dictionary.FeistelQuotient
@@ -59,9 +51,8 @@ open Cslib.DataStructure.Dictionary.WordRAM
 open Cslib.DataStructure.Dictionary.WordRAM.BitPackedArray
 open Cslib.DataStructure.Dictionary.WordRAM.Succinct
 open Cslib.DataStructure.HashFamily.WordRAM
-open Finset
 
-/-! ## Section 1: Unconditional space inequality (`succinctSpace_le_dictBitSize`) -/
+/-! ## Section 1: Space inequality and `FixedCoupled` step helpers -/
 
 private theorem div_ceil_le_self {A w : ℕ} (hw : 0 < w) : (A + w - 1) / w ≤ A := by
   rcases Nat.eq_zero_or_pos A with rfl | hA
@@ -112,1088 +103,1006 @@ theorem dictEnv_of_fits_dictBitSize {U V w N : ℕ}
     unfold dictBitSize offHash; omega
   exact ⟨⟨hw, hNU, hU, hV⟩, ⟨rfl, hfit_sz.of_le hsp_le⟩, hfit_sz.of_le hhash_le⟩
 
-/-! ## Section 2: `diffCount2` bounds for `promoteSlabProg` and `demoteSlabProg` -/
+theorem bCount_sub_one_reach {N b : ℕ} {gm : ℕ → ℕ}
+    (hslot : Succinct.SlotStoreInv N gm) (hb : b < numBuckets N)
+    (hbc_pos : 1 ≤ Succinct.bCount N gm b) :
+    Succinct.bCount N gm b - 1 < effBucketCap N ∨
+      gm (Succinct.gmQIdx b) * slabSize N ≤ Succinct.bCount N gm b - 1 := by
+  rcases Nat.eq_zero_or_pos (bucketBits N) with hb0 | hb_pos
+  · left
+    have hle : Succinct.bCount N gm b ≤ N := Succinct.bCount_le_n_max hslot b
+    have hlt : N < effBucketCap N := lt_effBucketCap_of_bucketBits_eq_zero hb0
+    omega
+  · right
+    have hb_ne : bucketBits N ≠ 0 := Nat.ne_of_gt hb_pos
+    have hbc_eq : Succinct.bCount N gm b =
+        gm (Succinct.gmQIdx b) * slabSize N + gm (Succinct.gmRIdx b) := by
+      unfold Succinct.bCount; rw [ite_eq_right hb_ne, ite_eq_left hb]
+    have hr_pos : 1 ≤ gm (Succinct.gmRIdx b) :=
+      Succinct.pos_gmRIdx_of_pos_bCount hb_pos hslot hb hbc_pos
+    omega
 
-theorem iterate_promoteStepProg_diffCount2 {U V w₀ n_max h_space base b : ℕ}
-    {L_p : List ℕ} (hnodup_p : L_p.Nodup) (qA₀ vA₀ : ℕ → ℕ)
-    {s₀ : Memory.State} (hw : 0 < w₀) (hb_pos : 0 < bucketBits n_max) :
-    ∀ m k (s : Memory.State),
-      k + m ≤ slabSize n_max →
-      Succinct.PromoteLoopInv U V w₀ n_max h_space base b s₀ k s →
-      let s' := (Memory.spec 0).clientState s
-        (iterate (Succinct.promoteStepProg U V w₀ n_max h_space) (base, b) m k)
-      diffCount2 L_p (Succinct.quotAt base U w₀ n_max h_space s'.mem)
-        (Succinct.valAt base U V w₀ n_max h_space s'.mem) qA₀ vA₀ ≤
-        diffCount2 L_p (Succinct.quotAt base U w₀ n_max h_space s.mem)
-          (Succinct.valAt base U V w₀ n_max h_space s.mem) qA₀ vA₀ + 3 * m := by
-  intro m
-  induction m with
-  | zero =>
-    intro k s _ _; simp only [iterate, Nat.mul_zero, Nat.add_zero]; exact le_rfl
-  | succ m ih =>
-    intro k s hkm hinv
-    have hk_lt : k < slabSize n_max := by omega
-    obtain ⟨hres, hinv1⟩ := Succinct.promoteLoopInv_step hw hb_pos hinv hk_lt
-    obtain ⟨_, _, _, hq1, hv1, _, _⟩ :=
-      Succinct.promoteStepProg_effect hw hb_pos s (Succinct.promoteStepInv_of_loopInv hinv hk_lt)
-    set s₁ := (Memory.spec 0).clientState s
-      (Succinct.promoteStepProg U V w₀ n_max h_space ((base, b), k))
-    have hstep : diffCount2 L_p (Succinct.quotAt base U w₀ n_max h_space s₁.mem)
-        (Succinct.valAt base U V w₀ n_max h_space s₁.mem) qA₀ vA₀ ≤
-        diffCount2 L_p (Succinct.quotAt base U w₀ n_max h_space s.mem)
-          (Succinct.valAt base U V w₀ n_max h_space s.mem) qA₀ vA₀ + 3 := by
-      rw [hq1, hv1]
-      refine (diffCount2_update_both_le hnodup_p _ _ qA₀ vA₀ _ _ _).trans ?_
-      refine (Nat.add_le_add_right
-        (diffCount2_update_both_le hnodup_p _ _ qA₀ vA₀ _ _ _) 1).trans ?_
-      refine (Nat.add_le_add_right (Nat.add_le_add_right
-        (diffCount2_update_both_le hnodup_p _ _ qA₀ vA₀ _ _ _) 1) 1).trans ?_
-      omega
-    have hrec := ih (k + 1) s₁ (by omega) hinv1
-    dsimp only at hrec ⊢; unfold iterate; rw [StateTransitionSpec.clientState_bind, hres]
-    dsimp only [s₁] at hstep hrec ⊢; omega
+theorem metaAtBit_eq_of_epochMetaWords_eq {U w N : ℕ} (hw : 0 < w) (hN_pos : 0 < N)
+    {m₁ m₂ : ℕ → ℕ} (hmeta : ∀ a < epochMetaWords U w N, m₁ a = m₂ a) :
+    gmAtBit U w N m₁ = gmAtBit U w N m₂ ∧
+    lmAtBit U w N m₁ = lmAtBit U w N m₂ ∧
+    tdAtBit U w N m₁ = tdAtBit U w N m₂ ∧
+    dtAtBit U w N m₁ = dtAtBit U w N m₂ := by
+  refine ⟨funext fun i => ?_, funext fun ⟨c, j⟩ => ?_, funext fun i => ?_, funext fun i => ?_⟩
+  · unfold gmAtBit
+    split_ifs with hi
+    · exact readPacked_congr hw (fun a ha => hmeta a (by
+        have hhi := ha.2
+        rw [← offDT_add_eq_epochMetaWords hN_pos]
+        unfold offDT offTD
+        omega)) hi
+    · rfl
+  · unfold lmAtBit
+    split_ifs with hcj
+    · exact readPacked_congr hw (fun a ha => hmeta a (by
+        have hmul : (c + 1) * Succinct.lmSubWords N w ≤ 9 * Succinct.lmSubWords N w :=
+          Nat.mul_le_mul_right _ hcj.1
+        have hhi := ha.2
+        dsimp only at hhi hcj
+        rw [← offDT_add_eq_epochMetaWords hN_pos]
+        unfold offDT offTD offGM
+        unfold offLMSub at hhi
+        rw [lmSubWords_eq] at hmul hhi ⊢
+        rw [Nat.add_one_mul] at hmul
+        omega)) hcj.2
+    · rfl
+  · unfold tdAtBit
+    split_ifs with hi
+    · exact readPacked_congr hw (fun a ha => hmeta a
+        (by rw [← offDT_add_eq_epochMetaWords hN_pos]; unfold offDT; omega)) hi
+    · rfl
+  · unfold dtAtBit
+    split_ifs with hi
+    · exact readPacked_congr hw (fun a ha => hmeta a
+        (by rw [← offDT_add_eq_epochMetaWords hN_pos]; omega)) hi
+    · rfl
 
-theorem promoteSlabProg_diffCount2_and_gm {U V w n_max h_space base b : ℕ}
-    {L_p : List ℕ} (hnodup_p : L_p.Nodup) (qA₀ vA₀ : ℕ → ℕ)
-    (hw : 0 < w) (hb_pos : 0 < bucketBits n_max)
-    (s : Memory.State) (hpre : Succinct.PromoteSlabInv U V w n_max h_space base b s) :
-    let s' := (Memory.spec 0).clientState s
-      (Succinct.promoteSlabProg U V w n_max h_space (base, b))
-    let gm := Succinct.gmAt base U V w n_max h_space s.mem
-    let gm' := Succinct.gmAt base U V w n_max h_space s'.mem
-    gm' 0 = gm 0 + 1 ∧ gm' 1 + slabSize n_max = gm 1 ∧
-    diffCount2 L_p (Succinct.quotAt base U w n_max h_space s'.mem)
-      (Succinct.valAt base U V w n_max h_space s'.mem) qA₀ vA₀ ≤
-      diffCount2 L_p (Succinct.quotAt base U w n_max h_space s.mem)
-        (Succinct.valAt base U V w n_max h_space s.mem) qA₀ vA₀ + 3 * slabSize n_max := by
-  intro s' gm gm'
-  have hloop0 := Succinct.promoteLoopInv_zero hpre
-  obtain ⟨hloopK, _, _⟩ :=
-    Succinct.iterate_promoteStepProg_spec (w := w) hw hb_pos (slabSize n_max) 0 s
-      (by omega) hloop0
-  rw [Nat.zero_add] at hloopK
-  have hdiffK := iterate_promoteStepProg_diffCount2 hnodup_p qA₀ vA₀ hw hb_pos
-    (slabSize n_max) 0 s (by omega) hloop0
-  set s₁ := (Memory.spec 0).clientState s
-    (Succinct.promoteLoopProg U V w n_max h_space (((base, b), 0), slabSize n_max))
-  change Succinct.PromoteLoopInv U V w n_max h_space base b s (slabSize n_max) s₁ at hloopK
-  have htot1 : (Succinct.gmAt base U V w n_max h_space s₁.mem 0 + 1) * slabSize n_max ≤ n_max := by
-    have := hloopK.tot_le; rw [Nat.add_one_mul]; omega
-  have hp_lt1 : Succinct.gmAt base U V w n_max h_space s₁.mem 0 < maxFullSlabs n_max :=
-    Succinct.nslabs_lt_maxFullSlabs_of_mul_le hb_pos htot1
-  obtain ⟨_, _, hq_push, hv_push, _, hgm_push⟩ :=
-    Succinct.gmPushSlabProg_effect (U := U) (V := V) (h_space := h_space)
-      hw hb_pos hloopK.b_lt s₁ hloopK.slab_bij hp_lt1
-  have hst : s' =
-      (Memory.spec 0).clientState s₁ (Succinct.gmPushSlabProg U V w n_max h_space (base, b)) := by
-    change (Memory.spec 0).clientState s
-      (Succinct.promoteSlabProg U V w n_max h_space (base, b)) = _
-    unfold Succinct.promoteSlabProg; rw [StateTransitionSpec.clientState_bind]
-  have hf_fields := gmPushSlab_fields (Succinct.gmAt base U V w n_max h_space s₁.mem) hloopK.b_lt
-  refine ⟨by dsimp only [gm', gm]; rw [hst, hgm_push, hf_fields.1, hloopK.gm0_eq],
-    by dsimp only [gm', gm]; rw [hst, hgm_push, hf_fields.2.1, hloopK.gm1_eq],
-    by rw [hst, hq_push, hv_push]; exact hdiffK⟩
+theorem denseOfPhys_physByBase {N : ℕ} {gm td dt : ℕ → ℕ}
+    (hslot : Succinct.SlotStoreInv N gm)
+    (hwin : WindowInv (maxTailItems N) (gm 0 * slabSize N) (gm 1) td dt)
+    {d : ℕ} (hd : d < Succinct.totalSlots N gm) :
+    denseOfPhys N gm td (physByBase N (gm 0 * slabSize N) dt d) = d := by
+  rcases Nat.eq_zero_or_pos (bucketBits N) with hb0 | hb_pos
+  · simp [denseOfPhys, physByBase, hb0]
+  · have hb_ne : bucketBits N ≠ 0 := Nat.ne_of_gt hb_pos
+    have htot_eq : Succinct.totalSlots N gm = gm 0 * slabSize N + gm 1 := by
+      unfold Succinct.totalSlots; rw [ite_eq_right hb_ne]
+    have htot_le : gm 0 * slabSize N + gm 1 ≤ N := hslot.multi_total_le hb_pos
+    have hnt_le : gm 1 ≤ maxTailItems N := (hslot.multi_tail hb_pos).ntails_le
+    by_cases hlt : d < gm 0 * slabSize N
+    · simp [denseOfPhys, physByBase, hb_ne, hlt]
+    · have hlo : gm 0 * slabSize N ≤ d := Nat.le_of_not_lt hlt
+      have hhi : d < gm 0 * slabSize N + gm 1 := by omega
+      have hown := hwin.owner_valid d hlo hhi
+      have hM_pos : 0 < maxTailItems N := by omega
+      have hphys_not_lt : ¬(N - 1 - dt (d % maxTailItems N) < gm 0 * slabSize N) := by
+        have := hown.1; omega
+      have hsub : N - 1 - (N - 1 - dt (d % maxTailItems N)) = dt (d % maxTailItems N) := by
+        have := hown.1; omega
+      unfold physByBase denseOfPhys
+      simp only [hb_ne, hlt, hphys_not_lt, ↓reduceIte, hsub, hown.2]
+      exact denseOfCirc_mod_self hM_pos hlo (by omega)
 
-theorem iterate_demoteStepProg_diffCount2 {U V w₀ n_max h_space base b : ℕ}
-    {L_p : List ℕ} (hnodup_p : L_p.Nodup) (qA₀ vA₀ : ℕ → ℕ)
-    {s₀ : Memory.State} (hw : 0 < w₀) (hb_pos : 0 < bucketBits n_max) :
-    ∀ m k (s : Memory.State),
-      k + m ≤ slabSize n_max →
-      Succinct.DemoteLoopInv U V w₀ n_max h_space base b s₀ k s →
-      let s' := (Memory.spec 0).clientState s
-        (iterate (Succinct.demoteStepProg U V w₀ n_max h_space) (base, b) m k)
-      diffCount2 L_p (Succinct.quotAt base U w₀ n_max h_space s'.mem)
-        (Succinct.valAt base U V w₀ n_max h_space s'.mem) qA₀ vA₀ ≤
-        diffCount2 L_p (Succinct.quotAt base U w₀ n_max h_space s.mem)
-          (Succinct.valAt base U V w₀ n_max h_space s.mem) qA₀ vA₀ + 2 * m := by
-  intro m
-  induction m with
-  | zero =>
-    intro k s _ _; simp only [iterate, Nat.mul_zero, Nat.add_zero]; exact le_rfl
-  | succ m ih =>
-    intro k s hkm hinv
-    have hk_lt : k < slabSize n_max := by omega
-    obtain ⟨hres, hinv1⟩ := Succinct.demoteLoopInv_step hw hb_pos hinv hk_lt
-    obtain ⟨_, _, _, hq1, hv1, _, _⟩ :=
-      Succinct.demoteStepProg_effect hw hb_pos s (Succinct.demoteLoopInv_to_stepInv hinv hk_lt)
-    set s₁ := (Memory.spec 0).clientState s
-      (Succinct.demoteStepProg U V w₀ n_max h_space ((base, b), k))
-    have hstep : diffCount2 L_p (Succinct.quotAt base U w₀ n_max h_space s₁.mem)
-        (Succinct.valAt base U V w₀ n_max h_space s₁.mem) qA₀ vA₀ ≤
-        diffCount2 L_p (Succinct.quotAt base U w₀ n_max h_space s.mem)
-          (Succinct.valAt base U V w₀ n_max h_space s.mem) qA₀ vA₀ + 2 := by
-      rw [hq1, hv1]
-      refine (diffCount2_update_both_le hnodup_p _ _ qA₀ vA₀ _ _ _).trans ?_
-      refine (Nat.add_le_add_right
-        (diffCount2_update_both_le hnodup_p _ _ qA₀ vA₀ _ _ _) 1).trans ?_
-      omega
-    have hrec := ih (k + 1) s₁ (by omega) hinv1
-    dsimp only at hrec ⊢; unfold iterate; rw [StateTransitionSpec.clientState_bind, hres]
-    dsimp only [s₁] at hstep hrec ⊢; omega
+theorem eq_denseOfPhys_iff_physByBase_eq {N b j : ℕ} {gm td dt : ℕ → ℕ}
+    (hslot : Succinct.SlotStoreInv N gm)
+    (hwin : WindowInv (maxTailItems N) (gm 0 * slabSize N) (gm 1) td dt)
+    (hb : b < numBuckets N) (hj : j < Succinct.bCount N gm b)
+    {d : ℕ} (hd : d < Succinct.totalSlots N gm) :
+    d = denseOfPhys N gm td (Succinct.slotOf N gm b j) ↔
+      physByBase N (gm 0 * slabSize N) dt d = Succinct.slotOf N gm b j := by
+  have htd : TailDenseInv N (gm 0) (gm 1) td dt :=
+    (windowInv_iff_tailDenseInv N (gm 0) (gm 1) td dt).mp hwin
+  constructor
+  · rintro rfl
+    exact physOfDense_denseOfPhys hslot htd hb hj
+  · intro h
+    rw [← h, denseOfPhys_physByBase hslot hwin hd]
 
-theorem demoteSlabProg_diffCount2_and_gm {U V w n_max h_space base b : ℕ}
-    {L_p : List ℕ} (hnodup_p : L_p.Nodup) (qA₀ vA₀ : ℕ → ℕ)
-    (hw : 0 < w) (hb_pos : 0 < bucketBits n_max)
-    (s : Memory.State) (hpre : Succinct.DemoteSlabInv U V w n_max h_space base b s) :
-    let s' := (Memory.spec 0).clientState s
-      (Succinct.demoteSlabProg U V w n_max h_space (base, b))
-    let gm := Succinct.gmAt base U V w n_max h_space s.mem
-    let gm' := Succinct.gmAt base U V w n_max h_space s'.mem
-    gm' 0 + 1 = gm 0 ∧ gm' 1 = gm 1 + slabSize n_max ∧
-    diffCount2 L_p (Succinct.quotAt base U w n_max h_space s'.mem)
-      (Succinct.valAt base U V w n_max h_space s'.mem) qA₀ vA₀ ≤
-      diffCount2 L_p (Succinct.quotAt base U w n_max h_space s.mem)
-        (Succinct.valAt base U V w n_max h_space s.mem) qA₀ vA₀ + 2 * slabSize n_max := by
-  intro s' gm gm'
-  have hloop0 := Succinct.demoteLoopInv_zero hpre
-  obtain ⟨hloopK, _, _⟩ :=
-    Succinct.iterate_demoteStepProg_spec (w := w) hw hb_pos (slabSize n_max) 0 s
-      (by omega) hloop0
-  rw [Nat.zero_add] at hloopK
-  have hdiffK := iterate_demoteStepProg_diffCount2 hnodup_p qA₀ vA₀ hw hb_pos
-    (slabSize n_max) 0 s (by omega) hloop0
-  set s₁ := (Memory.spec 0).clientState s
-    (Succinct.demoteLoopProg U V w n_max h_space (((base, b), 0), slabSize n_max))
-  change Succinct.DemoteLoopInv U V w n_max h_space base b s (slabSize n_max) s₁ at hloopK
-  obtain ⟨_, _, hq_pop, hv_pop, _, hgm_pop⟩ :=
-    Succinct.gmPopSlabProg_effect (U := U) (V := V) (h_space := h_space)
-      hw hb_pos hloopK.b_lt s₁ hloopK.slab_bij hloopK.qb_pos
-  have hst : s' =
-      (Memory.spec 0).clientState s₁ (Succinct.gmPopSlabProg U V w n_max h_space (base, b)) := by
-    change (Memory.spec 0).clientState s
-      (Succinct.demoteSlabProg U V w n_max h_space (base, b)) = _
-    unfold Succinct.demoteSlabProg; rw [StateTransitionSpec.clientState_bind]
-  have hf_fields := gmPopSlab_preserves_tail hloopK.b_lt hloopK.slab_bij
-  have hgm0_pos : 1 ≤ gm 0 := by
-    have := Succinct.q_le_nslabs_of_slabBijection hpre.2.2.1 hpre.1
-    have := hpre.2.2.2.2.1; dsimp only [gm]; omega
-  refine ⟨by
-      dsimp only [gm', gm] at hgm0_pos ⊢; rw [hst, hgm_pop, hf_fields.1, hloopK.gm0_eq]; omega,
-    by dsimp only [gm', gm]; rw [hst, hgm_pop, hf_fields.2.1, hloopK.gm1_eq],
-    by rw [hst, hq_pop, hv_pop]; exact hdiffK⟩
+/-- Update the value of dense item `r35` (`dense_found`) to `r274` (`v_new`) on an insert hit. -/
+@[expose]
+def insertHitRegCode : BitRAM.Code .standard 280 :=
+  .seq (.op (.copy 16 35))
+  (.seq (.op (.copy 17 274))
+        (writeDenseVRegCode 16 17))
 
-/-! ## Section 3: Window and `diffCount` transitions for `pushBackSlotProg` and `popBackSlotProg` -/
-
-/-- Bundled postcondition for a companion window and `diffCount` transition from `(s₀, td, dt)` to
-`(s', td', dt')` with slab-rebalancing work `W`. -/
-structure WindowStepPost (U V w N m₀ : ℕ) (L_p L_m : List ℕ)
-    (s₀ s' : Memory.State) (td dt td' dt' : ℕ → ℕ) (W : ℕ) : Prop where
-  tailDense :
-    let h_space := Succinct.hashSpace U w N
-    let gm' := Succinct.gmAt 0 U V w N h_space s'.mem
-    TailDenseInv N (gm' 0) (gm' 1) td' dt'
-  td_lt : ∀ i, td' i < max (maxTailItems N) 1
-  dt_lt : ∀ i, dt' i < max (maxTailItems N) 1
-  pot_le :
-    let h_space := Succinct.hashSpace U w N
-    let gm₀ := Succinct.gmAt 0 U V w N h_space s₀.mem
-    let gm' := Succinct.gmAt 0 U V w N h_space s'.mem
-    slotPotential N gm' + W ≤ slotPotential N gm₀ + 1
-  diff_qv :
-    let h_space := Succinct.hashSpace U w N
-    diffCount2 L_p (Succinct.quotAt 0 U w N h_space s'.mem)
-      (Succinct.valAt 0 U V w N h_space s'.mem)
-      (Succinct.quotAt 0 U w N h_space s₀.mem)
-      (Succinct.valAt 0 U V w N h_space s₀.mem) ≤ 2 + 3 * W
-  diff_phys :
-    let h_space := Succinct.hashSpace U w N
-    let gm₀ := Succinct.gmAt 0 U V w N h_space s₀.mem
-    let gm' := Succinct.gmAt 0 U V w N h_space s'.mem
-    diffCount (List.range m₀) (physByBase N (gm' 0 * slabSize N) dt')
-      (physByBase N (gm₀ 0 * slabSize N) dt) ≤ 1 + 2 * W
-  diff_td :
-    let M := maxTailItems N
-    let zMem : ℕ → ℕ := fun _ => 0
-    diffCount L_m (packArray (offTD U w N) (globalPtrBits N) w td' M zMem)
-      (packArray (offTD U w N) (globalPtrBits N) w td M zMem) ≤ 2 + 2 * W
-  diff_dt :
-    let M := maxTailItems N
-    let zMem : ℕ → ℕ := fun _ => 0
-    diffCount L_m (packArray (offDT U w N) (globalPtrBits N) w dt' M zMem)
-      (packArray (offDT U w N) (globalPtrBits N) w dt M zMem) ≤ 2 + 2 * W
-
-theorem pushBackSlotProg_window {U V w N m₀ b q_val v_val : ℕ}
-    {L_p L_m : List ℕ} (hnodup_p : L_p.Nodup) (hnodup_m : L_m.Nodup)
-    (hw : 0 < w) (s : Memory.State) (td dt : ℕ → ℕ)
-    (hinv : Succinct.SlotStoreInv N (Succinct.gmAt 0 U V w N (Succinct.hashSpace U w N) s.mem))
+theorem insertHitRegCode_fixedCoupled {U V w N b j_found phys_found v_new : ℕ}
+    {s_fix : Memory.State} {x : BitRAM.Data 280}
+    (hw : 0 < w) (hN_pos : 0 < N) (hU : U ≤ 2 ^ w) (hV : V ≤ 2 ^ w)
+    (hx : x.WellFormed w) (her : EpochRegs U V w N x)
+    (hcpl : FixedCoupled U V w N s_fix x.toBitMemoryState)
+    (hslot : Succinct.SlotStoreInv N
+      (Succinct.gmAt 0 U V w N (Succinct.hashSpace U w N) s_fix.mem))
     (hb : b < numBuckets N)
-    (htot : Succinct.totalSlots N (Succinct.gmAt 0 U V w N (Succinct.hashSpace U w N) s.mem) < N)
-    (hq_lt : q_val < 2 ^ quotientBits U N) (hv_lt : v_val < 2 ^ valBits V)
-    (hm₀ : m₀ ≤ Succinct.totalSlots N (Succinct.gmAt 0 U V w N (Succinct.hashSpace U w N) s.mem))
-    (htd : TailDenseInv N (Succinct.gmAt 0 U V w N (Succinct.hashSpace U w N) s.mem 0)
-      (Succinct.gmAt 0 U V w N (Succinct.hashSpace U w N) s.mem 1) td dt)
-    (htd_b : ∀ i, td i < max (maxTailItems N) 1)
-    (hdt_b : ∀ i, dt i < max (maxTailItems N) 1) :
+    (hj : j_found < Succinct.bCount N
+      (Succinct.gmAt 0 U V w N (Succinct.hashSpace U w N) s_fix.mem) b)
+    (hphys : phys_found = Succinct.slotOf N
+      (Succinct.gmAt 0 U V w N (Succinct.hashSpace U w N) s_fix.mem) b j_found)
+    (hv_lt : v_new < 2 ^ valBits V)
+    (hr35 : x.regs 35 = denseOfPhys N (gmAtBit U w N x.mem) (tdAtBit U w N x.mem) phys_found)
+    (hr274 : x.regs 274 = v_new)
+    (hsz : x.bitSize = dictBitSize U V w N (Succinct.totalSlots N (gmAtBit U w N x.mem)))
+    (hm2 : x.mem 2 = itemBits U V N) (hm3 : x.mem 3 = epochMetaBits U w N) :
     let h_space := Succinct.hashSpace U w N
-    let s' := (Memory.spec 0).clientState s
-      (Succinct.pushBackSlotProg U V w N h_space (((0, b), q_val), v_val))
-    ∃ td' dt' W, WindowStepPost U V w N m₀ L_p L_m s s' td dt td' dt' W := by
+    let s' := (Memory.spec 0).clientState s_fix
+      (Succinct.writeValProg U V w N h_space ((0, phys_found), v_new))
+    BitRAM.DemonicExecWithin w insertHitRegCode x
+      (fun y =>
+        y.WellFormed w ∧
+        EpochRegs U V w N y ∧
+        y.bitSize = x.bitSize ∧
+        FixedCoupled U V w N s' y.toBitMemoryState ∧
+        (∀ a < epochMetaWords U w N, y.mem a = x.mem a) ∧
+        (∀ r : Fin 280, 18 ≤ r.val → y.regs r = x.regs r)) 57 := by
   intro h_space s'
-  let gm₀ := Succinct.gmAt 0 U V w N h_space s.mem
-  let qA₀ := Succinct.quotAt 0 U w N h_space s.mem
-  let vA₀ := Succinct.valAt 0 U V w N h_space s.mem
-  let d := (((0, b), q_val), v_val)
-  by_cases hb0 : bucketBits N = 0
-  · refine ⟨td, dt, 0, ?_⟩
-    have hb_eq : b = 0 := by
-      have : numBuckets N = 1 := by simp [numBuckets, hb0]
-      omega
-    subst hb_eq
-    have htot0 : gm₀ 0 < N := by
-      unfold Succinct.totalSlots at htot; rwa [ite_eq_left hb0] at htot
-    have h0_lt : 0 < globalMetaLen N := by unfold globalMetaLen; omega
-    have hc1_lt : gm₀ 0 + 1 < 2 ^ globalPtrBits N :=
-      Succinct.lt_two_pow_globalPtrBits_of_le_n_max (by omega)
-    obtain ⟨_, _, hq1, hv1, _, hg1⟩ :=
-      Succinct.writeQuotProg_effect (base := 0) (V := V) (h_space := h_space) hw htot0 hq_lt s
-    let s₁ := (Memory.spec 0).clientState s
-      (Succinct.writeQuotProg U w N h_space ((0, gm₀ 0), q_val))
-    obtain ⟨_, _, hq2, hv2, _, hg2⟩ :=
-      Succinct.writeValProg_effect (base := 0) (h_space := h_space) hw htot0 hv_lt s₁
-    let s₂ := (Memory.spec 0).clientState s₁
-      (Succinct.writeValProg U V w N h_space ((0, gm₀ 0), v_val))
-    obtain ⟨_, _, hq3, hv3, _, hg3⟩ :=
-      Succinct.writeGMProg_effect (base := 0) (V := V) (h_space := h_space) hw h0_lt hc1_lt s₂
-    let s₃ := (Memory.spec 0).clientState s₂
-      (Succinct.writeGMProg U V w N h_space ((0, 0), gm₀ 0 + 1))
-    have hst : s' = s₃ := by
-      change (Memory.spec 0).clientState s (Succinct.pushBackSlotProg U V w N h_space d) = s₃
-      unfold Succinct.pushBackSlotProg
-      simp only [hb0, ↓reduceIte, d]
-      rw [StateTransitionSpec.clientState_bind, Succinct.clientState_readGMProg,
-        Succinct.clientResult_readGMProg s h0_lt]
-      repeat rw [StateTransitionSpec.clientState_bind]
-    have hgm'_eq : Succinct.gmAt 0 U V w N h_space s'.mem =
-        Function.update gm₀ 0 (gm₀ 0 + 1) := by
-      rw [hst, hg3, hg2, hg1]
-    have hgm'1 : Succinct.gmAt 0 U V w N h_space s'.mem 1 = 0 := by
-      rw [hgm'_eq, Function.update_of_ne (by decide)]
-      have hM0 : maxTailItems N = 0 := by simp [maxTailItems, tailCapPerBucket, hb0]
-      by_contra hpos
-      have := htd.td_lt 0 (Nat.pos_of_ne_zero hpos)
-      omega
-    refine ⟨?_, htd_b, hdt_b, ?_, ?_, ?_, ?_, ?_⟩
-    · dsimp only; rw [hgm'1]; exact tailDenseInv_zero N _ td dt
-    · have hpot' : slotPotential N (Succinct.gmAt 0 U V w N h_space s'.mem) = 0 := by
-        unfold slotPotential; simp [hb0]
-      have hpot0 : slotPotential N gm₀ = 0 := by unfold slotPotential; simp [hb0]
-      dsimp only [h_space, gm₀] at hpot' hpot0 ⊢
-      omega
-    · dsimp only
-      rw [hst, hq3, hq2, hq1, hv3, hv2, hv1]
-      have hup := diffCount2_update_both_le hnodup_p qA₀ vA₀ qA₀ vA₀ (gm₀ 0) q_val v_val
-      rw [diffCount2_self] at hup
-      dsimp only [h_space, qA₀, vA₀] at hup ⊢
-      omega
-    · dsimp only
-      have hphys_eq : physByBase N (Succinct.gmAt 0 U V w N h_space s'.mem 0 * slabSize N) dt =
-          physByBase N (gm₀ 0 * slabSize N) dt := by
-        funext x; unfold physByBase; simp [hb0]
-      rw [hphys_eq, diffCount_self]; omega
-    · dsimp only; rw [diffCount_self]; omega
-    · dsimp only; rw [diffCount_self]; omega
-  · have hb_pos : 0 < bucketBits N := Nat.pos_of_ne_zero hb0
-    let M := maxTailItems N
-    let K := slabSize N
-    have hK_pos : 0 < K := slabSize_pos N
-    have hM_pos : 0 < M := by
-      unfold M maxTailItems tailCapPerBucket
-      rw [ite_eq_right hb0]
-      exact Nat.mul_pos (Nat.two_pow_pos _) (by omega)
-    have hmax_M : max M 1 = M := max_eq_left hM_pos
-    have htd_M : ∀ i, td i < M := fun i => by have := htd_b i; omega
-    have hdt_M : ∀ i, dt i < M := fun i => by have := hdt_b i; omega
-    have hr0_lt : gm₀ (Succinct.gmRIdx b) < 2 * K := by
-      have := (hinv.multi_r_bounds hb_pos b hb).1
-      unfold tailCapPerBucket at this; rwa [ite_eq_right hb0] at this
-    have htail₀ := hinv.multi_tail hb_pos
-    have hslab₀ := hinv.multi_slab hb_pos
-    have ht_lt : gm₀ 1 < M :=
-      Succinct.ntails_lt_maxTailItems_of_r_lt hb (hinv.multi_r_bounds hb_pos b hb).1 htail₀
-    have hm₀_le : m₀ ≤ gm₀ 0 * K + M := by
-      unfold Succinct.totalSlots at hm₀
-      rw [ite_eq_right hb0] at hm₀
-      change m₀ ≤ gm₀ 0 * K + gm₀ 1 at hm₀
-      omega
-    -- Step 1: pushBackTailWriteProg
-    obtain ⟨hres1, _, _, _, hgm1_eq, htail1, hslab1, htot1, hqb1, hrb1, hother1, _⟩ :=
-      Succinct.pushBackTailWriteProg_effect (U := U) (V := V) (h_space := h_space)
-        hw hb_pos s hinv hb htot hq_lt hv_lt
-    let s₁ := (Memory.spec 0).clientState s (Succinct.pushBackTailWriteProg U V w N h_space d)
-    let gm₁ := Succinct.gmAt 0 U V w N h_space s₁.mem
-    have hpres1 := gmAppendTail_preserves_nonTail gm₀ hb
-      (hinv.multi_r_bounds hb_pos b hb).1 ht_lt
-    have hgm1_0 : gm₁ 0 = gm₀ 0 := by
-      dsimp only [gm₁]; rw [hgm1_eq, hpres1.1]
-    have hgm1_1 : gm₁ 1 = gm₀ 1 + 1 := by
-      dsimp only [gm₁]; rw [hgm1_eq, hpres1.2.1]
-    -- Bounded diffCount2 for pushBackTailWriteProg (1 writeQuot + 1 writeVal at g_new)
-    have hqv1 : diffCount2 L_p (Succinct.quotAt 0 U w N h_space s₁.mem)
-        (Succinct.valAt 0 U V w N h_space s₁.mem) qA₀ vA₀ ≤ 1 := by
-      obtain ⟨hres_app, _, _, hq_app, hv_app, _, _⟩ :=
-        Succinct.appendTailItemProg_effect (U := U) (V := V) (h_space := h_space)
-          hw hb_pos hb s htail₀ (hinv.multi_r_bounds hb_pos b hb).1
-      let s_app := (Memory.spec 0).clientState s
-        (Succinct.appendTailItemProg U V w N h_space (0, b))
-      let g_new := (N - 1) - gm₀ 1
-      have hg_new_lt : g_new < N := by
-        unfold Succinct.totalSlots at htot; rw [ite_eq_right hb0] at htot
-        dsimp only [g_new, gm₀] at htot ⊢; omega
-      obtain ⟨_, _, hq_wq, hv_wq, _, _⟩ :=
-        Succinct.writeQuotProg_effect (base := 0) (V := V) (h_space := h_space)
-          hw hg_new_lt hq_lt s_app
-      let s_wq := (Memory.spec 0).clientState s_app
-        (Succinct.writeQuotProg U w N h_space ((0, g_new), q_val))
-      obtain ⟨_, _, hq_wv, hv_wv, _, _⟩ :=
-        Succinct.writeValProg_effect (base := 0) (h_space := h_space) hw hg_new_lt hv_lt s_wq
-      have hst1 : s₁ = (Memory.spec 0).clientState s_wq
-          (Succinct.writeValProg U V w N h_space ((0, g_new), v_val)) := by
-        change (Memory.spec 0).clientState s (Succinct.pushBackTailWriteProg U V w N h_space d) = _
-        unfold Succinct.pushBackTailWriteProg
-        dsimp only [d]
-        rw [StateTransitionSpec.clientState_bind, hres_app,
-          StateTransitionSpec.clientState_bind, StateTransitionSpec.clientState_bind,
-          Succinct.clientState_readGMProg]
-      rw [hst1, hq_wv, hq_wq, hq_app, hv_wv, hv_wq, hv_app]
-      have hup := diffCount2_update_both_le hnodup_p qA₀ vA₀ qA₀ vA₀ g_new q_val v_val
-      rwa [diffCount2_self, Nat.zero_add] at hup
-    -- Window update for pushBackTailWriteProg
-    have hw0 : WindowInv M (gm₀ 0 * K) (gm₀ 1) td dt :=
-      (windowInv_iff_tailDenseInv N (gm₀ 0) (gm₀ 1) td dt).mpr htd
-    let p₁ := winGrowRight M (gm₀ 0 * K) (gm₀ 1) (td, dt)
-    obtain ⟨hw1, htd1_M, hdt1_M⟩ := winGrowRight_spec hw0 (by omega) htd_M hdt_M
-    let zMem : ℕ → ℕ := fun _ => 0
-    have hphys1 : diffCount (List.range m₀) (physByBase N (gm₀ 0 * K) p₁.2)
-        (physByBase N (gm₀ 0 * K) dt) ≤ 1 := by
-      have hu := diffCount_physByBase_update_dt (N := N) (b_tail := gm₀ 0 * K) (m₀ := m₀)
-        hm₀_le dt dt ((gm₀ 0 * K + gm₀ 1) % M) (gm₀ 1)
-      rwa [diffCount_self, Nat.zero_add] at hu
-    have hpack_td1 : diffCount L_m (packArray (offTD U w N) (globalPtrBits N) w p₁.1 M zMem)
-        (packArray (offTD U w N) (globalPtrBits N) w td M zMem) ≤ 2 := by
-      have hu := diffCount_packArray_update_le hnodup_m (offTD U w N) (globalPtrBits N) w
-        td td (gm₀ 1) ((gm₀ 0 * K + gm₀ 1) % M) M zMem
-      rwa [diffCount_self, Nat.zero_add] at hu
-    have hpack_dt1 : diffCount L_m (packArray (offDT U w N) (globalPtrBits N) w p₁.2 M zMem)
-        (packArray (offDT U w N) (globalPtrBits N) w dt M zMem) ≤ 2 := by
-      have hu := diffCount_packArray_update_le hnodup_m (offDT U w N) (globalPtrBits N) w
-        dt dt ((gm₀ 0 * K + gm₀ 1) % M) (gm₀ 1) M zMem
-      rwa [diffCount_self, Nat.zero_add] at hu
-    -- Branch on whether promoteSlabProg runs
-    by_cases hprom : gm₀ (Succinct.gmRIdx b) + 1 = 2 * K
-    · have hst : s' = (Memory.spec 0).clientState s₁
-          (Succinct.promoteSlabProg U V w N h_space (0, b)) := by
-        change (Memory.spec 0).clientState s (Succinct.pushBackSlotProg U V w N h_space d) = _
-        unfold Succinct.pushBackSlotProg
-        simp only [hb0, ↓reduceIte]
-        rw [StateTransitionSpec.clientState_bind, hres1, ite_eq_left hprom]
-      have htot0_lt : gm₀ 0 * K + gm₀ 1 < N := by
-        unfold Succinct.totalSlots at htot; rwa [ite_eq_right hb0] at htot
-      have hpre_prom : Succinct.PromoteSlabInv U V w N h_space 0 b s₁ := by
-        refine ⟨hb, htail1, hslab1, by rw [hrb1, hprom], fun b' hb' hne => ?_, ?_⟩
-        · rw [(hother1 b' hb' hne).1, (hother1 b' hb' hne).2]
-          exact hinv.multi_r_bounds hb_pos b' hb'
-        · change gm₁ 0 * K + gm₁ 1 ≤ N
-          rw [hgm1_0, hgm1_1]; omega
-      obtain ⟨_, _, _, _, hqb2, hrb2, hother2, _⟩ :=
-        Succinct.promoteSlabProg_effect hw hb_pos s₁ hpre_prom
-      obtain ⟨hgm'0, hgm'1, hqv2⟩ :=
-        promoteSlabProg_diffCount2_and_gm hnodup_p qA₀ vA₀ hw hb_pos s₁ hpre_prom
-      rw [← hst] at hqb2 hrb2 hother2 hgm'0 hgm'1 hqv2
-      let gm' := Succinct.gmAt 0 U V w N h_space s'.mem
-      change gm' 0 = gm₁ 0 + 1 at hgm'0
-      change gm' 1 + K = gm₁ 1 at hgm'1
-      have hgm'0_eq : gm' 0 * K = gm₀ 0 * K + K := by
-        rw [hgm'0, hgm1_0, Nat.add_one_mul]
-      have hgm'1_eq : gm' 1 + K = gm₀ 1 + 1 := by
-        rw [hgm'1, hgm1_1]
-      have hw1' : WindowInv M (gm₀ 0 * K) (gm' 1 + K) p₁.1 p₁.2 := by
-        rwa [hgm'1_eq]
-      let p' := iterShrinkLeft M (gm₀ 0 * K) (gm' 1) K p₁
-      obtain ⟨hw', htd'_M, hdt'_M, hphys2, hpack_td2, hpack_dt2⟩ :=
-        iterShrinkLeft_spec (N := N) (U := U) (w := w) (m₀ := m₀) hnodup_m
-          (gm₀ 0 * K) (gm' 1) td dt K p₁ (by omega) hm₀_le hw1' htd1_M hdt1_M
-      rw [← hgm'0_eq] at hw' hphys2
-      have hupd : gm' (Succinct.gmQIdx b) =
-            (pushBackCounts K (gm₀ (Succinct.gmQIdx b)) (gm₀ (Succinct.gmRIdx b))).1 ∧
-          gm' (Succinct.gmRIdx b) =
-            (pushBackCounts K (gm₀ (Succinct.gmQIdx b)) (gm₀ (Succinct.gmRIdx b))).2 := by
-        unfold pushBackCounts; rw [ite_eq_left hprom]
-        exact ⟨by dsimp only [gm', gm₁] at hqb2 hqb1 ⊢; rw [hqb2, hqb1], hrb2⟩
-      have hother_all : ∀ b' < numBuckets N, b' ≠ b →
-          gm' (Succinct.gmQIdx b') = gm₀ (Succinct.gmQIdx b') ∧
-          gm' (Succinct.gmRIdx b') = gm₀ (Succinct.gmRIdx b') :=
-        fun b' hb' hne => ⟨(hother2 b' hb' hne).1.trans (hother1 b' hb' hne).1,
-          (hother2 b' hb' hne).2.trans (hother1 b' hb' hne).2⟩
-      have hpot := Succinct.slotPotential_pushBack_le hb_pos hb hr0_lt hupd hother_all
-      have hwork : pushBackWork K (gm₀ (Succinct.gmRIdx b)) = K := by
-        unfold pushBackWork; rw [ite_eq_left hprom]
-      rw [hwork] at hpot
-      refine ⟨p'.1, p'.2, K,
-        (windowInv_iff_tailDenseInv N (gm' 0) (gm' 1) p'.1 p'.2).mp hw',
-        fun i => by rw [hmax_M]; exact htd'_M i,
-        fun i => by rw [hmax_M]; exact hdt'_M i,
-        hpot,
-        by dsimp only [h_space, qA₀, vA₀, K] at hqv1 hqv2 ⊢; omega,
-        by dsimp only [p', M, h_space, gm₀, gm', K] at hphys1 hphys2 ⊢; omega,
-        by dsimp only [p', M, zMem, K] at hpack_td1 hpack_td2 ⊢; omega,
-        by dsimp only [p', M, zMem, K] at hpack_dt1 hpack_dt2 ⊢; omega⟩
-    · have hst : s' = s₁ := by
-        change (Memory.spec 0).clientState s (Succinct.pushBackSlotProg U V w N h_space d) = s₁
-        unfold Succinct.pushBackSlotProg
-        simp only [hb0, ↓reduceIte]
-        rw [StateTransitionSpec.clientState_bind, hres1, ite_eq_right hprom]
-        rfl
-      let gm' := Succinct.gmAt 0 U V w N h_space s'.mem
-      have hgm'_eq : gm' = gm₁ := by dsimp only [gm', gm₁]; rw [hst]
-      have hupd : gm' (Succinct.gmQIdx b) =
-            (pushBackCounts K (gm₀ (Succinct.gmQIdx b)) (gm₀ (Succinct.gmRIdx b))).1 ∧
-          gm' (Succinct.gmRIdx b) =
-            (pushBackCounts K (gm₀ (Succinct.gmQIdx b)) (gm₀ (Succinct.gmRIdx b))).2 := by
-        unfold pushBackCounts; rw [ite_eq_right hprom, hgm'_eq]
-        exact ⟨hqb1, hrb1⟩
-      have hother_all : ∀ b' < numBuckets N, b' ≠ b →
-          gm' (Succinct.gmQIdx b') = gm₀ (Succinct.gmQIdx b') ∧
-          gm' (Succinct.gmRIdx b') = gm₀ (Succinct.gmRIdx b') := by
-        intro b' hb' hne; rw [hgm'_eq]; exact hother1 b' hb' hne
-      have hpot := Succinct.slotPotential_pushBack_le hb_pos hb hr0_lt hupd hother_all
-      have hwork : pushBackWork K (gm₀ (Succinct.gmRIdx b)) = 0 := by
-        unfold pushBackWork; rw [ite_eq_right hprom]
-      rw [hwork] at hpot
-      have hw' : WindowInv M (gm' 0 * K) (gm' 1) p₁.1 p₁.2 := by
-        rw [hgm'_eq, hgm1_0, hgm1_1]; exact hw1
-      refine ⟨p₁.1, p₁.2, 0,
-        (windowInv_iff_tailDenseInv N (gm' 0) (gm' 1) p₁.1 p₁.2).mp hw',
-        fun i => by rw [hmax_M]; exact htd1_M i,
-        fun i => by rw [hmax_M]; exact hdt1_M i,
-        hpot,
-        by dsimp only [h_space, qA₀, vA₀] at hqv1 ⊢; rw [hst]; omega,
-        by have h0 : gm' 0 = gm₀ 0 := by rw [hgm'_eq, hgm1_0]
-           dsimp only [h_space, gm₀, gm', K] at h0 hphys1 ⊢; rw [h0]; omega,
-        by dsimp only [M, zMem] at hpack_td1 ⊢; omega,
-        by dsimp only [M, zMem] at hpack_dt1 ⊢; omega⟩
+  set gm := gmAtBit U w N x.toBitMemoryState.mem
+  set td := tdAtBit U w N x.toBitMemoryState.mem
+  set dt := dtAtBit U w N x.toBitMemoryState.mem
+  set n_t := Succinct.totalSlots N gm
+  set d_found := denseOfPhys N gm td phys_found
+  have hgm_eq : gm = Succinct.gmAt 0 U V w N h_space s_fix.mem := hcpl.gm_eq
+  have hslot_gm : Succinct.SlotStoreInv N gm := hgm_eq.symm ▸ hslot
+  have hj_gm : j_found < Succinct.bCount N gm b := hgm_eq.symm ▸ hj
+  have hphys_gm : phys_found = Succinct.slotOf N gm b j_found := by rw [hphys, ← hgm_eq]
+  have hphys_lt : phys_found < N := by
+    rw [hphys_gm]; exact (Succinct.slotOf_lt_and_injective hslot_gm).1 b hb j_found hj_gm
+  have htd : TailDenseInv N (gm 0) (gm 1) td dt :=
+    (windowInv_iff_tailDenseInv N (gm 0) (gm 1) td dt).mp hcpl.win_inv
+  have hd_lt : d_found < n_t := by
+    dsimp only [d_found]; rw [hphys_gm]
+    exact (denseOfPhys_slotOf_lt_and_injective hslot_gm htd).1 b hb j_found hj_gm
+  have eff := Succinct.writeValProg_effect (U := U) (V := V) (w := w) (n_max := N)
+    (h_space := h_space) (base := 0) hw hphys_lt hv_lt s_fix
+  unfold insertHitRegCode
+  refine step_dExec_copy (v := d_found) (T := 56) hr35 ?_
+  refine step_dExec_copy (v := v_new) (T := 55)
+    (by simp +decide [BitRAM.Data.set, hr274]) ?_
+  set s1 := (x.set 16 d_found).set 17 v_new
+  have hs1_wf : s1.WellFormed w :=
+    wf_set 17 (wf_set 16 hx (by
+      dsimp only [d_found, gm, td, BitRAM.Data.toBitMemoryState]
+      rw [← hr35]; exact hx.regs_fits 35))
+      (hr274 ▸ hx.regs_fits 274)
+  have hs1_er : EpochRegs U V w N s1 :=
+    her.congr_regs (fun r hr1 _ => by
+      dsimp only [s1, BitRAM.Data.set]
+      repeat rw [Function.update_of_ne (by intro h; have := congrArg Fin.val h; omega)])
+  refine (writeDenseVRegCode_frame (n_t := n_t) (by decide) (by decide) hw hU hV hs1_wf hs1_er
+    hd_lt (by simp +decide [s1, BitRAM.Data.set]) (by simp +decide [s1, BitRAM.Data.set])
+    hv_lt (by change itemBitOff U V w N n_t ≤ x.bitSize; rw [hsz]; rfl) hm2 hm3).mono
+    (fun y ⟨hy_wf, hy_er, hy_sz, hy_v_eq, hy_v_ne, hy_q, hy_meta, hy_regs⟩ => ?_) le_rfl
+  obtain ⟨hgm_y, hlm_y, htd_y, hdt_y⟩ :=
+    metaAtBit_eq_of_epochMetaWords_eq hw hN_pos (m₂ := x.mem) hy_meta
+  have hgm_y' : gmAtBit U w N y.mem = gm := hgm_y
+  have htd_y' : tdAtBit U w N y.mem = td := htd_y
+  have hdt_y' : dtAtBit U w N y.mem = dt := hdt_y
+  have hwin : WindowInv (maxTailItems N) (gm 0 * slabSize N) (gm 1) td dt := hcpl.win_inv
+  refine ⟨hy_wf, hy_er, hy_sz, ?_, hy_meta, fun r hr => ?_⟩
+  · refine ⟨by dsimp only [BitRAM.Data.toBitMemoryState]
+               rw [hgm_y, eff.2.2.2.2.2]; exact hcpl.gm_eq,
+      by dsimp only [BitRAM.Data.toBitMemoryState]; rw [hlm_y, eff.2.2.2.2.1]; exact hcpl.lm_eq,
+      by dsimp only [BitRAM.Data.toBitMemoryState]; rw [hgm_y', htd_y', hdt_y']; exact hwin,
+      fun i => by dsimp only [BitRAM.Data.toBitMemoryState]; rw [htd_y]; exact hcpl.td_lt i,
+      fun i => by dsimp only [BitRAM.Data.toBitMemoryState]; rw [hdt_y]; exact hcpl.dt_lt i,
+      fun d hd => ?_,
+      fun d hd => ?_⟩
+    · dsimp only [BitRAM.Data.toBitMemoryState] at hd ⊢
+      rw [hgm_y'] at hd
+      rw [hgm_y', hdt_y', eff.2.2.1]
+      exact (hy_q d hd).trans (hcpl.quot_eq d hd)
+    · dsimp only [BitRAM.Data.toBitMemoryState] at hd ⊢
+      rw [hgm_y'] at hd
+      rw [hgm_y', hdt_y', eff.2.2.2.1]
+      have hiff := eq_denseOfPhys_iff_physByBase_eq hslot_gm hwin hb hj_gm hd
+      rw [← hphys_gm] at hiff
+      by_cases heq : d = d_found
+      · subst heq
+        rw [hiff.mp rfl, Function.update_self]
+        exact hy_v_eq
+      · rw [Function.update_of_ne (mt hiff.mpr heq)]
+        exact (hy_v_ne d hd heq).trans (hcpl.val_eq d hd)
+  · rw [hy_regs r (by omega)]
+    dsimp only [s1, BitRAM.Data.set]
+    repeat rw [Function.update_of_ne (by intro h; have := congrArg Fin.val h; omega)]
 
-theorem popBackSlotProg_window {U V w N m₀ b : ℕ}
-    {L_p L_m : List ℕ} (hnodup_p : L_p.Nodup) (hnodup_m : L_m.Nodup)
-    (hw : 0 < w) (s : Memory.State) (td dt : ℕ → ℕ)
-    (hinv : Succinct.SlotStoreInv N (Succinct.gmAt 0 U V w N (Succinct.hashSpace U w N) s.mem))
+theorem copyDenseItemRegCode_fixedCoupled {U V w N b j_del phys_del : ℕ}
+    {rSrc rDst : Fin 280} {s_fix : Memory.State} {x : BitRAM.Data 280}
+    (hrSrc_ge : 20 ≤ rSrc.val) (hrDst_ge : 20 ≤ rDst.val)
+    (hw : 0 < w) (hN_pos : 0 < N) (hU : U ≤ 2 ^ w) (hV : V ≤ 2 ^ w)
+    (hx : x.WellFormed w) (her : EpochRegs U V w N x)
+    (hcpl : FixedCoupled U V w N s_fix x.toBitMemoryState)
+    (hslot : Succinct.SlotStoreInv N
+      (Succinct.gmAt 0 U V w N (Succinct.hashSpace U w N) s_fix.mem))
     (hb : b < numBuckets N)
-    (hbc : 1 ≤ Succinct.bCount N (Succinct.gmAt 0 U V w N (Succinct.hashSpace U w N) s.mem) b)
-    (hm₀ : m₀ + 1 ≤ Succinct.totalSlots N
-      (Succinct.gmAt 0 U V w N (Succinct.hashSpace U w N) s.mem))
-    (htd : TailDenseInv N (Succinct.gmAt 0 U V w N (Succinct.hashSpace U w N) s.mem 0)
-      (Succinct.gmAt 0 U V w N (Succinct.hashSpace U w N) s.mem 1) td dt)
-    (htd_b : ∀ i, td i < max (maxTailItems N) 1)
-    (hdt_b : ∀ i, dt i < max (maxTailItems N) 1) :
+    (hj_del : j_del < Succinct.bCount N
+      (Succinct.gmAt 0 U V w N (Succinct.hashSpace U w N) s_fix.mem) b)
+    (hphys_del : phys_del = Succinct.slotOf N
+      (Succinct.gmAt 0 U V w N (Succinct.hashSpace U w N) s_fix.mem) b j_del)
+    (hrSrc : x.regs rSrc = denseOfPhys N (gmAtBit U w N x.mem) (tdAtBit U w N x.mem)
+      (Succinct.slotOf N (gmAtBit U w N x.mem) b
+        (Succinct.bCount N (gmAtBit U w N x.mem) b - 1)))
+    (hrDst : x.regs rDst = denseOfPhys N (gmAtBit U w N x.mem) (tdAtBit U w N x.mem) phys_del)
+    (hsz : x.bitSize = dictBitSize U V w N (Succinct.totalSlots N (gmAtBit U w N x.mem)))
+    (hm2 : x.mem 2 = itemBits U V N) (hm3 : x.mem 3 = epochMetaBits U w N) :
     let h_space := Succinct.hashSpace U w N
-    let s' := (Memory.spec 0).clientState s
-      (Succinct.popBackSlotProg U V w N h_space (0, b))
-    ∃ td' dt' W, WindowStepPost U V w N m₀ L_p L_m s s' td dt td' dt' W ∧
-      ∀ qA_b vA_b,
-        diffCount2 L_p (Succinct.quotAt 0 U w N h_space s'.mem)
-          (Succinct.valAt 0 U V w N h_space s'.mem) qA_b vA_b ≤
-          diffCount2 L_p (Succinct.quotAt 0 U w N h_space s.mem)
-            (Succinct.valAt 0 U V w N h_space s.mem) qA_b vA_b + 1 + 2 * W := by
+    let s' := (Memory.spec 0).clientState s_fix
+      (Succinct.copyLastPayloadProg U V w N h_space ((0, b), phys_del))
+    BitRAM.DemonicExecWithin w (copyDenseItemRegCode rSrc rDst) x
+      (fun y =>
+        y.WellFormed w ∧
+        EpochRegs U V w N y ∧
+        y.bitSize = x.bitSize ∧
+        FixedCoupled U V w N s' y.toBitMemoryState ∧
+        (∀ a < epochMetaWords U w N, y.mem a = x.mem a) ∧
+        (∀ r : Fin 280, 20 ≤ r.val → y.regs r = x.regs r)) 195 := by
   intro h_space s'
-  let gm₀ := Succinct.gmAt 0 U V w N h_space s.mem
-  let qA₀ := Succinct.quotAt 0 U w N h_space s.mem
-  let vA₀ := Succinct.valAt 0 U V w N h_space s.mem
-  let d := (0, b)
-  by_cases hb0 : bucketBits N = 0
-  · refine ⟨td, dt, 0, ?_, fun qA_b vA_b => ?_⟩
-    · have hb_eq : b = 0 := by
-        have : numBuckets N = 1 := by simp [numBuckets, hb0]
-        omega
-      subst hb_eq
-      have hbc0 : 1 ≤ gm₀ 0 := by unfold Succinct.bCount at hbc; simpa [hb0] using hbc
-      have hc_le : gm₀ 0 ≤ N := hinv.single_valid hb0
-      have h0_lt : 0 < globalMetaLen N := by unfold globalMetaLen; omega
-      have hc1_lt : gm₀ 0 - 1 < 2 ^ globalPtrBits N :=
-        Succinct.lt_two_pow_globalPtrBits_of_le_n_max (by omega)
-      obtain ⟨_, _, hq1, hv1, _, hg1⟩ :=
-        Succinct.writeGMProg_effect (base := 0) (V := V) (h_space := h_space) hw h0_lt hc1_lt s
-      let s₁ := (Memory.spec 0).clientState s
-        (Succinct.writeGMProg U V w N h_space ((0, 0), gm₀ 0 - 1))
-      have hst : s' = s₁ := by
-        change (Memory.spec 0).clientState s (Succinct.popBackSlotProg U V w N h_space d) = s₁
-        unfold Succinct.popBackSlotProg; simp only [hb0, ↓reduceIte, d]
-        rw [StateTransitionSpec.clientState_bind, Succinct.clientState_readGMProg,
-          Succinct.clientResult_readGMProg s h0_lt]
-      have hgm'_eq : Succinct.gmAt 0 U V w N h_space s'.mem =
-          Function.update gm₀ 0 (gm₀ 0 - 1) := by rw [hst, hg1]
-      have hgm'1 : Succinct.gmAt 0 U V w N h_space s'.mem 1 = 0 := by
-        rw [hgm'_eq, Function.update_of_ne (by decide)]
-        have hM0 : maxTailItems N = 0 := by simp [maxTailItems, tailCapPerBucket, hb0]
-        by_contra hpos; have := htd.td_lt 0 (Nat.pos_of_ne_zero hpos); omega
-      refine ⟨by dsimp only; rw [hgm'1]; exact tailDenseInv_zero N _ td dt,
-        htd_b, hdt_b, ?_, by dsimp only; rw [hst, hq1, hv1, diffCount2_self]; omega,
-        ?_, by dsimp only; rw [diffCount_self]; omega, by dsimp only; rw [diffCount_self]; omega⟩
-      · have hpot' : slotPotential N (Succinct.gmAt 0 U V w N h_space s'.mem) = 0 := by
-          unfold slotPotential; simp [hb0]
-        have hpot0 : slotPotential N gm₀ = 0 := by unfold slotPotential; simp [hb0]
-        dsimp only [h_space, gm₀] at hpot' hpot0 ⊢
-        omega
-      · dsimp only
-        have hphys_eq : physByBase N (Succinct.gmAt 0 U V w N h_space s'.mem 0 * slabSize N) dt =
-            physByBase N (gm₀ 0 * slabSize N) dt := by funext x; unfold physByBase; simp [hb0]
-        rw [hphys_eq, diffCount_self]; omega
-    · have hb_eq : b = 0 := by
-        have : numBuckets N = 1 := by simp [numBuckets, hb0]
-        omega
-      subst hb_eq
-      have h0_lt : 0 < globalMetaLen N := by unfold globalMetaLen; omega
-      have hc1_lt : gm₀ 0 - 1 < 2 ^ globalPtrBits N :=
-        Succinct.lt_two_pow_globalPtrBits_of_le_n_max (by
-          have : gm₀ 0 ≤ N := hinv.single_valid hb0; omega)
-      obtain ⟨_, _, hq1, hv1, _, _⟩ :=
-        Succinct.writeGMProg_effect (base := 0) (V := V) (h_space := h_space) hw h0_lt hc1_lt s
-      have hst : s' = (Memory.spec 0).clientState s
-          (Succinct.writeGMProg U V w N h_space ((0, 0), gm₀ 0 - 1)) := by
-        change (Memory.spec 0).clientState s (Succinct.popBackSlotProg U V w N h_space d) = _
-        unfold Succinct.popBackSlotProg; simp only [hb0, ↓reduceIte, d]
-        rw [StateTransitionSpec.clientState_bind, Succinct.clientState_readGMProg,
-          Succinct.clientResult_readGMProg s h0_lt]
-      rw [hst, hq1, hv1]; omega
-  · have hb_pos : 0 < bucketBits N := Nat.pos_of_ne_zero hb0
-    let M := maxTailItems N
-    let K := slabSize N
-    have hK_pos : 0 < K := slabSize_pos N
-    have hM_pos : 0 < M := by
-      unfold M maxTailItems tailCapPerBucket; rw [ite_eq_right hb0]
-      exact Nat.mul_pos (Nat.two_pow_pos _) (by omega)
-    have hmax_M : max M 1 = M := max_eq_left hM_pos
-    have htd_M : ∀ i, td i < M := fun i => by have := htd_b i; omega
-    have hdt_M : ∀ i, dt i < M := fun i => by have := hdt_b i; omega
-    have hr0_pos : 1 ≤ gm₀ (Succinct.gmRIdx b) :=
-      Succinct.pos_gmRIdx_of_pos_bCount hb_pos hinv hb hbc
-    have hr0_lt : gm₀ (Succinct.gmRIdx b) < 2 * K := by
-      have := (hinv.multi_r_bounds hb_pos b hb).1
-      unfold tailCapPerBucket at this; rwa [ite_eq_right hb0] at this
-    have htail₀ := hinv.multi_tail hb_pos
-    have hslab₀ := hinv.multi_slab hb_pos
-    have htot₀ := hinv.multi_total_le hb_pos
-    obtain ⟨_, _, hq1, hv1, _, hgm1_eq⟩ :=
-      Succinct.removeLastTailItemProg_effect (U := U) (V := V) (h_space := h_space)
-        hw hb_pos hb s htail₀ hr0_pos
-    let s₁ := (Memory.spec 0).clientState s (Succinct.removeLastTailItemProg U V w N h_space d)
-    let gm₁ := Succinct.gmAt 0 U V w N h_space s₁.mem
-    have hpres1 := gmRemoveTail_preserves_nonTail hb hr0_pos htail₀
-    have htail1 : TailBijection N gm₁ (fun b' => gm₁ (Succinct.gmRIdx b')) (gm₁ 1) := by
-      dsimp only [gm₁]; rw [hgm1_eq]; exact tailBijection_gmRemoveTail hb hr0_pos htail₀
-    have hslab1 : SlabBijection N gm₁ (fun b' => gm₁ (Succinct.gmQIdx b')) (gm₁ 0) := by
-      dsimp only [gm₁]; rw [hgm1_eq]; exact (slabBijection_gmRemoveTail hb hr0_pos htail₀ hslab₀).2
-    have hgm1_pos : 1 ≤ gm₀ 1 := by
-      have := Succinct.r_le_ntails_of_tailBijection htail₀ hb
-      dsimp only [gm₀, h_space] at hr0_pos ⊢; omega
-    have hgm1_0 : gm₁ 0 = gm₀ 0 := by dsimp only [gm₁]; rw [hgm1_eq, hpres1.1]
-    have hgm1_1 : gm₁ 1 + 1 = gm₀ 1 := by dsimp only [gm₁]; rw [hgm1_eq, hpres1.2.1]; omega
-    have hqb1 : gm₁ (Succinct.gmQIdx b) = gm₀ (Succinct.gmQIdx b) := by
-      dsimp only [gm₁]; rw [hgm1_eq, hpres1.2.2.2.2.1 b hb]
-    have hrb1 : gm₁ (Succinct.gmRIdx b) = gm₀ (Succinct.gmRIdx b) - 1 := by
-      dsimp only [gm₁]; rw [hgm1_eq, hpres1.2.2.1]
-    have hother1 : ∀ b' < numBuckets N, b' ≠ b →
-        gm₁ (Succinct.gmQIdx b') = gm₀ (Succinct.gmQIdx b') ∧
-        gm₁ (Succinct.gmRIdx b') = gm₀ (Succinct.gmRIdx b') := fun b' hb' hne => by
-      dsimp only [gm₁]
-      exact ⟨by rw [hgm1_eq, hpres1.2.2.2.2.1 b' hb'],
-        by rw [hgm1_eq, hpres1.2.2.2.1 b' hb' hne]⟩
-    have hqv1_gen : ∀ qA_b vA_b, diffCount2 L_p (Succinct.quotAt 0 U w N h_space s₁.mem)
-        (Succinct.valAt 0 U V w N h_space s₁.mem) qA_b vA_b ≤
-        diffCount2 L_p qA₀ vA₀ qA_b vA_b + 1 := fun qA_b vA_b => by
-      rw [hq1, hv1]
-      exact diffCount2_update_both_le hnodup_p qA₀ vA₀ qA_b vA_b _ _ _
-    have hqv1 : diffCount2 L_p (Succinct.quotAt 0 U w N h_space s₁.mem)
-        (Succinct.valAt 0 U V w N h_space s₁.mem) qA₀ vA₀ ≤ 1 := by
-      have := hqv1_gen qA₀ vA₀; rwa [diffCount2_self, Nat.zero_add] at this
-    have hw0 : WindowInv M (gm₀ 0 * K) (gm₁ 1 + 1) td dt := by
-      rw [hgm1_1]; exact (windowInv_iff_tailDenseInv N (gm₀ 0) (gm₀ 1) td dt).mpr htd
-    have hnt1_le : gm₁ 1 + 1 ≤ M := by rw [hgm1_1]; exact htail₀.ntails_le
-    let p₁ := winShrinkRight M (gm₀ 0 * K) (gm₁ 1) (td, dt)
-    obtain ⟨hw1, htd1_M, hdt1_M⟩ := winShrinkRight_spec hw0 hnt1_le htd_M hdt_M
-    let zMem : ℕ → ℕ := fun _ => 0
-    have hm₀_le0 : m₀ ≤ gm₀ 0 * K + M := by
-      unfold Succinct.totalSlots at hm₀; rw [ite_eq_right hb0] at hm₀
-      have := htail₀.ntails_le; change m₀ + 1 ≤ gm₀ 0 * K + gm₀ 1 at hm₀; omega
-    have hphys1 : diffCount (List.range m₀) (physByBase N (gm₀ 0 * K) p₁.2)
-        (physByBase N (gm₀ 0 * K) dt) ≤ 1 := by
-      have hu := diffCount_physByBase_update_dt (N := N) (b_tail := gm₀ 0 * K) (m₀ := m₀)
-        hm₀_le0 dt dt (td (gm₁ 1)) (dt ((gm₀ 0 * K + gm₁ 1) % M))
-      rwa [diffCount_self, Nat.zero_add] at hu
-    have hpack_td1 : diffCount L_m (packArray (offTD U w N) (globalPtrBits N) w p₁.1 M zMem)
-        (packArray (offTD U w N) (globalPtrBits N) w td M zMem) ≤ 2 := by
-      have hu := diffCount_packArray_update_le hnodup_m (offTD U w N) (globalPtrBits N) w
-        td td (dt ((gm₀ 0 * K + gm₁ 1) % M)) (td (gm₁ 1)) M zMem
-      rwa [diffCount_self, Nat.zero_add] at hu
-    have hpack_dt1 : diffCount L_m (packArray (offDT U w N) (globalPtrBits N) w p₁.2 M zMem)
-        (packArray (offDT U w N) (globalPtrBits N) w dt M zMem) ≤ 2 := by
-      have hu := diffCount_packArray_update_le hnodup_m (offDT U w N) (globalPtrBits N) w
-        dt dt (td (gm₁ 1)) (dt ((gm₀ 0 * K + gm₁ 1) % M)) M zMem
-      rwa [diffCount_self, Nat.zero_add] at hu
-    have hr_idx_lt : 4 + 3 * b + 1 < globalMetaLen N := Succinct.gmRIdx_lt hb_pos hb
-    have hq_idx_lt : 4 + 3 * b < globalMetaLen N := Succinct.gmQIdx_lt hb_pos hb
-    have hres_r : (Memory.spec 0).clientResult s₁
-        (Succinct.readGMProg U V w N h_space (0, 4 + 3 * b + 1)) = gm₁ (Succinct.gmRIdx b) :=
-      Succinct.clientResult_readGMProg s₁ hr_idx_lt
-    have hres_q : (Memory.spec 0).clientResult s₁
-        (Succinct.readGMProg U V w N h_space (0, 4 + 3 * b)) = gm₁ (Succinct.gmQIdx b) :=
-      Succinct.clientResult_readGMProg s₁ hq_idx_lt
-    by_cases hdem : gm₀ (Succinct.gmRIdx b) = 1 ∧ 0 < gm₀ (Succinct.gmQIdx b)
-    · have hr1_eq0 : gm₁ (Succinct.gmRIdx b) = 0 := by rw [hrb1, hdem.1]
-      have hq1_pos : 0 < gm₁ (Succinct.gmQIdx b) := by rw [hqb1]; exact hdem.2
-      have hst : s' = (Memory.spec 0).clientState s₁
-          (Succinct.demoteSlabProg U V w N h_space (0, b)) := by
-        change (Memory.spec 0).clientState s (Succinct.popBackSlotProg U V w N h_space d) = _
-        unfold Succinct.popBackSlotProg; simp only [hb0, ↓reduceIte]
-        rw [StateTransitionSpec.clientState_bind,
-          StateTransitionSpec.clientState_bind, Succinct.clientState_readGMProg, hres_r,
-          StateTransitionSpec.clientState_bind, Succinct.clientState_readGMProg, hres_q,
-          ite_eq_left hr1_eq0, ite_eq_left hq1_pos]
-      have hpre_dem : Succinct.DemoteSlabInv U V w N h_space 0 b s₁ := by
-        refine ⟨hb, htail1, hslab1, hr1_eq0, hq1_pos, fun b' hb' hne => ?_, ?_⟩
-        · dsimp only [gm₁] at hother1
-          rw [(hother1 b' hb' hne).1, (hother1 b' hb' hne).2]
-          exact hinv.multi_r_bounds hb_pos b' hb'
-        · change gm₁ 0 * K + gm₁ 1 ≤ N
-          rw [hgm1_0]
-          dsimp only [gm₀, h_space, K] at htot₀ hgm1_1 ⊢; omega
-      obtain ⟨_, _, _, hinv2, hqb2, hrb2, hother2, _⟩ :=
-        Succinct.demoteSlabProg_effect hw hb_pos s₁ hpre_dem
-      obtain ⟨hgm'0, hgm'1, hqv2⟩ :=
-        demoteSlabProg_diffCount2_and_gm hnodup_p qA₀ vA₀ hw hb_pos s₁ hpre_dem
-      rw [← hst] at hinv2 hqb2 hrb2 hother2 hgm'0 hgm'1 hqv2
-      let gm' := Succinct.gmAt 0 U V w N h_space s'.mem
-      change Succinct.SlotStoreInv N gm' at hinv2
-      change gm' 0 + 1 = gm₁ 0 at hgm'0
-      change gm' 1 = gm₁ 1 + K at hgm'1
-      have hgm0_eq : gm₀ 0 * K = gm' 0 * K + K := by rw [← hgm1_0, ← hgm'0, Nat.add_one_mul]
-      have hnt'_le : gm₁ 1 + K ≤ M := by rw [← hgm'1]; exact (hinv2.multi_tail hb_pos).ntails_le
-      have hm₀_le' : m₀ ≤ gm' 0 * K + M := by
-        unfold Succinct.totalSlots at hm₀; rw [ite_eq_right hb0] at hm₀
-        change m₀ + 1 ≤ gm₀ 0 * K + gm₀ 1 at hm₀; omega
-      have hw1' : WindowInv M (gm' 0 * K + K) (gm₁ 1) p₁.1 p₁.2 := by rwa [← hgm0_eq]
-      let p' := iterGrowLeft M (gm' 0 * K) (gm₁ 1) K p₁
-      obtain ⟨hw', htd'_M, hdt'_M, hphys2, hpack_td2, hpack_dt2⟩ :=
-        iterGrowLeft_spec (N := N) (U := U) (w := w) (m₀ := m₀) hnodup_m
-          K (gm' 0 * K) (gm₁ 1) td dt p₁ hnt'_le hm₀_le' hw1' htd1_M hdt1_M
-      rw [← hgm'1] at hw'
-      rw [← hgm0_eq] at hphys2
-      have hupd : gm' (Succinct.gmQIdx b) =
-            (popBackCounts K (gm₀ (Succinct.gmQIdx b)) (gm₀ (Succinct.gmRIdx b))).1 ∧
-          gm' (Succinct.gmRIdx b) =
-            (popBackCounts K (gm₀ (Succinct.gmQIdx b)) (gm₀ (Succinct.gmRIdx b))).2 := by
-        unfold popBackCounts; rw [ite_eq_left hdem]
-        exact ⟨by dsimp only [gm', gm₁] at hqb2 hqb1 ⊢; rw [hqb2, hqb1], hrb2⟩
-      have hother_all : ∀ b' < numBuckets N, b' ≠ b →
-          gm' (Succinct.gmQIdx b') = gm₀ (Succinct.gmQIdx b') ∧
-          gm' (Succinct.gmRIdx b') = gm₀ (Succinct.gmRIdx b') :=
-        fun b' hb' hne => ⟨(hother2 b' hb' hne).1.trans (hother1 b' hb' hne).1,
-          (hother2 b' hb' hne).2.trans (hother1 b' hb' hne).2⟩
-      have hpot := Succinct.slotPotential_popBack_le hb_pos hb hr0_pos hr0_lt hupd hother_all
-      have hwork : popBackWork K (gm₀ (Succinct.gmQIdx b)) (gm₀ (Succinct.gmRIdx b)) = K := by
-        unfold popBackWork; rw [ite_eq_left hdem]
-      rw [hwork] at hpot
-      refine ⟨p'.1, p'.2, K, ⟨(windowInv_iff_tailDenseInv N (gm' 0) (gm' 1) p'.1 p'.2).mp hw',
-        fun i => by rw [hmax_M]; exact htd'_M i,
-        fun i => by rw [hmax_M]; exact hdt'_M i,
-        hpot,
-        by dsimp only [h_space, qA₀, vA₀, K] at hqv1 hqv2 ⊢; omega,
-        by dsimp only [p', M, h_space, gm₀, gm', K] at hphys1 hphys2 ⊢; omega,
-        by dsimp only [p', M, zMem, K] at hpack_td1 hpack_td2 ⊢; omega,
-        by dsimp only [p', M, zMem, K] at hpack_dt1 hpack_dt2 ⊢; omega⟩,
-        fun qA_b vA_b => ?_⟩
-      obtain ⟨_, _, hqv2_b⟩ :=
-        demoteSlabProg_diffCount2_and_gm hnodup_p qA_b vA_b hw hb_pos s₁ hpre_dem
-      rw [← hst] at hqv2_b
-      have := hqv1_gen qA_b vA_b
-      dsimp only [h_space, qA₀, vA₀, K] at this hqv2_b ⊢
-      omega
-    · have hst : s' = s₁ := by
-        change (Memory.spec 0).clientState s (Succinct.popBackSlotProg U V w N h_space d) = s₁
-        unfold Succinct.popBackSlotProg; simp only [hb0, ↓reduceIte]
-        rw [StateTransitionSpec.clientState_bind,
-          StateTransitionSpec.clientState_bind, Succinct.clientState_readGMProg, hres_r,
-          StateTransitionSpec.clientState_bind, Succinct.clientState_readGMProg, hres_q]
-        by_cases hr1 : gm₁ (Succinct.gmRIdx b) = 0
-        · have hq1_zero : ¬0 < gm₁ (Succinct.gmQIdx b) := fun hq_pos =>
-            hdem ⟨by rw [hrb1] at hr1; omega, by rwa [hqb1] at hq_pos⟩
-          rw [ite_eq_left hr1, ite_eq_right hq1_zero]; rfl
-        · rw [ite_eq_right hr1]; rfl
-      let gm' := Succinct.gmAt 0 U V w N h_space s'.mem
-      have hgm'_eq : gm' = gm₁ := by dsimp only [gm', gm₁]; rw [hst]
-      have hupd : gm' (Succinct.gmQIdx b) =
-            (popBackCounts K (gm₀ (Succinct.gmQIdx b)) (gm₀ (Succinct.gmRIdx b))).1 ∧
-          gm' (Succinct.gmRIdx b) =
-            (popBackCounts K (gm₀ (Succinct.gmQIdx b)) (gm₀ (Succinct.gmRIdx b))).2 := by
-        unfold popBackCounts; rw [ite_eq_right hdem, hgm'_eq]; exact ⟨hqb1, hrb1⟩
-      have hother_all : ∀ b' < numBuckets N, b' ≠ b →
-          gm' (Succinct.gmQIdx b') = gm₀ (Succinct.gmQIdx b') ∧
-          gm' (Succinct.gmRIdx b') = gm₀ (Succinct.gmRIdx b') := by
-        intro b' hb' hne; rw [hgm'_eq]; exact hother1 b' hb' hne
-      have hpot := Succinct.slotPotential_popBack_le hb_pos hb hr0_pos hr0_lt hupd hother_all
-      have hwork : popBackWork K (gm₀ (Succinct.gmQIdx b)) (gm₀ (Succinct.gmRIdx b)) = 0 := by
-        unfold popBackWork; rw [ite_eq_right hdem]
-      rw [hwork] at hpot
-      have hw' : WindowInv M (gm' 0 * K) (gm' 1) p₁.1 p₁.2 := by
-        rw [hgm'_eq, hgm1_0]; exact hw1
-      refine ⟨p₁.1, p₁.2, 0, ⟨(windowInv_iff_tailDenseInv N (gm' 0) (gm' 1) p₁.1 p₁.2).mp hw',
-        fun i => by rw [hmax_M]; exact htd1_M i,
-        fun i => by rw [hmax_M]; exact hdt1_M i,
-        hpot,
-        by dsimp only [h_space, qA₀, vA₀] at hqv1 ⊢; rw [hst]; omega,
-        by have h0 : gm' 0 = gm₀ 0 := by rw [hgm'_eq, hgm1_0]
-           dsimp only [h_space, gm₀, gm', K] at h0 hphys1 ⊢; rw [h0]; omega,
-        by dsimp only [M, zMem] at hpack_td1 ⊢; omega,
-        by dsimp only [M, zMem] at hpack_dt1 ⊢; omega⟩,
-        fun qA_b vA_b => by
-          rw [hst]; have := hqv1_gen qA_b vA_b; dsimp only [h_space, qA₀, vA₀] at this ⊢; omega⟩
+  set gm := gmAtBit U w N x.toBitMemoryState.mem
+  set td := tdAtBit U w N x.toBitMemoryState.mem
+  set dt := dtAtBit U w N x.toBitMemoryState.mem
+  set n_t := Succinct.totalSlots N gm
+  have hgm_eq : gm = Succinct.gmAt 0 U V w N h_space s_fix.mem := hcpl.gm_eq
+  have hslot_gm : Succinct.SlotStoreInv N gm := hgm_eq.symm ▸ hslot
+  have hj_del_gm : j_del < Succinct.bCount N gm b := hgm_eq.symm ▸ hj_del
+  have hbc_pos : 1 ≤ Succinct.bCount N gm b := by omega
+  have hbc_pos_fix : 1 ≤ Succinct.bCount N
+      (Succinct.gmAt 0 U V w N h_space s_fix.mem) b := hgm_eq ▸ hbc_pos
+  set j_last := Succinct.bCount N gm b - 1
+  have hj_last_gm : j_last < Succinct.bCount N gm b := by omega
+  set phys_last := Succinct.slotOf N gm b j_last
+  have hphys_del_gm : phys_del = Succinct.slotOf N gm b j_del := by rw [hphys_del, ← hgm_eq]
+  have hphys_del_lt : phys_del < N := by
+    rw [hphys_del_gm]; exact (Succinct.slotOf_lt_and_injective hslot_gm).1 b hb j_del hj_del_gm
+  have htd : TailDenseInv N (gm 0) (gm 1) td dt :=
+    (windowInv_iff_tailDenseInv N (gm 0) (gm 1) td dt).mp hcpl.win_inv
+  set d_del := denseOfPhys N gm td phys_del
+  set d_last := denseOfPhys N gm td phys_last
+  have hd_del_lt : d_del < n_t := by
+    dsimp only [d_del]; rw [hphys_del_gm]
+    exact (denseOfPhys_slotOf_lt_and_injective hslot_gm htd).1 b hb j_del hj_del_gm
+  have hd_last_lt : d_last < n_t :=
+    (denseOfPhys_slotOf_lt_and_injective hslot_gm htd).1 b hb j_last hj_last_gm
+  obtain ⟨_, _, hq_c, hv_c, hlm_c, hgm_c⟩ :=
+    Succinct.copyLastPayloadProg_effect (U := U) (V := V) (w := w) (n_max := N)
+      (h_space := h_space) (base := 0) (b := b) (phys_del := phys_del) (s := s_fix)
+      hw hslot hb hbc_pos_fix hphys_del_lt
+  refine (copyDenseItemRegCode_exec (n_t := n_t) hrSrc_ge hrDst_ge hw hU hV hx her
+    hd_last_lt hd_del_lt hrSrc hrDst
+    (by rw [hsz]; rfl) hm2 hm3).mono
+    (fun y ⟨hy_wf, hy_er, hy_sz, hy_q_eq, hy_v_eq, hy_other, hy_meta, hy_regs⟩ => ?_) le_rfl
+  obtain ⟨hgm_y, hlm_y, htd_y, hdt_y⟩ :=
+    metaAtBit_eq_of_epochMetaWords_eq hw hN_pos hy_meta
+  have hgm_y' : gmAtBit U w N y.mem = gm := hgm_y
+  have htd_y' : tdAtBit U w N y.mem = td := htd_y
+  have hdt_y' : dtAtBit U w N y.mem = dt := hdt_y
+  have hwin : WindowInv (maxTailItems N) (gm 0 * slabSize N) (gm 1) td dt := hcpl.win_inv
+  have hphys_last_eq : physByBase N (gm 0 * slabSize N) dt d_last =
+      Succinct.slotOf N (Succinct.gmAt 0 U V w N h_space s_fix.mem) b
+        (Succinct.bCount N (Succinct.gmAt 0 U V w N h_space s_fix.mem) b - 1) := by
+    rw [← hgm_eq]
+    exact (eq_denseOfPhys_iff_physByBase_eq hslot_gm hwin hb hj_last_gm hd_last_lt).mp rfl
+  refine ⟨hy_wf, hy_er, hy_sz,
+    ⟨by dsimp only [BitRAM.Data.toBitMemoryState]; rw [hgm_y, hgm_c]; exact hcpl.gm_eq,
+     by dsimp only [BitRAM.Data.toBitMemoryState]; rw [hlm_y, hlm_c]; exact hcpl.lm_eq,
+     by dsimp only [BitRAM.Data.toBitMemoryState]; rw [hgm_y', htd_y', hdt_y']; exact hwin,
+     fun i => by dsimp only [BitRAM.Data.toBitMemoryState]; rw [htd_y]; exact hcpl.td_lt i,
+     fun i => by dsimp only [BitRAM.Data.toBitMemoryState]; rw [hdt_y]; exact hcpl.dt_lt i,
+     fun d hd => ?_,
+     fun d hd => ?_⟩,
+    hy_meta, hy_regs⟩
+  · dsimp only [BitRAM.Data.toBitMemoryState] at hd ⊢
+    rw [hgm_y'] at hd
+    rw [hgm_y', hdt_y', hq_c]
+    have hiff := eq_denseOfPhys_iff_physByBase_eq hslot_gm hwin hb hj_del_gm hd
+    rw [← hphys_del_gm] at hiff
+    by_cases heq : d = d_del
+    · subst heq
+      rw [hiff.mp rfl, Function.update_self]
+      exact hy_q_eq.trans ((hcpl.quot_eq d_last hd_last_lt).trans (by rw [hphys_last_eq]))
+    · rw [Function.update_of_ne (mt hiff.mpr heq)]
+      exact (hy_other d hd heq).1.trans (hcpl.quot_eq d hd)
+  · dsimp only [BitRAM.Data.toBitMemoryState] at hd ⊢
+    rw [hgm_y'] at hd
+    rw [hgm_y', hdt_y', hv_c]
+    have hiff := eq_denseOfPhys_iff_physByBase_eq hslot_gm hwin hb hj_del_gm hd
+    rw [← hphys_del_gm] at hiff
+    by_cases heq : d = d_del
+    · subst heq
+      rw [hiff.mp rfl, Function.update_self]
+      exact hy_v_eq.trans ((hcpl.val_eq d_last hd_last_lt).trans (by rw [hphys_last_eq]))
+    · rw [Function.update_of_ne (mt hiff.mpr heq)]
+      exact (hy_other d hd heq).2.trans (hcpl.val_eq d hd)
 
-/-! ## Section 4: Window and `diffCount` transitions for `insert` and `delete` -/
+theorem prependIfIndexedRegCode_fixedCoupled {U V w N b m j_new : ℕ}
+    {rB rM rJ : Fin 280} {s_fix : Memory.State} {x : BitRAM.Data 280}
+    (hrB_ge : 23 ≤ rB.val) (hrM_ge : 23 ≤ rM.val) (hrJ_ge : 23 ≤ rJ.val)
+    (hw : 0 < w) (hN_pos : 0 < N) (hnU : N ≤ U) (hU : U < 2 ^ w)
+    (hx : x.WellFormed w) (her : EpochRegs U V w N x)
+    (hcpl : FixedCoupled U V w N s_fix x.toBitMemoryState)
+    (hsz : epochMetaBits U w N ≤ x.bitSize)
+    (hb : b < numBuckets N) (hm : m < numMicroPerBucket N) (hj_n : j_new < N)
+    (hold : Succinct.lmHead N
+      (Succinct.lmAt 0 U V w N (Succinct.hashSpace U w N) s_fix.mem) b m ≤ effBucketCap N)
+    (hrB : x.regs rB = b) (hrM : x.regs rM = m) (hrJ : x.regs rJ = j_new) :
+    let h_space := Succinct.hashSpace U w N
+    let s' := (Memory.spec 0).clientState s_fix
+      (Succinct.prependIfIndexedProg U V w N h_space (((0, b), m), j_new))
+    BitRAM.DemonicExecWithin w (prependIfIndexedRegCode rB rM rJ) x
+      (fun y =>
+        y.WellFormed w ∧
+        EpochRegs U V w N y ∧
+        y.bitSize = x.bitSize ∧
+        FixedCoupled U V w N s' y.toBitMemoryState ∧
+        tdAtBit U w N y.mem = tdAtBit U w N x.mem ∧
+        (∀ a < offLM U w N, y.mem a = x.mem a) ∧
+        (∀ r : Fin 280, 23 ≤ r.val → y.regs r = x.regs r)) 350 := by
+  intro h_space s'
+  refine (prependIfIndexedRegCode_exec hrB_ge hrM_ge hrJ_ge hw hN_pos hnU hU hx her hsz
+    hb hm hj_n hcpl.lm_eq hold hrB hrM hrJ).mono
+    (fun y ⟨hy_sz, hy_wf, hy_er, hy_lm, hgm_s', hq_s', hv_s',
+      hy_gm, hy_td, hy_dt, hy_low, hy_items, hy_regs⟩ => ?_) le_rfl
+  change gmAtBit U w N y.toBitMemoryState.mem = gmAtBit U w N x.toBitMemoryState.mem at hy_gm
+  change tdAtBit U w N y.toBitMemoryState.mem = tdAtBit U w N x.toBitMemoryState.mem at hy_td
+  change dtAtBit U w N y.toBitMemoryState.mem = dtAtBit U w N x.toBitMemoryState.mem at hy_dt
+  exact ⟨hy_wf, hy_er, hy_sz,
+    ⟨by rw [hy_gm, hgm_s']; exact hcpl.gm_eq,
+     hy_lm,
+     by rw [hy_gm, hy_td, hy_dt]; exact hcpl.win_inv,
+     fun i => by rw [hy_td]; exact hcpl.td_lt i,
+     fun i => by rw [hy_dt]; exact hcpl.dt_lt i,
+     fun d hd => by
+       rw [hy_gm] at hd
+       rw [hy_gm, hy_dt, hq_s', (hy_items d).1]
+       exact hcpl.quot_eq d hd,
+     fun d hd => by
+       rw [hy_gm] at hd
+       rw [hy_gm, hy_dt, hv_s', (hy_items d).2]
+       exact hcpl.val_eq d hd⟩,
+    hy_td, hy_low, hy_regs⟩
 
-theorem insertWithHashProg_window {U V w N m₀ : ℕ}
-    {L_p L_m : List ℕ} (hnodup_p : L_p.Nodup) (hnodup_m : L_m.Nodup)
+theorem unlinkIfIndexedRegCode_fixedCoupled {U V w N b m j_del : ℕ}
+    {rB rM rJ : Fin 280} {s_fix : Memory.State} {x : BitRAM.Data 280}
+    (hrB_ge : 23 ≤ rB.val) (hrM_ge : 23 ≤ rM.val) (hrJ_ge : 23 ≤ rJ.val)
+    (hw : 0 < w) (hN_pos : 0 < N) (hnU : N ≤ U) (hU : U < 2 ^ w)
+    (hx : x.WellFormed w) (her : EpochRegs U V w N x)
+    (hcpl : FixedCoupled U V w N s_fix x.toBitMemoryState)
+    (hsz : epochMetaBits U w N ≤ x.bitSize)
+    (hb : b < numBuckets N) (hm : m < numMicroPerBucket N) (hj_n : j_del < N)
+    (hbounds : j_del < effBucketCap N →
+      Succinct.lmPrev N
+        (Succinct.lmAt 0 U V w N (Succinct.hashSpace U w N) s_fix.mem) b j_del ≤ effBucketCap N ∧
+      Succinct.lmNext N
+        (Succinct.lmAt 0 U V w N (Succinct.hashSpace U w N) s_fix.mem) b j_del ≤ effBucketCap N)
+    (hrB : x.regs rB = b) (hrM : x.regs rM = m) (hrJ : x.regs rJ = j_del) :
+    let h_space := Succinct.hashSpace U w N
+    let s' := (Memory.spec 0).clientState s_fix
+      (Succinct.unlinkIfIndexedProg U V w N h_space (((0, b), m), j_del))
+    BitRAM.DemonicExecWithin w (unlinkIfIndexedRegCode rB rM rJ) x
+      (fun y =>
+        y.WellFormed w ∧
+        EpochRegs U V w N y ∧
+        y.bitSize = x.bitSize ∧
+        FixedCoupled U V w N s' y.toBitMemoryState ∧
+        tdAtBit U w N y.mem = tdAtBit U w N x.mem ∧
+        (∀ a < offLM U w N, y.mem a = x.mem a) ∧
+        (∀ r : Fin 280, 23 ≤ r.val → y.regs r = x.regs r)) 287 := by
+  intro h_space s'
+  refine (unlinkIfIndexedRegCode_exec hrB_ge hrM_ge hrJ_ge hw hN_pos hnU hU hx her hsz
+    hb hm hj_n hcpl.lm_eq hbounds hrB hrM hrJ).mono
+    (fun y ⟨hy_sz, hy_wf, hy_er, hy_lm, hgm_s', hq_s', hv_s',
+      hy_gm, hy_td, hy_dt, hy_low, hy_items, hy_regs⟩ => ?_) le_rfl
+  change gmAtBit U w N y.toBitMemoryState.mem = gmAtBit U w N x.toBitMemoryState.mem at hy_gm
+  change tdAtBit U w N y.toBitMemoryState.mem = tdAtBit U w N x.toBitMemoryState.mem at hy_td
+  change dtAtBit U w N y.toBitMemoryState.mem = dtAtBit U w N x.toBitMemoryState.mem at hy_dt
+  exact ⟨hy_wf, hy_er, hy_sz,
+    ⟨by rw [hy_gm, hgm_s']; exact hcpl.gm_eq,
+     hy_lm,
+     by rw [hy_gm, hy_td, hy_dt]; exact hcpl.win_inv,
+     fun i => by rw [hy_td]; exact hcpl.td_lt i,
+     fun i => by rw [hy_dt]; exact hcpl.dt_lt i,
+     fun d hd => by
+       rw [hy_gm] at hd
+       rw [hy_gm, hy_dt, hq_s', (hy_items d).1]
+       exact hcpl.quot_eq d hd,
+     fun d hd => by
+       rw [hy_gm] at hd
+       rw [hy_gm, hy_dt, hv_s', (hy_items d).2]
+       exact hcpl.val_eq d hd⟩,
+    hy_td, hy_low, hy_regs⟩
+
+theorem virtualQuotAt_slotOf_eq_quotAt {U V w N b j : ℕ}
+    {s_fix : Memory.State} {s_bit : BitMemory.State}
+    (hcpl : FixedCoupled U V w N s_fix s_bit)
+    (hslot : Succinct.SlotStoreInv N
+      (Succinct.gmAt 0 U V w N (Succinct.hashSpace U w N) s_fix.mem))
+    (hb : b < numBuckets N)
+    (hj : j < Succinct.bCount N (gmAtBit U w N s_bit.mem) b) :
+    virtualQuotAt U V w N s_bit (Succinct.slotOf N (gmAtBit U w N s_bit.mem) b j) =
+      Succinct.quotAt 0 U w N (Succinct.hashSpace U w N) s_fix.mem
+        (Succinct.slotOf N (gmAtBit U w N s_bit.mem) b j) := by
+  have hslot_gm : Succinct.SlotStoreInv N (gmAtBit U w N s_bit.mem) :=
+    hcpl.gm_eq.symm ▸ hslot
+  have htd : TailDenseInv N (gmAtBit U w N s_bit.mem 0) (gmAtBit U w N s_bit.mem 1)
+      (tdAtBit U w N s_bit.mem) (dtAtBit U w N s_bit.mem) :=
+    (windowInv_iff_tailDenseInv N _ _ _ _).mp hcpl.win_inv
+  have hphys_lt : Succinct.slotOf N (gmAtBit U w N s_bit.mem) b j < N :=
+    (Succinct.slotOf_lt_and_injective hslot_gm).1 b hb j hj
+  have hd_lt : denseOfPhys N (gmAtBit U w N s_bit.mem) (tdAtBit U w N s_bit.mem)
+      (Succinct.slotOf N (gmAtBit U w N s_bit.mem) b j) <
+      Succinct.totalSlots N (gmAtBit U w N s_bit.mem) :=
+    (denseOfPhys_slotOf_lt_and_injective hslot_gm htd).1 b hb j hj
+  unfold virtualQuotAt
+  rw [ite_eq_left hphys_lt, hcpl.quot_eq _ hd_lt]
+  exact congrArg (Succinct.quotAt 0 U w N (Succinct.hashSpace U w N) s_fix.mem)
+    (physOfDense_denseOfPhys hslot_gm htd hb hj)
+
+theorem searchBucket_cond_iff {U V w N b q : ℕ}
+    {mOf : ℕ → ℕ} {L : ℕ → ℕ → List ℕ} {B : ℕ → ℕ → Option ℕ}
+    {s_fix : Memory.State} {s_bit : BitMemory.State}
+    (hb_inv : Succinct.BucketStateInv U V w N (Succinct.hashSpace U w N) 0 mOf L B s_fix)
+    (hcpl : FixedCoupled U V w N s_fix s_bit)
+    (hb : b < numBuckets N) (hm_lt : mOf q < numMicroPerBucket N) :
+    let gm := gmAtBit U w N s_bit.mem
+    let gm_fix := Succinct.gmAt 0 U V w N (Succinct.hashSpace U w N) s_fix.mem
+    let m := mOf q
+    ((∃ j ∈ L b m, virtualQuotAt U V w N s_bit (Succinct.slotOf N gm b j) = q) ∨
+      (∃ j, effBucketCap N ≤ j ∧ j < Succinct.bCount N gm b ∧
+        virtualQuotAt U V w N s_bit (Succinct.slotOf N gm b j) = q)) ↔
+    (∃ j < Succinct.bCount N gm_fix b,
+      Succinct.quotAt 0 U w N (Succinct.hashSpace U w N) s_fix.mem
+        (Succinct.slotOf N gm_fix b j) = q) := by
+  intro gm gm_fix m
+  have hgm : gmAtBit U w N s_bit.mem = gm_fix := hcpl.gm_eq
+  refine Iff.trans ?_ (Succinct.searchBucket_exists_iff hb_inv hb rfl hm_lt)
+  constructor
+  · rintro (⟨j, hj_in, hq⟩ | ⟨j, hcap, hj_lt, hq⟩)
+    · have hj_lt_fix : j < Succinct.bCount N gm_fix b :=
+        ((hb_inv.hchain_mem b hb m hm_lt j).mp hj_in).1
+      have hj_lt : j < Succinct.bCount N (gmAtBit U w N s_bit.mem) b := hgm.symm ▸ hj_lt_fix
+      have hq' : Succinct.quotAt 0 U w N (Succinct.hashSpace U w N) s_fix.mem
+          (Succinct.slotOf N gm_fix b j) = q := by
+        rw [← hgm, ← virtualQuotAt_slotOf_eq_quotAt hcpl hb_inv.hslot hb hj_lt]
+        exact hq
+      exact Or.inl ⟨j, hj_in, hq'⟩
+    · have hj_lt_fix : j < Succinct.bCount N gm_fix b := hgm ▸ hj_lt
+      have hq' : Succinct.quotAt 0 U w N (Succinct.hashSpace U w N) s_fix.mem
+          (Succinct.slotOf N gm_fix b j) = q := by
+        rw [← hgm, ← virtualQuotAt_slotOf_eq_quotAt hcpl hb_inv.hslot hb hj_lt]
+        exact hq
+      exact Or.inr ⟨j, hcap, hj_lt_fix, hq'⟩
+  · rintro (⟨j, hj_in, hq⟩ | ⟨j, hcap, hj_lt_fix, hq⟩)
+    · have hj_lt_fix : j < Succinct.bCount N gm_fix b :=
+        ((hb_inv.hchain_mem b hb m hm_lt j).mp hj_in).1
+      have hj_lt : j < Succinct.bCount N (gmAtBit U w N s_bit.mem) b := hgm.symm ▸ hj_lt_fix
+      have hq' : virtualQuotAt U V w N s_bit (Succinct.slotOf N gm b j) = q := by
+        dsimp only [gm]
+        rw [virtualQuotAt_slotOf_eq_quotAt hcpl hb_inv.hslot hb hj_lt, hgm, hq]
+      exact Or.inl ⟨j, hj_in, hq'⟩
+    · have hj_lt : j < Succinct.bCount N (gmAtBit U w N s_bit.mem) b := hgm.symm ▸ hj_lt_fix
+      have hq' : virtualQuotAt U V w N s_bit (Succinct.slotOf N gm b j) = q := by
+        dsimp only [gm]
+        rw [virtualQuotAt_slotOf_eq_quotAt hcpl hb_inv.hslot hb hj_lt, hgm, hq]
+      exact Or.inr ⟨j, hcap, hj_lt, hq'⟩
+
+/-! ## Section 2: Uniform `BitRAM` program for in-epoch `insert` (`inEpochInsertRegCode`) -/
+
+/-- Insert a new key-value pair `(q, v_new)` into bucket `b` (`r271 = q`, `r272 = b`, `r273 = m`,
+`r274 = v_new`): reads `j_new = bCount N gm b` into `r275`, appends `(q, v_new)` via
+`pushBackSlotRegCode 272 271 274`, and prepends `j_new` to micro-chain `(b, m)` via
+`prependIfIndexedRegCode 272 273 275`. -/
+@[expose]
+def insertNewRegCode : BitRAM.Code .standard 280 :=
+  .seq readBucketCountRegCode
+  (.seq (.op (.copy 275 14))
+  (.seq (pushBackSlotRegCode 272 271 274)
+        (prependIfIndexedRegCode 272 273 275)))
+
+theorem insertNewRegCode_exec {U V w N b q m v_new : ℕ}
+    {L : ℕ → ℕ → List ℕ} {B : ℕ → ℕ → Option ℕ} {mOf : ℕ → ℕ}
+    {s_fix : Memory.State} {x : BitRAM.Data 280}
+    (hw : 0 < w) (hN_pos : 0 < N) (hnU : N ≤ U) (hU : U < 2 ^ w) (hV : V ≤ 2 ^ w)
+    (hx : x.WellFormed w) (her : EpochRegs U V w N x)
+    (hcpl : FixedCoupled U V w N s_fix x.toBitMemoryState)
+    (hb_inv : Succinct.BucketStateInv U V w N (Succinct.hashSpace U w N) 0 mOf L B s_fix)
+    (hb : b < numBuckets N) (hm : m < numMicroPerBucket N)
+    (htot : Succinct.totalSlots N
+      (Succinct.gmAt 0 U V w N (Succinct.hashSpace U w N) s_fix.mem) < N)
+    (hq_lt : q < 2 ^ quotientBits U N) (hv_lt : v_new < 2 ^ valBits V)
+    (hsz : x.bitSize = dictBitSize U V w N (Succinct.totalSlots N (gmAtBit U w N x.mem)))
+    (hfits : Fits w (dictBitSize U V w N (Succinct.totalSlots N (gmAtBit U w N x.mem) + 1)))
+    (hm2 : x.mem 2 = itemBits U V N) (hm3 : x.mem 3 = epochMetaBits U w N)
+    (hr271 : x.regs 271 = q) (hr272 : x.regs 272 = b)
+    (hr273 : x.regs 273 = m) (hr274 : x.regs 274 = v_new) :
+    let h_space := Succinct.hashSpace U w N
+    let gm_fix := Succinct.gmAt 0 U V w N h_space s_fix.mem
+    let j_new := Succinct.bCount N gm_fix b
+    let s₁ := (Memory.spec 0).clientState s_fix
+      (Succinct.pushBackSlotProg U V w N h_space (((0, b), q), v_new))
+    let s' := (Memory.spec 0).clientState s₁
+      (Succinct.prependIfIndexedProg U V w N h_space (((0, b), m), j_new))
+    let gm' := Succinct.gmAt 0 U V w N h_space s'.mem
+    ∃ T,
+      BitRAM.DemonicExecWithin w insertNewRegCode x
+        (fun y =>
+          y.WellFormed w ∧
+          EpochRegs U V w N y ∧
+          y.bitSize = dictBitSize U V w N (Succinct.totalSlots N (gmAtBit U w N y.mem)) ∧
+          FixedCoupled U V w N s' y.toBitMemoryState ∧
+          (∀ a < offLM U w N, y.mem a = x.mem a) ∧
+          (∀ r : Fin 280, 32 ≤ r.val → r ≠ 275 → y.regs r = x.regs r)) T ∧
+      T + 1967 * Succinct.slotPotential N gm' ≤
+        1967 * Succinct.slotPotential N gm_fix + 4253 := by
+  intro h_space gm_fix j_new s₁ s' gm'
+  have hsz_meta : epochMetaBits U w N ≤ x.bitSize := by
+    rw [hsz]; exact Nat.le_add_right _ _
+  have hslot_gm : Succinct.SlotStoreInv N (gmAtBit U w N x.mem) :=
+    hcpl.gm_eq.symm ▸ hb_inv.hslot
+  have hj_new_eq : Succinct.bCount N (gmAtBit U w N x.mem) b = j_new :=
+    congrArg (fun g => Succinct.bCount N g b) hcpl.gm_eq
+  have hj_new_lt_n : j_new < N :=
+    lt_of_le_of_lt (Succinct.bCount_le_totalSlots hb_inv.hslot b hb) htot
+  have eff_pb := Succinct.pushBackSlotProg_effect (U := U) (V := V) (w := w) (n_max := N)
+    (h_space := h_space) (base := 0) (b := b) (q_val := q) (v_val := v_new)
+    hw s_fix hb_inv.hslot hb htot hq_lt hv_lt
+  have hold_s₁ : Succinct.lmHead N (Succinct.lmAt 0 U V w N h_space s₁.mem) b m ≤
+      effBucketCap N := by
+    rw [eff_pb.2.2.1]
+    exact (hb_inv.hchains.1 b hb m hm).head_le_cap
+  set s_mid := x.set 275 j_new
+  have hs_mid_wf : s_mid.WellFormed w :=
+    wf_set 275 hx (fits_of_le_N hw hnU hU (by omega))
+  have hs_mid_er : EpochRegs U V w N s_mid :=
+    her.congr_regs (fun r hr1 _ => by
+      dsimp only [s_mid, BitRAM.Data.set]
+      rw [Function.update_of_ne (by intro h; have := congrArg Fin.val h; omega)])
+  obtain ⟨T_pb0, _, hpot_pb0⟩ :=
+    pushBackSlotRegCode_exec (rB := 272) (rQ := 271) (rV := 274) (s_fix := s_fix) (x := s_mid)
+      (by decide) (by decide) (by decide) hw hN_pos hnU hU hV hs_mid_wf hs_mid_er hm2 hm3 hcpl
+      hb_inv.hslot hb htot hsz hfits hq_lt hv_lt
+      (by simp +decide [s_mid, BitRAM.Data.set, hr272])
+      (by simp +decide [s_mid, BitRAM.Data.set, hr271])
+      (by simp +decide [s_mid, BitRAM.Data.set, hr274])
+  have hs_mid_gm : gmAtBit U w N s_mid.mem = gm_fix := hcpl.gm_eq
+  rw [hs_mid_gm] at hpot_pb0
+  set gm₁ := Succinct.gmAt 0 U V w N h_space s₁.mem
+  set T_pb := 1967 * Succinct.slotPotential N gm_fix + 3800 - 1967 * Succinct.slotPotential N gm₁
+  have hgm'_eq : gm' = gm₁ := by
+    have eff_pr := Succinct.prependIfIndexedProg_allChainsValid (U := U) (V := V) (w := w)
+      (n_max := N) (h_space := h_space) (base := 0) (b := b) (m := m) (j_new := j_new)
+      hw hb hm hj_new_lt_n (hb_inv.hchains.of_lm_eq eff_pb.2.2.1)
+      (fun m' hm' hj_in => by
+        have hlt := ((hb_inv.hchain_mem b hb m' hm' j_new).mp hj_in).1
+        dsimp only [j_new, gm_fix, h_space] at hlt; omega)
+    exact eff_pr.2.2.2.2.1
+  refine ⟨T_pb + 453, ?_, by rw [hgm'_eq]; dsimp only [T_pb, gm_fix, gm₁] at hpot_pb0 ⊢; omega⟩
+  unfold insertNewRegCode
+  refine .seq (T₁ := 102) (T₂ := T_pb + 351)
+    (readBucketCountRegCode_exec hw hN_pos hnU hU hx her hsz_meta hslot_gm hb hr272)
+    (fun y1 ⟨hy1_st, hy1_wf, hy1_er, hy1_14, hy1_regs⟩ => ?_) (by omega)
+  have hy1_14_eq : y1.regs 14 = j_new := hy1_14.trans hj_new_eq
+  refine step_dExec_copy (v := j_new) (T := T_pb + 350) hy1_14_eq ?_
+  set y1' := y1.set 275 j_new
+  have hy1'_wf : y1'.WellFormed w :=
+    wf_set 275 hy1_wf (hy1_14_eq ▸ hy1_wf.regs_fits 14)
+  have hy1'_er : EpochRegs U V w N y1' :=
+    hy1_er.congr_regs (fun r hr1 _ => by
+      dsimp only [y1', BitRAM.Data.set]
+      rw [Function.update_of_ne (by intro h; have := congrArg Fin.val h; omega)])
+  have hy1'_st : y1'.toBitMemoryState = x.toBitMemoryState := hy1_st
+  have hy1'_mem : y1'.mem = x.mem := congrArg BitMemory.State.mem hy1_st
+  have hy1'_sz : y1'.bitSize = x.bitSize := congrArg BitMemory.State.bitSize hy1_st
+  have hy1'_hi : ∀ r : Fin 280, 20 ≤ r.val → r ≠ 275 → y1'.regs r = x.regs r := by
+    intro r hr hne
+    dsimp only [y1', BitRAM.Data.set]
+    rw [Function.update_of_ne hne, hy1_regs r hr]
+  obtain ⟨T_pb', hexec_pb', hpot_pb'⟩ :=
+    pushBackSlotRegCode_exec (rB := 272) (rQ := 271) (rV := 274) (s_fix := s_fix) (x := y1')
+      (by decide) (by decide) (by decide) hw hN_pos hnU hU hV hy1'_wf hy1'_er
+      (by rw [hy1'_mem, hm2]) (by rw [hy1'_mem, hm3])
+      (by rw [hy1'_st]; exact hcpl) hb_inv.hslot hb htot
+      (by rw [hy1'_sz, hy1'_mem, hsz]) (by rw [hy1'_mem]; exact hfits) hq_lt hv_lt
+      (by rw [hy1'_hi 272 (by decide) (by decide), hr272])
+      (by rw [hy1'_hi 271 (by decide) (by decide), hr271])
+      (by rw [hy1'_hi 274 (by decide) (by decide), hr274])
+  have hT_le : T_pb' ≤ T_pb := by
+    have hgm_x : gmAtBit U w N x.mem = gm_fix := hcpl.gm_eq
+    rw [hy1'_mem, hgm_x] at hpot_pb'
+    dsimp only [T_pb, gm_fix, gm₁, s₁, h_space] at hpot_pb' ⊢
+    omega
+  refine .seq (T₁ := T_pb) (T₂ := 350)
+    (hexec_pb'.mono (fun z hz => hz) hT_le)
+    (fun y2 ⟨hy2_wf, hy2_er, hy2_sz, hy2_cpl, hy2_low, hy2_regs⟩ => ?_) le_rfl
+  have hy2_sz_meta : epochMetaBits U w N ≤ y2.bitSize := by
+    rw [hy2_sz]; exact Nat.le_add_right _ _
+  have hy2_272 : y2.regs 272 = b := by
+    rw [hy2_regs 272 (by decide), hy1'_hi 272 (by decide) (by decide), hr272]
+  have hy2_273 : y2.regs 273 = m := by
+    rw [hy2_regs 273 (by decide), hy1'_hi 273 (by decide) (by decide), hr273]
+  have hy2_275 : y2.regs 275 = j_new := by
+    rw [hy2_regs 275 (by decide)]
+    simp +decide [y1', BitRAM.Data.set]
+  refine (prependIfIndexedRegCode_fixedCoupled (rB := 272) (rM := 273) (rJ := 275) (s_fix := s₁)
+    (by decide) (by decide) (by decide) hw hN_pos hnU hU hy2_wf hy2_er hy2_cpl hy2_sz_meta
+    hb hm hj_new_lt_n hold_s₁ hy2_272 hy2_273 hy2_275).mono
+    (fun y ⟨hy_wf, hy_er, hy_sz, hy_cpl, _, hy_low, hy_regs⟩ => ?_) le_rfl
+  have hy_gm : gmAtBit U w N y.mem = gm' := hy_cpl.gm_eq
+  have hy2_gm : gmAtBit U w N y2.mem = gm₁ := hy2_cpl.gm_eq
+  refine ⟨hy_wf, hy_er,
+    by rw [hy_sz, hy2_sz, hy_gm, hgm'_eq, hy2_gm],
+    hy_cpl,
+    fun a ha => (hy_low a ha).trans ((hy2_low a ha).trans (congrFun hy1'_mem a)),
+    fun r hr hne => (hy_regs r (by omega)).trans
+      ((hy2_regs r hr).trans (hy1'_hi r (by omega) hne))⟩
+
+
+/-- Uniform `BitRAM.Code .standard 280` program executing an in-epoch insertion (`r270 = u.val`,
+`r274 = v_new`): splits `u.val` via `feistelSplitRegCode`, searches bucket `b` via
+`searchBucketRegCode`, and dispatches to `insertNewRegCode` on a miss (`r32 = 0`) or
+`insertHitRegCode` on a hit (`r32 ≠ 0`). -/
+@[expose]
+def inEpochInsertRegCode : BitRAM.Code .standard 280 :=
+  .seq feistelSplitRegCode
+  (.seq searchBucketRegCode
+  (.seq (.op (.const 36 0))
+        (.branch (.eq 32 36)
+          insertNewRegCode
+          insertHitRegCode)))
+
+open Classical in
+theorem inEpochInsertRegCode_exec {U V w N : ℕ}
     (hwf : Succinct.DictParamsWf U V w N)
     (henv : Succinct.DictEnv U V w N (Succinct.hashSpace U w N) w 0)
-    (θ : Succinct.QuotHashSeed U N) {s_abs : Dynamic.State U} {s : Memory.State}
-    (hinv : Succinct.DictStateInv U V w N 0 θ s_abs s)
-    (u : Fin U) (v : ℕ)
-    (hval : (Dynamic.spec U V N).valid s_abs (.insert u v))
-    (hm₀ : m₀ ≤ (Dynamic.dom s_abs).card)
-    (td dt : ℕ → ℕ)
-    (htd : TailDenseInv N (Succinct.gmAt 0 U V w N (Succinct.hashSpace U w N) s.mem 0)
-      (Succinct.gmAt 0 U V w N (Succinct.hashSpace U w N) s.mem 1) td dt)
-    (htd_b : ∀ i, td i < max (maxTailItems N) 1)
-    (hdt_b : ∀ i, dt i < max (maxTailItems N) 1) :
+    (hN_pos : 0 < N)
+    (θ : Succinct.QuotHashSeed U N) {s_abs : Dynamic.State U} {s_fix : Memory.State}
+    (hdict : Succinct.DictStateInv U V w N 0 θ s_abs s_fix)
+    (u : Fin U) (v_new : ℕ)
+    (hvalid_op : (Dynamic.spec U V N).valid s_abs (.insert u v_new))
+    {x : BitRAM.Data 280}
+    (hx : x.WellFormed w) (her : EpochRegs U V w N x)
+    (hcpl : FixedCoupled U V w N s_fix x.toBitMemoryState)
+    (hrep_hash : ReducedKWise.Rep offHash w (Succinct.qBits U N) (Succinct.hashB N)
+      (totalMicroBits N) 3 θ x.mem)
+    (hm1 : x.mem 1 = N) (hm2 : x.mem 2 = itemBits U V N) (hm3 : x.mem 3 = epochMetaBits U w N)
+    (hsz : x.bitSize = dictBitSize U V w N (Succinct.totalSlots N (gmAtBit U w N x.mem)))
+    (hfit_cap : Fits w (dictBitSize U V w N N))
+    (hr270 : x.regs 270 = u.val) (hr274 : x.regs 274 = v_new) :
     let h_q := Succinct.hValOfSeed U N θ (keyQuotient (bucketBits N) u.val)
-    let d := (((0, u.val), v), h_q)
-    let prog := Succinct.insertWithHashProg U V w N d
-    let s' := (Memory.spec 0).clientState s prog
-    ∃ td' dt' W, WindowStepPost U V w N m₀ L_p L_m s s' td dt td' dt' W := by
-  intro h_q d prog s'
-  have hw : 0 < w := hwf.1
-  let h_space := Succinct.hashSpace U w N
-  obtain ⟨L, hb_inv⟩ := hinv.hbucket
-  let h1 := Succinct.hValOfSeed U N θ
-  let b := feistelBucket (bucketBits N) h1 u.val
-  let q := keyQuotient (bucketBits N) u.val
-  let m_micro := Succinct.mOfSeed U N θ q
+    let prog := Succinct.insertWithHashProg U V w N (((0, u.val), v_new), h_q)
+    let s' := (Memory.spec 0).clientState s_fix prog
+    let h_space := Succinct.hashSpace U w N
+    let gm_fix := Succinct.gmAt 0 U V w N h_space s_fix.mem
+    let gm' := Succinct.gmAt 0 U V w N h_space s'.mem
+    ∃ T,
+      BitRAM.DemonicExecWithin w inEpochInsertRegCode x
+        (fun y =>
+          y.WellFormed w ∧
+          EpochRegs U V w N y ∧
+          y.bitSize = dictBitSize U V w N (Succinct.totalSlots N (gmAtBit U w N y.mem)) ∧
+          FixedCoupled U V w N s' y.toBitMemoryState ∧
+          (∀ a < offLM U w N, y.mem a = x.mem a)) T ∧
+      T + 1967 * Succinct.slotPotential N gm' ≤
+        1967 * Succinct.slotPotential N gm_fix + 147893 +
+          350 * probeExcess N (Succinct.qStage1 U N θ.1) (Succinct.polyStage2 U N) θ.2
+            (Dynamic.dom s_abs) u := by
+  intro h_q prog s' h_space gm_fix gm'
+  rcases hwf with ⟨hw, hnU, hU, hV⟩
+  obtain ⟨L, hb_inv⟩ := hdict.hbucket
+  set h1 := Succinct.hValOfSeed U N θ
+  set q := keyQuotient (bucketBits N) u.val
+  set b := feistelBucket (bucketBits N) h1 u.val
+  set m := Succinct.mOfSeed U N θ q
+  set gm := gmAtBit U w N x.mem
+  have hb_lt : b < numBuckets N := feistelBucket_lt (bucketBits N) h1 u.val
+  have hm_lt : m < numMicroPerBucket N := Succinct.mOfSeed_lt U N θ q
+  have hq_lt : q < 2 ^ quotientBits U N := keyQuotient_lt_two_pow_quotientBits hnU u.isLt
+  have hv_lt : v_new < 2 ^ valBits V :=
+    lt_of_lt_of_le hvalid_op.2 (Nat.le_pow_clog (by decide) V)
+  have hsz_meta : epochMetaBits U w N ≤ x.bitSize := by
+    rw [hsz]; exact Nat.le_add_right _ _
+  have hadm_meta : epochMetaWords U w N ≤ x.wordSize w :=
+    epochMetaWords_le_wordSize_of_bitSize hw hsz_meta
+  have hfit_meta : Fits w (epochMetaWords U w N) :=
+    hfit_cap.of_le ((Nat.le_mul_of_pos_right _ hw).trans (Nat.le_add_right _ _))
+  have hgm_eq : gm = gm_fix := hcpl.gm_eq
+  have hlm_eq : lmAtBit U w N x.mem = Succinct.lmAt 0 U V w N h_space s_fix.mem := hcpl.lm_eq
+  have hslot_gm : Succinct.SlotStoreInv N gm := hgm_eq.symm ▸ hb_inv.hslot
+  have htd_gm : TailDenseInv N (gm 0) (gm 1) (tdAtBit U w N x.mem) (dtAtBit U w N x.mem) :=
+    (windowInv_iff_tailDenseInv N (gm 0) (gm 1) _ _).mp hcpl.win_inv
+  have hchain_gm : Succinct.IsDLChain N (Succinct.lmHead N (lmAtBit U w N x.mem) b m)
+      (Succinct.lmPrev N (lmAtBit U w N x.mem) b)
+      (Succinct.lmNext N (lmAtBit U w N x.mem) b) (L b m) := by
+    rw [hlm_eq]; exact hb_inv.hchains.1 b hb_lt m hm_lt
+  have hc_lt_gm : ∀ j ∈ L b m, j < Succinct.bCount N gm b := by
+    intro j hj
+    rw [hgm_eq]
+    exact ((hb_inv.hchain_mem b hb_lt m hm_lt j).mp hj).1
   have hb_eq : (h_q &&& (2 ^ bucketBits N - 1)) ^^^ (u.val &&& (2 ^ bucketBits N - 1)) = b :=
     Succinct.and_mask_xor_eq_feistelBucket (bucketBits N) u.val h_q
   have hq_eq : u.val >>> bucketBits N = q := Nat.shiftRight_eq_div_pow u.val (bucketBits N)
-  have hm_eq : h_q >>> bucketBits N = m_micro := rfl
-  have hb_lt : b < numBuckets N := feistelBucket_lt (bucketBits N) h1 u.val
-  have hm_lt : m_micro < numMicroPerBucket N := Succinct.mOfSeed_lt U N θ q
-  have hq_lt : q < 2 ^ quotientBits U N := keyQuotient_lt_two_pow_quotientBits hwf.2.1 u.isLt
-  have hv_lt : v < 2 ^ valBits V := hval.2.trans_le (Nat.le_pow_clog (by decide) V)
-  have hs'_eq : s' = (Memory.spec 0).clientState s
-      (Succinct.insertBodyProg U V w N h_space ((((0, b), q), v), m_micro)) := by
-    refine congrArg ((Memory.spec 0).clientState s) ?_
+  have hm_eq : h_q >>> bucketBits N = m := rfl
+  have hs'_eq : s' = (Memory.spec 0).clientState s_fix
+      (Succinct.insertBodyProg U V w N h_space ((((0, b), q), v_new), m)) := by
+    refine congrArg ((Memory.spec 0).clientState s_fix) ?_
     change Succinct.insertBodyProg U V w N h_space
       ((((0, (h_q &&& (2 ^ bucketBits N - 1)) ^^^ (u.val &&& (2 ^ bucketBits N - 1))),
-        u.val >>> bucketBits N), v), h_q >>> bucketBits N) = _
+        u.val >>> bucketBits N), v_new), h_q >>> bucketBits N) = _
     rw [hb_eq, hq_eq, hm_eq]
   have hsb := Succinct.searchBucketProg_bucket_spec hb_inv henv hb_lt rfl hm_lt (q_target := q)
   dsimp only at hsb
-  set res := (Memory.spec 0).clientResult s
-    (Succinct.searchBucketProg U V w N h_space (((0, b), q), m_micro))
+  set res := (Memory.spec 0).clientResult s_fix
+    (Succinct.searchBucketProg U V w N h_space (((0, b), q), m))
   have hres := hsb.2.2
-  by_cases hex : ∃ j < Succinct.bCount N (Succinct.gmAt 0 U V w N h_space s.mem) b,
-      Succinct.quotAt 0 U w N h_space s.mem
-        (Succinct.slotOf N (Succinct.gmAt 0 U V w N h_space s.mem) b j) = q
-  · rw [ite_eq_left hex] at hres
-    rcases hres with ⟨hf1, hj_lt, _, hphys_eq⟩
-    have hphys_lt : res.2 < N := by
-      rw [hphys_eq]; exact (Succinct.slotOf_lt_and_injective hb_inv.hslot).1 b hb_lt res.1.2 hj_lt
-    have hs'_wv : s' = (Memory.spec 0).clientState s
-        (Succinct.writeValProg U V w N h_space ((0, res.2), v)) := by
-      rw [hs'_eq]; unfold Succinct.insertBodyProg; simp only [pure_bind]
-      rw [StateTransitionSpec.clientState_bind, hsb.1]
-      change (Memory.spec 0).clientState s
-        (if res.1.1 = 1 then Succinct.writeValProg U V w N h_space ((0, res.2), v)
-         else Succinct.insertNewProg U V w N h_space ((((0, b), q), v), m_micro)) = _
-      rw [ite_eq_left hf1]
-    have eff := Succinct.writeValProg_effect (U := U) (base := 0) (h_space := h_space)
-      hw hphys_lt hv_lt s
-    have hgm_eq : Succinct.gmAt 0 U V w N h_space s'.mem =
-        Succinct.gmAt 0 U V w N h_space s.mem := by rw [hs'_wv, eff.2.2.2.2.2]
-    refine ⟨td, dt, 0, by dsimp only; rw [hgm_eq]; exact htd, htd_b, hdt_b,
-      by dsimp only [h_space] at hgm_eq ⊢; rw [hgm_eq]; omega, ?_,
-      by dsimp only [h_space] at hgm_eq ⊢; rw [hgm_eq, diffCount_self]; omega,
-      by dsimp only; rw [diffCount_self]; omega, by dsimp only; rw [diffCount_self]; omega⟩
-    dsimp only; rw [hs'_wv, eff.2.2.1, eff.2.2.2.1]
-    have hup := diffCount2_update_both_le hnodup_p
-      (Succinct.quotAt 0 U w N h_space s.mem) (Succinct.valAt 0 U V w N h_space s.mem)
-      (Succinct.quotAt 0 U w N h_space s.mem) (Succinct.valAt 0 U V w N h_space s.mem)
-      res.2 (Succinct.quotAt 0 U w N h_space s.mem res.2) v
-    rw [Function.update_eq_self, diffCount2_self] at hup
-    dsimp only [h_space] at hup ⊢; omega
-  · rw [ite_eq_right hex] at hres
-    have hB_eq : Succinct.bucketMapOfState U N h1 s_abs b q = s_abs u :=
-      Succinct.bucketMapOfState_feistelBucket hwf.2.1 h1 s_abs u
-    have hnot_some : ¬(s_abs u).isSome := by
-      rw [← hB_eq]; exact mt (hb_inv.hmap_dom b hb_lt q).mp hex
-    have htot : Succinct.totalSlots N (Succinct.gmAt 0 U V w N h_space s.mem) < N := by
-      rw [hinv.htot]; exact hval.1.symm.resolve_left hnot_some
-    have hne1 : res.1.1 ≠ 1 := by omega
-    let s₁ := (Memory.spec 0).clientState s
-      (Succinct.pushBackSlotProg U V w N h_space (((0, b), q), v))
-    let j_new := Succinct.bCount N (Succinct.gmAt 0 U V w N h_space s.mem) b
-    have hs'_pr : s' = (Memory.spec 0).clientState s₁
-        (Succinct.prependIfIndexedProg U V w N h_space (((0, b), m_micro), j_new)) := by
-      rw [hs'_eq]; unfold Succinct.insertBodyProg Succinct.insertNewProg; simp only [pure_bind]
-      rw [StateTransitionSpec.clientState_bind, hsb.1]
-      change (Memory.spec 0).clientState s
-        (if res.1.1 = 1 then Succinct.writeValProg U V w N h_space ((0, res.2), v)
-         else do
-           let tot ← Succinct.readTotalSlotsProg U V w N h_space 0
-           if tot < N then do
-             let j_new ← Succinct.readBucketCountProg U V w N h_space (0, b)
-             Succinct.pushBackSlotProg U V w N h_space (((0, b), q), v)
-             Succinct.prependIfIndexedProg U V w N h_space (((0, b), m_micro), j_new)
-           else pure ()) = _
-      rw [ite_eq_right hne1, StateTransitionSpec.clientState_bind,
-        Succinct.clientState_readTotalSlotsProg, Succinct.clientResult_readTotalSlotsProg,
-        ite_eq_left htot, StateTransitionSpec.clientState_bind,
-        Succinct.clientState_readBucketCountProg,
-        Succinct.clientResult_readBucketCountProg (0, b) s hb_lt,
-        StateTransitionSpec.clientState_bind]
-    have eff_pb := Succinct.pushBackSlotProg_effect (U := U) (V := V) (w := w) (n_max := N)
-      (h_space := h_space) (base := 0) (b := b) (q_val := q) (v_val := v)
-      hw s hb_inv.hslot hb_lt htot hq_lt hv_lt
-    have hj_new_lt_n : j_new < N :=
-      lt_of_le_of_lt (Succinct.bCount_le_totalSlots hb_inv.hslot b hb_lt) htot
-    have hj_not : ∀ m' < numMicroPerBucket N, j_new ∉ L b m' := fun m' hm' hj_in => by
-      have hlt := ((hb_inv.hchain_mem b hb_lt m' hm' j_new).mp hj_in).1
-      dsimp only [j_new, h_space] at hlt; omega
-    have eff_pr := Succinct.prependIfIndexedProg_allChainsValid (U := U) (V := V) (w := w)
-      (n_max := N) (h_space := h_space) (base := 0) (b := b) (m := m_micro) (j_new := j_new)
-      hw hb_lt hm_lt hj_new_lt_n (hb_inv.hchains.of_lm_eq eff_pb.2.2.1) hj_not
-    have hgm'_eq : Succinct.gmAt 0 U V w N h_space s'.mem =
-        Succinct.gmAt 0 U V w N h_space s₁.mem := by rw [hs'_pr, eff_pr.2.2.2.2.1]
-    have hm₀_tot : m₀ ≤ Succinct.totalSlots N (Succinct.gmAt 0 U V w N h_space s.mem) := by
-      rwa [hinv.htot]
-    obtain ⟨td', dt', W, hpost⟩ :=
-      pushBackSlotProg_window hnodup_p hnodup_m hw s td dt
-        hb_inv.hslot hb_lt htot hq_lt hv_lt hm₀_tot htd htd_b hdt_b
-    refine ⟨td', dt', W, by dsimp only; rw [hgm'_eq]; exact hpost.tailDense,
-      hpost.td_lt, hpost.dt_lt,
-      by dsimp only; rw [hgm'_eq]; exact hpost.pot_le,
-      by dsimp only; rw [hs'_pr, eff_pr.2.2.1, eff_pr.2.2.2.1]; exact hpost.diff_qv,
-      by dsimp only; rw [hgm'_eq]; exact hpost.diff_phys,
-      hpost.diff_td, hpost.diff_dt⟩
-
-theorem deleteFinishWithHashProg_window {U V w N m₀ : ℕ}
-    {L_p L_m : List ℕ} (hnodup_p : L_p.Nodup) (hnodup_m : L_m.Nodup)
-    (hwf : Succinct.DictParamsWf U V w N)
-    (henv : Succinct.DictEnv U V w N (Succinct.hashSpace U w N) w 0)
-    (θ : Succinct.QuotHashSeed U N) {s_abs : Dynamic.State U} {s : Memory.State}
-    (hinv : Succinct.DictStateInv U V w N 0 θ s_abs s)
-    (u : Fin U)
-    (hm₀ : m₀ ≤ (Dynamic.dom (Function.update s_abs u none)).card)
-    (td dt : ℕ → ℕ)
-    (htd : TailDenseInv N (Succinct.gmAt 0 U V w N (Succinct.hashSpace U w N) s.mem 0)
-      (Succinct.gmAt 0 U V w N (Succinct.hashSpace U w N) s.mem 1) td dt)
-    (htd_b : ∀ i, td i < max (maxTailItems N) 1)
-    (hdt_b : ∀ i, dt i < max (maxTailItems N) 1) :
-    let h_q := Succinct.hValOfSeed U N θ (keyQuotient (bucketBits N) u.val)
-    let d_prep := ((0, u.val), h_q)
-    let prep := (Memory.spec 0).clientResult s (Succinct.deletePrepWithHashProg U V w N d_prep)
-    let h_q_last := Succinct.hValOfSeed U N θ prep.2
-    let d_fin := ((((0, u.val), h_q), prep.1), h_q_last)
-    let prog_fin := Succinct.deleteFinishWithHashProg U V w N d_fin
-    let s' := (Memory.spec 0).clientState s prog_fin
-    ∃ td' dt' W, WindowStepPost U V w N m₀ L_p L_m s s' td dt td' dt' W := by
-  intro h_q d_prep prep h_q_last d_fin prog_fin s'
-  have hw : 0 < w := hwf.1
-  let h_space := Succinct.hashSpace U w N
-  obtain ⟨L, hb_inv⟩ := hinv.hbucket
-  let h1 := Succinct.hValOfSeed U N θ
-  let b := feistelBucket (bucketBits N) h1 u.val
-  let q := keyQuotient (bucketBits N) u.val
-  let m_micro := Succinct.mOfSeed U N θ q
-  have hb_eq : (h_q &&& (2 ^ bucketBits N - 1)) ^^^ (u.val &&& (2 ^ bucketBits N - 1)) = b :=
-    Succinct.and_mask_xor_eq_feistelBucket (bucketBits N) u.val h_q
-  have hq_eq : u.val >>> bucketBits N = q := Nat.shiftRight_eq_div_pow u.val (bucketBits N)
-  have hm_eq : h_q >>> bucketBits N = m_micro := rfl
-  have hb_lt : b < numBuckets N := feistelBucket_lt (bucketBits N) h1 u.val
-  have hm_lt : m_micro < numMicroPerBucket N := Succinct.mOfSeed_lt U N θ q
-  have hprep_res : prep = (Memory.spec 0).clientResult s
-      (Succinct.deletePrepProg U V w N h_space (((0, b), q), m_micro)) := by
-    refine congrArg ((Memory.spec 0).clientResult s) ?_
-    change Succinct.deletePrepProg U V w N h_space
-      (((0, (h_q &&& (2 ^ bucketBits N - 1)) ^^^ (u.val &&& (2 ^ bucketBits N - 1))),
-        u.val >>> bucketBits N), h_q >>> bucketBits N) = _
-    rw [hb_eq, hq_eq, hm_eq]
-  let m_last := Succinct.mOfSeed U N θ prep.2
-  have hs'_eq : s' = (Memory.spec 0).clientState s
-      (Succinct.deleteFinishProg U V w N h_space
-        (((((0, b), prep.1.1), prep.1.2), m_micro), m_last)) := by
-    refine congrArg ((Memory.spec 0).clientState s) ?_
-    change Succinct.deleteFinishProg U V w N h_space
-      (((((0, (h_q &&& (2 ^ bucketBits N - 1)) ^^^ (u.val &&& (2 ^ bucketBits N - 1))),
-        prep.1.1), prep.1.2), h_q >>> bucketBits N), h_q_last >>> bucketBits N) = _
-    rw [hb_eq, hm_eq]; rfl
-  have hprep := Succinct.deletePrepProg_bucket_spec hb_inv henv hb_lt rfl hm_lt (q_target := q)
-  dsimp only at hprep; rw [← hprep_res] at hprep
-  have hm_last_lt : m_last < numMicroPerBucket N := Succinct.mOfSeed_lt U N θ prep.2
-  have hprep_branch := hprep.2.2.2
-  let gm₀ := Succinct.gmAt 0 U V w N h_space s.mem
-  by_cases hex : ∃ j < Succinct.bCount N gm₀ b,
-      Succinct.quotAt 0 U w N h_space s.mem (Succinct.slotOf N gm₀ b j) = q
-  · rw [ite_eq_left hex] at hprep_branch
-    rcases hprep_branch with ⟨hf1, hj_del_lt, hq_del, hphys_del_eq, hq_last_eq⟩
-    have hsome : (s_abs u).isSome := by
-      rw [← Succinct.bucketMapOfState_feistelBucket hwf.2.1 h1 s_abs u]
-      exact (hb_inv.hmap_dom b hb_lt q).mpr hex
-    have hm₀_tot : m₀ + 1 ≤ Succinct.totalSlots N gm₀ := by
-      have hpos_dom : 0 < (Dynamic.dom s_abs).card :=
-        Finset.card_pos.mpr ⟨u, mem_dom_iff_isSome.mpr hsome⟩
-      have hdel_eq := Dynamic.card_dom_delete_eq_of_isSome hsome
-      dsimp only [gm₀, h_space]
-      rw [hinv.htot]; omega
-    let j_del := prep.1.1.2
-    let phys_del := prep.1.2
-    let j_last := Succinct.bCount N gm₀ b - 1
-    have hj_del_lt' : j_del < Succinct.bCount N gm₀ b := hj_del_lt
-    have hj_last_lt : j_last < Succinct.bCount N gm₀ b := by
-      dsimp only [j_last, j_del, gm₀, h_space] at hj_del_lt ⊢; omega
-    have hbc_pos : 1 ≤ Succinct.bCount N gm₀ b := by
-      dsimp only [j_del, gm₀, h_space] at hj_del_lt ⊢; omega
-    have hphys_del_lt : phys_del < N := by
-      dsimp only [phys_del]; rw [hphys_del_eq]
-      exact (Succinct.slotOf_lt_and_injective hb_inv.hslot).1 b hb_lt j_del hj_del_lt'
-    have hj_del_n : j_del < N := lt_of_lt_of_le hj_del_lt (Succinct.bCount_le_n_max hb_inv.hslot b)
-    have hj_last_n : j_last < N :=
-      lt_of_lt_of_le hj_last_lt (Succinct.bCount_le_n_max hb_inv.hslot b)
-    have hmem_del : j_del < effBucketCap N → j_del ∈ L b m_micro := fun hj_cap =>
-      (hb_inv.hchain_mem b hb_lt m_micro hm_lt j_del).mpr ⟨hj_del_lt, hj_cap, by rw [hq_del]⟩
-    have hmem_last : j_last < effBucketCap N → j_last ∈ L b m_last := fun hj_cap =>
-      (hb_inv.hchain_mem b hb_lt m_last hm_last_lt j_last).mpr
-        ⟨hj_last_lt, hj_cap, by dsimp only [m_last]; rw [hq_last_eq]⟩
-    let s₁ := (Memory.spec 0).clientState s
-      (Succinct.unlinkIfIndexedProg U V w N h_space (((0, b), m_micro), j_del))
-    obtain ⟨_, _, hq_u1, hv_u1, hgm_u1, L₁, hval₁, hmem₁⟩ :=
-      Succinct.unlinkIfIndexedProg_allChainsValid (U := U) (V := V) (w := w) (n_max := N)
-        (h_space := h_space) (base := 0) (b := b) (m := m_micro) (j_del := j_del)
-        hw hb_lt hm_lt hj_del_n hb_inv.hchains hmem_del
-    by_cases hlt : j_del < j_last
-    · have hmem_last₁ : j_last < effBucketCap N → j_last ∈ L₁ b m_last := fun hj_cap => by
-        rw [hmem₁ b hb_lt m_last hm_last_lt j_last]
-        exact ⟨hmem_last hj_cap, fun ⟨_, heq⟩ => by omega⟩
-      let s₂ := (Memory.spec 0).clientState s₁
-        (Succinct.unlinkIfIndexedProg U V w N h_space (((0, b), m_last), j_last))
-      obtain ⟨_, _, hq_u2, hv_u2, hgm_u2, L₂, hval₂, hmem₂⟩ :=
-        Succinct.unlinkIfIndexedProg_allChainsValid (U := U) (V := V) (w := w)
-          (n_max := N) (h_space := h_space) (base := 0) (b := b) (m := m_last)
-          (j_del := j_last) (s := s₁) hw hb_lt hm_last_lt hj_last_n hval₁ hmem_last₁
-      have hslot₂ : Succinct.SlotStoreInv N (Succinct.gmAt 0 U V w N h_space s₂.mem) := by
-        rw [hgm_u2, hgm_u1]; exact hb_inv.hslot
-      have hbc₂ : 1 ≤ Succinct.bCount N (Succinct.gmAt 0 U V w N h_space s₂.mem) b := by
-        rw [hgm_u2, hgm_u1]; exact hbc_pos
-      let s₃ := (Memory.spec 0).clientState s₂
-        (Succinct.copyLastPayloadProg U V w N h_space ((0, b), phys_del))
-      obtain ⟨_, _, hq_c, hv_c, hlm_c, hgm_c⟩ :=
-        Succinct.copyLastPayloadProg_effect (U := U) (V := V) (w := w) (n_max := N)
-          (h_space := h_space) (base := 0) (b := b) (phys_del := phys_del) (s := s₂)
-          hw hslot₂ hb_lt hbc₂ hphys_del_lt
-      have hval₃ : AllChainsValid N (Succinct.lmAt 0 U V w N h_space s₃.mem) L₂ :=
-        hval₂.of_lm_eq hlm_c
-      have hj_not₂ : ∀ m' < numMicroPerBucket N, j_del ∉ L₂ b m' := by
-        intro m' hm' hj_in
-        have hj_in₁ := ((hmem₂ b hb_lt m' hm' j_del).mp hj_in).1
-        exact ((hmem₁ b hb_lt m' hm' j_del).mp hj_in₁).2 ⟨rfl, rfl⟩
-      let s₄ := (Memory.spec 0).clientState s₃
-        (Succinct.prependIfIndexedProg U V w N h_space (((0, b), m_last), j_del))
-      obtain ⟨_, _, hq_pr, hv_pr, hgm_pr, _⟩ :=
-        Succinct.prependIfIndexedProg_allChainsValid (U := U) (V := V) (w := w)
-          (n_max := N) (h_space := h_space) (base := 0) (b := b) (m := m_last)
-          (j_new := j_del) (s := s₃) hw hb_lt hm_last_lt hj_del_n hval₃ hj_not₂
-      have hgm₄_eq : Succinct.gmAt 0 U V w N h_space s₄.mem = gm₀ := by
-        rw [hgm_pr, hgm_c, hgm_u2, hgm_u1]
-      have hslot₄ : Succinct.SlotStoreInv N (Succinct.gmAt 0 U V w N h_space s₄.mem) := by
-        rw [hgm₄_eq]; exact hb_inv.hslot
-      have hbc₄ : 1 ≤ Succinct.bCount N (Succinct.gmAt 0 U V w N h_space s₄.mem) b := by
-        rw [hgm₄_eq]; exact hbc_pos
-      have hm₀_tot₄ : m₀ + 1 ≤ Succinct.totalSlots N (Succinct.gmAt 0 U V w N h_space s₄.mem) := by
-        rw [hgm₄_eq]; exact hm₀_tot
-      have htd₄ : TailDenseInv N (Succinct.gmAt 0 U V w N h_space s₄.mem 0)
-          (Succinct.gmAt 0 U V w N h_space s₄.mem 1) td dt := by rw [hgm₄_eq]; exact htd
-      have hs'_pop : s' = (Memory.spec 0).clientState s₄
-          (Succinct.popBackSlotProg U V w N h_space (0, b)) := by
-        rw [hs'_eq]
-        unfold Succinct.deleteFinishProg Succinct.deleteFoundProg Succinct.deleteSwapProg
+  have hrep_bit : BucketRepInv U V w N (Succinct.mOfSeed U N θ) L
+      (Succinct.bucketMapOfState U N h1 s_abs) x.toBitMemoryState :=
+    bucketRepInv_of_fixedCoupled hb_inv hcpl
+  have hprobe := chain_and_overflow_le_probeExcess_rep θ hrep_bit u
+  obtain ⟨s_out, hs_out⟩ : ∃ s_out, s_out = s' := ⟨s', rfl⟩
+  obtain ⟨gm_out, hgm_out⟩ : ∃ gm_out, gm_out = gm' := ⟨gm', rfl⟩
+  obtain ⟨T_search, hT_search⟩ : ∃ T_search,
+      T_search = 295 + 350 * (L b m).length + 287 * (Succinct.bCount N gm b - effBucketCap N) :=
+    ⟨_, rfl⟩
+  obtain ⟨T_ins, hT_ins⟩ : ∃ T_ins,
+      T_ins = 1967 * Succinct.slotPotential N gm_fix + 4253 -
+        1967 * Succinct.slotPotential N gm_out :=
+    ⟨_, rfl⟩
+  rw [← hs_out, ← hgm_out]
+  refine ⟨142643 + T_search + 1 + (T_ins + 1), ?_, ?_⟩
+  · unfold inEpochInsertRegCode
+    refine .seq (T₁ := 142643) (T₂ := T_search + 1 + (T_ins + 1))
+      (dExec_with_fits
+        (feistelSplitRegCode_exec hN_pos hnU hU.le hfit_meta θ u.isLt x her hr270 hadm_meta
+          hrep_hash) hx.regs_fits hx.mem_wf.mem_fits)
+      (fun y1 ⟨⟨_, hy1_271, hy1_272, hy1_273, hy1_er, hy1_hi, hy1_mem, hy1_sz⟩,
+        hy1_rfits, _⟩ => ?_) (by omega)
+    have hy1_st : y1.toBitMemoryState = x.toBitMemoryState := by
+      ext a
+      · exact congrFun hy1_mem a
+      · exact hy1_sz
+    have hy1_wf : y1.WellFormed w := ⟨hy1_rfits, hy1_st ▸ hx.mem_wf⟩
+    refine .seq (T₂ := T_ins + 1 + 1)
+      (searchBucketRegCode_exec (b := b) (m := m) (q_target := q) (L := L b m) (x := y1)
+        hw hN_pos hnU hU hy1_wf hy1_er
+        (by rw [hy1_mem, hm1]) (by rw [hy1_mem, hm2]) (by rw [hy1_mem, hm3])
+        (by rw [hy1_mem, hy1_sz, hsz])
+        (by rw [hy1_mem]; exact hslot_gm) (by rw [hy1_mem]; exact htd_gm) hb_lt hm_lt
+        (by rw [hy1_mem]; exact hchain_gm) (by rw [hy1_mem]; exact hc_lt_gm)
+        hy1_271 hy1_272 hy1_273)
+      (fun y2 ⟨hy2_st, hy2_wf, hy2_er, hy2_res, hy2_hi⟩ => ?_)
+      (by rw [hy1_mem, hT_search]; dsimp only [gm]; omega)
+    have hy2_st_x : y2.toBitMemoryState = x.toBitMemoryState := hy2_st.trans hy1_st
+    have hy2_mem : y2.mem = x.mem := congrArg BitMemory.State.mem hy2_st_x
+    have hy2_sz : y2.bitSize = x.bitSize := congrArg BitMemory.State.bitSize hy2_st_x
+    rw [hy1_st, hy1_mem] at hy2_res
+    refine DemonicExecWithin.step_const (T := T_ins + 1) (fits_zero w) ?_
+    set s2 := y2.set 36 0
+    have hs2_wf : s2.WellFormed w := wf_set 36 hy2_wf (fits_zero w)
+    have hs2_er : EpochRegs U V w N s2 :=
+      hy2_er.congr_regs (fun r hr1 _ => by
+        dsimp only [s2, BitRAM.Data.set]
+        rw [Function.update_of_ne (by intro h; have := congrArg Fin.val h; omega)])
+    have hs2_271 : s2.regs 271 = q := by
+      dsimp only [s2, BitRAM.Data.set]
+      rw [Function.update_of_ne (by decide), hy2_hi 271 (by decide), hy1_271]
+    have hs2_272 : s2.regs 272 = b := by
+      dsimp only [s2, BitRAM.Data.set]
+      rw [Function.update_of_ne (by decide), hy2_hi 272 (by decide), hy1_272]
+    have hs2_273 : s2.regs 273 = m := by
+      dsimp only [s2, BitRAM.Data.set]
+      rw [Function.update_of_ne (by decide), hy2_hi 273 (by decide), hy1_273]
+    have hs2_274 : s2.regs 274 = v_new := by
+      dsimp only [s2, BitRAM.Data.set]
+      rw [Function.update_of_ne (by decide), hy2_hi 274 (by decide), hy1_hi 274 (by decide), hr274]
+    have hiff_cond :
+        ((∃ j ∈ L b m,
+            virtualQuotAt U V w N x.toBitMemoryState
+              (Succinct.slotOf N (gmAtBit U w N x.mem) b j) = q) ∨
+          ∃ j, effBucketCap N ≤ j ∧ j < Succinct.bCount N (gmAtBit U w N x.mem) b ∧
+            virtualQuotAt U V w N x.toBitMemoryState
+              (Succinct.slotOf N (gmAtBit U w N x.mem) b j) = q) ↔
+        ∃ j < Succinct.bCount N gm_fix b,
+          Succinct.quotAt 0 U w N h_space s_fix.mem (Succinct.slotOf N gm_fix b j) = q :=
+      searchBucket_cond_iff hb_inv hcpl hb_lt hm_lt (q := q)
+    by_cases hex : ∃ j < Succinct.bCount N gm_fix b,
+        Succinct.quotAt 0 U w N h_space s_fix.mem (Succinct.slotOf N gm_fix b j) = q
+    · rw [ite_eq_left hex] at hres
+      rw [ite_eq_left (hiff_cond.mpr hex)] at hy2_res
+      rcases hres with ⟨hf1, hj_lt, hq_res, hphys_eq⟩
+      obtain ⟨hy2_32, hy2_33_lt, _, hy2_q, hy2_34, hy2_35⟩ := hy2_res
+      have hcond : ¬BitRAM.CondHolds (.eq 32 36) s2 := by
+        change s2.regs 32 ≠ s2.regs 36
+        simp +decide [s2, BitRAM.Data.set, hy2_32]
+      have hj_eq : y2.regs 33 = res.1.2 := by
+        have hgm_x : gmAtBit U w N x.mem =
+            Succinct.gmAt 0 U V w N (Succinct.hashSpace U w N) s_fix.mem := hcpl.gm_eq
+        have hq33 : Succinct.quotAt 0 U w N (Succinct.hashSpace U w N) s_fix.mem
+            (Succinct.slotOf N (Succinct.gmAt 0 U V w N (Succinct.hashSpace U w N) s_fix.mem) b
+              (y2.regs 33)) = q := by
+          rw [← hgm_x]
+          exact (virtualQuotAt_slotOf_eq_quotAt hcpl hb_inv.hslot hb_lt hy2_33_lt).symm.trans hy2_q
+        exact hb_inv.hnodup_q b hb_lt (y2.regs 33) (by rw [← hgm_x]; exact hy2_33_lt) res.1.2 hj_lt
+          (hq33.trans hq_res.symm)
+      have hs'_wv : s_out = (Memory.spec 0).clientState s_fix
+          (Succinct.writeValProg U V w N h_space ((0, res.2), v_new)) := by
+        rw [hs_out, hs'_eq]; unfold Succinct.insertBodyProg; simp only [pure_bind]
+        rw [StateTransitionSpec.clientState_bind, hsb.1]
+        change (Memory.spec 0).clientState s_fix
+          (if res.1.1 = 1 then Succinct.writeValProg U V w N h_space ((0, res.2), v_new)
+           else Succinct.insertNewProg U V w N h_space ((((0, b), q), v_new), m)) = _
+        rw [ite_eq_left hf1]
+      have hphys_lt : res.2 < N := by
+        rw [hphys_eq]; exact (Succinct.slotOf_lt_and_injective hb_inv.hslot).1 b hb_lt res.1.2 hj_lt
+      have eff_wv := Succinct.writeValProg_effect (U := U) (V := V) (w := w) (n_max := N)
+        (h_space := h_space) (base := 0) hw hphys_lt hv_lt s_fix
+      have hgm'_eq : gm_out = gm_fix := by
+        rw [hgm_out]; dsimp only [gm', gm_fix]; rw [← hs_out, hs'_wv, eff_wv.2.2.2.2.2]
+      have h59_le : 57 + 2 ≤ T_ins + 1 := by rw [hT_ins, hgm'_eq]; omega
+      have hs2_35 : s2.regs 35 =
+          denseOfPhys N (gmAtBit U w N s2.mem) (tdAtBit U w N s2.mem) res.2 := by
+        dsimp only [s2, BitRAM.Data.set]
+        rw [Function.update_of_ne (by decide), hy2_mem, hy2_35, hj_eq, hphys_eq]
+        have hgm_x : gmAtBit U w N x.mem =
+            Succinct.gmAt 0 U V w N (Succinct.hashSpace U w N) s_fix.mem := hcpl.gm_eq
+        rw [hgm_x]
+      refine .branch_neg (T₀ := 57) hcond ?_ h59_le
+      refine (insertHitRegCode_fixedCoupled hw hN_pos hU.le hV hs2_wf hs2_er
+        (by change FixedCoupled U V w N s_fix y2.toBitMemoryState; rw [hy2_st_x]; exact hcpl)
+        hb_inv.hslot hb_lt hj_lt hphys_eq hv_lt hs2_35 hs2_274
+        (by change y2.bitSize = dictBitSize U V w N (Succinct.totalSlots N (gmAtBit U w N y2.mem))
+            rw [hy2_sz, hy2_mem, hsz])
+        (by change y2.mem 2 = _; rw [hy2_mem, hm2])
+        (by change y2.mem 3 = _; rw [hy2_mem, hm3])).mono
+        (fun y ⟨hy_wf, hy_er, hy_sz, hy_cpl, hy_meta, _⟩ => ?_) le_rfl
+      have hy_gm : gmAtBit U w N y.mem =
+          Succinct.gmAt 0 U V w N h_space
+            ((Memory.spec 0).clientState s_fix
+              (Succinct.writeValProg U V w N h_space ((0, res.2), v_new))).mem := hy_cpl.gm_eq
+      exact ⟨hy_wf, hy_er,
+        by rw [hy_sz]; change y2.bitSize = _
+           rw [hy2_sz, hsz, hy_gm, eff_wv.2.2.2.2.2, hgm_eq],
+        by rw [hs'_wv]; exact hy_cpl,
+        fun a ha => (hy_meta a (by rw [← offDT_add_eq_epochMetaWords hN_pos]
+                                   unfold offDT offTD offGM; omega)).trans (congrFun hy2_mem a)⟩
+    · rw [ite_eq_right hex] at hres
+      rw [ite_eq_right (mt hiff_cond.mp hex)] at hy2_res
+      have hcond : BitRAM.CondHolds (.eq 32 36) s2 := by
+        change s2.regs 32 = s2.regs 36
+        simp +decide [s2, BitRAM.Data.set, hy2_res]
+      have hB_eq : Succinct.bucketMapOfState U N h1 s_abs b q = s_abs u :=
+        Succinct.bucketMapOfState_feistelBucket hnU h1 s_abs u
+      have hnot_some : ¬(s_abs u).isSome := by
+        rw [← hB_eq]; exact mt (hb_inv.hmap_dom b hb_lt q).mp hex
+      have htot : Succinct.totalSlots N gm_fix < N := by
+        rw [hdict.htot]; exact hvalid_op.1.symm.resolve_left hnot_some
+      have htot_gm : Succinct.totalSlots N gm < N := hgm_eq.symm ▸ htot
+      have hfits_next : Fits w (dictBitSize U V w N (Succinct.totalSlots N gm + 1)) :=
+        hfit_cap.of_le (by
+          unfold dictBitSize
+          exact Nat.add_le_add_left (Nat.mul_le_mul_right _ (by omega)) _)
+      have hne1 : res.1.1 ≠ 1 := by omega
+      let s₁ := (Memory.spec 0).clientState s_fix
+        (Succinct.pushBackSlotProg U V w N h_space (((0, b), q), v_new))
+      let j_new := Succinct.bCount N gm_fix b
+      have hs'_pr : s_out = (Memory.spec 0).clientState s₁
+          (Succinct.prependIfIndexedProg U V w N h_space (((0, b), m), j_new)) := by
+        rw [hs_out, hs'_eq]; unfold Succinct.insertBodyProg Succinct.insertNewProg
         simp only [pure_bind]
-        rw [ite_eq_left hf1, StateTransitionSpec.clientState_bind,
-          StateTransitionSpec.clientState_bind, Succinct.clientState_readBucketCountProg,
-          Succinct.clientResult_readBucketCountProg (0, b) s₁ hb_lt, hgm_u1,
-          ite_eq_left hlt]
-        repeat rw [StateTransitionSpec.clientState_bind]
-      obtain ⟨td', dt', W, hpost, hpost_qv⟩ :=
-        popBackSlotProg_window hnodup_p hnodup_m hw s₄ td dt
-          hslot₄ hb_lt hbc₄ hm₀_tot₄ htd₄ htd_b hdt_b
-      have hqv₄ : diffCount2 L_p (Succinct.quotAt 0 U w N h_space s₄.mem)
-          (Succinct.valAt 0 U V w N h_space s₄.mem)
-          (Succinct.quotAt 0 U w N h_space s.mem)
-          (Succinct.valAt 0 U V w N h_space s.mem) ≤ 1 := by
-        rw [hq_pr, hq_c, hgm_u2, hgm_u1, hq_u2, hq_u1,
-          hv_pr, hv_c, hgm_u2, hgm_u1, hv_u2, hv_u1]
-        refine (diffCount2_update_both_le hnodup_p
-          (Succinct.quotAt 0 U w N h_space s.mem) (Succinct.valAt 0 U V w N h_space s.mem)
-          (Succinct.quotAt 0 U w N h_space s.mem) (Succinct.valAt 0 U V w N h_space s.mem)
-          _ _ _).trans ?_
-        rw [diffCount2_self, Nat.zero_add]
-      refine ⟨td', dt', W,
-        by dsimp only; rw [hs'_pop]; exact hpost.tailDense,
-        hpost.td_lt, hpost.dt_lt,
-        by dsimp only [gm₀] at hgm₄_eq; dsimp only [h_space] at hs'_pop hgm₄_eq ⊢
-           rw [hs'_pop, ← hgm₄_eq]; exact hpost.pot_le,
-        by dsimp only [h_space] at hs'_pop hqv₄ ⊢; rw [hs'_pop]
-           have := hpost_qv (Succinct.quotAt 0 U w N (Succinct.hashSpace U w N) s.mem)
-             (Succinct.valAt 0 U V w N (Succinct.hashSpace U w N) s.mem); omega,
-        by dsimp only [gm₀] at hgm₄_eq; dsimp only [h_space] at hs'_pop hgm₄_eq ⊢
-           rw [hs'_pop, ← hgm₄_eq]; exact hpost.diff_phys,
-        hpost.diff_td, hpost.diff_dt⟩
-    · have hslot₁ : Succinct.SlotStoreInv N (Succinct.gmAt 0 U V w N h_space s₁.mem) := by
-        rw [hgm_u1]; exact hb_inv.hslot
-      have hbc₁ : 1 ≤ Succinct.bCount N (Succinct.gmAt 0 U V w N h_space s₁.mem) b := by
-        rw [hgm_u1]; exact hbc_pos
-      have hm₀_tot₁ : m₀ + 1 ≤ Succinct.totalSlots N (Succinct.gmAt 0 U V w N h_space s₁.mem) := by
-        rw [hgm_u1]; exact hm₀_tot
-      have htd₁ : TailDenseInv N (Succinct.gmAt 0 U V w N h_space s₁.mem 0)
-          (Succinct.gmAt 0 U V w N h_space s₁.mem 1) td dt := by rw [hgm_u1]; exact htd
-      have hs'_pop : s' = (Memory.spec 0).clientState s₁
-          (Succinct.popBackSlotProg U V w N h_space (0, b)) := by
-        rw [hs'_eq]
-        unfold Succinct.deleteFinishProg Succinct.deleteFoundProg
-        simp only [pure_bind]
-        rw [ite_eq_left hf1, StateTransitionSpec.clientState_bind,
-          StateTransitionSpec.clientState_bind, Succinct.clientState_readBucketCountProg,
-          Succinct.clientResult_readBucketCountProg (0, b) s₁ hb_lt, hgm_u1,
-          ite_eq_right hlt]
-      obtain ⟨td', dt', W, hpost, _⟩ :=
-        popBackSlotProg_window hnodup_p hnodup_m hw s₁ td dt
-          hslot₁ hb_lt hbc₁ hm₀_tot₁ htd₁ htd_b hdt_b
-      refine ⟨td', dt', W,
-        by dsimp only; rw [hs'_pop]; exact hpost.tailDense,
-        hpost.td_lt, hpost.dt_lt,
-        by dsimp only [h_space] at hs'_pop hgm_u1 ⊢; rw [hs'_pop, ← hgm_u1]; exact hpost.pot_le,
-        by dsimp only [h_space] at hs'_pop hq_u1 hv_u1 ⊢
-           rw [hs'_pop, ← hq_u1, ← hv_u1]; exact hpost.diff_qv,
-        by dsimp only [h_space] at hs'_pop hgm_u1 ⊢; rw [hs'_pop, ← hgm_u1]; exact hpost.diff_phys,
-        hpost.diff_td, hpost.diff_dt⟩
-  · rw [ite_eq_right hex] at hprep_branch
-    rcases hprep_branch with ⟨hf0, _⟩
-    have hne1 : prep.1.1.1 ≠ 1 := by omega
-    have hs'_id : s' = s := by
-      rw [hs'_eq]
-      unfold Succinct.deleteFinishProg
-      simp only [pure_bind]
-      rw [ite_eq_right hne1]; rfl
-    refine ⟨td, dt, 0,
-      by dsimp only; rw [hs'_id]; exact htd,
-      htd_b, hdt_b,
-      by dsimp only; rw [hs'_id]; omega,
-      by dsimp only; rw [hs'_id, diffCount2_self]; omega,
-      by dsimp only; rw [hs'_id, diffCount_self]; omega,
-      by dsimp only; rw [diffCount_self]; omega,
-      by dsimp only; rw [diffCount_self]; omega⟩
+        rw [StateTransitionSpec.clientState_bind, hsb.1]
+        change (Memory.spec 0).clientState s_fix
+          (if res.1.1 = 1 then Succinct.writeValProg U V w N h_space ((0, res.2), v_new)
+           else do
+             let tot ← Succinct.readTotalSlotsProg U V w N h_space 0
+             if tot < N then do
+               let j_new ← Succinct.readBucketCountProg U V w N h_space (0, b)
+               Succinct.pushBackSlotProg U V w N h_space (((0, b), q), v_new)
+               Succinct.prependIfIndexedProg U V w N h_space (((0, b), m), j_new)
+             else pure ()) = _
+        rw [ite_eq_right hne1, StateTransitionSpec.clientState_bind,
+          Succinct.clientState_readTotalSlotsProg, Succinct.clientResult_readTotalSlotsProg,
+          ite_eq_left htot, StateTransitionSpec.clientState_bind,
+          Succinct.clientState_readBucketCountProg,
+          Succinct.clientResult_readBucketCountProg (0, b) s_fix hb_lt,
+          StateTransitionSpec.clientState_bind]
+      obtain ⟨T_new, hexec_new, hpot_new⟩ :=
+        insertNewRegCode_exec hw hN_pos hnU hU hV hs2_wf hs2_er
+          (by change FixedCoupled U V w N s_fix y2.toBitMemoryState; rw [hy2_st_x]; exact hcpl)
+          hb_inv hb_lt hm_lt htot hq_lt hv_lt
+          (by change y2.bitSize = dictBitSize U V w N (Succinct.totalSlots N (gmAtBit U w N y2.mem))
+              rw [hy2_sz, hy2_mem, hsz])
+          (by change Fits w (dictBitSize U V w N (Succinct.totalSlots N (gmAtBit U w N y2.mem) + 1))
+              rw [hy2_mem]; exact hfits_next)
+          (by change y2.mem 2 = _; rw [hy2_mem, hm2])
+          (by change y2.mem 3 = _; rw [hy2_mem, hm3])
+          hs2_271 hs2_272 hs2_273 hs2_274
+      have hgm_out_pr : gm_out = Succinct.gmAt 0 U V w N h_space
+          ((Memory.spec 0).clientState s₁
+            (Succinct.prependIfIndexedProg U V w N h_space (((0, b), m), j_new))).mem := by
+        rw [hgm_out]; dsimp only [gm']; rw [← hs_out, hs'_pr]
+      have hT_new_le : T_new ≤ T_ins := by
+        rw [hT_ins, hgm_out_pr]
+        dsimp only [gm_fix, s₁, j_new, h_space] at hpot_new ⊢
+        omega
+      refine .branch_pos (T₀ := T_ins) hcond ?_ (by omega)
+      refine hexec_new.mono (fun y ⟨hy_wf, hy_er, hy_sz, hy_cpl, hy_low, _⟩ => ?_) hT_new_le
+      exact ⟨hy_wf, hy_er, hy_sz, by rw [hs'_pr]; exact hy_cpl,
+        fun a ha => (hy_low a ha).trans (congrFun hy2_mem a)⟩
+  · have hpot_bound : 1967 * Succinct.slotPotential N gm_out ≤
+        1967 * Succinct.slotPotential N gm_fix + 4253 := by
+      by_cases hex : ∃ j < Succinct.bCount N gm_fix b,
+          Succinct.quotAt 0 U w N h_space s_fix.mem (Succinct.slotOf N gm_fix b j) = q
+      · rw [ite_eq_left hex] at hres
+        rcases hres with ⟨hf1, hj_lt, _, hphys_eq⟩
+        have hs'_wv : s_out = (Memory.spec 0).clientState s_fix
+            (Succinct.writeValProg U V w N h_space ((0, res.2), v_new)) := by
+          rw [hs_out, hs'_eq]; unfold Succinct.insertBodyProg; simp only [pure_bind]
+          rw [StateTransitionSpec.clientState_bind, hsb.1]
+          change (Memory.spec 0).clientState s_fix
+            (if res.1.1 = 1 then Succinct.writeValProg U V w N h_space ((0, res.2), v_new)
+             else Succinct.insertNewProg U V w N h_space ((((0, b), q), v_new), m)) = _
+          rw [ite_eq_left hf1]
+        have hphys_lt : res.2 < N := by
+          rw [hphys_eq]
+          exact (Succinct.slotOf_lt_and_injective hb_inv.hslot).1 b hb_lt res.1.2 hj_lt
+        have eff_wv := Succinct.writeValProg_effect (U := U) (V := V) (w := w) (n_max := N)
+          (h_space := h_space) (base := 0) hw hphys_lt hv_lt s_fix
+        have hgm'_eq : gm_out = gm_fix := by
+          rw [hgm_out]; dsimp only [gm', gm_fix]; rw [← hs_out, hs'_wv, eff_wv.2.2.2.2.2]
+        rw [hgm'_eq]; omega
+      · rw [ite_eq_right hex] at hres
+        have hB_eq : Succinct.bucketMapOfState U N h1 s_abs b q = s_abs u :=
+          Succinct.bucketMapOfState_feistelBucket hnU h1 s_abs u
+        have hnot_some : ¬(s_abs u).isSome := by
+          rw [← hB_eq]; exact mt (hb_inv.hmap_dom b hb_lt q).mp hex
+        have htot : Succinct.totalSlots N gm_fix < N := by
+          rw [hdict.htot]; exact hvalid_op.1.symm.resolve_left hnot_some
+        have hne1 : res.1.1 ≠ 1 := by omega
+        let s₁ := (Memory.spec 0).clientState s_fix
+          (Succinct.pushBackSlotProg U V w N h_space (((0, b), q), v_new))
+        let j_new := Succinct.bCount N gm_fix b
+        have hs'_pr : s_out = (Memory.spec 0).clientState s₁
+            (Succinct.prependIfIndexedProg U V w N h_space (((0, b), m), j_new)) := by
+          rw [hs_out, hs'_eq]; unfold Succinct.insertBodyProg Succinct.insertNewProg
+          simp only [pure_bind]
+          rw [StateTransitionSpec.clientState_bind, hsb.1]
+          change (Memory.spec 0).clientState s_fix
+            (if res.1.1 = 1 then Succinct.writeValProg U V w N h_space ((0, res.2), v_new)
+             else do
+               let tot ← Succinct.readTotalSlotsProg U V w N h_space 0
+               if tot < N then do
+                 let j_new ← Succinct.readBucketCountProg U V w N h_space (0, b)
+                 Succinct.pushBackSlotProg U V w N h_space (((0, b), q), v_new)
+                 Succinct.prependIfIndexedProg U V w N h_space (((0, b), m), j_new)
+               else pure ()) = _
+          rw [ite_eq_right hne1, StateTransitionSpec.clientState_bind,
+            Succinct.clientState_readTotalSlotsProg, Succinct.clientResult_readTotalSlotsProg,
+            ite_eq_left htot, StateTransitionSpec.clientState_bind,
+            Succinct.clientState_readBucketCountProg,
+            Succinct.clientResult_readBucketCountProg (0, b) s_fix hb_lt,
+            StateTransitionSpec.clientState_bind]
+        have eff_pb := Succinct.pushBackSlotProg_effect (U := U) (V := V) (w := w) (n_max := N)
+          (h_space := h_space) (base := 0) (b := b) (q_val := q) (v_val := v_new)
+          hw s_fix hb_inv.hslot hb_lt htot hq_lt hv_lt
+        have hj_new_lt_n : j_new < N :=
+          lt_of_le_of_lt (Succinct.bCount_le_totalSlots hb_inv.hslot b hb_lt) htot
+        have eff_pr := Succinct.prependIfIndexedProg_allChainsValid (U := U) (V := V) (w := w)
+          (n_max := N) (h_space := h_space) (base := 0) (b := b) (m := m) (j_new := j_new)
+          hw hb_lt hm_lt hj_new_lt_n (hb_inv.hchains.of_lm_eq eff_pb.2.2.1)
+          (fun m' hm' hj_in => by
+            have hlt := ((hb_inv.hchain_mem b hb_lt m' hm' j_new).mp hj_in).1
+            dsimp only [j_new, gm_fix, h_space] at hlt; omega)
+        have hgm'_s1 : gm_out = Succinct.gmAt 0 U V w N h_space s₁.mem := by
+          rw [hgm_out]; dsimp only [gm']; rw [← hs_out, hs'_pr, eff_pr.2.2.2.2.1]
+        have hpot_s1 : Succinct.slotPotential N (Succinct.gmAt 0 U V w N h_space s₁.mem) ≤
+            Succinct.slotPotential N gm_fix + 2 := by
+          have hpb_pot := eff_pb.2.2.2.2.2.2.2.2.2.2
+          dsimp only [s₁, gm_fix] at hpb_pot ⊢
+          omega
+        rw [hgm'_s1]; omega
+    have hsum := hprobe.2.2.1
+    rw [hT_search, hT_ins]
+    dsimp only [BitRAM.Data.toBitMemoryState, b, q, m, h1, gm] at hsum hpot_bound ⊢
+    omega
 
 end Cslib.DataStructure.Dictionary.BitResizable

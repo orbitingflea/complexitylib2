@@ -361,10 +361,12 @@ theorem denseOfCirc_pred_of_lt {M b c : ℕ} (hM : 0 < M) (hc : c < M)
   omega
 
 /-- Canonical `td` mapping `(b + t) % M` for initial / rebuilt companions. -/
+@[expose]
 def canonTD (M b : ℕ) (t : ℕ) : ℕ :=
   if M = 0 then 0 else (b + t) % M
 
 /-- Canonical `dt` mapping `(c + M - b % M) % M` for initial / rebuilt companions. -/
+@[expose]
 def canonDT (M b : ℕ) (c : ℕ) : ℕ :=
   if M = 0 then 0 else (c + M - b % M) % M
 
@@ -402,6 +404,7 @@ theorem windowInv_canon {M b n : ℕ} (hn : n ≤ M) :
       rw [htd_eq, Nat.add_sub_of_le hlo]
 
 /-- Physical slot of dense item `d` parameterized explicitly by the tail base `b_tail`. -/
+@[expose]
 def physByBase (N b_tail : ℕ) (dt : ℕ → ℕ) (d : ℕ) : ℕ :=
   if bucketBits N = 0 then d
   else if d < b_tail then d
@@ -412,6 +415,7 @@ theorem physOfDense_eq_physByBase (N : ℕ) (gm dt : ℕ → ℕ) :
   rfl
 
 /-- Grow the circular window `[b, b + n)` on the right by 1 to `[b, b + (n + 1))`. -/
+@[expose]
 def winGrowRight (M b n : ℕ) (p : (ℕ → ℕ) × (ℕ → ℕ)) : (ℕ → ℕ) × (ℕ → ℕ) :=
   let c := (b + n) % M
   (Function.update p.1 n c, Function.update p.2 c n)
@@ -468,6 +472,7 @@ theorem winGrowRight_spec {M b n : ℕ} {td dt : ℕ → ℕ}
     · rw [Function.update_of_ne hi]; exact hdt_b i
 
 /-- Grow the circular window `[b + 1, b + 1 + n)` on the left by 1 to `[b, b + (n + 1))`. -/
+@[expose]
 def winGrowLeft (M b n : ℕ) (p : (ℕ → ℕ) × (ℕ → ℕ)) : (ℕ → ℕ) × (ℕ → ℕ) :=
   let c := b % M
   (Function.update p.1 n c, Function.update p.2 c n)
@@ -524,6 +529,7 @@ theorem winGrowLeft_spec {M b n : ℕ} {td dt : ℕ → ℕ}
     · rw [Function.update_of_ne hi]; exact hdt_b i
 
 /-- Shrink the circular window `[b, b + (n + 1))` on the right by 1 to `[b, b + n)`. -/
+@[expose]
 def winShrinkRight (M b n : ℕ) (p : (ℕ → ℕ) × (ℕ → ℕ)) : (ℕ → ℕ) × (ℕ → ℕ) :=
   let c_rem := (b + n) % M
   let t_rem := p.2 c_rem
@@ -616,6 +622,7 @@ theorem winShrinkRight_spec {M b n : ℕ} {td dt : ℕ → ℕ}
     · rw [Function.update_of_ne hi]; exact hdt_b i
 
 /-- Shrink the circular window `[b, b + (n + 1))` on the left by 1 to `[b + 1, b + 1 + n)`. -/
+@[expose]
 def winShrinkLeft (M b n : ℕ) (p : (ℕ → ℕ) × (ℕ → ℕ)) : (ℕ → ℕ) × (ℕ → ℕ) :=
   let c_rem := b % M
   let t_rem := p.2 c_rem

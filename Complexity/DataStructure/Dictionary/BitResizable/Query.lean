@@ -1158,49 +1158,4 @@ theorem queryRegCode_exec {U V w N u : ℕ}
       repeat rw [Function.update_of_ne (by intro h; have := congrArg Fin.val h; omega)]
       exact hs2_hi r hr
 
-/-- Uniform parameter-free in-place value update on insert hit (`BitRAM.Code .standard 280`):
-given `r35 = dense` (from a prior `searchBucketRegCode` hit) and `r274 = v_new`, writes `v_new`
-into the dense value slice at index `r35` in `57` instructions, preserving `r ≥ 18`. -/
-@[expose]
-def insertHitRegCode : BitRAM.Code .standard 280 :=
-  .seq (.op (.copy 16 35))
-  (.seq (.op (.copy 17 274))
-        (writeDenseVRegCode 16 17))
-
-theorem insertHitRegCode_exec {U V w N n_t d v : ℕ} {x : BitRAM.Data 280}
-    (hw : 0 < w) (hV : V ≤ 2 ^ w)
-    (hx : x.WellFormed w) (her : EpochRegs U V w N x)
-    (hd : d < n_t) (hr35 : x.regs 35 = d) (hr274 : x.regs 274 = v)
-    (hv : Fits (valBits V) v)
-    (hsz : itemBitOff U V w N n_t ≤ x.bitSize)
-    (hm2 : x.mem 2 = itemBits U V N)
-    (hm3 : x.mem 3 = epochMetaBits U w N) :
-    BitRAM.DemonicExecWithin w insertHitRegCode x
-      (fun y =>
-        y.toBitMemoryState =
-          (BitMemory.stepFn w x.toBitMemoryState
-            (.writeBits (itemValBitOff U V w N d) (valBits V) v)).1 ∧
-        y.WellFormed w ∧
-        EpochRegs U V w N y ∧
-        (∀ r : Fin 280, 18 ≤ r.val → y.regs r = x.regs r)) 57 := by
-  unfold insertHitRegCode
-  refine step_dExec_copy (v := d) (T := 56) hr35 ?_
-  refine step_dExec_copy (v := v) (T := 55)
-    (by simp +decide [BitRAM.Data.set, hr274]) ?_
-  set s1 := (x.set 16 d).set 17 v
-  have hs1_wf : s1.WellFormed w :=
-    wf_set 17 (wf_set 16 hx (hr35 ▸ hx.regs_fits 35)) (hr274 ▸ hx.regs_fits 274)
-  have hs1_er : EpochRegs U V w N s1 :=
-    her.congr_regs (fun r hr1 _ => by
-      dsimp only [s1, BitRAM.Data.set]
-      repeat rw [Function.update_of_ne (by intro h; have := congrArg Fin.val h; omega)])
-  refine (writeDenseVRegCode_exec (rD := 16) (rV := 17) (by decide) (by decide)
-    hw hV hs1_wf hs1_er hd (by simp +decide [s1, BitRAM.Data.set])
-    (by simp +decide [s1, BitRAM.Data.set]) hv hsz hm2 hm3).mono
-    (fun y ⟨hy_st, hy_wf, hy_er, hy_regs⟩ => ?_) le_rfl
-  refine ⟨hy_st, hy_wf, hy_er, fun r hr => ?_⟩
-  rw [hy_regs r (by omega)]
-  dsimp only [s1, BitRAM.Data.set]
-  repeat rw [Function.update_of_ne (by intro h; have := congrArg Fin.val h; omega)]
-
 end Cslib.DataStructure.Dictionary.BitResizable
