@@ -3567,6 +3567,7 @@ public import Complexity.DataStructure.VanEmdeBoas.WordRAM.Member
 public import Complexity.DataStructure.VanEmdeBoas.WordRAM.Model
 public import Complexity.DataStructure.VanEmdeBoas.WordRAM.Program
 public import Complexity.DataStructure.VanEmdeBoas.WordRAM.Successor
+public import Complexity.DataStructure.WordRAM.Randomized.HighProbability
 public import Complexity.DataStructure.WordRAM.Randomized.ObliviousSequence
 public import Complexity.DataStructure.WordRAM.Randomized.StateTransition
 public import Complexity.DataStructure.WordRAM.StateTransition
