@@ -8,6 +8,8 @@ For finite-source statistical bounds, import [Game/CloseTo/Statistical.lean](../
 
 For adaptive stateful replacement, import [Security/Oracle.lean](../../Complexity/Computability/Interactive/Security/Oracle.lean). `OracleComp.IsCostBounded.closeTo_runWith` turns a program's existing cost bound `K` and per-call `CloseTo` bounds `cost q * ε` into a bound `K * ε` on the joint result and final state. The premise compares both handlers at every identical query and starting state, including unreachable states; no coupling or finite state space is assumed. Calls of cost zero can still update a shared cache, but their joint reply/state laws must agree statistically at error zero. Charging only signing calls therefore avoids paying for unchanged hash calls or private sampling. The checked adaptive client in [OracleStatistical.lean](../../ComplexityTests/OracleStatistical.lean) uses two repeated signing requests, answer-dependent repeated cache reads, and a concrete nonzero error bound while preserving the cache and signing log. This shared lemma does not itself complete the native Schnorr signing-game or key-generation transport in #2568.
 
+For two continuations that agree outside a bad input event, import [Game/CloseTo/UntilBad.lean](../../Complexity/Crypto/Game/CloseTo/UntilBad.lean). `CloseTo.bind_of_eq_on μ f g bad` bounds the mixtures by the actual probability `μ.toOuterMeasure bad`; agreement is required only on supported inputs outside `bad`, and neither type must be finite. This lets a cache-programming step charge only the probability that the sampled point was already cached. The [checked clients](../../ComplexityTests/CloseToUntilBad.lean) retain the actual Fiat–Shamir reply and final cache, show a sharp one-half error on an infinite output type, and allow arbitrary disagreement on impossible inputs at zero cost. This law does not identify different hidden cache states or justify removing aborted queries.
+
 [ComputationallyIndistinguishable](https://github.com/cslib-community/complexitylib/blob/13e6a31951bf1c89a1a6258c44f9444aecbbefd8/Complexity/Crypto/Computational/Basic.lean#L94) specializes admissibility to a uniform native strict-PPT test on `(1^n, sample)`. Its ensembles are arbitrary PMFs on bit strings: sampleability and polynomial output length are not bundled. `IsPPTTest` admits semantic tests whose laws have a native program witness. Efficient postprocessing and hybrid results use those certificates, not the mere presence of a Lean function.
 
 Pinned cslib also has the finite [Generator](https://github.com/leanprover/cslib/blob/254e30e6d4299c51323aaeaf5f51a4763b375d4a/Cslib/Crypto/Primitives/PRG/Defs.lean#L38) interface, whose `Secure` accepts any chosen predicate on randomized tests, while expansion is a separate cardinality property. Complexitylib adds circuit-bounded tests and uniform machine tests on top. These are intentionally different quantifiers; the circuit version can select a new bounded circuit at each input length [cslib][cslib].
@@ -23,7 +25,20 @@ Pinned cslib also has the finite [Generator](https://github.com/leanprover/cslib
 | Target collision resistance | [Complexity/Crypto/Computational/TargetCollisionResistant.lean](../../Complexity/Crypto/Computational/TargetCollisionResistant.lean), [Complexity/Crypto/Computational/NaorYung.lean](../../Complexity/Crypto/Computational/NaorYung.lean), [Complexity/Crypto/Computational/InaccessibleEntropy/TargetCollision.lean](../../Complexity/Crypto/Computational/InaccessibleEntropy/TargetCollision.lean) | Two-stage pre-key target choice and post-key second-preimage search; polynomial key/block schedules, fixed-depth `2^n`-capacity tree extension, Naor–Yung UOWHFs from `OneWayPermutation`, and Rompel–HHRVW UOWHFs from `OneWay` |
 | Inaccessible entropy and shrinking collision grids | [Complexity/Crypto/Computational/InaccessibleEntropy/Basic.lean](../../Complexity/Crypto/Computational/InaccessibleEntropy/Basic.lean), [Complexity/Crypto/Computational/InaccessibleEntropy/Amplify.lean](../../Complexity/Crypto/Computational/InaccessibleEntropy/Amplify.lean), [Complexity/Crypto/Computational/InaccessibleEntropy/TargetCollision.lean](../../Complexity/Crypto/Computational/InaccessibleEntropy/TargetCollision.lean) | Fixed-width native polynomial evaluation, accessible preimage subsets with eventual `1 / denom n` entropy gap, polynomial-size grids of `1`-bit shrinking candidates with an existential random-collision-resistant sequence (`exists_good_candidate`), and uniform `gridCount n`-way cascade concatenation |
 | Discrete logarithm and DDH | [Complexity/Crypto/Computational/DiscreteLog.lean](https://github.com/cslib-community/complexitylib/blob/13e6a31951bf1c89a1a6258c44f9444aecbbefd8/Complexity/Crypto/Computational/DiscreteLog.lean), [Complexity/Crypto/Computational/DiffieHellman.lean](https://github.com/cslib-community/complexitylib/blob/13e6a31951bf1c89a1a6258c44f9444aecbbefd8/Complexity/Crypto/Computational/DiffieHellman.lean) | Encoded prime-order group families, exact ideal group laws; public operations and samplers require separate certificates |
+| Quadratic residuosity, RSA, and Rabin factoring | [Complexity/Crypto/Computational/QuadraticResiduosity.lean](../../Complexity/Crypto/Computational/QuadraticResiduosity.lean), [Complexity/Crypto/Computational/RSATrapdoor.lean](../../Complexity/Crypto/Computational/RSATrapdoor.lean), [Complexity/Crypto/Computational/RabinFactoring.lean](../../Complexity/Crypto/Computational/RabinFactoring.lean) | Composite Jacobi symbol `jacobiSymbol`, `QR_N` / `QNR_N^{+1}` split and `QuadraticResiduosityHard`; all-residue and unit-group RSA trapdoor bijection (`rsaEval`, `rsaInvert`, `RSAOneWay`); Blum-integer square roots (`blumSqrt`, `crtSqrt`), `FactoringHard`, `RabinOneWay`, and explicit PPT equivalence `rabinOneWay_iff_factoringHard` |
 | LWE, SIS, and module lattices | [Complexity/Crypto/Computational/LWE/Basic.lean](https://github.com/cslib-community/complexitylib/blob/13e6a31951bf1c89a1a6258c44f9444aecbbefd8/Complexity/Crypto/Computational/LWE/Basic.lean), [Complexity/Crypto/Computational/SIS/Basic.lean](https://github.com/cslib-community/complexitylib/blob/13e6a31951bf1c89a1a6258c44f9444aecbbefd8/Complexity/Crypto/Computational/SIS/Basic.lean), [Complexity/Crypto/Computational/SIS/Module.lean](../../Complexity/Crypto/Computational/SIS/Module.lean), [Complexity/Crypto/Computational/SIS/ModuleEncryption.lean](../../Complexity/Crypto/Computational/SIS/ModuleEncryption.lean) | Explicit dimensions, modulus and noise/norm parameters (`2^w` binary matrix words in `Basic.lean`, arbitrary `[NeZero (q security)]` moduli, Ajtai collision extraction, negacyclic `R_q = ℤ_q[X]/(X^n+1)` block-anticirculant expansion `expandModuleMatrix`, `ModuleSIS`, `RingSIS`, and `DecisionModuleLWE` in `SIS/Module.lean`, and dual-Regev `ModuleLWE` public-key encryption in `SIS/ModuleEncryption.lean`); classical uniform-PPT hardness hypotheses |
+
+For a one-bit expanding PRG, [Stretch/Prefix.lean](../../Complexity/Crypto/Computational/Stretch/Prefix.lean)
+proves that `(forwardIterate g ℓ seed).take ℓ` has length `ℓ` and agrees with the first `ℓ`
+emitted bits of every longer run. The premise is global: `length (g seed) = length seed + 1`
+for every seed, including the empty word. The complete `forwardIterate` output also retains a
+reversed final seed and is not prefix-consistent. Native computation charges both the seed and
+unary `ℓ`; for each uniform native length schedule `L n`, the emitted `L n`-bit prefix from a
+uniform `n`-bit seed is computationally indistinguishable from `uniformList (L n)`, by existing
+stretch security and reverse/take postprocessing. [PRGStretch clients](../../ComplexityTests/PRGStretch.lean)
+check zero widths, order-sensitive output, and native XOR encryption/recovery. This is the emitted-pad
+prerequisite for the stream-cipher route of Boneh–Shoup §3.2 [bs23][bs23]; adaptive arbitrary-word
+one-time encryption and hash-then-MAC/EtM remain open in [#2749](https://github.com/cslib-community/complexitylib/issues/2749).
 
 Several independently keyed copies of a pseudorandom function are again pseudorandom: [`PseudorandomFunction.multiKey`](../../Complexity/Crypto/Computational/PseudorandomFunction/MultiKey.lean) answers `t` word channels with the `n`-bit blocks of one `t * n`-bit key, against `t` independent random functions, for every fixed `t`. Its hybrid reduction `prfMultiReduction` simulates the already random channels with a lazy list cache and is itself oracle PPT; the concrete bound sums `t` PRF advantages (Boneh–Shoup, Exercise 4.26). The number of keys is a constant, not a function of the security parameter; the exercise also allows a polynomially bounded number of keys, which this theorem does not cover.
 
@@ -68,6 +83,68 @@ This arithmetic certificate does not remove the existing restrictions on exact n
 or imply small-secret security.
 
 These are implications from hardness assumptions. They do not prove that a concrete OWF, DDH group, LWE family or SIS parameter choice is hard. The LWE interface exposes only the serialized public matrix `[B*t+e | B]`, with independent errors and one shared uniform secret; in [`SIS/Module.lean`](../../Complexity/Crypto/Computational/SIS/Module.lean), `expandModuleMatrix` and `flattenPolyVec` embed negacyclic `ModuleSIS` and `ModuleLWE` instances over `ℤ_q[X]/(X^n+1)` into unstructured `(d * n) × (k * n)` matrices over `ℤ_q` (checked with concrete evaluations and nonvacuity proofs in [`ComplexityTests/Crypto/ModuleSIS.lean`](../../ComplexityTests/Crypto/ModuleSIS.lean)), and [`SIS/ModuleEncryption.lean`](../../Complexity/Crypto/Computational/SIS/ModuleEncryption.lean) builds dual-Regev public-key encryption (`moduleLWEKeyGen`, `moduleLWEEncrypt`, `moduleLWEDecrypt`), bounded-noise decryption correctness (`moduleLWEDecrypt_moduleLWEEncrypt_eq`), and two-hop public-key/ciphertext reductions to `ModuleLWE.sampleLaw` (`advantage_realEncryptionView_uniform_le`, `advantage_realEncryptionView_msg_le`, checked in [`ComplexityTests/Crypto/ModuleEncryption.lean`](../../ComplexityTests/Crypto/ModuleEncryption.lean)); no worst-case lattice reduction is asserted there.
+
+For deterministic native key generation, import
+[`ModuleEncryption/Native.lean`](../../Complexity/Crypto/Computational/SIS/ModuleEncryption/Native.lean).
+`exists_computableInPolyTime_moduleLWEKeyGen` supplies one total word function with a plain
+polynomial-time certificate and exact agreement with `ModuleLWE.encodeSample (moduleLWEKeyGen …)`.
+Both rank and polynomial degree are unary inputs; the positive modulus and signed secret/error
+coefficients are binary. The public matrix input uses `ModuleSIS.encodeMatrix`: its structured
+`(k*n)`-square rotation-block expansion is already present. Runtime charges that complete matrix
+word, both complete framed signed lists and the dimensions; it does not assume a seed codec.
+The implementation reuses total framing/number decoders and the upstream padded list dot product,
+then reduces each integer coordinate modulo `q`. Short rows/vectors pad with zero and excess
+entries are ignored, but still contribute to input length. Canonical equality requires `q > 0`;
+there is no assertion that malformed words are rejected. [Checked clients](../../ComplexityTests/Crypto/ModuleKeyGenNative.lean)
+use the same certified function for rank two, degree two, composite modulus six, signed wraps,
+modulus one, zero dimensions and a 129-bit modulus. The structured matrix sampler below supplies
+its public matrix input; full randomized key generation must still compose the actual secret and
+error samplers. Full native encryption/decryption, seed compression and security remain separate
+obligations.
+
+The structured matrix input itself now has a native constructor and exact sampler in
+[`SIS/Module/MatrixSampling.lean`](../../Complexity/Crypto/Computational/SIS/Module/MatrixSampling.lean).
+`exists_computableInPolyTime_encodeModuleMatrix` supplies one total implementation of the existing
+`ModuleSIS.encodeMatrix`, from rectangular nested coefficient lists, unary row/rank/degree and a
+binary modulus. Its canonical identity assumes `q > 0`; zero dimensions and modulus one are
+included. The private implementation pads missing coefficients with zero, ignores excess entries
+while charging their input length, and uses the actual negative wrap of `rotMatrix`. At modulus
+zero it remains total, without a canonical residue interpretation.
+`exists_isPPTOn_sampleEncodedModuleMatrix` samples independent polynomial coefficients using
+`sampleBinaryNat w`, then performs that certified expansion. Its exact law is uniform on the
+original polynomial matrix followed by `ModuleSIS.encodeMatrix`, for unary dimensions and bit
+width, including width zero. The expanded scalar entries are correlated. [Tests](../../ComplexityTests/Crypto/ModuleMatrixSampling.lean)
+check a rectangular modulus-six expansion, empty shapes, a 129-bit modulus, and a nonrotation
+matrix with zero structured-sampler mass but positive independent-scalar-uniform mass. They also
+compose the same obtained sampler with the native key generator: the composition is strict PPT
+for runtime dimensions/width and complete supplied signed secret/error words, and its concrete
+conditional law agrees with the existing key generator. Full CBD randomized key generation,
+native encryption/decryption and security remain separate tasks.
+
+For arbitrary positive binary moduli, including primes, import
+[`Module/ApproximateSampling.lean`](../../Complexity/Crypto/Computational/SIS/Module/ApproximateSampling.lean).
+`exists_isPPTOn_approximateEncodedModuleMatrix` gives one strict-PPT program using the existing
+`sampleModNat width q` independently on each polynomial coefficient, then the same native
+rotation-block expansion. Its exact law is the nested product of those actual residue laws
+followed by `ModuleSIS.encodeMatrix`. Its all-event `CloseTo` error against the ideal structured
+uniform law is at most `d*k*n*q/2^width`. The count is the number of independent polynomial
+coefficients; expanded scalar entries remain correlated. The modulus is binary, dimensions and
+width unary, and the program is total even at modulus zero, outside the positive-modulus law.
+`exists_isPPTOn_sampleEncodedModuleMatrixWithPrecision` computes width `q.size + precision`
+natively and gives error at most `d*k*n/2^precision`, with unary precision and binary modulus.
+Neither theorem asserts exact uniform sampling for arbitrary moduli.
+
+[Checked clients](../../ComplexityTests/Crypto/ModuleMatrixApproximation.lean) show that four fair
+bits reduced modulo three give the encoded zero two-coefficient block mass `9/64`, whereas the
+ideal structured law gives `1/9`. The bound is `3/8`. The same obtained sampler and native keygen
+function compose uniformly on runtime dimensions, binary modulus and complete supplied secret
+and error words; deterministic keygen postprocessing preserves that error against the existing
+ideal conditional key law. Other clients cover width zero, modulus one, empty dimensions and a
+129-bit modulus. Full random secret/error composition, encryption and security remain open.
+The scalar all-event bridge `Probability.closeTo_uniform_sampleModNat` now lives in
+[`Game/CloseTo/UniformNat.lean`](../../Complexity/Crypto/Game/CloseTo/UniformNat.lean), publicly
+reexported by its original Lyubashevsky consumer, so this construction does not import a
+signature protocol to obtain a generic sampler bound.
 
 The Module-LWE sampling APIs now accept explicit distributions: `moduleLWEPublicKeyLaw` has an
 optional `secretLaw`, `encryptionViewOfKeyLaw` an optional `ephemeralLaw`, and `realEncryptionView`
@@ -180,6 +257,8 @@ and decode a true message incorrectly. The displayed bound is below one at `t=10
 This is correctness for explicit laws, not a small-secret security reduction. Complete native
 key generation, encryption and decryption certificates remain separate.
 
+For composite-modulus number-theoretic hardness assumptions, import [`QuadraticResiduosity.lean`](../../Complexity/Crypto/Computational/QuadraticResiduosity.lean), [`RSATrapdoor.lean`](../../Complexity/Crypto/Computational/RSATrapdoor.lean), and [`RabinFactoring.lean`](../../Complexity/Crypto/Computational/RabinFactoring.lean) ([katzlindell20][katzlindell20], §§9.2.3–9.2.4, §15.1.1, §§15.4.1–15.4.3, and §§15.5.1–15.5.2; checked examples and reduction clients are in [`ComplexityTests/Crypto/QuadraticResiduosity.lean`](../../ComplexityTests/Crypto/QuadraticResiduosity.lean), [`ComplexityTests/Crypto/RSATrapdoor.lean`](../../ComplexityTests/Crypto/RSATrapdoor.lean), and [`ComplexityTests/Crypto/RabinFactoring.lean`](../../ComplexityTests/Crypto/RabinFactoring.lean)). In [`QuadraticResiduosity.lean`](../../Complexity/Crypto/Computational/QuadraticResiduosity.lean), quadratic residues reuse Mathlib's `IsSquare` and `Subgroup.square` (`Subgroup.mem_square`), `jacobiSymbol p q` multiplies the Legendre symbols on `(ZMod (p * q))ˣ`, `jacobiPosSet_eq_disjoint_union` and `card_quadResidueSet_eq_card_positiveNonresidues` partition `J_N^{+1}` into equal-sized `quadResidueSet` (`QR_N`) and `positiveNonresidues` (`QNR_N^{+1}`) for distinct odd primes `p ≠ q`, `blumSqrt p q` inverts squaring on `QR_N` for Blum moduli `IsBlumModulus p q` (`blumSqrt_sq`, `sq_bijOn_quadResidueSet`, `neg_one_mem_positiveNonresidues`), and `QuadraticResiduosityHard` compares `qrRealGame` against `qrIdealGame`. In [`RSATrapdoor.lean`](../../Complexity/Crypto/Computational/RSATrapdoor.lean), `rsaEval N e x = x ^ e % N` and `rsaInvert N d y = y ^ d % N` are certified in polynomial time (`computableInPolyTime_rsaEval`, `computableInPolyTime_rsaInvert`) and proved mutually inverse across all residues `x < N` (`rsaInvert_rsaEval`, `rsaEval_rsaInvert`), inducing bijections both on `Fin N` (`rsaEval_bijective_fin`, including nonunits dividing `p` or `q`) and on `(ZMod N)ˣ` (`rsaEval_bijective_units`), with `rsaInversionGame` sampling `x` uniformly from `Fin desc.modulus` (`RSAOneWay`). In [`RabinFactoring.lean`](../../Complexity/Crypto/Computational/RabinFactoring.lean), `rabinOneWay_iff_factoringHard` establishes `RabinOneWay gen ↔ FactoringHard gen` for Blum moduli via explicit certified PPT reductions `factorToRabin` (computing `crtSqrt y a b` from a nontrivial factorization `a * b = N`, with exact loss `1` in `succProbability_factoringGame_le`) and `rabinToFactor` (`rabinOneWay_of_factoringHard`, `factoringHard_of_rabinOneWay`). Across all three modules, generator families (`setup : ℕ → PMF ModulusDesc`, `RSAGen := ℕ → PMF RSADesc`, `BlumGen := ℕ → PMF BlumDesc`) are arbitrary `PMF` families over valid parameter tuples without bundled prime-generation algorithms or bit-length bounds in `n`, and adversaries/reductions use uniform native strict-PPT (`IsPPTOn`) on `(1^n, ...)` with binary `encNat` encodings (charging the full encoded input and sampled/callback output uniformly before `n`). Rather than assuming an exact uniform sampler on `(ZMod N)ˣ`, `rabinInversionGame` and `rabinToFactor` use an original dyadic all-residue sampling variant that draws a uniform `2 * N.bits.length`-bit list `r` (`x = ofBits r < 2^(2 * bits(N))` with `N^2 ≤ 2^(2 * bits(N))`) and squares `x` modulo `N`: `rabinToFactor` checks `1 < gcd(x, N) < N` first and otherwise queries the inverter on `x^2 % N` to return `rabinFactorPair (x + x') N`, yielding the concrete factor-`3` reduction bound `succProbability_rabinInversionGame_le` without modular rejection-sampling error.
+
 ## Encryption and chosen-message attacks
 
 [AdversaryOf](https://github.com/cslib-community/complexitylib/blob/13e6a31951bf1c89a1a6258c44f9444aecbbefd8/Complexity/Crypto/Computational/Encryption/Basic.lean#L73) has a first stage choosing two messages and a saved word from the public key, and a second stage guessing from that saved state and the challenge ciphertext. Each stage has a native certificate. `INDCPAOn` explicitly constrains admissible message pairs. `WordINDCPA` requires equal lengths; the general `INDCPAOf` with all pairs is stronger for variable-length word messages. Invalid challenges are made independent of the hidden experiment bit.
@@ -196,7 +275,7 @@ Starting with the imports and local context in [`ComplexityTests/Crypto/HybridEn
 
 For adaptive decapsulation security, import [`KEMFromPKE/CCA.lean`](../../Complexity/Crypto/Computational/Encryption/KEMFromPKE/CCA.lean) and apply `WordINDCCA2.indistinguishable_encryptKeyEncaps` (Boneh–Shoup v0.6, Exercise 12.5(f), p. 514 [bs23][bs23]). The result uses `Game.Indistinguishable` over `kemCCARealGame` and `kemCCAIdealGame`, with the existing `IsOraclePPT` adversaries. Both games share the CPA sampling continuations and use `cca2Phase2Oracle` to reject the exact challenge word. The reduction preserves advantage exactly, samples two equal-length keys, and forwards postchallenge queries unchanged. It requires a unary polynomial-time `keyLen`; honest algorithm certificates and supported-output correctness are separate. Here the original option-valued decryptor is retained, so `some []` denotes successful empty-key decapsulation and `none` denotes rejection.
 
-The [checked CCA KEM clients](../../ComplexityTests/Crypto/KEMFromPKECCA.lean) instantiate doubled key length, an unconditional correct zero-width KEM, and a reply-dependent tag-flipping attack with advantage `1 - 2^(-keyLen n)`. The attack fixture is correctly decryptable but insecure; it makes no CPA-security claim. Its native oracle certificate bounds reply reading, and the honest-game certificate charges decryption. This endpoint covers one encapsulation followed by adaptive queries; full KEM–DEM CCA composition, prechallenge KEM queries and multiple encapsulation challenges remain separate objectives.
+The [checked CCA KEM clients](../../ComplexityTests/Crypto/KEMFromPKECCA.lean) instantiate doubled key length, an unconditional correct zero-width KEM, and a reply-dependent tag-flipping attack with advantage `1 - 2^(-keyLen n)`. The attack fixture is correctly decryptable but insecure; it makes no CPA-security claim. Its native oracle certificate bounds reply reading, and the honest-game certificate charges decryption. This KEM endpoint covers one encapsulation followed by adaptive queries. The composition below uses this schedule; prechallenge KEM queries and multiple encapsulation challenges remain separate objectives.
 
 The canonical `hybridDecrypt` now takes Option-valued decapsulation and symmetric decryption,
 rejects noncanonical ciphertext-pair encodings, and propagates component failures. Its supported
@@ -216,10 +295,26 @@ Canonical framing makes component-level challenge rejection agree with exact wor
 
 The [checked clients](../../ComplexityTests/Crypto/HybridDEMCCA.lean) include the existing PRF
 Encrypt-then-MAC construction, a full-advantage echo-cipher counterexample, and a zero-width
-adaptive trace distinguishing `none` from `some []`. The full composition bound still requires
-two KEM steps and key-distribution compatibility. Encoded Encrypt-then-MAC keys are framed
-pairs with `3*n` random bits and encoded length `4*n+1`, so they cannot be replaced by uniform
-words of that encoded length.
+adaptive trace distinguishing `none` from `some []`.
+
+[`Hybrid/CompositionCCA.lean`](../../Complexity/Crypto/Computational/Encryption/Hybrid/CompositionCCA.lean)
+completes both KEM hops and Exercise 12.5(a)'s concrete bound for this `n`-bit-message model:
+`exists_hybridCCA_reductions` supplies native adversaries with hybrid advantage at most twice
+the KEM advantage plus the actual symmetric CCA advantage. The hidden-bit reduction's signed
+probability identities precede the absolute-value bound. `hybrid_indcca2On` gives the asymptotic
+endpoint using existing `INDCCA2On`, and `isPPTOn_hybridCCAGame` certifies the honest experiment.
+No new encryption scheme or security predicate is introduced.
+
+The postprocessor `F` must take uniform `keyLen n`-bit seeds to exactly the distribution of
+`E.keyGen n`, with one native algorithm for all parameters. The
+[checked clients](../../ComplexityTests/Crypto/HybridCompositionCCA.lean) instantiate an actual
+CCA-secure PKE's encrypted-key KEM with the PRF Encrypt-then-MAC cipher. Its `3*n` random bits
+produce framed keys of encoded length `4*n+1`, not uniform encoded words. A general total
+saved-coins client uses the existing evaluator theorem and returns supported keys on every seed.
+Supported KEM correctness justifies the real-hop sampling commutation; perfect hybrid correctness
+additionally checks support of the postprocessed real key. Tests expose the failure without that
+KEM premise, and show that a perfect zero-width KEM with the insecure echo DEM remains insecure.
+Arbitrary message-space extension and stronger KEM query schedules remain separate.
 
 ## Authentication, signatures, and state
 
@@ -246,5 +341,6 @@ The finite query-only PRG/cipher results, semantic commitment interfaces and uni
 [hhrvw20]: ../sources.md#hhrvw20
 [hill99]: ../sources.md#hill99
 [holenstein06]: ../sources.md#holenstein06
+[katzlindell20]: ../sources.md#katzlindell20
 [naoryung89]: ../sources.md#naoryung89
 [rompel90]: ../sources.md#rompel90
