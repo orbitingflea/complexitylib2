@@ -729,9 +729,11 @@ theorem microStepRegCode_exec {U V w N b q_target j : ℕ} {x : BitRAM.Data 280}
     simp +decide [s3, BitRAM.Data.set, hy2_regs 30 (by decide), hs2_30]
   have hy3_31 : y3.regs 31 = next_ptr := by
     rw [hy3_regs 31 (by decide) (by decide)]
-    dsimp only [s3, s2, BitRAM.Data.set]
+    dsimp only [s3, BitRAM.Data.set]
     rw [Function.update_of_ne (by decide), Function.update_of_ne (by decide),
-      hy2_regs 31 (by decide), Function.update_self, hy1_0]
+      hy2_regs 31 (by decide)]
+    dsimp only [s2, BitRAM.Data.set]
+    rw [Function.update_self, hy1_0]
     rfl
   have hy3_32 : y3.regs 32 = 0 := by
     rw [hy3_regs 32 (by decide) (by decide)]
@@ -1224,7 +1226,10 @@ theorem initOvfSearchRegCode_exec {U V w N b : ℕ} {x : BitRAM.Data 280}
   refine step_dExec_bin (v := qK) (T := 110)
     (by simp +decide [BitRAM.Data.set, BinOp.eval, hy3_37, hy3_250]; rfl) hfit_qK ?_
   refine step_dExec_bin (v := c) (T := 109)
-    (by simp +decide [BitRAM.Data.set, BinOp.eval]; exact hbc_eq) hfit_c ?_
+    (by
+      simp +decide only [BinOp.eval, Fin.isValue, BitRAM.Data.set_regs, Function.update_self,
+        ne_eq, Function.update_of_ne]
+      exact hbc_eq) hfit_c ?_
   refine step_dExec_copy (v := effBucketCap N) (T := 108)
     (by simp +decide [BitRAM.Data.set, hy3_251]) ?_
   set s4 := (((y3.set 38 (gm (Succinct.gmRIdx b))).set 39 qK).set 40 c).set 30 (effBucketCap N)

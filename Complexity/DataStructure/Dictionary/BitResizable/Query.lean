@@ -452,7 +452,6 @@ theorem ovfStepRegCode_exec {U V w N b q_target j : ℕ} {x : BitRAM.Data 280}
       rw [hy2_regs 41 (by decide) (by decide)]
       dsimp only [s2, BitRAM.Data.set]
       rw [Function.update_of_ne (by decide), Function.update_of_ne (by decide), hy1_41 hj1]
-      rfl
   have hy2_hi : ∀ r : Fin 280, 45 ≤ r.val → y2.regs r = x.regs r := by
     intro r hr
     rw [hy2_regs r (by omega) (by intro h; have := congrArg Fin.val h; omega)]
