@@ -723,6 +723,8 @@ public import Complexity.Computability.Circuit.Approximation.Hamming
 public import Complexity.Computability.Circuit.Arithmetic
 public import Complexity.Computability.Circuit.Arithmetic.CircuitLowerBound
 public import Complexity.Computability.Circuit.Arithmetic.Determinant
+public import Complexity.Computability.Circuit.Arithmetic.Encoding
+public import Complexity.Computability.Circuit.Arithmetic.EvaluationTime
 public import Complexity.Computability.Circuit.Arithmetic.Formula
 public import Complexity.Computability.Circuit.Arithmetic.GeneralLowerBound
 public import Complexity.Computability.Circuit.Arithmetic.Hessian
@@ -1040,6 +1042,7 @@ public import Complexity.Computability.Circuit.Cyclic.Feedback
 public import Complexity.Computability.Circuit.DagProtocol
 public import Complexity.Computability.Circuit.Decomposable
 public import Complexity.Computability.Circuit.Depth
+public import Complexity.Computability.Circuit.Encoding.Evaluation
 public import Complexity.Computability.Circuit.Encoding.MapOp
 public import Complexity.Computability.Circuit.Erase
 public import Complexity.Computability.Circuit.Evaluation
@@ -2101,6 +2104,8 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO.TwoPow
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigOLe
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Degree
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Degree.BitString
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Degree.BitString.Cut
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Degree.Bounds
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Degree.Primitives
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Doubled
@@ -2922,9 +2927,11 @@ public import Complexity.Crypto.Computational.Encryption.Basic
 public import Complexity.Crypto.Computational.Encryption.CCA
 public import Complexity.Crypto.Computational.Encryption.CCA.Interleaved
 public import Complexity.Crypto.Computational.Encryption.Circular
+public import Complexity.Crypto.Computational.Encryption.DecryptionBound
 public import Complexity.Crypto.Computational.Encryption.EncryptThenMAC
 public import Complexity.Crypto.Computational.Encryption.Hybrid
 public import Complexity.Crypto.Computational.Encryption.Hybrid.CCA
+public import Complexity.Crypto.Computational.Encryption.Hybrid.CompositionCCA
 public import Complexity.Crypto.Computational.Encryption.Hybrid.DEMCCA
 public import Complexity.Crypto.Computational.Encryption.KEMFromPKE
 public import Complexity.Crypto.Computational.Encryption.KEMFromPKE.CCA
@@ -3137,6 +3144,7 @@ public import Complexity.Crypto.Computational.Rompel
 public import Complexity.Crypto.Computational.SIS.Basic
 public import Complexity.Crypto.Computational.SIS.Module
 public import Complexity.Crypto.Computational.SIS.ModuleEncryption
+public import Complexity.Crypto.Computational.SIS.ModuleEncryption.Native
 public import Complexity.Crypto.Computational.SIS.ModuleEncryption.Sampling
 public import Complexity.Crypto.Computational.SIS.ModuleEncryption.Sampling.Concentration
 public import Complexity.Crypto.Computational.SIS.ModulusSwitch
@@ -3151,11 +3159,13 @@ public import Complexity.Crypto.Computational.SchnorrEavesdrop
 public import Complexity.Crypto.Computational.SchnorrIdentification
 public import Complexity.Crypto.Computational.SchnorrProtocol
 public import Complexity.Crypto.Computational.SchnorrSignature
+public import Complexity.Crypto.Computational.SchnorrSignature.NativeROM
 public import Complexity.Crypto.Computational.SchnorrSignature.WordROM
 public import Complexity.Crypto.Computational.Signature
 public import Complexity.Crypto.Computational.Signature.RandomOracle
 public import Complexity.Crypto.Computational.Signature.WordRandomOracle
 public import Complexity.Crypto.Computational.Stretch
+public import Complexity.Crypto.Computational.Stretch.Prefix
 public import Complexity.Crypto.Computational.Stretch.Quantitative
 public import Complexity.Crypto.Computational.TCRSignature
 public import Complexity.Crypto.Computational.TCRSignature.ManyTime
@@ -3199,6 +3209,8 @@ public import Complexity.Crypto.Protocols.MPC.Basic
 public import Complexity.Crypto.Protocols.MPC.CircuitEval
 public import Complexity.Crypto.Protocols.MPC.Composition
 public import Complexity.Crypto.Protocols.MPC.OTCommitment
+public import Complexity.Crypto.Protocols.MPC.OTCommitment.CompleteSender
+public import Complexity.Crypto.Protocols.MPC.OTCommitment.CompleteSender.PolyTime
 public import Complexity.Crypto.Protocols.MPC.OTCommitment.Equivocation
 public import Complexity.Crypto.Protocols.MPC.OTCommitment.Extraction
 public import Complexity.Crypto.Protocols.MPC.OTCommitment.Opening
@@ -3214,6 +3226,7 @@ public import Complexity.Crypto.Protocols.MPC.SharedMul
 public import Complexity.Crypto.Protocols.PolynomialCommitment.Basic
 public import Complexity.Crypto.Protocols.SigmaProtocol.Abort
 public import Complexity.Crypto.Protocols.SigmaProtocol.Abort.FiatShamir
+public import Complexity.Crypto.Protocols.SigmaProtocol.Abort.RandomOracle
 public import Complexity.Crypto.Protocols.SigmaProtocol.Abort.View
 public import Complexity.Crypto.Protocols.SigmaProtocol.Basic
 public import Complexity.Crypto.Protocols.SigmaProtocol.Composition
@@ -3233,11 +3246,15 @@ public import Complexity.Crypto.Protocols.SigmaProtocol.Lyubashevsky.Signature.E
 public import Complexity.Crypto.Protocols.SigmaProtocol.Lyubashevsky.Signature.Extraction
 public import Complexity.Crypto.Protocols.SigmaProtocol.Lyubashevsky.Signature.Failure
 public import Complexity.Crypto.Protocols.SigmaProtocol.Lyubashevsky.Signature.Parameters
+public import Complexity.Crypto.Protocols.SigmaProtocol.Lyubashevsky.Signature.RandomOracle
 public import Complexity.Crypto.Protocols.SigmaProtocol.Lyubashevsky.Signature.View
 public import Complexity.Crypto.Protocols.SigmaProtocol.SchnorrIdentification
 public import Complexity.Crypto.Protocols.SigmaProtocol.SchnorrSignature
 public import Complexity.Crypto.Protocols.Signature.RandomOracle
 public import Complexity.Crypto.Protocols.Signature.RandomOracle.Simulation
+public import Complexity.Crypto.Protocols.UC.Emulation
+public import Complexity.Crypto.Protocols.UC.Execution
+public import Complexity.Crypto.Protocols.UC.Machine
 public import Complexity.Crypto.Protocols.VOLE.AdaptiveMulCheck
 public import Complexity.Crypto.Protocols.VOLE.Basic
 public import Complexity.Crypto.Protocols.VOLE.BatchMulCheck
