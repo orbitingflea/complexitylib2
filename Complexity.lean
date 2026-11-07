@@ -1768,6 +1768,9 @@ public import Complexity.Computability.Complexity.Parameterized
 public import Complexity.Computability.Complexity.Parameterized.Kernelization
 public import Complexity.Computability.Complexity.Parameterized.VertexCover
 public import Complexity.Computability.Complexity.Parameterized.VertexCover.BussKernel
+public import Complexity.Computability.Complexity.Problems.CSP.Basic
+public import Complexity.Computability.Complexity.Problems.CSP.Constant
+public import Complexity.Computability.Complexity.Problems.CSP.Majority
 public import Complexity.Computability.Complexity.Problems.CircuitSAT
 public import Complexity.Computability.Complexity.Problems.CircuitValue
 public import Complexity.Computability.Complexity.Problems.CircuitValue.Compilation
@@ -2025,6 +2028,7 @@ public import Complexity.Computability.Machines.ReadMachine.Tidy
 public import Complexity.Computability.Machines.ReadMachine.VirtualWord
 public import Complexity.Computability.Machines.ReadMachine.VirtualWord.Evaluator
 public import Complexity.Computability.Machines.ReadMachine.VirtualWord.Runtime
+public import Complexity.Computability.Machines.ReadMachine.VirtualWord.Simulation
 public import Complexity.Computability.Machines.Turing.MultiTape.Alternating
 public import Complexity.Computability.Machines.Turing.MultiTape.Alternating.Game
 public import Complexity.Computability.Machines.Turing.MultiTape.Alternating.GuessVerify
@@ -2658,6 +2662,7 @@ public import Complexity.Computability.PolyTime.CNF.GreedyParityContext
 public import Complexity.Computability.PolyTime.CNF.GreedyParitySearch
 public import Complexity.Computability.PolyTime.CNF.SparseCNFLeafCounter
 public import Complexity.Computability.PolyTime.CNF.SparsePolyCompile
+public import Complexity.Computability.PolyTime.CSP.CNFTemplate
 public import Complexity.Computability.PolyTime.CSP.ToCNF
 public import Complexity.Computability.PolyTime.CSP.Vars
 public import Complexity.Computability.PolyTime.CommonCountingAccum
@@ -3770,6 +3775,7 @@ public import Complexity.Foundations.Combinatorics.PartialLabelScores
 public import Complexity.Foundations.Combinatorics.PowersetTail
 public import Complexity.Foundations.Combinatorics.ReplacementCounting
 public import Complexity.Foundations.Combinatorics.ReplacementDesignBridge
+public import Complexity.Foundations.Combinatorics.SetPartition.Basic
 public import Complexity.Foundations.Combinatorics.SetPartition.JoinMatrix
 public import Complexity.Foundations.Combinatorics.SharedSummaries
 public import Complexity.Foundations.Combinatorics.SimpleGraph.Metric
@@ -4065,6 +4071,7 @@ public import Complexity.Foundations.LinearAlgebra.VariableCopyPlacement
 public import Complexity.Foundations.Logic.Function.Iterate
 public import Complexity.Foundations.MeasureTheory.Constructions.BorelSpace.Order
 public import Complexity.Foundations.MeasureTheory.Group.ConvolutionDensity
+public import Complexity.Foundations.MeasureTheory.Group.FundamentalDomain
 public import Complexity.Foundations.MeasureTheory.Group.QuotientDensity
 public import Complexity.Foundations.MeasureTheory.Integral.Pi
 public import Complexity.Foundations.MeasureTheory.Measure.TotalVariation.Map
@@ -4401,6 +4408,8 @@ public import Complexity.Logics.Propositional.CNF.TwoCNF
 public import Complexity.Logics.Propositional.CNF.UnsatVal
 public import Complexity.Logics.Propositional.CSP
 public import Complexity.Logics.Propositional.CSP.BinaryDigits
+public import Complexity.Logics.Propositional.CSP.Boolean
+public import Complexity.Logics.Propositional.CSP.CNFTemplate
 public import Complexity.Logics.Propositional.CSP.ExactlyOne
 public import Complexity.Logics.Propositional.CSP.HardCore
 public import Complexity.Logics.Propositional.CSP.PartitionFunction
