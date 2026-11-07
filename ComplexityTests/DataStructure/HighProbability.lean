@@ -273,6 +273,43 @@ example :
     rw [hfp, Nat.cast_one, one_mul, h1]
   exact hhalf.trans hsucc
 
+/-- Concrete exercise of `reachable_step_whp_ofFn` on `fastSlowImpl`: after any valid oblivious
+prefix `ops`, the next operation still halts within `C.worstCaseTime + 1` machine steps (`evalRand`)
+with probability at least `1 / 2`. -/
+example (ops : List PUnit) (hv : unitSpec.ValidHistory PUnit.unit ops) :
+    let C := fastSlowImpl 4 0 (by decide)
+    ∃ (ν₀ : PMF (C.Seed × Data 5)) (τ_pref : PMF (WhpSeqOutcome C.Seed unitSpec 5)),
+      C.ExecWhpSteps 3 ops
+        (ν₀.map fun p => WhpSeqOutcome.ofCoupled ⟨p.1, PUnit.unit, p.2⟩) τ_pref ∧
+      (2 : ℝ≥0∞)⁻¹ ≤
+        ((τ_pref.map fun tr => (tr.current.seed, tr.current.data)).bind fun p =>
+          evalRand 4 (fastSlowSubroutine.code.program 3) (C.worstCaseTime + 1)
+            ⟨0, C.toDynamicProgram.prepare PUnit.unit p.2⟩).toOuterMeasure
+          {cfg | ∃ p q : C.Seed × Data 5,
+            p ∈ (τ_pref.map fun tr => (tr.current.seed, tr.current.data)).support ∧
+            cfg = .halted (q.2.regs 3) q.2 ∧
+            C.decode PUnit.unit q.2.regs =
+              some (unitSpec.stepFn (unitSpec.run PUnit.unit ops).1 PUnit.unit).2 ∧
+            C.rep q.1 (unitSpec.stepFn (unitSpec.run PUnit.unit ops).1 PUnit.unit).1 q.2 ∧
+            q.2.Bounded 4 ∧
+            Modifies (Block.mk 0 C.space).footprint p.2.mem q.2.mem} := by
+  intro C
+  have hx : (Data.init [] : Data 5).Bounded 4 := Data.Bounded.init (by simp [InputFits])
+  have hz : ∀ a ∈ (Block.mk 0 C.space).footprint, (Data.init [] : Data 5).mem a = 0 := by
+    change ∀ a ∈ (Block.mk 0 0).footprint, _
+    simp [Block.footprint]
+  obtain ⟨ν₀, τ_pref, hex, hprob⟩ :=
+    C.reachable_step_whp_ofFn 3 ops PUnit.unit hx (by simp [Data.init]) (fun j => Fin.elim0 j)
+      hz hv trivial
+  refine ⟨ν₀, τ_pref, hex, ?_⟩
+  have hhalf : (2 : ℝ≥0∞)⁻¹ ≤ 1 - C.failureProb := by
+    have hfp : C.failureProb = (2 : ℝ≥0∞)⁻¹ := rfl
+    have h1 : (1 : ℝ≥0∞) - (2 : ℝ≥0∞)⁻¹ = (2 : ℝ≥0∞)⁻¹ :=
+      ENNReal.sub_eq_of_eq_add (by simp)
+        (by simpa [div_eq_mul_inv] using (ENNReal.add_halves 1).symm)
+    rw [hfp, h1]
+  exact hhalf.trans hprob
+
 /-! ## 2. Negative `.halt` / 1-instruction no-op sanity checks -/
 
 /-- **Negative sanity check 1 (`no_noop_highProbImpl_dictionary`):**
