@@ -18,6 +18,7 @@ the FHE industrial context, the first-order design decisions and the repository'
 | Program | Issues |
 | --- | --- |
 | Frontier program: ambitious theorems toward the research frontier | [#897]; its tracks are linked below |
+| Optional experiment: formalize unformalized STOC 2027 submission results, subject to independent source-correspondence review | [#2527] |
 | Metacomplexity: time-bounded Kolmogorov complexity, partial MCSP, hardness magnification | [#798], audit [#884] |
 | Plain computability: delete the tidy calculus, keeping a machine-level kernel | [#862], from [#456] |
 | Consolidation: duplicates, accurate statements and docs, less churn | [#949], [#939] |
@@ -562,8 +563,9 @@ index links to canonical definitions rather than keeping a second set.
   (Lemma 3.3), including virtual-input/answer regeneration and adaptive-to-tt conversion.
   Uniform runtime initialization and generic virtual-input simulation of component-certified
   query machines are proved, with arbitrary saved outer state/output continuations and an additive
-  native space bound. Extracting that query-machine interface from arbitrary native logspace
-  query-generator/evaluator certificates, supplied header preparation, answer regeneration and
+  native space bound. Generic extraction from existing native machines and ordinary logspace
+  word-function certificates is proved, with streaming output and workspace-derived saved-state
+  bounds. Preparing supplied headers from live query generators, regenerating answer words and
   the resource-certified suffix loop remain open;
   bounded and many-one self-reducibility specializations; concrete complete self-reducible
   problems (Theorem 3.5); Section 4
@@ -1227,6 +1229,8 @@ not planned, not as proved.
 [#2423]: https://github.com/cslib-community/complexitylib/issues/2423
 
 [#2521]: https://github.com/cslib-community/complexitylib/issues/2521
+
+[#2527]: https://github.com/cslib-community/complexitylib/issues/2527
 
 [#2568]: https://github.com/cslib-community/complexitylib/issues/2568
 

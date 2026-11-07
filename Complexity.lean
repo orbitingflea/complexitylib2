@@ -1082,6 +1082,7 @@ public import Complexity.Computability.Circuit.Boolean.Yablonskii
 public import Complexity.Computability.Circuit.Clique
 public import Complexity.Computability.Circuit.Complexity
 public import Complexity.Computability.Circuit.CompositionDepth
+public import Complexity.Computability.Circuit.CompositionLines
 public import Complexity.Computability.Circuit.Continuity
 public import Complexity.Computability.Circuit.Counting
 public import Complexity.Computability.Circuit.CriticalPath
@@ -2027,6 +2028,7 @@ public import Complexity.Computability.Machines.ReadMachine.StepMachine
 public import Complexity.Computability.Machines.ReadMachine.Tidy
 public import Complexity.Computability.Machines.ReadMachine.VirtualWord
 public import Complexity.Computability.Machines.ReadMachine.VirtualWord.Evaluator
+public import Complexity.Computability.Machines.ReadMachine.VirtualWord.Native
 public import Complexity.Computability.Machines.ReadMachine.VirtualWord.Runtime
 public import Complexity.Computability.Machines.ReadMachine.VirtualWord.Simulation
 public import Complexity.Computability.Machines.Turing.MultiTape.Alternating
