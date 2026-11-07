@@ -85,8 +85,35 @@ Schaefer criterion are unary. For a language lacking all six operations,
 `CSP.projection_or_negation_of_not_hasSchaeferPolymorphism` identifies every positive-arity
 polymorphism as a projection or negated projection. Consequently every self-dual relation is
 preserved. [Checked examples](../../ComplexityTests/BooleanClone.lean) include a NAE relation
-with none of the six operations and with negation as a polymorphism. This is the algebraic
-classification; its hardness application remains part of #2822.
+with none of the six operations and with negation as a polymorphism. The hardness application
+below uses this algebraic classification.
+
+For fixed-language reductions, import `Complexity.Logics.Propositional.CSP.PrimitivePositive`
+and `Complexity.Computability.PolyTime.CSP.Gadget`. A `CSP.PPGadget` is a well-formed conjunction
+with free ports and existential auxiliary ports. `CSP.exists_ppGadget_of_polymorphisms` proves
+the canonical finite construction when the target relation is nonempty, separates its coordinate
+columns, and is preserved by every positive-arity common polymorphism. This restricted
+equality-free form does not assert general equality elimination. The native
+`CSP.computableInPolyTime_replaceGadgetsGuarded` compiler uses fixed gadget lookup, fresh odd
+auxiliary names and even original names, retaining binary variable labels. It checks exact source
+arities and substitutes an explicit rejecting instance on malformed inputs.
+[Checked examples](../../ComplexityTests/CSPGadget.lean) exercise freshness, repeated ports,
+existential witnesses, empty/nullary instances and malformed rejection.
+The shared exact-arity certificate is
+`Cslib.Complexity.CSP.computableInPolyTime_validArity` in
+`Complexity.Computability.PolyTime.CSP.Boolean`; both satisfiability and gadget compilers reuse it.
+
+The hard branch is available from `Complexity.Computability.Complexity.Problems.CSP.Hardness`:
+`CSPSAT.npComplete_of_not_hasSchaeferPolymorphism` proves native NP-completeness whenever the
+fixed finite language has none of the six operations. It assumes no solver, clone classification
+or pp-definability theorem: all are proved in its imports. `SelfDualThreeSAT.npComplete` supplies
+the hard source by adjoining a shared reference bit to signed three-literal clauses. XOR with
+that bit normalizes any model to an ordinary clause model. The eight lifted relations are
+self-dual, nonempty and separate all coordinate columns, discharging the restricted gadget
+construction's hypotheses. The reduction checks exact arity and retains binary labels, including
+sparse labels. [Checked hardness examples](../../ComplexityTests/SchaeferHardness.lean) give
+a concrete NAE language and cover contradictory clauses, repeated variables and malformed scopes.
+The tractable branches must still be assembled to complete #2822.
 
 ## Three resolution representations
 
