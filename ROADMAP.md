@@ -957,12 +957,15 @@ each statement against the numbered result. Organize modules by subject, not cha
   transfers with pass counts.
 - **Learning:** machine-certified running times for the LMN and Kushilevitz–Mansour learners;
   distributional problems and reductions, samplability, average-to-worst-case connections,
-  PAC/agnostic/SQ learning, learning lower bounds, compression and refutation. For realizable
+  PAC/agnostic learning, learning lower bounds, compression and refutation. For realizable
   PAC learning ([#2868](https://github.com/cslib-community/complexitylib/issues/2868)), extend
   the countable-domain VC ε-net upper bound `O((d log (1/ε) + log (1/δ))/ε)` to general
-  well-behaved classes over measurable domains. Give the
-  computational–statistical gap program concrete clients: an SQ oracle with tolerance and query
-  costs, statistical-dimension lower bounds for a specified planted problem, and corresponding
+  well-behaved classes over measurable domains. Statistical queries
+  ([#2910](https://github.com/cslib-community/complexitylib/issues/2910)): the deterministic SQ
+  model has correlational and SQ-dimension query lower bounds, including parities. Remaining:
+  simulating SQ learners from random examples, without noise and under random classification
+  noise (Kearns's Theorems 1 and 3); the low-degree algorithm as an SQ algorithm; randomized SQ
+  learners; and Feldman's statistical dimension for a specified planted problem, with matching
   sample and runtime upper bounds. Develop low-degree likelihood-ratio and sum-of-squares
   comparisons where justified, distinguishing restricted-model bounds from unrestricted
   computational hardness. Use the [distributional framework](#average-case-complexity).
@@ -1064,9 +1067,11 @@ Coordinate native graph-algorithm work with [CSLib's graph-algorithm directions]
 reusing graph and matroid foundations and the shared data-structure interfaces.
 
 - **Flows and matching:** a native augmenting-path algorithm with charged runtime (integral
-  max-flow/min-cut and a `TimeM` Edmonds–Karp solver are in `Algorithms/Lean/MaxFlow`); then
-  minimum-cost flow and weighted bipartite matching through common residual-network and duality
-  machinery.
+  max-flow/min-cut, a `TimeM` Edmonds–Karp solver and Hopcroft–Karp bipartite matching are in
+  `Algorithms/Lean/MaxFlow`); then minimum-cost flow and weighted bipartite matching through common
+  residual-network and duality machinery. Remaining matching directions: the decomposition of
+  `M ⊕ M*` into vertex-disjoint augmenting paths, general (non-bipartite) matching with blossoms,
+  and a sparse Hopcroft–Karp entry point that also charges construction of the adjacency lists.
 - **Matroids:** matroid intersection with explicit oracle and implementation costs, beyond the
   weighted greedy algorithm and its independence-oracle interface.
 - **Submodular optimization:** further constraints and approximation bounds beyond the
