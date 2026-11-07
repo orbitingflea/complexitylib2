@@ -1057,6 +1057,7 @@ public import Complexity.Computability.Circuit.Boolean.WeightedThreshold.Activat
 public import Complexity.Computability.Circuit.Boolean.WeightedThreshold.Activity
 public import Complexity.Computability.Circuit.Boolean.WeightedThreshold.ActivityBounds
 public import Complexity.Computability.Circuit.Boolean.WeightedThreshold.Andreev
+public import Complexity.Computability.Circuit.Boolean.WeightedThreshold.AndreevApproxMajority
 public import Complexity.Computability.Circuit.Boolean.WeightedThreshold.AndreevAverage
 public import Complexity.Computability.Circuit.Boolean.WeightedThreshold.AndreevLowerBound
 public import Complexity.Computability.Circuit.Boolean.WeightedThreshold.AndreevWindowed
@@ -3269,6 +3270,7 @@ public import Complexity.Crypto.Game.UntilBad
 public import Complexity.Crypto.Negligible
 public import Complexity.Crypto.Negligible.Basic
 public import Complexity.Crypto.Negligible.Dyadic
+public import Complexity.Crypto.Primitives.BlockCipher.CBCMAC
 public import Complexity.Crypto.Primitives.BlockCipher.Modes
 public import Complexity.Crypto.Primitives.PRG.Circuit
 public import Complexity.Crypto.Primitives.PRG.Game
@@ -3677,6 +3679,7 @@ public import Complexity.Foundations.Combinatorics.AffineDisperser.Bits
 public import Complexity.Foundations.Combinatorics.AffineDisperser.Explicit
 public import Complexity.Foundations.Combinatorics.AffineDisperser.IndependentSources
 public import Complexity.Foundations.Combinatorics.AffineDisperser.Threshold
+public import Complexity.Foundations.Combinatorics.ApproximateMajority
 public import Complexity.Foundations.Combinatorics.BalancedSchedules
 public import Complexity.Foundations.Combinatorics.BinomialTail
 public import Complexity.Foundations.Combinatorics.BudgetTuples
@@ -3808,6 +3811,7 @@ public import Complexity.Foundations.Data.BitString.List.Binary
 public import Complexity.Foundations.Data.BitString.List.Operations
 public import Complexity.Foundations.Data.BitString.List.Positions
 public import Complexity.Foundations.Data.BitString.List.Vote
+public import Complexity.Foundations.Data.BitString.PadBlocks
 public import Complexity.Foundations.Data.BitString.Parity
 public import Complexity.Foundations.Data.BitString.Parity.DotProduct
 public import Complexity.Foundations.Data.BitString.Parity.Weight
