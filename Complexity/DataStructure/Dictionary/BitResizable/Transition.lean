@@ -90,8 +90,8 @@ open Cslib.DataStructure.Dictionary.WordRAM
 /-! ## Section 1: Epoch geometry linear word bound and hysteresis / potential algebra -/
 
 /-- Decidability of the epoch capacity invariant `EpochInv U N m`. -/
-instance instDecidableEpochInv (U N m : ℕ) : Decidable (EpochInv U N m) := by
-  unfold EpochInv; infer_instance
+instance instDecidableEpochInv (U N m : ℕ) : Decidable (EpochInv U N m) :=
+  inferInstanceAs (Decidable ((m = 0 ∧ N = 0) ∨ (1 ≤ m ∧ m ≤ N ∧ N ≤ 4 * m ∧ N ≤ U)))
 
 /-- Next abstract dictionary state after executing operation `op` on `s_abs`. -/
 @[expose]
@@ -289,21 +289,30 @@ theorem epochInv_nextEpochCap {U N : ℕ} (s_abs : Dynamic.State U) (op : Dynami
 
 /-! ## Section 2: Uniform compiled in-epoch sequence execution (`BitRAM.Code .standard 280`) -/
 
-/-- Predicate stating that an operation sequence `ops` keeps the active key count inside the epoch
-hysteresis window `EpochInv U N (Dynamic.dom s_t).card` before and after every step. -/
+/-- Predicate stating that an operation sequence `ops` starts from a capacity-bounded state
+(`N ≤ U`, `(Dynamic.dom s_abs).card ≤ N`) and keeps every post-operation active key count
+inside the epoch hysteresis window `EpochInv U N (Dynamic.dom s_t).card`. In particular, an
+active epoch `N > 0` initialized empty (`card = 0 ≤ N`) enters `EpochInv` on its first
+insertion (`1 ≤ N ≤ 4`). -/
 @[expose]
 def InEpochHistory (U N : ℕ) : Dynamic.State U → List (Dynamic.Op U) → Prop
-  | s_abs, [] => EpochInv U N (Dynamic.dom s_abs).card
+  | s_abs, [] => N ≤ U ∧ (Dynamic.dom s_abs).card ≤ N
   | s_abs, op :: ops =>
-    EpochInv U N (Dynamic.dom s_abs).card ∧
+    N ≤ U ∧
+    (Dynamic.dom s_abs).card ≤ N ∧
+    EpochInv U N (Dynamic.dom (nextState s_abs op)).card ∧
     InEpochHistory U N (nextState s_abs op) ops
 
-theorem InEpochHistory.head {U N : ℕ} {s_abs : Dynamic.State U} {ops : List (Dynamic.Op U)}
-    (h : InEpochHistory U N s_abs ops) :
-    EpochInv U N (Dynamic.dom s_abs).card := by
-  cases ops with
-  | nil => exact h
-  | cons _ _ => exact h.1
+/-- `InEpochHistory U N s_abs (op :: ops)` follows from `(Dynamic.dom s_abs).card ≤ N`,
+`EpochInv U N (Dynamic.dom (nextState s_abs op)).card`, and
+`InEpochHistory U N (nextState s_abs op) ops`. -/
+theorem inEpochHistory_cons_of_epochInv {U N : ℕ} {s_abs : Dynamic.State U}
+    {op : Dynamic.Op U} {ops : List (Dynamic.Op U)}
+    (hcard : (Dynamic.dom s_abs).card ≤ N)
+    (hepoch' : EpochInv U N (Dynamic.dom (nextState s_abs op)).card)
+    (hrest : InEpochHistory U N (nextState s_abs op) ops) :
+    InEpochHistory U N s_abs (op :: ops) :=
+  ⟨hepoch'.cap_le_univ, hcard, hepoch', hrest⟩
 
 /-- Concrete total deterministic amortized overhead sum along an operation sequence `ops` under
 epoch seed `θ` (with no unconstrained existential budget). -/
@@ -329,8 +338,8 @@ theorem tsum_inEpochSeqOverhead_le {U N : ℕ} {s_abs : Dynamic.State U}
   | nil =>
     simp [inEpochSeqOverhead]
   | cons op ops ih =>
-    rcases hhist with ⟨hepoch, hrest⟩
-    have hstep := tsum_inEpochStepOverhead_le hepoch.cap_le_univ s_abs hepoch.card_le op
+    rcases hhist with ⟨hNU, hcard, _, hrest⟩
+    have hstep := tsum_inEpochStepOverhead_le hNU s_abs hcard op
     have htail := ih hrest
     have hsplit :
         (∑' θ : Succinct.QuotHashSeed U N,
@@ -360,10 +369,12 @@ theorem tsum_inEpochSeqOverhead_le {U N : ℕ} {s_abs : Dynamic.State U}
 
 /-- Operational multi-step execution trace of a **single fixed uniform program**
 `stepCode : BitRAM.Code .standard 280` under a `.grow` memory oracle `oracle` across `ops`,
-binding every step `op` to `y = evalWithOracle w oracle T stepCode (loadOpRegs op x)` and
-`ExecCodeDistWithOracle w oracle stepCode (loadOpRegs op x) (PMF.pure y) (T : ℝ≥0∞)`, and checking
-live `Rep`, exact bit size `dictBitSize U V w N n_t`, tight `OPT + O(n_t log log n_t) + 218 * w`
-space, and `OpOutputCorrect` at every step. -/
+binding every step `op` to `DemonicExecWithin`,
+`y = evalWithOracle w oracle T stepCode (loadOpRegs op x)`, and
+`ExecCodeDistWithOracle w oracle stepCode (loadOpRegs op x) (PMF.pure y) (T : ℝ≥0∞)`, and
+checking well-formedness, live `Rep`, exact bit size `dictBitSize U V w N n_t`, tight
+`OPT + O(n_t log log n_t) + 218 * w` space, and `OpOutputCorrect` at every step. -/
+@[expose]
 def InEpochOracleTrace (stepCode : BitRAM.Code .standard 280)
     (U V w N : ℕ) (oracle : (ℕ → ℕ) → ℕ → ℕ → (ℕ → ℕ))
     (θ : Succinct.QuotHashSeed U N) :
@@ -377,8 +388,15 @@ def InEpochOracleTrace (stepCode : BitRAM.Code .standard 280)
       let y := evalWithOracle w oracle T stepCode (loadOpRegs op x)
       ts = T :: ts_rest ∧
       xs = y :: xs_rest ∧
+      BitRAM.DemonicExecWithin w stepCode (loadOpRegs op x)
+        (fun y' =>
+          y'.WellFormed w ∧
+          Rep U V w N θ s_abs' y'.toBitMemoryState ∧
+          y'.bitSize = dictBitSize U V w N n' ∧
+          OpOutputCorrect s_abs op y'.regs) T ∧
       ExecCodeDistWithOracle w oracle stepCode (loadOpRegs op x) (PMF.pure y) (T : ℝ≥0∞) ∧
       (∀ fuel ≥ T, evalWithOracle w oracle fuel stepCode (loadOpRegs op x) = y) ∧
+      y.WellFormed w ∧
       Rep U V w N θ s_abs' y.toBitMemoryState ∧
       y.bitSize = dictBitSize U V w N n' ∧
       y.bitSize ≤ Dynamic.optBits U V n' + 680 * n' * Dynamic.logLogFactor n' + 218 * w ∧
@@ -410,15 +428,24 @@ theorem inEpochStepRegCode_oracle_seq {U V w N : ℕ}
   | nil =>
     exact ⟨[], [], s_fix₀, rfl, rfl, ⟨rfl, rfl⟩, by simp [inEpochSeqOverhead]⟩
   | cons op ops ih =>
-    rcases hhist with ⟨_, hhist_rest⟩
+    rcases hhist with ⟨_, _, hepoch', hhist_rest⟩
     rcases hvh with ⟨hval_op, hvh_rest⟩
-    have hepoch' : EpochInv U N (Dynamic.dom (nextState s_abs op)).card := hhist_rest.head
     have hdyn_val : (Dynamic.spec U V N).valid s_abs op :=
       dynamic_valid_of_spec_valid hval_op hepoch'.card_le
-    obtain ⟨s_fix₁, T, hinv₁, hout₁, hdist₁, hfuel₁, hcost₁⟩ :=
-      inEpochStepRegCode_evalWithOracle horacle hw hU hV θ hinv₀ hdyn_val
+    obtain ⟨s_fix₁, T, hExec₁, hcost₁⟩ :=
+      inEpochStepRegCode_exec hw hU hV θ hinv₀ hdyn_val
     have hstep_eq : ((Dynamic.spec U V N).stepFn s_abs op).1 = nextState s_abs op := rfl
+    obtain ⟨⟨hinv₁, hout₁⟩, hdist₁, hfuel₁⟩ := hExec₁.evalWithOracle_spec_of_le horacle
     rw [hstep_eq] at hinv₁
+    have hExec₁_rep : BitRAM.DemonicExecWithin w inEpochStepRegCode (loadOpRegs op x₀)
+        (fun y' =>
+          y'.WellFormed w ∧
+          Rep U V w N θ (nextState s_abs op) y'.toBitMemoryState ∧
+          y'.bitSize = dictBitSize U V w N (Dynamic.dom (nextState s_abs op)).card ∧
+          OpOutputCorrect s_abs op y'.regs) T :=
+      hExec₁.mono (fun y' ⟨hinv', hout'⟩ => by
+        rw [hstep_eq] at hinv'
+        exact ⟨hinv'.wf, hinv'.rep hepoch', hinv'.bitSize_eq, hout'⟩) le_rfl
     let y₁ := evalWithOracle w oracle T inEpochStepRegCode (loadOpRegs op x₀)
     have hrep₁ : Rep U V w N θ (nextState s_abs op) y₁.toBitMemoryState :=
       hinv₁.rep hepoch'
@@ -429,7 +456,8 @@ theorem inEpochStepRegCode_oracle_seq {U V w N : ℕ}
       ih hinv₁ hhist_rest hvh_rest
     refine ⟨T :: ts_rest, y₁ :: xs_rest, s_fix_f,
       by simp [hlen_ts], by simp [hlen_xs],
-      ⟨T, ts_rest, xs_rest, rfl, rfl, hdist₁, hfuel₁, hrep₁, hsz₁, hspace₁, hout₁, htrace_rest⟩,
+      ⟨T, ts_rest, xs_rest, rfl, rfl, hExec₁_rep, hdist₁, hfuel₁, hinv₁.wf, hrep₁, hsz₁,
+        hspace₁, hout₁, htrace_rest⟩,
       ?_⟩
     simp only [List.sum_cons, inEpochSeqOverhead]
     omega
@@ -560,6 +588,7 @@ theorem pureMultiEpochStep_amortized_le {U w N m m' : ℕ} (hw : 0 < w) (hU : Fi
 3. the exact layout bit size `dictBitSize U V w N_t n_t` satisfies
    `dictBitSize U V w N_t n_t ≤ Dynamic.optBits U V n_t + 680 * n_t * Dynamic.logLogFactor n_t`
    `+ 218 * w`. -/
+@[expose]
 def PureMultiEpochSpaceTrace (U V w : ℕ) :
     ℕ → Dynamic.State U → List (Dynamic.Op U) → Prop
   | N, s_abs, [] =>
@@ -674,5 +703,62 @@ theorem rep_exists_active_slot_of_some {U V w N : ℕ} {θ : Succinct.QuotHashSe
   refine ⟨hb_lt, j, hj_lt, hq_eq, hv_eq.symm, ?_⟩
   rw [hq_eq]
   exact feistelReconstruct_feistelBucket (bucketBits N) h1 u.val
+
+/-- **Faithfulness of `Rep` (`rep_inj`):**
+the bit-resizable memory state `s_bit` together with the epoch seed `θ` uniquely determines the
+abstract dictionary `s_abs : Dynamic.State U`. -/
+theorem rep_inj {U V w N : ℕ} {θ : Succinct.QuotHashSeed U N}
+    {s₁ s₂ : Dynamic.State U} {s_bit : BitMemory.State}
+    (hrep₁ : Rep U V w N θ s₁ s_bit) (hrep₂ : Rep U V w N θ s₂ s_bit) :
+    s₁ = s₂ := by
+  by_cases hN0 : N = 0
+  · subst hN0
+    have hc₁ : (Dynamic.dom s₁).card = 0 := by
+      rcases hrep₁.epoch_inv with ⟨h0, _⟩ | ⟨_, _, _, _⟩ <;> omega
+    have hc₂ : (Dynamic.dom s₂).card = 0 := by
+      rcases hrep₂.epoch_inv with ⟨h0, _⟩ | ⟨_, _, _, _⟩ <;> omega
+    funext u
+    have hnone₁ : s₁ u = none := by
+      cases h : s₁ u with
+      | none => rfl
+      | some v =>
+        have hmem : u ∈ Dynamic.dom s₁ := Dictionary.mem_dom_iff_isSome.mpr (by rw [h]; rfl)
+        have hpos : 0 < (Dynamic.dom s₁).card := Finset.card_pos.mpr ⟨u, hmem⟩
+        omega
+    have hnone₂ : s₂ u = none := by
+      cases h : s₂ u with
+      | none => rfl
+      | some v =>
+        have hmem : u ∈ Dynamic.dom s₂ := Dictionary.mem_dom_iff_isSome.mpr (by rw [h]; rfl)
+        have hpos : 0 < (Dynamic.dom s₂).card := Finset.card_pos.mpr ⟨u, hmem⟩
+        omega
+    rw [hnone₁, hnone₂]
+  · have hN : 0 < N := Nat.pos_of_ne_zero hN0
+    have htransfer : ∀ {sa sb : Dynamic.State U},
+        Rep U V w N θ sa s_bit → Rep U V w N θ sb s_bit →
+        ∀ (u : Fin U) (v : ℕ), sa u = some v → sb u = some v := by
+      intro sa sb ha hb u v hsa
+      obtain ⟨hb_lt, j, hj_lt, _, hv_eq, hrec⟩ := rep_exists_active_slot_of_some ha hN hsa
+      obtain ⟨hu_lt, hsb⟩ := rep_feistel_reconstruct_active_slot hb hN hb_lt hj_lt
+      have hfin : (⟨feistelReconstruct (bucketBits N) (Succinct.hValOfSeed U N θ)
+          (feistelBucket (bucketBits N) (Succinct.hValOfSeed U N θ) u.val)
+          (virtualQuotAt U V w N s_bit
+            (Succinct.slotOf N (gmAtBit U w N s_bit.mem)
+              (feistelBucket (bucketBits N) (Succinct.hValOfSeed U N θ) u.val) j)),
+          hu_lt⟩ : Fin U) = u :=
+        Fin.ext hrec
+      rw [hfin, hv_eq] at hsb
+      exact hsb
+    funext u
+    cases h1 : s₁ u with
+    | none =>
+      cases h2 : s₂ u with
+      | none => rfl
+      | some v2 =>
+        have hc := htransfer hrep₂ hrep₁ u v2 h2
+        rw [h1] at hc
+        cases hc
+    | some v1 =>
+      exact (htransfer hrep₁ hrep₂ u v1 h1).symm
 
 end Cslib.DataStructure.Dictionary.BitResizable

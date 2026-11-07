@@ -322,6 +322,7 @@ theorem readLMMod4RegCode_exec {U V w N c_base b j : ℕ} {x : BitRAM.Data 280}
         repeat rw [Function.update_of_ne (by intro h; have := congrArg Fin.val h; omega)]
         exact hs1_regs r hr
 
+/-- Read `Succinct.lmPrev N (lmAtBit U w N x.mem) b j` (`(r13, r14) = (b, j)`) into register `0`. -/
 @[expose]
 def readLMPrevRegCode : BitRAM.Code .standard 280 :=
   readLMMod4RegCode 1
@@ -341,6 +342,7 @@ theorem readLMPrevRegCode_exec {U V w N b j : ℕ} {x : BitRAM.Data 280}
         (∀ r : Fin 280, 18 ≤ r.val → y.regs r = x.regs r)) 62 :=
   readLMMod4RegCode_exec hw hN_pos hnU hU hx her hsz (by decide) hb hj hr13 hr14
 
+/-- Read `Succinct.lmNext N (lmAtBit U w N x.mem) b j` (`(r13, r14) = (b, j)`) into register `0`. -/
 @[expose]
 def readLMNextRegCode : BitRAM.Code .standard 280 :=
   readLMMod4RegCode 5
@@ -544,10 +546,12 @@ theorem writeLMMod4RegCode_exec {U V w N c_base b j val : ℕ} {x : BitRAM.Data 
         repeat rw [Function.update_of_ne (by intro h; have := congrArg Fin.val h; omega)]
         exact hs1_regs r hr
 
+/-- Write register `15` into the `lmPrev` slot of `(b, j) = (r13, r14)` in `LocalMeta`. -/
 @[expose]
 def writeLMPrevRegCode : BitRAM.Code .standard 280 :=
   writeLMMod4RegCode 1
 
+/-- Write register `15` into the `lmNext` slot of `(b, j) = (r13, r14)` in `LocalMeta`. -/
 @[expose]
 def writeLMNextRegCode : BitRAM.Code .standard 280 :=
   writeLMMod4RegCode 5
