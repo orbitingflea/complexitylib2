@@ -144,10 +144,15 @@ Markus Bläser and Bodo Manthey. *Smoothed Complexity Theory*. ACM Transactions 
 
 Donald Beaver, Silvio Micali, Phillip Rogaway. "The Round Complexity of Secure Protocols." *Proceedings of the 22nd Annual ACM Symposium on Theory of Computing (STOC '90)*, 503–513, 1990. https://doi.org/10.1145/100216.100287 . Bibliographic data from the DOI record and secondary listings, cited as the usual source of the point-and-permute technique. The full text was not inspected in this pass.
 
+<a id="bodlaenderdowneyfellowshermelin2009"></a>
+## bodlaenderdowneyfellowshermelin2009
+
+Hans L. Bodlaender, Rodney G. Downey, Michael R. Fellows and Danny Hermelin. "On Problems without Polynomial Kernels." *Journal of Computer and System Sciences* 75(8), 423–434, 2009. https://doi.org/10.1016/j.jcss.2009.04.001 . Bibliographic data from the reference list of [Bodlaender, Jansen and Kratsch](#bodlaenderjansenkratsch2014), item [4]. The paper was not inspected; the manual cites it only through that paper's attribution of the k-Path kernel lower bound (Section 1, p. 2 of arXiv v1), and no theorem number is used.
+
 <a id="bodlaenderjansenkratsch2014"></a>
 ## bodlaenderjansenkratsch2014
 
-Hans L. Bodlaender, Bart M. P. Jansen and Stefan Kratsch. "Kernelization Lower Bounds by Cross-Composition." *SIAM Journal on Discrete Mathematics* 28(1), 277–305, 2014. https://doi.org/10.1137/120880240 . Inspected the arXiv version [1206.5941v1](https://arxiv.org/abs/1206.5941v1) on 2026-11-08: Definition 1 (kernelization, generalized kernelization, p. 4), Definition 2 (compression, p. 5), Proposition 1 (p. 5), Definition 4 (weak OR-distillation, p. 5), Theorem 2 (Fortnow–Santhanam, p. 6), Lemma 1 (complementary witness lemma, attributed to Dell and van Melkebeek, p. 7), Definition 8 (polynomial equivalence relation, p. 8), Definition 9 (and/or-cross-composition, p. 8), Theorem 5 and Corollary 2 (p. 9) and Theorem 6 with its proof (pp. 10–11). Locators follow that arXiv numbering; the journal numbering was not checked.
+Hans L. Bodlaender, Bart M. P. Jansen and Stefan Kratsch. "Kernelization Lower Bounds by Cross-Composition." *SIAM Journal on Discrete Mathematics* 28(1), 277–305, 2014. https://doi.org/10.1137/120880240 . Inspected the arXiv version [1206.5941v1](https://arxiv.org/abs/1206.5941v1) on 2026-11-08: Definition 1 (kernelization, generalized kernelization, p. 4), Definition 2 (compression, p. 5), Proposition 1 (p. 5), Definition 4 (weak OR-distillation, p. 5), Theorem 2 (Fortnow–Santhanam, p. 6), Lemma 1 (complementary witness lemma, attributed to Dell and van Melkebeek, p. 7), Definition 8 (polynomial equivalence relation, p. 8), Definition 9 (and/or-cross-composition, p. 8), Theorem 5 and Corollary 2 (p. 9), Theorem 6 with its proof (pp. 10–11), the attribution of the k-Path kernel lower bound in Section 1 (p. 2) and the equivalence relation in the proof of Theorem 7 (p. 13). Locators follow that arXiv numbering; the journal numbering was not checked.
 
 <a id="borodin72"></a>
 ## borodin72
@@ -444,7 +449,7 @@ Ralph E. Gomory and T. C. Hu. “Multi-Terminal Network Flows.” *Journal of th
 <a id="grenet11"></a>
 ## grenet11
 
-Bruno Grenet. *An upper bound for the permanent versus determinant problem*. Manuscript, 2011 (the PDF is dated May 25, 2012). https://www-verimag.imag.fr/~grenetb/publis/Gre11.pdf . Checked against the author's PDF on 2026-11-08. Its unnumbered Lemma (an algebraic branching program of size `2ⁿ` on the subsets of `{1, …, n}` computes the permanent) and unnumbered Theorem (a `(2ⁿ - 1) × (2ⁿ - 1)` matrix with entries in `{x_ij} ∪ {-1, 0, 1}` has the permanent as determinant) are `Matrix.permanent_eq_det_grenetMatrix` and `Cslib.Circuits.Arithmetic.isProjection_permanent_det_two_pow_sub_one`. Grenet works over fields of characteristic other than two; the library proves the identity over every commutative ring. The library uses Grenet's construction with a different sign normalization: `-1` on the diagonal at every vertex other than the merged source and sink, rather than loops of weight `1` with weight `-1` on the first layer for even `n`. It proves the determinant identity through the adjugate rather than through cycle covers.
+Bruno Grenet. *An upper bound for the permanent versus determinant problem*. Manuscript, 2011 (the PDF is dated May 25, 2012). https://www-verimag.imag.fr/~grenetb/publis/Gre11.pdf . Checked against the author's PDF on 2026-11-08. Its unnumbered Lemma (an algebraic branching program of size `2ⁿ` on the subsets of `{1, …, n}` computes the permanent) is the private path-sum development in `Complexity/Foundations/LinearAlgebra/Matrix/GrenetPermanent.lean`. Its unnumbered Theorem (a `(2ⁿ - 1) × (2ⁿ - 1)` matrix with entries in `{x_ij} ∪ {-1, 0, 1}` has the permanent as determinant) is `Matrix.permanent_eq_det_grenetMatrix` together with `Matrix.grenetMatrix_apply_eq`. `Cslib.Circuits.Arithmetic.isProjection_permanent_det_two_pow_sub_one` is the strict projection form, Grenet's `dc_s(n) ≤ 2ⁿ - 1`. Grenet works over fields of characteristic other than two; the library proves the identity over every commutative ring. The library uses Grenet's construction with a different sign normalization: `-1` on the diagonal at every vertex other than the merged source and sink, rather than loops of weight `1` with weight `-1` on the first layer for even `n`. It proves the determinant identity through the adjugate rather than through cycle covers.
 
 <a id="grigoriev01"></a>
 ## grigoriev01
@@ -661,6 +666,11 @@ Lean development team. *Validating a Lean Proof*, The Lean Language Reference, a
 ## lemkehowson64
 
 Carlton E. Lemke and Joseph T. Howson, Jr. "Equilibrium Points of Bimatrix Games." *Journal of the Society for Industrial and Applied Mathematics* 12(2), 413–423, 1964. https://doi.org/10.1137/0112033 . Bibliographic data from the DOI record and secondary summaries; the paper's text was not consulted. It is cited only as the origin of the algorithm. Locators for the formalized statements follow [vonstengel07](#vonstengel07).
+
+<a id="lempelziv76"></a>
+## lempelziv76
+
+Abraham Lempel and Jacob Ziv. "On the Complexity of Finite Sequences." *IEEE Transactions on Information Theory* 22(1), 75–81, 1976. https://doi.org/10.1109/TIT.1976.1055501 . Bibliographic data from the DOI record. The paper's text was not inspected (it is paywalled). The definitions of reproduction, production, history and exhaustive history, and the statements that the exhaustive history is unique and has the fewest components (so that the complexity `c(S)` is its number of components), were taken from secondary summaries. No theorem numbers are cited.
 
 <a id="leskovecrajaramanullman20"></a>
 ## leskovecrajaramanullman20
@@ -947,6 +957,11 @@ Claude E. Shannon. *The Zero Error Capacity of a Noisy Channel*. IRE Transaction
 
 Lloyd Shapley and Herbert Scarf. *On Cores and Indivisibility*. Journal of Mathematical Economics 1(1), 23–37, 1974. https://doi.org/10.1016/0304-4068(74)90033-0 . Bibliographic metadata only; the publisher's text is paywalled and was not inspected. The housing market model and the top trading cycles algorithm (credited there to David Gale) are attributed to it as in [roughgarden13cs364a](#roughgarden13cs364a), Lecture #9, §3, and [schummervohra07](#schummervohra07), §10.6 (which lists the pages as 23–28; the Crossref record was not rechecked). The housing-market modules also attribute to it the competitive allocation at round-size prices (`isCompetitive_ttc`), from memory of the literature; this attribution is unverified.
 
+<a id="shenuspenskyvereshchagin17"></a>
+## shenuspenskyvereshchagin17
+
+Alexander Shen, Vladimir A. Uspensky and Nikolay Vereshchagin. *Kolmogorov Complexity and Algorithmic Randomness*. Mathematical Surveys and Monographs 220, American Mathematical Society, 2017. https://doi.org/10.1090/surv/220 . The printed edition was not inspected. The authors' open draft dated 6 October 2016 (https://www.lirmm.fr/~ashen/kolmbook-eng.pdf) was read on 2026-11-08 UTC: Section 2.2, Theorem 17 (optimal conditional decompressors), Theorem 18 (`C(x | y) ≤ C(x) + O(1)`, `C(x | x) = O(1)`), Theorem 20 (`C(x, y) ≤ C(x) + 2 log C(x) + C(y | x) + O(1)`), Theorem 21 (Kolmogorov–Levin, `O(log n)` form, proof by sections and large sections) and Theorem 22 (`C(x, y) = C(x) + C(y | x) + O(log C(x, y))`); Section 2.3, the definition `I(x : y) = C(y) − C(y | x)` and Theorem 23 (information symmetry). The draft's theorem numbers are not claimed to match the printed edition, so the library cites sections.
+
 <a id="sipser13"></a>
 ## sipser13
 
@@ -1051,6 +1066,11 @@ Andrew Chi-Chih Yao. "How to Generate and Exchange Secrets (Extended Abstract)."
 ## younger67
 
 Daniel H. Younger. "Recognition and Parsing of Context-Free Languages in Time n³." *Information and Control* 10(2), 189–208, 1967. https://doi.org/10.1016/S0019-9958(67)80007-X . Bibliographic metadata was checked on 2026-11-08; the article body was not inspected. It is cited, with [Kasami 1965](#kasami65), as an original source of the CYK algorithm.
+
+<a id="zivlempel77"></a>
+## zivlempel77
+
+Jacob Ziv and Abraham Lempel. "A Universal Algorithm for Sequential Data Compression." *IEEE Transactions on Information Theory* 23(3), 337–343, 1977. https://doi.org/10.1109/TIT.1977.1055714 . Bibliographic data from the DOI record and secondary summaries. It is cited as the origin of the sliding-window code that writes each phrase as (pointer, length, next symbol). The paper's text was not inspected, and its bounded lookahead and fixed-width codewords are not formalized.
 
 <a id="zivlempel78"></a>
 ## zivlempel78

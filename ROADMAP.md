@@ -979,11 +979,14 @@ DLOGTIME-uniform AC⁰ under explicit conventions.
   Fortnow–Santhanam theorem that an OR-distillation of an `NP`-hard problem gives
   `coNP ⊆ NP/poly`, in the class-wise form over a polynomial equivalence relation; polynomial
   compressions, OR-cross-composition and the Bodlaender–Jansen–Kratsch theorem ruling out
-  polynomial kernels and compressions unless `coNP ⊆ NP/poly`. Remaining
-  ([#3266](https://github.com/cslib-community/complexitylib/issues/3266)): concrete lower bounds
-  (k-Path, Clique parameterized by vertex cover); cross-compositions of bounded cost and the
-  complementary witness lemma; Yap's collapse `coNP ⊆ NP/poly → PH = Σ₃`; AND-composition
-  (Drucker).
+  polynomial kernels and compressions unless `coNP ⊆ NP/poly`; k-Path has no polynomial kernel
+  or compression unless `coNP ⊆ NP/poly`, by an OR-cross-composition from Hamiltonian path.
+  Remaining ([#3266](https://github.com/cslib-community/complexitylib/issues/3266)): further
+  concrete lower bounds (Clique parameterized by vertex cover); k-Path in `NP`; moving the
+  single-copy pendant gadget and `LongPath_npHard` from `Parameterized/LongPathKernel.lean` to a
+  `Problems/LongPath` hardness module beside the other `NP`-hardness results;
+  cross-compositions of bounded cost and the complementary witness lemma; Yap's collapse
+  `coNP ⊆ NP/poly → PH = Σ₃`; AND-composition (Drucker).
 - **Color coding** ([#2870](https://github.com/cslib-community/complexitylib/issues/2870)):
   colorful k-Path is in `FPT` by the dynamic programming over color sets. Remaining: random
   colorings (a fixed `k`-set is colorful with probability `K.descFactorial k / K ^ k ≥ e ^ (-k)`)
@@ -1394,11 +1397,14 @@ each statement against the numbered result. Organize modules by subject, not cha
   Trevisan and Kerenidis–de Wolf exponential bounds for two-query codes.
 - **Lempel–Ziv compression** ([#3312](https://github.com/cslib-community/complexitylib/issues/3312)):
   LZ78 incremental parsing, its lossless pair and bit codes, the distinct-parsing bound and the
-  worst-case length `⌈log₂ k⌉ n (1 + o(1))` are in `Algorithms/Lean/LempelZiv`. Remaining:
-  asymptotic optimality for stationary ergodic sources (Ziv's inequality, compression ratio tending
-  to the entropy rate, which needs stationary-process infrastructure), LZ77 and sliding-window
-  variants, and the links to Kolmogorov complexity and finite-state compressibility (Lempel–Ziv
-  complexity). Machine-level or `TimeM` costs of the parser are a separate endpoint.
+  worst-case length `⌈log₂ k⌉ n (1 + o(1))` are in `Algorithms/Lean/LempelZiv`. So are LZ77
+  sliding-window parsing with its lossless triple code, the optimality and uniqueness of the
+  exhaustive history (Lempel–Ziv complexity) and `#LZ77 ≤ #LZ78`
+  ([#3518](https://github.com/cslib-community/complexitylib/issues/3518)). Remaining: asymptotic
+  optimality for stationary ergodic sources (Ziv's inequality, compression ratio tending to the
+  entropy rate, which needs stationary-process infrastructure), bit-level LZ77 codes with a bounded
+  lookahead, and the links to Kolmogorov complexity and finite-state compressibility. Machine-level
+  or `TimeM` costs of the parsers are a separate endpoint.
 - **Boolean analysis:** hypercontractivity beyond `p ≤ 2 ≤ q` and its further applications
   (small-set expansion, the Level-k inequalities); coverage of O'Donnell's *Analysis of Boolean
   Functions* ([#2131](https://github.com/cslib-community/complexitylib/issues/2131)), including the
@@ -1605,6 +1611,11 @@ each statement against the numbered result. Organize modules by subject, not cha
   the multi-tape `plain` complexity (needs compiling partial recursive functions to `universalTM`
   programs), a prefix-free version, Chaitin's halting probability `Ω` and its randomness,
   Solovay's refinements, and the Kritchman–Raz proof of Gödel's second incompleteness theorem.
+  Beyond the plain Kolmogorov–Levin symmetry of information for the Partrec universal method
+  ([#3324](https://github.com/cslib-community/complexitylib/issues/3324)): the exact symmetry
+  `K(x, y) = K(x) + K(y | x, K(x)) + O(1)` of prefix complexity (Gács, Chaitin); symmetry of
+  information for the binary-string models (`condUniversalTM`) and for time-bounded complexity,
+  with its connection to one-way functions (Liu–Pass, Hirahara).
 - **Quantum computation** ([#896]): channel semantics and approximation costs alongside the
   circuit and measurement semantics, reusing suitable quantum foundations rather than
   incompatible models, and a bridge between the query and circuit models; complete problems for
