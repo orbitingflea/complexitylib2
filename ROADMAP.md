@@ -723,12 +723,16 @@ universe size, not supplied as unverified input tables. In dependency order:
 - A witness-carrying reduction structure once a client needs one, for example size bounds for
   Cook–Levin.
 - **Logical lower-bound methods:** building on the Ehrenfeucht–Fraïssé games for relational
-  vocabularies and the [nondefinability of connectivity](Complexity/Logics/FirstOrder/EhrenfeuchtFraisse/Connectivity.lean)
-  by interpretation from finite linear orders, add games for vocabularies with constants, pebble
-  games with their finite-variable equivalence theorems, Hanf and Gaifman locality, and further
-  nondefinability results such as acyclicity of finite graphs; then
-  counting and fixed-point expressiveness, including Cai–Fürer–Immerman-style separations. Connect
-  the methods to the ordered capture theorems, where FO(≤, BIT) defines EVEN.
+  vocabularies and the nondefinability of
+  [connectivity](Complexity/Logics/FirstOrder/EhrenfeuchtFraisse/Connectivity.lean),
+  [bipartiteness and acyclicity](Complexity/Logics/FirstOrder/EhrenfeuchtFraisse/GraphProperties.lean)
+  by interpretation from finite linear orders, add Hanf and Gaifman locality
+  ([locality track](https://github.com/cslib-community/complexitylib/issues/3015)) and use it for
+  further graph nondefinability results, such as planarity, Hamiltonicity and `k`-colorability
+  for `k ≥ 3`. Then add games for vocabularies with constants, pebble games with their
+  finite-variable equivalence theorems, and counting and fixed-point expressiveness, including
+  Cai–Fürer–Immerman-style separations. Connect the methods to the ordered capture theorems,
+  where FO(≤, BIT) defines EVEN.
 - **Undecidability in the finite:** Trakhtenbrot's theorem holds for raw relational sentences
   over unboundedly many symbols of arity at most three. Next, sharpen it to a fixed vocabulary
   and then to a single binary relation (Libkin, Theorem 9.2), and add a computable `Primcodable`
@@ -805,6 +809,11 @@ DLOGTIME-uniform AC⁰ under explicit conventions.
   bound, First Fit Decreasing's `11/9` bound and Lawler's faster knapsack FPTAS, building on the
   knapsack FPTAS and Next Fit and First Fit (`Algorithms/Lean/{Knapsack,BinPacking}`) and the
   `3/2` bin-packing hardness (`PCP/Approximation/BinPacking`).
+- **Scheduling:** beyond Graham's list-scheduling, LPT and precedence bounds in
+  `Algorithms/Lean/Scheduling`: real-valued processing times with precedences, Graham's anomaly
+  instances as checked examples, a general tight family for LPT, the Hochbaum–Shmoys PTAS for
+  `P || C_max`, and runtime bounds for `listSchedule` and `lptSchedule`
+  ([#2909](https://github.com/cslib-community/complexitylib/issues/2909)).
 - **A practical PCP construction:** a reasonably runnable construction and its cost on complete
   reductions; rotation certificates polynomial in the bit length of a vertex name; machine-level
   error reduction and extractors from expander walks, with certified seed and evaluation costs.
@@ -933,8 +942,19 @@ DLOGTIME-uniform AC⁰ under explicit conventions.
   `Algorithms/Lean/Query/Arith/Karatsuba`. Integer Karatsuba as De Morgan circuits for the full
   `2w`-bit product, with `O(w ^ log₂ 3)` gates, is in `Circuit/Boolean/Karatsuba`. Open: smaller
   constants, logarithmic or polylogarithmic depth, uniform generation, and a native or word-RAM
-  realization; Toom–Cook (`O(n ^ log₃ 5)` for Toom-3) and FFT-based multiplication over rings
-  with suitable roots of unity; and lower bounds such as rank `3` for the two-term product tensor.
+  realization; Toom–Cook (`O(n ^ log₃ 5)` for Toom-3); and lower bounds such as rank `3` for the
+  two-term product tensor.
+- **Fast Fourier transform and FFT multiplication**
+  ([#2979](https://github.com/cslib-community/complexitylib/issues/2979)): the radix-2
+  Cooley–Tukey transform over any commutative ring with `ω ^ (2 ^ k) = -1`, with exactly
+  `(n / 2) log₂ n` multiplications and `n log₂ n` additions, its inverse, the convolution theorem
+  and `O(n log n)` polynomial multiplication, is in `Algorithms/Lean/Query/Arith/FFT` and
+  `Foundations/Algebra/DFT`. Open: arbitrary lengths on coefficient lists (zero padding to a power
+  of two) with a list-level `UpperBound`; the transform as an arithmetic circuit of size
+  `O(n log n)` and depth `O(log n)`; rings without suitable roots of unity (Schönhage–Strassen over
+  `R[x] / (x ^ m + 1)` and the `O(n log n log log n)` integer bound); mixed-radix and Bluestein
+  transforms; and lower bounds such as Morgenstern's `Ω(n log n)` for bounded-coefficient linear
+  circuits.
 - **Real-algebraic decision procedures:** port the Sturm–Tarski query evaluator, recursive
   evaluator, implicit arithmetic, native space certificates and the ETR upper bound from
   [lean-canny](https://github.com/SamuelSchlesinger/lean-canny).
@@ -993,15 +1013,21 @@ each statement against the numbered result. Organize modules by subject, not cha
 
 - **Lifting** ([#890]): applications of deterministic lifting, such as partition-number
   separations, and randomized lifting.
+- **Randomized query complexity of game trees**
+  ([#3060](https://github.com/cslib-community/complexitylib/issues/3060)): the AND–OR tree on
+  `n = 4 ^ k` leaves is evasive, and the directional algorithm gives Motwani–Raghavan's
+  `R₀ ≤ n ^ (log₄ 3)` and Snir's sharp `R₀ = O(n ^ (log₂ α))`, `α = (1 + √33) / 4`, `≈ n ^ 0.7537`.
+  Remaining: the Saks–Wigderson lower bound `R₀ = Ω(n ^ (log₂ α))` for the NAND tree, which would
+  match the upper bound, via Yao's principle for expected cost; Monte Carlo (bounded-error) bounds
+  for the same trees; and Saks–Wigderson's general read-once formula and game-tree (MIN/MAX over
+  integer leaves) results.
 - Multiparty protocols, discrepancy and information complexity, direct-sum and direct-product
   results, and reductions to streaming, sketching and cell-probe lower bounds.
 - **Streaming and sketching:** native time and space bounds for Count-Min, including hash-seed
   storage and evaluation; the AMS sketches for `F₀` and `F_k` with `k > 2` and the `n^{Ω(1)}`
-  lower bounds for `F_k` with `k ≥ 6`; the remaining `Ω(n)` lower bounds of Alon–Matias–Szegedy
-  §3 for deterministic approximation and randomized exact computation of `F_k` with `k ≠ 1`
-  (Propositions 3.7 and 3.8); `ProbComp` samplers and native realizations of the AMS `F₂` sketch;
-  CountSketch, turnstile updates, and heavy-hitter recovery; multi-pass communication-to-streaming
-  transfers with pass counts.
+  lower bounds for `F_k` with `k ≥ 6`; `ProbComp` samplers and native realizations of the AMS `F₂`
+  sketch; CountSketch, turnstile updates, and heavy-hitter recovery; multi-pass
+  communication-to-streaming transfers with pass counts.
 - **Learning:** machine-certified running times for the LMN and Kushilevitz–Mansour learners;
   distributional problems and reductions, samplability, average-to-worst-case connections,
   PAC/agnostic learning, learning lower bounds, compression and refutation. For realizable
@@ -1321,14 +1347,14 @@ densities (expected revenue equals expected virtual welfare; Vickrey with a rese
   ([#2884](https://github.com/cslib-community/complexitylib/issues/2884)): crossing sequences,
   translation invariance, cut-and-paste across boundaries at different positions (with the
   crossing sequences on the kept sides), the quadratic palindrome lower bound for cslib
-  `SingleTapeTM` deciders that answer under the head, and the fact that bounded crossing sequences
-  at the input boundaries force `Language.IsRegular` are proved. Remaining: an explicit
-  single-tape palindrome decider in time `O(n²)`, which shows the bound is tight and gives a
-  positive instance of `DecidesPalindromesInTime`; a linear-time multi-tape palindrome decider,
-  which gives the one-tape/two-tape time separation; and the gap theorem that single-tape deciders
-  running in time `o(n log n)` accept only regular languages
-  ([#2965](https://github.com/cslib-community/complexitylib/issues/2965)), by bounding the
-  crossing sequences of a shortest counterexample.
+  `SingleTapeTM` deciders that answer under the head, the fact that bounded crossing sequences
+  at the input boundaries force `Language.IsRegular`, and the gap theorem that single-tape
+  deciders running in time `o(n log n)` accept only regular languages
+  ([#2965](https://github.com/cslib-community/complexitylib/issues/2965)) are proved.
+  Remaining: an explicit single-tape palindrome decider in time `O(n²)`, which shows the bound is
+  tight and gives a positive instance of `DecidesPalindromesInTime`; a linear-time multi-tape
+  palindrome decider, which gives the one-tape/two-tape time separation; and the nondeterministic
+  analogue of the gap theorem under the accept measure.
 - **Generic RAM:** uniform arbitrary-program dispatch and general width-selection and input-fit
   theorems; simulating operations by programs over smaller bases; structured programs and time
   classes over arbitrary value domains with weighted or bit costs; simulations between instances;
@@ -1408,9 +1434,11 @@ densities (expected revenue equals expected virtual welfare; Vickrey with a rese
 
 ### Parallel, external-memory and distributed models
 
-- **Parallel algorithms:** work–span semantics and a processor-scheduling or simulation theorem,
-  followed by prefix scan, sorting and graph primitives with both work and span bounds. State
-  processor access, synchronization and scheduling overhead explicitly.
+- **Parallel algorithms:** work–span semantics for a parallel language or PRAM model whose
+  computation DAGs feed the unit-time DAG scheduling bounds (work and span laws, greedy bound and
+  Brent's lemma are in `Algorithms/Lean/Scheduling/Brent.lean`), followed by prefix scan, sorting
+  and graph primitives with both work and span bounds. State processor access, synchronization and
+  scheduling overhead explicitly, including work stealing (Blumofe–Leiserson).
 - **Memory hierarchies:** external-memory and ideal-cache models with explicit capacity and
   block-size parameters; scanning, B-tree operations, blocked matrix multiplication and
   cache-oblivious sorting as clients. Connect arithmetic-step, memory-access and cache-miss
