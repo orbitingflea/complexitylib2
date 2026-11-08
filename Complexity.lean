@@ -12,13 +12,16 @@ public import Complexity.Algorithms.ExactTriangle.PieceBounds
 public import Complexity.Algorithms.ExactTriangle.Splitting
 public import Complexity.Algorithms.ExactTriangle.Weights
 public import Complexity.Algorithms.ExactTriangle.Witnesses
+public import Complexity.Algorithms.LatticeReduction.Babai
 public import Complexity.Algorithms.LatticeReduction.LLL
+public import Complexity.Algorithms.LatticeReduction.NearestPlane
 public import Complexity.Algorithms.LatticeReduction.Potential
 public import Complexity.Algorithms.LatticeReduction.RationalGramSchmidt
 public import Complexity.Algorithms.LatticeReduction.Reduced
 public import Complexity.Algorithms.Lean.AhoCorasick.Basic
 public import Complexity.Algorithms.Lean.AhoCorasick.KMP
 public import Complexity.Algorithms.Lean.AhoCorasick.Search
+public import Complexity.Algorithms.Lean.Arborescence.ChuLiuEdmonds
 public import Complexity.Algorithms.Lean.Assignment.Auction
 public import Complexity.Algorithms.Lean.Assignment.Basic
 public import Complexity.Algorithms.Lean.BellmanFord.Basic
@@ -171,6 +174,8 @@ public import Complexity.Algorithms.Lean.TreeDecomposition.IndependentSet
 public import Complexity.Algorithms.Lean.TreeDecomposition.IndependentSetFPT
 public import Complexity.Algorithms.Lean.VertexCover.Matching
 public import Complexity.Algorithms.Lean.Yates
+public import Complexity.Algorithms.Lean.ZFunction.Basic
+public import Complexity.Algorithms.Lean.ZFunction.Search
 public import Complexity.Algorithms.Matching.Edmonds
 public import Complexity.Algorithms.Matching.MVV
 public import Complexity.Algorithms.Matching.Tutte
@@ -2974,6 +2979,7 @@ public import Complexity.Computability.PCP.Approximation.Hastad
 public import Complexity.Computability.PCP.Approximation.Hastad.LinearTest
 public import Complexity.Computability.PCP.Approximation.IndependentSet
 public import Complexity.Computability.PCP.Approximation.Johnson
+public import Complexity.Computability.PCP.Approximation.KCenter
 public import Complexity.Computability.PCP.Approximation.LabelCover
 public import Complexity.Computability.PCP.Approximation.LabelCover.Incidence
 public import Complexity.Computability.PCP.Approximation.LabelCover.Repetition
@@ -3760,7 +3766,9 @@ public import Complexity.Crypto.Protocols.Cipher.LubyRackoff
 public import Complexity.Crypto.Protocols.Commitment.World
 public import Complexity.Crypto.Protocols.KEM.FujisakiOkamoto
 public import Complexity.Crypto.Protocols.MAC.CarterWegman
+public import Complexity.Crypto.Protocols.MPC.Advantage
 public import Complexity.Crypto.Protocols.MPC.Basic
+public import Complexity.Crypto.Protocols.MPC.BatchOT
 public import Complexity.Crypto.Protocols.MPC.Beaver
 public import Complexity.Crypto.Protocols.MPC.Broadcast
 public import Complexity.Crypto.Protocols.MPC.CircuitEval
@@ -3784,6 +3792,7 @@ public import Complexity.Crypto.Protocols.MPC.OTCommitment.Session
 public import Complexity.Crypto.Protocols.MPC.OTCommitment.World
 public import Complexity.Crypto.Protocols.MPC.PolyTime
 public import Complexity.Crypto.Protocols.MPC.SharedMul
+public import Complexity.Crypto.Protocols.MPC.Yao
 public import Complexity.Crypto.Protocols.PIR.Basic
 public import Complexity.Crypto.Protocols.PIR.CoveringCode
 public import Complexity.Crypto.Protocols.PIR.Cube
@@ -3957,9 +3966,13 @@ public import Complexity.DataStructure.Memory.RecordLink
 public import Complexity.DataStructure.Memory.Region
 public import Complexity.DataStructure.Memory.Spec
 public import Complexity.DataStructure.Memory.Triple
+public import Complexity.DataStructure.NearNeighbor.Hamming
+public import Complexity.DataStructure.NearNeighbor.LSH
 public import Complexity.DataStructure.ObliviousSequence
 public import Complexity.DataStructure.Online.Basic
+public import Complexity.DataStructure.Online.Randomized
 public import Complexity.DataStructure.Online.SkiRental
+public import Complexity.DataStructure.Online.SkiRental.Randomized
 public import Complexity.DataStructure.OrderedSet.Basic
 public import Complexity.DataStructure.OrderedSet.ExtractMin
 public import Complexity.DataStructure.OrderedSet.Spec
@@ -4238,6 +4251,7 @@ public import Complexity.Foundations.Combinatorics.Bregman
 public import Complexity.Foundations.Combinatorics.BudgetTuples
 public import Complexity.Foundations.Combinatorics.CentralBinomial
 public import Complexity.Foundations.Combinatorics.DepthReduction
+public import Complexity.Foundations.Combinatorics.Digraph.Arborescence
 public import Complexity.Foundations.Combinatorics.Digraph.MatrixTree
 public import Complexity.Foundations.Combinatorics.Expander.AffineFamily
 public import Complexity.Foundations.Combinatorics.Expander.AffinePlane
@@ -4520,6 +4534,7 @@ public import Complexity.Foundations.Data.List.BalancedFold
 public import Complexity.Foundations.Data.List.Basic
 public import Complexity.Foundations.Data.List.Blocks
 public import Complexity.Foundations.Data.List.Boole
+public import Complexity.Foundations.Data.List.CommonPrefix
 public import Complexity.Foundations.Data.List.Counting
 public import Complexity.Foundations.Data.List.DotProduct
 public import Complexity.Foundations.Data.List.Equiv
@@ -4945,6 +4960,7 @@ public import Complexity.GameTheory.Congestion.Basic
 public import Complexity.GameTheory.Congestion.CostSharing
 public import Complexity.GameTheory.Congestion.Hedge
 public import Complexity.GameTheory.Congestion.Nonatomic
+public import Complexity.GameTheory.Congestion.PLS
 public import Complexity.GameTheory.Congestion.PigouBound
 public import Complexity.GameTheory.Congestion.Stability
 public import Complexity.GameTheory.Mechanism.Bayesian
@@ -5270,11 +5286,13 @@ public import Complexity.Logics.Propositional.Resolution.Interpolation.PolyTime
 public import Complexity.Logics.Propositional.Resolution.Pigeonhole
 public import Complexity.Logics.Propositional.Resolution.PigeonholeSpace
 public import Complexity.Logics.Propositional.Resolution.Proof
+public import Complexity.Logics.Propositional.Resolution.ProverDelayer
 public import Complexity.Logics.Propositional.Resolution.Restrict
 public import Complexity.Logics.Propositional.Resolution.SizeWidth
 public import Complexity.Logics.Propositional.Resolution.Space
 public import Complexity.Logics.Propositional.Resolution.SpaceWidth
 public import Complexity.Logics.Propositional.Resolution.TreeLike
+public import Complexity.Logics.Propositional.Resolution.TreeLikePigeonhole
 public import Complexity.Logics.Propositional.Resolution.TreeLikeSpace
 public import Complexity.Logics.Propositional.Resolution.Tseitin
 public import Complexity.Logics.Propositional.Resolution.TseitinExpander
@@ -5350,6 +5368,7 @@ public import Complexity.Privacy.DifferentialPrivacy.ExponentialMechanism
 public import Complexity.Privacy.DifferentialPrivacy.Hamming
 public import Complexity.Privacy.DifferentialPrivacy.Packing
 public import Complexity.Privacy.DifferentialPrivacy.PrivacyLoss
+public import Complexity.Privacy.DifferentialPrivacy.RandomReconstruction
 public import Complexity.Privacy.DifferentialPrivacy.RandomizedResponse
 public import Complexity.Privacy.DifferentialPrivacy.Reconstruction
 public import Complexity.Privacy.DifferentialPrivacy.SmallUniverse
