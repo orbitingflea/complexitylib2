@@ -570,10 +570,11 @@ index links to canonical definitions rather than keeping a second set.
   transfer needs a quasi-linear-size Cook–Levin reduction.
 - Alternating time and space classes and bounded-alternation characterizations of PH; sharp
   bounds for sublinear space, distinct from polynomial-space simulation.
-- **Alternating space, `EXP ⊆ APSPACE` and `P ⊆ AL`**
-  ([#2873](https://github.com/cslib-community/complexitylib/issues/2873)): an alternating machine
-  checks one cell of a deterministic tableau. It guesses the cell's predecessor window
-  existentially and checks each predecessor cell universally.
+- **Alternating logspace, `P ⊆ AL`**
+  ([#2873](https://github.com/cslib-community/complexitylib/issues/2873)): play the circuit-value
+  game on the tableau of a polynomial-time machine (`Tableau.ValueGame`, which gives
+  `APSPACE = EXP`) in logarithmic space. This needs a word game machine whose round reads the
+  input from the input tape and keeps only the `O(log n)`-bit wire claim on its work tape.
 - **Pebble games and space lower bounds**
   ([#2995](https://github.com/cslib-community/complexitylib/issues/2995)): the black pebble game
   on a `Digraph`, the path-blocking lower-bound engine, and the exact prices `h + 2` of the
@@ -637,12 +638,19 @@ index links to canonical definitions rather than keeping a second set.
   `IsImmune`/`IsBiImmune`, a `P`-bi-immune set in `E` (`Classes/Immune/Construction.lean`) and
   Berman's theorem that `≤ᵖₘ`-complete sets for `E`/`EXP` are not `P`-immune
   (`Classes/Immune/Complete.lean`), witnessed by bounded halting with a binary time bound
-  (`Problems/BoundedHalting.lean`, [#3002](https://github.com/cslib-community/complexitylib/issues/3002)):
+  (`Problems/BoundedHalting.lean`, [#3002](https://github.com/cslib-community/complexitylib/issues/3002)),
+  and complexity cores, with Lynch's lemma that problems outside `P` have infinite polynomial cores
+  (`Classes/Immune/Core.lean`, `Classes/Immune/PolyTimeCore.lean`,
+  [#3080](https://github.com/cslib-community/complexitylib/issues/3080)):
   a SAT-free home for the machine enumeration of `Ladner/Basic.lean` shared by Ladner and the
   immunity modules;
+  the recursive core of Lynch's Lemma 1 (a decidable problem outside `P` has an infinite
+  *decidable* core); `EXP`
+  and `PSPACE` instances of the class-generic core theorem (`exists_infinite_isComplexityCore_subset`
+  needs only countability, finite sets and closure under unions); core density for intractable
+  sets (Orponen and Schöning) and core sizes for hard sets (Juedes and Lutz);
   `DTIME(t)`-bi-immune sets in larger time classes for general constructible `t`, the remaining
-  Balcázar–Schöning results, complexity cores (Lynch; Orponen and Schöning) and their sizes for
-  hard sets (Juedes and Lutz), almost-everywhere hardness, and measure strengthenings (almost every
+  Balcázar–Schöning results, almost-everywhere hardness, and measure strengthenings (almost every
   set in `E` is `P`-bi-immune, Mayordomo).
 - **Exponential-time complete problems**
   ([#3002](https://github.com/cslib-community/complexitylib/issues/3002)): after bounded halting
@@ -750,12 +758,14 @@ universe size, not supplied as unverified input tables. In dependency order:
   `Primcodable` bridge from Mathlib `L.Sentence` that transfers the results to Mathlib syntax
   ([#2886](https://github.com/cslib-community/complexitylib/issues/2886)).
 - **Logic and automata on words**, after Büchi–Elgot–Trakhtenbrot for finite words (MSO =
-  regular, [#2885](https://github.com/cslib-community/complexitylib/issues/2885)): the strict
-  inclusion FO[<] ⊊ MSO via EVEN, through a translation of first-order word sentences into
-  Mathlib's order language; FO[<] = star-free = aperiodic (McNaughton–Papert, Schützenberger);
+  regular) and FO[<] ⊊ MSO via EVEN
+  ([#2885](https://github.com/cslib-community/complexitylib/issues/2885)): FO[<] = star-free =
+  aperiodic (McNaughton–Papert, Schützenberger; star-free ⇒ FO is
+  [#3075](https://github.com/cslib-community/complexitylib/issues/3075));
   closure of regular languages under homomorphic images, upstream to cslib; the non-elementary
-  lower bound on formula-to-automaton translation; and Büchi's theorem for ω-words (S1S) over
-  cslib's ω-regular languages.
+  lower bound on formula-to-automaton translation; Büchi's theorem for ω-words (S1S) over
+  cslib's ω-regular languages; and MSO on trees: finite trees and tree automata
+  (Thatcher–Wright, Doner) and Rabin's theorem for infinite trees (S2S).
 - **Asymptotic probabilities:** extend the 0-1 laws for `G(n, 1/2)` and for uniform structures
   over finite relational vocabularies
   ([#2967](https://github.com/cslib-community/complexitylib/issues/2967)) to constant edge
@@ -1013,6 +1023,13 @@ each statement against the numbered result. Organize modules by subject, not cha
   (Theorems 3 and 4) and extractor (Theorem 1) are not yet formalized;
   condensers, limited independence, explicit expanders and space-bounded generators, with finite
   guarantees separate from uniform construction and decoding costs.
+- **Explicit Ramsey graphs** ([#3041](https://github.com/cslib-community/complexitylib/issues/3041)):
+  strongly explicit graphs with no `k`-clique and no `k`-independent set, on more vertices than
+  Nagy's `C(k - 1, 3)`, toward Erdős's existential `2 ^ (k / 2)`: Frankl–Wilson's
+  `k ^ Θ(log k / log log k)` vertices, then the disperser and extractor constructions of Cohen,
+  Chattopadhyay–Zuckerman and Li. Keep the clique and independence bounds separate from the
+  polynomial-time recognition and adjacency certificates on vertex names. An explicit graph on
+  `2 ^ Ω(k)` vertices is open.
 - **Codes:** Guruswami–Sudan list decoding and local decoding, keeping interpolation,
   list-size/agreement guarantees and decoding runtime as separate obligations; concrete
   list-decodable codes for Nisan–Wigderson.
@@ -1155,10 +1172,14 @@ each statement against the numbered result. Organize modules by subject, not cha
 
 ### Optimization and duality
 
-- **Linear programming:** rational input and output encodings, primal and dual certificates,
-  weak and strong duality, and infeasible or unbounded outcomes. Reuse Mathlib's convexity and
-  linear-algebra foundations; certify certificate checking and a polynomial-time LP algorithm
-  with bit complexity and intermediate precision accounted for.
+- **Linear programming** ([#2976](https://github.com/cslib-community/complexitylib/issues/2976)):
+  Fourier–Motzkin elimination, Farkas' lemma, weak and strong duality, the unbounded and
+  infeasible outcomes and complementary slackness over any linearly ordered field are in
+  `Foundations/LinearAlgebra/Matrix/{FourierMotzkin,Farkas,LinearProgramming}`. Remaining:
+  rational input and output encodings; bit-size bounds on basic solutions and Farkas
+  certificates (Cramer's rule with the Hadamard bound), giving LP feasibility in NP ∩ coNP with
+  machine-checked certificate verifiers; and a polynomial-time LP algorithm (ellipsoid or
+  interior point) with bit complexity and intermediate precision accounted for.
 - **Separation and optimization:** a precise oracle interface and a separation–optimization
   equivalence with its representation, accuracy and well-boundedness hypotheses. Extend to
   convex optimization through explicit oracle and numerical-error contracts.
