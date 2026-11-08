@@ -992,12 +992,10 @@ DLOGTIME-uniform AC⁰ under explicit conventions.
   `coNP ⊆ NP/poly`, in the class-wise form over a polynomial equivalence relation; polynomial
   compressions, OR-cross-composition and the Bodlaender–Jansen–Kratsch theorem ruling out
   polynomial kernels and compressions unless `coNP ⊆ NP/poly`; k-Path has no polynomial kernel
-  or compression unless `coNP ⊆ NP/poly`, by an OR-cross-composition from Hamiltonian path.
+  or compression unless `coNP ⊆ NP/poly`, by an OR-cross-composition from Hamiltonian path;
+  k-Path is `NP`-complete.
   Remaining ([#3266](https://github.com/cslib-community/complexitylib/issues/3266)): further
-  concrete lower bounds (Clique parameterized by vertex cover); k-Path in `NP`; moving the
-  single-copy pendant gadget and `LongPath_npHard` from `Parameterized/LongPathKernel.lean` to a
-  `Problems/LongPath` hardness module beside the other `NP`-hardness results;
-  cross-compositions of bounded cost and the complementary witness lemma; Yap's collapse
+  concrete lower bounds (Clique parameterized by vertex cover); cross-compositions of bounded cost and the complementary witness lemma; Yap's collapse
   `coNP ⊆ NP/poly → PH = Σ₃`; AND-composition (Drucker).
 - **Color coding** ([#2870](https://github.com/cslib-community/complexitylib/issues/2870)):
   colorful k-Path is in `FPT` by the dynamic programming over color sets. Remaining: random
@@ -1673,7 +1671,9 @@ each statement against the numbered result. Organize modules by subject, not cha
   universality of `{Λ(P(i)), H}`, Solovay–Kitaev and polynomial-time synthesis (the exact real
   simulation of controlled phase gates, `mem_BQP_iff_phase`, is done); for QMA ([#2876](https://github.com/cslib-community/complexitylib/issues/2876)), error
   reduction from an inverse-polynomial gap, strong error reduction that keeps the witness length,
-  `QMA ⊆ A₀PP`, mixed witnesses, QCMA and the local Hamiltonian problem; related query,
+  `QMA ⊆ A₀PP`, mixed witnesses, QCMA and the local Hamiltonian problem; BQP with arbitrary
+  elementary gates through Shi's constructive synthesis of real rotations
+  ([#3350](https://github.com/cslib-community/complexitylib/issues/3350)); related query,
   communication and interactive classes, with amplification, containments and complete problems.
   Supply the
   [quantum adversary models](#concurrent-and-quantum-security) needed by cryptographic
@@ -1788,12 +1788,21 @@ each statement against the numbered result. Organize modules by subject, not cha
   `Problems/LinearProgramming`. The simplex method on dictionaries with Bland's rule, its no-cycling
   theorem, termination within `N.choose m - 1` pivots, the optimality and unboundedness certificates
   and an optimal dual solution read off the final dictionary are in `Algorithms/Lean/Simplex`
-  ([#3370](https://github.com/cslib-community/complexitylib/issues/3370)). Remaining: a
-  polynomial-time LP algorithm (ellipsoid or interior point) with bit complexity and intermediate
-  precision accounted for; and LP optimization as a search problem with rational outputs. For the
-  simplex method: Phase I (an initial feasible dictionary or an infeasibility certificate); the
-  Klee–Minty cube on which Dantzig's rule makes `2ⁿ - 1` pivots; smoothed analysis (Spielman–Teng);
-  strongly polynomial special cases; and a costed implementation.
+  ([#3370](https://github.com/cslib-community/complexitylib/issues/3370)), as is the Klee–Minty
+  lower bound: Dantzig's rule makes exactly `2ⁿ - 1` pivots on the `n`-dimensional Klee–Minty
+  program ([#3441](https://github.com/cslib-community/complexitylib/issues/3441)). The geometric
+  core of the central-cut ellipsoid method over exact reals is in
+  `Foundations/Analysis/Convex/Ellipsoid` and `Algorithms/Ellipsoid/Basic`
+  ([#3240](https://github.com/cslib-community/complexitylib/issues/3240)): half-ellipsoid
+  containment, the volume ratio `exp (-1 / (2 (n + 1)))` and the iteration bound against a strong
+  separation oracle. Remaining: a polynomial-time LP algorithm (ellipsoid or interior point) with
+  bit complexity and intermediate precision accounted for; and LP optimization as a search problem
+  with rational outputs. For the ellipsoid route that means a finite-precision update with its
+  rounding error, a volume lower bound for full-dimensional rational polytopes, the reduction of
+  feasibility to that case, and a machine-level running-time bound. For the simplex method: Phase I
+  (an initial feasible dictionary or an infeasibility certificate); exponential lower bounds for
+  other pivoting rules, such as Bland's rule on Klee–Minty-type programs (Avis–Chvátal 1978);
+  smoothed analysis (Spielman–Teng); strongly polynomial special cases; and a costed implementation.
 - **Extension complexity** ([#3258](https://github.com/cslib-community/complexitylib/issues/3258)):
   nonnegative rank, slack matrices, extended formulations with free equations, Yannakakis's
   factorization theorem `xc P = rank₊ S` for nontrivial polytopes, and the rectangle covering bound
