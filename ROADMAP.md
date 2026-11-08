@@ -970,6 +970,12 @@ each statement against the numbered result. Organize modules by subject, not cha
 - **Codes:** Guruswami–Sudan list decoding and local decoding, keeping interpolation,
   list-size/agreement guarantees and decoding runtime as separate obligations; concrete
   list-decodable codes for Nisan–Wigderson.
+- **Locally decodable codes** ([#2929](https://github.com/cslib-community/complexitylib/issues/2929)):
+  query-bounded decoders, the Hadamard code, Katz–Trevisan smoothing for oblivious-read decoders
+  and the one-query bound are in place. Remaining: the adaptive-to-non-adaptive reduction (so that
+  smoothing covers every adaptive decoder), the matching/XOR normal form and the Katz–Trevisan bound
+  `n ≥ Ω(k^{q/(q-1)})` with explicit `(δ, ε, q)` dependence, and the Goldreich–Karloff–Schulman–
+  Trevisan and Kerenidis–de Wolf exponential bounds for two-query codes.
 - **Boolean analysis:** hypercontractivity beyond `p ≤ 2 ≤ q` and its applications; coverage of
   O'Donnell's *Analysis of Boolean Functions*
   ([#2131](https://github.com/cslib-community/complexitylib/issues/2131)), including the book-form
@@ -1126,6 +1132,12 @@ reusing graph and matroid foundations and the shared data-structure interfaces.
   residual-network and duality machinery. Remaining matching directions: the decomposition of
   `M ⊕ M*` into vertex-disjoint augmenting paths, general (non-bipartite) matching with blossoms,
   and a sparse Hopcroft–Karp entry point that also charges construction of the adjacency lists.
+- **Graph search and shortest paths** ([#3053](https://github.com/cslib-community/complexitylib/issues/3053)):
+  after `TimeM` depth-first search, topological sort and Bellman–Ford
+  (`Algorithms/Lean/{DFS,BellmanFord}`), strongly connected components in linear time with the
+  linear-time 2-SAT algorithm as a client of the `TwoSAT` problem module; the Bellman–Ford
+  predecessor tree; and bridges from Bellman–Ford to Dijkstra's distances and to the matrix
+  shortest-path model.
 - **Matroids:** matroid intersection with explicit oracle and implementation costs, beyond the
   weighted greedy algorithm and its independence-oracle interface.
 - **Submodular optimization:** further constraints and approximation bounds beyond the
@@ -1178,17 +1190,24 @@ reusing graph and matroid foundations and the shared data-structure interfaces.
 ### Mechanism design ([#2947](https://github.com/cslib-community/complexitylib/issues/2947))
 
 Single-parameter mechanisms with Myerson's Lemma for arbitrary monotone allocation rules, the
-Vickrey auction, knapsack auctions with welfare-maximizing rules, and Groves/VCG mechanisms over
-finite outcome sets are in `GameTheory/Mechanism`. Remaining directions:
+Vickrey auction, knapsack auctions with welfare-maximizing rules, Groves/VCG mechanisms over
+finite outcome sets, and Myerson's optimal auction for independent regular distributions with
+densities (expected revenue equals expected virtual welfare; Vickrey with a reserve price) are in
+`GameTheory/Mechanism`. Remaining directions:
 
 - **Single-parameter corollaries:** the sponsored-search payment formula (rank-by-bid
   allocation with slot click-through rates) and the greedy knapsack rule with its monotonicity
   and ½-approximation. State allocation algorithms with charged running time, so that
   approximation and truthfulness are both proved for an actual algorithm.
-- **Revenue maximization:** Bayesian single-parameter environments with independent priors,
-  expected revenue equals expected virtual welfare, and Myerson's optimal auction for regular
-  distributions. Begin with finitely supported or density-based distributions, whichever the
-  probability API supports better, and keep regularity and ironing explicit.
+- **Revenue maximization beyond the regular DSIC case:** ironing for irregular distributions;
+  regular distributions (Lecture 5, Definition 3.1) whose virtual valuation is unbounded below at
+  `0`, such as `f(v) = 2v` on `[0, 1]`, which the endpoint convention of `IsRegular` excludes (this
+  needs an explicit treatment of zero bids);
+  optimality among Bayesian incentive-compatible mechanisms (interim allocation rules, the
+  revelation principle); revenue equivalence and the symmetric first-price equilibrium
+  `b(v) = (n - 1) v / n` for i.i.d. uniform values; a measurable virtual-welfare maximizer for a
+  finite feasible set, removing the measurability hypothesis; and distributions without a bounded
+  density (atoms, unbounded support).
 - **Multi-parameter characterizations:** Groves mechanisms as the only DSIC welfare maximizers
   on rich valuation domains (Green–Laffont, Holmström), and limits of VCG such as revenue
   monotonicity and collusion.
@@ -1222,8 +1241,10 @@ finite outcome sets are in `GameTheory/Mechanism`. Remaining directions:
   Metropolis chains and path coupling, with the lazy hypercube walk
   (`Probability/BitString/LazyRandomWalk`, #2857) and Glauber dynamics for `q > 2Δ` colorings
   (`Probability/MarkovChain/Coloring`, #2933) as clients. Extend with conductance,
-  canonical-path and spectral-gap arguments, and with the reduction from approximately counting
-  colorings to sampling them with the Glauber chain. Implement Metropolis sampling for encoded
+  canonical-path and spectral-gap arguments. For the reduction from approximately counting
+  colorings to sampling them, frozen-boundary Glauber dynamics and the ratio bound are in place
+  (`Probability/MarkovChain/Coloring/Ratio`); finish with the product estimator and its
+  second-moment analysis (#3003). Implement Metropolis sampling for encoded
   rational target weights, charging initialization, arithmetic and every transition, with support and
   mixing hypotheses explicit.
 - **FPRAS and almost-uniform sampling:** an almost-uniform sampling (FPAUS) interface with
@@ -1399,9 +1420,15 @@ finite outcome sets are in `GameTheory/Mechanism`. Remaining directions:
   reductions with corresponding algorithmic examples. The deterministic LOCAL model on oriented
   cycles, Cole–Vishkin and Linial's `log*` bound, the bridge to Mathlib's `cycleGraph` colourings
   and the `Θ(log* n)` bounds for maximal independent sets on cycles exist
-  (`Complexity/Computability/Distributed/OrientedCycle/`). Open: general graphs with port
-  numbering, Linial's `O(Δ²)` colouring and `(Δ + 1)`-colouring/MIS on bounded-degree graphs,
-  CONGEST message bounds, randomized LOCAL algorithms, and closing the additive gaps between the
+  (`Complexity/Computability/Distributed/OrientedCycle/`). For LCL problems without inputs on
+  directed cycles (Chang–Studený–Suomela, Table 1), the `O(1)`/`Ω(log* n)` gap and the
+  `Θ(log* n)` bound for problems with a flexible state exist (`OrientedCycle/LCL/`). Open: the
+  `Ω(n)` lower bound for problems without a flexible state
+  ([#3009](https://github.com/cslib-community/complexitylib/issues/3009)), a tight
+  `½ log* n + O_|L|(1)` upper bound for flexible problems, LCLs with inputs, on paths (directed
+  or undirected) and on undirected cycles, general graphs with port numbering, Linial's `O(Δ²)` colouring and
+  `(Δ + 1)`-colouring/MIS on bounded-degree graphs, CONGEST message bounds, randomized LOCAL
+  algorithms such as Luby's MIS, and closing the additive gaps between the
   `⌈(log* n) / 2⌉ + 3` and `(log* n) / 2 - 1` round bounds for 3-colouring cycles and between
   `⌈(log* n) / 2⌉ + 5` and `(log* n) / 2 - 2` for MIS on cycles.
 
