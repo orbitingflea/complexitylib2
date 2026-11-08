@@ -2284,6 +2284,7 @@ public import Complexity.Computability.DecisionTree.Symmetric
 public import Complexity.Computability.Distributed.Byzantine.Basic
 public import Complexity.Computability.Distributed.Byzantine.NodeBound
 public import Complexity.Computability.Distributed.Byzantine.OralMessages
+public import Complexity.Computability.Distributed.Byzantine.RecursiveOralMessages
 public import Complexity.Computability.Distributed.OrientedCycle.Basic
 public import Complexity.Computability.Distributed.OrientedCycle.ColeVishkin
 public import Complexity.Computability.Distributed.OrientedCycle.Graph
@@ -4444,6 +4445,7 @@ public import Complexity.Foundations.Data.BitString.List.Operations
 public import Complexity.Foundations.Data.BitString.List.Positions
 public import Complexity.Foundations.Data.BitString.List.PrefixFree
 public import Complexity.Foundations.Data.BitString.List.Vote
+public import Complexity.Foundations.Data.BitString.MajorityVote
 public import Complexity.Foundations.Data.BitString.PadBlocks
 public import Complexity.Foundations.Data.BitString.Parity
 public import Complexity.Foundations.Data.BitString.Parity.DotProduct
@@ -5228,6 +5230,9 @@ public import Complexity.Logics.Propositional.CSP.AffineTemplate
 public import Complexity.Logics.Propositional.CSP.BinaryDigits
 public import Complexity.Logics.Propositional.CSP.Boolean
 public import Complexity.Logics.Propositional.CSP.CNFTemplate
+public import Complexity.Logics.Propositional.CSP.Edge.Augmenting
+public import Complexity.Logics.Propositional.CSP.Edge.Defects
+public import Complexity.Logics.Propositional.CSP.Edge.Walk
 public import Complexity.Logics.Propositional.CSP.ExactlyOne
 public import Complexity.Logics.Propositional.CSP.HardCore
 public import Complexity.Logics.Propositional.CSP.Occurrence
