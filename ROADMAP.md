@@ -1001,10 +1001,12 @@ DLOGTIME-uniform AC⁰ under explicit conventions.
   derandomization.
 - **Packing approximation**
   ([#2964](https://github.com/cslib-community/complexitylib/issues/2964)): the asymptotic
-  approximation scheme for bin packing of Fernandez de la Vega and Lueker, First Fit's `17/10`
-  bound, First Fit Decreasing's `11/9` bound and Lawler's faster knapsack FPTAS, building on the
-  knapsack FPTAS and Next Fit and First Fit (`Algorithms/Lean/{Knapsack,BinPacking}`) and the
-  `3/2` bin-packing hardness (`PCP/Approximation/BinPacking`).
+  approximation scheme for bin packing of Fernandez de la Vega and Lueker, Dósa and Sgall's
+  absolute bound `FF ≤ ⌊17/10 * OPT⌋` for First Fit and their matching lower-bound instances,
+  First Fit Decreasing's `11/9` bound and Lawler's faster knapsack FPTAS, building on the knapsack
+  FPTAS, Next Fit, First Fit's `17/10 * OPT + 4/5` bound
+  (`Algorithms/Lean/{Knapsack,BinPacking}`) and the `3/2` bin-packing hardness
+  (`PCP/Approximation/BinPacking`).
 - **Scheduling:** beyond Graham's list-scheduling, LPT and precedence bounds in
   `Algorithms/Lean/Scheduling`: real-valued processing times with precedences, Graham's anomaly
   instances as checked examples, a general tight family for LPT, the Hochbaum–Shmoys PTAS for
@@ -1649,13 +1651,11 @@ reusing graph and matroid foundations and the shared data-structure interfaces.
   beyond Karger's and Karger–Stein's randomized algorithms (`Algorithms/WordRAM/Karger`) and the
   deterministic Stoer–Wagner algorithm with the maximum adjacency ordering lemma and an `O(n³)`
   `TimeM` bound on natural-number weights (`Algorithms/Lean/StoerWagner`,
-  `WeightedCut/MAOrdering`): the `O(n m + n² log n)` priority-queue version, real weights,
+  `WeightedCut/MAOrdering`), both built on the probability-free contraction API of
+  `WeightedCut/Contraction`: the `O(n m + n² log n)` priority-queue version, real weights,
   Nagamochi–Ibaraki sparse certificates for `k`-edge-connectivity,
   Karger's near-linear minimum cut algorithm, and Queyranne's minimization of symmetric submodular
-  functions (which generalizes the maximum adjacency argument to hypergraph cuts). Moving the
-  contraction API (`contractMatrix`, `contractPart`, `contractCut`) from `WordRAM/Karger` into
-  `WeightedCut` ([#3403](https://github.com/cslib-community/complexitylib/issues/3403)) would let
-  both algorithms share one foundation.
+  functions (which generalizes the maximum adjacency argument to hypergraph cuts).
 - **Gomory–Hu trees** ([#3320](https://github.com/cslib-community/complexitylib/issues/3320)):
   remaining after the existence theorem for cut-equivalent trees of symmetric submodular set
   functions and weighted undirected graphs, with flow-equivalence, the minimum-cut triangle

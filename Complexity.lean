@@ -21,6 +21,7 @@ public import Complexity.Algorithms.Lean.Assignment.Basic
 public import Complexity.Algorithms.Lean.BellmanFord.Basic
 public import Complexity.Algorithms.Lean.BinPacking.Basic
 public import Complexity.Algorithms.Lean.BinPacking.FirstFit
+public import Complexity.Algorithms.Lean.BinPacking.FirstFitWeight
 public import Complexity.Algorithms.Lean.BinPacking.NextFit
 public import Complexity.Algorithms.Lean.BinarySearch
 public import Complexity.Algorithms.Lean.CYK.Basic
@@ -3781,6 +3782,9 @@ public import Complexity.DataStructure.ApproximateMembership.Spec
 public import Complexity.DataStructure.ApproximateMembership.WordRAM.QuotientFilter
 public import Complexity.DataStructure.ApproximateMembership.WordRAM.QuotientFilter.Cluster
 public import Complexity.DataStructure.ApproximateMembership.WordRAM.QuotientFilter.SlotArray
+public import Complexity.DataStructure.CellProbe.Randomized.ObliviousSequence
+public import Complexity.DataStructure.CellProbe.Randomized.StateTransition
+public import Complexity.DataStructure.CellProbe.StateTransition
 public import Complexity.DataStructure.CountMin.Basic
 public import Complexity.DataStructure.CountMin.LinearHash
 public import Complexity.DataStructure.CountMin.Probability
@@ -4296,6 +4300,7 @@ public import Complexity.Foundations.Combinatorics.TupleCover
 public import Complexity.Foundations.Combinatorics.UniformSchedules
 public import Complexity.Foundations.Combinatorics.WeightBudget
 public import Complexity.Foundations.Combinatorics.WeightedCut
+public import Complexity.Foundations.Combinatorics.WeightedCut.Contraction
 public import Complexity.Foundations.Combinatorics.WeightedCut.MAOrdering
 public import Complexity.Foundations.Combinatorics.WeightedCut.MinCutBetween
 public import Complexity.Foundations.Combinatorics.WeightedCut.Multigraph
@@ -5346,6 +5351,7 @@ public import Complexity.Probability.PMF.Markov
 public import Complexity.Probability.PMF.Option
 public import Complexity.Probability.PMF.Option.Bind
 public import Complexity.Probability.PMF.TailQuantile
+public import Complexity.Probability.PMF.ToReal
 public import Complexity.Probability.PMF.TwoBranch
 public import Complexity.Probability.PMF.Uniform
 public import Complexity.Probability.PMF.UniformBound
