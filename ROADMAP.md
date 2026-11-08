@@ -1788,10 +1788,14 @@ each statement against the numbered result. Organize modules by subject, not cha
 - **Online convex optimization:** projected online gradient descent and its `O(GD√T)` and
   strongly convex `O(log T)` regret bounds (Zinkevich; Hazan Theorems 3.1 and 3.3), over the
   metric projection onto complete convex sets, are in `MachineLearning/OnlineLearning`
-  ([#2983](https://github.com/cslib-community/complexitylib/issues/2983)). Remaining:
-  follow-the-regularized-leader and online mirror descent (recovering Hedge as the entropic
-  case), the `Ω(GD√T)` lower bound, online Newton step for exp-concave losses, Blackwell
-  approachability and calibration, and finite-precision implementations.
+  ([#2983](https://github.com/cslib-community/complexitylib/issues/2983)).
+  Follow-the-regularized-leader with a fixed strongly convex regularizer (regret equality, be the
+  leader, the `L² / (2μ)` stability bound, tuned and linearized-loss forms) and Euclidean lazy
+  projection are there too ([#3160](https://github.com/cslib-community/complexitylib/issues/3160)).
+  Remaining: entropic FTRL recovering Hedge with `√(2T ln n)`, time-varying regularizers and
+  local-norm bounds, online mirror descent (Bregman divergences, agile OMD), the `Ω(GD√T)` lower
+  bound, online Newton step for exp-concave losses, Blackwell approachability and calibration,
+  and finite-precision implementations.
 
 ### Combinatorial optimization
 
@@ -2208,6 +2212,15 @@ Arrow's theorem). Remaining directions:
 
 ### String algorithms
 
+- **Burrows–Wheeler transform** ([#3354](https://github.com/cslib-community/complexitylib/issues/3354)):
+  the rotation-sort transform with its index, the LF-mapping (row and occurrence forms), the
+  decoding formula, invertibility and a table-driven `TimeM` decoder with exactly `|w|` LF steps
+  are in `Algorithms/Lean/BurrowsWheeler`. Remaining: charged construction of the rank tables and
+  of the forward transform (comparison counts for the rotation sort); move-to-front and entropy
+  coding of the last column; compression bounds in terms of the empirical entropy `H_k` (Manzini);
+  FM-index backward search and rank/select structures; and the link to suffix arrays for
+  sentinel-terminated words, once [#3331](https://github.com/cslib-community/complexitylib/issues/3331)
+  lands.
 - **Suffix arrays** ([#3331](https://github.com/cslib-community/complexitylib/issues/3331)):
   `Algorithms/Lean/SuffixArray` has the suffix-array specification with uniqueness, a sort-based
   reference construction, Kasai et al.'s LCP construction with at most `2|w|` character

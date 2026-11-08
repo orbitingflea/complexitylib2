@@ -32,6 +32,8 @@ public import Complexity.Algorithms.Lean.BinPacking.NextFit
 public import Complexity.Algorithms.Lean.BinPacking.Online
 public import Complexity.Algorithms.Lean.BinPacking.OnlineLowerBound
 public import Complexity.Algorithms.Lean.BinarySearch
+public import Complexity.Algorithms.Lean.BurrowsWheeler.Basic
+public import Complexity.Algorithms.Lean.BurrowsWheeler.Decode
 public import Complexity.Algorithms.Lean.CYK.Basic
 public import Complexity.Algorithms.Lean.DFS.Basic
 public import Complexity.Algorithms.Lean.DFS.TopologicalSort
@@ -3729,6 +3731,7 @@ public import Complexity.Crypto.Computational.ZeroKnowledge.Amplification
 public import Complexity.Crypto.Computational.ZeroKnowledge.AuxClock
 public import Complexity.Crypto.Computational.ZeroKnowledge.Levin
 public import Complexity.Crypto.Computational.ZeroKnowledge.Soundness
+public import Complexity.Crypto.Encoding
 public import Complexity.Crypto.Game
 public import Complexity.Crypto.Game.CloseTo
 public import Complexity.Crypto.Game.CloseTo.RandomOracle
@@ -4103,6 +4106,7 @@ public import Complexity.Foundations.Analysis.BernoulliInequality
 public import Complexity.Foundations.Analysis.Brouwer
 public import Complexity.Foundations.Analysis.Calculus.Taylor
 public import Complexity.Foundations.Analysis.Convex.FirstOrder
+public import Complexity.Foundations.Analysis.Convex.Strong
 public import Complexity.Foundations.Analysis.ENNRealFraction
 public import Complexity.Foundations.Analysis.ENNRealTsum
 public import Complexity.Foundations.Analysis.Fourier.ZModMultiples
@@ -4425,6 +4429,7 @@ public import Complexity.Foundations.Data.BitString.Counter
 public import Complexity.Foundations.Data.BitString.CoverCoding
 public import Complexity.Foundations.Data.BitString.CyclicDifference
 public import Complexity.Foundations.Data.BitString.DeltaMatroid.Basic
+public import Complexity.Foundations.Data.BitString.DeltaMatroid.Composition
 public import Complexity.Foundations.Data.BitString.DeltaMatroid.Operations
 public import Complexity.Foundations.Data.BitString.Enumeration
 public import Complexity.Foundations.Data.BitString.Flip
@@ -4555,6 +4560,7 @@ public import Complexity.Foundations.Data.List.Perm
 public import Complexity.Foundations.Data.List.Range
 public import Complexity.Foundations.Data.List.RowMajor
 public import Complexity.Foundations.Data.List.SelectDistinct
+public import Complexity.Foundations.Data.List.SortedCount
 public import Complexity.Foundations.Data.List.SumIndicator
 public import Complexity.Foundations.Data.List.TwoBitTable
 public import Complexity.Foundations.Data.Matrix.Binary
@@ -5229,6 +5235,7 @@ public import Complexity.Logics.Propositional.CSP.PartitionFunction
 public import Complexity.Logics.Propositional.CSP.Permanent
 public import Complexity.Logics.Propositional.CSP.PrimitivePositive
 public import Complexity.Logics.Propositional.CSP.Table
+public import Complexity.Logics.Propositional.CSP.Table.DeltaMatroid
 public import Complexity.Logics.Propositional.CSP.ToBoolean
 public import Complexity.Logics.Propositional.CSP.ToCNF
 public import Complexity.Logics.Propositional.CSP.ToCNF.Count
@@ -5315,6 +5322,7 @@ public import Complexity.Logics.SecondOrder.WordMSO.OfRegular
 public import Complexity.Logics.SecondOrder.WordMSO.Separation
 public import Complexity.Logics.SecondOrder.WordMSO.StarFree
 public import Complexity.Logics.SecondOrder.WordMSO.ToRegular
+public import Complexity.MachineLearning.OnlineLearning.FTRL
 public import Complexity.MachineLearning.OnlineLearning.Hedge
 public import Complexity.MachineLearning.OnlineLearning.MistakeBound.Agnostic
 public import Complexity.MachineLearning.OnlineLearning.MistakeBound.Basic
