@@ -727,8 +727,11 @@ index links to canonical definitions rather than keeping a second set.
   query machines are proved, with arbitrary saved outer state/output continuations and an additive
   native space bound. Generic extraction from existing native machines and ordinary logspace
   word-function certificates is proved, with streaming output and workspace-derived saved-state
-  bounds. Preparing supplied headers from live query generators, regenerating answer words and
-  the resource-certified suffix loop remain open;
+  bounds. Runtime frames can now be generated from ordinary tail/compact-metadata programs and
+  consumed through actual recomputation composition, with caller-input header/virtual-length
+  bounds. Live local-query suffix extraction uses the existing counter-program API; a certified
+  general ceiling-logarithmic cut computation is still required. Unbounded answer-stream
+  generation (including its native oracle contract) and the resource-certified suffix loop remain open;
   bounded and many-one self-reducibility specializations; concrete complete self-reducible
   problems (Theorem 3.5); Section 4
   bounded/logarithmic-query results and
@@ -1388,6 +1391,13 @@ each statement against the numbered result. Organize modules by subject, not cha
   `BinomialRandomGraph/IsolatedVertices.lean`. Remaining: the limit `e ^ (-e ^ (-c))` at
   `p = (log n + c) / n` (the Poisson limit of the number of isolated vertices), the hitting-time
   theorem, and the translation to `G(n, m)`.
+- **Random graph thresholds** ([#3275](https://github.com/cslib-community/complexitylib/issues/3275)):
+  for Mathlib's binomial random graph `G(n, p)`, the first-moment `0`-statement for every fixed
+  subgraph and the triangle threshold `p = 1 / n` (both moments, explicit bounds) are in
+  `Foundations/Probability/Combinatorics/BinomialRandomGraph`. Remaining: the second-moment
+  `1`-statement for balanced graphs at `n ^ (-v / e)` and Bollobás's general threshold
+  `n ^ (-1 / m(H))`, Janson's inequality and the Poisson limit at the threshold. The connectivity
+  threshold `log n / n` is the item above.
 - **Explicit Ramsey graphs** ([#3041](https://github.com/cslib-community/complexitylib/issues/3041)):
   strongly explicit graphs with no `k`-clique and no `k`-independent set, on more vertices than
   Frankl–Wilson's `k ^ Θ(log k / log log k)`, toward Erdős's existential `2 ^ (k / 2)`: the
