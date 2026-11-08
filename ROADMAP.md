@@ -564,6 +564,14 @@ index links to canonical definitions rather than keeping a second set.
   ([#2873](https://github.com/cslib-community/complexitylib/issues/2873)): an alternating machine
   checks one cell of a deterministic tableau. It guesses the cell's predecessor window
   existentially and checks each predecessor cell universally.
+- **Pebble games and space lower bounds**
+  ([#2995](https://github.com/cslib-community/complexitylib/issues/2995)): the black pebble game
+  on a `Digraph`, the path-blocking lower-bound engine, and the exact prices `h + 2` of the
+  complete binary tree and the pyramid (Cook) are in `Complexity/Computability/Pebbling`. Next:
+  connect `s`-pebble black pebblings to `s`-register evaluation of `Cslib.Circuits.Program`
+  straight-line programs; black-white and reversible pebbling; the Hopcroft–Paul–Valiant
+  `O(n / log n)` pebbling of bounded-indegree DAGs and the matching Paul–Tarjan–Celoni
+  `Ω(n / log n)` family; Gilbert–Tarjan and Lengauer–Tarjan time–space trade-offs.
 - **Deeper consequences of a Boolean-hierarchy collapse:** Kadin's sparse `S` with
   `coNP ⊆ NP^S`, and the collapse of `PH` into `P^{NP^{NP}[O(log n)]} ⊆ Δ₃ᴾ`, which follows from
   results of Wagner and of Chang and Kadin, not from Kadin's 1988 argument (see his erratum).
@@ -1016,10 +1024,14 @@ each statement against the numbered result. Organize modules by subject, not cha
   `Θ(√n / ε²)` sample bounds for `ε ≤ 1/2` on even domains: the collision tester and Paninski's
   lower bound. Identity testing to any fixed distribution reduces to uniformity on `4n` points
   through Goldreich's kernel, which gives `O(√n / ε²)` samples
-  ([#2930](https://github.com/cslib-community/complexitylib/issues/2930)). Remaining: further access
-  models, the odd-domain lower bound, instance-optimal identity testing, closeness, tolerant and
-  structured-property distribution testing, canonical testers and further query and sample lower
-  bounds.
+  ([#2930](https://github.com/cslib-community/complexitylib/issues/2930)). Closeness testing has
+  the two-sample model and the collision-based tolerant `ℓ₂` tester with `O(√b / ε²)` samples
+  when both squared `ℓ₂` norms are at most `b`, hence `O(n / ε²)` samples in statistical distance
+  ([#3017](https://github.com/cslib-community/complexitylib/issues/3017)). Remaining: the optimal
+  `O(n^{2/3} ε^{-4/3} + √n ε^{-2})` closeness tester by flattening and its matching lower bound,
+  further access models, the odd-domain lower bound, instance-optimal identity testing, tolerant
+  and structured-property distribution testing, canonical testers and further query and sample
+  lower bounds.
 - **Kolmogorov complexity and metacomplexity** ([#798], [#884]): the near-linear threshold regime
   of Liu–Pass Theorem 3.1 (c), hardness for every polynomial `t(n) ≥ (1 + ε)n` rather than above a
   polynomial threshold, which needs a rate-1 efficient conditional EP-PRG running in `n + O(n^c)`

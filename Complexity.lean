@@ -2765,6 +2765,10 @@ public import Complexity.Computability.PCP.RegularConstraintGraph
 public import Complexity.Computability.PCP.SelectedComposition
 public import Complexity.Computability.PCP.ThreeSAT
 public import Complexity.Computability.PCP.TwoProverGame
+public import Complexity.Computability.Pebbling.Basic
+public import Complexity.Computability.Pebbling.BinaryTree
+public import Complexity.Computability.Pebbling.Blocking
+public import Complexity.Computability.Pebbling.Pyramid
 public import Complexity.Computability.PolyTime.BitString.InitialTestsSearch
 public import Complexity.Computability.PolyTime.BooleanAnalysis.BoundedIncidenceCounter
 public import Complexity.Computability.PolyTime.BooleanAnalysis.BoundedIncidenceExactness
@@ -2848,6 +2852,7 @@ public import Complexity.Computability.Probabilistic.Selection
 public import Complexity.Computability.Probabilistic.Traverse
 public import Complexity.Computability.Probabilistic.UniformNat
 public import Complexity.Computability.PropertyTesting.Distribution.Basic
+public import Complexity.Computability.PropertyTesting.Distribution.ClosenessCollision
 public import Complexity.Computability.PropertyTesting.Distribution.IdentityReduction
 public import Complexity.Computability.PropertyTesting.Distribution.UniformityCollision
 public import Complexity.Computability.PropertyTesting.Distribution.UniformityLowerBound
@@ -4811,6 +4816,7 @@ public import Complexity.Probability.HashFamily.Uniform
 public import Complexity.Probability.HashIsolation
 public import Complexity.Probability.IID
 public import Complexity.Probability.IID.CollisionCount
+public import Complexity.Probability.IID.CrossCollisionCount
 public import Complexity.Probability.Isolation
 public import Complexity.Probability.KWiseIndependent
 public import Complexity.Probability.KWiseIndependent.Coupling
