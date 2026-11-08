@@ -466,13 +466,16 @@ index links to canonical definitions rather than keeping a second set.
 - **Abstract (Blum) complexity** ([#2866]): Blum complexity measures over Mathlib's
   `Nat.Partrec.Code`, with the `evaln` fuel instance, Borodin's gap theorem for the
   almost-everywhere classes (also with a two-argument stretch), recursive relatedness, Blum's
-  speedup theorem, and arbitrarily complex functions with the resulting strict hierarchy of
-  classes, are in `Computability/BlumComplexity`. Remaining: the McCreight–Meyer union theorem;
-  Blum's compression theorem in its running-time form (a single computable `h` such that every
-  total `φ_i` has `C_{Φ_i} ⊂ C_{n ↦ h n (Φ_i n)}`; the value form with `φ_i` in place of `Φ_i`
-  is false, by the gap theorem); honesty; effective forms of speedup such as Blum's
-  pseudo-speedup, which computes a faster program for a finite variant of `f` (M. Blum, *On
-  effective procedures for speeding up algorithms*, J. ACM 18(2), 1971), and Blum measures for
+  speedup theorem, arbitrarily complex functions with the resulting strict hierarchy of
+  classes, and the McCreight–Meyer union theorem, are in `Computability/BlumComplexity`.
+  Remaining: Blum's compression theorem in its running-time form (a single computable `h` such
+  that every total `φ_i` has `C_{Φ_i} ⊂ C_{n ↦ h n (Φ_i n)}`; the value form with `φ_i` in place
+  of `Φ_i` is false, by the gap theorem); the McCreight–Meyer honesty and naming theorems
+  ([#3234](https://github.com/cslib-community/complexitylib/issues/3234): every `C_t` equals
+  `C_{t'}` for an `h`-honest `t'`, with one computable `h` for all `t`, or for the cost `Φ_e` of a
+  total program); effective forms of speedup such as Blum's pseudo-speedup, which computes a
+  faster program for a finite variant of `f` (M. Blum, *On effective procedures for speeding up
+  algorithms*, J. ACM 18(2), 1971), and Blum measures for
   native multitape time and space through a Gödel-numbering bridge from native descriptions.
 - **Time hierarchies** ([#1572]): native polynomial padding separates every pair of integer
   degrees `1 ≤ a < b`, in deterministic and in nondeterministic time, and the `O(t log t)`
@@ -589,10 +592,16 @@ index links to canonical definitions rather than keeping a second set.
   on a `Digraph`, the path-blocking lower-bound engine, and the exact prices `h + 2` of the
   complete binary tree and the pyramid (Cook) are in `Complexity/Computability/Pebbling`, and
   `Complexity/Computability/Circuit/Pebbling.lean` identifies `s`-register evaluation of
-  `Cslib.Circuits.Program` straight-line programs with `s`-pebble black pebbling. Next:
-  black-white and reversible pebbling; the Hopcroft–Paul–Valiant `O(n / log n)` pebbling of
-  bounded-indegree DAGs and the matching Paul–Tarjan–Celoni `Ω(n / log n)` family;
-  Gilbert–Tarjan and Lengauer–Tarjan time–space trade-offs, including for register evaluation.
+  `Cslib.Circuits.Program` straight-line programs with `s`-pebble black pebbling. Bennett's
+  reversible game and its exact prices on the path, `⌈log₂ (v + 2)⌉` (visiting) and
+  `⌈log₂ (v + 1)⌉ + 1` (persistent), are in `Pebbling/ReversiblePath.lean`
+  ([#3163](https://github.com/cslib-community/complexitylib/issues/3163)). Next: black-white
+  pebbling; the full reachable-configuration characterization and the reversible time–space and
+  erasure trade-offs of Li–Tromp–Vitányi
+  ([#3199](https://github.com/cslib-community/complexitylib/issues/3199));
+  the Hopcroft–Paul–Valiant `O(n / log n)` pebbling of bounded-indegree DAGs and the matching
+  Paul–Tarjan–Celoni `Ω(n / log n)` family; Gilbert–Tarjan and Lengauer–Tarjan time–space
+  trade-offs, including for register evaluation.
 - **Deeper consequences of a Boolean-hierarchy collapse:** Kadin's sparse `S` with
   `coNP ⊆ NP^S`, and the collapse of `PH` into `P^{NP^{NP}[O(log n)]} ⊆ Δ₃ᴾ`, which follows from
   results of Wagner and of Chang and Kadin, not from Kadin's 1988 argument (see his erratum).
@@ -1018,8 +1027,13 @@ DLOGTIME-uniform AC⁰ under explicit conventions.
   `Formula.size + 1` over every commutative semiring; a selector occurring in one permanent entry
   can be eliminated with one extra dimension when `2` is invertible; the conversion from VP
   witnesses to formulas, the two-entry gadget and the general Boolean-sum elimination needed for
-  VNP-hardness remain open); formula and branching-program models,
-  identity testing, hitting sets, and tensor and rank methods, including partial-derivative
+  VNP-hardness remain open); formula and branching-program models (Nisan's exact size formula for
+  homogeneous layered non-commutative ABPs is proved in
+  [`Arithmetic/Noncommutative`](Complexity/Computability/Circuit/Arithmetic/Noncommutative/Nisan.lean)
+  ([#3198](https://github.com/cslib-community/complexitylib/issues/3198)); open there: the `n^m`
+  palindrome bound and the separation from non-commutative circuits, the reduction from general
+  non-commutative ABPs, non-commutative formula lower bounds for the determinant and permanent,
+  and ROABPs), identity testing, hitting sets, and tensor and rank methods, including partial-derivative
   measures (the order-`k` measure and bounded-product-fan-in depth-three determinant and permanent
   lower bounds, covering homogeneous depth-three circuits, are proved in
   [`Arithmetic/DepthThree`](Complexity/Computability/Circuit/Arithmetic/DepthThree.lean);
@@ -1064,6 +1078,19 @@ DLOGTIME-uniform AC⁰ under explicit conventions.
   `R[x] / (x ^ m + 1)` and the `O(n log n log log n)` integer bound); mixed-radix and Bluestein
   transforms; and lower bounds such as Morgenstern's `Ω(n log n)` for bounded-coefficient linear
   circuits.
+- **Matrix rigidity and linear circuits**
+  ([#3209](https://github.com/cslib-community/complexitylib/issues/3209)): rigidity
+  (`Foundations/LinearAlgebra/Matrix/Rigidity.lean`) and Valiant's criterion
+  (`Circuit/Arithmetic/Rigidity.lean`) are proved: a fan-in-2 affine circuit of size `s` and depth
+  below `2 ^ D` computing `A x` gives `R_A(2 t s / D) ≤ m 2 ^ (2 ^ (D - t))` for every `t ≤ D`, so a
+  matrix with `R_A(n / e) > n 2 ^ (log₂ n / k)` needs `Ω(n log log n)` gates in depth `O(log n)`.
+  The criterion also covers polynomial gates over infinite fields. Open: the explicit lower bounds
+  `R(r) = Ω(n² / r · log(n / r))` for Cauchy and other totally regular matrices, through the
+  Kővári–Sós–Turán bound and the untouched-minor lemma (Lokam, Lemma 2.4 and Theorem 2.5);
+  Shparlinsky's Vandermonde and the Sylvester–Hadamard bounds; the upper bound `R(r) ≤ (n - r)²`
+  and the counting proof that random matrices over finite fields are nearly maximally rigid;
+  Alman–Williams non-rigidity of the Walsh–Hadamard matrix; the criterion for nonlinear gates over
+  finite fields; and, as Valiant's open problem, an explicit `(εn, n ^ (1 + δ))`-rigid matrix.
 - **Real-algebraic decision procedures:** port the Sturm–Tarski query evaluator, recursive
   evaluator, implicit arithmetic, native space certificates and the ETR upper bound from
   [lean-canny](https://github.com/SamuelSchlesinger/lean-canny).
@@ -1138,7 +1165,17 @@ each statement against the numbered result. Organize modules by subject, not cha
   match the upper bound, via Yao's principle for expected cost; Monte Carlo (bounded-error) bounds
   for the same trees; and Saks–Wigderson's general read-once formula and game-tree (MIN/MAX over
   integer leaves) results.
-- Multiparty protocols, discrepancy and information complexity, direct-sum and direct-product
+- **Number-on-forehead multiparty protocols**
+  ([#3197](https://github.com/cslib-community/complexitylib/issues/3197)): `NOF.Protocol`,
+  public-coin NOF protocols, cylinder intersections and the multiparty discrepancy bound
+  `2 γ ≤ 2 ^ c disc_ν(f)`, with the two-player case matching the two-party discrepancy. Next: the
+  Chung–Raz cube bound `disc(f) ^ (2 ^ k) ≤ E(f)` and the Babai–Nisan–Szegedy lower bound
+  `Ω(n / 4 ^ k)` for generalized inner product. Remaining: the sharper `Ω(n / 2 ^ k)` bound for
+  generalized inner product (source to be verified before citing) and Grolmusz's `O(k n / 2 ^ k)`
+  protocol; matrix multiplication (Raz) and NOF disjointness lower bounds; and applications to
+  `ACC⁰` and branching-program lower bounds. A two-party companion is the Aho–Ullman–Yannakakis bound
+  `D(f) = O(N⁰(f) N¹(f))` relating deterministic and nondeterministic communication.
+- Multiparty number-in-hand protocols, information complexity, direct-sum and direct-product
   results, and reductions to streaming, sketching and cell-probe lower bounds.
 - **Dynamic cell-probe lower bounds**
   ([#3207](https://github.com/cslib-community/complexitylib/issues/3207)): the problem-independent
@@ -1232,7 +1269,7 @@ each statement against the numbered result. Organize modules by subject, not cha
   incompatible models, and a bridge between the query and circuit models; complete problems for
   BQP; for QMA ([#2876](https://github.com/cslib-community/complexitylib/issues/2876)), error
   reduction from an inverse-polynomial gap, strong error reduction that keeps the witness length,
-  `QMA ⊆ A₀PP`, `MA ⊆ QMA`, mixed witnesses, QCMA and the local Hamiltonian problem; related query,
+  `QMA ⊆ A₀PP`, mixed witnesses, QCMA and the local Hamiltonian problem; related query,
   communication and interactive classes, with amplification, containments and complete problems.
   Supply the
   [quantum adversary models](#concurrent-and-quantum-security) needed by cryptographic

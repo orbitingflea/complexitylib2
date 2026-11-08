@@ -813,6 +813,7 @@ public import Complexity.Computability.BlumComplexity.Gap
 public import Complexity.Computability.BlumComplexity.Hierarchy
 public import Complexity.Computability.BlumComplexity.RecursiveRelatedness
 public import Complexity.Computability.BlumComplexity.Speedup
+public import Complexity.Computability.BlumComplexity.Union
 public import Complexity.Computability.BranchingProgram.MonoidProgram
 public import Complexity.Computability.BranchingProgram.PolyLength
 public import Complexity.Computability.BranchingProgram.ReadOnce
@@ -838,6 +839,8 @@ public import Complexity.Computability.Circuit.Arithmetic.Hessian
 public import Complexity.Computability.Circuit.Arithmetic.Hessian.SourceComplexity
 public import Complexity.Computability.Circuit.Arithmetic.MatrixMultiplication.Exponent
 public import Complexity.Computability.Circuit.Arithmetic.MatrixMultiplication.NineQuarters
+public import Complexity.Computability.Circuit.Arithmetic.Noncommutative.ABP
+public import Complexity.Computability.Circuit.Arithmetic.Noncommutative.Nisan
 public import Complexity.Computability.Circuit.Arithmetic.Pairing
 public import Complexity.Computability.Circuit.Arithmetic.Permanent
 public import Complexity.Computability.Circuit.Arithmetic.Permanent.BooleanSum
@@ -846,6 +849,7 @@ public import Complexity.Computability.Circuit.Arithmetic.Permanent.Projection
 public import Complexity.Computability.Circuit.Arithmetic.Power
 public import Complexity.Computability.Circuit.Arithmetic.RelativeRank
 public import Complexity.Computability.Circuit.Arithmetic.RelativeRankUpper
+public import Complexity.Computability.Circuit.Arithmetic.Rigidity
 public import Complexity.Computability.Circuit.Arithmetic.SPCircuit
 public import Complexity.Computability.Circuit.Arithmetic.SetMultilinear
 public import Complexity.Computability.Circuit.Arithmetic.SetMultilinearGadget
@@ -1370,6 +1374,7 @@ public import Complexity.Computability.Circuit.Quantum.Basic
 public import Complexity.Computability.Circuit.Quantum.Classical
 public import Complexity.Computability.Circuit.Quantum.Code
 public import Complexity.Computability.Circuit.Quantum.Counter
+public import Complexity.Computability.Circuit.Quantum.HadamardLayer
 public import Complexity.Computability.Circuit.Quantum.Output
 public import Complexity.Computability.Circuit.Quantum.OutputSupport
 public import Complexity.Computability.Circuit.Quantum.Parallel
@@ -1442,6 +1447,10 @@ public import Complexity.Computability.Communication.Lifting.Density
 public import Complexity.Computability.Communication.Lifting.Gadget
 public import Complexity.Computability.Communication.Lifting.Partition
 public import Complexity.Computability.Communication.Lifting.Simulation
+public import Complexity.Computability.Communication.NOF.Discrepancy
+public import Complexity.Computability.Communication.NOF.Protocol
+public import Complexity.Computability.Communication.NOF.Randomized
+public import Complexity.Computability.Communication.NOF.TwoParty
 public import Complexity.Computability.Communication.Newman
 public import Complexity.Computability.Communication.Nondeterministic.Basic
 public import Complexity.Computability.Communication.Nondeterministic.Functions
@@ -1548,6 +1557,7 @@ public import Complexity.Computability.Complexity.Classes.CountingSimulation.Tru
 public import Complexity.Computability.Complexity.Classes.CountingSimulation.TruncatedSum
 public import Complexity.Computability.Complexity.Classes.DP
 public import Complexity.Computability.Complexity.Classes.EXP
+public import Complexity.Computability.Complexity.Classes.EXP.Decidable
 public import Complexity.Computability.Complexity.Classes.EXP.Padding
 public import Complexity.Computability.Complexity.Classes.EXP.Separation
 public import Complexity.Computability.Complexity.Classes.FPAUS
@@ -1602,6 +1612,7 @@ public import Complexity.Computability.Complexity.Classes.Inclusions
 public import Complexity.Computability.Complexity.Classes.Ladner
 public import Complexity.Computability.Complexity.Classes.Ladner.Basic
 public import Complexity.Computability.Complexity.Classes.Ladner.PolyTime
+public import Complexity.Computability.Complexity.Classes.Ladner.Stages
 public import Complexity.Computability.Complexity.Classes.LogSpace
 public import Complexity.Computability.Complexity.Classes.LogSpace.Complement
 public import Complexity.Computability.Complexity.Classes.LogSpace.FirstOrder
@@ -1711,6 +1722,7 @@ public import Complexity.Computability.Complexity.Classes.Promise.Time.Verifier
 public import Complexity.Computability.Complexity.Classes.QMA
 public import Complexity.Computability.Complexity.Classes.QMA.Amplification
 public import Complexity.Computability.Complexity.Classes.QMA.Counting
+public import Complexity.Computability.Complexity.Classes.QMA.MA
 public import Complexity.Computability.Complexity.Classes.QMA.NP
 public import Complexity.Computability.Complexity.Classes.RP
 public import Complexity.Computability.Complexity.Classes.RP.Closure
@@ -2880,7 +2892,10 @@ public import Complexity.Computability.Pebbling.Basic
 public import Complexity.Computability.Pebbling.BinaryTree
 public import Complexity.Computability.Pebbling.Blocking
 public import Complexity.Computability.Pebbling.Map
+public import Complexity.Computability.Pebbling.Path
 public import Complexity.Computability.Pebbling.Pyramid
+public import Complexity.Computability.Pebbling.Reversible
+public import Complexity.Computability.Pebbling.ReversiblePath
 public import Complexity.Computability.PolyTime.BitString.InitialTestsSearch
 public import Complexity.Computability.PolyTime.BooleanAnalysis.BoundedIncidenceCounter
 public import Complexity.Computability.PolyTime.BooleanAnalysis.BoundedIncidenceExactness
@@ -4399,6 +4414,7 @@ public import Complexity.Foundations.GroupTheory.Perm.Fixing
 public import Complexity.Foundations.GroupTheory.Perm.Last
 public import Complexity.Foundations.LinearAlgebra.CubeSum
 public import Complexity.Foundations.LinearAlgebra.ExchangeReplacement
+public import Complexity.Foundations.LinearAlgebra.FreeAlgebra
 public import Complexity.Foundations.LinearAlgebra.ImageSparsification
 public import Complexity.Foundations.LinearAlgebra.Interpolation
 public import Complexity.Foundations.LinearAlgebra.KernelVector
@@ -4422,6 +4438,7 @@ public import Complexity.Foundations.LinearAlgebra.Matrix.PartialDerivatives
 public import Complexity.Foundations.LinearAlgebra.Matrix.PilotCorrection
 public import Complexity.Foundations.LinearAlgebra.Matrix.Rank
 public import Complexity.Foundations.LinearAlgebra.Matrix.RectPermanent
+public import Complexity.Foundations.LinearAlgebra.Matrix.Rigidity
 public import Complexity.Foundations.LinearAlgebra.Matrix.SchurComplement
 public import Complexity.Foundations.LinearAlgebra.Matrix.SubmatrixRobust
 public import Complexity.Foundations.LinearAlgebra.Matrix.TimeLayer
