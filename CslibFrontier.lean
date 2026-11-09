@@ -3089,6 +3089,7 @@ public import CslibFrontier.Computability.Machines.Turing.MultiTape.Probabilisti
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Probabilistic.Replay.WithOracle
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Probabilistic.Replay.WithOracleInput
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Probabilistic.ReplayInput
+public import CslibFrontier.Computability.Machines.Turing.MultiTape.Probabilistic.ReplayVerdict
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Probabilistic.RunsWords
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Probabilistic.Sampling
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Probabilistic.Sequential
@@ -4816,6 +4817,7 @@ public import CslibFrontier.Foundations.Data.Nat.Choose.PrimePowerDvd
 public import CslibFrontier.Foundations.Data.Nat.Choose.Real
 public import CslibFrontier.Foundations.Data.Nat.Choose.Sum
 public import CslibFrontier.Foundations.Data.Nat.Choose.Vandermonde
+public import CslibFrontier.Foundations.Data.Nat.ClogPow
 public import CslibFrontier.Foundations.Data.Nat.Div
 public import CslibFrontier.Foundations.Data.Nat.Doubling
 public import CslibFrontier.Foundations.Data.Nat.Factorial
