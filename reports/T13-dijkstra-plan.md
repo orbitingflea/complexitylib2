@@ -1,12 +1,12 @@
 # T13: Dijkstra on the word RAM, phase 1 plan
 
 Branch `t13-dijkstra-plan`, based on `ea36c1fe` (main after the #442 merge). Line numbers are at
-that commit. Paths: `C/` = `Complexity/Computability/WordRAM/`, `A/` = `Complexity/Algorithms/WordRAM/`.
+that commit. Paths: `C/` = `CslibFrontier/Computability/WordRAM/`, `A/` = `CslibFrontier/Algorithms/WordRAM/`.
 "(inferred)" marks what I derived rather than read.
 
 ## The proposed phase-1 statement
 
-File: `A/Dijkstra/Statement.lean` (imported from `Complexity.lean`; `lake build --wfail` passes,
+File: `A/Dijkstra/Statement.lean` (imported from `CslibFrontier.lean`; `lake build --wfail` passes,
 no `sorry`). Core part:
 
 ```lean
@@ -58,7 +58,7 @@ A sanity lemma `Instance.dist_self : I.dist u u = 0` is proved, so `dist` is not
 
 | Item | Choice | Reason |
 |---|---|---|
-| Input | words `n, s`, then the `n × n` matrix row by row; entry `0` = no edge, `c + 1` = weight `c`; entry `(u, v)` at address `u n + v + 3` | O(n²) reading fits the O(n²) bound; one row scan per extracted vertex; same layout as `USTCONInstance` (`Complexity/Computability/Complexity/Problems/USTCON.lean:64-78`) |
+| Input | words `n, s`, then the `n × n` matrix row by row; entry `0` = no edge, `c + 1` = weight `c`; entry `(u, v)` at address `u n + v + 3` | O(n²) reading fits the O(n²) bound; one row scan per extracted vertex; same layout as `USTCONInstance` (`CslibFrontier/Computability/Complexity/Problems/USTCON.lean:64-78`) |
 | Output | memory cells `n² + 3 + v` (just past the input) at the halting state; `0` = unreachable, `d + 1` = distance `d` | no library notion returns a vector (see survey §2); a width-independent encoding of `⊤` keeps the statement free of `w` |
 | Assumption | weights in ℕ (so nonnegative); `Fits w ((n + 2)² (W + 2))`, `W` = largest weight | bounds every address (`≤ n² + 2n + 3`), the matrix entries (`≤ W + 1`), and every tentative distance (`≤ n W + 1`) and sum (`≤ (n + 1) W + 2`), with slack for two scratch arrays (inferred, from the planned layout below) |
 | Basis | `Basis.standard` | the library's default and that of every algorithm in `A/`; the `ram[...]` notation's binary operations are standard (`C/Notation.lean:21, 30-31`); the program uses `*` (for `u n` row offsets), which the additive basis lacks (`C/Basis.lean:307-308`: only add and sub); `MapOp` in `A/ElementDistinctness.lean:145-146` maps additive → standard, not back, so an additive version would need its own program and cost proof. `Basis.exact` makes truncated subtraction fault (`C/Basis.lean:193`) and gains nothing here |
@@ -130,9 +130,9 @@ width-indexed family with bounded code (`Function:73-77`), and `ComputableInO`, 
 ### 5. Shortest-path specifications
 
 - Mathlib `SimpleGraph.dist`/`edist` (`Mathlib/Combinatorics/SimpleGraph/Metric.lean`) and this
-  repo's `Complexity/Foundations/Combinatorics/SimpleGraph/Metric.lean`: unweighted, undirected.
+  repo's `CslibFrontier/Foundations/Combinatorics/SimpleGraph/Metric.lean`: unweighted, undirected.
 - Mathlib `Digraph` (`Mathlib/Combinatorics/Digraph/Basic.lean`): no walks or weights.
-  `Complexity/Computability/Complexity/Problems/Hamiltonian.lean:28` notes the same gap.
+  `CslibFrontier/Computability/Complexity/Problems/Hamiltonian.lean:28` notes the same gap.
 - Mathlib `Quiver.Path` with `Quiver.Path.addWeight` and `addWeightOfEPs`
   (`Mathlib/Combinatorics/Quiver/Path/Weight.lean:47, 55`): directed paths with summed weights.
   Chosen. A quiver on a type synonym `I.Vertex` whose arrows `u ⟶ v` are the weights `c` with

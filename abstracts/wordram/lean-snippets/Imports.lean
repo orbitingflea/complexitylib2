@@ -1,2 +1,2 @@
-import ComplexityTests.Abstracts.Check
-import ComplexityTests.Abstracts.WordRAMBridge
+import CslibFrontierTests.Abstracts.Check
+import CslibFrontierTests.Abstracts.WordRAMBridge

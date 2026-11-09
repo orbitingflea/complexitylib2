@@ -1,13 +1,13 @@
 # T14: Dijkstra on the word RAM, phase 2 plan (O(m log n))
 
 Branch `t14-dijkstra-heap-plan`, based on `de10fb7b` (fork main with phase 1, T13, merged). Line
-numbers are at that commit. Paths: `C/` = `Complexity/Computability/WordRAM/`,
-`A/` = `Complexity/Algorithms/WordRAM/`, `D/` = `A/Dijkstra/`. "(inferred)" marks what I derived
+numbers are at that commit. Paths: `C/` = `CslibFrontier/Computability/WordRAM/`,
+`A/` = `CslibFrontier/Algorithms/WordRAM/`, `D/` = `A/Dijkstra/`. "(inferred)" marks what I derived
 rather than read.
 
 ## The proposed phase-2 statement
 
-File: `D/HeapStatement.lean` (imported from `Complexity.lean`; `lake build --wfail` and
+File: `D/HeapStatement.lean` (imported from `CslibFrontier.lean`; `lake build --wfail` and
 `lake exe mk_all --check` pass; no `sorry`). Core part:
 
 ```lean
@@ -117,7 +117,7 @@ takes the minimum of the parallel weights.
   subroutine inside one program (each call halts).
 - `A/`: Stack, Queue, DynamicArray, PrefixSums, FusionTree, VanEmdeBoas, ElementDistinctness,
   Dijkstra. No priority queue (searched `priority|binary heap|decrease.?key|extract.?min|sift`
-  over `Complexity/`; only unrelated hits). vEB has only membership certified (T13 report,
+  over `CslibFrontier/`; only unrelated hits). vEB has only membership certified (T13 report,
   phase 2 notes).
 - CSLib (`.lake/packages/cslib`): no heap or priority queue (searched `priority|heap`).
 - Batteries `Batteries.BinaryHeap` (`.lake/packages/batteries/Batteries/Data/BinaryHeap/`, rev

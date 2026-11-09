@@ -1,5 +1,5 @@
 PYTHON ?= python3
-LEAN = ../../ComplexityTests/Abstracts
+LEAN = ../../CslibFrontierTests/Abstracts
 
 all: section.pdf
 

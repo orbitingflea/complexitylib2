@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Split the definitions of ComplexityTests/Abstracts/WordRAMAbstract.lean into one snippet file
+"""Split the definitions of CslibFrontierTests/Abstracts/WordRAMAbstract.lean into one snippet file
 per declaration, in lean-snippets/, so the section typesets exactly the Lean code. Doc and
 section comments are removed; `--` comments are kept. Only the declarations before the section
 "Main theorems" are cut: the section does not quote the theorems. Follows
@@ -12,8 +12,8 @@ from pathlib import Path
 
 here = Path(__file__).resolve().parent
 root = here.parent.parent
-abstract = root / "ComplexityTests/Abstracts/WordRAMAbstract.lean"
-namespace = "ComplexityTests.Abstracts.WordRAMAbstract"
+abstract = root / "CslibFrontierTests/Abstracts/WordRAMAbstract.lean"
+namespace = "CslibFrontierTests.Abstracts.WordRAMAbstract"
 out = here / "lean-snippets"
 out.mkdir(exist_ok=True)
 for old in out.glob("*.lean"):

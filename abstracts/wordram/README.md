@@ -1,7 +1,7 @@
 # The word RAM in Lean: a hand-written section
 
 A standalone section that presents the definitions of
-`ComplexityTests/Abstracts/WordRAMAbstract.lean`, in the style of Section 4 of Demaine and
+`CslibFrontierTests/Abstracts/WordRAMAbstract.lean`, in the style of Section 4 of Demaine and
 Langerman's tiling paper. This directory is local to the fork. `scripts/build_abstracts.py` can
 render the abstract from its doc comments, given a catalogue entry for it, but
 `abstracts/catalogue.json` has no such entry, so the catalogue workflow does not select it.
