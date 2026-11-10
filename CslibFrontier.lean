@@ -3718,6 +3718,7 @@ public import CslibFrontier.Crypto.Computational.Encryption.CompositionCounterex
 public import CslibFrontier.Crypto.Computational.Encryption.DecryptionBound
 public import CslibFrontier.Crypto.Computational.Encryption.EncForge
 public import CslibFrontier.Crypto.Computational.Encryption.EncryptThenMAC
+public import CslibFrontier.Crypto.Computational.Encryption.HalfBlockPRP
 public import CslibFrontier.Crypto.Computational.Encryption.Hybrid
 public import CslibFrontier.Crypto.Computational.Encryption.Hybrid.CCA
 public import CslibFrontier.Crypto.Computational.Encryption.Hybrid.CompositionCCA
@@ -3728,6 +3729,7 @@ public import CslibFrontier.Crypto.Computational.Encryption.OFBMode
 public import CslibFrontier.Crypto.Computational.Encryption.PolyTime
 public import CslibFrontier.Crypto.Computational.Encryption.PublicKeyCPA
 public import CslibFrontier.Crypto.Computational.Encryption.PublicKeyReplacement
+public import CslibFrontier.Crypto.Computational.Encryption.RealIdealAE
 public import CslibFrontier.Crypto.Computational.EvenMansour
 public import CslibFrontier.Crypto.Computational.Factoring.PollardRho
 public import CslibFrontier.Crypto.Computational.GGM.Circuit
@@ -3992,6 +3994,7 @@ public import CslibFrontier.Crypto.Computational.TreeSignature.CoinHybrid
 public import CslibFrontier.Crypto.Computational.TreeSignature.Security
 public import CslibFrontier.Crypto.Computational.UniformChoice
 public import CslibFrontier.Crypto.Computational.UnitSampling
+public import CslibFrontier.Crypto.Computational.WeakPRF
 public import CslibFrontier.Crypto.Computational.WordSignature
 public import CslibFrontier.Crypto.Computational.ZeroKnowledge
 public import CslibFrontier.Crypto.Computational.ZeroKnowledge.Amplification
@@ -4067,6 +4070,7 @@ public import CslibFrontier.Crypto.Protocols.KEM.FujisakiOkamoto
 public import CslibFrontier.Crypto.Protocols.KEM.FujisakiOkamoto.Security
 public import CslibFrontier.Crypto.Protocols.KEM.MLKEM
 public import CslibFrontier.Crypto.Protocols.MAC.CarterWegman
+public import CslibFrontier.Crypto.Protocols.MAC.PolynomialEvaluation
 public import CslibFrontier.Crypto.Protocols.MAC.VariableLength
 public import CslibFrontier.Crypto.Protocols.MPC.Advantage
 public import CslibFrontier.Crypto.Protocols.MPC.BGW
