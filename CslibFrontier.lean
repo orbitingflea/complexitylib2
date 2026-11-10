@@ -2834,6 +2834,7 @@ public import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.P
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Basic
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
+public import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString.Positions
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Bounds
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Configuration
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.DPi
@@ -3300,6 +3301,7 @@ public import CslibFrontier.Computability.PolyTime.BooleanAnalysis.IncidenceBran
 public import CslibFrontier.Computability.PolyTime.BooleanAnalysis.SparsePolyCounter
 public import CslibFrontier.Computability.PolyTime.BudgetTuples
 public import CslibFrontier.Computability.PolyTime.CNF.BranchedSparseCNFCounter
+public import CslibFrontier.Computability.PolyTime.CNF.DeclaredInput
 public import CslibFrontier.Computability.PolyTime.CNF.GreedyParityContext
 public import CslibFrontier.Computability.PolyTime.CNF.GreedyParitySearch
 public import CslibFrontier.Computability.PolyTime.CNF.SparseCNFLeafCounter
@@ -5737,6 +5739,7 @@ public import CslibFrontier.Probability.ApproximateCounting.Relative
 public import CslibFrontier.Probability.BitString
 public import CslibFrontier.Probability.BitString.AffineHash
 public import CslibFrontier.Probability.BitString.AffineHash.ThreeWise
+public import CslibFrontier.Probability.BitString.AffineHash.Word
 public import CslibFrontier.Probability.BitString.BinarySymmetricChannel
 public import CslibFrontier.Probability.BitString.BinarySymmetricChannel.Achievability
 public import CslibFrontier.Probability.BitString.BinarySymmetricChannel.Capacity
