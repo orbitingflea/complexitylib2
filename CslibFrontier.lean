@@ -3882,6 +3882,8 @@ public import CslibFrontier.Crypto.Computational.MerkleSignature.Security
 public import CslibFrontier.Crypto.Computational.MerkleTree
 public import CslibFrontier.Crypto.Computational.MerkleTree.Binding
 public import CslibFrontier.Crypto.Computational.MerkleTree.ROMExtract
+public import CslibFrontier.Crypto.Computational.MillerRabin
+public import CslibFrontier.Crypto.Computational.ModulusGeneration
 public import CslibFrontier.Crypto.Computational.NaorReingold
 public import CslibFrontier.Crypto.Computational.NaorReingold.PRF
 public import CslibFrontier.Crypto.Computational.NaorReingold.Security
@@ -4463,6 +4465,7 @@ public import CslibFrontier.Foundations.Analysis.Convex.FirstOrder
 public import CslibFrontier.Foundations.Analysis.Convex.Strong
 public import CslibFrontier.Foundations.Analysis.ENNRealFraction
 public import CslibFrontier.Foundations.Analysis.ENNRealNatDiv
+public import CslibFrontier.Foundations.Analysis.ENNRealOneSubInvPow
 public import CslibFrontier.Foundations.Analysis.ENNRealTsum
 public import CslibFrontier.Foundations.Analysis.Fourier.ZModMultiples
 public import CslibFrontier.Foundations.Analysis.Fourier.ZModProd
@@ -4800,6 +4803,7 @@ public import CslibFrontier.Foundations.Data.BitString.List.LowBits
 public import CslibFrontier.Foundations.Data.BitString.List.Operations
 public import CslibFrontier.Foundations.Data.BitString.List.Positions
 public import CslibFrontier.Foundations.Data.BitString.List.PrefixFree
+public import CslibFrontier.Foundations.Data.BitString.List.Single
 public import CslibFrontier.Foundations.Data.BitString.List.Vote
 public import CslibFrontier.Foundations.Data.BitString.MajorityVote
 public import CslibFrontier.Foundations.Data.BitString.PadBlocks
@@ -5172,6 +5176,7 @@ public import CslibFrontier.Foundations.NumberTheory.AKS.IntegerVariant
 public import CslibFrontier.Foundations.NumberTheory.AKS.Introspective
 public import CslibFrontier.Foundations.NumberTheory.AKS.PerfectPower
 public import CslibFrontier.Foundations.NumberTheory.AKS.SmallR
+public import CslibFrontier.Foundations.NumberTheory.CentralBinomPrimes
 public import CslibFrontier.Foundations.NumberTheory.Harmonic
 public import CslibFrontier.Foundations.NumberTheory.Padics.AdjoinRootDigitLift
 public import CslibFrontier.Foundations.NumberTheory.Padics.AdjoinRootReduction
@@ -5182,6 +5187,7 @@ public import CslibFrontier.Foundations.NumberTheory.Primality.RabinMonier
 public import CslibFrontier.Foundations.NumberTheory.Primality.StrongLiars
 public import CslibFrontier.Foundations.NumberTheory.Primality.Witness
 public import CslibFrontier.Foundations.NumberTheory.PrimeCounting
+public import CslibFrontier.Foundations.NumberTheory.PrimeDensity
 public import CslibFrontier.Foundations.NumberTheory.PrimeWindow
 public import CslibFrontier.Foundations.NumberTheory.SqrtPrimeWindow
 public import CslibFrontier.Foundations.Order.AntitoneSwap
