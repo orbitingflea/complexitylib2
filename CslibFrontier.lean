@@ -1253,6 +1253,7 @@ public import CslibFrontier.Computability.Circuit.Boolean.PopulationCount.PolyTi
 public import CslibFrontier.Computability.Circuit.Boolean.PopulationCount.ThresholdPolyTime
 public import CslibFrontier.Computability.Circuit.Boolean.Propagation
 public import CslibFrontier.Computability.Circuit.Boolean.Razborov.MiddleSlice
+public import CslibFrontier.Computability.Circuit.Boolean.Razborov.Natural
 public import CslibFrontier.Computability.Circuit.Boolean.Razborov.RankProperty
 public import CslibFrontier.Computability.Circuit.Boolean.ReadOnce
 public import CslibFrontier.Computability.Circuit.Boolean.Routing
@@ -2519,6 +2520,7 @@ public import CslibFrontier.Computability.Kolmogorov.MINKT
 public import CslibFrontier.Computability.Kolmogorov.MINKTStar
 public import CslibFrontier.Computability.Kolmogorov.MINKTStar.Generator
 public import CslibFrontier.Computability.Kolmogorov.MINKTStar.Generator.PolyTime
+public import CslibFrontier.Computability.Kolmogorov.MINKTStar.Hardness
 public import CslibFrontier.Computability.Kolmogorov.MINKTStar.TruthTable
 public import CslibFrontier.Computability.Kolmogorov.MINcKT
 public import CslibFrontier.Computability.Kolmogorov.MKtP
@@ -4225,6 +4227,7 @@ public import CslibFrontier.Crypto.Primitives.PRG.NisanWigderson.BitPolynomial
 public import CslibFrontier.Crypto.Primitives.PRG.NisanWigderson.Circuit
 public import CslibFrontier.Crypto.Primitives.PRG.NisanWigderson.Derandomization
 public import CslibFrontier.Crypto.Primitives.PRG.NisanWigderson.Design
+public import CslibFrontier.Crypto.Primitives.PRG.NisanWigderson.MXCircuit
 public import CslibFrontier.Crypto.Primitives.PRG.NisanWigderson.Queries
 public import CslibFrontier.Crypto.Primitives.PRG.NisanWigderson.Reconstruction
 public import CslibFrontier.Crypto.Primitives.PRG.NisanWigderson.Sampling
