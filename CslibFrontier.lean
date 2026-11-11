@@ -2164,6 +2164,7 @@ public import CslibFrontier.Computability.Complexity.Problems.FeedbackArcSet
 public import CslibFrontier.Computability.Complexity.Problems.FeedbackVertexSet
 public import CslibFrontier.Computability.Complexity.Problems.GeneralizedGeography
 public import CslibFrontier.Computability.Complexity.Problems.Graph
+public import CslibFrontier.Computability.Complexity.Problems.Graph.DartConnectivity
 public import CslibFrontier.Computability.Complexity.Problems.Graph.DirectedCycle
 public import CslibFrontier.Computability.Complexity.Problems.Graph.OrthogonalDrawing
 public import CslibFrontier.Computability.Complexity.Problems.Graph.OrthogonalDrawing.Encoding
@@ -2174,6 +2175,11 @@ public import CslibFrontier.Computability.Complexity.Problems.Graph.PerfectMatch
 public import CslibFrontier.Computability.Complexity.Problems.Graph.Ports
 public import CslibFrontier.Computability.Complexity.Problems.Graph.RotationSystem
 public import CslibFrontier.Computability.Complexity.Problems.Graph.RotationSystem.Certificate
+public import CslibFrontier.Computability.Complexity.Problems.Graph.RotationSystem.ComponentCounts
+public import CslibFrontier.Computability.Complexity.Problems.Graph.RotationSystem.Components
+public import CslibFrontier.Computability.Complexity.Problems.Graph.RotationSystem.Differences
+public import CslibFrontier.Computability.Complexity.Problems.Graph.RotationSystem.Dual
+public import CslibFrontier.Computability.Complexity.Problems.Graph.RotationSystem.Lifting
 public import CslibFrontier.Computability.Complexity.Problems.Graph.SpanningTrees
 public import CslibFrontier.Computability.Complexity.Problems.Graph.VertexColors
 public import CslibFrontier.Computability.Complexity.Problems.GraphIsomorphism
@@ -4979,6 +4985,7 @@ public import CslibFrontier.Foundations.Data.MvPolynomial.SchwartzZippel
 public import CslibFrontier.Foundations.Data.MvPolynomial.SetMultilinear
 public import CslibFrontier.Foundations.Data.MvPolynomial.SetMultilinearProjection
 public import CslibFrontier.Foundations.Data.MvPolynomial.SetMultilinearProjectionProd
+public import CslibFrontier.Foundations.Data.MvPolynomial.Substitution
 public import CslibFrontier.Foundations.Data.MvPolynomial.Support
 public import CslibFrontier.Foundations.Data.MvPolynomial.TruncateTotalDegree
 public import CslibFrontier.Foundations.Data.Nat.ArithmeticProgression
@@ -5106,6 +5113,7 @@ public import CslibFrontier.Foundations.Geometry.Orthogonal.Separation
 public import CslibFrontier.Foundations.Geometry.Orthogonal.Simple
 public import CslibFrontier.Foundations.Geometry.Orthogonal.Subdivision
 public import CslibFrontier.Foundations.Geometry.Orthogonal.Trim
+public import CslibFrontier.Foundations.GroupTheory.Perm.Doubled
 public import CslibFrontier.Foundations.GroupTheory.Perm.Fin
 public import CslibFrontier.Foundations.GroupTheory.Perm.FiveCycle
 public import CslibFrontier.Foundations.GroupTheory.Perm.Fixing
@@ -5124,6 +5132,7 @@ public import CslibFrontier.Foundations.LinearAlgebra.Matrix.ClosedSubmatrix
 public import CslibFrontier.Foundations.LinearAlgebra.Matrix.CoinStep
 public import CslibFrontier.Foundations.LinearAlgebra.Matrix.CutRank
 public import CslibFrontier.Foundations.LinearAlgebra.Matrix.Derivation
+public import CslibFrontier.Foundations.LinearAlgebra.Matrix.EndpointIncidence
 public import CslibFrontier.Foundations.LinearAlgebra.Matrix.Farkas
 public import CslibFrontier.Foundations.LinearAlgebra.Matrix.FourierMotzkin
 public import CslibFrontier.Foundations.LinearAlgebra.Matrix.GrenetPermanent
@@ -5512,12 +5521,16 @@ public import CslibFrontier.Logics.Polymorphism.BooleanClone
 public import CslibFrontier.Logics.Propositional.Algebraic.Boolean
 public import CslibFrontier.Logics.Propositional.Algebraic.CNF
 public import CslibFrontier.Logics.Propositional.Algebraic.CNF.Boolean
+public import CslibFrontier.Logics.Propositional.Algebraic.CNF.Parity
 public import CslibFrontier.Logics.Propositional.Algebraic.Nullstellensatz.Combination
 public import CslibFrontier.Logics.Propositional.Algebraic.Nullstellensatz.PolynomialCalculus
 public import CslibFrontier.Logics.Propositional.Algebraic.Nullstellensatz.Proof
+public import CslibFrontier.Logics.Propositional.Algebraic.Nullstellensatz.Tseitin
 public import CslibFrontier.Logics.Propositional.Algebraic.PolynomialCalculus.Invariant
 public import CslibFrontier.Logics.Propositional.Algebraic.PolynomialCalculus.Nullstellensatz
 public import CslibFrontier.Logics.Propositional.Algebraic.PolynomialCalculus.Proof
+public import CslibFrontier.Logics.Propositional.Algebraic.PolynomialCalculus.Tseitin
+public import CslibFrontier.Logics.Propositional.Algebraic.PolynomialCalculus.TseitinExpander
 public import CslibFrontier.Logics.Propositional.Algebraic.SubsetSum
 public import CslibFrontier.Logics.Propositional.Algebraic.SumOfSquares.Basic
 public import CslibFrontier.Logics.Propositional.Algebraic.SumOfSquares.CNF
