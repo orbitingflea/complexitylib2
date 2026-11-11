@@ -76,7 +76,9 @@ import CslibFrontier.Computability.MCSP.HardnessConsequences
 import CslibFrontier.Computability.MCSP.Magnification
 import CslibFrontier.Computability.MCSP.Magnification.AntiChecker
 import CslibFrontier.Computability.MCSP.Magnification.GapMCSP
+import CslibFrontier.Computability.MCSP.MultiNPHard
 import CslibFrontier.Computability.MCSP.PartialETH
+import CslibFrontier.Computability.PCP.Approximation.UniqueGames.Complexity
 import CslibFrontier.Computability.PCP.Completeness
 import CslibFrontier.Computability.QueryComplexity.Quantum.NayakWuConsequences
 import CslibFrontier.Crypto.Computational.Nonuniform.ZeroKnowledge
@@ -698,6 +700,32 @@ register_result "partial-mcsp" where
     N = 2^m, with explicit unary or binary size-threshold encodings and De Morgan all-gate or \
     binary-gate cost. Conditional: the library also refutes ETH (subexponential-sat), so the \
     premise is false; the implications remain valid."
+
+register_result "multi-mcsp-np-hard" where
+  title := "Ilango–Loff–Oliveira: Multi-output MCSP is NP-hard under randomized reductions"
+  topic := "meta-complexity"
+  sources := [
+    { paper := IlangoLoffOliveira2020, theorem := "Theorem 4",
+      locator := "p. 22:5; reduction in Section 4.2, pp. 22:20–22:21" }
+  ]
+  theorems := [
+    Cslib.MultiMCSP.rpHard,
+    Cslib.MultiMCSP.rpHard_pos,
+    Cslib.MultiMCSP.rpReducible_gapSetCover,
+    Cslib.MultiMCSP.NP_subset_BPP_of_mem_BPP,
+    Cslib.MultiMCSP.NP_subset_coRP_of_mem_coRP
+  ]
+  scope := "Every NP language reduces to Multi-output MCSP (n, m and s in unary, then the m \
+    tables) by a polynomial-time randomized many-one reduction with one-sided error: yes maps \
+    to yes always, no to no with probability at least 2/3; the reduction lands in Definition \
+    1's positive instances. Over any De Morgan basis: Boolean.DeMorgan.interpretation is \
+    Definition 1's constant-free AND/OR/NOT basis, Boolean.interpretation the library variant \
+    with constants. Library route: from the library's GapSetCover 3 rather than Trevisan's \
+    bounded Set Cover; soundness by a union bound over small circuits in place of Lemma 16; \
+    windows as OR chains rather than canonical DNFs; the positions of the ground list in \
+    place of its distinct elements. The BPP and coRP inclusions are conditional on Multi-MCSP \
+    being in BPP or coRP; they follow from the reduction and are not stated separately in the \
+    source."
 
 register_result "magnification" where
   title := "McKay–Murray–Williams: barely superlinear circuit lower bounds for MCSP separate P \
@@ -2584,3 +2612,25 @@ register_result "nayak-wu-median" where
     ε = 1/3 (hence 1/δ <= 432T when 1 <= δ n), 12T (216T) for involutive-difference oracle \
     steps, and the same bound on T + 1 for index-returning algorithms. Derived via adversary \
     weight-layer bounds rather than polynomials; comparison-tree oracles are not formalized."
+
+register_result "unique-games-perfect-completeness" where
+  title := "Satisfiable unique games are in P"
+  topic := "interactive proofs"
+  sources := [
+    { paper := Khot2010, theorem := unverified,
+      locator := "Section 2.4, after Definition 2.4 (author copy, p. 6)" }
+  ]
+  theorems := [
+    Cslib.Complexity.gapUniqueGames_one_mem_PromiseP,
+    Cslib.Complexity.gapUniqueGames_one_mem_PromiseP_of_pos,
+    Cslib.Complexity.gapUniqueGames_zero_mem_PromiseP,
+    Cslib.Complexity.isUniqueGame_mem_P,
+    Cslib.Complexity.satisfiable_uniqueGame_mem_P
+  ]
+  scope := "Native multi-tape PromiseP and P membership for each fixed finite alphabet Fin L \
+    under Graph.encoding (encPi (encFinEnum (Fin L))), the encoding of UniqueGamesConjecture. \
+    For 0 < L, label propagation over List.finRange L is certified by reading the final \
+    table directly without constructing ℕ → Fin L closures at runtime. For L = 0, Fin 0 is \
+    empty so every unique game vacuously has unsatVal = 0 and GapUniqueGames (Fin 0) 1 s \
+    has no no-instances, while no graph is satisfiable. This fixes L rather than taking it \
+    as part of the input."
