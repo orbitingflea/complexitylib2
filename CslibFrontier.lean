@@ -1400,6 +1400,7 @@ public import CslibFrontier.Computability.Circuit.Boolean.WeightedThreshold.Capa
 public import CslibFrontier.Computability.Circuit.Boolean.WeightedThreshold.Components
 public import CslibFrontier.Computability.Circuit.Boolean.WeightedThreshold.Cut
 public import CslibFrontier.Computability.Circuit.Boolean.WeightedThreshold.DepthTwo
+public import CslibFrontier.Computability.Circuit.Boolean.WeightedThreshold.DepthTwoInputs
 public import CslibFrontier.Computability.Circuit.Boolean.WeightedThreshold.InnerProduct
 public import CslibFrontier.Computability.Circuit.Boolean.WeightedThreshold.KaneWilliamsB
 public import CslibFrontier.Computability.Circuit.Boolean.WeightedThreshold.LTF
@@ -2296,6 +2297,7 @@ public import CslibFrontier.Computability.Complexity.Parameterized.WHierarchy.Cl
 public import CslibFrontier.Computability.Complexity.Parameterized.WHierarchy.Clique.Bracket
 public import CslibFrontier.Computability.Complexity.Parameterized.WHierarchy.Clique.Graph
 public import CslibFrontier.Computability.Complexity.Parameterized.WHierarchy.IndependentSet
+public import CslibFrontier.Computability.Complexity.Parameterized.WHierarchy.XP
 public import CslibFrontier.Computability.Complexity.Problems.BipartitePerfectMatching
 public import CslibFrontier.Computability.Complexity.Problems.BipartitePerfectMatching.Membership
 public import CslibFrontier.Computability.Complexity.Problems.BoundedHalting
