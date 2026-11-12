@@ -1733,6 +1733,7 @@ public import CslibFrontier.Computability.Communication.Nondeterministic.Basic
 public import CslibFrontier.Computability.Communication.Nondeterministic.CoverNumber
 public import CslibFrontier.Computability.Communication.Nondeterministic.ExtensionComplexity
 public import CslibFrontier.Computability.Communication.Nondeterministic.Functions
+public import CslibFrontier.Computability.Communication.Nondeterministic.UniqueDisjointness
 public import CslibFrontier.Computability.Communication.Operations
 public import CslibFrontier.Computability.Communication.PartitionJoin
 public import CslibFrontier.Computability.Communication.PaturiSimon
@@ -1853,6 +1854,8 @@ public import CslibFrontier.Computability.Complexity.Classes.EXP
 public import CslibFrontier.Computability.Complexity.Classes.EXP.Decidable
 public import CslibFrontier.Computability.Complexity.Classes.EXP.Padding
 public import CslibFrontier.Computability.Complexity.Classes.EXP.Separation
+public import CslibFrontier.Computability.Complexity.Classes.EXPSPACE
+public import CslibFrontier.Computability.Complexity.Classes.EXPSPACE.Separation
 public import CslibFrontier.Computability.Complexity.Classes.FPAUS
 public import CslibFrontier.Computability.Complexity.Classes.FPAUS.Counting
 public import CslibFrontier.Computability.Complexity.Classes.FPAUS.ExactSampler
@@ -4803,6 +4806,13 @@ public import CslibFrontier.Foundations.Analysis.Brouwer.Simplex
 public import CslibFrontier.Foundations.Analysis.Calculus.Taylor
 public import CslibFrontier.Foundations.Analysis.Convex.Ellipsoid
 public import CslibFrontier.Foundations.Analysis.Convex.ExtendedFormulation
+public import CslibFrontier.Foundations.Analysis.Convex.ExtendedFormulation.CorrDigraph
+public import CslibFrontier.Foundations.Analysis.Convex.ExtendedFormulation.Correlation
+public import CslibFrontier.Foundations.Analysis.Convex.ExtendedFormulation.Cut
+public import CslibFrontier.Foundations.Analysis.Convex.ExtendedFormulation.Reduction
+public import CslibFrontier.Foundations.Analysis.Convex.ExtendedFormulation.StableSet
+public import CslibFrontier.Foundations.Analysis.Convex.ExtendedFormulation.TSP
+public import CslibFrontier.Foundations.Analysis.Convex.ExtendedFormulation.TourSplit
 public import CslibFrontier.Foundations.Analysis.Convex.FirstOrder
 public import CslibFrontier.Foundations.Analysis.Convex.Strong
 public import CslibFrontier.Foundations.Analysis.ENNRealFraction
@@ -5298,6 +5308,7 @@ public import CslibFrontier.Foundations.Data.List.Basic
 public import CslibFrontier.Foundations.Data.List.Blocks
 public import CslibFrontier.Foundations.Data.List.Boole
 public import CslibFrontier.Foundations.Data.List.CommonPrefix
+public import CslibFrontier.Foundations.Data.List.ConsecutivePairs
 public import CslibFrontier.Foundations.Data.List.Counting
 public import CslibFrontier.Foundations.Data.List.CourseOfValues
 public import CslibFrontier.Foundations.Data.List.DotProduct
