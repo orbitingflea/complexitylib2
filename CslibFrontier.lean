@@ -3726,9 +3726,11 @@ public import CslibFrontier.Computability.QueryComplexity.Quantum.Progress
 public import CslibFrontier.Computability.QueryComplexity.Quantum.Search
 public import CslibFrontier.Computability.QueryComplexity.Quantum.Simon
 public import CslibFrontier.Computability.QueryComplexity.Quantum.SimonSearch
+public import CslibFrontier.Computability.QueryComplexity.Quantum.SpectralAdversary
 public import CslibFrontier.Computability.QueryComplexity.Quantum.UnknownSearch
 public import CslibFrontier.Computability.QueryComplexity.Quantum.ValueAdversary
 public import CslibFrontier.Computability.QueryComplexity.Quantum.ValueQuery
+public import CslibFrontier.Computability.QueryComplexity.Quantum.WeightedAdversary
 public import CslibFrontier.Computability.QueryComplexity.Randomized
 public import CslibFrontier.Computability.QueryComplexity.Randomized.Counting
 public import CslibFrontier.Computability.QueryComplexity.Randomized.DeutschJozsa
@@ -4512,6 +4514,9 @@ public import CslibFrontier.DataStructure.ApproximateMembership.WordRAM.Quotient
 public import CslibFrontier.DataStructure.ApproximateMembership.WordRAM.QuotientFilter.Cluster
 public import CslibFrontier.DataStructure.ApproximateMembership.WordRAM.QuotientFilter.SlotArray
 public import CslibFrontier.DataStructure.BTree.Basic
+public import CslibFrontier.DataStructure.BTree.Comparisons.Insert
+public import CslibFrontier.DataStructure.BTree.Comparisons.Query
+public import CslibFrontier.DataStructure.BTree.Comparisons.Range
 public import CslibFrontier.DataStructure.BTree.Cost.Erase
 public import CslibFrontier.DataStructure.BTree.Cost.Insert
 public import CslibFrontier.DataStructure.BTree.Cost.OfSortedList
@@ -5520,6 +5525,7 @@ public import CslibFrontier.Foundations.LinearAlgebra.Matrix.Copositive
 public import CslibFrontier.Foundations.LinearAlgebra.Matrix.CutRank
 public import CslibFrontier.Foundations.LinearAlgebra.Matrix.Derivation
 public import CslibFrontier.Foundations.LinearAlgebra.Matrix.EndpointIncidence
+public import CslibFrontier.Foundations.LinearAlgebra.Matrix.EuclideanOpNorm
 public import CslibFrontier.Foundations.LinearAlgebra.Matrix.Farkas
 public import CslibFrontier.Foundations.LinearAlgebra.Matrix.FourierMotzkin
 public import CslibFrontier.Foundations.LinearAlgebra.Matrix.GaussJordan
