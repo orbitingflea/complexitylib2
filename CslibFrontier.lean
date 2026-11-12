@@ -3278,6 +3278,7 @@ public import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.P
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.SqrtLog.Budget
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Unpair
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Option
+public import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.OutputLength
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Pi
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Polynomial
@@ -3961,6 +3962,7 @@ public import CslibFrontier.Computability.RAM.Defs
 public import CslibFrontier.Computability.RAM.Input
 public import CslibFrontier.Computability.RAM.Squaring
 public import CslibFrontier.Computability.Reduction.ManyOne
+public import CslibFrontier.Computability.Reduction.TruthTable
 public import CslibFrontier.Computability.StreamArithmetic.EstimatorRecipes
 public import CslibFrontier.Computability.StreamArithmetic.Interface
 public import CslibFrontier.Computability.StreamArithmetic.Primitives
@@ -6031,6 +6033,7 @@ public import CslibFrontier.Languages.Probabilistic.Oracle.Norm
 public import CslibFrontier.Languages.Probabilistic.Oracle.Norm.Init
 public import CslibFrontier.Languages.Probabilistic.Oracle.QueryCount
 public import CslibFrontier.Languages.Probabilistic.Oracle.Simulation
+public import CslibFrontier.Languages.Probabilistic.Oracle.Substitution
 public import CslibFrontier.Languages.Probabilistic.Oracle.Support
 public import CslibFrontier.Languages.Probabilistic.Oracle.Tabulate
 public import CslibFrontier.Languages.Probabilistic.Oracle.Transcript
