@@ -1049,6 +1049,7 @@ public import CslibFrontier.Computability.Circuit.Arithmetic.HittingSet.Defs
 public import CslibFrontier.Computability.Circuit.Arithmetic.HittingSet.DerivativeClosed
 public import CslibFrontier.Computability.Circuit.Arithmetic.HittingSet.LogCurve
 public import CslibFrontier.Computability.Circuit.Arithmetic.HittingSet.LowerBound
+public import CslibFrontier.Computability.Circuit.Arithmetic.HittingSet.NoncommABP
 public import CslibFrontier.Computability.Circuit.Arithmetic.HittingSet.ROABP
 public import CslibFrontier.Computability.Circuit.Arithmetic.HittingSet.ROABPMonomials
 public import CslibFrontier.Computability.Circuit.Arithmetic.HittingSet.ROABPWeights
@@ -2623,7 +2624,6 @@ public import CslibFrontier.Computability.Complexity.Problems.StatisticalDiffere
 public import CslibFrontier.Computability.Complexity.Problems.StatisticalDifference.PolyTime
 public import CslibFrontier.Computability.Complexity.Problems.SubsetSum
 public import CslibFrontier.Computability.Complexity.Problems.SubsetSum.Digits
-public import CslibFrontier.Computability.Complexity.Problems.SubsetSum.Mask
 public import CslibFrontier.Computability.Complexity.Problems.TQBF
 public import CslibFrontier.Computability.Complexity.Problems.TQBF.Closed
 public import CslibFrontier.Computability.Complexity.Problems.TSP
@@ -2676,6 +2676,7 @@ public import CslibFrontier.Computability.Complexity.Reduction.TruthTable.Compos
 public import CslibFrontier.Computability.Complexity.Reduction.TruthTableVariants
 public import CslibFrontier.Computability.Complexity.Reduction.Turing
 public import CslibFrontier.Computability.Complexity.Reduction.TuringAutoreducible
+public import CslibFrontier.Computability.Complexity.Reduction.Word
 public import CslibFrontier.Computability.DecisionTree.AffineScore
 public import CslibFrontier.Computability.DecisionTree.Basic
 public import CslibFrontier.Computability.DecisionTree.CanonicalTree
@@ -5521,6 +5522,7 @@ public import CslibFrontier.Foundations.Data.List.Last
 public import CslibFrontier.Foundations.Data.List.Lex
 public import CslibFrontier.Foundations.Data.List.ListsUpTo
 public import CslibFrontier.Foundations.Data.List.Lookup
+public import CslibFrontier.Foundations.Data.List.MaskSelect
 public import CslibFrontier.Foundations.Data.List.OfFn
 public import CslibFrontier.Foundations.Data.List.OfFnGetD
 public import CslibFrontier.Foundations.Data.List.OfFnPad
