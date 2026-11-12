@@ -57,6 +57,8 @@ import CslibFrontier.Computability.Complexity.Problems.Graph.RotationSystem.Reco
 import CslibFrontier.Computability.Complexity.Problems.Graph.ClosedPassages.Loop
 import CslibFrontier.Computability.Complexity.Problems.Graph.RotationSystem.Realization.Bouquet
 import CslibFrontier.Computability.Complexity.Problems.Graph.RotationSystem.Realization.Converse
+import CslibFrontier.Computability.Complexity.Problems.Graph.RotationSystem.Realization.Equivalence
+import CslibFrontier.Computability.Complexity.Problems.Graph.RotationSystem.Star
 import CslibFrontier.Computability.Complexity.Problems.Graph.PolygonalDrawing.Germs
 import CslibFrontier.Computability.Complexity.Problems.Graph.PolygonalDrawing.Neighborhood
 import CslibFrontier.Computability.Complexity.Problems.Graph.PolygonalDrawing.Points
@@ -66,6 +68,8 @@ import CslibFrontier.Logics.Propositional.CSP.Planar.Embedding.AtomBoundary
 import CslibFrontier.Logics.Propositional.CSP.Planar.Embedding.Projection
 import CslibFrontier.Logics.Propositional.CSP.Planar.Embedding.GadgetCyclic
 import CslibFrontier.Logics.Propositional.CSP.Planar.Embedding.Equality
+import CslibFrontier.Logics.Propositional.CSP.Planar.Embedding.SelfDual
+import CslibFrontier.Logics.Propositional.CSP.PrimitivePositive.Polymorphism
 import CslibFrontier.Computability.PolyTime.CSP.Table
 import CslibFrontier.Computability.PolyTime.CSP.CyclicDifference.Size
 import CslibFrontier.Computability.PolyTime.CSP.Edge.Augmenting
@@ -1184,11 +1188,10 @@ For permutation-only proofs, import `CslibFrontier.Foundations.GroupTheory.Perm.
 
 # Polygonal Geometry Prerequisites
 
-The loop-only forward realization is proved below. The general equivalence
-between numerical genus zero and geometric realization remains unproved.
-It still needs general forward restoration of nonloop contractions by directed
-contiguous vertex splits. The finite segment-to-face-color converse is proved
-below. Topological taming, indexed FZ versus DK set conventions and
+Componentwise numerical genus zero is equivalent to an actual polygonal
+embedding realizing the supplied literal clockwise rotation, when all incident
+endpoints are declared. Both general directions are proved below.
+Topological taming, indexed FZ versus DK set conventions and
 source comparison, frozen-switch completeness, Hanani–Tutte recognition and the
 full #3091 endpoint remain open.
 
@@ -1331,9 +1334,65 @@ Numerical nonalternation supplies disjoint or nested port intervals; the
 construction proves actual real-parameter nonintersection internally.
 `CslibFrontierTests/PolygonalBouquet.lean` also checks a nonvacuous unbounded-degree
 family, nested/disjoint loops, interlacing obstruction and reversed-order
-rejection. This loop-only forward theorem combines with the converse below.
-General nonloop restoration remains open; no coordinate-bit or native-runtime
-claim is made.
+rejection. This loop-only theorem supplies the base of the general forward
+construction. No coordinate-bit or native-runtime claim is made.
+
+## General Forward Realization and Restoration
+
+Ordinary import
+`CslibFrontier.Computability.Complexity.Problems.Graph.RotationSystem.Realization.Forward`
+gives the provider-free theorem for every supplied rotation:
+
+```lean
+open Cslib.Complexity Graph in
+example {G : Graph} (r : RotationSystem G)
+    (hG : ∀ v ∈ G.incidenceVertices, v ∈ G.1)
+    (hr : r.NumericalGenusZero) :
+    ∃ D : PolygonalDrawing G, D.IsEmbedding ∧ D.Realizes r :=
+  r.exists_polygonalDrawing hG hr
+```
+
+There is no degree, connectedness, loop, bridge, cofaciality, rational-coordinate
+or geometric-provider premise. In particular, every nonloop star degree is
+included, using the numerical star API imported at the start of this chapter:
+
+```lean
+open Cslib.Complexity Graph Graph.RotationSystem in
+example (n : ℕ) : ∃ D : PolygonalDrawing (starGraph n),
+    D.IsEmbedding ∧ D.Realizes (starRotation n) :=
+  (starRotation n).exists_polygonalDrawing (starGraph_endpoints_declared n)
+    (numericalGenusZero_starRotation n)
+```
+
+The proof reindexes a nonloop occurrence, contracts it, recurses on edge count,
+restores it and transports back to the exact original edge/declaration lists.
+Ordinary `Realization.Restoration` imports also expose complete restoration of
+any supplied actual contracted drawing:
+
+```lean
+open Cslib.Complexity Graph Graph.RotationSystem in
+example {G : Graph} {u v : ℕ}
+    (r : RotationSystem (lastEdgeGraph G u v)) (huv : u ≠ v)
+    (hG : ∀ w ∈ (lastEdgeGraph G u v).incidenceVertices, w ∈ G.1)
+    {D : PolygonalDrawing (contractLastEdgeGraph G u v)}
+    (hD : D.IsEmbedding) (hR : D.Realizes (r.contractLastEdge huv)) :
+    ∃ ρ > 0, ∃ a b : ℂ, (D.restoration huv ρ a b).IsEmbedding ∧
+      (D.restoration huv ρ a b).Realizes r :=
+  hR.exists_restoration r huv hG hD
+```
+
+The radius, centers, separated fans and exact connector insertion gaps are
+chosen internally. Exterior pieces remain, and both ends of a target loop
+reattach independently. Empty retained blocks keep their prescribed slots;
+all real contacts, simplicity, declared points and clockwise triples are proved.
+The generic rank API lives in `RotationSystem.IntervalOrder`; ordinary
+`Realization.BouquetOrder` imports continue to expose it without aliases.
+
+`CslibFrontierTests/PolygonalForward.lean` applies the theorem to bridges,
+parallel occurrences, endpoint loops, untouched components, sparse repeated
+declarations, isolates and emptiness. `PolygonalContractionSplit.lean` applies
+automatic restoration to an actual drawing with two independent loop ends.
+`PolygonalJoin`, `PolygonalRestriction` and `PolygonalSplitFans` check local APIs.
 
 ## Polygonal-to-Numerical Converse
 
@@ -1372,21 +1431,20 @@ the empty literal clockwise vertex sectors. They descend to the existing face
 quotient. The indexed-dual/lifting exactness criterion supplies Euler equality;
 its face-color premise is discharged internally in the final theorem.
 
-Combining the two directions gives the exact loop-only equivalence:
+Ordinary `Realization.Equivalence` imports combine the general endpoints:
 
 ```lean
 open Cslib.Complexity Graph in
 example {G : Graph} (r : RotationSystem G)
-    (hG : ∀ v ∈ G.incidenceVertices, v ∈ G.1)
-    (hloop : ∀ e : Fin G.2.length,
-      (Dart.vertex (G := G) (e, false)) = Dart.vertex (e, true)) :
+    (hG : ∀ v ∈ G.incidenceVertices, v ∈ G.1) :
     r.NumericalGenusZero ↔
-      ∃ D : PolygonalDrawing G, D.IsEmbedding ∧ D.Realizes r := by
-  constructor
-  · exact fun hr => r.exists_polygonalDrawing_of_loops hG hr hloop
-  · rintro ⟨D, hD, hR⟩
-    exact hD.numericalGenusZero hG hR
+      ∃ D : PolygonalDrawing G, D.IsEmbedding ∧ D.Realizes r :=
+  r.numericalGenusZero_iff_exists_polygonalDrawing hG
 ```
+
+Use `.mp hr` for the forward construction and `.mpr ⟨D, hD, hR⟩` for the
+converse. `CslibFrontierTests/PolygonalEquivalence.lean` checks both directions
+through this ordinary import on nonloop stars at arbitrary degree.
 
 A failure of numerical genus excludes that specific realized rotation:
 
@@ -1407,10 +1465,10 @@ nonzero loop face colors, sparse/duplicate points, emptiness and a torus
 rotation obstruction. `PolygonalConverseAudit.lean` records scoped stored
 declaration/axiom/environment checks.
 
-The proof is an original finite PL argument. General forward restoration,
-arbitrary topological-arc/source comparison, frozen-switch completeness,
-Hanani–Tutte/recognition and full #3091 remain open. No coordinate-bit or
-native-runtime bound is claimed.
+These are original finite PL proofs. Arbitrary topological-arc taming,
+indexed FZ versus DK set source comparison, frozen-switch completeness,
+Hanani–Tutte, bare recognition and full #3091 remain open. No coordinate-bit,
+runtime/P bound or CSP dichotomy is claimed.
 
 # Ordered Incidence-to-Polygon Rotations
 
@@ -2096,6 +2154,83 @@ substitution is supplied. Remaining pin/disequality
 recipes, expanded language endpoints, native target acceptance, geometric/
 source comparison, recognition and full #3091 remain open.
 
+
+# Original-Language Ordered Disequality
+
+Import `CslibFrontier.Logics.Propositional.CSP.Planar.Embedding.SelfDual` for a
+generic language result, beyond the preceding concrete NAE example. Common NOT
+and failure of the unary false-constant operation supply both an actual
+original-language disequality gadget and its ordered numerical boundary:
+
+```lean
+open Cslib.Logic.PL Cslib.Logic.PL.CSP in
+open Cslib.Complexity.CSP.OrderedBoundary in
+example {Rel : Type} {arity : Rel → ℕ}
+    {sem : Rel → List Bool → Bool}
+    (hnot : HasPolymorphism arity sem (fun a : Fin 1 → Bool => !(a 0)))
+    (hfalse : ¬HasPolymorphism arity sem
+      (fun _ : Fin 1 → Bool => false)) :
+    ∃ g : PPGadget arity sem RelationMinor.disequality,
+      Nonempty (GadgetWitness g) :=
+  exists_disequality_of_common_not hnot hfalse
+```
+
+There is no finite-alphabet, pin, template or target-certificate premise.
+The minimum ranges over actual gadgets with actual checked boundaries;
+projection and adjacent equality supply each descent step. Unary arity is
+excluded by common complement, leaving disequality. This is static classical
+existence, with no uniform preprocessing or input-varying compiler bound.
+
+The witness yields an actual accepted table and the intended free-row behavior:
+
+```lean
+open Cslib.Logic.PL Cslib.Logic.PL.CSP Cslib.Complexity in
+open Cslib.Complexity.CSP.OrderedBoundary in
+example {Rel : Type} {arity : Rel → ℕ}
+    {sem : Rel → List Bool → Bool}
+    (hnot : HasPolymorphism arity sem (fun a : Fin 1 → Bool => !(a 0)))
+    (hfalse : ¬HasPolymorphism arity sem
+      (fun _ : Fin 1 → Bool => false)) :
+    ∃ (g : PPGadget arity sem RelationMinor.disequality)
+        (c : Graph.RotationCertificate),
+      verify g.body (List.ofFn Sum.inl) c = true ∧
+      (∃ b, g.body.eval sem (Sum.elim ![true, false] b) = true) ∧
+      ¬(∃ b, g.body.eval sem (Sum.elim ![false, false] b) = true) := by
+  obtain ⟨g, ⟨w⟩⟩ := exists_disequality_of_common_not hnot hfalse
+  refine ⟨g, w.certificate, w.accepted, ?_, ?_⟩
+  · exact (g.correct ![true, false]).mp (by decide)
+  · intro hb
+    exact (by decide : ![false, false] ∉ RelationMinor.disequality)
+      ((g.correct ![false, false]).mpr hb)
+```
+
+`CslibFrontierTests/PlanarSelfDualEnabling.lean` supplies the hypotheses for
+`{NAE3, CROSS}`. Empty and true/false-nullary languages also test the limits:
+unsatisfiability alone does not imply failure of the false constant.
+
+The separate import
+`CslibFrontier.Logics.Propositional.CSP.PrimitivePositive.Polymorphism` supplies
+forward semantic preservation, with an arbitrary operation index `J`:
+
+```lean
+open Cslib.Logic.PL Cslib.Logic.PL.CSP in
+example {Rel J : Type} {arity : Rel → ℕ}
+    {sem : Rel → List Bool → Bool} {n : ℕ}
+    {R : Set (Fin n → Bool)} (g : PPGadget arity sem R)
+    {f : (J → Bool) → Bool} (h : HasPolymorphism arity sem f) :
+    Cslib.Logic.IsPolymorphism f R := g.isPolymorphism h
+```
+
+`HasPolymorphism.eval` applies to a wellformed original CSP body and its
+satisfying assignments; the gadget theorem handles existential auxiliaries.
+`J` may be empty. Neither semantic fact asserts arbitrary planar PP closure.
+`CslibFrontierTests/CSPGadgetPolymorphism.lean` imports no graph rotation model
+and checks repeated scopes, nullary operations and false nullary constraints.
+
+The descent follows DK Lemma 3, printed pp. 437–438; actual-body ordered
+reconstruction is original. General attachments and expanded-language recipes,
+native target acceptance, geometry/source comparison, recognition and full
+#3091 remain open.
 
 # Finite Crossover Gadget Semantics
 
