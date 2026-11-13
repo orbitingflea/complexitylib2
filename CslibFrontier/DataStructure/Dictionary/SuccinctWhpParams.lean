@@ -953,7 +953,7 @@ private theorem add_six_le_two_pow : ∀ {k : ℕ}, 4 ≤ k → k + 6 ≤ 2 ^ k
 
 /-- When `whpThreshold c ≤ n_max`, all `2 ^ bCharWhp n_max`-scaled hash and `BufTrie` bit counts
 are individually bounded by `n_max`. -/
-private theorem sublinear_table_bits_le {c n_max : ℕ} (hth : whpThreshold c ≤ n_max) :
+theorem sublinear_table_bits_le {c n_max : ℕ} (hth : whpThreshold c ≤ n_max) :
     let bc := bCharWhp n_max
     BitPackedDoubleTabulation.topEntries (cTabWhp c) (dTabWhp c) bc * bc ≤ n_max ∧
     BitPackedDoubleTabulation.botEntries (dTabWhp c) bc * bWhp n_max ≤ n_max ∧
