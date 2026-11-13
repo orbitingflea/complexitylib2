@@ -7,7 +7,7 @@ Authors: Renfei Zhou
 module
 -- upstream: candidate
 
-public import CslibFrontier.Algorithms.WordRAM.Dijkstra.Statement
+public import CslibFrontier.Algorithms.WordRAM.Dijkstra.HeapStatement
 public import CslibFrontier.Computability.WordRAM.ExactNotation
 public import CslibFrontier.Computability.WordRAM.Function
 
@@ -18,10 +18,10 @@ This file writes the quadratic-time Dijkstra program as a structured word-RAM pr
 exact basis `Cslib.WordRAM.Basis.exact` [Dijkstra][Dijkstra1959] [Cormen et al., Section
 24.3][CLRS2009].
 
-The program reads the instance of `Cslib.Algorithms.WordRAM.Dijkstra.Instance.encode`, whose
+The program reads the instance of `Cslib.Algorithms.Dijkstra.Instance.encode`, whose
 weight matrix entry for row `u` and column `v` sits at address `u n + v + 3`. It keeps two arrays
 of `n` words just past the input: the tentative distances at `n² + 3 + v`, which are the output
-cells `Cslib.Algorithms.WordRAM.Dijkstra.Instance.outAddr`, and the visited flags at
+cells `Cslib.Algorithms.Dijkstra.Instance.outAddr`, and the visited flags at
 `n² + 3 + n + v`. Both start at `0` because memory past the input is `0`; a distance word `0`
 means "no path found yet" and `d + 1` means distance `d`.
 
@@ -35,9 +35,9 @@ On the exact basis a subtraction below zero faults. The program's only subtracti
 
 ## Main definitions
 
-* `Cslib.Algorithms.WordRAM.Dijkstra.Instance.encodeWeight`: a matrix entry as a word.
-* `Cslib.Algorithms.WordRAM.Dijkstra.Instance.encode`: the weight-matrix input words.
-* `Cslib.Algorithms.WordRAM.Dijkstra.Instance.outAddr`: the output address of a vertex.
+* `Cslib.Algorithms.Dijkstra.Instance.encodeWeight`: a matrix entry as a word.
+* `Cslib.Algorithms.Dijkstra.Instance.encode`: the weight-matrix input words.
+* `Cslib.Algorithms.Dijkstra.Instance.outAddr`: the output address of a vertex.
 * `Cslib.Algorithms.WordRAM.Dijkstra.QuadraticSpec`: a flat program computes every distance from
   the source within `K n ^ 2` instructions.
 * `Cslib.Algorithms.WordRAM.Dijkstra.QuadraticStatement`: some program meets `QuadraticSpec`.
@@ -56,11 +56,7 @@ On the exact basis a subtraction below zero faults. The program's only subtracti
 
 @[expose] public section
 
-namespace Cslib.Algorithms.WordRAM.Dijkstra
-
-open Cslib.WordRAM
-
-namespace Instance
+namespace Cslib.Algorithms.Dijkstra.Instance
 
 variable (I : Instance)
 
@@ -81,7 +77,11 @@ def encode : List ℕ :=
 `n * n + 2`. -/
 def outAddr (v : Fin I.n) : ℕ := I.n * I.n + 3 + v
 
-end Instance
+end Cslib.Algorithms.Dijkstra.Instance
+
+namespace Cslib.Algorithms.WordRAM.Dijkstra
+
+open Cslib.WordRAM Cslib.Algorithms.Dijkstra
 
 /-- **Quadratic-time shortest paths.** At every word size `w` that holds `(n + 2) ^ 2 (W + 2)`,
 where `W` is the largest weight, the flat program `p`, started on the input words of an instance,

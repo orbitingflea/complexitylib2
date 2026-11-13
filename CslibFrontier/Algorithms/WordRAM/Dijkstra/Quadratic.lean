@@ -7,7 +7,6 @@ Authors: Renfei Zhou
 module
 -- upstream: candidate
 
-public import CslibFrontier.Algorithms.WordRAM.Dijkstra.Invariant
 public import CslibFrontier.Algorithms.WordRAM.Dijkstra.MinScan
 public import CslibFrontier.Algorithms.WordRAM.Dijkstra.Relax
 
@@ -22,11 +21,11 @@ shortest-path distances from the source of a weighted directed graph with `n` ve
 The memory of the program determines a visited set and tentative distances
 (`Cslib.Algorithms.WordRAM.Dijkstra.visitedOf`, `Cslib.Algorithms.WordRAM.Dijkstra.distOf`); the
 loop invariant `Cslib.Algorithms.WordRAM.Dijkstra.OuterInv` asks that they satisfy the invariant
-`Cslib.Algorithms.WordRAM.Dijkstra.Instance.Inv` of Dijkstra's algorithm and that the round
+`Cslib.Algorithms.Dijkstra.Instance.Inv` of Dijkstra's algorithm and that the round
 counter counts the visited vertices, or has jumped to `n` once no unvisited vertex is reachable.
 Each round keeps it by `Cslib.Algorithms.WordRAM.Dijkstra.minScan_spec`,
 `Cslib.Algorithms.WordRAM.Dijkstra.relax_spec` and
-`Cslib.Algorithms.WordRAM.Dijkstra.Instance.Inv.step`.
+`Cslib.Algorithms.Dijkstra.Instance.Inv.step`.
 
 ## Main definitions
 
@@ -51,7 +50,17 @@ Each round keeps it by `Cslib.Algorithms.WordRAM.Dijkstra.minScan_spec`,
 
 namespace Cslib.Algorithms.WordRAM.Dijkstra
 
-open Cslib.WordRAM Reg
+open Cslib.WordRAM Cslib.Algorithms.Dijkstra Reg
+
+/-- A nonzero distance word decodes to a finite distance. -/
+private theorem decodeDist_ne_top {b : ℕ} (hb : b ≠ 0) : decodeDist b ≠ ⊤ := by
+  simp [decodeDist, hb]
+
+/-- Decoding preserves order between nonzero distance words. -/
+private theorem decodeDist_le {a b : ℕ} (ha : a ≠ 0) (hb : b ≠ 0) (h : a ≤ b) :
+    decodeDist a ≤ decodeDist b := by
+  simp only [decodeDist, ha, hb, ite_false]
+  exact_mod_cast Nat.sub_le_sub_right h 1
 
 /-- The address of the visited flag of vertex `v`, just past the output cells. -/
 def visAddr (I : Instance) (v : Fin I.n) : ℕ := I.n * I.n + 3 + I.n + v
@@ -83,7 +92,8 @@ structure OuterInv (I : Instance) (y : Data 17) : Prop where
 variable {I : Instance} {w : ℕ}
 
 /-- Every matrix entry is at most the largest weight plus one. -/
-theorem Instance.encodeWeight_le (I : Instance) (u v : Fin I.n) :
+theorem _root_.Cslib.Algorithms.Dijkstra.Instance.encodeWeight_le (I : Instance)
+    (u v : Fin I.n) :
     Instance.encodeWeight (I.weight u v) ≤ I.maxWeight + 1 := by
   cases h : I.weight u v with
   | none => simp [Instance.encodeWeight]
