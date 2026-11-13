@@ -1695,6 +1695,7 @@ public import CslibFrontier.Computability.Circuit.Quantum.Input
 public import CslibFrontier.Computability.Circuit.Quantum.Oracle.Basic
 public import CslibFrontier.Computability.Circuit.Quantum.Oracle.Code
 public import CslibFrontier.Computability.Circuit.Quantum.Oracle.Resources
+public import CslibFrontier.Computability.Circuit.Quantum.Oracle.Signature
 public import CslibFrontier.Computability.Circuit.Quantum.Oracle.Uniform
 public import CslibFrontier.Computability.Circuit.Quantum.Oracle.ValueQuery
 public import CslibFrontier.Computability.Circuit.Quantum.Output
@@ -4679,6 +4680,7 @@ public import CslibFrontier.Crypto.Primitives.Garbling.SizeLowerBound
 public import CslibFrontier.Crypto.Primitives.Garbling.Switch.Basic
 public import CslibFrontier.Crypto.Primitives.Garbling.Switch.Garble
 public import CslibFrontier.Crypto.Primitives.Garbling.Switch.Oblivious
+public import CslibFrontier.Crypto.Primitives.HQC.Correctness
 public import CslibFrontier.Crypto.Primitives.HQC.PKE
 public import CslibFrontier.Crypto.Primitives.HQC.SupportDensity
 public import CslibFrontier.Crypto.Primitives.HQC.SupportSampling
