@@ -56,6 +56,9 @@ certified efficiency, and security in declaration docstrings.
 For documentation-only changes, check links, claims against source, and Lean examples with the
 imports shown. Record the scope of validation and review accurately.
 
+Prepare the PR using the [writing guidance](AGENTS.md#writing-in-issues-and-prs) and
+[template](.github/pull_request_template.md), adapting the explanation to the reader and change.
+
 ## Library quality standard
 
 The bar is Mathlib's [style guidelines](https://leanprover-community.github.io/contribute/style.html)
@@ -210,6 +213,13 @@ generates the equation lemma `f.eq_1`, whose statement is the body, and stores i
 file even when `f` is private (Lean v4.36; `unfold f`, `dsimp only [f]` and `rfl` did not in our
 tests, [#4243](https://github.com/cslib-community/cslib-frontier/issues/4243)). `import all` also
 loads private information, so such edits do reach its clients.
+
+Evidence that a public API is usable must include a representative `module` client with ordinary
+imports of that API, exercising intended operations through exposed bodies or public equations.
+[QuantumOracleModule.lean](CslibFrontierTests/QuantumOracleModule.lean) is an example.
+A test without `module`, or using `import all` for that API, has broader access and cannot
+establish usability for ordinary clients. Intentional internal, metaprogramming and axiom tests
+keep their documented access and supplement this representative evidence.
 
 - **What is a helper.** A helper is proof plumbing: a step meaningful only inside one proof, or a
   fact about a module-local construction, encoding or intermediate quantity. Helpers are `private`

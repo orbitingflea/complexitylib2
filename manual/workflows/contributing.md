@@ -34,7 +34,15 @@ the checks and how to record a concise before/after example without a separate a
 
 ## Validate the client, then the change
 
-Begin with diagnostics for the changed file and a representative downstream client. For new bundled hypotheses, provide a satisfying instance; use a negative case when it exposes vacuity or a model boundary. Tests should exercise behavior or the interface rather than restate a theorem by name.
+Begin with diagnostics for the changed file and a representative downstream client. To establish
+public API usability, use a `module` client with ordinary imports of the API, exercising intended
+operations through exposed bodies or public equations.
+[QuantumOracleModule.lean](../../CslibFrontierTests/QuantumOracleModule.lean) is a complete example.
+A test without `module`, or using `import all` for that API, has broader access and cannot
+establish usability for ordinary clients. Intentional internal, metaprogramming and axiom tests
+keep their documented access and supplement this evidence.
+
+For new bundled hypotheses, provide a satisfying instance; use a negative case when it exposes vacuity or a model boundary. Tests should exercise behavior or the interface rather than restate a theorem by name.
 
 After adding a library file, run `lake exe mk_all` to regenerate the aggregate. New tests belong in `CslibFrontierTests/` and are included by a Lake glob. During development:
 
@@ -106,7 +114,12 @@ preserve the mathematical claim and resource bounds, and complete the cleanup af
 contribution before approval. Deferral requires the exceptional disposition described in
 [Improving library ergonomics](../../AGENTS.md#improving-library-ergonomics).
 
-Explain the problem, resulting behavior, limitations and validation in the PR. Link its task issue and source references, preserve contributor credit, and disclose AI tools and their role under the applicable policy. Obtain independent correctness/API review of the current revision. Reviewers read new and changed proofs against the rest of the file and nearby modules, because a diff does not show the existing proof that a new block repeats; a new copy of an argument the library already makes is a [review finding](../../AGENTS.md#review-cycle) when a shared lemma would pay under the [library quality standard](../../CONTRIBUTING.md#library-quality-standard). A reviewer who helped design or implement the change cannot supply that independence; agent review is not human approval.
+Write the PR for a contributor who has not followed the task. Introduce the setting, central
+idea and what the change enables, using the
+[PR-writing guidance and example](../../AGENTS.md#writing-in-issues-and-prs). Explain important
+limitations and put validation after the explanation, linking detailed evidence.
+
+Link its task issue and source references, preserve contributor credit, and disclose AI tools and their role under the applicable policy. Obtain independent correctness/API review of the current revision. Reviewers read new and changed proofs against the rest of the file and nearby modules, because a diff does not show the existing proof that a new block repeats; a new copy of an argument the library already makes is a [review finding](../../AGENTS.md#review-cycle) when a shared lemma would pay under the [library quality standard](../../CONTRIBUTING.md#library-quality-standard). A reviewer who helped design or implement the change cannot supply that independence; agent review is not human approval.
 
 After fixes, request review of the affected delta. Changed reasoning, statement semantics and uncertain conflict resolutions require fresh review; a clean rebase may sometimes preserve existing approval. Integration requires maintainer authority as well as validation and review. State what is complete and what remains. When only a milestone is delivered, keep the broader objective visible and open or explicitly disposed of.
 
