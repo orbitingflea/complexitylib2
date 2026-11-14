@@ -41,27 +41,32 @@ Sections 3–5):
 ## Source attribution
 
 * [BenderFarachColtonKuszmaulKuszmaulLiu2022] (`arXiv:2111.00602v2`):
-  - Section 3.1 (printed pp. 8–10 / PDF pp. 9–11): $k$-kick tree hierarchy, kick limit $k + 1$,
-    and priority kicks.
+  - Section 3.1 (printed pp. 8–10 / PDF pp. 9–11) and Theorem 2 (printed p. 11 / PDF p. 12):
+    $k$-kick tree hierarchy, priority kicks, and worst-case switching cost $k + 1$.
   - Section 4.1 (printed p. 24 / PDF p. 25): Method of Four Russians lookup tables on machine words.
   - Section 4.2–4.3 (printed pp. 24–26 / PDF pp. 25–27): mini-arrays and local query routers.
   - Section 5.1 (printed pp. 27–28 / PDF pp. 28–29): free-slot bitmap tree.
   - Section 5.2 (printed pp. 30–32 / PDF pp. 31–33): multi-tier cubbies and tail replacement.
-  - Section 5.3 (printed pp. 34–36 / PDF pp. 33–35): quotienting and space bounds.
+  - Section 5.3 (printed pp. 33–35 / PDF pp. 34–36): quotienting and space bounds.
 
 ## Main definitions
 
-* `Cslib.DataStructure.Dictionary.WordRAM.KickTree.KickTreeParams`: configuration parameters.
-* `Cslib.DataStructure.Dictionary.WordRAM.KickTree.offSeeds`, `offQuot`, `offVal`,
-  `offFourRussians`, `offFreeSlotTree`, `offFacility`, `totalSpace`:
-  word offsets and total footprint.
+* `Cslib.DataStructure.Dictionary.WordRAM.KickTree.KickTreeParams`, `defaultKickLimit`,
+  `mkKickTreeParams`, `kickTreeParamsWords`: configuration parameters and 6-word encoding.
+* `Cslib.DataStructure.Dictionary.WordRAM.KickTree.seedWords`, `offSeeds`, `offQuot`, `quotWords`,
+  `offVal`, `valWords`, `offFourRussians`, `fourRussiansWords`, `offFreeSlotTree`, `freeSlotWords`,
+  `offFacility`, `facilityWords`, `totalSpace`: word offsets, block sizes, and total footprint.
 * `Cslib.DataStructure.Dictionary.WordRAM.KickTree.kickTreeWords`: succinct word space bound.
 * `Cslib.DataStructure.Dictionary.WordRAM.KickTree.quotAt`, `valAt`, `fourRussiansAt`, `freeSlotAt`,
   `cubbyAt`: pure extraction functions for the memory blocks.
 
 ## Main results
 
-* `totalSpace_le_kickTreeWords`: `totalSpace` is bounded by `kickTreeWords 8 2080 U V w k n_max`.
+* `totalSpace_eq`, `quot_end_le_totalSpace`, `val_end_le_totalSpace`,
+  `fourRussians_end_le_totalSpace`, `freeSlot_end_le_totalSpace`, `facility_end_le_totalSpace`,
+  `fourRussiansWords_le`: block footprint decompositions and bounds.
+* `totalSpace_le_kickTreeWords`: `totalSpace` is bounded by `kickTreeWords 8 2080 U V w k n_max`
+  (original bit-packing constant accounting).
 * `kickTreeWords_le_succinctWords`: specialization at $k = 2$ connects to `Dynamic.succinctWords`.
 * `quotAt_lt`, `valAt_lt`, `fourRussiansAt_lt`, `freeSlotAt_lt`, `cubbyAt_lt`: bit-width bounds.
 * `quotAt_zero_of_init`, `valAt_zero_of_init`, `fourRussiansAt_zero_of_init`,
@@ -71,9 +76,9 @@ Sections 3–5):
 
 ## References
 
-* [M. A. Bender, M. Farach-Colton, J. Kuszmaul, W. Kuszmaul, M. Liu,
-  *Dynamic Dictionaries with Worst-Case Optimal Operations and Space*]
-  [BenderFarachColtonKuszmaulKuszmaulLiu2022], arXiv:2111.00602.
+* [M. A. Bender, M. Farach-Colton, J. Kuszmaul, W. Kuszmaul, and M. Liu,
+  *On the Optimal Time/Space Tradeoff for Hash Tables*][BenderFarachColtonKuszmaulKuszmaulLiu2022],
+  STOC 2022, pp. 1284–1297 (`arXiv:2111.00602v2`).
 -/
 
 public section
@@ -102,11 +107,11 @@ structure KickTreeParams where
   V : ℕ
   /-- Kick parameter `k ≥ 1`. -/
   k : ℕ
-  /-- Worst-case kick limit (bounded by `k + 1` steps per Lemma 1 / Theorem 2). -/
+  /-- Worst-case kick limit (bounded by `k + 1` steps per Section 3.1 / Theorem 2). -/
   kickLimit : ℕ
 deriving Repr, DecidableEq
 
-/-- Default kick limit `k + 1` from Lemma 1 / Theorem 2 switching cost. -/
+/-- Default kick limit `k + 1` from Section 3.1 / Theorem 2 switching cost. -/
 @[expose] def defaultKickLimit (k : ℕ) : ℕ := k + 1
 
 /-- Canonical constructor for `KickTreeParams` from dimensions `w`, `n_max`, `U`, `V`, `k`. -/

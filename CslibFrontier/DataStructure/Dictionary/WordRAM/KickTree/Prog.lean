@@ -22,44 +22,60 @@ public import CslibFrontier.DataStructure.Dictionary.KickTree.Facility
 public import CslibFrontier.DataStructure.BallsToSlots.KickTree
 
 /-!
-# Word-RAM `Memory.Prog` Subroutines and Realization for STOC 2022 KickTree
+# Word-RAM `Memory.Prog` Subroutines and Realization for Kick-Tree Slot Operations
 
-This module formalizes the core Word-RAM `Memory.Prog` subroutines and their width-free
-`Realizes .exact` (`¬ReadsWidth`) realization certificates for the STOC 2022 `k`-kick tree
-dynamic dictionary ([BenderFarachColtonKuszmaulKuszmaulLiu2022], `arXiv:2111.00602v2`):
+This module formalizes word-addressed `Memory.Prog` slot subroutines and their width-free
+`Realizes .exact` (`¬ReadsWidth`) realization certificates toward the `k`-kick tree dynamic
+dictionary ([BenderFarachColtonKuszmaulKuszmaulLiu2022], `arXiv:2111.00602v2`). Each subroutine is
+parameterized by runtime region offsets and operates on unpacked word-addressed slot cells (one
+word per slot, ahead of bit-packed array wiring via `Layout.lean`):
 
-1. **Initialization (`initProg`)**: initializes seed words at `offSeeds` and zeroes metadata
-   roots at `offFreeSlot`.
-2. **Query Routing (`queryProg`)**: queries cubby metadata at `offFacility` and quotient matching
-   at `offQuot`, retrieving stored values from `offVal` when present.
-3. **Bounded Kick Loop (`kickStepProg`, `kickLoopProg`)**: executes the bounded switching sequence
-   using `Realization.iterate`, bounded by `kickLimit ≤ k + 1` steps per Lemma 1 / Theorem 2.
-4. **Deletion via Tail Replacement (`deleteProg`)**: implements non-hash tail replacement
-   (Section 5.2 / `Facility.tailReplace`) and free-slot reclamation.
+1. **Initialization (`initProg`)**: writes `seed` into the first two seed words at `offSeeds` and
+   zeroes the header word at `offFreeSlot`.
+2. **Query Routing (`queryProg`)**: checks slot activity at `offFacility + slot` and quotient
+   equality at `offQuot + slot`, returning the word at `offVal + slot` (or `0` otherwise).
+3. **Bounded Kick Loop (`kickStepProg`, `kickLoopIterProg`, `kickLoopProg`)**: bounded quotient-slot
+   displacement loop via `Realization.iterate` using XOR-buddy transition `slot ^^^ 1` on
+   word-addressed quotient cells (without moving values), bounded by `fuel` (`kickLimit`, matching
+   the `k + 1` switching-step budget of Section 3.1 / Theorem 2).
+4. **Deletion via Tail Replacement (`deleteProg`)**: copies quotient and value words from
+   `tailSlot` into `slot` and zeroes `tailSlot` in `offQuot`, `offVal`, and `offFreeSlot`
+   (adapting Section 5.2 / `Facility.tailReplace` to word-addressed slots).
 
 ## Source attribution
 
 * [BenderFarachColtonKuszmaulKuszmaulLiu2022] (`arXiv:2111.00602v2`):
-  - Section 3.1 (printed pp. 8–10 / PDF pp. 9–11): $k$-kick tree structure and switching paths.
+  - Section 3.1 (printed pp. 8–10 / PDF pp. 9–11) and Theorem 2 (printed p. 11 / PDF p. 12):
+    $k$-kick tree structure and worst-case switching cost $k + 1$.
   - Section 5.1 (printed pp. 27–29 / PDF pp. 28–30): free-slot tree and cubby routing.
   - Section 5.2 (printed pp. 30–32 / PDF pp. 31–33): non-hash tail replacement on deletion.
-  - Section 5.3 (printed pp. 34–36 / PDF pp. 33–35): quotienting and word-space layout.
+  - Section 5.3 (printed pp. 33–35 / PDF pp. 34–36): quotienting and word-space layout.
 
 ## Main definitions
 
-* `Cslib.DataStructure.Dictionary.WordRAM.KickTree.initProg`: initialize dictionary state.
-* `Cslib.DataStructure.Dictionary.WordRAM.KickTree.queryProg`: query routing with cubby check.
-* `Cslib.DataStructure.Dictionary.WordRAM.KickTree.kickStepProg`: single kick displacement step.
-* `Cslib.DataStructure.Dictionary.WordRAM.KickTree.kickLoopProg`: bounded kick loop via `iterate`.
-* `Cslib.DataStructure.Dictionary.WordRAM.KickTree.deleteProg`: deletion via tail replacement.
+* `Cslib.DataStructure.Dictionary.WordRAM.KickTree.initProg`: initialize seed and header words.
+* `Cslib.DataStructure.Dictionary.WordRAM.KickTree.queryProg`: word-addressed slot query check.
+* `Cslib.DataStructure.Dictionary.WordRAM.KickTree.KickState`, `kickStepProg`: single XOR-buddy
+  quotient displacement step.
+* `Cslib.DataStructure.Dictionary.WordRAM.KickTree.kickLoopIterProg`, `kickLoopProg`: bounded kick
+  loop via `iterate`.
+* `Cslib.DataStructure.Dictionary.WordRAM.KickTree.deleteProg`: word-addressed slot deletion via
+  tail replacement.
 
 ## Main results
 
 * `realize_init`, `not_readsWidth_init`: realization and width-freedom of `initProg`.
 * `realize_query`, `not_readsWidth_query`: realization and width-freedom of `queryProg`.
 * `realize_kickStep`: realization of single kick step.
-* `realize_kickLoop`, `not_readsWidth_kickLoop`: realization and width-freedom of `kickLoopProg`.
+* `realize_kickLoop`, `not_readsWidth_kickLoop`: realization and width-freedom of
+  `kickLoopIterProg`.
 * `realize_delete`, `not_readsWidth_delete`: realization and width-freedom of `deleteProg`.
+
+## References
+
+* [M. A. Bender, M. Farach-Colton, J. Kuszmaul, W. Kuszmaul, and M. Liu,
+  *On the Optimal Time/Space Tradeoff for Hash Tables*][BenderFarachColtonKuszmaulKuszmaulLiu2022],
+  STOC 2022, pp. 1284–1297 (`arXiv:2111.00602v2`).
 -/
 
 public section
@@ -159,11 +175,11 @@ theorem not_readsWidth_query {r : ℕ} (frontier : Fin r) (src : Fin 5 → Fin r
 an active kick in progress, and `status = 0` indicates the item has been placed. -/
 abbrev KickState := ℕ × ℕ × ℕ
 
-/-- Single switching step of the bounded kick loop (Lemma 1 / Theorem 2):
-Inspects candidate slot `slot`. If vacant (quotient `0`), writes `item`,
-marks cubby metadata active, and terminates (`status = 0`). If occupied, displaces
-the incumbent quotient, writes `item`, and transitions to alternate slot
-`slot ^^^ 1` with displaced occupant as new item (`status = 1`). -/
+/-- Single word-addressed XOR-buddy quotient displacement step:
+Inspects candidate word `base + offQuot + slot`. If vacant (`0`), writes `item`,
+marks `base + offFacility + slot` active (`1`), and terminates (`status = 0`). If occupied,
+displaces the incumbent quotient, writes `item`, and transitions to buddy slot
+`slot ^^^ 1` with displaced occupant as new item (`status = 1`, without moving `offVal`). -/
 @[expose] def kickStepProg (base offFacility : ℕ) : KickState → Memory.Prog KickState
   | (slot, item, status) => do
       if 0 < status then do
@@ -203,8 +219,8 @@ theorem realize_kickStep :
   · exact h.2.2.2.1
   · exact h.2.2.2.2
 
-/-- Bounded kick loop insertion subroutine executing at most `fuel` steps
-using `Realization.iterate` (bounded by `k + 1` steps per Lemma 1 / Theorem 2). -/
+/-- Bounded kick loop subroutine executing at most `fuel` steps using `Realization.iterate`
+(matching the `k + 1` switching-step budget of Section 3.1 / Theorem 2). -/
 @[expose] def kickLoopIterProg : ((ℕ × ℕ) × KickState) × ℕ → Memory.Prog KickState
   | (((base, offFacility), state), fuel) =>
       iterate (fun (((b, off), s) : (ℕ × ℕ) × KickState) => kickStepProg b off s)
@@ -251,10 +267,10 @@ theorem not_readsWidth_kickLoop {r : ℕ} (frontier : Fin r) (src : Fin 6 → Fi
 
 /-! ### 4. Deletion Subroutine via Tail Replacement -/
 
-/-- Word-RAM `Memory.Prog` subroutine deleting an item via non-hash tail replacement
-(STOC 2022 Section 5.2 / `Facility.tailReplace`) and free-slot reclamation.
-Copies the quotient and value from `tailSlot` into `slot`, clears `tailSlot`,
-and marks `tailSlot` available in the free-slot tree bitmap. -/
+/-- Word-RAM `Memory.Prog` subroutine deleting a word-addressed slot item via non-hash tail
+replacement ([BenderFarachColtonKuszmaulKuszmaulLiu2022], Section 5.2 / `Facility.tailReplace`)
+and free-slot word reclamation. Copies the quotient and value words from `tailSlot` into `slot`
+and zeroes `tailSlot` in `offQuot`, `offVal`, and `offFreeSlot`. -/
 @[expose] def deleteProg (base offVal offFreeSlot slot tailSlot : ℕ) :
     Memory.Prog Unit := do
   let tailQuot ← Memory.read (base + offQuot + tailSlot)

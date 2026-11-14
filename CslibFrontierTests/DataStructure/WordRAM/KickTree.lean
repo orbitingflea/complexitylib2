@@ -14,7 +14,8 @@ public import CslibFrontier.DataStructure.Dictionary.WordRAM.KickTree.Prog
 # Concrete Tests for KickTree Word-RAM Layout and `Memory.Prog` Subroutines
 
 This module tests the concrete execution, layout bounds, extraction invariants, and
-`Memory.Prog` subroutines for the STOC 2022 `k`-kick tree dynamic dictionary:
+word-addressed `Memory.Prog` subroutines for the `k`-kick tree dynamic dictionary
+([BenderFarachColtonKuszmaulKuszmaulLiu2022]):
 
 1. **Layout & Space Bounds**: verifies `totalSpace_le_kickTreeWords` and
    `kickTreeWords_le_succinctWords` on concrete parameters.
@@ -23,6 +24,12 @@ This module tests the concrete execution, layout bounds, extraction invariants, 
 3. **`Memory.Prog` Execution**: verifies concrete `clientResult` and `clientState` transitions
    for `initProg`, `queryProg`, `kickStepProg`, `kickLoopProg`, and `deleteProg`.
 4. **Width-Freedom**: validates that emitted code for all subroutines satisfies `¬ReadsWidth`.
+
+## References
+
+* [M. A. Bender, M. Farach-Colton, J. Kuszmaul, W. Kuszmaul, and M. Liu,
+  *On the Optimal Time/Space Tradeoff for Hash Tables*][BenderFarachColtonKuszmaulKuszmaulLiu2022],
+  STOC 2022, pp. 1284–1297 (`arXiv:2111.00602v2`).
 -/
 
 public section
