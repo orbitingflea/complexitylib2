@@ -24,6 +24,7 @@ have unbounded encodings, such as words or tapes. Every entry and its framing co
 
 ## Main results
 
+* `Turing.MultiTapeTM.length_le_encPi`: bound an entry by its enclosing table.
 * `Turing.MultiTapeTM.length_encPi_le`: bound the whole table from the sizes of its entries.
 
 ## References
@@ -50,6 +51,14 @@ noncomputable def encPi (enc : Value ↪ List Bool) : (Index → Value) ↪ List
 @[simp] theorem encPi_apply (enc : Value ↪ List Bool) (values : Index → Value) :
     encPi enc values = encList enc
       (List.ofFn (fun i => values ((Fintype.equivFin Index).symm i))) := rfl
+
+/-- Every encoded entry is no longer than its enclosing finite table. -/
+theorem length_le_encPi (enc : Value ↪ List Bool) (values : Index → Value) (i : Index) :
+    (enc (values i)).length ≤ (encPi enc values).length := by
+  rw [encPi_apply]
+  apply SizedListEncoding.length_elem_le (encA := enc) (encL := encList enc)
+  rw [List.mem_ofFn]
+  exact ⟨Fintype.equivFin Index i, by simp⟩
 
 /-- The table encoding charges every entry, including its list framing. -/
 theorem length_encPi_le (enc : Value ↪ List Bool) (values : Index → Value)

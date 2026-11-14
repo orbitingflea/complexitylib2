@@ -658,25 +658,19 @@ theorem spaceBound_of_encFiniteConfig {k : ℕ} {Control : Type} [Finite Control
     have hL := hstack tape.left
     have hR := hstack tape.right
     simp only [Cslib.Turing.BiTape.spaceUsed, encBiTape_apply, length_encPair]; omega
-  have hpi {Index Value : Type} [Fintype Index] (enc : Value ↪ List Bool)
-      (values : Index → Value) (i : Index) :
-      (enc (values i)).length ≤ (encPi enc values).length := by
-    rw [encPi_apply]
-    apply SizedListEncoding.length_elem_le (encA := enc) (encL := encList enc)
-    rw [List.mem_ofFn]; exact ⟨Fintype.equivFin Index i, by simp⟩
   refine ⟨?_, ?_, ?_, ?_, ?_⟩
   · simp only [encFiniteConfig_apply, encFiniteCfg_apply, length_encPair, encBits_apply]; omega
   · intro tape
     have h1 := htape (cfg.tapes.workTapes tape)
-    have h2 := hpi (encBiTape encBool) cfg.tapes.workTapes tape
+    have h2 := length_le_encPi (encBiTape encBool) cfg.tapes.workTapes tape
     simp only [encFiniteConfig_apply, encFiniteCfg_apply, length_encPair]; omega
   · simp only [encFiniteConfig_apply, encFiniteCfg_apply, length_encPair, encBits_apply]; omega
   · intro channel
-    have h1 := hpi (encPair encBits (encBiTape encBool)) cfg.channels channel
+    have h1 := length_le_encPi (encPair encBits (encBiTape encBool)) cfg.channels channel
     simp only [encFiniteConfig_apply, length_encPair, encBits_apply] at h1 ⊢; omega
   · intro channel
     have h1 := htape (cfg.channels channel).2
-    have h2 := hpi (encPair encBits (encBiTape encBool)) cfg.channels channel
+    have h2 := length_le_encPi (encPair encBits (encBiTape encBool)) cfg.channels channel
     simp only [encFiniteConfig_apply, length_encPair] at h2 ⊢; omega
 
 /-- One step of `oneSessionStep` preserves the countdown and `FiniteConfig.SpaceBound`. -/
