@@ -5712,6 +5712,7 @@ public import CslibFrontier.Foundations.Data.Code.Singleton
 public import CslibFrontier.Foundations.Data.Code.Sudan
 public import CslibFrontier.Foundations.Data.Code.SudanInterpolant
 public import CslibFrontier.Foundations.Data.ENat.IInf
+public import CslibFrontier.Foundations.Data.Fin.AddFlip
 public import CslibFrontier.Foundations.Data.Fin.Append
 public import CslibFrontier.Foundations.Data.Fin.BalancedBlocks
 public import CslibFrontier.Foundations.Data.Fin.Counting
@@ -5773,6 +5774,7 @@ public import CslibFrontier.Foundations.Data.List.CommonPrefix
 public import CslibFrontier.Foundations.Data.List.ConsecutivePairs
 public import CslibFrontier.Foundations.Data.List.Counting
 public import CslibFrontier.Foundations.Data.List.CourseOfValues
+public import CslibFrontier.Foundations.Data.List.Dedup
 public import CslibFrontier.Foundations.Data.List.DotProduct
 public import CslibFrontier.Foundations.Data.List.Equiv
 public import CslibFrontier.Foundations.Data.List.EraseDups
@@ -5801,6 +5803,7 @@ public import CslibFrontier.Foundations.Data.List.OrderStatistic
 public import CslibFrontier.Foundations.Data.List.Palindrome
 public import CslibFrontier.Foundations.Data.List.Perm
 public import CslibFrontier.Foundations.Data.List.Primrec
+public import CslibFrontier.Foundations.Data.List.Product
 public import CslibFrontier.Foundations.Data.List.Range
 public import CslibFrontier.Foundations.Data.List.RowMajor
 public import CslibFrontier.Foundations.Data.List.SelectDistinct
@@ -6386,6 +6389,7 @@ public import CslibFrontier.Languages.SQL.Expr
 public import CslibFrontier.Languages.SQL.JoinSize
 public import CslibFrontier.Languages.SQL.Query
 public import CslibFrontier.Languages.SQL.QueryEquiv
+public import CslibFrontier.Languages.SQL.QueryLaws
 public import CslibFrontier.Languages.SQL.Row
 public import CslibFrontier.Languages.SQL.Scalar
 public import CslibFrontier.Languages.SQL.Schema
