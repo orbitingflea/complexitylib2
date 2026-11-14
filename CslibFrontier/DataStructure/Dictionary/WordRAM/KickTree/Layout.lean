@@ -9,70 +9,76 @@ module
 
 public import CslibFrontier.Init
 public import CslibFrontier.Computability.WordRAM.Realization.Absorb
-public import CslibFrontier.DataStructure.BallsToSlots.KickTree
 public import CslibFrontier.DataStructure.Dictionary.Dynamic.Spec
 public import CslibFrontier.DataStructure.Dictionary.FeistelQuotient
-public import CslibFrontier.DataStructure.Dictionary.KickTree.Facility
-public import CslibFrontier.DataStructure.Dictionary.KickTree.Metadata
 public import CslibFrontier.DataStructure.Dictionary.KickTree.QuotientPerm
 public import CslibFrontier.DataStructure.Dictionary.WordRAM.BitPackedArray
 public import CslibFrontier.Foundations.Data.Nat.IterLog
+import CslibFrontier.DataStructure.BallsToSlots.KickTree
 import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.Positivity
 import Mathlib.Tactic.Ring
 
 /-!
-# Word-RAM Memory Layout for the `k`-Kick Tree Dynamic Dictionary
+# Parameterized Bit-Packed Word-RAM Memory Layout for `k`-Kick Tree Slot Tables
 
-This module defines the word-level memory layout and pure array extraction functions for the
-fixed-capacity STOC 2022 `k`-kick tree dynamic dictionary of Bender, Farach-Colton, J. Kuszmaul,
-W. Kuszmaul, and Liu ([BenderFarachColtonKuszmaulKuszmaulLiu2022], `arXiv:2111.00602v2`,
-Sections 3–5):
-- `KickTreeParams`: word width `w`, capacity bound `nMax`, universe `U ≤ 2 ^ w`, value bound
-  `V ≤ 2 ^ w`, parameter `k ≥ 1`, and bounded kick limit.
-- Memory offsets: `offSeeds`, `offQuot`, `offVal`, `offFourRussians`, `offFreeSlotTree`,
-  `offFacility`, and `totalSpace`.
-- Master space bound `totalSpace_le_kickTreeWords`: total memory footprint is bounded by the
-  succinct word bound `kickTreeWords 8 2080 U V w k n_max`, which matches the optimal
-  $\text{OPT} + O(n_{\max} \log^{(k)} n_{\max})$ bit-redundancy bound.
-- Pure extraction functions for memory blocks (`quotAt`, `valAt`, `fourRussiansAt`, `freeSlotAt`,
-  `cubbyAt`) with bit-width bounds and zero-initialization properties.
+This module defines a parameterized bit-packed Word-RAM memory layout and pure array extraction and
+update laws for fixed-capacity `k`-kick tree slot tables toward the dynamic dictionary of Bender,
+Farach-Colton, J. Kuszmaul, W. Kuszmaul, and Liu ([BenderFarachColtonKuszmaulKuszmaulLiu2022],
+`arXiv:2111.00602v2`, Sections 3.1 and 5.1–5.3):
+
+1. `[base, base + p.hSpace)`: `p.hSpace` words parameterized for hash seeds, precomputed
+   Four-Russians word lookup tables, and fixed-size directory headers (mirroring
+   `SuccinctLayout`'s `h_space` convention rather than hardcoding seed or table sizes).
+2. `Quotients` (`offQuot p`): `packedWords p.nMax (fullQuotBits p.U p.nMax) p.w` words storing
+   `p.nMax` quotients of `fullQuotBits p.U p.nMax` bits.
+3. `Values` (`offVal p`): `packedWords p.nMax (valBits p.V) p.w` words storing `p.nMax` values of
+   `valBits p.V` bits.
+4. `Occupancy` (`offOcc p`): `packedWords (4 * p.nMax) 1 p.w` words storing `4 * p.nMax` 1-bit
+   flags (`0 .. p.nMax - 1` for primary slot occupancy independent of zero quotients, plus up to
+   `3 * p.nMax` free-slot bitmap bits).
+5. `SlotMeta` (`offMeta p`): `packedWords (p.cMeta * p.nMax) (metaBits p) p.w` words storing
+   `p.cMeta * p.nMax` entries of `metaBits p = max (Nat.iterLog p.k p.nMax) 1` bits (parameterized
+   by multiplicity `p.cMeta` to accommodate per-slot kick-depth tags and auxiliary router/cubby
+   metadata sub-arrays).
 
 ## Source attribution
 
 * [BenderFarachColtonKuszmaulKuszmaulLiu2022] (`arXiv:2111.00602v2`):
   - Section 3.1 (printed pp. 8–10 / PDF pp. 9–11) and Theorem 2 (printed p. 11 / PDF p. 12):
-    $k$-kick tree hierarchy, priority kicks, and worst-case switching cost $k + 1$.
-  - Section 4.1 (printed p. 24 / PDF p. 25): Method of Four Russians lookup tables on machine words.
-  - Section 4.2–4.3 (printed pp. 24–26 / PDF pp. 25–27): mini-arrays and local query routers.
-  - Section 5.1 (printed pp. 27–28 / PDF pp. 28–29): free-slot bitmap tree.
-  - Section 5.2 (printed pp. 30–32 / PDF pp. 31–33): multi-tier cubbies and tail replacement.
-  - Section 5.3 (printed pp. 33–35 / PDF pp. 34–36): quotienting and space bounds.
+    `k`-kick tree slot hierarchy, priority depths, and worst-case switching cost `k + 1`.
+  - Section 5.1–5.3 (printed pp. 27–35 / PDF pp. 28–36): free-slot bitmaps, cubby/router metadata
+    budgets `O(n_max log^(k) n_max)`, tail replacement, and quotiented payload bit accounting.
+  - Explicit layout adaptation: header/table word count `p.hSpace` and metadata array multiplicity
+    `p.cMeta` are kept as explicit parameters in `KickTreeParams`, yielding the exact deterministic
+    word bound `totalSpace p ≤ kickTreeWords (p.cMeta + 6) (p.hSpace + 11) p.U p.V p.w p.k p.nMax`
+    via `BitPackedArray` ceiling-division subadditivity.
 
 ## Main definitions
 
 * `Cslib.DataStructure.Dictionary.WordRAM.KickTree.KickTreeParams`, `defaultKickLimit`,
-  `mkKickTreeParams`, `kickTreeParamsWords`: configuration parameters and 6-word encoding.
-* `Cslib.DataStructure.Dictionary.WordRAM.KickTree.seedWords`, `offSeeds`, `offQuot`, `quotWords`,
-  `offVal`, `valWords`, `offFourRussians`, `fourRussiansWords`, `offFreeSlotTree`, `freeSlotWords`,
-  `offFacility`, `facilityWords`, `totalSpace`: word offsets, block sizes, and total footprint.
-* `Cslib.DataStructure.Dictionary.WordRAM.KickTree.kickTreeWords`: succinct word space bound.
-* `Cslib.DataStructure.Dictionary.WordRAM.KickTree.quotAt`, `valAt`, `fourRussiansAt`, `freeSlotAt`,
-  `cubbyAt`: pure extraction functions for the memory blocks.
+  `mkKickTreeParams`, `kickTreeParamsWords`: configuration record and 8-word encoding.
+* `Cslib.DataStructure.Dictionary.WordRAM.KickTree.offQuot`, `quotWords`, `offVal`, `valWords`,
+  `occLen`, `offOcc`, `occWords`, `metaBits`, `metaLen`, `offMeta`, `metaWords`, `totalSpace`:
+  bit-packed block offsets, bit/entry counts, and total word footprint.
+* `Cslib.DataStructure.Dictionary.WordRAM.KickTree.kickTreeWords`: succinct word-space bound.
+* `Cslib.DataStructure.Dictionary.WordRAM.KickTree.quotAt`, `valAt`, `occAt`, `metaAt`,
+  `writeQuotMem`, `writeValMem`, `writeOccMem`, `writeMetaMem`: pure bit-packed array extraction
+  and update functions.
 
 ## Main results
 
-* `totalSpace_eq`, `quot_end_le_totalSpace`, `val_end_le_totalSpace`,
-  `fourRussians_end_le_totalSpace`, `freeSlot_end_le_totalSpace`, `facility_end_le_totalSpace`,
-  `fourRussiansWords_le`: block footprint decompositions and bounds.
-* `totalSpace_le_kickTreeWords`: `totalSpace` is bounded by `kickTreeWords 8 2080 U V w k n_max`
-  (original bit-packing constant accounting).
-* `kickTreeWords_le_succinctWords`: specialization at $k = 2$ connects to `Dynamic.succinctWords`.
-* `quotAt_lt`, `valAt_lt`, `fourRussiansAt_lt`, `freeSlotAt_lt`, `cubbyAt_lt`: bit-width bounds.
-* `quotAt_zero_of_init`, `valAt_zero_of_init`, `fourRussiansAt_zero_of_init`,
-  `freeSlotAt_zero_of_init`, `cubbyAt_zero_of_init`: extracted arrays are identically zero on
-  zero-initialized memory.
-* `arrays_congr_of_eq_on`: extracted arrays depend only on words in `[base, base + totalSpace)`.
+* `totalSpace_eq`, `quot_end_le_totalSpace`, `val_end_le_totalSpace`, `occ_end_le_totalSpace`,
+  `meta_end_le_totalSpace`: block footprint decompositions and bounds.
+* `totalSpace_le_kickTreeWords`: `totalSpace p` is bounded by
+  `kickTreeWords (p.cMeta + 6) (p.hSpace + 11) p.U p.V p.w p.k p.nMax`.
+* `kickTreeWords_le_succinctWords`: specialization at `k = 2` connects to `Dynamic.succinctWords`.
+* `quotAt_lt`, `valAt_lt`, `occAt_lt`, `metaAt_lt`: bit-width bounds on extracted entries.
+* `quotAt_zero_of_init`, `valAt_zero_of_init`, `occAt_zero_of_init`, `metaAt_zero_of_init`:
+  extracted arrays are identically zero when `[base + p.hSpace, base + totalSpace p)` is zeroed.
+* `arrays_congr_of_eq_on`: extracted arrays depend only on `[base + p.hSpace, base + totalSpace p)`.
+* `writeQuotMem_effects`, `writeValMem_effects`, `writeOccMem_effects`, `writeMetaMem_effects`:
+  exact `Function.update` and cross-array non-interference laws for bit-packed updates.
 
 ## References
 
@@ -94,38 +100,45 @@ open Cslib.DataStructure.Dictionary.FeistelQuotient
 
 /-! ### 1. Parameter record and memory offsets -/
 
-/-- Word-RAM configuration parameters for the `k`-kick tree dynamic dictionary
-([BenderFarachColtonKuszmaulKuszmaulLiu2022] Section 3.1, pp. 8–10 / PDF pp. 9–11). -/
+/-- Parameterized Word-RAM layout configuration for a fixed-capacity `k`-kick tree slot table
+([BenderFarachColtonKuszmaulKuszmaulLiu2022], Sections 3.1 and 5.1–5.3). -/
 structure KickTreeParams where
   /-- Machine word width `w`. -/
   w : ℕ
-  /-- Maximum dictionary capacity `nMax`. -/
+  /-- Primary slot capacity `nMax`. -/
   nMax : ℕ
-  /-- Key universe size `U ≤ 2 ^ w`. -/
+  /-- Key universe size `U`. -/
   U : ℕ
-  /-- Value range bound `V ≤ 2 ^ w`. -/
+  /-- Value range size `V`. -/
   V : ℕ
-  /-- Kick parameter `k ≥ 1`. -/
+  /-- Kick parameter `k`. -/
   k : ℕ
-  /-- Worst-case kick limit (bounded by `k + 1` steps per Section 3.1 / Theorem 2). -/
+  /-- Worst-case kick step limit (`k + 1` per Section 3.1 / Theorem 2). -/
   kickLimit : ℕ
+  /-- Reserved header word count `[base, base + hSpace)` for hash seeds, Four-Russians word
+  lookup tables, and fixed-size headers. -/
+  hSpace : ℕ
+  /-- Multiplicity of `metaBits`-wide entries per slot in `SlotMeta` (`cMeta * nMax` entries). -/
+  cMeta : ℕ
 deriving Repr, DecidableEq
 
-/-- Default kick limit `k + 1` from Section 3.1 / Theorem 2 switching cost. -/
+/-- Default kick step limit `k + 1` from Section 3.1 / Theorem 2 switching cost. -/
 @[expose] def defaultKickLimit (k : ℕ) : ℕ := k + 1
 
-/-- Canonical constructor for `KickTreeParams` from dimensions `w`, `nMax`, `U`, `V`, `k`. -/
-@[expose] def mkKickTreeParams (w nMax U V k : ℕ) : KickTreeParams where
+/-- Canonical constructor for `KickTreeParams` setting `kickLimit := defaultKickLimit k`. -/
+@[expose] def mkKickTreeParams (w nMax U V k hSpace cMeta : ℕ) : KickTreeParams where
   w := w
   nMax := nMax
   U := U
   V := V
   k := k
   kickLimit := defaultKickLimit k
+  hSpace := hSpace
+  cMeta := cMeta
 
-/-- 6-word encoding embedding for `KickTreeParams`. -/
-def kickTreeParamsWords : KickTreeParams ↪ (Fin 6 → ℕ) where
-  toFun p := ![p.w, p.nMax, p.U, p.V, p.k, p.kickLimit]
+/-- 8-word encoding embedding for `KickTreeParams`. -/
+def kickTreeParamsWords : KickTreeParams ↪ (Fin 8 → ℕ) where
+  toFun p := ![p.w, p.nMax, p.U, p.V, p.k, p.kickLimit, p.hSpace, p.cMeta]
   inj' := by
     intro p₁ p₂ h
     have h0 := congrFun h ⟨0, by decide⟩
@@ -134,115 +147,94 @@ def kickTreeParamsWords : KickTreeParams ↪ (Fin 6 → ℕ) where
     have h3 := congrFun h ⟨3, by decide⟩
     have h4 := congrFun h ⟨4, by decide⟩
     have h5 := congrFun h ⟨5, by decide⟩
-    cases p₁; cases p₂; dsimp at h0 h1 h2 h3 h4 h5
-    rw [h0, h1, h2, h3, h4, h5]
+    have h6 := congrFun h ⟨6, by decide⟩
+    have h7 := congrFun h ⟨7, by decide⟩
+    cases p₁; cases p₂; dsimp at h0 h1 h2 h3 h4 h5 h6 h7
+    rw [h0, h1, h2, h3, h4, h5, h6, h7]
 
-instance : WordEncoding KickTreeParams := ⟨6, kickTreeParamsWords⟩
+instance : WordEncoding KickTreeParams := ⟨8, kickTreeParamsWords⟩
 
-/-- Number of machine words reserved for hash seed storage. -/
-@[expose] def seedWords : ℕ := 16
+/-- Word offset of the bit-packed `Quotients` array relative to `base`. -/
+@[expose] def offQuot (p : KickTreeParams) : ℕ := p.hSpace
 
-/-- Word offset of hash seeds relative to `base`. -/
-@[expose] def offSeeds : ℕ := 0
-
-/-- Word offset of `Quotients` array relative to `base`. -/
-@[expose] def offQuot : ℕ := offSeeds + seedWords
-
-/-- Word size of the bit-packed `Quotients` array. -/
+/-- Word size of the bit-packed `Quotients` array (`p.nMax` entries). -/
 @[expose] def quotWords (p : KickTreeParams) : ℕ :=
   packedWords p.nMax (fullQuotBits p.U p.nMax) p.w
 
-/-- Word offset of `Values` array relative to `base`. -/
+/-- Word offset of the bit-packed `Values` array relative to `base`. -/
 @[expose] def offVal (p : KickTreeParams) : ℕ :=
-  offQuot + quotWords p
+  offQuot p + quotWords p
 
-/-- Word size of the bit-packed `Values` array. -/
+/-- Word size of the bit-packed `Values` array (`p.nMax` entries). -/
 @[expose] def valWords (p : KickTreeParams) : ℕ :=
   packedWords p.nMax (valBits p.V) p.w
 
-/-- Word offset of `FourRussians` lookup tables relative to `base`. -/
-@[expose] def offFourRussians (p : KickTreeParams) : ℕ :=
+/-- Number of 1-bit entries in `Occupancy` (`4 * p.nMax`: primary slot occupancy in
+`0 .. p.nMax - 1` plus up to `3 * p.nMax` free-slot bitmap bits). -/
+@[expose] def occLen (p : KickTreeParams) : ℕ := 4 * p.nMax
+
+/-- Word offset of the bit-packed `Occupancy` bitmap relative to `base`. -/
+@[expose] def offOcc (p : KickTreeParams) : ℕ :=
   offVal p + valWords p
 
-/-- Word size of the precomputed Four-Russians lookup tables (for 8-bit characters). -/
-@[expose] def fourRussiansWords (p : KickTreeParams) : ℕ :=
-  packedWords 256 8 p.w
+/-- Word size of the bit-packed `Occupancy` bitmap. -/
+@[expose] def occWords (p : KickTreeParams) : ℕ :=
+  packedWords (occLen p) 1 p.w
 
-/-- Word offset of `FreeSlotTree` bitmap relative to `base`. -/
-@[expose] def offFreeSlotTree (p : KickTreeParams) : ℕ :=
-  offFourRussians p + fourRussiansWords p
+/-- Bit width `max (Nat.iterLog p.k p.nMax) 1` of each entry in `SlotMeta`. -/
+@[expose] def metaBits (p : KickTreeParams) : ℕ :=
+  max (Nat.iterLog p.k p.nMax) 1
 
-/-- Word size of the free-slot tree bitmap for `2 * nMax + 1` nodes. -/
-@[expose] def freeSlotWords (p : KickTreeParams) : ℕ :=
-  packedWords (2 * p.nMax + 1) 1 p.w
+/-- Number of entries `p.cMeta * p.nMax` in `SlotMeta`. -/
+@[expose] def metaLen (p : KickTreeParams) : ℕ := p.cMeta * p.nMax
 
-/-- Word offset of `Facility` multi-tier cubbies relative to `base`. -/
-@[expose] def offFacility (p : KickTreeParams) : ℕ :=
-  offFreeSlotTree p + freeSlotWords p
+/-- Word offset of the bit-packed `SlotMeta` array relative to `base`. -/
+@[expose] def offMeta (p : KickTreeParams) : ℕ :=
+  offOcc p + occWords p
 
-/-- Word size of the multi-tier facility cubby metadata block. -/
-@[expose] def facilityWords (p : KickTreeParams) : ℕ :=
-  packedWords (p.nMax + 1) (max (Nat.iterLog p.k p.nMax) 1) p.w
+/-- Word size of the bit-packed `SlotMeta` array. -/
+@[expose] def metaWords (p : KickTreeParams) : ℕ :=
+  packedWords (metaLen p) (metaBits p) p.w
 
-/-- Total word footprint of the `k`-kick tree dynamic dictionary starting at `base`. -/
+/-- Total word footprint `[base, base + totalSpace p)` of the layout. -/
 @[expose] def totalSpace (p : KickTreeParams) : ℕ :=
-  offFacility p + facilityWords p
+  offMeta p + metaWords p
 
 /-! ### 2. Space bound theorems -/
 
 /-- Total space decomposition identity. -/
 theorem totalSpace_eq (p : KickTreeParams) :
-    totalSpace p = seedWords + quotWords p + valWords p + fourRussiansWords p +
-      freeSlotWords p + facilityWords p := by
-  unfold totalSpace offFacility offFreeSlotTree offFourRussians offVal offQuot offSeeds seedWords
+    totalSpace p = p.hSpace + quotWords p + valWords p + occWords p + metaWords p := by
+  unfold totalSpace offMeta offOcc offVal offQuot
   omega
 
-/-- The quotient block ends before the total space footprint. -/
+/-- The `Quotients` block ends at or before `totalSpace p`. -/
 theorem quot_end_le_totalSpace (p : KickTreeParams) :
-    offQuot + quotWords p ≤ totalSpace p := by
-  rw [totalSpace_eq]; unfold offQuot offSeeds seedWords; omega
+    offQuot p + quotWords p ≤ totalSpace p := by
+  rw [totalSpace_eq]; unfold offQuot; omega
 
-/-- The value block ends before the total space footprint. -/
+/-- The `Values` block ends at or before `totalSpace p`. -/
 theorem val_end_le_totalSpace (p : KickTreeParams) :
     offVal p + valWords p ≤ totalSpace p := by
-  rw [totalSpace_eq]; unfold offVal offQuot offSeeds seedWords; omega
+  rw [totalSpace_eq]; unfold offVal offQuot; omega
 
-/-- The Four-Russians block ends before the total space footprint. -/
-theorem fourRussians_end_le_totalSpace (p : KickTreeParams) :
-    offFourRussians p + fourRussiansWords p ≤ totalSpace p := by
-  rw [totalSpace_eq]; unfold offFourRussians offVal offQuot offSeeds seedWords; omega
+/-- The `Occupancy` block ends at or before `totalSpace p`. -/
+theorem occ_end_le_totalSpace (p : KickTreeParams) :
+    offOcc p + occWords p ≤ totalSpace p := by
+  rw [totalSpace_eq]; unfold offOcc offVal offQuot; omega
 
-/-- The free-slot tree block ends before the total space footprint. -/
-theorem freeSlot_end_le_totalSpace (p : KickTreeParams) :
-    offFreeSlotTree p + freeSlotWords p ≤ totalSpace p := by
-  rw [totalSpace_eq]
-  unfold offFreeSlotTree offFourRussians offVal offQuot offSeeds seedWords
-  omega
-
-/-- The facility block ends before the total space footprint. -/
-theorem facility_end_le_totalSpace (p : KickTreeParams) :
-    offFacility p + facilityWords p ≤ totalSpace p := by
-  rw [totalSpace_eq]; unfold offFacility offFreeSlotTree offFourRussians offVal offQuot offSeeds
-    seedWords; omega
+/-- The `SlotMeta` block ends at or before `totalSpace p`. -/
+theorem meta_end_le_totalSpace (p : KickTreeParams) :
+    offMeta p + metaWords p ≤ totalSpace p := by
+  rw [totalSpace_eq]; unfold offMeta offOcc offVal offQuot; omega
 
 /-- Succinct word-space bound for the `k`-kick tree dynamic dictionary:
 `⌈(OPT(U, V, n_max) + C * n_max * max (Nat.iterLog k n_max) 1) / w⌉ + C₀`. -/
 @[expose] def kickTreeWords (C C₀ U V w k n_max : ℕ) : ℕ :=
   (Dynamic.optBits U V n_max + C * n_max * max (Nat.iterLog k n_max) 1 + w - 1) / w + C₀
 
-/-- Four-Russians table words are bounded by 2050 whenever `0 < w`. -/
-theorem fourRussiansWords_le (p : KickTreeParams) (hw : 0 < p.w) :
-    fourRussiansWords p ≤ 2050 := by
-  unfold fourRussiansWords packedWords
-  have : 2048 * 1 ≤ p.w * 2048 := by
-    calc 2048 * 1 = 1 * 2048 := by ring
-    _ ≤ p.w * 2048 := Nat.mul_le_mul_right 2048 hw
-  have hle : 256 * 8 + p.w - 1 < p.w * 2049 := by omega
-  have hlt : (256 * 8 + p.w - 1) / p.w < 2049 := Nat.div_lt_of_lt_mul hle
-  omega
-
 /-- Specialization: for `k = 2`, `kickTreeWords` is bounded by `Dynamic.succinctWords`
-via `max_iterLog_two_le_logLogFactor`. -/
+via `BallsToSlots.max_iterLog_two_le_logLogFactor`. -/
 theorem kickTreeWords_le_succinctWords (C C₀ U V w n_max : ℕ) :
     kickTreeWords C C₀ U V w 2 n_max ≤ Dynamic.succinctWords C C₀ U V w n_max := by
   unfold kickTreeWords Dynamic.succinctWords
@@ -255,101 +247,57 @@ theorem kickTreeWords_le_succinctWords (C C₀ U V w n_max : ℕ) :
     omega
   exact Nat.add_le_add_right (Nat.div_le_div_right hadd) _
 
-/-- Master deterministic word-space bound: total memory footprint `totalSpace p` is at most
-`kickTreeWords 8 2080 p.U p.V p.w p.k p.nMax` for all `0 < p.w`. -/
-theorem totalSpace_le_kickTreeWords (p : KickTreeParams) (hw : 0 < p.w) :
-    totalSpace p ≤ kickTreeWords 8 2080 p.U p.V p.w p.k p.nMax := by
+/-- Master deterministic word-space bound: `totalSpace p` is bounded by
+`kickTreeWords (p.cMeta + 6) (p.hSpace + 11) p.U p.V p.w p.k p.nMax`. -/
+theorem totalSpace_le_kickTreeWords (p : KickTreeParams) :
+    totalSpace p ≤
+      kickTreeWords (p.cMeta + 6) (p.hSpace + 11) p.U p.V p.w p.k p.nMax := by
   rw [totalSpace_eq]
-  have h12 := packedWords_add_le p.nMax (fullQuotBits p.U p.nMax)
-    p.nMax (valBits p.V) p.w
+  have h12 := packedWords_add_le p.nMax (fullQuotBits p.U p.nMax) p.nMax (valBits p.V) p.w
   have h123 := div_add_packedWords_le
     (p.nMax * fullQuotBits p.U p.nMax + p.nMax * valBits p.V) 5
-    (2 * p.nMax + 1) 1 p.w
+    (occLen p) 1 p.w
   have h1234 := div_add_packedWords_le
-    (p.nMax * fullQuotBits p.U p.nMax + p.nMax * valBits p.V +
-      (2 * p.nMax + 1) * 1) 8
-    (p.nMax + 1) (max (Nat.iterLog p.k p.nMax) 1) p.w
+    (p.nMax * fullQuotBits p.U p.nMax + p.nMax * valBits p.V + occLen p * 1) 8
+    (metaLen p) (metaBits p) p.w
   have hopt := mul_fullQuotBits_add_valBits_le_optBits p.U p.V p.nMax
-  have h4R := fourRussiansWords_le p hw
-  have hchain : packedWords p.nMax (fullQuotBits p.U p.nMax) p.w +
-      packedWords p.nMax (valBits p.V) p.w +
-      packedWords (2 * p.nMax + 1) 1 p.w +
-      packedWords (p.nMax + 1) (max (Nat.iterLog p.k p.nMax) 1) p.w ≤
-      (p.nMax * fullQuotBits p.U p.nMax + p.nMax * valBits p.V +
-        (2 * p.nMax + 1) * 1 + (p.nMax + 1) * (max (Nat.iterLog p.k p.nMax) 1) +
-        p.w - 1) / p.w + 11 := by
-    omega
-  have hdiv_le :
-      (p.nMax * fullQuotBits p.U p.nMax + p.nMax * valBits p.V +
-        (2 * p.nMax + 1) * 1 + (p.nMax + 1) * (max (Nat.iterLog p.k p.nMax) 1) +
-        p.w - 1) / p.w ≤
-      (Dynamic.optBits p.U p.V p.nMax +
-        8 * p.nMax * max (Nat.iterLog p.k p.nMax) 1 + p.w - 1) / p.w + 2 := by
-    by_cases hn : p.nMax = 0
-    · obtain ⟨w, nMax, U, V, k, kickLimit⟩ := p
-      dsimp only at *
-      subst hn
-      have hiter : Nat.iterLog k 0 = 0 := Nat.iterLog_zero_right k
-      have hL1 : max (Nat.iterLog k 0) 1 = 1 := by rw [hiter]; rfl
-      have hnum : 0 * fullQuotBits U 0 + 0 * valBits V +
-          (2 * 0 + 1) * 1 + (0 + 1) * max (Nat.iterLog k 0) 1 + w - 1 = w + 1 := by
-        rw [hL1]; omega
-      rw [hnum]
-      have hlt : (w + 1) / w < 3 := by
-        have : w + 1 < w * 3 := by omega
-        exact Nat.div_lt_of_lt_mul this
-      have : (w + 1) / w ≤ 2 := by omega
-      have hzero : Dynamic.optBits U V 0 + 8 * 0 * max (Nat.iterLog k 0) 1 + w - 1 =
-          Dynamic.optBits U V 0 + w - 1 := by simp
-      rw [hzero]
-      exact le_trans (by omega) (Nat.le_add_left 2 _)
-    · have hn1 : 1 ≤ p.nMax := Nat.pos_of_ne_zero hn
-      set M := max (Nat.iterLog p.k p.nMax) 1
-      have hM : 1 ≤ M := le_max_right _ _
-      have hterm1 : p.nMax * fullQuotBits p.U p.nMax + p.nMax * valBits p.V ≤
-          Dynamic.optBits p.U p.V p.nMax + 2 * p.nMax := by
-        rw [← Nat.mul_add]; exact hopt
-      have h5M : 5 * p.nMax ≤ 5 * p.nMax * M := by
-        have := Nat.mul_le_mul_left (5 * p.nMax) hM
-        simpa using this
-      have h2M : (p.nMax + 1) * M ≤ 2 * p.nMax * M := by
-        have : p.nMax + 1 ≤ 2 * p.nMax := by omega
-        exact Nat.mul_le_mul_right M this
-      have hsum52 : 5 * p.nMax + (p.nMax + 1) * M ≤ 7 * p.nMax * M := by
-        calc 5 * p.nMax + (p.nMax + 1) * M
-          _ ≤ 5 * p.nMax * M + 2 * p.nMax * M := Nat.add_le_add h5M h2M
-          _ = 7 * p.nMax * M := by ring
-      have h78 : 7 * p.nMax * M ≤ 8 * p.nMax * M :=
-        Nat.mul_le_mul_right M (by omega)
-      have hle_num : p.nMax * fullQuotBits p.U p.nMax +
-          p.nMax * valBits p.V +
-          (2 * p.nMax + 1) * 1 + (p.nMax + 1) * M ≤
-          Dynamic.optBits p.U p.V p.nMax + 8 * p.nMax * M := by
-        calc p.nMax * fullQuotBits p.U p.nMax + p.nMax * valBits p.V +
-              (2 * p.nMax + 1) * 1 + (p.nMax + 1) * M
-          _ ≤ Dynamic.optBits p.U p.V p.nMax + 2 * p.nMax + (2 * p.nMax + 1) +
-              (p.nMax + 1) * M := by
-            linarith [hterm1]
-          _ = Dynamic.optBits p.U p.V p.nMax + (4 * p.nMax + 1) + (p.nMax + 1) * M := by ring
-          _ ≤ Dynamic.optBits p.U p.V p.nMax + 5 * p.nMax + (p.nMax + 1) * M := by omega
-          _ ≤ Dynamic.optBits p.U p.V p.nMax + 7 * p.nMax * M := by
-            linarith [hsum52]
-          _ ≤ Dynamic.optBits p.U p.V p.nMax + 8 * p.nMax * M := by
-            linarith [h78]
-      have hnum_le : p.nMax * fullQuotBits p.U p.nMax + p.nMax * valBits p.V +
-          (2 * p.nMax + 1) * 1 + (p.nMax + 1) * M + p.w - 1 ≤
-          Dynamic.optBits p.U p.V p.nMax + 8 * p.nMax * M + p.w - 1 := by omega
-      have hdiv := Nat.div_le_div_right hnum_le (c := p.w)
-      exact le_trans hdiv (Nat.le_add_right _ 2)
-  unfold kickTreeWords quotWords valWords freeSlotWords facilityWords seedWords
+  set M := metaBits p
+  have hM : 1 ≤ M := le_max_right _ _
+  have hterm1 : p.nMax * fullQuotBits p.U p.nMax + p.nMax * valBits p.V ≤
+      Dynamic.optBits p.U p.V p.nMax + 2 * p.nMax := by
+    rw [← Nat.mul_add]; exact hopt
+  have h6M : 6 * p.nMax ≤ 6 * p.nMax * M := by
+    simpa using Nat.mul_le_mul_left (6 * p.nMax) hM
+  have hnum_le : p.nMax * fullQuotBits p.U p.nMax + p.nMax * valBits p.V +
+      occLen p * 1 + metaLen p * M ≤
+      Dynamic.optBits p.U p.V p.nMax + (p.cMeta + 6) * p.nMax * M := by
+    calc p.nMax * fullQuotBits p.U p.nMax + p.nMax * valBits p.V +
+          occLen p * 1 + metaLen p * M
+      _ = (p.nMax * fullQuotBits p.U p.nMax + p.nMax * valBits p.V) +
+          4 * p.nMax + p.cMeta * p.nMax * M := by
+        unfold occLen metaLen; ring
+      _ ≤ Dynamic.optBits p.U p.V p.nMax + 2 * p.nMax + 4 * p.nMax +
+          p.cMeta * p.nMax * M := by linarith [hterm1]
+      _ = Dynamic.optBits p.U p.V p.nMax + 6 * p.nMax + p.cMeta * p.nMax * M := by ring
+      _ ≤ Dynamic.optBits p.U p.V p.nMax + 6 * p.nMax * M + p.cMeta * p.nMax * M := by
+        linarith [h6M]
+      _ = Dynamic.optBits p.U p.V p.nMax + (p.cMeta + 6) * p.nMax * M := by ring
+  have hdiv : (p.nMax * fullQuotBits p.U p.nMax + p.nMax * valBits p.V +
+      occLen p * 1 + metaLen p * M + p.w - 1) / p.w ≤
+      (Dynamic.optBits p.U p.V p.nMax + (p.cMeta + 6) * p.nMax * M + p.w - 1) / p.w :=
+    Nat.div_le_div_right (by omega)
+  unfold kickTreeWords quotWords valWords occWords metaWords
+  have hM_def : max (Nat.iterLog p.k p.nMax) 1 = M := rfl
+  have hM_meta : metaBits p = M := rfl
+  rw [hM_def, hM_meta] at *
   omega
 
-/-! ### 3. Pure extraction functions -/
+/-! ### 3. Pure extraction and update functions -/
 
 /-- Pure extraction function for `Quotients[idx]` (`0` for `idx ≥ p.nMax`). -/
 @[expose] def quotAt (base : ℕ) (p : KickTreeParams) (mem : ℕ → ℕ) (idx : ℕ) : ℕ :=
   if idx < p.nMax then
-    readPacked (base + offQuot) (fullQuotBits p.U p.nMax) p.w mem idx
+    readPacked (base + offQuot p) (fullQuotBits p.U p.nMax) p.w mem idx
   else 0
 
 /-- Pure extraction function for `Values[idx]` (`0` for `idx ≥ p.nMax`). -/
@@ -358,182 +306,269 @@ theorem totalSpace_le_kickTreeWords (p : KickTreeParams) (hw : 0 < p.w) :
     readPacked (base + offVal p) (valBits p.V) p.w mem idx
   else 0
 
-/-- Pure extraction function for `FourRussians` table entry `idx < 256` (`0` out of bounds). -/
-@[expose] def fourRussiansAt (base : ℕ) (p : KickTreeParams) (mem : ℕ → ℕ) (idx : ℕ) : ℕ :=
-  if idx < 256 then
-    readPacked (base + offFourRussians p) 8 p.w mem idx
+/-- Pure extraction function for `Occupancy[idx]` (`0` for `idx ≥ occLen p`). -/
+@[expose] def occAt (base : ℕ) (p : KickTreeParams) (mem : ℕ → ℕ) (idx : ℕ) : ℕ :=
+  if idx < occLen p then
+    readPacked (base + offOcc p) 1 p.w mem idx
   else 0
 
-/-- Pure extraction function for `FreeSlotTree` bitmap bit `idx < 2 * p.nMax + 1`. -/
-@[expose] def freeSlotAt (base : ℕ) (p : KickTreeParams) (mem : ℕ → ℕ) (idx : ℕ) : ℕ :=
-  if idx < 2 * p.nMax + 1 then
-    readPacked (base + offFreeSlotTree p) 1 p.w mem idx
+/-- Pure extraction function for `SlotMeta[idx]` (`0` for `idx ≥ metaLen p`). -/
+@[expose] def metaAt (base : ℕ) (p : KickTreeParams) (mem : ℕ → ℕ) (idx : ℕ) : ℕ :=
+  if idx < metaLen p then
+    readPacked (base + offMeta p) (metaBits p) p.w mem idx
   else 0
 
-/-- Pure extraction function for `Facility` cubby metadata entry `idx < p.nMax + 1`. -/
-@[expose] def cubbyAt (base : ℕ) (p : KickTreeParams) (mem : ℕ → ℕ) (idx : ℕ) : ℕ :=
-  if idx < p.nMax + 1 then
-    readPacked (base + offFacility p) (max (Nat.iterLog p.k p.nMax) 1) p.w mem idx
-  else 0
+/-- Pure bit-packed update of `Quotients[idx]` to `val`. -/
+@[expose] def writeQuotMem (base : ℕ) (p : KickTreeParams) (mem : ℕ → ℕ) (idx val : ℕ) : ℕ → ℕ :=
+  writePacked (base + offQuot p) (fullQuotBits p.U p.nMax) p.w mem idx val
 
-/-! ### 4. Value range theorems -/
+/-- Pure bit-packed update of `Values[idx]` to `val`. -/
+@[expose] def writeValMem (base : ℕ) (p : KickTreeParams) (mem : ℕ → ℕ) (idx val : ℕ) : ℕ → ℕ :=
+  writePacked (base + offVal p) (valBits p.V) p.w mem idx val
+
+/-- Pure bit-packed update of `Occupancy[idx]` to `val`. -/
+@[expose] def writeOccMem (base : ℕ) (p : KickTreeParams) (mem : ℕ → ℕ) (idx val : ℕ) : ℕ → ℕ :=
+  writePacked (base + offOcc p) 1 p.w mem idx val
+
+/-- Pure bit-packed update of `SlotMeta[idx]` to `val`. -/
+@[expose] def writeMetaMem (base : ℕ) (p : KickTreeParams) (mem : ℕ → ℕ) (idx val : ℕ) : ℕ → ℕ :=
+  writePacked (base + offMeta p) (metaBits p) p.w mem idx val
+
+/-! ### 4. Value range, zero-initialization, congruence, and update laws -/
 
 /-- Value range invariant for `quotAt`: every entry is `< 2 ^ fullQuotBits p.U p.nMax`. -/
 theorem quotAt_lt (base : ℕ) (p : KickTreeParams) (mem : ℕ → ℕ) (idx : ℕ) :
     quotAt base p mem idx < 2 ^ fullQuotBits p.U p.nMax := by
-  unfold quotAt
-  split_ifs
+  unfold quotAt; split_ifs
   · exact readPacked_lt _ _ _ _ _
   · positivity
 
 /-- Value range invariant for `valAt`: every entry is `< 2 ^ valBits p.V`. -/
 theorem valAt_lt (base : ℕ) (p : KickTreeParams) (mem : ℕ → ℕ) (idx : ℕ) :
     valAt base p mem idx < 2 ^ valBits p.V := by
-  unfold valAt
-  split_ifs
+  unfold valAt; split_ifs
   · exact readPacked_lt _ _ _ _ _
   · positivity
 
-/-- Value range invariant for `fourRussiansAt`: every entry is `< 2 ^ 8`. -/
-theorem fourRussiansAt_lt (base : ℕ) (p : KickTreeParams) (mem : ℕ → ℕ) (idx : ℕ) :
-    fourRussiansAt base p mem idx < 2 ^ 8 := by
-  unfold fourRussiansAt
-  split_ifs
+/-- Value range invariant for `occAt`: every entry is `< 2 ^ 1`. -/
+theorem occAt_lt (base : ℕ) (p : KickTreeParams) (mem : ℕ → ℕ) (idx : ℕ) :
+    occAt base p mem idx < 2 ^ 1 := by
+  unfold occAt; split_ifs
   · exact readPacked_lt _ _ _ _ _
   · positivity
 
-/-- Value range invariant for `freeSlotAt`: every entry is `< 2 ^ 1`. -/
-theorem freeSlotAt_lt (base : ℕ) (p : KickTreeParams) (mem : ℕ → ℕ) (idx : ℕ) :
-    freeSlotAt base p mem idx < 2 ^ 1 := by
-  unfold freeSlotAt
-  split_ifs
+/-- Value range invariant for `metaAt`: every entry is `< 2 ^ metaBits p`. -/
+theorem metaAt_lt (base : ℕ) (p : KickTreeParams) (mem : ℕ → ℕ) (idx : ℕ) :
+    metaAt base p mem idx < 2 ^ metaBits p := by
+  unfold metaAt; split_ifs
   · exact readPacked_lt _ _ _ _ _
   · positivity
 
-/-- Value range invariant for `cubbyAt`: every entry is `< 2 ^ max (Nat.iterLog p.k p.nMax) 1`. -/
-theorem cubbyAt_lt (base : ℕ) (p : KickTreeParams) (mem : ℕ → ℕ) (idx : ℕ) :
-    cubbyAt base p mem idx < 2 ^ max (Nat.iterLog p.k p.nMax) 1 := by
-  unfold cubbyAt
-  split_ifs
-  · exact readPacked_lt _ _ _ _ _
-  · positivity
-
-/-! ### 5. Zero-initialization theorems -/
-
-/-- On zero-initialized table memory `[base, base + totalSpace p)`, `quotAt` is identically zero. -/
+/-- On zeroed array memory `[base + p.hSpace, base + totalSpace p)`, `quotAt` is identically `0`. -/
 theorem quotAt_zero_of_init {base : ℕ} (p : KickTreeParams) (hw : 0 < p.w) {mem : ℕ → ℕ}
-    (hzero : ∀ a, base ≤ a → a < base + totalSpace p → mem a = 0) :
+    (hzero : ∀ a, base + p.hSpace ≤ a → a < base + totalSpace p → mem a = 0) :
     quotAt base p mem = fun _ => 0 := by
-  funext idx
-  unfold quotAt
-  split_ifs with hidx
+  funext idx; unfold quotAt; split_ifs with hidx
   · have hlt1 : wordOffset (fullQuotBits p.U p.nMax) p.w idx + 1 < quotWords p :=
       wordOffset_add_one_lt_packedWords hw hidx
     have hbound := quot_end_le_totalSpace p
-    exact readPacked_zero
-      (hzero _ (by omega) (by omega))
-      (hzero _ (by omega) (by omega))
+    unfold offQuot at hbound ⊢
+    exact readPacked_zero (hzero _ (by omega) (by omega)) (hzero _ (by omega) (by omega))
   · rfl
 
-/-- On zero-initialized table memory `[base, base + totalSpace p)`, `valAt` is identically zero. -/
+/-- On zeroed array memory `[base + p.hSpace, base + totalSpace p)`, `valAt` is identically `0`. -/
 theorem valAt_zero_of_init {base : ℕ} (p : KickTreeParams) (hw : 0 < p.w) {mem : ℕ → ℕ}
-    (hzero : ∀ a, base ≤ a → a < base + totalSpace p → mem a = 0) :
+    (hzero : ∀ a, base + p.hSpace ≤ a → a < base + totalSpace p → mem a = 0) :
     valAt base p mem = fun _ => 0 := by
-  funext idx
-  unfold valAt
-  split_ifs with hidx
+  funext idx; unfold valAt; split_ifs with hidx
   · have hlt1 : wordOffset (valBits p.V) p.w idx + 1 < valWords p :=
       wordOffset_add_one_lt_packedWords hw hidx
     have hbound := val_end_le_totalSpace p
-    exact readPacked_zero
-      (hzero _ (by omega) (by omega))
-      (hzero _ (by omega) (by omega))
+    have hoff : p.hSpace ≤ offVal p := by unfold offVal offQuot; omega
+    exact readPacked_zero (hzero _ (by omega) (by omega)) (hzero _ (by omega) (by omega))
   · rfl
 
-/-- On zero-initialized table memory `[base, base + totalSpace p)`, `fourRussiansAt` is identically
-zero. -/
-theorem fourRussiansAt_zero_of_init {base : ℕ} (p : KickTreeParams) (hw : 0 < p.w) {mem : ℕ → ℕ}
-    (hzero : ∀ a, base ≤ a → a < base + totalSpace p → mem a = 0) :
-    fourRussiansAt base p mem = fun _ => 0 := by
-  funext idx
-  unfold fourRussiansAt
-  split_ifs with hidx
-  · have hlt1 : wordOffset 8 p.w idx + 1 < fourRussiansWords p :=
+/-- On zeroed array memory `[base + p.hSpace, base + totalSpace p)`, `occAt` is identically `0`. -/
+theorem occAt_zero_of_init {base : ℕ} (p : KickTreeParams) (hw : 0 < p.w) {mem : ℕ → ℕ}
+    (hzero : ∀ a, base + p.hSpace ≤ a → a < base + totalSpace p → mem a = 0) :
+    occAt base p mem = fun _ => 0 := by
+  funext idx; unfold occAt; split_ifs with hidx
+  · have hlt1 : wordOffset 1 p.w idx + 1 < occWords p :=
       wordOffset_add_one_lt_packedWords hw hidx
-    have hbound := fourRussians_end_le_totalSpace p
-    exact readPacked_zero
-      (hzero _ (by omega) (by omega))
-      (hzero _ (by omega) (by omega))
+    have hbound := occ_end_le_totalSpace p
+    have hoff : p.hSpace ≤ offOcc p := by unfold offOcc offVal offQuot; omega
+    exact readPacked_zero (hzero _ (by omega) (by omega)) (hzero _ (by omega) (by omega))
   · rfl
 
-/-- On zero-initialized table memory `[base, base + totalSpace p)`, `freeSlotAt` is identically
-zero. -/
-theorem freeSlotAt_zero_of_init {base : ℕ} (p : KickTreeParams) (hw : 0 < p.w) {mem : ℕ → ℕ}
-    (hzero : ∀ a, base ≤ a → a < base + totalSpace p → mem a = 0) :
-    freeSlotAt base p mem = fun _ => 0 := by
-  funext idx
-  unfold freeSlotAt
-  split_ifs with hidx
-  · have hlt1 : wordOffset 1 p.w idx + 1 < freeSlotWords p :=
+/-- On zeroed array memory `[base + p.hSpace, base + totalSpace p)`, `metaAt` is identically `0`. -/
+theorem metaAt_zero_of_init {base : ℕ} (p : KickTreeParams) (hw : 0 < p.w) {mem : ℕ → ℕ}
+    (hzero : ∀ a, base + p.hSpace ≤ a → a < base + totalSpace p → mem a = 0) :
+    metaAt base p mem = fun _ => 0 := by
+  funext idx; unfold metaAt; split_ifs with hidx
+  · have hlt1 : wordOffset (metaBits p) p.w idx + 1 < metaWords p :=
       wordOffset_add_one_lt_packedWords hw hidx
-    have hbound := freeSlot_end_le_totalSpace p
-    exact readPacked_zero
-      (hzero _ (by omega) (by omega))
-      (hzero _ (by omega) (by omega))
+    have hbound := meta_end_le_totalSpace p
+    have hoff : p.hSpace ≤ offMeta p := by unfold offMeta offOcc offVal offQuot; omega
+    exact readPacked_zero (hzero _ (by omega) (by omega)) (hzero _ (by omega) (by omega))
   · rfl
 
-/-- On zero-initialized table memory `[base, base + totalSpace p)`, `cubbyAt` is identically
-zero. -/
-theorem cubbyAt_zero_of_init {base : ℕ} (p : KickTreeParams) (hw : 0 < p.w) {mem : ℕ → ℕ}
-    (hzero : ∀ a, base ≤ a → a < base + totalSpace p → mem a = 0) :
-    cubbyAt base p mem = fun _ => 0 := by
-  funext idx
-  unfold cubbyAt
-  split_ifs with hidx
-  · have hlt1 : wordOffset (max (Nat.iterLog p.k p.nMax) 1) p.w idx + 1 < facilityWords p :=
-      wordOffset_add_one_lt_packedWords hw hidx
-    have hbound := facility_end_le_totalSpace p
-    exact readPacked_zero
-      (hzero _ (by omega) (by omega))
-      (hzero _ (by omega) (by omega))
-  · rfl
-
-/-! ### 6. Memory congruence theorem -/
-
-/-- If two memories agree on `[base, base + totalSpace p)`, they yield identical extraction
-results for all five sub-arrays. -/
+/-- Memories agreeing on `[base + p.hSpace, base + totalSpace p)` yield identical extracted
+arrays. -/
 theorem arrays_congr_of_eq_on {base : ℕ} (p : KickTreeParams) (hw : 0 < p.w) {mem₁ mem₂ : ℕ → ℕ}
-    (heq : ∀ a, base ≤ a → a < base + totalSpace p → mem₁ a = mem₂ a) :
+    (heq : ∀ a, base + p.hSpace ≤ a → a < base + totalSpace p → mem₁ a = mem₂ a) :
     quotAt base p mem₁ = quotAt base p mem₂ ∧
       valAt base p mem₁ = valAt base p mem₂ ∧
-      fourRussiansAt base p mem₁ = fourRussiansAt base p mem₂ ∧
-      freeSlotAt base p mem₁ = freeSlotAt base p mem₂ ∧
-      cubbyAt base p mem₁ = cubbyAt base p mem₂ := by
-  refine ⟨?_, ?_, ?_, ?_, ?_⟩
+      occAt base p mem₁ = occAt base p mem₂ ∧
+      metaAt base p mem₁ = metaAt base p mem₂ := by
+  refine ⟨?_, ?_, ?_, ?_⟩
   · funext idx; unfold quotAt; split_ifs with hidx
     · have hbound := quot_end_le_totalSpace p
       exact readPacked_congr (N := p.nMax) hw (fun a ⟨ha1, ha2⟩ =>
-        heq a (by omega) (by dsimp [quotWords] at hbound; omega)) hidx
+        heq a (by unfold offQuot at ha1; omega)
+          (by dsimp [quotWords] at hbound; omega)) hidx
     · rfl
   · funext idx; unfold valAt; split_ifs with hidx
     · have hbound := val_end_le_totalSpace p
+      have hoff : p.hSpace ≤ offVal p := by unfold offVal offQuot; omega
       exact readPacked_congr (N := p.nMax) hw (fun a ⟨ha1, ha2⟩ =>
         heq a (by omega) (by dsimp [valWords] at hbound; omega)) hidx
     · rfl
-  · funext idx; unfold fourRussiansAt; split_ifs with hidx
-    · have hbound := fourRussians_end_le_totalSpace p
-      exact readPacked_congr (N := 256) hw (fun a ⟨ha1, ha2⟩ =>
-        heq a (by omega) (by dsimp [fourRussiansWords] at hbound; omega)) hidx
+  · funext idx; unfold occAt; split_ifs with hidx
+    · have hbound := occ_end_le_totalSpace p
+      have hoff : p.hSpace ≤ offOcc p := by unfold offOcc offVal offQuot; omega
+      exact readPacked_congr (N := occLen p) hw (fun a ⟨ha1, ha2⟩ =>
+        heq a (by omega) (by dsimp [occWords] at hbound; omega)) hidx
     · rfl
-  · funext idx; unfold freeSlotAt; split_ifs with hidx
-    · have hbound := freeSlot_end_le_totalSpace p
-      exact readPacked_congr (N := 2 * p.nMax + 1) hw (fun a ⟨ha1, ha2⟩ =>
-        heq a (by omega) (by dsimp [freeSlotWords] at hbound; omega)) hidx
+  · funext idx; unfold metaAt; split_ifs with hidx
+    · have hbound := meta_end_le_totalSpace p
+      have hoff : p.hSpace ≤ offMeta p := by unfold offMeta offOcc offVal offQuot; omega
+      exact readPacked_congr (N := metaLen p) hw (fun a ⟨ha1, ha2⟩ =>
+        heq a (by omega) (by dsimp [metaWords] at hbound; omega)) hidx
     · rfl
-  · funext idx; unfold cubbyAt; split_ifs with hidx
-    · have hbound := facility_end_le_totalSpace p
-      exact readPacked_congr (N := p.nMax + 1) hw (fun a ⟨ha1, ha2⟩ =>
-        heq a (by omega) (by dsimp [facilityWords] at hbound; omega)) hidx
+
+/-- Exact array update and cross-array frame law for `writeQuotMem`. -/
+theorem writeQuotMem_effects {base : ℕ} (p : KickTreeParams) (hw : 0 < p.w) (mem : ℕ → ℕ)
+    {idx val : ℕ} (hidx : idx < p.nMax) (hval : val < 2 ^ fullQuotBits p.U p.nMax) :
+    quotAt base p (writeQuotMem base p mem idx val) = Function.update (quotAt base p mem) idx val ∧
+      valAt base p (writeQuotMem base p mem idx val) = valAt base p mem ∧
+      occAt base p (writeQuotMem base p mem idx val) = occAt base p mem ∧
+      metaAt base p (writeQuotMem base p mem idx val) = metaAt base p mem ∧
+      (∀ a, ¬(base + offQuot p ≤ a ∧ a < base + offQuot p + quotWords p) →
+        writeQuotMem base p mem idx val a = mem a) := by
+  have hout : ∀ a, ¬(base + offQuot p ≤ a ∧ a < base + offQuot p + quotWords p) →
+      writeQuotMem base p mem idx val a = mem a := fun a ha =>
+    writePacked_outside hw mem hidx val ha
+  refine ⟨?_, ?_, ?_, ?_, hout⟩
+  · funext i; by_cases hi : i = idx
+    · subst hi; simp [quotAt, hidx, writeQuotMem, readPacked_writePacked_self _ _ _ _ _ hval]
+    · unfold quotAt; rw [Function.update_of_ne hi]; split_ifs with hlt
+      · exact readPacked_writePacked_of_ne hw mem hi val
+      · rfl
+  · funext i; unfold valAt; split_ifs with hlt
+    · exact readPacked_congr (N := p.nMax) hw (fun a ⟨ha1, ha2⟩ =>
+        hout a (by unfold offVal at ha1; omega)) hlt
     · rfl
+  · funext i; unfold occAt; split_ifs with hlt
+    · exact readPacked_congr (N := occLen p) hw (fun a ⟨ha1, ha2⟩ =>
+        hout a (by unfold offOcc offVal at ha1; omega)) hlt
+    · rfl
+  · funext i; unfold metaAt; split_ifs with hlt
+    · exact readPacked_congr (N := metaLen p) hw (fun a ⟨ha1, ha2⟩ =>
+        hout a (by unfold offMeta offOcc offVal at ha1; omega)) hlt
+    · rfl
+
+/-- Exact array update and cross-array frame law for `writeValMem`. -/
+theorem writeValMem_effects {base : ℕ} (p : KickTreeParams) (hw : 0 < p.w) (mem : ℕ → ℕ)
+    {idx val : ℕ} (hidx : idx < p.nMax) (hval : val < 2 ^ valBits p.V) :
+    quotAt base p (writeValMem base p mem idx val) = quotAt base p mem ∧
+      valAt base p (writeValMem base p mem idx val) = Function.update (valAt base p mem) idx val ∧
+      occAt base p (writeValMem base p mem idx val) = occAt base p mem ∧
+      metaAt base p (writeValMem base p mem idx val) = metaAt base p mem ∧
+      (∀ a, ¬(base + offVal p ≤ a ∧ a < base + offVal p + valWords p) →
+        writeValMem base p mem idx val a = mem a) := by
+  have hout : ∀ a, ¬(base + offVal p ≤ a ∧ a < base + offVal p + valWords p) →
+      writeValMem base p mem idx val a = mem a := fun a ha =>
+    writePacked_outside hw mem hidx val ha
+  refine ⟨?_, ?_, ?_, ?_, hout⟩
+  · funext i; unfold quotAt; split_ifs with hlt
+    · exact readPacked_congr (N := p.nMax) hw (fun a ⟨ha1, ha2⟩ =>
+        hout a (by unfold offVal; dsimp [quotWords]; omega)) hlt
+    · rfl
+  · funext i; by_cases hi : i = idx
+    · subst hi; simp [valAt, hidx, writeValMem, readPacked_writePacked_self _ _ _ _ _ hval]
+    · unfold valAt; rw [Function.update_of_ne hi]; split_ifs with hlt
+      · exact readPacked_writePacked_of_ne hw mem hi val
+      · rfl
+  · funext i; unfold occAt; split_ifs with hlt
+    · exact readPacked_congr (N := occLen p) hw (fun a ⟨ha1, ha2⟩ =>
+        hout a (by unfold offOcc at ha1; omega)) hlt
+    · rfl
+  · funext i; unfold metaAt; split_ifs with hlt
+    · exact readPacked_congr (N := metaLen p) hw (fun a ⟨ha1, ha2⟩ =>
+        hout a (by unfold offMeta offOcc at ha1; omega)) hlt
+    · rfl
+
+/-- Exact array update and cross-array frame law for `writeOccMem`. -/
+theorem writeOccMem_effects {base : ℕ} (p : KickTreeParams) (hw : 0 < p.w) (mem : ℕ → ℕ)
+    {idx val : ℕ} (hidx : idx < occLen p) (hval : val < 2 ^ 1) :
+    quotAt base p (writeOccMem base p mem idx val) = quotAt base p mem ∧
+      valAt base p (writeOccMem base p mem idx val) = valAt base p mem ∧
+      occAt base p (writeOccMem base p mem idx val) = Function.update (occAt base p mem) idx val ∧
+      metaAt base p (writeOccMem base p mem idx val) = metaAt base p mem ∧
+      (∀ a, ¬(base + offOcc p ≤ a ∧ a < base + offOcc p + occWords p) →
+        writeOccMem base p mem idx val a = mem a) := by
+  have hout : ∀ a, ¬(base + offOcc p ≤ a ∧ a < base + offOcc p + occWords p) →
+      writeOccMem base p mem idx val a = mem a := fun a ha =>
+    writePacked_outside hw mem hidx val ha
+  refine ⟨?_, ?_, ?_, ?_, hout⟩
+  · funext i; unfold quotAt; split_ifs with hlt
+    · exact readPacked_congr (N := p.nMax) hw (fun a ⟨ha1, ha2⟩ =>
+        hout a (by unfold offOcc offVal; dsimp [quotWords]; omega)) hlt
+    · rfl
+  · funext i; unfold valAt; split_ifs with hlt
+    · exact readPacked_congr (N := p.nMax) hw (fun a ⟨ha1, ha2⟩ =>
+        hout a (by unfold offOcc; dsimp [valWords]; omega)) hlt
+    · rfl
+  · funext i; by_cases hi : i = idx
+    · subst hi; simp [occAt, hidx, writeOccMem, readPacked_writePacked_self _ _ _ _ _ hval]
+    · unfold occAt; rw [Function.update_of_ne hi]; split_ifs with hlt
+      · exact readPacked_writePacked_of_ne hw mem hi val
+      · rfl
+  · funext i; unfold metaAt; split_ifs with hlt
+    · exact readPacked_congr (N := metaLen p) hw (fun a ⟨ha1, ha2⟩ =>
+        hout a (by unfold offMeta at ha1; omega)) hlt
+    · rfl
+
+/-- Exact array update and cross-array frame law for `writeMetaMem`. -/
+theorem writeMetaMem_effects {base : ℕ} (p : KickTreeParams) (hw : 0 < p.w) (mem : ℕ → ℕ)
+    {idx val : ℕ} (hidx : idx < metaLen p) (hval : val < 2 ^ metaBits p) :
+    quotAt base p (writeMetaMem base p mem idx val) = quotAt base p mem ∧
+      valAt base p (writeMetaMem base p mem idx val) = valAt base p mem ∧
+      occAt base p (writeMetaMem base p mem idx val) = occAt base p mem ∧
+      metaAt base p (writeMetaMem base p mem idx val) =
+        Function.update (metaAt base p mem) idx val ∧
+      (∀ a, ¬(base + offMeta p ≤ a ∧ a < base + offMeta p + metaWords p) →
+        writeMetaMem base p mem idx val a = mem a) := by
+  have hout : ∀ a, ¬(base + offMeta p ≤ a ∧ a < base + offMeta p + metaWords p) →
+      writeMetaMem base p mem idx val a = mem a := fun a ha =>
+    writePacked_outside hw mem hidx val ha
+  refine ⟨?_, ?_, ?_, ?_, hout⟩
+  · funext i; unfold quotAt; split_ifs with hlt
+    · exact readPacked_congr (N := p.nMax) hw (fun a ⟨ha1, ha2⟩ =>
+        hout a (by unfold offMeta offOcc offVal; dsimp [quotWords]; omega)) hlt
+    · rfl
+  · funext i; unfold valAt; split_ifs with hlt
+    · exact readPacked_congr (N := p.nMax) hw (fun a ⟨ha1, ha2⟩ =>
+        hout a (by unfold offMeta offOcc; dsimp [valWords]; omega)) hlt
+    · rfl
+  · funext i; unfold occAt; split_ifs with hlt
+    · exact readPacked_congr (N := occLen p) hw (fun a ⟨ha1, ha2⟩ =>
+        hout a (by unfold offMeta; dsimp [occWords]; omega)) hlt
+    · rfl
+  · funext i; by_cases hi : i = idx
+    · subst hi; simp [metaAt, hidx, writeMetaMem, readPacked_writePacked_self _ _ _ _ _ hval]
+    · unfold metaAt; rw [Function.update_of_ne hi]; split_ifs with hlt
+      · exact readPacked_writePacked_of_ne hw mem hi val
+      · rfl
 
 end Cslib.DataStructure.Dictionary.WordRAM.KickTree
