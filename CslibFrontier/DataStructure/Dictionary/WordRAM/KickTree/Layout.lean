@@ -28,7 +28,7 @@ This module defines the word-level memory layout and pure array extraction funct
 fixed-capacity STOC 2022 `k`-kick tree dynamic dictionary of Bender, Farach-Colton, J. Kuszmaul,
 W. Kuszmaul, and Liu ([BenderFarachColtonKuszmaulKuszmaulLiu2022], `arXiv:2111.00602v2`,
 Sections 3–5):
-- `KickTreeParams`: word width `w`, capacity bound `n_max`, universe `U ≤ 2 ^ w`, value bound
+- `KickTreeParams`: word width `w`, capacity bound `nMax`, universe `U ≤ 2 ^ w`, value bound
   `V ≤ 2 ^ w`, parameter `k ≥ 1`, and bounded kick limit.
 - Memory offsets: `offSeeds`, `offQuot`, `offVal`, `offFourRussians`, `offFreeSlotTree`,
   `offFacility`, and `totalSpace`.
@@ -99,8 +99,8 @@ open Cslib.DataStructure.Dictionary.FeistelQuotient
 structure KickTreeParams where
   /-- Machine word width `w`. -/
   w : ℕ
-  /-- Maximum dictionary capacity `n_max`. -/
-  n_max : ℕ
+  /-- Maximum dictionary capacity `nMax`. -/
+  nMax : ℕ
   /-- Key universe size `U ≤ 2 ^ w`. -/
   U : ℕ
   /-- Value range bound `V ≤ 2 ^ w`. -/
@@ -114,10 +114,10 @@ deriving Repr, DecidableEq
 /-- Default kick limit `k + 1` from Section 3.1 / Theorem 2 switching cost. -/
 @[expose] def defaultKickLimit (k : ℕ) : ℕ := k + 1
 
-/-- Canonical constructor for `KickTreeParams` from dimensions `w`, `n_max`, `U`, `V`, `k`. -/
-@[expose] def mkKickTreeParams (w n_max U V k : ℕ) : KickTreeParams where
+/-- Canonical constructor for `KickTreeParams` from dimensions `w`, `nMax`, `U`, `V`, `k`. -/
+@[expose] def mkKickTreeParams (w nMax U V k : ℕ) : KickTreeParams where
   w := w
-  n_max := n_max
+  nMax := nMax
   U := U
   V := V
   k := k
@@ -125,7 +125,7 @@ deriving Repr, DecidableEq
 
 /-- 6-word encoding embedding for `KickTreeParams`. -/
 def kickTreeParamsWords : KickTreeParams ↪ (Fin 6 → ℕ) where
-  toFun p := ![p.w, p.n_max, p.U, p.V, p.k, p.kickLimit]
+  toFun p := ![p.w, p.nMax, p.U, p.V, p.k, p.kickLimit]
   inj' := by
     intro p₁ p₂ h
     have h0 := congrFun h ⟨0, by decide⟩
@@ -150,7 +150,7 @@ instance : WordEncoding KickTreeParams := ⟨6, kickTreeParamsWords⟩
 
 /-- Word size of the bit-packed `Quotients` array. -/
 @[expose] def quotWords (p : KickTreeParams) : ℕ :=
-  packedWords p.n_max (fullQuotBits p.U p.n_max) p.w
+  packedWords p.nMax (fullQuotBits p.U p.nMax) p.w
 
 /-- Word offset of `Values` array relative to `base`. -/
 @[expose] def offVal (p : KickTreeParams) : ℕ :=
@@ -158,7 +158,7 @@ instance : WordEncoding KickTreeParams := ⟨6, kickTreeParamsWords⟩
 
 /-- Word size of the bit-packed `Values` array. -/
 @[expose] def valWords (p : KickTreeParams) : ℕ :=
-  packedWords p.n_max (valBits p.V) p.w
+  packedWords p.nMax (valBits p.V) p.w
 
 /-- Word offset of `FourRussians` lookup tables relative to `base`. -/
 @[expose] def offFourRussians (p : KickTreeParams) : ℕ :=
@@ -172,9 +172,9 @@ instance : WordEncoding KickTreeParams := ⟨6, kickTreeParamsWords⟩
 @[expose] def offFreeSlotTree (p : KickTreeParams) : ℕ :=
   offFourRussians p + fourRussiansWords p
 
-/-- Word size of the free-slot tree bitmap for `2 * n_max + 1` nodes. -/
+/-- Word size of the free-slot tree bitmap for `2 * nMax + 1` nodes. -/
 @[expose] def freeSlotWords (p : KickTreeParams) : ℕ :=
-  packedWords (2 * p.n_max + 1) 1 p.w
+  packedWords (2 * p.nMax + 1) 1 p.w
 
 /-- Word offset of `Facility` multi-tier cubbies relative to `base`. -/
 @[expose] def offFacility (p : KickTreeParams) : ℕ :=
@@ -182,7 +182,7 @@ instance : WordEncoding KickTreeParams := ⟨6, kickTreeParamsWords⟩
 
 /-- Word size of the multi-tier facility cubby metadata block. -/
 @[expose] def facilityWords (p : KickTreeParams) : ℕ :=
-  packedWords (p.n_max + 1) (max (Nat.iterLog p.k p.n_max) 1) p.w
+  packedWords (p.nMax + 1) (max (Nat.iterLog p.k p.nMax) 1) p.w
 
 /-- Total word footprint of the `k`-kick tree dynamic dictionary starting at `base`. -/
 @[expose] def totalSpace (p : KickTreeParams) : ℕ :=
@@ -256,37 +256,37 @@ theorem kickTreeWords_le_succinctWords (C C₀ U V w n_max : ℕ) :
   exact Nat.add_le_add_right (Nat.div_le_div_right hadd) _
 
 /-- Master deterministic word-space bound: total memory footprint `totalSpace p` is at most
-`kickTreeWords 8 2080 p.U p.V p.w p.k p.n_max` for all `0 < p.w`. -/
+`kickTreeWords 8 2080 p.U p.V p.w p.k p.nMax` for all `0 < p.w`. -/
 theorem totalSpace_le_kickTreeWords (p : KickTreeParams) (hw : 0 < p.w) :
-    totalSpace p ≤ kickTreeWords 8 2080 p.U p.V p.w p.k p.n_max := by
+    totalSpace p ≤ kickTreeWords 8 2080 p.U p.V p.w p.k p.nMax := by
   rw [totalSpace_eq]
-  have h12 := packedWords_add_le p.n_max (fullQuotBits p.U p.n_max)
-    p.n_max (valBits p.V) p.w
+  have h12 := packedWords_add_le p.nMax (fullQuotBits p.U p.nMax)
+    p.nMax (valBits p.V) p.w
   have h123 := div_add_packedWords_le
-    (p.n_max * fullQuotBits p.U p.n_max + p.n_max * valBits p.V) 5
-    (2 * p.n_max + 1) 1 p.w
+    (p.nMax * fullQuotBits p.U p.nMax + p.nMax * valBits p.V) 5
+    (2 * p.nMax + 1) 1 p.w
   have h1234 := div_add_packedWords_le
-    (p.n_max * fullQuotBits p.U p.n_max + p.n_max * valBits p.V +
-      (2 * p.n_max + 1) * 1) 8
-    (p.n_max + 1) (max (Nat.iterLog p.k p.n_max) 1) p.w
-  have hopt := mul_fullQuotBits_add_valBits_le_optBits p.U p.V p.n_max
+    (p.nMax * fullQuotBits p.U p.nMax + p.nMax * valBits p.V +
+      (2 * p.nMax + 1) * 1) 8
+    (p.nMax + 1) (max (Nat.iterLog p.k p.nMax) 1) p.w
+  have hopt := mul_fullQuotBits_add_valBits_le_optBits p.U p.V p.nMax
   have h4R := fourRussiansWords_le p hw
-  have hchain : packedWords p.n_max (fullQuotBits p.U p.n_max) p.w +
-      packedWords p.n_max (valBits p.V) p.w +
-      packedWords (2 * p.n_max + 1) 1 p.w +
-      packedWords (p.n_max + 1) (max (Nat.iterLog p.k p.n_max) 1) p.w ≤
-      (p.n_max * fullQuotBits p.U p.n_max + p.n_max * valBits p.V +
-        (2 * p.n_max + 1) * 1 + (p.n_max + 1) * (max (Nat.iterLog p.k p.n_max) 1) +
+  have hchain : packedWords p.nMax (fullQuotBits p.U p.nMax) p.w +
+      packedWords p.nMax (valBits p.V) p.w +
+      packedWords (2 * p.nMax + 1) 1 p.w +
+      packedWords (p.nMax + 1) (max (Nat.iterLog p.k p.nMax) 1) p.w ≤
+      (p.nMax * fullQuotBits p.U p.nMax + p.nMax * valBits p.V +
+        (2 * p.nMax + 1) * 1 + (p.nMax + 1) * (max (Nat.iterLog p.k p.nMax) 1) +
         p.w - 1) / p.w + 11 := by
     omega
   have hdiv_le :
-      (p.n_max * fullQuotBits p.U p.n_max + p.n_max * valBits p.V +
-        (2 * p.n_max + 1) * 1 + (p.n_max + 1) * (max (Nat.iterLog p.k p.n_max) 1) +
+      (p.nMax * fullQuotBits p.U p.nMax + p.nMax * valBits p.V +
+        (2 * p.nMax + 1) * 1 + (p.nMax + 1) * (max (Nat.iterLog p.k p.nMax) 1) +
         p.w - 1) / p.w ≤
-      (Dynamic.optBits p.U p.V p.n_max +
-        8 * p.n_max * max (Nat.iterLog p.k p.n_max) 1 + p.w - 1) / p.w + 2 := by
-    by_cases hn : p.n_max = 0
-    · obtain ⟨w, n_max, U, V, k, kickLimit⟩ := p
+      (Dynamic.optBits p.U p.V p.nMax +
+        8 * p.nMax * max (Nat.iterLog p.k p.nMax) 1 + p.w - 1) / p.w + 2 := by
+    by_cases hn : p.nMax = 0
+    · obtain ⟨w, nMax, U, V, k, kickLimit⟩ := p
       dsimp only at *
       subst hn
       have hiter : Nat.iterLog k 0 = 0 := Nat.iterLog_zero_right k
@@ -303,42 +303,42 @@ theorem totalSpace_le_kickTreeWords (p : KickTreeParams) (hw : 0 < p.w) :
           Dynamic.optBits U V 0 + w - 1 := by simp
       rw [hzero]
       exact le_trans (by omega) (Nat.le_add_left 2 _)
-    · have hn1 : 1 ≤ p.n_max := Nat.pos_of_ne_zero hn
-      set M := max (Nat.iterLog p.k p.n_max) 1
+    · have hn1 : 1 ≤ p.nMax := Nat.pos_of_ne_zero hn
+      set M := max (Nat.iterLog p.k p.nMax) 1
       have hM : 1 ≤ M := le_max_right _ _
-      have hterm1 : p.n_max * fullQuotBits p.U p.n_max + p.n_max * valBits p.V ≤
-          Dynamic.optBits p.U p.V p.n_max + 2 * p.n_max := by
+      have hterm1 : p.nMax * fullQuotBits p.U p.nMax + p.nMax * valBits p.V ≤
+          Dynamic.optBits p.U p.V p.nMax + 2 * p.nMax := by
         rw [← Nat.mul_add]; exact hopt
-      have h5M : 5 * p.n_max ≤ 5 * p.n_max * M := by
-        have := Nat.mul_le_mul_left (5 * p.n_max) hM
+      have h5M : 5 * p.nMax ≤ 5 * p.nMax * M := by
+        have := Nat.mul_le_mul_left (5 * p.nMax) hM
         simpa using this
-      have h2M : (p.n_max + 1) * M ≤ 2 * p.n_max * M := by
-        have : p.n_max + 1 ≤ 2 * p.n_max := by omega
+      have h2M : (p.nMax + 1) * M ≤ 2 * p.nMax * M := by
+        have : p.nMax + 1 ≤ 2 * p.nMax := by omega
         exact Nat.mul_le_mul_right M this
-      have hsum52 : 5 * p.n_max + (p.n_max + 1) * M ≤ 7 * p.n_max * M := by
-        calc 5 * p.n_max + (p.n_max + 1) * M
-          _ ≤ 5 * p.n_max * M + 2 * p.n_max * M := Nat.add_le_add h5M h2M
-          _ = 7 * p.n_max * M := by ring
-      have h78 : 7 * p.n_max * M ≤ 8 * p.n_max * M :=
+      have hsum52 : 5 * p.nMax + (p.nMax + 1) * M ≤ 7 * p.nMax * M := by
+        calc 5 * p.nMax + (p.nMax + 1) * M
+          _ ≤ 5 * p.nMax * M + 2 * p.nMax * M := Nat.add_le_add h5M h2M
+          _ = 7 * p.nMax * M := by ring
+      have h78 : 7 * p.nMax * M ≤ 8 * p.nMax * M :=
         Nat.mul_le_mul_right M (by omega)
-      have hle_num : p.n_max * fullQuotBits p.U p.n_max +
-          p.n_max * valBits p.V +
-          (2 * p.n_max + 1) * 1 + (p.n_max + 1) * M ≤
-          Dynamic.optBits p.U p.V p.n_max + 8 * p.n_max * M := by
-        calc p.n_max * fullQuotBits p.U p.n_max + p.n_max * valBits p.V +
-              (2 * p.n_max + 1) * 1 + (p.n_max + 1) * M
-          _ ≤ Dynamic.optBits p.U p.V p.n_max + 2 * p.n_max + (2 * p.n_max + 1) +
-              (p.n_max + 1) * M := by
+      have hle_num : p.nMax * fullQuotBits p.U p.nMax +
+          p.nMax * valBits p.V +
+          (2 * p.nMax + 1) * 1 + (p.nMax + 1) * M ≤
+          Dynamic.optBits p.U p.V p.nMax + 8 * p.nMax * M := by
+        calc p.nMax * fullQuotBits p.U p.nMax + p.nMax * valBits p.V +
+              (2 * p.nMax + 1) * 1 + (p.nMax + 1) * M
+          _ ≤ Dynamic.optBits p.U p.V p.nMax + 2 * p.nMax + (2 * p.nMax + 1) +
+              (p.nMax + 1) * M := by
             linarith [hterm1]
-          _ = Dynamic.optBits p.U p.V p.n_max + (4 * p.n_max + 1) + (p.n_max + 1) * M := by ring
-          _ ≤ Dynamic.optBits p.U p.V p.n_max + 5 * p.n_max + (p.n_max + 1) * M := by omega
-          _ ≤ Dynamic.optBits p.U p.V p.n_max + 7 * p.n_max * M := by
+          _ = Dynamic.optBits p.U p.V p.nMax + (4 * p.nMax + 1) + (p.nMax + 1) * M := by ring
+          _ ≤ Dynamic.optBits p.U p.V p.nMax + 5 * p.nMax + (p.nMax + 1) * M := by omega
+          _ ≤ Dynamic.optBits p.U p.V p.nMax + 7 * p.nMax * M := by
             linarith [hsum52]
-          _ ≤ Dynamic.optBits p.U p.V p.n_max + 8 * p.n_max * M := by
+          _ ≤ Dynamic.optBits p.U p.V p.nMax + 8 * p.nMax * M := by
             linarith [h78]
-      have hnum_le : p.n_max * fullQuotBits p.U p.n_max + p.n_max * valBits p.V +
-          (2 * p.n_max + 1) * 1 + (p.n_max + 1) * M + p.w - 1 ≤
-          Dynamic.optBits p.U p.V p.n_max + 8 * p.n_max * M + p.w - 1 := by omega
+      have hnum_le : p.nMax * fullQuotBits p.U p.nMax + p.nMax * valBits p.V +
+          (2 * p.nMax + 1) * 1 + (p.nMax + 1) * M + p.w - 1 ≤
+          Dynamic.optBits p.U p.V p.nMax + 8 * p.nMax * M + p.w - 1 := by omega
       have hdiv := Nat.div_le_div_right hnum_le (c := p.w)
       exact le_trans hdiv (Nat.le_add_right _ 2)
   unfold kickTreeWords quotWords valWords freeSlotWords facilityWords seedWords
@@ -346,15 +346,15 @@ theorem totalSpace_le_kickTreeWords (p : KickTreeParams) (hw : 0 < p.w) :
 
 /-! ### 3. Pure extraction functions -/
 
-/-- Pure extraction function for `Quotients[idx]` (`0` for `idx ≥ p.n_max`). -/
+/-- Pure extraction function for `Quotients[idx]` (`0` for `idx ≥ p.nMax`). -/
 @[expose] def quotAt (base : ℕ) (p : KickTreeParams) (mem : ℕ → ℕ) (idx : ℕ) : ℕ :=
-  if idx < p.n_max then
-    readPacked (base + offQuot) (fullQuotBits p.U p.n_max) p.w mem idx
+  if idx < p.nMax then
+    readPacked (base + offQuot) (fullQuotBits p.U p.nMax) p.w mem idx
   else 0
 
-/-- Pure extraction function for `Values[idx]` (`0` for `idx ≥ p.n_max`). -/
+/-- Pure extraction function for `Values[idx]` (`0` for `idx ≥ p.nMax`). -/
 @[expose] def valAt (base : ℕ) (p : KickTreeParams) (mem : ℕ → ℕ) (idx : ℕ) : ℕ :=
-  if idx < p.n_max then
+  if idx < p.nMax then
     readPacked (base + offVal p) (valBits p.V) p.w mem idx
   else 0
 
@@ -364,23 +364,23 @@ theorem totalSpace_le_kickTreeWords (p : KickTreeParams) (hw : 0 < p.w) :
     readPacked (base + offFourRussians p) 8 p.w mem idx
   else 0
 
-/-- Pure extraction function for `FreeSlotTree` bitmap bit `idx < 2 * p.n_max + 1`. -/
+/-- Pure extraction function for `FreeSlotTree` bitmap bit `idx < 2 * p.nMax + 1`. -/
 @[expose] def freeSlotAt (base : ℕ) (p : KickTreeParams) (mem : ℕ → ℕ) (idx : ℕ) : ℕ :=
-  if idx < 2 * p.n_max + 1 then
+  if idx < 2 * p.nMax + 1 then
     readPacked (base + offFreeSlotTree p) 1 p.w mem idx
   else 0
 
-/-- Pure extraction function for `Facility` cubby metadata entry `idx < p.n_max + 1`. -/
+/-- Pure extraction function for `Facility` cubby metadata entry `idx < p.nMax + 1`. -/
 @[expose] def cubbyAt (base : ℕ) (p : KickTreeParams) (mem : ℕ → ℕ) (idx : ℕ) : ℕ :=
-  if idx < p.n_max + 1 then
-    readPacked (base + offFacility p) (max (Nat.iterLog p.k p.n_max) 1) p.w mem idx
+  if idx < p.nMax + 1 then
+    readPacked (base + offFacility p) (max (Nat.iterLog p.k p.nMax) 1) p.w mem idx
   else 0
 
 /-! ### 4. Value range theorems -/
 
-/-- Value range invariant for `quotAt`: every entry is `< 2 ^ fullQuotBits p.U p.n_max`. -/
+/-- Value range invariant for `quotAt`: every entry is `< 2 ^ fullQuotBits p.U p.nMax`. -/
 theorem quotAt_lt (base : ℕ) (p : KickTreeParams) (mem : ℕ → ℕ) (idx : ℕ) :
-    quotAt base p mem idx < 2 ^ fullQuotBits p.U p.n_max := by
+    quotAt base p mem idx < 2 ^ fullQuotBits p.U p.nMax := by
   unfold quotAt
   split_ifs
   · exact readPacked_lt _ _ _ _ _
@@ -410,9 +410,9 @@ theorem freeSlotAt_lt (base : ℕ) (p : KickTreeParams) (mem : ℕ → ℕ) (idx
   · exact readPacked_lt _ _ _ _ _
   · positivity
 
-/-- Value range invariant for `cubbyAt`: every entry is `< 2 ^ max (Nat.iterLog p.k p.n_max) 1`. -/
+/-- Value range invariant for `cubbyAt`: every entry is `< 2 ^ max (Nat.iterLog p.k p.nMax) 1`. -/
 theorem cubbyAt_lt (base : ℕ) (p : KickTreeParams) (mem : ℕ → ℕ) (idx : ℕ) :
-    cubbyAt base p mem idx < 2 ^ max (Nat.iterLog p.k p.n_max) 1 := by
+    cubbyAt base p mem idx < 2 ^ max (Nat.iterLog p.k p.nMax) 1 := by
   unfold cubbyAt
   split_ifs
   · exact readPacked_lt _ _ _ _ _
@@ -427,7 +427,7 @@ theorem quotAt_zero_of_init {base : ℕ} (p : KickTreeParams) (hw : 0 < p.w) {me
   funext idx
   unfold quotAt
   split_ifs with hidx
-  · have hlt1 : wordOffset (fullQuotBits p.U p.n_max) p.w idx + 1 < quotWords p :=
+  · have hlt1 : wordOffset (fullQuotBits p.U p.nMax) p.w idx + 1 < quotWords p :=
       wordOffset_add_one_lt_packedWords hw hidx
     have hbound := quot_end_le_totalSpace p
     exact readPacked_zero
@@ -490,7 +490,7 @@ theorem cubbyAt_zero_of_init {base : ℕ} (p : KickTreeParams) (hw : 0 < p.w) {m
   funext idx
   unfold cubbyAt
   split_ifs with hidx
-  · have hlt1 : wordOffset (max (Nat.iterLog p.k p.n_max) 1) p.w idx + 1 < facilityWords p :=
+  · have hlt1 : wordOffset (max (Nat.iterLog p.k p.nMax) 1) p.w idx + 1 < facilityWords p :=
       wordOffset_add_one_lt_packedWords hw hidx
     have hbound := facility_end_le_totalSpace p
     exact readPacked_zero
@@ -512,12 +512,12 @@ theorem arrays_congr_of_eq_on {base : ℕ} (p : KickTreeParams) (hw : 0 < p.w) {
   refine ⟨?_, ?_, ?_, ?_, ?_⟩
   · funext idx; unfold quotAt; split_ifs with hidx
     · have hbound := quot_end_le_totalSpace p
-      exact readPacked_congr (N := p.n_max) hw (fun a ⟨ha1, ha2⟩ =>
+      exact readPacked_congr (N := p.nMax) hw (fun a ⟨ha1, ha2⟩ =>
         heq a (by omega) (by dsimp [quotWords] at hbound; omega)) hidx
     · rfl
   · funext idx; unfold valAt; split_ifs with hidx
     · have hbound := val_end_le_totalSpace p
-      exact readPacked_congr (N := p.n_max) hw (fun a ⟨ha1, ha2⟩ =>
+      exact readPacked_congr (N := p.nMax) hw (fun a ⟨ha1, ha2⟩ =>
         heq a (by omega) (by dsimp [valWords] at hbound; omega)) hidx
     · rfl
   · funext idx; unfold fourRussiansAt; split_ifs with hidx
@@ -527,12 +527,12 @@ theorem arrays_congr_of_eq_on {base : ℕ} (p : KickTreeParams) (hw : 0 < p.w) {
     · rfl
   · funext idx; unfold freeSlotAt; split_ifs with hidx
     · have hbound := freeSlot_end_le_totalSpace p
-      exact readPacked_congr (N := 2 * p.n_max + 1) hw (fun a ⟨ha1, ha2⟩ =>
+      exact readPacked_congr (N := 2 * p.nMax + 1) hw (fun a ⟨ha1, ha2⟩ =>
         heq a (by omega) (by dsimp [freeSlotWords] at hbound; omega)) hidx
     · rfl
   · funext idx; unfold cubbyAt; split_ifs with hidx
     · have hbound := facility_end_le_totalSpace p
-      exact readPacked_congr (N := p.n_max + 1) hw (fun a ⟨ha1, ha2⟩ =>
+      exact readPacked_congr (N := p.nMax + 1) hw (fun a ⟨ha1, ha2⟩ =>
         heq a (by omega) (by dsimp [facilityWords] at hbound; omega)) hidx
     · rfl
 

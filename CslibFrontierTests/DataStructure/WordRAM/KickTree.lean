@@ -57,14 +57,14 @@ theorem test_hw : 0 < testParams.w := by decide
 /-- Verify the deterministic master space bound on concrete parameters. -/
 theorem test_totalSpace_le_kickTreeWords :
     totalSpace testParams ≤ kickTreeWords 8 2080 testParams.U testParams.V
-      testParams.w testParams.k testParams.n_max :=
+      testParams.w testParams.k testParams.nMax :=
   totalSpace_le_kickTreeWords testParams test_hw
 
 /-- Verify the specialization to `succinctWords` at k = 2. -/
 theorem test_kickTreeWords_le_succinctWords :
-    kickTreeWords 8 2080 testParams.U testParams.V testParams.w 2 testParams.n_max ≤
-      Dynamic.succinctWords 8 2080 testParams.U testParams.V testParams.w testParams.n_max :=
-  kickTreeWords_le_succinctWords 8 2080 testParams.U testParams.V testParams.w testParams.n_max
+    kickTreeWords 8 2080 testParams.U testParams.V testParams.w 2 testParams.nMax ≤
+      Dynamic.succinctWords 8 2080 testParams.U testParams.V testParams.w testParams.nMax :=
+  kickTreeWords_le_succinctWords 8 2080 testParams.U testParams.V testParams.w testParams.nMax
 
 /-! ### 2. Pure Extraction and Range Tests -/
 
@@ -87,11 +87,11 @@ theorem test_zero_of_init :
 
 /-- Test range bounds on arbitrary memory. -/
 theorem test_range_bounds (mem : ℕ → ℕ) (idx : ℕ) :
-    quotAt 0 testParams mem idx < 2 ^ fullQuotBits testParams.U testParams.n_max ∧
+    quotAt 0 testParams mem idx < 2 ^ fullQuotBits testParams.U testParams.nMax ∧
     valAt 0 testParams mem idx < 2 ^ valBits testParams.V ∧
     fourRussiansAt 0 testParams mem idx < 2 ^ 8 ∧
     freeSlotAt 0 testParams mem idx < 2 ^ 1 ∧
-    cubbyAt 0 testParams mem idx < 2 ^ max (Nat.iterLog testParams.k testParams.n_max) 1 :=
+    cubbyAt 0 testParams mem idx < 2 ^ max (Nat.iterLog testParams.k testParams.nMax) 1 :=
   ⟨quotAt_lt 0 testParams mem idx,
    valAt_lt 0 testParams mem idx,
    fourRussiansAt_lt 0 testParams mem idx,
