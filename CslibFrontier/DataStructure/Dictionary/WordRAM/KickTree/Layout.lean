@@ -8,7 +8,6 @@ module
 -- upstream: candidate
 
 public import CslibFrontier.Init
-public import CslibFrontier.Computability.WordRAM.Realization.Absorb
 public import CslibFrontier.DataStructure.Dictionary.Dynamic.Spec
 public import CslibFrontier.DataStructure.Dictionary.FeistelQuotient
 public import CslibFrontier.DataStructure.Dictionary.KickTree.QuotientPerm
@@ -57,7 +56,7 @@ Farach-Colton, J. Kuszmaul, W. Kuszmaul, and Liu ([BenderFarachColtonKuszmaulKus
 ## Main definitions
 
 * `Cslib.DataStructure.Dictionary.WordRAM.KickTree.KickTreeParams`, `defaultKickLimit`,
-  `mkKickTreeParams`, `kickTreeParamsWords`: configuration record and 8-word encoding.
+  `mkKickTreeParams`: layout configuration record and canonical constructor.
 * `Cslib.DataStructure.Dictionary.WordRAM.KickTree.offQuot`, `quotWords`, `offVal`, `valWords`,
   `occLen`, `offOcc`, `occWords`, `metaBits`, `metaLen`, `offMeta`, `metaWords`, `totalSpace`:
   bit-packed block offsets, bit/entry counts, and total word footprint.
@@ -91,8 +90,6 @@ public section
 
 namespace Cslib.DataStructure.Dictionary.WordRAM.KickTree
 
-open Cslib.WordRAM
-open Cslib.WordRAM.Realization
 open Cslib.DataStructure.Dictionary
 open Cslib.DataStructure.Dictionary.WordRAM.BitPackedArray
 open Cslib.DataStructure.Dictionary.KickTree
@@ -135,24 +132,6 @@ deriving Repr, DecidableEq
   kickLimit := defaultKickLimit k
   hSpace := hSpace
   cMeta := cMeta
-
-/-- 8-word encoding embedding for `KickTreeParams`. -/
-def kickTreeParamsWords : KickTreeParams ↪ (Fin 8 → ℕ) where
-  toFun p := ![p.w, p.nMax, p.U, p.V, p.k, p.kickLimit, p.hSpace, p.cMeta]
-  inj' := by
-    intro p₁ p₂ h
-    have h0 := congrFun h ⟨0, by decide⟩
-    have h1 := congrFun h ⟨1, by decide⟩
-    have h2 := congrFun h ⟨2, by decide⟩
-    have h3 := congrFun h ⟨3, by decide⟩
-    have h4 := congrFun h ⟨4, by decide⟩
-    have h5 := congrFun h ⟨5, by decide⟩
-    have h6 := congrFun h ⟨6, by decide⟩
-    have h7 := congrFun h ⟨7, by decide⟩
-    cases p₁; cases p₂; dsimp at h0 h1 h2 h3 h4 h5 h6 h7
-    rw [h0, h1, h2, h3, h4, h5, h6, h7]
-
-instance : WordEncoding KickTreeParams := ⟨8, kickTreeParamsWords⟩
 
 /-- Word offset of the bit-packed `Quotients` array relative to `base`. -/
 @[expose] def offQuot (p : KickTreeParams) : ℕ := p.hSpace

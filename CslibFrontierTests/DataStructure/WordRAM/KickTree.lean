@@ -21,13 +21,12 @@ certificates for `k`-kick tree slot tables ([BenderFarachColtonKuszmaulKuszmaulL
    `kickTreeWords_le_succinctWords` on concrete parameters.
 2. **Pure Extraction & Range Bounds**: verifies zero-initialization and bit-width bounds for
    `quotAt`, `valAt`, `occAt`, and `metaAt`.
-3. **Sequential `Memory.Prog` Execution & Caller Specs**: exercises concrete bit-packed execution
-   and chains `allocKickTableProg_spec`, `kickStepProg_vacant_spec`, `kickStepProg_displace_spec`,
-   `querySlotProg_spec`, and `deleteSlotProg_spec` end to end (covering stored `(quot = 0, val = 0)`
-   vs empty slots, displacement along `pathBase`, tail replacement `slot ≠ tailSlot`, and
-   self-deletion `slot = tailSlot`).
+3. **Sequential `_spec` Caller Tests**: chains `allocKickTableProg_spec`, `kickLoopProg`
+   (`p.kickLimit`-bounded `iterate`), `querySlotProg_spec`, `clearSlotProg_spec` (vacating hashed
+   kick-tree slots), and `popUnindexedSlotProg_spec` (popping and compacting unindexed `TailCubby`
+   slots for subsequent `kickLoopProg` re-insertion).
 4. **Width-Freedom (`¬ReadsWidth`) & Non-Vacuous Native Execution**: extracts concrete emitted
-   `WordRAM.Code` for all five `Realizes .exact` certificates, checks `¬ReadsWidth`, and proves
+   `WordRAM.Code` for all six `Realizes .exact` certificates, checks `¬ReadsWidth`, and proves
    non-trivial native `ExecWithin` execution at `w = 64` (`y ≠ x`, rejecting `.halt`).
 
 ## References
@@ -56,15 +55,12 @@ kick parameter `k = 2`, header space `hSpace = 16`, metadata multiplicity `cMeta
 @[expose] def testParams : KickTreeParams :=
   mkKickTreeParams 64 1000 1000000 1000000 2 16 2
 
-/-- Small concrete test parameters (`w = 16, nMax = 8`) for kernel `decide` evaluation tests. -/
+/-- Small concrete test parameters (`w = 16, nMax = 8, k = 1`, so `kickLimit = 2`). -/
 @[expose] def smallParams : KickTreeParams :=
-  mkKickTreeParams 16 8 64 64 2 2 2
+  mkKickTreeParams 16 8 64 64 1 2 2
 
 /-- Word width of `testParams` is positive. -/
 theorem test_hw : 0 < testParams.w := by decide
-
-/-- Metadata multiplicity of `testParams` is at least `1`. -/
-theorem test_hc : 1 ≤ testParams.cMeta := by decide
 
 /-- Verify the parameterized master space bound on `testParams`. -/
 theorem test_totalSpace_le_kickTreeWords :
@@ -108,29 +104,31 @@ theorem test_range_bounds (mem : ℕ → ℕ) (idx : ℕ) :
 
 /-! ### 3. End-to-End Sequential `_spec` Caller Tests -/
 
-/-- Representative caller chaining `allocKickTableProg_spec`, `kickLoopProg` (`iterate` +
-`kickStepProg_vacant_spec` / `kickStepProg_displace_spec` / `kickStepProg_inactive_spec`),
-`querySlotProg_spec`, and `deleteSlotProg_spec` end to end on `smallParams`:
-1. Allocates zeroed table at `base = 0` (`s₀.frontier = 0`) with switching path `[100, 101] =
-   [3, 5]` outside `[0, totalSpace smallParams)`.
-2. Runs 2-step `kickLoopProg` inserting `(quot = 0, val = 0, meta = 1)`: step 0 fills vacant slot
-   `3` (`active := 0`), step 1 idles; verifies `some 0` at `(3, 0)` and `none` at vacant `(5, 0)`.
-3. Runs 2-step `kickLoopProg` inserting `(quot = 7, val = 9, meta = 1)`: step 0 displaces
-   `(0, 0, 1)` from slot `3`, step 1 places `(0, 0, 1)` into vacant slot `5`; verifies `some 9` at
-   `(3, 7)`, `none` on mismatch `(3, 8)`, and `some 0` at displaced `(5, 0)`.
-4. Deletes slot `3` via tail replacement from slot `5`; verifies slot `3` holds `(0, 0)` (`some 0`)
-   and reclaimed tail slot `5` returns `none` at quotient `0`.
-5. Self-deletes slot `3` (`slot = tailSlot = 3`); verifies slot `3` returns `none`. -/
+/-- Representative caller chaining `allocKickTableProg_spec`, `kickLoopProg` (`p.kickLimit`-bounded
+`iterate`), `querySlotProg_spec`, `clearSlotProg_spec`, and `popUnindexedSlotProg_spec` on
+`smallParams` (`p.kickLimit = 2`):
+1. Allocates hashed kick-tree table at `base = 0` with switching path `[100, 101] = [3, 5]`.
+2. Inserts `(quot = 0, val = 0, meta = 1)` via `kickLoopProg`: fills vacant slot `3` in 1 step and
+   idles on step 2; verifies `some 0` at `(3, 0)` and `none` at vacant `(5, 0)`.
+3. Inserts `(quot = 7, val = 9, meta = 1)` via `kickLoopProg`: displaces `(0, 0, 1)` from slot `3`
+   to vacant slot `5`; verifies `some 9` at `(3, 7)`, `none` on mismatch `(3, 8)`, and `some 0` at
+   displaced `(5, 0)`.
+4. Vacates hashed slot `3` via `clearSlotProg`; verifies `(3, 7)` returns `none` while `(5, 0)` in
+   its own bin remains `some 0`.
+5. Exercises `popUnindexedSlotProg` for both `slot ≠ lastSlot` (`0` compacted from `1`) and
+   self-pop `slot = lastSlot` (`0` from `0`), verifying the returned payload and cleared tail. -/
 theorem test_sequential_caller_specs :
     let mInit : ℕ → ℕ := fun a => if a = 100 then 3 else if a = 101 then 5 else 0
     let s₀ : Memory.State := ⟨mInit, 0⟩
     let s₁ := (Memory.spec 0).clientState s₀ (allocKickTableProg smallParams)
-    let r₂ := (Memory.spec 0).clientResult s₁ (kickLoopProg smallParams 0 100 2 0 0 1)
-    let s₂ := (Memory.spec 0).clientState s₁ (kickLoopProg smallParams 0 100 2 0 0 1)
-    let r₄ := (Memory.spec 0).clientResult s₂ (kickLoopProg smallParams 0 100 2 7 9 1)
-    let s₄ := (Memory.spec 0).clientState s₂ (kickLoopProg smallParams 0 100 2 7 9 1)
-    let s₅ := (Memory.spec 0).clientState s₄ (deleteSlotProg smallParams 0 3 5)
-    let s₆ := (Memory.spec 0).clientState s₅ (deleteSlotProg smallParams 0 3 3)
+    let r₂ := (Memory.spec 0).clientResult s₁ (kickLoopProg smallParams 0 100 0 0 1)
+    let s₂ := (Memory.spec 0).clientState s₁ (kickLoopProg smallParams 0 100 0 0 1)
+    let r₄ := (Memory.spec 0).clientResult s₂ (kickLoopProg smallParams 0 100 7 9 1)
+    let s₄ := (Memory.spec 0).clientState s₂ (kickLoopProg smallParams 0 100 7 9 1)
+    let s₅ := (Memory.spec 0).clientState s₄ (clearSlotProg smallParams 0 3)
+    let popped := (Memory.spec 0).clientResult s₄ (popUnindexedSlotProg smallParams 0 3 5)
+    let sPop := (Memory.spec 0).clientState s₄ (popUnindexedSlotProg smallParams 0 3 5)
+    let sSelf := (Memory.spec 0).clientState sPop (popUnindexedSlotProg smallParams 0 3 3)
     r₂ = ⟨1, 0, 0, 0, 0⟩ ∧
       r₄ = ⟨2, 0, 0, 0, 0⟩ ∧
       (Memory.spec 0).clientResult s₂ (querySlotProg smallParams 0 3 0) = some 0 ∧
@@ -138,10 +136,13 @@ theorem test_sequential_caller_specs :
       (Memory.spec 0).clientResult s₄ (querySlotProg smallParams 0 3 7) = some 9 ∧
       (Memory.spec 0).clientResult s₄ (querySlotProg smallParams 0 3 8) = none ∧
       (Memory.spec 0).clientResult s₄ (querySlotProg smallParams 0 5 0) = some 0 ∧
-      (Memory.spec 0).clientResult s₅ (querySlotProg smallParams 0 3 0) = some 0 ∧
-      (Memory.spec 0).clientResult s₅ (querySlotProg smallParams 0 5 0) = none ∧
-      (Memory.spec 0).clientResult s₆ (querySlotProg smallParams 0 3 0) = none := by
-  intro mInit s₀ s₁ r₂ s₂ r₄ s₄ s₅ s₆
+      (Memory.spec 0).clientResult s₅ (querySlotProg smallParams 0 3 7) = none ∧
+      (Memory.spec 0).clientResult s₅ (querySlotProg smallParams 0 5 0) = some 0 ∧
+      popped = ((7, 9), 1) ∧
+      (Memory.spec 0).clientResult sPop (querySlotProg smallParams 0 3 0) = some 0 ∧
+      (Memory.spec 0).clientResult sPop (querySlotProg smallParams 0 5 0) = none ∧
+      (Memory.spec 0).clientResult sSelf (querySlotProg smallParams 0 3 0) = none := by
+  intro mInit s₀ s₁ r₂ s₂ r₄ s₄ s₅ popped sPop sSelf
   have shw : 0 < smallParams.w := by decide
   have shc : 1 ≤ smallParams.cMeta := by decide
   have htot_le : totalSpace smallParams ≤ 100 := by decide
@@ -156,14 +157,15 @@ theorem test_sequential_caller_specs :
   obtain ⟨hbase, _, hq1, hv1, ho1, hm1⟩ := allocKickTableProg_spec smallParams shw s₀
   have hbase0 : (Memory.spec 0).clientResult s₀ (allocKickTableProg smallParams) = 0 := hbase
   rw [hbase0] at hq1 hv1 ho1 hm1
-  -- Unroll 2-step kickLoopProg on s₁: step 0 places (0, 0, 1) at vacant slot 3; step 1 is inactive
+  have hkl : smallParams.kickLimit = 2 := rfl
   have hloop1_res : r₂ =
       (Memory.spec 0).clientResult
         ((Memory.spec 0).clientState s₁ (kickStepProg smallParams 0 100 ⟨0, 0, 0, 1, 1⟩))
         (kickStepProg smallParams 0 100
           ((Memory.spec 0).clientResult s₁ (kickStepProg smallParams 0 100 ⟨0, 0, 0, 1, 1⟩))) := by
-    change (Memory.spec 0).clientResult s₁ (kickLoopProg _ _ _ _ _ _ _) = _
-    unfold kickLoopProg kickLoopIterGenProg iterate
+    change (Memory.spec 0).clientResult s₁ (kickLoopProg _ _ _ _ _ _) = _
+    unfold kickLoopProg kickLoopIterGenProg
+    rw [hkl]; unfold iterate
     rw [StateTransitionSpec.clientResult_bind]
     unfold iterate
     rw [StateTransitionSpec.clientResult_bind]
@@ -173,8 +175,9 @@ theorem test_sequential_caller_specs :
         ((Memory.spec 0).clientState s₁ (kickStepProg smallParams 0 100 ⟨0, 0, 0, 1, 1⟩))
         (kickStepProg smallParams 0 100
           ((Memory.spec 0).clientResult s₁ (kickStepProg smallParams 0 100 ⟨0, 0, 0, 1, 1⟩))) := by
-    change (Memory.spec 0).clientState s₁ (kickLoopProg _ _ _ _ _ _ _) = _
-    unfold kickLoopProg kickLoopIterGenProg iterate
+    change (Memory.spec 0).clientState s₁ (kickLoopProg _ _ _ _ _ _) = _
+    unfold kickLoopProg kickLoopIterGenProg
+    rw [hkl]; unfold iterate
     rw [StateTransitionSpec.clientState_bind]
     unfold iterate
     rw [StateTransitionSpec.clientState_bind]
@@ -194,24 +197,25 @@ theorem test_sequential_caller_specs :
   have hs2_eq : s₂ =
       (Memory.spec 0).clientState s₁ (kickStepProg smallParams 0 100 ⟨0, 0, 0, 1, 1⟩) := by
     rw [hloop1_st, hr1a]; exact hinact.2
-  rw [ ← hs2_eq] at hout1a hq2 hv2 hm2 ho2
+  rw [← hs2_eq] at hout1a hq2 hv2 hm2 ho2
   have hs2_100 : s₂.mem (100 + 0) = 3 := (hout1a 100 (by omega)).trans hs1_100
   have hs2_101 : s₂.mem 101 = 5 := (hout1a 101 (by omega)).trans hs1_101
-  -- Unroll 2-step kickLoopProg on s₂: step 0 displaces (0, 0, 1) from slot 3; step 1 lands at 5
   set s₃ := (Memory.spec 0).clientState s₂ (kickStepProg smallParams 0 100 ⟨0, 7, 9, 1, 1⟩)
   set st₃ := (Memory.spec 0).clientResult s₂ (kickStepProg smallParams 0 100 ⟨0, 7, 9, 1, 1⟩)
   have hloop2_res : r₄ =
       (Memory.spec 0).clientResult s₃ (kickStepProg smallParams 0 100 st₃) := by
-    change (Memory.spec 0).clientResult s₂ (kickLoopProg _ _ _ _ _ _ _) = _
-    unfold kickLoopProg kickLoopIterGenProg iterate
+    change (Memory.spec 0).clientResult s₂ (kickLoopProg _ _ _ _ _ _) = _
+    unfold kickLoopProg kickLoopIterGenProg
+    rw [hkl]; unfold iterate
     rw [StateTransitionSpec.clientResult_bind]
     unfold iterate
     rw [StateTransitionSpec.clientResult_bind]
     rfl
   have hloop2_st : s₄ =
       (Memory.spec 0).clientState s₃ (kickStepProg smallParams 0 100 st₃) := by
-    change (Memory.spec 0).clientState s₂ (kickLoopProg _ _ _ _ _ _ _) = _
-    unfold kickLoopProg kickLoopIterGenProg iterate
+    change (Memory.spec 0).clientState s₂ (kickLoopProg _ _ _ _ _ _) = _
+    unfold kickLoopProg kickLoopIterGenProg
+    rw [hkl]; unfold iterate
     rw [StateTransitionSpec.clientState_bind]
     unfold iterate
     rw [StateTransitionSpec.clientState_bind]
@@ -237,26 +241,32 @@ theorem test_sequential_caller_specs :
   dsimp only at hs4_spec
   rw [hs3_101, hst3_eq] at hs4_spec
   dsimp only at hs4_spec
-  obtain ⟨hr4a, _, _, hq4, hv4, _, ho4⟩ := hs4_spec
+  obtain ⟨hr4a, _, _, hq4, hv4, hm4, ho4⟩ := hs4_spec
   rw [hst3_eq] at hloop2_res hloop2_st
   have hr4_eq : r₄ = ⟨2, 0, 0, 0, 0⟩ := by rw [hloop2_res]; exact hr4a
-  rw [← hloop2_st] at hq4 hv4 ho4
+  rw [← hloop2_st] at hq4 hv4 hm4 ho4
   obtain ⟨_, _, hq5, hv5, _, ho5⟩ :=
-    deleteSlotProg_spec smallParams shw shc (base := 0) (by decide : 3 < smallParams.nMax)
+    clearSlotProg_spec smallParams shw shc (base := 0) (by decide : 3 < smallParams.nMax) s₄
+  obtain ⟨hpop_res, _, _, hqP, hvP, _, hoP⟩ :=
+    popUnindexedSlotProg_spec smallParams shw shc (base := 0) (by decide : 3 < smallParams.nMax)
       (by decide : 5 < smallParams.nMax) s₄
-  obtain ⟨_, _, hq6, hv6, _, ho6⟩ :=
-    deleteSlotProg_spec smallParams shw shc (base := 0) (by decide : 3 < smallParams.nMax)
-      (by decide : 3 < smallParams.nMax) s₅
-  refine ⟨hr2_eq, hr4_eq, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+  obtain ⟨_, _, _, _, _, _, hoS⟩ :=
+    popUnindexedSlotProg_spec smallParams shw shc (base := 0) (by decide : 3 < smallParams.nMax)
+      (by decide : 3 < smallParams.nMax) sPop
+  refine ⟨hr2_eq, hr4_eq, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
   · rw [(querySlotProg_spec smallParams (by decide) s₂).2, ho2, hq2, hv2]; decide
   · rw [(querySlotProg_spec smallParams (by decide) s₂).2, ho2, ho1]; decide
   · rw [(querySlotProg_spec smallParams (by decide) s₄).2, ho4, ho3, ho2, hq4, hq3, hv4, hv3]
     decide
   · rw [(querySlotProg_spec smallParams (by decide) s₄).2, ho4, ho3, ho2, hq4, hq3]; decide
   · rw [(querySlotProg_spec smallParams (by decide) s₄).2, ho4, hq4, hv4]; decide
-  · rw [(querySlotProg_spec smallParams (by decide) s₅).2, ho5, hq5, hv5, ho4, hq4, hv4]; decide
   · rw [(querySlotProg_spec smallParams (by decide) s₅).2, ho5]; decide
-  · rw [(querySlotProg_spec smallParams (by decide) s₆).2, ho6]; decide
+  · rw [(querySlotProg_spec smallParams (by decide) s₅).2, ho5, ho4, hq5, hq4, hv5, hv4]; decide
+  · change (Memory.spec 0).clientResult s₄ _ = _
+    rw [hpop_res, hq4, hq3, hv4, hv3, hm4, hm3]; decide
+  · rw [(querySlotProg_spec smallParams (by decide) sPop).2, hoP, hqP, hvP, ho4, hq4, hv4]; decide
+  · rw [(querySlotProg_spec smallParams (by decide) sPop).2, hoP]; decide
+  · rw [(querySlotProg_spec smallParams (by decide) sSelf).2, hoS]; decide
 
 /-! ### 4. Width-Freedom (`¬ReadsWidth`) and Non-Vacuous Native Execution Tests -/
 
@@ -321,10 +331,16 @@ theorem test_not_readsWidth_kickLoop :
   obtain ⟨r, _, _, _, _, c, hnw, _⟩ := exists_emitted_not_readsWidth realizes_kickLoopGen
   exact ⟨r, c, hnw⟩
 
-/-- Emitted `Code` for `deleteSlotGenProg` satisfies `¬ReadsWidth`. -/
-theorem test_not_readsWidth_delete :
+/-- Emitted `Code` for `clearSlotGenProg` satisfies `¬ReadsWidth`. -/
+theorem test_not_readsWidth_clearSlot :
     ∃ (r : ℕ) (c : Code .exact r), ¬c.ReadsWidth := by
-  obtain ⟨r, _, _, _, _, c, hnw, _⟩ := exists_emitted_not_readsWidth realizes_deleteSlotGen
+  obtain ⟨r, _, _, _, _, c, hnw, _⟩ := exists_emitted_not_readsWidth realizes_clearSlotGen
+  exact ⟨r, c, hnw⟩
+
+/-- Emitted `Code` for `popUnindexedSlotGenProg` satisfies `¬ReadsWidth`. -/
+theorem test_not_readsWidth_popUnindexedSlot :
+    ∃ (r : ℕ) (c : Code .exact r), ¬c.ReadsWidth := by
+  obtain ⟨r, _, _, _, _, c, hnw, _⟩ := exists_emitted_not_readsWidth realizes_popUnindexedSlotGen
   exact ⟨r, c, hnw⟩
 
 /-- Non-vacuous native execution and `.halt`-rejection test for `realizes_allocKickTableGen`:
