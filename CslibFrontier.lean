@@ -4965,6 +4965,7 @@ public import CslibFrontier.DataStructure.Dictionary.WordRAM.SuccinctSlabPool
 public import CslibFrontier.DataStructure.Dictionary.WordRAM.SuccinctSlotInv
 public import CslibFrontier.DataStructure.Dictionary.WordRAM.SuccinctTailOps
 public import CslibFrontier.DataStructure.Dictionary.WordRAM.SuccinctValidHistory
+public import CslibFrontier.DataStructure.Dictionary.WordRAM.SuccinctWhp
 public import CslibFrontier.DataStructure.Dictionary.WordRAM.SuccinctWhpBTreeProg
 public import CslibFrontier.DataStructure.Dictionary.WordRAM.SuccinctWhpBufferTrieProg
 public import CslibFrontier.DataStructure.Dictionary.WordRAM.SuccinctWhpHashProg
