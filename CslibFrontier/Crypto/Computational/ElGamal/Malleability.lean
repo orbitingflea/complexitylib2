@@ -10,13 +10,11 @@ module
 public import CslibFrontier.Crypto.Computational.ElGamal.ProbComp
 public import CslibFrontier.Crypto.Computational.Encryption.CCA
 public import CslibFrontier.Crypto.Computational.Encryption.CCA.Interleaved
+public import CslibFrontier.Crypto.Computational.Encryption.CCA.Malleability
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Encodings.Nat.WordsRoundTrip
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Encodings.Pair.Projections
-import CslibFrontier.Computability.Probabilistic.Oracle.Composition
-import CslibFrontier.Crypto.Negligible.Basic
-import CslibFrontier.Languages.Probabilistic.Oracle.Norm
 import CslibFrontier.Tactic.PolyTime
-import CslibFrontier.Tactic.PPT
+import CslibFrontier.Tactic.SuppCases
 
 /-!
 # Multiplicative ElGamal is not CCA secure
@@ -35,10 +33,12 @@ proves that unconditionally, by an explicit strict oracle-PPT adversary with 1CC
 
 Multiplicative ElGamal ([BonehShoup2023], Exercise 11.5, p. 459) encrypts `m` as
 `(v, e) = (β • g, β • u + m)` (written additively) and decrypts `(v, e)` to `e - α • v`. The
-adversary `elGamalMaulAdversary` submits two challenge messages encoding distinct group elements
-`x₀ ≠ x₁`, maps the challenge ciphertext `(v, e)` to `(v, e + g)` (`elGamalMaulCiphertext`), which
-differs from it because `g ≠ 0`, asks the Phase 2 decryption oracle for it, receives `x_b + g`, and
-outputs whether this is `x₁ + g`.
+adversary `elGamalMaulAdversary` is the generic malleability adversary `Encryption.maulAdversary`
+of `CslibFrontier/Crypto/Computational/Encryption/CCA/Malleability.lean`, instantiated as follows.
+It submits two challenge messages encoding distinct group elements `x₀ ≠ x₁`, maps the challenge
+ciphertext `(v, e)` to `(v, e + g)` (`elGamalMaulCiphertext`), whose decryption differs because
+`g ≠ 0`, asks the Phase 2 decryption oracle for it, receives `x_b + g`, and outputs whether this is
+`x₁ + g`. The proofs supply only these malleability facts to the generic lemmas.
 
 ## Mapping to the source
 
@@ -65,7 +65,8 @@ outputs whether this is `x₁ + g`.
   `Option`-valued decryptor for the CCA games.
 * `Cslib.Crypto.PrimeOrderGroupFamily.elGamalMaulCiphertext`: the word-level ciphertext map
   `(v, e) ↦ (v, e + g)`.
-* `Cslib.Crypto.PrimeOrderGroupFamily.elGamalMaulAdversary`: the one-query 1CCA adversary.
+* `Cslib.Crypto.PrimeOrderGroupFamily.elGamalMaulAdversary`: the one-query 1CCA adversary, an
+  instance of `Cslib.Crypto.Encryption.maulAdversary`.
 
 ## Main results
 
@@ -161,19 +162,51 @@ theorem computableInPolyTime_elGamalMaulCiphertext :
   fun_prop
 
 /-- **The 1CCA malleability adversary against multiplicative ElGamal** ([BonehShoup2023],
-Exercise 12.1, p. 512). Phase 1 makes no query and chooses `(msg₀ n, msg₁ n)`. Phase 2 maps the
-challenge ciphertext `ct` to `elGamalMaulCiphertext (d n) ct`, queries the decryption oracle on it
-once, and outputs whether the reply is the encoded decryption `some (encodeMsg (d n) (msg₁ n) + g)`
-that world `1` produces. It reads only a prefix one bit longer than that target word. -/
+Exercise 12.1, p. 512): the generic `Encryption.maulAdversary` with messages `(msg₀ n, msg₁ n)`,
+transformation `elGamalMaulCiphertext (d n)` and target the encoded decryption
+`some (encodeMsg (d n) (msg₁ n) + g)` that world `1` produces. Phase 2 queries the decryption oracle
+once, on the mauled challenge, and outputs whether the reply is that target. -/
 def elGamalMaulAdversary {Msg : Type} (encodeMsg : F.Desc → Msg → List Bool)
-    (d : ℕ → F.Desc) (msg₀ msg₁ : ℕ → Msg) : CCA2AdversaryOf Msg where
-  choose n _ := pure ((msg₀ n, msg₁ n), [])
-  guess n _ ct := do
-    let target := encOption encBits
-      (some (F.add (d n, encodeMsg (d n) (msg₁ n), F.encode (d n) (F.generator (d n)))))
-    let reply ← List.take (target.length + 1) <$>
-      ProbOracleComp.query ((), F.elGamalMaulCiphertext (d n) ct)
-    return reply == target
+    (d : ℕ → F.Desc) (msg₀ msg₁ : ℕ → Msg) : CCA2AdversaryOf Msg :=
+  maulAdversary (fun n _ => msg₀ n) (fun n _ => msg₁ n)
+    (fun n _ ct => F.elGamalMaulCiphertext (d n) ct)
+    (fun n _ => encOption encBits
+      (some (F.add (d n, encodeMsg (d n) (msg₁ n), F.encode (d n) (F.generator (d n))))))
+
+/-- The target word of `elGamalMaulAdversary` is computable in polynomial time. -/
+private theorem computableInPolyTime_elGamalMaulTarget {Msg : Type} {encMsg : Msg ↪ List Bool}
+    {encodeMsg : F.Desc → Msg → List Bool} {d : ℕ → F.Desc} {msg₁ : ℕ → Msg}
+    (hencMsg : ComputableInPolyTime (fun p : F.Desc × Msg => encodeMsg p.1 p.2)
+      (encPair F.encDesc encMsg) encBits)
+    (hd : ComputableInPolyTime d encUnary F.encDesc)
+    (hmsg₁ : ComputableInPolyTime msg₁ encUnary encMsg) :
+    ComputableInPolyTime
+      (fun p : ℕ × List Bool => encOption encBits (some (F.add (d p.1, encodeMsg (d p.1) (msg₁ p.1),
+        F.encode (d p.1) (F.generator (d p.1))))))
+      (encPair encUnary encBits) encBits := by
+  have hn := ComputableInPolyTime.fst encUnary encBits
+  have hdn := hd.comp hn
+  have hw : ComputableInPolyTime
+      (fun p : ℕ × List Bool =>
+        F.add (d p.1, encodeMsg (d p.1) (msg₁ p.1), F.encode (d p.1) (F.generator (d p.1))))
+      (encPair encUnary encBits) encBits :=
+    F.computableInPolyTime_add.comp (hdn.prod ((hencMsg.comp (hdn.prod (hmsg₁.comp hn))).prod
+      (F.computableInPolyTime_generator.comp hdn)))
+  fun_prop
+
+/-- The transformation of `elGamalMaulAdversary` is computable in polynomial time. -/
+private theorem computableInPolyTime_elGamalMaul {d : ℕ → F.Desc}
+    (hd : ComputableInPolyTime d encUnary F.encDesc) :
+    ComputableInPolyTime
+      (fun p : ℕ × List Bool × List Bool => F.elGamalMaulCiphertext (d p.1) p.2.2)
+      encGuessInput encBits := by
+  have hn : ComputableInPolyTime (fun p : ℕ × List Bool × List Bool => p.1) encGuessInput
+      encUnary := by
+    fun_prop
+  have hct : ComputableInPolyTime (fun p : ℕ × List Bool × List Bool => p.2.2) encGuessInput
+      encBits := by
+    fun_prop
+  exact F.computableInPolyTime_elGamalMaulCiphertext.comp ((hd.comp hn).prod hct)
 
 /-- `elGamalMaulAdversary` is strict oracle PPT whenever the group family, the message encoder
 and both message choices are computable in polynomial time. -/
@@ -184,76 +217,58 @@ theorem isPPT_elGamalMaulAdversary {Msg : Type} {encMsg : Msg ↪ List Bool}
     (hd : ComputableInPolyTime d encUnary F.encDesc)
     (hmsg₀ : ComputableInPolyTime msg₀ encUnary encMsg)
     (hmsg₁ : ComputableInPolyTime msg₁ encUnary encMsg) :
-    (F.elGamalMaulAdversary encodeMsg d msg₀ msg₁).IsPPT encMsg where
-  choose := by
-    have hn := ComputableInPolyTime.fst encUnary encBits
-    exact ((((hmsg₀.comp hn).prod (hmsg₁.comp hn)).prod
-      (ComputableInPolyTime.const ([] : List Bool))).isOraclePPTOn).isOraclePPT
-  guess := by
-    let E := encGuessInput
-    have hn : ComputableInPolyTime (fun p : ℕ × List Bool × List Bool => p.1) E encUnary := by
-      fun_prop
-    have hct : ComputableInPolyTime (fun p : ℕ × List Bool × List Bool => p.2.2) E encBits := by
-      fun_prop
-    have hdn := hd.comp hn
-    have hw : ComputableInPolyTime
-        (fun p : ℕ × List Bool × List Bool =>
-          F.add (d p.1, encodeMsg (d p.1) (msg₁ p.1), F.encode (d p.1) (F.generator (d p.1)))) E
-        encBits :=
-      F.computableInPolyTime_add.comp (hdn.prod ((hencMsg.comp (hdn.prod (hmsg₁.comp hn))).prod
-        (F.computableInPolyTime_generator.comp hdn)))
-    have htarget : ComputableInPolyTime
-        (fun p : ℕ × List Bool × List Bool =>
-          encOption encBits (some (F.add (d p.1, encodeMsg (d p.1) (msg₁ p.1),
-            F.encode (d p.1) (F.generator (d p.1)))))) E encBits := by
-      fun_prop
-    have hreq : ComputableInPolyTime
-        (fun p : ℕ × List Bool × List Bool => F.elGamalMaulCiphertext (d p.1) p.2.2) E encBits :=
-      F.computableInPolyTime_elGamalMaulCiphertext.comp (hdn.prod hct)
-    have hout : ComputableInPolyTime
-        (fun p : (ℕ × List Bool × List Bool) × List Bool =>
-          p.2 == encOption encBits (some (F.add (d p.1.1, encodeMsg (d p.1.1) (msg₁ p.1.1),
-            F.encode (d p.1.1) (F.generator (d p.1.1)))))) (encPair E encBits) encBool :=
-      (ComputableInPolyTime.snd E encBits).beq (htarget.comp (ComputableInPolyTime.fst E encBits))
-    exact (IsOraclePPTOn.query_take' () hreq (by fun_prop)).bind_with hout.isOraclePPTOn
+    (F.elGamalMaulAdversary encodeMsg d msg₀ msg₁).IsPPT encMsg :=
+  isPPT_maulAdversary (hmsg₀.comp (.fst encUnary encBits)) (hmsg₁.comp (.fst encUnary encBits))
+    (F.computableInPolyTime_elGamalMaul hd)
+    (F.computableInPolyTime_elGamalMaulTarget hencMsg hd hmsg₁)
 
-/-- Reading a prefix one bit longer than `l` decides equality with `l`. -/
-private theorem take_length_succ_beq (l r : List Bool) :
-    (List.take (l.length + 1) r == l) = decide (r = l) := by
-  by_cases h : r = l
-  · subst h
-    simp only [List.take_of_length_le (Nat.le_succ _), beq_self_eq_true, decide_true]
-  · simp only [h, decide_false, beq_eq_false_iff_ne, ne_eq]
-    intro htake
-    have hlen := congrArg List.length htake
-    rw [List.length_take] at hlen
-    exact h (by rwa [List.take_of_length_le (by omega)] at htake)
-
-/-- In world `bit`, if the selected message encodes `xb` and `msg₁ n` encodes `x₁`, the game
-outputs `decide (xb = x₁)` with probability `1`. -/
-private theorem eval_cca2GameOn_elGamalMaulAdversary_aux {Msg : Type}
-    {valid : ℕ → List Bool → Msg → Msg → Bool} {encodeMsg : F.Desc → Msg → List Bool}
-    {d : ℕ → F.Desc} {msg₀ msg₁ : ℕ → Msg} {bit : Bool} {n : ℕ}
+/-- Every honest public key of `elGamalKeyGenProb d n` frames the group description `d n`. -/
+private theorem valid_of_mem_support_elGamalKeyGenProb {Msg : Type}
+    {valid : ℕ → List Bool → Msg → Msg → Bool} {d : ℕ → F.Desc} {msg₀ msg₁ : ℕ → Msg} {n : ℕ}
     (hvalid : ∀ u, valid n (encPair F.encDesc encBits (d n, u)) (msg₀ n) (msg₁ n) = true)
-    {xb x₁ : F.Carrier (d n)}
-    (hxb : encodeMsg (d n) (if bit then msg₁ n else msg₀ n) = F.encode (d n) xb)
-    (hx₁ : encodeMsg (d n) (msg₁ n) = F.encode (d n) x₁) :
-    ProbComp.eval (cca2GameOn valid encBits (F.elGamalKeyGenProb d)
-      (F.elGamalEncryptProb encodeMsg d) (F.elGamalDecryptOpt d)
-      (F.elGamalMaulAdversary encodeMsg d msg₀ msg₁) bit n) = PMF.pure (decide (xb = x₁)) := by
-  have hmaul (a b : ℕ) :
-      let ct := encPair encBits encBits
-        (F.encodeElGamalEncrypt (d n, F.encodeElGamalPublicKey (d n, a), F.encode (d n) xb, b))
-      (F.elGamalMaulCiphertext (d n) ct == ct) = false := by
-    rw [beq_eq_false_iff_ne, encodeElGamalPublicKey_eq_encode, encodeElGamalEncrypt_encode]
-    exact F.elGamalMaulCiphertext_ne (d n) _ _
-  simp only [cca2GameOn, elGamalMaulAdversary, elGamalKeyGenProb, elGamalEncryptProb,
-    ChoiceOut.msg₀, ChoiceOut.msg₁, ChoiceOut.msgs, hvalid, ↓reduceIte,
-    ProbComp.eval_bind, ProbComp.eval_pure, runWith_norm, pmf_norm, hxb, hx₁,
-    dropFrame_encPair_encBits, cca2Phase2Oracle, F.add_encode, hmaul, Bool.false_eq_true,
-    elGamalDecryptOpt, elGamalDecryptDet_elGamalMaulCiphertext, take_length_succ_beq,
-    EmbeddingLike.apply_eq_iff_eq, Option.some.injEq, (F.encode_injective (d n)).eq_iff,
-    add_left_inj, PMF.bind_const]
+    {keys : List Bool × List Bool}
+    (hkeys : keys ∈ (ProbComp.eval (F.elGamalKeyGenProb d n)).support) :
+    valid n keys.1 (msg₀ n) (msg₁ n) = true := by
+  supp_cases hkeys [elGamalKeyGenProb] with ⟨a, _, rfl⟩
+  exact hvalid _
+
+/-- The malleability conditions of `Encryption.eval_cca2GameOn_maulAdversary` for
+`elGamalMaulAdversary`: on every honest key pair and challenge ciphertext of world `bit`, mauling
+changes the decryption from `x_b` to `x_b + g`, which equals the target `x₁ + g` exactly when
+`bit = true`. -/
+private theorem elGamalMaul_conditions {Msg : Type} {encodeMsg : F.Desc → Msg → List Bool}
+    {d : ℕ → F.Desc} {msg₀ msg₁ : ℕ → Msg} {n : ℕ}
+    {x₀ x₁ : F.Carrier (d n)} (hx₀ : encodeMsg (d n) (msg₀ n) = F.encode (d n) x₀)
+    (hx₁ : encodeMsg (d n) (msg₁ n) = F.encode (d n) x₁) (hne : x₀ ≠ x₁) (bit : Bool)
+    {keys : List Bool × List Bool}
+    (hkeys : keys ∈ (ProbComp.eval (F.elGamalKeyGenProb d n)).support)
+    {ct : List Bool} (hct : ct ∈ (ProbComp.eval
+      (F.elGamalEncryptProb encodeMsg d n keys.1 (if bit then msg₁ n else msg₀ n))).support) :
+    F.elGamalDecryptOpt d n keys.2 (F.elGamalMaulCiphertext (d n) ct) ≠
+        F.elGamalDecryptOpt d n keys.2 ct ∧
+      (encOption encBits (F.elGamalDecryptOpt d n keys.2 (F.elGamalMaulCiphertext (d n) ct)) =
+          encOption encBits (some (F.add (d n, encodeMsg (d n) (msg₁ n),
+            F.encode (d n) (F.generator (d n))))) ↔ bit = true) := by
+  obtain ⟨xb, hxb, hiff⟩ : ∃ xb, encodeMsg (d n) (if bit then msg₁ n else msg₀ n) =
+      F.encode (d n) xb ∧ (xb = x₁ ↔ bit = true) := by
+    cases bit
+    · exact ⟨x₀, hx₀, by simpa only [Bool.false_eq_true, iff_false] using hne⟩
+    · exact ⟨x₁, hx₁, iff_of_true rfl rfl⟩
+  have hct' : ct ∈ (ProbComp.eval
+      (F.elGamalEncryptProb (fun _ x => x) d n keys.1 (F.encode (d n) xb))).support := by
+    rw [← hxb]
+    exact hct
+  have hdec := F.elGamalDecryptDet_elGamalEncryptProb d n hkeys xb hct'
+  have hmauldec : F.elGamalDecryptDet d n keys.2 (F.elGamalMaulCiphertext (d n) ct) =
+      F.encode (d n) (xb + F.generator (d n)) := by
+    supp_cases hkeys [elGamalKeyGenProb] with ⟨a, _, rfl⟩
+    supp_cases hct' [elGamalEncryptProb] with ⟨b, _, rfl⟩
+    simp only [dropFrame_encPair_encBits]
+    exact F.elGamalDecryptDet_elGamalMaulCiphertext d n a b xb
+  simp only [elGamalDecryptOpt, hmauldec, hdec, hx₁, F.add_encode, ne_eq, Option.some.injEq,
+    EmbeddingLike.apply_eq_iff_eq, (F.encode_injective (d n)).eq_iff, add_left_inj, hiff,
+    and_true]
+  exact fun h => F.generator_ne_zero (d n) (add_eq_left.mp h)
 
 /-- **World `bit` of the 1CCA game against multiplicative ElGamal outputs `bit`**
 ([BonehShoup2023], Exercise 12.1, p. 512): if both challenge messages are admissible under every
@@ -267,10 +282,10 @@ theorem eval_cca2GameOn_elGamalMaulAdversary {Msg : Type}
     (hx₁ : encodeMsg (d n) (msg₁ n) = F.encode (d n) x₁) (hne : x₀ ≠ x₁) (bit : Bool) :
     ProbComp.eval (cca2GameOn valid encBits (F.elGamalKeyGenProb d)
       (F.elGamalEncryptProb encodeMsg d) (F.elGamalDecryptOpt d)
-      (F.elGamalMaulAdversary encodeMsg d msg₀ msg₁) bit n) = PMF.pure bit := by
-  cases bit
-  · rw [F.eval_cca2GameOn_elGamalMaulAdversary_aux hvalid hx₀ hx₁, decide_eq_false hne]
-  · rw [F.eval_cca2GameOn_elGamalMaulAdversary_aux hvalid hx₁ hx₁, decide_eq_true rfl]
+      (F.elGamalMaulAdversary encodeMsg d msg₀ msg₁) bit n) = PMF.pure bit :=
+  eval_cca2GameOn_maulAdversary
+    (fun _ hkeys => F.valid_of_mem_support_elGamalKeyGenProb hvalid hkeys)
+    fun _ hkeys _ hct => F.elGamalMaul_conditions hx₀ hx₁ hne bit hkeys hct
 
 /-- **`elGamalMaulAdversary` has 1CCA advantage `1`** against multiplicative ElGamal
 ([BonehShoup2023], Exercise 12.1, p. 512), under the hypotheses of
@@ -287,10 +302,10 @@ theorem advantage_cca2GameOn_elGamalMaulAdversary {Msg : Type}
         (F.elGamalMaulAdversary encodeMsg d msg₀ msg₁) false n))
       (ProbComp.eval (cca2GameOn valid encBits (F.elGamalKeyGenProb d)
         (F.elGamalEncryptProb encodeMsg d) (F.elGamalDecryptOpt d)
-        (F.elGamalMaulAdversary encodeMsg d msg₀ msg₁) true n)) = 1 := by
-  rw [F.eval_cca2GameOn_elGamalMaulAdversary hvalid hx₀ hx₁ hne,
-    F.eval_cca2GameOn_elGamalMaulAdversary hvalid hx₀ hx₁ hne, Game.advantage_pure_false_left]
-  simp [Game.succProbability]
+        (F.elGamalMaulAdversary encodeMsg d msg₀ msg₁) true n)) = 1 :=
+  advantage_cca2GameOn_maulAdversary
+    (fun _ hkeys => F.valid_of_mem_support_elGamalKeyGenProb hvalid hkeys)
+    fun bit _ hkeys _ hct => F.elGamalMaul_conditions hx₀ hx₁ hne bit hkeys hct
 
 /-- **Multiplicative ElGamal is not 1CCA secure, general form** ([BonehShoup2023], Exercise 12.1,
 p. 512): for a polynomial-time group family `d` and message encoder `encodeMsg`, if polynomial-time
@@ -309,20 +324,18 @@ theorem not_indcca2On_elGamalEncryptProb {Msg : Type} {encMsg : Msg ↪ List Boo
     (hdistinct : ∀ n, ∃ x₀ x₁ : F.Carrier (d n), encodeMsg (d n) (msg₀ n) = F.encode (d n) x₀ ∧
       encodeMsg (d n) (msg₁ n) = F.encode (d n) x₁ ∧ x₀ ≠ x₁) :
     ¬ INDCCA2On valid encMsg encBits (F.elGamalKeyGenProb d) (F.elGamalEncryptProb encodeMsg d)
-      (F.elGamalDecryptOpt d) := by
-  intro hcca
-  have hneg := hcca _ (F.isPPT_elGamalMaulAdversary hencMsg hd hmsg₀ hmsg₁)
-  have hone : (fun n => Game.advantage
-      (ProbComp.eval (cca2GameOn valid encBits (F.elGamalKeyGenProb d)
-        (F.elGamalEncryptProb encodeMsg d) (F.elGamalDecryptOpt d)
-        (F.elGamalMaulAdversary encodeMsg d msg₀ msg₁) false n))
-      (ProbComp.eval (cca2GameOn valid encBits (F.elGamalKeyGenProb d)
-        (F.elGamalEncryptProb encodeMsg d) (F.elGamalDecryptOpt d)
-        (F.elGamalMaulAdversary encodeMsg d msg₀ msg₁) true n))) = fun _ => 1 := by
-    funext n
-    obtain ⟨x₀, x₁, hx₀, hx₁, hne⟩ := hdistinct n
-    exact F.advantage_cca2GameOn_elGamalMaulAdversary (hvalid n) hx₀ hx₁ hne
-  exact not_negligible_const one_ne_zero (hone ▸ hneg)
+      (F.elGamalDecryptOpt d) :=
+  not_indcca2On_of_maulAdversary (msg₀ := fun n _ => msg₀ n) (msg₁ := fun n _ => msg₁ n)
+    (maul := fun n _ ct => F.elGamalMaulCiphertext (d n) ct)
+    (target := fun n _ => encOption encBits
+      (some (F.add (d n, encodeMsg (d n) (msg₁ n), F.encode (d n) (F.generator (d n))))))
+    (hmsg₀.comp (.fst encUnary encBits)) (hmsg₁.comp (.fst encUnary encBits))
+    (F.computableInPolyTime_elGamalMaul hd)
+    (F.computableInPolyTime_elGamalMaulTarget hencMsg hd hmsg₁)
+    (fun n _ hkeys => F.valid_of_mem_support_elGamalKeyGenProb (hvalid n) hkeys)
+    fun n bit _ hkeys _ hct => by
+      obtain ⟨_, _, hx₀, hx₁, hne⟩ := hdistinct n
+      exact F.elGamalMaul_conditions hx₀ hx₁ hne bit hkeys hct
 
 /-- **Bit ElGamal is not 1CCA secure** ([BonehShoup2023], Exercise 12.1, p. 512, for the bit
 messages `0` and `g` of `encodeBit`): for every prime-order group family `F` and polynomial-time

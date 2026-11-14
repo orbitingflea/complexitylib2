@@ -229,43 +229,19 @@ theorem equiv_simpBinary (Γ : Fin n → SqlType) (op : BinOp) (e₁ e₂ : Expr
       Except.ok_bind]
     exact Except.toOption_eq_some_iff.mp h
   next =>
+    -- Each taken branch applies its guard's law, in the order of `simpBinary`; the last is `rfl`.
     split
-    · split_ifs with h₁ h₂ h₃ h₄
-      · obtain ⟨rfl, h⟩ := h₁
-        exact Equiv.and_true h
-      · obtain ⟨rfl, h⟩ := h₂
-        exact Equiv.true_and h
-      · obtain ⟨rfl, h⟩ := h₃
-        exact Equiv.and_false h
-      · obtain ⟨rfl, h⟩ := h₄
-        exact Equiv.false_and h
-      · rfl
-    · split_ifs with h₁ h₂ h₃ h₄
-      · obtain ⟨rfl, h⟩ := h₁
-        exact Equiv.or_false h
-      · obtain ⟨rfl, h⟩ := h₂
-        exact Equiv.false_or h
-      · obtain ⟨rfl, h⟩ := h₃
-        exact Equiv.or_true h
-      · obtain ⟨rfl, h⟩ := h₄
-        exact Equiv.true_or h
-      · rfl
-    · split_ifs with h₁ h₂
-      · obtain ⟨rfl, h⟩ := h₁
-        exact Equiv.add_zero h
-      · obtain ⟨rfl, h⟩ := h₂
-        exact Equiv.zero_add h
-      · rfl
-    · split_ifs with h₁
-      · obtain ⟨rfl, h⟩ := h₁
-        exact Equiv.sub_zero h
-      · rfl
-    · split_ifs with h₁ h₂
-      · obtain ⟨rfl, h⟩ := h₁
-        exact Equiv.mul_one h
-      · obtain ⟨rfl, h⟩ := h₂
-        exact Equiv.one_mul h
-      · rfl
+    · split_ifs <;> (try obtain ⟨rfl, h⟩ := ‹_ ∧ _›) <;> first
+        | rfl | exact Equiv.and_true h | exact Equiv.true_and h | exact Equiv.and_false h
+        | exact Equiv.false_and h
+    · split_ifs <;> (try obtain ⟨rfl, h⟩ := ‹_ ∧ _›) <;> first
+        | rfl | exact Equiv.or_false h | exact Equiv.false_or h | exact Equiv.or_true h
+        | exact Equiv.true_or h
+    · split_ifs <;> (try obtain ⟨rfl, h⟩ := ‹_ ∧ _›) <;> first
+        | rfl | exact Equiv.add_zero h | exact Equiv.zero_add h
+    · split_ifs <;> (try obtain ⟨rfl, h⟩ := ‹_ ∧ _›) <;> first | rfl | exact Equiv.sub_zero h
+    · split_ifs <;> (try obtain ⟨rfl, h⟩ := ‹_ ∧ _›) <;> first
+        | rfl | exact Equiv.mul_one h | exact Equiv.one_mul h
     · rfl
 
 theorem equiv_simpInList (Γ : Fin n → SqlType) (e : Expr n) (vs : List Datum) :

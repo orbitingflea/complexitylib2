@@ -558,7 +558,7 @@ theorem gapWeightedSetCover_mem_PromiseP_of_approx {A : WeightedSetSystem → Li
       listGetD_binary ⟨[], 0⟩ hlist hidx
     exact computableInPolyTime_weightedSetWeight.comp hset
   have hcost : ComputableInPolyTime costList encWeightedSetSystem encNat :=
-    (ComputableInPolyTime.of_tidy ComputableTidilyInPolyTime.binary_sum).comp hws
+    ComputableInPolyTime.binary_sum.comp hws
   exact gapOpt_mem_PromiseP_of_approx (Valid := WeightedSetSystem.Coverable) hρ0 hρ hcost
     (fun W hW => minWeightedSetCover.opt_le W (A W) hW (happrox W hW).1)
     (fun W hW => (happrox W hW).2) (GapWeightedSetCover r)

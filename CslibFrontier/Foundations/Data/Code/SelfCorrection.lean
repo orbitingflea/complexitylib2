@@ -26,12 +26,22 @@ with fixed directions.
 
 ## Main definitions
 
+* `Cslib.Code.affineLineEquiv`: the affine bijection `v ↦ x + c • v` on a module over `F` for
+  `c ≠ 0`.
 * `Cslib.Code.lagrangeWeight`, `Cslib.Code.lagrangeDecode`: interpolation along a line.
+* `Cslib.Code.nonzeroNodes`: canonical choice of `d + 1` distinct nonzero evaluation nodes in `F`
+  when `d + 2 ≤ Fintype.card F`.
 
 ## Main results
 
+* `Cslib.Code.exists_nonzero_nodes_of_le_card`, `Cslib.Code.nonzeroNodes_ne_zero`: `d + 1` distinct
+  nonzero evaluation nodes exist whenever `d + 2 ≤ Fintype.card F`.
+* `Cslib.Code.lagrangeDecode_eq_of_exists_natDegree_le`: interpolation along a line is exact
+  whenever the line restriction has degree at most `d`.
+* `Cslib.Code.card_lagrangeDecode_ne_le_of_forall_eq`: at most `(d + 1) * Δ(w, p)` directions err
+  over any finite vector space when `p` is reconstructed along lines.
 * `Cslib.Code.lagrangeDecode_eq_of_mem_reedMuller`: interpolation is exact on codewords.
-* `Cslib.Code.card_lagrangeDecode_ne_le`: few directions err.
+* `Cslib.Code.card_lagrangeDecode_ne_le`: few directions err for Reed–Muller codewords.
 
 ## References
 
@@ -45,6 +55,45 @@ namespace Cslib.Code
 open Finset Polynomial
 
 variable {F : Type*} [Field F] [Fintype F] [DecidableEq F] {m d : ℕ}
+
+omit [Fintype F] [DecidableEq F] in
+/-- For a nonzero scalar `c : F` and base point `x : V` in a module over `F`, the affine map
+`v ↦ x + c • v` is a bijection on `V`. -/
+def affineLineEquiv {V : Type*} [AddCommGroup V] [Module F V] (x : V) {c : F} (hc : c ≠ 0) :
+    V ≃ V where
+  toFun v := x + c • v
+  invFun w := c⁻¹ • (w - x)
+  left_inv v := by simp [smul_smul, inv_mul_cancel₀ hc]
+  right_inv w := by simp [smul_smul, mul_inv_cancel₀ hc]
+
+omit [Fintype F] [DecidableEq F] in
+@[simp]
+theorem affineLineEquiv_apply {V : Type*} [AddCommGroup V] [Module F V] (x : V) {c : F}
+    (hc : c ≠ 0) (v : V) : affineLineEquiv x hc v = x + c • v := rfl
+
+omit [DecidableEq F] in
+/-- Whenever `d + 2 ≤ Fintype.card F`, there exist `d + 1` distinct nonzero elements in `F`. -/
+theorem exists_nonzero_nodes_of_le_card (hcard : d + 2 ≤ Fintype.card F) :
+    ∃ ν : Fin (d + 1) ↪ F, ∀ i, ν i ≠ 0 := by
+  classical
+  have hle : d + 1 ≤ #(univ.erase (0 : F)) := by
+    rw [card_erase_of_mem (mem_univ 0), card_univ]
+    omega
+  obtain ⟨s, hs, hscard⟩ := exists_subset_card_eq hle
+  let e : Fin (d + 1) ≃ s := (s.equivFinOfCardEq hscard).symm
+  refine ⟨⟨fun i => (e i).1, fun i j hij => e.injective (Subtype.ext hij)⟩, fun i => ?_⟩
+  exact ne_of_mem_erase (hs (e i).2)
+
+omit [DecidableEq F] in
+/-- Canonical choice of `d + 1` distinct nonzero evaluation nodes in `F` when
+`d + 2 ≤ Fintype.card F`. -/
+noncomputable def nonzeroNodes (hcard : d + 2 ≤ Fintype.card F) : Fin (d + 1) ↪ F :=
+  (exists_nonzero_nodes_of_le_card hcard).choose
+
+omit [DecidableEq F] in
+theorem nonzeroNodes_ne_zero (hcard : d + 2 ≤ Fintype.card F) (i : Fin (d + 1)) :
+    nonzeroNodes hcard i ≠ 0 :=
+  (exists_nonzero_nodes_of_le_card hcard).choose_spec i
 
 /-- The Lagrange weight of the node `ν i` at `0`. -/
 noncomputable def lagrangeWeight (ν : Fin (d + 1) ↪ F) (i : Fin (d + 1)) : F :=
@@ -64,40 +113,60 @@ theorem eval_zero_eq_sum_lagrangeWeight (ν : Fin (d + 1) ↪ F) {P : F[X]}
 
 /-- **Interpolation along a line**: the combination of the values of `w` at the points
 `x + ν i • v` with the Lagrange weights at `0`. -/
-noncomputable def lagrangeDecode (ν : Fin (d + 1) ↪ F) (w : (Fin m → F) → F)
-    (x v : Fin m → F) : F :=
+noncomputable def lagrangeDecode {V : Type*} [AddCommGroup V] [Module F V]
+    (ν : Fin (d + 1) ↪ F) (w : V → F) (x v : V) : F :=
   ∑ i, lagrangeWeight ν i * w (x + ν i • v)
 
 omit [Fintype F] [DecidableEq F] in
-/-- **Interpolation is exact on codewords** of the Reed–Muller code of degree `d`, for every
-direction. -/
-theorem lagrangeDecode_eq_of_mem_reedMuller (ν : Fin (d + 1) ↪ F) {p : (Fin m → F) → F}
-    (hp : p ∈ reedMuller F m d) (x v : Fin m → F) : lagrangeDecode ν p x v = p x := by
-  obtain ⟨P, hP, hPeval⟩ := exists_natDegree_le_eval_eq_of_mem_reedMuller hp x v
+/-- **Interpolation along a line is exact** whenever the restriction of `p` to the line
+`t ↦ p (x + t • v)` agrees with a polynomial of degree at most `d`. -/
+theorem lagrangeDecode_eq_of_exists_natDegree_le {V : Type*} [AddCommGroup V] [Module F V]
+    (ν : Fin (d + 1) ↪ F) {p : V → F} {x v : V}
+    (h : ∃ P : F[X], P.natDegree ≤ d ∧ ∀ t, P.eval t = p (x + t • v)) :
+    lagrangeDecode ν p x v = p x := by
+  obtain ⟨P, hP, hPeval⟩ := h
   have hx : p x = P.eval 0 := by rw [hPeval, zero_smul, add_zero]
   rw [lagrangeDecode, hx, eval_zero_eq_sum_lagrangeWeight ν hP]
   simp only [hPeval]
 
-/-- **Few directions err.** At every point `x`, at most `(d + 1) * Δ(w, p)` directions `v` make
-interpolation along the line through `x` in the direction `v` err, when the nodes are nonzero. -/
-theorem card_lagrangeDecode_ne_le (ν : Fin (d + 1) ↪ F) (hν : ∀ i, ν i ≠ 0)
-    {p : (Fin m → F) → F} (hp : p ∈ reedMuller F m d) (w : (Fin m → F) → F) (x : Fin m → F) :
+omit [Fintype F] in
+/-- **Few directions err along lines.** Over any finite vector space `V` over `F`, if `p` is
+reconstructed along every line through `x`, at most `(d + 1) * Δ(w, p)` directions `v`
+make interpolation along the line through `x` in direction `v` err when the nodes are nonzero. -/
+theorem card_lagrangeDecode_ne_le_of_forall_eq {V : Type*} [AddCommGroup V] [Module F V]
+    [Fintype V] (ν : Fin (d + 1) ↪ F) (hν : ∀ i, ν i ≠ 0)
+    {p : V → F} {x : V} (hp : ∀ v, lagrangeDecode ν p x v = p x) (w : V → F) :
     #{v | lagrangeDecode ν w x v ≠ p x} ≤ (d + 1) * #{y | w y ≠ p y} := by
-  set E : Finset (Fin m → F) := {y | w y ≠ p y}
-  have hsub : ({v | lagrangeDecode ν w x v ≠ p x} : Finset (Fin m → F)) ⊆
+  classical
+  set E : Finset V := {y | w y ≠ p y}
+  have hsub : ({v | lagrangeDecode ν w x v ≠ p x} : Finset V) ⊆
       univ.biUnion fun i => univ.filter fun v => x + ν i • v ∈ E := by
     intro v hv
     rw [mem_filter] at hv
     by_contra hnot
     simp only [mem_biUnion, mem_univ, true_and, mem_filter, not_exists, E, ne_eq,
       not_not] at hnot
-    refine hv.2 ((sum_congr rfl fun i _ => ?_).trans (lagrangeDecode_eq_of_mem_reedMuller ν hp x v))
+    refine hv.2 ((sum_congr rfl fun i _ => ?_).trans (hp v))
     rw [hnot i]
   refine (card_le_card hsub).trans ((card_biUnion_le).trans ?_)
   calc ∑ i, #(univ.filter fun v => x + ν i • v ∈ E) ≤ ∑ _i : Fin (d + 1), #E :=
-        sum_le_sum fun i _ => card_le_card_of_injOn (fun v => x + ν i • v)
+        sum_le_sum fun i _ => card_le_card_of_injOn (affineLineEquiv x (hν i))
           (fun v hv => by simpa using hv)
-          (fun v _ v' _ h => smul_right_injective _ (hν i) (add_left_cancel h))
+          (affineLineEquiv x (hν i)).injective.injOn
     _ = (d + 1) * #E := by rw [sum_const, card_univ, Fintype.card_fin, smul_eq_mul]
+
+omit [Fintype F] [DecidableEq F] in
+/-- **Interpolation is exact on codewords** of the Reed–Muller code of degree `d`, for every
+direction. -/
+theorem lagrangeDecode_eq_of_mem_reedMuller (ν : Fin (d + 1) ↪ F) {p : (Fin m → F) → F}
+    (hp : p ∈ reedMuller F m d) (x v : Fin m → F) : lagrangeDecode ν p x v = p x :=
+  lagrangeDecode_eq_of_exists_natDegree_le ν (exists_natDegree_le_eval_eq_of_mem_reedMuller hp x v)
+
+/-- **Few directions err.** At every point `x`, at most `(d + 1) * Δ(w, p)` directions `v` make
+interpolation along the line through `x` in the direction `v` err, when the nodes are nonzero. -/
+theorem card_lagrangeDecode_ne_le (ν : Fin (d + 1) ↪ F) (hν : ∀ i, ν i ≠ 0)
+    {p : (Fin m → F) → F} (hp : p ∈ reedMuller F m d) (w : (Fin m → F) → F) (x : Fin m → F) :
+    #{v | lagrangeDecode ν w x v ≠ p x} ≤ (d + 1) * #{y | w y ≠ p y} :=
+  card_lagrangeDecode_ne_le_of_forall_eq ν hν (lagrangeDecode_eq_of_mem_reedMuller ν hp x) w
 
 end Cslib.Code

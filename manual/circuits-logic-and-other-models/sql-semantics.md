@@ -246,7 +246,8 @@ Over `WHERE c`, an outer predicate can be replaced in the context of the inner i
 type of `c` (`Query.Equiv.select_select_expr`), since `c` keeps some of the input's rows.
 `DISTINCT` turns set equivalence into bag equivalence (`Query.Equiv.distinct_of_set`). The
 list-level facts behind these proofs, such as `EquivLevel.Rel.filterRows` for `WHERE` over related
-inputs, are public for proofs of further laws.
+inputs and `EquivLevel.Rel.lift` for a list operation that respects permutations and depends only
+on the members of its input, are public for proofs of further laws.
 
 ## Query laws
 
@@ -426,14 +427,25 @@ cannot compare a computed row such as `Fin.append r s` with a literal `![…]`. 
 concrete instance is `decide` once the table type has a `Fintype` instance. To prove a law for all
 datums, case on the datums and their values, or rewrite
 with the characterizations `Datum.exists_toTruth_eq_ok_iff`, `Datum.exists_asInt_eq_ok_iff` and
-`CmpOp.exists_eval_eq_ok_iff`, which say when an operand is accepted. For expressions, prove a
+`CmpOp.exists_eval_eq_ok_iff`, which say when an operand is accepted. A boolean operand is a truth
+value (`Datum.hasType_bool_iff`), so `obtain ⟨t, rfl⟩ := Datum.hasType_bool_iff.mp h` followed by
+`cases t <;> rfl` checks a law on `TRUE`, `FALSE` and `NULL`. For expressions, prove a
 law with `Expr.Equiv.of_eval_eq` and the evaluation equations `Expr.eval_unary`,
 `Expr.eval_binary` and their siblings, or on observations as above, then lift it into larger
 expressions with the congruence lemmas and into queries with `Query.Equiv.select_expr` and its
 siblings. For queries, `Query.Equiv.of_eval_eq` proves a law whose sides evaluate equally; in
 general, rewrite with the evaluation equations (`Query.eval_select`, …), `Except.toOption_bind`,
 and `Expr.toOption_filterRows` or `Except.toOption_mapM`, which reduce a query's observation to
-list operations. The checked examples are in
+list operations. `simp` writes `pure` in `Except` as `Except.ok` (`Except.pure_eq_ok`,
+`Except.bind_ok`), so the monad laws `bind_assoc` and `pure_bind` evaluate both sides of a law
+without a case on `q.eval D`, as in `Query.unionAll_assoc`. When the two sides evaluate the same
+inputs in different orders, compare observations: after `Except.toOption_bind` the steps are
+`Option.bind`s, which commute (`Option.bind_comm`), as in `Query.select_unionAll`. To prove that a
+computation fails only in a given way, state it as `x.Spec P E` (`Except.Spec`: `x` succeeds with
+a result satisfying `P` or fails with an error satisfying `E`) and compose the steps of its `do`
+block with `Except.Spec.bind`, and lists of steps with `Except.Spec.mapM` and
+`Except.Spec.filterMapM`; `Expr.eval_spec` and `Query.eval_spec` state type soundness in this
+form. The checked examples are in
 [Truth.lean](../../CslibFrontierTests/Languages/SQL/Truth.lean),
 [Scalar.lean](../../CslibFrontierTests/Languages/SQL/Scalar.lean),
 [Expr.lean](../../CslibFrontierTests/Languages/SQL/Expr.lean),

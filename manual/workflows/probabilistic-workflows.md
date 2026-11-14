@@ -286,6 +286,21 @@ a single `PMF.apply_ne_top _ _` keep the term. To compare success probabilities,
 `Game.advantage g₀ g₁` into `succProbability g₀ ≤ succProbability g₁ + B`. The [checked examples](../../CslibFrontierTests/PMFFiniteness.lean) cover
 each rule and the failure.
 
+## Certify a seeded binary linear hash
+
+Import [Probabilistic/LinearHash.lean](../../CslibFrontier/Computability/Probabilistic/LinearHash.lean).
+`LinearHash.computableInPolyTime_wordHash` takes plain certificates for the unary output count,
+the raw matrix seed and the input word, under any input encoding. Its row parser pads short
+seeds with zero; there is no well-formed-seed hypothesis. The proof composes the plain row parser,
+captured map and constant-state Boolean fold.
+
+`LinearHash.isPPTOn_extract` samples `count * input.length` fair bits and returns the complete
+seed followed by the digest. Supply plain count and input certificates; sampling and copying the
+revealed seed are included in the strict-PPT claim. For a deterministic caller, see the padded
+Naor–Reingold evaluator in
+[NaorReingold/Security.lean](../../CslibFrontier/Crypto/Computational/NaorReingold/Security.lean).
+These certificates assert polynomial time, rather than an exact time or workspace constant.
+
 ## Count the fair coins used by an exact sampler
 
 Import [DDGTree.lean](../../CslibFrontier/Probability/DDGTree.lean) to describe an exact sampler as

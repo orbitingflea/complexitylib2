@@ -47,6 +47,9 @@ implementation of the two-stage universe-reduced `k`-wise independent hash famil
 
 ## Main results
 
+* `Cslib.Probability.oddMulModWord_parts_lt`: every intermediate product, shift, and sum in
+  `halfMulMod (w₀ - 1)` and `oddMulModWord w₀` is strictly `< 2 ^ w₀` when `0 < w₀`,
+  `α < 2 ^ (w₀ - 1)`, and `x < 2 ^ w₀`.
 * `Cslib.Probability.oddMulModWord_shiftRight_eq_multiplyShiftReduced`: `oddMulModWord` shifted
   right by `w₀ - R` equals `multiplyShiftReduced`.
 * `Cslib.Probability.two_mul_reducedChunkBits_le`: `2 * reducedChunkBits t ≤ w` whenever `w₀ ≤ w`,
@@ -106,6 +109,126 @@ theorem oddMulModWord_lt {w₀ : ℕ} (hw₀ : 0 < w₀) (α x : ℕ) :
     conv_lhs => rw [← Nat.sub_add_cancel hw₀, pow_succ']
   rw [Nat.shiftLeft_eq, pow_one, hpow]
   omega
+
+/-- Every intermediate product, shift, and sum in `halfMulMod (w₀ - 1) α_val (u_val &&& ...)` and
+`oddMulModWord w₀ α_val u_val` is strictly `< 2 ^ w₀` whenever `0 < w₀`, `α_val < 2 ^ (w₀ - 1)`,
+and `u_val < 2 ^ w₀`. -/
+theorem oddMulModWord_parts_lt {w₀ α_val u_val : ℕ} (hw₀ : 0 < w₀)
+    (hα : α_val < 2 ^ (w₀ - 1)) (hu : u_val < 2 ^ w₀) :
+    let m := w₀ - 1
+    let h := m / 2
+    let x' := u_val &&& (2 ^ m - 1)
+    let α₀ := α_val &&& (2 ^ h - 1)
+    let α₁ := α_val >>> h
+    let x₀ := x' &&& (2 ^ h - 1)
+    let x₁ := x' >>> h
+    let p₀ := (α₀ * x₀) &&& (2 ^ m - 1)
+    let p₁ := ((α₀ * x₁) &&& (2 ^ (m - h) - 1)) <<< h
+    let p₂ := ((α₁ * x₀) &&& (2 ^ (m - h) - 1)) <<< h
+    let p₃ := ((α₁ &&& (2 ^ (m - 2 * h) - 1)) * (x₁ &&& (2 ^ (m - 2 * h) - 1))) <<< (2 * h)
+    let s₁ := (p₀ + p₁) &&& (2 ^ m - 1)
+    let s₂ := (s₁ + p₂) &&& (2 ^ m - 1)
+    let hm := (s₂ + p₃) &&& (2 ^ m - 1)
+    α₀ * x₀ < 2 ^ w₀ ∧
+    α₀ * x₁ < 2 ^ w₀ ∧
+    (((α₀ * x₁) &&& (2 ^ (m - h) - 1)) <<< h) < 2 ^ w₀ ∧
+    α₁ * x₀ < 2 ^ w₀ ∧
+    (((α₁ * x₀) &&& (2 ^ (m - h) - 1)) <<< h) < 2 ^ w₀ ∧
+    (α₁ &&& (2 ^ (m - 2 * h) - 1)) * (x₁ &&& (2 ^ (m - 2 * h) - 1)) < 2 ^ w₀ ∧
+    (((α₁ &&& (2 ^ (m - 2 * h) - 1)) * (x₁ &&& (2 ^ (m - 2 * h) - 1))) <<< (2 * h)) < 2 ^ w₀ ∧
+    p₀ + p₁ < 2 ^ w₀ ∧
+    s₁ + p₂ < 2 ^ w₀ ∧
+    s₂ + p₃ < 2 ^ w₀ ∧
+    (u_val >>> 1) + hm < 2 ^ w₀ ∧
+    ((((u_val >>> 1) + hm) &&& (2 ^ m - 1)) <<< 1) < 2 ^ w₀ ∧
+    (u_val &&& 1) + ((((u_val >>> 1) + hm) &&& (2 ^ m - 1)) <<< 1) < 2 ^ w₀ := by
+  intro m h x' α₀ α₁ x₀ x₁ p₀ p₁ p₂ p₃ s₁ s₂ hm
+  have h2m_eq : 2 * 2 ^ m = 2 ^ w₀ := by
+    rw [← pow_succ', Nat.sub_add_cancel hw₀]
+  have hm_lt : 2 ^ m < 2 ^ w₀ := by
+    have := Nat.two_pow_pos m
+    omega
+  have h_le : h ≤ m := Nat.div_le_self m 2
+  have h2_le : 2 * h ≤ m := Nat.mul_div_le m 2
+  have hα₀ : α₀ < 2 ^ h := by
+    dsimp only [α₀]; rw [Nat.and_two_pow_sub_one_eq_mod]; exact Nat.mod_lt _ (Nat.two_pow_pos _)
+  have hx₀ : x₀ < 2 ^ h := by
+    dsimp only [x₀]; rw [Nat.and_two_pow_sub_one_eq_mod]; exact Nat.mod_lt _ (Nat.two_pow_pos _)
+  have hα₁ : α₁ < 2 ^ (m - h) := by
+    dsimp only [α₁]; rw [Nat.shiftRight_eq_div_pow]
+    refine Nat.div_lt_of_lt_mul ?_
+    rw [← pow_add, Nat.add_sub_of_le h_le]
+    exact hα
+  have hx' : x' < 2 ^ m := by
+    dsimp only [x']; rw [Nat.and_two_pow_sub_one_eq_mod]; exact Nat.mod_lt _ (Nat.two_pow_pos _)
+  have hx₁ : x₁ < 2 ^ (m - h) := by
+    dsimp only [x₁]; rw [Nat.shiftRight_eq_div_pow]
+    refine Nat.div_lt_of_lt_mul ?_
+    rw [← pow_add, Nat.add_sub_of_le h_le]
+    exact hx'
+  have hp₀_raw : α₀ * x₀ < 2 ^ m := by
+    calc α₀ * x₀ < 2 ^ h * 2 ^ h := Nat.mul_lt_mul'' hα₀ hx₀
+      _ = 2 ^ (2 * h) := by rw [← pow_add, two_mul]
+      _ ≤ 2 ^ m := Nat.pow_le_pow_right two_pos h2_le
+  have hp₁_raw : α₀ * x₁ < 2 ^ m := by
+    calc α₀ * x₁ < 2 ^ h * 2 ^ (m - h) := Nat.mul_lt_mul'' hα₀ hx₁
+      _ = 2 ^ m := by rw [← pow_add, Nat.add_sub_of_le h_le]
+  have hp₂_raw : α₁ * x₀ < 2 ^ m := by
+    calc α₁ * x₀ < 2 ^ (m - h) * 2 ^ h := Nat.mul_lt_mul'' hα₁ hx₀
+      _ = 2 ^ m := by rw [← pow_add, Nat.sub_add_cancel h_le]
+  have hp₁_lt : p₁ < 2 ^ m := by
+    dsimp only [p₁]; rw [Nat.shiftLeft_eq, Nat.and_two_pow_sub_one_eq_mod]
+    calc ((α₀ * x₁) % 2 ^ (m - h)) * 2 ^ h
+        < 2 ^ (m - h) * 2 ^ h := Nat.mul_lt_mul_of_pos_right (Nat.mod_lt _ (Nat.two_pow_pos _))
+          (Nat.two_pow_pos _)
+      _ = 2 ^ m := by rw [← pow_add, Nat.sub_add_cancel h_le]
+  have hp₂_lt : p₂ < 2 ^ m := by
+    dsimp only [p₂]; rw [Nat.shiftLeft_eq, Nat.and_two_pow_sub_one_eq_mod]
+    calc ((α₁ * x₀) % 2 ^ (m - h)) * 2 ^ h
+        < 2 ^ (m - h) * 2 ^ h := Nat.mul_lt_mul_of_pos_right (Nat.mod_lt _ (Nat.two_pow_pos _))
+          (Nat.two_pow_pos _)
+      _ = 2 ^ m := by rw [← pow_add, Nat.sub_add_cancel h_le]
+  have hp₃_mul_lt :
+      (α₁ &&& (2 ^ (m - 2 * h) - 1)) * (x₁ &&& (2 ^ (m - 2 * h) - 1)) < 2 ^ (m - 2 * h) := by
+    rw [Nat.and_two_pow_sub_one_eq_mod, Nat.and_two_pow_sub_one_eq_mod]
+    rcases (by omega : m - 2 * h = 0 ∨ m - 2 * h = 1) with hd0 | hd1
+    · rw [hd0, pow_zero, Nat.mod_one, zero_mul]; exact one_pos
+    · rw [hd1, pow_one]
+      have h1 : α₁ % 2 < 2 := Nat.mod_lt _ two_pos
+      have h2 : x₁ % 2 < 2 := Nat.mod_lt _ two_pos
+      rcases (by omega : α₁ % 2 = 0 ∨ α₁ % 2 = 1) with h0 | h1_eq
+      · simp [h0]
+      · simp [h1_eq, h2]
+  have hp₃_lt : p₃ < 2 ^ m := by
+    dsimp only [p₃]; rw [Nat.shiftLeft_eq]
+    calc _ < 2 ^ (m - 2 * h) * 2 ^ (2 * h) :=
+          Nat.mul_lt_mul_of_pos_right hp₃_mul_lt (Nat.two_pow_pos _)
+      _ = 2 ^ m := by rw [← pow_add, Nat.sub_add_cancel h2_le]
+  have hp₀_lt : p₀ < 2 ^ m := by
+    dsimp only [p₀]; rw [Nat.and_two_pow_sub_one_eq_mod]; exact Nat.mod_lt _ (Nat.two_pow_pos _)
+  have hs₁_lt : s₁ < 2 ^ m := by
+    dsimp only [s₁]; rw [Nat.and_two_pow_sub_one_eq_mod]; exact Nat.mod_lt _ (Nat.two_pow_pos _)
+  have hs₂_lt : s₂ < 2 ^ m := by
+    dsimp only [s₂]; rw [Nat.and_two_pow_sub_one_eq_mod]; exact Nat.mod_lt _ (Nat.two_pow_pos _)
+  have hhm_lt : hm < 2 ^ m := by
+    dsimp only [hm]; rw [Nat.and_two_pow_sub_one_eq_mod]; exact Nat.mod_lt _ (Nat.two_pow_pos _)
+  have hu_shr : u_val >>> 1 < 2 ^ m := by
+    rw [Nat.shiftRight_eq_div_pow, pow_one]
+    refine Nat.div_lt_of_lt_mul ?_
+    omega
+  have hsh_fin : ((((u_val >>> 1) + hm) &&& (2 ^ m - 1)) <<< 1) ≤ 2 * 2 ^ m - 2 := by
+    rw [Nat.shiftLeft_eq, pow_one, Nat.and_two_pow_sub_one_eq_mod]
+    have hmod : ((u_val >>> 1) + hm) % 2 ^ m < 2 ^ m := Nat.mod_lt _ (Nat.two_pow_pos _)
+    omega
+  have hubit : u_val &&& 1 < 2 := by
+    change u_val &&& (2 ^ 1 - 1) < 2
+    rw [Nat.and_two_pow_sub_one_eq_mod]
+    exact Nat.mod_lt _ two_pos
+  exact ⟨hp₀_raw.trans hm_lt, hp₁_raw.trans hm_lt, hp₁_lt.trans hm_lt,
+    hp₂_raw.trans hm_lt, hp₂_lt.trans hm_lt,
+    hp₃_mul_lt.trans_le ((Nat.pow_le_pow_right two_pos (by omega)).trans hm_lt.le),
+    hp₃_lt.trans hm_lt,
+    by omega, by omega, by omega, by omega, by omega, by omega⟩
 
 /-- Exact modular correctness of `halfMulMod`: for all `m α x' : ℕ`, `halfMulMod m α x'` equals
 `(α * x') % 2 ^ m`. -/

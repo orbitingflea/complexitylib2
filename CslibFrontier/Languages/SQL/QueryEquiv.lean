@@ -148,29 +148,23 @@ theorem Rel.append (h₁ : ℓ.Rel l₁ l₂) (h₂ : ℓ.Rel l₃ l₄) : ℓ.R
   · intro a
     simp only [List.mem_append, h₁ a, h₂ a]
 
-theorem Rel.filter (p : α → Bool) (h : ℓ.Rel l₁ l₂) : ℓ.Rel (l₁.filter p) (l₂.filter p) := by
+/-- A list operation that respects permutations, and whose members depend only on the members of
+its input, relates related lists at every level. -/
+theorem Rel.lift {F : List α → List β} (hperm : ∀ {l₁ l₂ : List α}, l₁.Perm l₂ → (F l₁).Perm (F l₂))
+    (hmem : ∀ {l₁ l₂ : List α}, (∀ a, a ∈ l₁ ↔ a ∈ l₂) → ∀ b, b ∈ F l₁ ↔ b ∈ F l₂)
+    (h : ℓ.Rel l₁ l₂) : ℓ.Rel (F l₁) (F l₂) := by
   cases ℓ
-  · exact h ▸ rfl
-  · exact List.Perm.filter p h
-  · intro a
-    simp only [List.mem_filter, h a]
+  exacts [h ▸ rfl, hperm h, hmem h]
+
+theorem Rel.filter (p : α → Bool) (h : ℓ.Rel l₁ l₂) : ℓ.Rel (l₁.filter p) (l₂.filter p) :=
+  h.lift (List.Perm.filter p) fun h a => by simp only [List.mem_filter, h a]
 
 theorem Rel.filterMap (f : α → Option β) (h : ℓ.Rel l₁ l₂) :
-    ℓ.Rel (l₁.filterMap f) (l₂.filterMap f) := by
-  cases ℓ
-  · exact h ▸ rfl
-  · exact List.Perm.filterMap f h
-  · intro b
-    simp only [List.mem_filterMap]
-    exact exists_congr fun a => and_congr_left' (h a)
+    ℓ.Rel (l₁.filterMap f) (l₂.filterMap f) :=
+  h.lift (List.Perm.filterMap f) fun h _ => by simp only [List.mem_filterMap, h]
 
-theorem Rel.map (f : α → β) (h : ℓ.Rel l₁ l₂) : ℓ.Rel (l₁.map f) (l₂.map f) := by
-  cases ℓ
-  · exact h ▸ rfl
-  · exact List.Perm.map f h
-  · intro b
-    simp only [List.mem_map]
-    exact exists_congr fun a => and_congr_left' (h a)
+theorem Rel.map (f : α → β) (h : ℓ.Rel l₁ l₂) : ℓ.Rel (l₁.map f) (l₂.map f) :=
+  h.lift (List.Perm.map f) fun h _ => by simp only [List.mem_map, h]
 
 theorem Rel.product {t₁ t₂ : List β} (h : ℓ.Rel l₁ l₂) (h' : ℓ.Rel t₁ t₂) :
     ℓ.Rel (l₁ ×ˢ t₁) (l₂ ×ˢ t₂) := by
@@ -180,12 +174,8 @@ theorem Rel.product {t₁ t₂ : List β} (h : ℓ.Rel l₁ l₂) (h' : ℓ.Rel 
   · rintro ⟨a, b⟩
     simp only [List.mem_product, h a, h' b]
 
-theorem Rel.dedup [DecidableEq α] (h : ℓ.Rel l₁ l₂) : ℓ.Rel l₁.dedup l₂.dedup := by
-  cases ℓ
-  · exact h ▸ rfl
-  · exact List.Perm.dedup h
-  · intro a
-    simp only [List.mem_dedup, h a]
+theorem Rel.dedup [DecidableEq α] (h : ℓ.Rel l₁ l₂) : ℓ.Rel l₁.dedup l₂.dedup :=
+  h.lift List.Perm.dedup fun h a => by simp only [List.mem_dedup, h a]
 
 /-- Lists with the same members, related at any level, have permuted deduplications. -/
 theorem Rel.perm_dedup [DecidableEq α] (h : ℓ.Rel l₁ l₂) : l₁.dedup.Perm l₂.dedup :=

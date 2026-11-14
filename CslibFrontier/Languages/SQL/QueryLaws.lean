@@ -128,7 +128,7 @@ theorem toOption_evalTruth_and (c p : Expr n) (r : Row n) :
   · simp [ha]
   · simp [ha]
   · simp [ha]
-  · rcases hb : b.toTruth with _ | t <;> simp [ha, hb, pure, Except.pure]
+  · rcases hb : b.toTruth with _ | t <;> simp [ha, hb]
 
 /-- `WHERE` on two lists one after the other is `WHERE` on their concatenation. -/
 theorem toOption_filterRows_append (p : Expr n) (rs ss : List (Row n)) :
@@ -331,16 +331,12 @@ predicate on every pair, so no condition is needed. -/
 theorem select_join_true (θ : Expr (n + m)) (q₁ : Query S n) (q₂ : Query S m) :
     Equiv .ordered (select θ (join (lit (.bool true)) q₁ q₂)) (join θ q₁ q₂) :=
   Equiv.of_eval_eq fun D _ => by
-    simp only [eval_select, eval_join, Expr.filterRows_true]
-    rcases q₁.eval D with e | rs
-    · rfl
-    rcases q₂.eval D with e | ss <;> rfl
+    simp only [eval_select, eval_join, Expr.filterRows_true, bind_assoc, Except.ok_bind]
 
 /-- `WHERE TRUE` keeps every row. -/
 theorem select_true (q : Query S n) : Equiv .ordered (select (lit (.bool true)) q) q :=
   Equiv.of_eval_eq fun D _ => by
-    simp only [eval_select, Expr.filterRows_true]
-    rcases q.eval D with e | rs <;> rfl
+    simp only [eval_select, Expr.filterRows_true, Except.bind_ok]
 
 /-! ### Projections -/
 
@@ -376,40 +372,25 @@ theorem project_col (q : Query S n) : Equiv .ordered (project Expr.col q) q :=
 theorem select_unionAll (p : Expr n) (q₁ q₂ : Query S n) :
     Equiv .ordered (select p (unionAll q₁ q₂)) (unionAll (select p q₁) (select p q₂)) := by
   refine equiv_ordered_iff.mpr fun D _ => ?_
-  simp only [eval_select, eval_unionAll]
-  rcases q₁.eval D with e | rs
-  · rfl
-  rcases q₂.eval D with e | ss
-  · simp only [Except.ok_bind]
-    rcases p.filterRows rs <;> rfl
-  simp only [Except.ok_bind, pure_bind, Except.toOption_bind, Expr.toOption_filterRows_append,
-    Except.toOption_pure]
-  rcases (p.filterRows rs).toOption <;> rcases (p.filterRows ss).toOption <;> rfl
+  simp only [eval_select, eval_unionAll, bind_assoc, pure_bind, Except.toOption_bind,
+    Expr.toOption_filterRows_append, Except.toOption_pure]
+  -- The right side filters `q₁` before evaluating `q₂`; observed in `Option`, binds commute.
+  congr 1; funext rs; rw [Option.bind_comm]; simp only [Option.map_eq_bind, Function.comp_def]
 
 /-- A `SELECT` list distributes over `UNION ALL`. -/
 theorem project_unionAll (es : Fin k → Expr n) (q₁ q₂ : Query S n) :
     Equiv .ordered (project es (unionAll q₁ q₂)) (unionAll (project es q₁) (project es q₂)) := by
   refine equiv_ordered_iff.mpr fun D _ => ?_
-  simp only [eval_project, eval_unionAll]
-  rcases q₁.eval D with e | rs
-  · rfl
-  rcases q₂.eval D with e | ss
-  · simp only [Except.ok_bind]
-    rcases rs.mapM (Expr.evalRow es) <;> rfl
-  simp only [Except.ok_bind, pure_bind, List.mapM_append]
+  simp only [eval_project, eval_unionAll, bind_assoc, pure_bind, List.mapM_append,
+    Except.toOption_bind]
+  -- The right side evaluates `q₂` after projecting `q₁`; observed in `Option`, binds commute.
+  congr 1; funext rs; exact Option.bind_comm _ _
 
 /-- `UNION ALL` is associative. -/
 theorem unionAll_assoc (q₁ q₂ q₃ : Query S n) :
     Equiv .ordered (unionAll (unionAll q₁ q₂) q₃) (unionAll q₁ (unionAll q₂ q₃)) :=
   Equiv.of_eval_eq fun D _ => by
-    simp only [eval_unionAll]
-    rcases q₁.eval D with e | rs
-    · rfl
-    rcases q₂.eval D with e | ss
-    · rfl
-    rcases q₃.eval D with e | ts
-    · rfl
-    simp only [Except.ok_bind, pure_bind, List.append_assoc]
+    simp only [eval_unionAll, bind_assoc, pure_bind, List.append_assoc]
 
 /-- `UNION ALL` is commutative as a bag. It is not as a list: the left input comes first. -/
 theorem unionAll_comm (q₁ q₂ : Query S n) : Equiv .bag (unionAll q₁ q₂) (unionAll q₂ q₁) :=
@@ -455,10 +436,7 @@ theorem join_comm (θ : Expr (n + m)) (q₁ : Query S n) (q₂ : Query S m) :
 /-- `DISTINCT` is idempotent. -/
 theorem distinct_distinct (q : Query S n) : Equiv .ordered (distinct (distinct q)) (distinct q) :=
   Equiv.of_eval_eq fun D _ => by
-    simp only [eval_distinct]
-    rcases q.eval D with e | rs
-    · rfl
-    simp only [Except.ok_bind, pure, Except.pure, List.dedup_idem]
+    simp only [eval_distinct, bind_assoc, pure_bind, List.dedup_idem]
 
 /-- `DISTINCT` ignores the duplicates that `UNION ALL` of a query with itself creates. -/
 theorem distinct_unionAll_self (q : Query S n) :
@@ -467,7 +445,7 @@ theorem distinct_unionAll_self (q : Query S n) :
     simp only [eval_distinct, eval_unionAll]
     rcases q.eval D with e | rs
     · rfl
-    simp only [Except.ok_bind, pure, Except.pure,
+    simp only [Except.ok_bind, Except.pure_eq_ok,
       List.Subset.dedup_append_right (List.Subset.refl rs)]
 
 /-- `WHERE` commutes with `DISTINCT`. The left side evaluates `p` on one copy of each row and the

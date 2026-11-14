@@ -70,12 +70,13 @@ entries.
   (`AuxiliaryInputZeroKnowledge.generableZeroKnowledge`), and lifts via the prefix-clock bridge in
   `CslibFrontier.Crypto.Computational.ZeroKnowledge.AuxClock` to unbounded auxiliary input
   (`UnboundedAuxiliaryInputZeroKnowledge`, `InstanceAuxiliaryInputZeroKnowledge`).
-  Under the explicit advice-PRG premise `GMW.AdvicePRG`
-  (from `GMW.gmwView_negligible_of_advice_prg`), the GMW proof systems satisfy
-  `ZKProof.AuxiliaryInputZeroKnowledge`
-  (`PseudorandomGenerator.auxiliaryInputZeroKnowledge_singleZKProofOfReduction`,
-  `PseudorandomGenerator.auxiliaryInputZeroKnowledge_singleZKProofThreeSAT`); this module does
-  not derive `GMW.AdvicePRG` from uniform PRG or one-way function assumptions.
+  As steps toward the GMW theorem, the GMW proof systems satisfy
+  `ZKProof.AuxiliaryInputZeroKnowledge` under the advice-PRG premise `GMW.AdvicePRG`
+  (`PseudorandomGenerator.auxiliaryInputZeroKnowledge_singleZKProofOfReduction_of_advicePRG`,
+  `PseudorandomGenerator.auxiliaryInputZeroKnowledge_singleZKProofThreeSAT_of_advicePRG`, from
+  `GMW.gmwView_negligible_of_advice_prg`). That premise is novel to this library: it follows from
+  a nonuniform PRG (`NonuniformPRG.advicePRG`) and is not known to follow from a uniform PRG or
+  one-way function. The library's GMW theorem is `NonuniformOneWay.exists_zkProof_of_mem_NP`.
 * **Bundled witness relation (`ZKProof.isWitness`).** `ZKProof` bundles its
   own polynomial-time witness predicate `isWitness : α → List Bool → Bool` characterizing `A`
   (`mem_iff_exists_witness`). No witness-length bound is imposed, so `isWitness` by itself need not
@@ -113,10 +114,10 @@ entries.
 * `Cslib.Crypto.ZKProof.zero_knowledge_const`,
   `Cslib.Crypto.ZKProof.AuxiliaryInputZeroKnowledge.zero_knowledge_const`:
   fixed-instance computational zero-knowledge.
-* `Cslib.Crypto.PseudorandomGenerator.auxiliaryInputZeroKnowledge_singleZKProofOfReduction`,
-  `Cslib.Crypto.PseudorandomGenerator.auxiliaryInputZeroKnowledge_singleZKProofThreeSAT`:
-  general `AuxiliaryInputZeroKnowledge` for the single-session GMW proof systems under the explicit
-  advice-PRG premise `GMW.AdvicePRG`.
+* `PseudorandomGenerator.auxiliaryInputZeroKnowledge_singleZKProofOfReduction_of_advicePRG`,
+  `PseudorandomGenerator.auxiliaryInputZeroKnowledge_singleZKProofThreeSAT_of_advicePRG`:
+  steps: general `AuxiliaryInputZeroKnowledge` for the single-session GMW proof systems under the
+  advice-PRG premise `GMW.AdvicePRG`, which is novel to this library.
 
 ## References
 
@@ -449,11 +450,14 @@ noncomputable def PseudorandomGenerator.singleZKProofOfReduction
         GMW.gmwView_indistinguishable_gmwSimulator hG hf hV ha hw_comp hz
           hw_sat⟩
 
-/-- Under the explicit advice-PRG premise `GMW.AdvicePRG enc generator length`, the GMW proof
-system `hG.singleZKProofOfReduction hstretch hf hred` satisfies general auxiliary-input
+/-- A step toward the Goldreich–Micali–Wigderson theorem, not that theorem: it rests on
+`GMW.AdvicePRG`, a premise novel to this library. Under `GMW.AdvicePRG enc generator length`, the
+GMW proof system `hG.singleZKProofOfReduction hstretch hf hred` satisfies general auxiliary-input
 zero-knowledge (`ZKProof.AuxiliaryInputZeroKnowledge`) across all arbitrary polynomially bounded
-valid instance, witness, and auxiliary-input families. -/
-theorem PseudorandomGenerator.auxiliaryInputZeroKnowledge_singleZKProofOfReduction
+valid instance, witness, and auxiliary-input families. A nonuniform PRG satisfies the premise
+(`NonuniformPRG.advicePRG`); the library's GMW theorem is
+`NonuniformOneWay.exists_zkProof_of_mem_NP`. -/
+theorem PseudorandomGenerator.auxiliaryInputZeroKnowledge_singleZKProofOfReduction_of_advicePRG
     {α : Type} {enc : α ↪ List Bool} {A : Set α}
     {generator : List Bool → List Bool} {length : ℕ → ℕ}
     (hG : PseudorandomGenerator generator length)
@@ -478,16 +482,18 @@ noncomputable def PseudorandomGenerator.singleZKProofThreeSAT
     ZKProof encCNF ThreeSAT (fun _ => 1 / 3) :=
   hG.singleZKProofOfReduction hstretch (by fun_prop) (fun _ => Iff.rfl)
 
-/-- Under the explicit advice-PRG premise `GMW.AdvicePRG encCNF generator length`, the GMW proof
-system `hG.singleZKProofThreeSAT hstretch` satisfies general auxiliary-input zero-knowledge
-(`ZKProof.AuxiliaryInputZeroKnowledge`). -/
-theorem PseudorandomGenerator.auxiliaryInputZeroKnowledge_singleZKProofThreeSAT
+/-- A step toward the Goldreich–Micali–Wigderson theorem, not that theorem: it rests on
+`GMW.AdvicePRG`, a premise novel to this library. Under `GMW.AdvicePRG encCNF generator length`,
+the GMW proof system `hG.singleZKProofThreeSAT hstretch` satisfies general auxiliary-input
+zero-knowledge (`ZKProof.AuxiliaryInputZeroKnowledge`). The library's GMW theorem is
+`NonuniformOneWay.exists_zkProof_of_mem_NP`. -/
+theorem PseudorandomGenerator.auxiliaryInputZeroKnowledge_singleZKProofThreeSAT_of_advicePRG
     {generator : List Bool → List Bool} {length : ℕ → ℕ}
     (hG : PseudorandomGenerator generator length)
     (hstretch : ∀ k, 3 * k + 1 ≤ length k)
     (hAdv : GMW.AdvicePRG encCNF generator length) :
     (hG.singleZKProofThreeSAT hstretch).AuxiliaryInputZeroKnowledge :=
-  hG.auxiliaryInputZeroKnowledge_singleZKProofOfReduction hstretch (by fun_prop)
+  hG.auxiliaryInputZeroKnowledge_singleZKProofOfReduction_of_advicePRG hstretch (by fun_prop)
     (fun _ => Iff.rfl) hAdv
 
 end Cslib.Crypto

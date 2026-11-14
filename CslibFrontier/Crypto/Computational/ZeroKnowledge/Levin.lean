@@ -40,8 +40,9 @@ a polynomial-time-generable witness family remains polynomial-time-generable aft
 This single-session system has soundness `1 / 3`. Its sequential repetition with negligible
 soundness, and the existence theorems for every NP relation through
 `Cslib.Complexity.CookLevin.ThreeSAT_levinHard`, are in
-`CslibFrontier.Crypto.Computational.ZeroKnowledge.Amplification`. The auxiliary-input form stays
-conditional on `Cslib.Crypto.GMW.AdvicePRG`.
+`CslibFrontier.Crypto.Computational.ZeroKnowledge.Amplification`. The auxiliary-input form here is
+a step conditional on `Cslib.Crypto.GMW.AdvicePRG`, a premise novel to this library; the library's
+GMW theorem for NP relations is `Cslib.Crypto.NonuniformOneWay.exists_zkProof_of_npRelation`.
 
 ## Main definitions
 
@@ -56,8 +57,9 @@ conditional on `Cslib.Crypto.GMW.AdvicePRG`.
   `Cslib.Crypto.PseudorandomGenerator.isWitness_levinSingleZKProof`: the bundled witness check is
   the relation itself.
 * `Cslib.Crypto.ZKProof.AuxiliaryInputZeroKnowledge.withRelationWitness`,
-  `Cslib.Crypto.PseudorandomGenerator.auxiliaryInputZeroKnowledge_levinSingleZKProof`:
-  auxiliary-input zero knowledge carries over (the latter under the advice-PRG premise).
+  `Cslib.Crypto.PseudorandomGenerator.auxiliaryInputZeroKnowledge_levinSingleZKProof_of_advicePRG`:
+  auxiliary-input zero knowledge carries over (the latter a step under the novel advice-PRG
+  premise `GMW.AdvicePRG`).
 * `Cslib.Complexity.LevinReduction.mem_language_iff_mem_threeSAT`: membership through a Levin
   reduction to 3SAT.
 
@@ -186,15 +188,19 @@ theorem PseudorandomGenerator.isWitness_levinSingleZKProof
     (hG.levinSingleZKProof hstretch r).isWitness a w = true ↔ R.IsWitness a w :=
   ZKProof.isWitness_withRelationWitness _ _ _ a w
 
-/-- Under the explicit advice-PRG premise `GMW.AdvicePRG enc generator length`, the Levin-reduction
-proof system satisfies general auxiliary-input zero knowledge: polynomially bounded witness
-families of `R` map to polynomially bounded 3SAT witness families. -/
-theorem PseudorandomGenerator.auxiliaryInputZeroKnowledge_levinSingleZKProof
+/-- A step toward the Goldreich–Micali–Wigderson theorem for NP relations, not that theorem: it
+rests on `GMW.AdvicePRG`, a premise novel to this library. Under
+`GMW.AdvicePRG enc generator length`, the Levin-reduction proof system satisfies general
+auxiliary-input zero knowledge: polynomially bounded witness families of `R` map to polynomially
+bounded 3SAT witness families. A nonuniform PRG satisfies the premise
+(`NonuniformPRG.advicePRG`); the library's GMW theorem for relations is
+`NonuniformOneWay.exists_zkProof_of_npRelation`. -/
+theorem PseudorandomGenerator.auxiliaryInputZeroKnowledge_levinSingleZKProof_of_advicePRG
     {generator : List Bool → List Bool} {length : ℕ → ℕ}
     (hG : PseudorandomGenerator generator length) (hstretch : ∀ k, 3 * k + 1 ≤ length k)
     (r : LevinReduction R ThreeSAT.npRelation) (hAdv : GMW.AdvicePRG enc generator length) :
     (hG.levinSingleZKProof hstretch r).AuxiliaryInputZeroKnowledge :=
-  (hG.auxiliaryInputZeroKnowledge_singleZKProofOfReduction hstretch
+  (hG.auxiliaryInputZeroKnowledge_singleZKProofOfReduction_of_advicePRG hstretch
     r.computableInPolyTime_toFun r.mem_language_iff_mem_threeSAT hAdv).withRelationWitness r _
 
 end Cslib.Crypto

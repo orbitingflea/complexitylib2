@@ -135,6 +135,17 @@ The source of [MachinePrograms.lean](https://github.com/cslib-community/cslib-fr
 
 ## Composing polynomial resource envelopes
 
+For sums of binary naturals, import
+[`PolyTime.Nat.Binary`](../../CslibFrontier/Computability/Machines/Turing/MultiTape/Complexity/PolyTime/Nat/Binary.lean)
+and compose `ComputableInPolyTime.binary_sum` with the certificate producing the
+`encList encNat` input. Its plain fold proof bounds accumulator digit growth by the
+encoded input length plus one per element.
+The [weighted SetCover verifier](../../CslibFrontier/Computability/Complexity/Problems/SetCover.lean)
+and [approximation reduction](../../CslibFrontier/Computability/PCP/Approximation/SetCover/ApproxReduction.lean)
+compose this plain certificate directly with their weight-list certificates.
+[TruncatedSum](../../CslibFrontier/Computability/Complexity/Classes/CountingSimulation/TruncatedSum.lean)
+uses the same certificate for separate time and space envelopes.
+
 For a polynomial-time map on pairs, import
 [`CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Families`](../../CslibFrontier/Computability/Machines/Turing/MultiTape/Complexity/PolyTime/Families.lean).
 Given `hg : ComputableInPolyTime g (encPair encA encB) encC` and polynomial bounds `ha`, `hb`
@@ -143,6 +154,17 @@ bounds the encoded output family. The families themselves need not be computable
 [Levin](../../CslibFrontier/Crypto/Computational/ZeroKnowledge/Levin.lean) and
 [amplification](../../CslibFrontier/Crypto/Computational/ZeroKnowledge/Amplification.lean)
 proofs use this rule to transport witness families through the same deterministic reduction.
+
+For binary-natural preprocessing, import
+[`BigO.NatPolynomial`](../../CslibFrontier/Computability/Machines/Turing/MultiTape/Complexity/BigO/NatPolynomial.lean).
+`hf.nat_inO` and `hf.natPair_inO` turn plain polynomial-time certificates into
+output-charged bounds linear in the numeric value or sum, for arbitrary output encodings.
+Their proofs use the realizing machine's cost degree; the independent output degree need not
+coincide with it. The [padding certificates](../../CslibFrontier/Computability/Machines/Turing/MultiTape/Complexity/BigO/PolynomialPadding.lean)
+compose these bounds with plain framing, unframing and unary writing. The polynomial writer
+retains time exponent `2 * k` and space exponent `k` for `k ≥ 1`; the guard retains quadratic
+time and linear space in the full input length, including insufficient or malformed padding.
+The [regression source](../../CslibFrontierTests/PolynomialPadding.lean) includes the guard certificate and empty-input controls.
 
 A reduction closure proof that runs a certificate or counting bound `q(|f a|)` of the target on
 the reduced instance needs one polynomial in the source length. For

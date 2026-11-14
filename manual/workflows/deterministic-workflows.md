@@ -170,6 +170,23 @@ uses the fact that setting a variable does not lengthen the encoded formula. The
 instance and a formula with an empty clause, where the `1 / 2` bound fails without its
 hypothesis. Build it with `scripts/build.sh CslibFrontierTests.JohnsonMaxSAT`.
 
+For a fold with a captured parameter and a known bound on reachable states, use
+`ComputableInPolyTime.foldlWith` from
+[`PolyTime/Fold.lean`](../../CslibFrontier/Computability/Machines/Turing/MultiTape/Complexity/PolyTime/Fold.lean).
+Certify the step jointly on `(parameter, accumulator, element)` with encoding
+`encPair (encPair encP encB) encA`; separate certificates for each fixed parameter do not
+supply this uniform callback. Then bound the encoded accumulator after every consumed prefix.
+The size bound may depend on the original input and need only be polynomially bounded, not
+computable. In
+[`computableInPolyTime_naorYungCascade`](../../CslibFrontier/Crypto/Computational/NaorYungUOWHF.lean),
+the accumulator contains a state word and an unconsumed suffix. The state length is at most
+its initial length plus `n + 1`, and the suffix never grows. This handles arbitrary initial
+words, including ones longer than the final width; replacing the prefix bound by the final
+output length would miss those inputs. The compression and adversary certificates consume
+this plain fold certificate directly. Existing concrete clients are in
+[`Crypto/NaorYungUOWHF.lean`](../../CslibFrontierTests/Crypto/NaorYungUOWHF.lean); check them with
+`scripts/build.sh CslibFrontierTests.Crypto.NaorYungUOWHF`.
+
 To charge estimator and branch evaluations explicitly or package the Turing-machine transfer once,
 use [Algorithms/Lean/PessimisticEstimator.lean](../../CslibFrontier/Algorithms/Lean/PessimisticEstimator.lean)
 and [Computability/PolyTime/PessimisticEstimator.lean](../../CslibFrontier/Computability/PolyTime/PessimisticEstimator.lean).

@@ -23,7 +23,7 @@
  "CslibFrontier/Computability/Machines/Turing/MultiTape/Complexity/PolyTime/List.lean": 65,
  "CslibFrontier/Computability/Machines/Turing/MultiTape/Complexity/PolyTime/Membership.lean": 2,
  "CslibFrontier/Computability/Machines/Turing/MultiTape/Complexity/PolyTime/Nat.lean": 17,
- "CslibFrontier/Computability/Machines/Turing/MultiTape/Complexity/PolyTime/Nat/Binary.lean": 17,
+ "CslibFrontier/Computability/Machines/Turing/MultiTape/Complexity/PolyTime/Nat/Binary.lean": 16,
  "CslibFrontier/Computability/Machines/Turing/MultiTape/Complexity/PolyTime/Nat/BinaryDiv.lean": 5,
  "CslibFrontier/Computability/Machines/Turing/MultiTape/Complexity/PolyTime/Nat/Div.lean": 4,
  "CslibFrontier/Computability/Machines/Turing/MultiTape/Complexity/PolyTime/Nat/Log.lean": 5,

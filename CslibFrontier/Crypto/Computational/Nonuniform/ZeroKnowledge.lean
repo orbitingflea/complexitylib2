@@ -16,13 +16,13 @@ import CslibFrontier.Tactic.PPT
 /-!
 # Auxiliary-input zero knowledge from a nonuniform generator or one-way function
 
-`GMW.AdvicePRG enc generator length` is the security premise of the auxiliary-input
-Goldreich–Micali–Wigderson theorems such as
-`PseudorandomGenerator.exists_auxiliaryInputZKProof_of_mem_NP`: a test reading an instance,
-a witness and an auxiliary input from arbitrary polynomially bounded families cannot distinguish
-the generator's output at seed length `n + 7` from uniform. A nonuniform pseudorandom generator
-satisfies it: the three families form one advice value under the pair encoding, which the test
-reads without decoding, and the parameter shift by `7` is polynomial-time preprocessing.
+`GMW.AdvicePRG enc generator length`, a premise novel to this library, is the security premise of
+the steps toward the auxiliary-input Goldreich–Micali–Wigderson theorem, such as
+`PseudorandomGenerator.exists_auxiliaryInputZKProof_of_mem_NP_of_advicePRG`: a test reading an
+instance, a witness and an auxiliary input from arbitrary polynomially bounded families cannot
+distinguish the generator's output at seed length `n + 7` from uniform. A nonuniform pseudorandom
+generator satisfies it: the three families form one advice value under the pair encoding, which the
+test reads without decoding, and the parameter shift by `7` is polynomial-time preprocessing.
 
 Composing this bridge with `NonuniformOneWay.exists_nonuniformPRG_three_mul` derives
 auxiliary-input zero knowledge (`AuxiliaryInputZeroKnowledge`, and hence the unbounded-`z` and
@@ -112,7 +112,8 @@ theorem NonuniformPRG.exists_zkProof_of_mem_NP
     ∃ zk : ZKProof enc A (fun n => (1 / 3 : ENNReal) ^ (n + 1)),
       zk.NegligibleSoundness ∧ zk.AuxiliaryInputZeroKnowledge := by
   obtain ⟨_, h⟩ := h.exists_three_mul
-  exact h.toPRG.exists_auxiliaryInputZKProof_of_mem_NP (fun _ => le_rfl) (h.advicePRG enc) hA
+  exact h.toPRG.exists_auxiliaryInputZKProof_of_mem_NP_of_advicePRG (fun _ => le_rfl)
+    (h.advicePRG enc) hA
 
 /-- **Soundness-amplified auxiliary-input GMW zero knowledge for NP relations from a nonuniform
 PRG.** Given any nonuniform pseudorandom generator, every NP relation `R` has a computational
@@ -126,7 +127,8 @@ theorem NonuniformPRG.exists_zkProof_of_npRelation
       (∀ a w, zk.isWitness a w = true ↔ R.IsWitness a w) ∧
       zk.NegligibleSoundness ∧ zk.AuxiliaryInputZeroKnowledge := by
   obtain ⟨_, h⟩ := h.exists_three_mul
-  exact h.toPRG.exists_auxiliaryInputZKProof_of_npRelation (fun _ => le_rfl) (h.advicePRG enc) R
+  exact h.toPRG.exists_auxiliaryInputZKProof_of_npRelation_of_advicePRG (fun _ => le_rfl)
+    (h.advicePRG enc) R
 
 /-- **Goldreich–Micali–Wigderson theorem in full (from a nonuniform one-way function).** If a
 nonuniform one-way function exists, every language `A ∈ NP enc` has a computational zero-knowledge

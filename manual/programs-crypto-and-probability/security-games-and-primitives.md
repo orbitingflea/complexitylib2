@@ -1165,13 +1165,34 @@ with the source's assignment order: at width 25 the cipher tag overwrites tweak 
 low bits, preserved middle bits, both high layouts, distinct tweaks and tags, and injectivity at
 the 128-bit NIST width.
 
-Algorithm 6's counter-mode PRG and `ExpandSeed` are the first source consumers, but are not
-implemented here. This function-level layout also has no native machine or resource certificate:
-later work must account for materializing the full salt, the 24-bit conversion and tag updates,
-the number of calls made by PRG/tree expansion, and the resulting time, output-size, program-size,
-and reduction-resource translations. It proves neither an asymptotic machine-certified
-scheme-family reduction/negligibility endpoint nor finite instantiated candidate/parameter-set
-advantage bounds with exact constants, soundness/failure/query terms, and assumption parameters.
+Algorithm 6's counter-mode byte PRG is a separate source consumer and remains unimplemented.
+This function-level layout also has no native machine or resource certificate: later work must
+account for materializing the full salt, the 24-bit conversion and tag updates, the number of calls
+made by PRG/tree expansion, and the resulting time, output-size, program-size, and
+reduction-resource translations.
+
+### SDitH two-child seed expansion
+
+Import [`ExpandSeed.lean`](../../CslibFrontier/Crypto/Primitives/SDitH/ExpandSeed.lean) for the
+five-line `ExpandSeed` procedure in SDitH v3.0 §3.2.2 (p. 18). A node
+`idx : Fin (2 ^ 23)` has exact 24-bit child tweaks `2 * idx` and `2 * idx + 1`, so neither wraps.
+`expandSeed encStar variant salt seed idx` applies the explicit modified-cipher parameter
+`encStar` under `seed` to the two `tweakSalt` plaintexts with tag `true`. Projection lemmas expose
+both calls, while `expandSeed_plaintexts_ne` proves that their plaintexts differ when
+`26 ≤ securityBits`; it intentionally does not assert that the encrypted child seeds differ. The
+[ordinary-module client](../../CslibFrontierTests/Crypto/SDitH/ExpandSeed.lean) checks both numeric
+tweaks and both outputs of a concrete 128-bit XOR toy cipher.
+
+The specification labels this procedure for Categories I and V. The current reference code also
+contains a 192-bit Category III path using truncated Rijndael-256-256, but that implementation
+observation is not silently promoted to a source claim here. The API is primitive-parametric and
+proves no AES/Rijndael, PRP/ICM, TreePRG, soundness, zero-knowledge, or signature theorem. At the
+function level it makes exactly two modified-cipher calls and materializes two full tweaked salts.
+Later work must retain those time, space, randomness/query and output costs together with the
+constructed program's description size and embedded parameters/advice; offline compiler
+construction is a separate resource. Algorithm 6, the full GGM/BAVC tree, `CommitSeed`, the
+protocol and transcript, abort and rejection analysis, Fiat–Shamir/QROM, SD/RSD hardness, and both
+asymptotic and finite concrete endpoints remain open.
 
 ## Encryption and chosen-message attacks
 
@@ -1226,9 +1247,11 @@ For adaptive `Q`-query left-or-right chosen-plaintext attacks (Boneh–Shoup Sec
 
 [CCA2AdversaryOf](https://github.com/cslib-community/cslib-frontier/blob/13e6a31951bf1c89a1a6258c44f9444aecbbefd8/Complexity/Crypto/Computational/Encryption/CCA.lean#L266) exposes adaptive decryption before and after the challenge; the second handler rejects the exact challenge ciphertext. The multi-challenge interface in [`CCA.lean`](../../CslibFrontier/Crypto/Computational/Encryption/CCA.lean) (`MultiCCA2AdversaryOf`, `INDCCA2MultiOn`) is a two-phase **batch** model, whereas [`CCA/Interleaved.lean`](../../CslibFrontier/Crypto/Computational/Encryption/CCA/Interleaved.lean) (`InterleavedCCA2AdversaryOf`, `interleavedCcaOracle`, `INDCCA2InterleavedOn`) formalizes Boneh–Shoup Attack Game 12.1 and Definition 12.1 ([bs23][bs23], §12.1, pp. 467–468) with a single stateful combined encryption-and-decryption oracle that tracks the list `S` of challenge ciphertexts generated so far, allowing arbitrary adaptive interleaving of `.challenge m₀ m₁` and `.decrypt c` queries (including decryption of a ciphertext `c` before a later challenge happens to produce `c`) and proving equivalence with both 1CCA and phased batch multi-challenge CCA (`indcca2InterleavedOn_iff_indcca2On`, `indcca2InterleavedOn_iff_indcca2MultiOn`, and `advantage_interleavedCca2GameOn`, with concrete checks in [`CslibFrontierTests/Crypto/CCAInterleaved.lean`](../../CslibFrontierTests/Crypto/CCAInterleaved.lean)). Encodings are part of the security boundary: the inspected Cramer–Shoup parser [decodeCramerShoup](https://github.com/cslib-community/cslib-frontier/blob/13e6a31951bf1c89a1a6258c44f9444aecbbefd8/Complexity/Crypto/Computational/CramerShoup/Scheme.lean#L876) requires canonical framing, so a different raw serialization of the challenge does not silently bypass the equality check.
 
+A malleable scheme is not CCA secure: an adversary maps the challenge to a different ciphertext with a related plaintext, asks the Phase 2 oracle to decrypt it, and reads off the hidden bit (Boneh–Shoup v0.6, Section 12.2.1, pp. 469–470 [bs23][bs23]). [`CCA/Malleability.lean`](../../CslibFrontier/Crypto/Computational/Encryption/CCA/Malleability.lean) packages this attack once. `maulAdversary msg₀ msg₁ maul target` chooses the pair, queries `maul n pk ct` once and compares the reply with `target n pk`. `isPPT_maulAdversary` certifies it from polynomial-time ingredients. `not_indcca2On_of_maulAdversary` refutes `INDCCA2On` when the pair is admissible under honest keys and, on every honest key pair and challenge ciphertext, the transformation changes the decryption and decrypts to `target` exactly in world `1`; the oracle then cannot reject the query, and the advantage is exactly `1` (`advantage_cca2GameOn_maulAdversary`). A scheme supplies only these conditions: [`GoldwasserMicali/Malleability.lean`](../../CslibFrontier/Crypto/Computational/GoldwasserMicali/Malleability.lean) multiplies the challenge by the public nonresidue, which flips the bit (`not_indcca2_goldwasserMicali`, unconditional, and `not_indcca2_blumGoldwasserMicali` under the Blum condition of `indcpa_blumGoldwasserMicali`), and [`Paillier/Malleability.lean`](../../CslibFrontier/Crypto/Computational/Paillier/Malleability.lean) multiplies it by `1 + N`, which adds `1` to the plaintext (`not_indcca2On_paillier`, unconditional, for the scheme and predicate of `DCR.indcpaOn_paillier`), and multiplicative ElGamal (below) adds `g` to the second ciphertext component. Each scheme's CCA decryptor is its never-rejecting `decryptOpt`, and the `INDCCA2Interleaved…` corollaries follow by `INDCCA2InterleavedOn.indcca2On`. The [checked clients](../../CslibFrontierTests/Crypto/CCAMalleability.lean) pair each IND-CPA theorem with its CCA failure and run both attacks on concrete moduli; run `scripts/build.sh CslibFrontierTests.Crypto.CCAMalleability`.
+
 The endpoint [DDH.indcca2On_cramerShoup](https://github.com/cslib-community/cslib-frontier/blob/13e6a31951bf1c89a1a6258c44f9444aecbbefd8/Complexity/Crypto/Computational/CramerShoup.lean#L1688) (together with its batch multi-challenge lift `DDH.indcca2MultiOn_cramerShoup` and fully adaptive interleaved multi-challenge lift [`DDH.indcca2InterleavedOn_cramerShoup`](../../CslibFrontier/Crypto/Computational/CramerShoup/Interleaved.lean)) combines DDH, collision resistance, negligible inverse group order, and explicit efficient public operations. Key generation draws a uniform hash key and publishes it in the public key, as Cramer and Shoup do ([cs03][cs03], Section 6.1, Figure 1), so the collision-resistance premise is about a keyed family: its collision finders see the group and the key. A premise about one fixed hash per security parameter would not be the standard notion, since for a fixed function an adversary that just outputs a collision exists (Boneh–Shoup v0.6, Section 8.1, p. 290 [bs23][bs23]). The theorem assumes collision resistance, following Boneh–Shoup Theorem 12.9; the original papers need only target collision resistance (universal one-wayness) of the keyed hash ([cs03][cs03], Section 6.2, Theorem 1). Approximate modular sampling and its statistical error are accounted for. Other clients include ElGamal, hybrid encryption, authenticated encryption and encrypt-then-MAC; they instantiate the same staged/oracle security schemas. Homomorphic schemes add circuit functionality and are treated [separately](homomorphic-encryption.md).
 
-IND-CPA security does not give CCA security. [`ElGamal/Malleability.lean`](../../CslibFrontier/Crypto/Computational/ElGamal/Malleability.lean) shows that multiplicative ElGamal, which is IND-CPA secure under DDH, is not CCA secure (Boneh–Shoup v0.6, Exercise 12.1, p. 512 [bs23][bs23]). The adversary `elGamalMaulAdversary` maps the challenge `(v, e)` to `(v, e + g)` with `elGamalMaulCiphertext`, asks the Phase 2 oracle to decrypt that different ciphertext, and compares the reply with `m₁ + g`. `isPPT_elGamalMaulAdversary` certifies it, and `advantage_cca2GameOn_elGamalMaulAdversary` gives advantage exactly `1` at every parameter. `not_indcca2Of_elGamalBitEncryptProb` needs only a polynomial-time group family; `not_indcca2On_elGamalGroupEncryptProb` covers group-element messages under any admissibility predicate that admits `(0, g)`, such as `cramerShoupValid`. In the CCA games the decryptor is `elGamalDecryptOpt`, which never rejects. A separation of this kind applies the scheme's `INDCCA2On` hypothesis to an explicit adversary through its `isPPT_` certificate and contradicts negligibility with `not_negligible_const`. The [checked clients](../../CslibFrontierTests/Crypto/ElGamalMalleability.lean) run the attack on a Schnorr group; run `scripts/build.sh CslibFrontierTests.Crypto.ElGamalMalleability`.
+IND-CPA security does not give CCA security. [`ElGamal/Malleability.lean`](../../CslibFrontier/Crypto/Computational/ElGamal/Malleability.lean) shows that multiplicative ElGamal, which is IND-CPA secure under DDH, is not CCA secure (Boneh–Shoup v0.6, Exercise 12.1, p. 512 [bs23][bs23]). The adversary `elGamalMaulAdversary` is `maulAdversary` with transformation `elGamalMaulCiphertext`, which maps the challenge `(v, e)` to `(v, e + g)`; it asks the Phase 2 oracle to decrypt that different ciphertext and compares the reply with `m₁ + g`. `isPPT_elGamalMaulAdversary` certifies it, and `advantage_cca2GameOn_elGamalMaulAdversary` gives advantage exactly `1` at every parameter. `not_indcca2Of_elGamalBitEncryptProb` needs only a polynomial-time group family; `not_indcca2On_elGamalGroupEncryptProb` covers group-element messages under any admissibility predicate that admits `(0, g)`, such as `cramerShoupValid`. In the CCA games the decryptor is `elGamalDecryptOpt`, which never rejects. The proofs supply only the malleability conditions to `not_indcca2On_of_maulAdversary`, which applies the `INDCCA2On` hypothesis to the adversary through `isPPT_maulAdversary` and contradicts negligibility with `not_negligible_const`. The [checked clients](../../CslibFrontierTests/Crypto/ElGamalMalleability.lean) run the attack on a Schnorr group; run `scripts/build.sh CslibFrontierTests.Crypto.ElGamalMalleability`.
 
 The canonical [`KEMINDCPA keyLen keyGen encaps`](../../CslibFrontier/Crypto/Computational/Encryption/Hybrid.lean) compares the real encapsulated key with an independent uniform `keyLen n`-bit word. Use `fun n => n` for normalized keys, or another schedule such as `fun n => 2 * n`. The composition methods `KEMINDCPA.hybrid_indcpa` and `KEMINDCPA.hybrid_indcpaOn` consume `DEMOneTimeKeyINDCPAOf` and `DEMOneTimeKeyINDCPAOn` at the same schedule; the latter requires a polynomial-time admissibility predicate independent of the public key. The exact bound is twice the hidden-bit KEM distinguisher's advantage plus the DEM adversary's advantage (Boneh–Shoup v0.6, Exercise 11.9(b), pp. 460–461 [bs23][bs23]). The native ideal-game certificate `isPPTOn_kemIdealGame` additionally takes `ComputableInPolyTime keyLen encUnary encUnary`. The reductions do not sample ideal keys, so the security implication itself does not need that certificate.
 
@@ -1336,8 +1359,8 @@ and `PMF.toOuterMeasure`, with `deltaCorrect_zero_of_perfect` and `DeltaCorrect.
 its advantage in the shared experiment `PKE.cpaExperiment` with every message pair admissible. The
 advantage is the two-world difference, twice HHK17's `|Pr[b' = b] - 1/2|`. The narrower
 fixed-message experiment `ExplicitCoinPKE.indCpaGame` (`ExplicitCoinPKE.indCpaAdvantage`, messages
-`(m₀, m₁)` fixed before key generation, single-stage adversary) remains for the K-PKE bound; the FO
-theorems do not use it. On top of `ExplicitCoinPKE`, `FujisakiOkamoto.encT` and `FujisakiOkamoto.decT`
+`(m₀, m₁)` fixed before key generation, single-stage adversary) remains for the spread-necessity
+example; the FO theorems and the K-PKE bound do not use it. On top of `ExplicitCoinPKE`, `FujisakiOkamoto.encT` and `FujisakiOkamoto.decT`
 define the derandomization transform `T[PKE, G]` (§3.1, Fig. 5) with mandatory re-encryption check
 `encT P G pk m' = c` (`decT_encT_eq_some`, `encT_of_decT_eq_some`, `dec_of_decT_eq_some`,
 `decT_eq_none_of_reencrypt_ne`), while `FujisakiOkamoto.Scheme` (with arbitrary samplers
@@ -1470,10 +1493,14 @@ as `⌈q / 2⌋` rather than `encodePolyMsg`'s `⌊q / 2⌋`. The FIPS 203 round
 `compress_one_decompress_one_add`, which together give the deterministic bounded-noise correctness
 `decrypt_encrypt_eq_of_noise_le`. Key generation and coins are `ProbComp` programs over
 `sampleCenteredBinomial` with a uniform matrix in place of `SampleNTT`, and `toExplicitCoinPKE`
-feeds the scheme to the FO layer. `indCpaAdvantage_le` bounds its fixed-message IND-CPA advantage by
-four `ModuleLWE.advantage` terms of the explicit reductions `mlweKeyReduction` and
-`mlweReduction`, with centered-binomial secret and error laws; `DecisionModuleLWE` fixes a uniform
-secret, so it does not bound these terms. `MLKEMTransform.decapsWith` is the FIPS 203 implicit-rejection wrapper over any
+feeds the scheme to the FO layer. `cpaAdvantage_le` bounds its two-stage IND-CPA advantage
+(`ExplicitCoinPKE.cpaAdvantage`, messages chosen by the adversary after seeing the public key) by
+four `ModuleLWE.advantage` terms: the public-key hop `mlweKeyReduction A b` and the ciphertext hop
+`mlweReduction A b` for each challenge bit `b`, with centered-binomial secret and error laws. Both
+reductions are explicit programs that run the adversary's first stage themselves, as in the hops of
+Kyber v3.02 ([kyber302][kyber302], §4.4, eq. (6)), with a uniform matrix instead of `XOF` and a
+ciphertext hop on the uncompressed sample. The bound is concrete and charges no running time; `DecisionModuleLWE`
+fixes a uniform secret, so it does not bound these terms. `MLKEMTransform.decapsWith` is the FIPS 203 implicit-rejection wrapper over any
 `ExplicitCoinPKE`, defined through `FujisakiOkamoto.decT` and proved equal to the standard's
 decapsulation algorithm (`decapsWith_eq`). [`CslibFrontierTests/Crypto/MLKEM.lean`](../../CslibFrontierTests/Crypto/MLKEM.lean)
 checks the three parameter sets, sharpness of the compression and decoding bounds at `q = 3329`,
@@ -1840,6 +1867,7 @@ The finite query-only PRG/cipher results, semantic commitment interfaces and uni
 [hill99]: ../sources.md#hill99
 [holenstein06]: ../sources.md#holenstein06
 [katzlindell20]: ../sources.md#katzlindell20
+[kyber302]: ../sources.md#kyber302
 [manin56]: ../sources.md#manin56
 [naoryung89]: ../sources.md#naoryung89
 [rompel90]: ../sources.md#rompel90

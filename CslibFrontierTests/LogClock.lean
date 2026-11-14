@@ -31,21 +31,15 @@ example : fits (3, 15) = false ∧ fits (3, 16) = true ∧ fits (0, 0) = false :
 example : ComputableInO fits (encPair encNat encNat) encBool (fun p => p.1 + p.2)
     fun p => p.1 + p.2 := by
   apply ComputableInPolyTime.natPair_inO
-  apply ComputableInPolyTime.of_tidy
-  change ComputableTidilyInPolyTime (fun p : ℕ × ℕ => decide ((p.1 + 1) ^ 2 ≤ p.2))
+  change ComputableInPolyTime (fun p : ℕ × ℕ => decide ((p.1 + 1) ^ 2 ≤ p.2))
     (encPair encNat encNat) encBool
-  have hsucc := ComputableTidilyInPolyTime.binary_add'
-    (ComputableTidilyInPolyTime.fst encNat encNat) (ComputableTidilyInPolyTime.const 1)
-  simpa only [sq] using ComputableTidilyInPolyTime.binary_le'
-    (ComputableTidilyInPolyTime.binary_mul' hsucc hsucc)
-    (ComputableTidilyInPolyTime.snd encNat encNat)
+  exact ComputableInPolyTime.binary_le'
+    (ComputableInPolyTime.binary_pow' (by fun_prop) (.const 2)) (.snd encNat encNat)
 
 /-- Binary-polynomial postprocessing gives the expected exponential clock. -/
 example : TimeConstructible fun n => 2 ^ (2 * n) := by
   have hmul : ComputableInPolyTime (fun m : ℕ => m * m) encNat encNat := by
-    apply ComputableInPolyTime.of_tidy
-    exact ComputableTidilyInPolyTime.binary_mul'
-      ComputableTidilyInPolyTime.id' ComputableTidilyInPolyTime.id'
+    exact ComputableInPolyTime.binary_mul' (by fun_prop) (by fun_prop)
   have h := timeConstructible_two_pow.comp_of_computableInPolyTime hmul
     (fun _ => Nat.le_mul_of_pos_right _ Nat.one_le_two_pow)
   have heq : (fun n : ℕ => 2 ^ n * 2 ^ n) = (fun n => 2 ^ (2 * n)) := by

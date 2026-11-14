@@ -229,6 +229,11 @@ Ward Beullens, Fabio Campos, Sofía Celi, Basil Hess and Matthias J. Kannwischer
 
 Olaf Beyersdorff, Nicola Galesi and Massimo Lauria. *A lower bound for the pigeonhole principle in tree-like Resolution by asymmetric Prover–Delayer games*. Information Processing Letters 110(23), 1074–1077, 2010. https://doi.org/10.1016/j.ipl.2010.09.007 ; author's copy https://massimolauria.net/documents/tree-like-php.pdf (6 pages). Read in the author's copy on 2026-11-08. Locators checked there: Theorem 1 on p. 3 (if `F` has a tree-like refutation of size at most `S`, Delayer gets at most `log S` points in every `(c₀, c₁)`-game with `1/c₀ + 1/c₁ = 1`); Theorem 2 on p. 4 (every tree-like refutation of `PHP^m_n` has size `2^Ω(n log n)`); the explicit `2^((n/2) log(n/2 + 1)) = (n/2 + 1)^(n/2)` for even `n` at the end of that proof on p. 5; and the closing remark on p. 5 that the bound also holds for the functional pigeonhole principle. The abstract and introduction present the result as a simpler proof of Dantchev and Riis's bound (CCC 2001). Journal pagination was taken from the Crossref record. The ECCC version (TR10-081) was not reachable from this environment and was not read.
 
+<a id="bfckk24"></a>
+## bfckk24
+
+Michael A. Bender, Martin Farach-Colton, John Kuszmaul and William Kuszmaul. "Modern Hashing Made Simple." *Proceedings of the 2024 SIAM Symposium on Simplicity in Algorithms (SOSA 2024)*, 363–373, 2024. https://doi.org/10.1137/1.9781611977936.33 (`BenderFarachColtonKuszmaulKuszmaul2024`). Bibliographic metadata and pagination come from `references.bib` and the DOI record; the article text was not inspected in this pass, and no numbered theorem from it is claimed in Milestones 1–2 (`HighProbability`, `VarianceTail`, and `BitPackedDoubleTabulation`), which cite it at paper level as the downstream dictionary target ([#5356](https://github.com/cslib-community/cslib-frontier/issues/5356)).
+
 <a id="bfckkl22"></a>
 ## bfckkl22
 
@@ -872,7 +877,7 @@ Christopher Henson and Fabrizio Montesi. *Computer Science as Infrastructure: th
 <a id="hhk17"></a>
 ## hhk17
 
-Dennis Hofheinz, Kathrin Hövelmanns, Eike Kiltz. “A Modular Analysis of the Fujisaki–Okamoto Transformation.” *Theory of Cryptography (TCC 2017)*, LNCS 10677, 341–371, 2017. https://doi.org/10.1007/978-3-319-70500-2_12 ; full version https://eprint.iacr.org/2017/604 (dated 2 November 2021). Checked against the 2 November 2021 ePrint PDF (§2.1 correctness/spreadness and Def. 2.2 / Fig. 4 IND-CPA; §3.1 Fig. 5 transform `T`; §3.2.1 Fig. 9 `FO^⊥`; §3.2.2 Fig. 12 `FO-notbot`), with model adaptations (`ExplicitCoinPKE`/`Scheme` fixed types and arbitrary `sampleCoins`/`sampleMsg`/`sampleKey` samplers, two-stage IND-CPA `cpaAdvantage` via `PKE.cpaExperiment` on `ExplicitCoinPKE.toPKE`, with the single-stage fixed-message `indCpaGame`/`indCpaAdvantage` kept only for K-PKE and the spread-necessity example, and domain-separated `H : Bool × M × CT → K`) documented in the Lean modules and chapter text.
+Dennis Hofheinz, Kathrin Hövelmanns, Eike Kiltz. “A Modular Analysis of the Fujisaki–Okamoto Transformation.” *Theory of Cryptography (TCC 2017)*, LNCS 10677, 341–371, 2017. https://doi.org/10.1007/978-3-319-70500-2_12 ; full version https://eprint.iacr.org/2017/604 (dated 2 November 2021). Checked against the 2 November 2021 ePrint PDF (§2.1 correctness/spreadness and Def. 2.2 / Fig. 4 IND-CPA; §3.1 Fig. 5 transform `T`; §3.2.1 Fig. 9 `FO^⊥`; §3.2.2 Fig. 12 `FO-notbot`), with model adaptations (`ExplicitCoinPKE`/`Scheme` fixed types and arbitrary `sampleCoins`/`sampleMsg`/`sampleKey` samplers, two-stage IND-CPA `cpaAdvantage` via `PKE.cpaExperiment` on `ExplicitCoinPKE.toPKE`, with the single-stage fixed-message `indCpaGame`/`indCpaAdvantage` kept only for the spread-necessity example, and domain-separated `H : Bool × M × CT → K`) documented in the Lean modules and chapter text.
 
 <a id="hhrvw20"></a>
 ## hhrvw20
@@ -1148,6 +1153,11 @@ Peter Kairouz, Sewoong Oh and Pramod Viswanath. *The Composition Theorem for Dif
 ## ks08
 
 Vladimir Kolesnikov, Thomas Schneider. "Improved Garbled Circuit: Free XOR Gates and Applications." *Automata, Languages and Programming, 35th International Colloquium (ICALP 2008)*, Lecture Notes in Computer Science 5126, 486–498, 2008. https://doi.org/10.1007/978-3-540-70583-3_40 ; author's copy: https://www.cs.toronto.edu/~vlad/papers/XOR_ICALP08.pdf . Cited at paper level for the free-XOR technique, which it proves secure in the random oracle model; no theorem numbers are claimed.
+
+<a id="kyber302"></a>
+## kyber302
+
+Roberto Avanzi, Joppe Bos, Léo Ducas, Eike Kiltz, Tancrède Lepoint, Vadim Lyubashevsky, John M. Schanck, Peter Schwabe, Gregor Seiler, Damien Stehlé. *CRYSTALS-Kyber: Algorithm Specifications and Supporting Documentation (version 3.02)*, NIST Post-Quantum Cryptography Standardization third-round submission, 4 August 2021. https://pq-crystals.org/kyber/data/kyber-specification-round3-20210804.pdf . Checked on 2026-11-14 against that PDF (SHA-256 `1c54ad57022e00b77ff7acd40e9b38a962e7fbbd02bea73b183349c53a8f8aee`): the Module-LWE advantage `Adv^mlwe_{m,k,η}` with `(s, e) ← β_η^k × β_η^m` (§4.3, p. 19); Theorem 1, the IND-CPA bound for Kyber.CPAPKE (§4.3.1, p. 20); and the Module-LWER problem with the two-term replacement eq. (6) (§4.4 and footnote 3, pp. 21–22). Cited for `MLKEM.cpaAdvantage_le`, whose model differences (uniform matrix, sampled coins, uncompressed ciphertext hop, no running time) are recorded in the Lean module.
 
 <a id="lamportshostakpease1982"></a>
 ## lamportshostakpease1982
@@ -1743,6 +1753,16 @@ Madhu Sudan, Luca Trevisan and Salil Vadhan. *Pseudorandom Generators without th
 ## tarjan72
 
 Robert Endre Tarjan. "Depth-First Search and Linear Graph Algorithms." *SIAM Journal on Computing* 1(2), 146–160, 1972. https://doi.org/10.1137/0201010 . Bibliographic data from the DOI record; the paper was not inspected in this pass.
+
+<a id="tarjan77"></a>
+## tarjan77
+
+Robert Endre Tarjan. *Reference Machines Require Non-Linear Time to Maintain Disjoint Sets*. Stanford CS-TR-77-603, March 1977. [Report PDF](https://ftpmirror.your.org/pub/misc/bitsavers/pdf/stanford/Stanford_CS_TR_Collection_2025-12-12/PDF/1977/CS-TR-77-603.pdf). Section 2, pp. 4–7, checked on 2026-11-14: explicit-reference memory, instruction/record costs, undefined-value traps (p. 6), and equality-only symbols. This check corrects the earlier manual claim that behavior on undefined data was unspecified. The local model uses total semantics and does not prove source equivalence or the lower bound.
+
+<a id="tarjan79"></a>
+## tarjan79
+
+Robert Endre Tarjan. “A Class of Algorithms Which Require Nonlinear Time to Maintain Disjoint Sets.” *Journal of Computer and System Sciences* 18(2), 110–127, 1979. https://doi.org/10.1016/0022-0000(79)90042-4 . The pointer-machine development cites §2, pp. 111–112, and the disjoint-set application in §3, pp. 113–115. The original implementation records inspection of the journal PDF; the 2026-11-14 correction independently checked the accessible 1977 report above, not the journal PDF. The chapter distinguishes the formal model from source-faithful algorithms and lower bounds.
 
 <a id="thaler22"></a>
 ## thaler22

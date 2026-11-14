@@ -40,10 +40,11 @@ finite bound and certificate under uniform PRG security, for deterministic polyn
 instance/witness/auxiliary families.
 
 `gmwView_negligible_of_advice_prg` instead permits arbitrary families with three separate
-polynomial encoding-length bounds, under an explicit stronger PRG premise against uniform
-full-input tests supplied those families as advice. This module does not derive that premise
-from uniform one-wayness or HILL. Unbounded auxiliary input with a clock independent of its
-length, witness-level Levin reductions, and sequential soundness amplification remain separate.
+polynomial encoding-length bounds, under `AdvicePRG`: a PRG premise, novel to this library, against
+uniform full-input tests supplied those families as advice. It follows from a nonuniform PRG
+(`Cslib.Crypto.NonuniformPRG.advicePRG`), and is not known to follow from uniform one-wayness.
+Unbounded auxiliary input with a clock independent of its length, witness-level Levin reductions,
+and sequential soundness amplification remain separate.
 
 The proof uses four distribution transformations:
 
@@ -64,8 +65,9 @@ The proof uses four distribution transformations:
 * `Cslib.Crypto.GMW.gmwRealWithPads`: a guessed-challenge attempt with supplied unopened pads.
 * `Cslib.Crypto.GMW.gmwRealPRGPads`, `Cslib.Crypto.GMW.gmwRealUniformPads`: its two pad sources.
 * `Cslib.Crypto.GMW.gmwViewReduction`: the single-challenge pointwise reduction.
-* `Cslib.Crypto.GMW.AdvicePRG`: explicit advice-supplied PRG premise at seed size `n + 7` for
-  arbitrary polynomially bounded instance, witness, and auxiliary-input families.
+* `Cslib.Crypto.GMW.AdvicePRG`: advice-supplied PRG premise at seed size `n + 7` for arbitrary
+  polynomially bounded instance, witness, and auxiliary-input families; novel to this library, and
+  implied by a nonuniform PRG.
 
 ## Main results
 
@@ -912,14 +914,23 @@ theorem isPPTOn_gmwViewReduction {α : Type} {enc : α ↪ List Bool}
     (ComputableInPolyTime.id' (encIn := encBits)) (ComputableInPolyTime.id' (encIn := encBits))
   exact (congrArg (IsPPTOn _ _) (by funext ((n, a, w, z), challenge); rfl)).mp h
 
-/-- Explicit advice-PRG premise at GMW seed size `n + 7` for an instance encoding `enc`:
-`generator` has output length `length`, is computable in polynomial time, and its output at seed
-length `n + 7` is indistinguishable from uniform strings of length `length (n + 7)` against every
-full-input uniform strict PPT test supplied with arbitrary polynomially bounded instance, witness,
-and auxiliary-input families `(a, w, z)`.
+/-- **The advice-PRG premise of the GMW auxiliary-input steps.** This assumption is novel to this
+library: no cited source states it. For an instance encoding `enc`, `generator` has output length
+`length`, is computable in polynomial time, and its output at seed length `n + 7` is
+indistinguishable from uniform strings of length `length (n + 7)` against every full-input uniform
+strict PPT test that also reads arbitrary polynomially bounded instance, witness and
+auxiliary-input families `(a, w, z)`.
 
-This stronger advice-supplied premise is **not** derived here from uniform `PseudorandomGenerator`
-security or uniform `OneWay` security. -/
+*Relation to standard assumptions.* It follows from a nonuniform pseudorandom generator
+(`NonuniformPRG.advicePRG`), so a nonuniform one-way function yields a generator satisfying it
+(`NonuniformOneWay.exists_nonuniformPRG_three_mul`). That is how the library's
+Goldreich–Micali–Wigderson theorem, `NonuniformOneWay.exists_zkProof_of_mem_NP`, discharges it.
+It is not known to follow from a uniform `PseudorandomGenerator` or a uniform `OneWay` function:
+the families are arbitrary, so the tests it covers are nonuniform.
+
+*Why it is plausible.* It is the special case of nonuniform PRG security in which the advice is
+the tuple `(a n, w n, z n)` and the seed length is shifted by `7`; any generator secure against
+tests with polynomially bounded advice satisfies it. -/
 def AdvicePRG {α : Type} (enc : α ↪ List Bool) (generator : List Bool → List Bool)
     (length : ℕ → ℕ) : Prop :=
   ComputableInPolyTime generator encBits encBits ∧

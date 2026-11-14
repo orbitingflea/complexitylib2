@@ -187,7 +187,7 @@ example {generator : List Bool → List Bool} {length : ℕ → ℕ}
     (hstretch : ∀ k, 3 * k + 1 ≤ length k)
     (hAdv : GMW.AdvicePRG encCNF generator length) :
     (hG.singleZKProofThreeSAT hstretch).AuxiliaryInputZeroKnowledge :=
-  hG.auxiliaryInputZeroKnowledge_singleZKProofThreeSAT hstretch hAdv
+  hG.auxiliaryInputZeroKnowledge_singleZKProofThreeSAT_of_advicePRG hstretch hAdv
 
 -- Weakening the soundness bound: an amplified proof system is in particular `1 / 3`-sound.
 example {f : List Bool → List Bool} (hf : OneWay f) :
@@ -203,7 +203,8 @@ example {α : Type} {enc : α ↪ List Bool} {generator : List Bool → List Boo
     (hAdv : GMW.AdvicePRG enc generator length) (R : NPRelation enc) :
     ∃ zk : ZKProof enc R.language (fun _ => 1 / 3),
       (∀ a w, zk.isWitness a w = true ↔ R.IsWitness a w) ∧ zk.AuxiliaryInputZeroKnowledge :=
-  let ⟨zk, hw, _, hzk⟩ := hG.exists_auxiliaryInputZKProof_of_npRelation hstretch hAdv R
+  let ⟨zk, hw, _, hzk⟩ :=
+    hG.exists_auxiliaryInputZKProof_of_npRelation_of_advicePRG hstretch hAdv R
   ⟨zk.mono one_third_pow_succ_le, hw, hzk⟩
 
 -- Machine-level input-tape prefix locality: a `fuel`-step run on `u ++ v` depends only on
@@ -291,7 +292,7 @@ example {generator : List Bool → List Bool} {length : ℕ → ℕ}
     (hAdv : GMW.AdvicePRG encCNF generator length) :
     (hG.singleZKProofThreeSAT hstretch).UnboundedAuxiliaryInputZeroKnowledge ∧
       (hG.singleZKProofThreeSAT hstretch).InstanceAuxiliaryInputZeroKnowledge :=
-  let hzk := hG.auxiliaryInputZeroKnowledge_singleZKProofThreeSAT hstretch hAdv
+  let hzk := hG.auxiliaryInputZeroKnowledge_singleZKProofThreeSAT_of_advicePRG hstretch hAdv
   ⟨hzk.unboundedAuxiliaryInputZeroKnowledge, hzk.instanceAuxiliaryInputZeroKnowledge⟩
 
 -- Polynomial-count sequential repetition of any strict oracle PPT verifier is strict oracle PPT.
@@ -373,7 +374,7 @@ example {generator : List Bool → List Bool} {length : ℕ → ℕ}
     (hG.zkProofThreeSAT hstretch).AuxiliaryInputZeroKnowledge ∧
     (hG.zkProofThreeSAT hstretch).UnboundedAuxiliaryInputZeroKnowledge ∧
     (hG.zkProofThreeSAT hstretch).InstanceAuxiliaryInputZeroKnowledge := by
-  have hzk := hG.auxiliaryInputZeroKnowledge_zkProofThreeSAT hstretch hAdv
+  have hzk := hG.auxiliaryInputZeroKnowledge_zkProofThreeSAT_of_advicePRG hstretch hAdv
   exact ⟨hG.negligibleSoundness_zkProofThreeSAT hstretch,
     hzk, hzk.unboundedAuxiliaryInputZeroKnowledge, hzk.instanceAuxiliaryInputZeroKnowledge⟩
 

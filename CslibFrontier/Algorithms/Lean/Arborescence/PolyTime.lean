@@ -1283,16 +1283,14 @@ theorem computableInPolyTime_edmondsTableAuxList :
     set L := (encTableAuxInput x).length
     set M₀ := x.cost.foldl (fun m r => r.foldl (fun k (z : ℤ) => max k z.natAbs) m) 0
     have hinv := stateBoundInv_iterate x i
-    have hlen_in : L = 2 * x.fuel + 1 + (2 * x.root + 1 +
-        (2 * (encList (encList encBool) x.adj).length + 1 +
-          (encList (encList encIntBin) x.cost).length)) := by
-      dsimp only [L]
-      rw [encTableAuxInput_apply, length_encPair, length_encPair, length_encPair]
-      simp [encUnary_apply]
-    have hfuel : x.fuel ≤ L := by omega
-    have hroot : x.root ≤ L := by omega
-    have hadj_in : (encList (encList encBool) x.adj).length ≤ L := by omega
-    have hcost_in : (encList (encList encIntBin) x.cost).length ≤ L := by omega
+    have hfuel : x.fuel ≤ L := by
+      simpa only [encUnary_apply, List.length_replicate] using encTableAuxInput_fuel_length_le x
+    have hroot : x.root ≤ L := by
+      simpa only [encUnary_apply, List.length_replicate] using encTableAuxInput_root_length_le x
+    have hadj_in : (encList (encList encBool) x.adj).length ≤ L :=
+      encTableAuxInput_adj_length_le x
+    have hcost_in : (encList (encList encIntBin) x.cost).length ≤ L :=
+      encTableAuxInput_cost_length_le x
     have hn : x.adj.length ≤ L :=
       (SizedListEncoding.length_le (encA := encList encBool)
         (encL := encList (encList encBool)) x.adj).trans hadj_in
@@ -1415,16 +1413,11 @@ theorem computableInPolyTime_edmondsTableAuxList :
       set base := p.2
       have hinv := stateBoundInv_iterate x x.fuel
       set final := contractStep^[x.fuel] ⟨x.adj, x.cost, x.root, false, none, []⟩
-      have hlen_in : (encTableAuxInput x).length = 2 * x.fuel + 1 + (2 * x.root + 1 +
-          (2 * (encList (encList encBool) x.adj).length + 1 +
-            (encList (encList encIntBin) x.cost).length)) := by
-        rw [encTableAuxInput_apply, length_encPair, length_encPair, length_encPair]
-        simp [encUnary_apply]
-      have hL_adj : x.adj.length ≤ (encTableAuxInput x).length := by
-        have h1 := SizedListEncoding.length_le (encA := encList encBool)
-          (encL := encList (encList encBool)) x.adj
-        omega
-      have hL_root : x.root ≤ (encTableAuxInput x).length := by omega
+      have hL_adj : x.adj.length ≤ (encTableAuxInput x).length :=
+        (SizedListEncoding.length_le (encA := encList encBool)
+          (encL := encList (encList encBool)) x.adj).trans (encTableAuxInput_adj_length_le x)
+      have hL_root : x.root ≤ (encTableAuxInput x).length := by
+        simpa only [encUnary_apply, List.length_replicate] using encTableAuxInput_root_length_le x
       have hbase_len : base.length ≤ (encList encUnary base).length :=
         SizedListEncoding.length_le (encA := encUnary) (encL := encList encUnary) base
       have hbase_elem : ∀ v ∈ base, v ≤ (encList encUnary base).length := fun v hv => by

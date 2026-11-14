@@ -32,7 +32,12 @@ with `omega`, without unfolding the record's framed tuple. For dependent fields 
 encoded word supplied by the field's encoding function. Single-field records and flattened
 fields use the same rule names. The
 [structure encoding client](../../CslibFrontierTests/StructureEncoding.lean) exercises ordinary,
-single-field and dependent flattened records.
+single-field and dependent flattened records. The production
+[Arborescence storage proof](../../CslibFrontier/Algorithms/Lean/Arborescence/PolyTime.lean)
+uses these bounds for all four `TableAuxInput` fields in its iteration and expansion fold:
+normalize unary word lengths for fuel and root, and compose the adjacency field bound with
+`SizedListEncoding.length_le` for the number of rows. No tuple-length identity is needed for
+these component comparisons; state-growth estimates remain separate.
 
 The optional visibility prefix applies to the encoding, its tuple abbreviation and every constructor/field rule. `enc_structure` and `public enc_structure` generate public declarations, even outside a `public section`; use `private enc_structure` for an implementation record and keep its generated names inside the defining module. Public `fun_prop` rules are scoped to the namespace; private rules use `local fun_prop` in the defining scope and do not export. The [visibility fixture](../../CslibFrontierTests/StructureEncodingVisibility.lean) uses both forms on the existing parameterized table and on a private, explicitly parameterized record with a dependent field; the [importing client](../../CslibFrontierTests/StructureEncodingVisibilityClient.lean) rebuilds the public table through both explicit rules and `fun_prop`, and checks that private generated names are unavailable.
 

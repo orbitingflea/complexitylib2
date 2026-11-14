@@ -47,8 +47,17 @@ inequalities in the spirit of the limited-independence moment method of Bellare 
   (`expect_sum_sub_expect_pow_le`) and tail density at most `2 * (3 * m * μ / a ^ 2) ^ m`
   (`dens_abs_sum_sub_expect_le`).
 
+For centered `[-1, 1]`-valued random variables with heterogeneous per-coordinate variance bounds
+`v x` or small total mean where `2 * m ≤ 3 * μ` does not hold, see
+`CslibFrontier.Probability.KWiseIndependent.VarianceTail` (`expect_sum_pow_le_of_sq_le`,
+`dens_filter_le_abs_sum_of_sq_le`, `dens_filter_le_abs_sum_sub_expect_of_Icc`), which drops the
+`1 / r!` symmetry factor and `2 * m ≤ 3 * μ` hypothesis at the cost of an extra factor of `m` inside
+the base (`m * (m ^ 2 * max (∑ x ∈ S, v x) 1 / a ^ 2) ^ m`).
+
 ## Main results
 
+* `Cslib.Probability.abs_expect_sub_expect_pow_le`: for `g : Y → [0, 1]` and `2 ≤ c`,
+  `|𝔼 y, (g y - 𝔼 y', g y') ^ c| ≤ 𝔼 y, g y`.
 * `Cslib.Probability.expect_sum_sub_expect_pow_le`: variance-sensitive `2m`-th central moment bound
   for `[0, 1]`-valued sums under `2m`-wise independence.
 * `Cslib.Probability.dens_abs_sum_sub_expect_le`: Markov tail bound
@@ -74,7 +83,9 @@ namespace Cslib.Probability
 open Finset Fintype
 open scoped BigOperators
 
-private theorem abs_expect_sub_expect_pow_le {Y : Type*} [Fintype Y] [Nonempty Y]
+/-- For any `[0, 1]`-valued random variable `g : Y → ℝ` on a nonempty finite type `Y` and exponent
+`2 ≤ c`, the `c`-th centered moment satisfies `|𝔼 y, (g y - 𝔼 y', g y') ^ c| ≤ 𝔼 y, g y`. -/
+theorem abs_expect_sub_expect_pow_le {Y : Type*} [Fintype Y] [Nonempty Y]
     (g : Y → ℝ) (hg : ∀ y, g y ∈ Set.Icc 0 1) {c : ℕ} (hc : 2 ≤ c) :
     |𝔼 y, (g y - 𝔼 y', g y') ^ c| ≤ 𝔼 y, g y := by
   set p : ℝ := 𝔼 y, g y

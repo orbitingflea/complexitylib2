@@ -13,13 +13,15 @@ public import CslibFrontier.Computability.Machines.Turing.MultiTape.PolyTime
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.Primitives
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
+import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString.Dot
 import CslibFrontier.Computability.Probabilistic.Sampling
 import CslibFrontier.Tactic.PPT
 
 /-!
 # Polynomial-time binary linear hashing
 
-Matrix hashing uses the shared row parser and Boolean folds. Both certificates allow computed
+Matrix hashing uses the shared row parser and inner-product certificate. Both certificates allow
+computed
 input and output lengths, arbitrary input encodings, and short matrix seeds padded with zero.
 The full extractor charges sampling, hashing and copying its complete public seed and digest.
 
@@ -31,7 +33,8 @@ The full extractor charges sampling, hashing and copying its complete public see
 ## References
 
 Adapted from Computability/Probabilistic/LinearHash.lean on the cslib `crypto` branch at
-`5ff69ca93402e7c947208dc56396d6d86203ccd8`, using the tidy machine calculus.
+`5ff69ca93402e7c947208dc56396d6d86203ccd8`. The certificates compose the plain
+row, inner-product and sampling APIs.
 -/
 
 public section
@@ -39,18 +42,6 @@ public section
 namespace Cslib.BitString.LinearHash
 
 open Probability Turing.MultiTapeTM
-
-/-- Hash efficiently available words, with all dimensions computed in unary. -/
-@[local fun_prop]
-private theorem computableTidilyInPolyTime_wordHash {α : Type} {encode : α ↪ List Bool}
-    {count : α → ℕ} {seed input : α → List Bool}
-    (hcount : ComputableTidilyInPolyTime count encode encUnary)
-    (hseed : ComputableTidilyInPolyTime seed encode encBits)
-    (hinput : ComputableTidilyInPolyTime input encode encBits) :
-    ComputableTidilyInPolyTime (fun a => wordHash (count a) (seed a) (input a))
-      encode encBits := by
-  unfold wordHash listDot
-  fun_prop
 
 /-- Hash plain polynomial-time words, retaining unary output dimensions and the full input. -/
 @[fun_prop]
@@ -60,8 +51,9 @@ theorem computableInPolyTime_wordHash {α : Type} {encode : α ↪ List Bool}
     (hseed : ComputableInPolyTime seed encode encBits)
     (hinput : ComputableInPolyTime input encode encBits) :
     ComputableInPolyTime (fun a => wordHash (count a) (seed a) (input a))
-      encode encBits :=
-  .of_tidy (computableTidilyInPolyTime_wordHash hcount.tidy hseed.tidy hinput.tidy)
+      encode encBits := by
+  unfold wordHash
+  fun_prop
 
 /-- The complete extractor is uniformly strict PPT, including the revealed matrix seed. -/
 @[program_certificate]
@@ -70,15 +62,11 @@ theorem isPPTOn_extract {α : Type} {encode : α ↪ List Bool}
     (hcount : ComputableInPolyTime count encode encUnary)
     (hinput : ComputableInPolyTime input encode encBits) :
     IsPPTOn encode encBits (fun a => extract (count a) (input a)) := by
-  have hcount := hcount.tidy
-  have hinput := hinput.tidy
-  have hwidth := ComputableTidilyInPolyTime.unary_mul.comp
-    (hcount.prod (ComputableTidilyInPolyTime.length_bits.comp hinput))
-  have hsample := ComputableInPolyTime.sampleList (.of_tidy hwidth)
-  have hc := (ComputableInPolyTime.of_tidy hcount).comp
-    (ComputableInPolyTime.fst encode encBits)
-  have hi := (ComputableInPolyTime.of_tidy hinput).comp
-    (ComputableInPolyTime.fst encode encBits)
+  have hwidth := ComputableInPolyTime.unary_mul.comp
+    (hcount.prod (ComputableInPolyTime.length_bits.comp hinput))
+  have hsample := ComputableInPolyTime.sampleList hwidth
+  have hc := hcount.comp (ComputableInPolyTime.fst encode encBits)
+  have hi := hinput.comp (ComputableInPolyTime.fst encode encBits)
   have hs := ComputableInPolyTime.snd encode encBits
   have hcallback := ComputableInPolyTime.bitsAppend hs
     (computableInPolyTime_wordHash hc hs hi)

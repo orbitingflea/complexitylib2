@@ -21,6 +21,17 @@ namespace CslibFrontierTests.PolynomialPadding
 
 open Turing.MultiTapeTM
 
+-- Guard costs depend on the full input word, including malformed and insufficient padding.
+example (k : ℕ) :
+    ComputableInO
+      (fun x : List Bool => decide (((unframe x).length + 1) ^ k ≤ x.length))
+      encBits encBool (fun x => (x.length + 1) ^ 2) (fun x => x.length + 1) :=
+  computableInO_polynomialPaddingGuard k
+
+-- Zero exponent is valid for the guard, but is not a writer's k ≥ 1 hypothesis.
+example : decide (((unframe ([] : List Bool)).length + 1) ^ 0 ≤ 0) = false ∧
+    ¬ (1 ≤ (0 : ℕ)) := by decide
+
 private def cubePad (x : List Bool) : List Bool :=
   frame x ++ List.replicate ((x.length + 1) ^ 3) true
 

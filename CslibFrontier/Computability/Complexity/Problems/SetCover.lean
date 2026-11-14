@@ -682,7 +682,7 @@ theorem WeightedSetCover_mem_NP : WeightedSetCover ∈ NP encWeightedSetCover :=
         (fun q : (WeightedSetSystem × ℕ) × List ℕ =>
           (q.2.map fun i => (q.1.1.sets.getD i ⟨[], 0⟩).weight).sum)
         (encPair encWeightedSetCover (encList encUnary)) encNat :=
-      (ComputableInPolyTime.of_tidy ComputableTidilyInPolyTime.binary_sum).comp hws
+      ComputableInPolyTime.binary_sum.comp hws
     have hk : ComputableInPolyTime (fun q : (WeightedSetSystem × ℕ) × List ℕ => q.1.2)
         (encPair encWeightedSetCover (encList encUnary)) encNat :=
       (snd encWeightedSetSystem encNat).comp (fst encWeightedSetCover (encList encUnary))
