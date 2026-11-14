@@ -16,6 +16,7 @@ public import CslibFrontier.Crypto.Encoding
 public import CslibFrontier.Languages.Probabilistic.UniformNat
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Basic
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
+import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Captured
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Binary
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.BinaryDiv
@@ -313,10 +314,10 @@ theorem computableInPolyTime_ciphertext {α : Type} {input : α ↪ List Bool}
     (hN : ComputableInPolyTime N input encNat) (hz : ComputableInPolyTime z input encNat)
     (hm : ComputableInPolyTime m input encBool) (hr : ComputableInPolyTime r input encNat) :
     ComputableInPolyTime (fun a => ciphertext (N a) (z a) (m a) (r a)) input encNat := by
-  have hfactor := ComputableTidilyInPolyTime.cond hm.tidy hz.tidy (.const 1)
+  have hfactor := hm.ite hz (.const 1)
   have hpow := computableInPolyTime_powMod hN hr (.const 2)
   unfold ciphertext
-  exact .of_tidy (.binary_mod' (.binary_mul' hfactor hpow.tidy) hN.tidy)
+  exact .binary_mod' (.binary_mul' hfactor hpow) hN
 
 /-- `isQuadResidueNat` is computable in polynomial time. -/
 theorem computableInPolyTime_isQuadResidueNat {α : Type} {input : α ↪ List Bool}
@@ -324,21 +325,20 @@ theorem computableInPolyTime_isQuadResidueNat {α : Type} {input : α ↪ List B
     (hq : ComputableInPolyTime q input encNat) (hc : ComputableInPolyTime c input encNat) :
     ComputableInPolyTime (fun a => isQuadResidueNat (p a) (q a) (c a)) input encBool := by
   have hexpP : ComputableInPolyTime (fun a => (p a - 1) / 2) input encNat :=
-    .of_tidy (.binary_div' (.binary_sub' hp.tidy (.const 1)) (.const 2))
+    .binary_div' (.binary_sub' hp (.const 1)) (.const 2)
   have hexpQ : ComputableInPolyTime (fun a => (q a - 1) / 2) input encNat :=
-    .of_tidy (.binary_div' (.binary_sub' hq.tidy (.const 1)) (.const 2))
+    .binary_div' (.binary_sub' hq (.const 1)) (.const 2)
   unfold isQuadResidueNat
-  exact .of_tidy (.bool_and'
-    (.beq (computableInPolyTime_powMod hp hc hexpP).tidy (.const 1))
-    (.beq (computableInPolyTime_powMod hq hc hexpQ).tidy (.const 1)))
+  exact ComputableInPolyTime.bool_and.comp
+    (((computableInPolyTime_powMod hp hc hexpP).beq (.const 1)).prod
+      ((computableInPolyTime_powMod hq hc hexpQ).beq (.const 1)))
 
 /-- `decryptNat` is computable in polynomial time. -/
 theorem computableInPolyTime_decryptNat {α : Type} {input : α ↪ List Bool}
     {p q c : α → ℕ} (hp : ComputableInPolyTime p input encNat)
     (hq : ComputableInPolyTime q input encNat) (hc : ComputableInPolyTime c input encNat) :
     ComputableInPolyTime (fun a => decryptNat (p a) (q a) (c a)) input encBool :=
-  .of_tidy (ComputableTidilyInPolyTime.bool_not.comp
-    (computableInPolyTime_isQuadResidueNat hp hq hc).tidy)
+  ComputableInPolyTime.bool_not.comp (computableInPolyTime_isQuadResidueNat hp hq hc)
 
 /-- `keyGen gen` is uniformly strict PPT whenever `gen` is. -/
 theorem isPPTOn_keyGen {gen : ℕ → ProbComp KeyDesc} (hgen : IsPPTOn encUnary encKeyDesc gen) :
@@ -349,7 +349,7 @@ theorem isPPTOn_keyGen {gen : ℕ → ProbComp KeyDesc} (hgen : IsPPTOn encUnary
     (ComputableInPolyTime.snd encUnary encKeyDesc)
   have hp := hk.fst'.fst'; have hq := hk.fst'.snd'; have hz := hk.snd'
   have hN : ComputableInPolyTime (fun x : ℕ × KeyDesc => x.2.modulus)
-      (encPair encUnary encKeyDesc) encNat := .of_tidy (.binary_mul' hp.tidy hq.tidy)
+      (encPair encUnary encKeyDesc) encNat := .binary_mul' hp hq
   exact hgen.bind_with ((hN.prod hz).encoding_comp.prod (hp.prod hq).encoding_comp).isPPTOn
 
 /-- `encrypt` is uniformly strict PPT. -/
@@ -1090,8 +1090,8 @@ theorem computableInPolyTime_validBoundedWords {maxLen : ℕ → ℕ}
     (hmax : ComputableInPolyTime maxLen encUnary encUnary) :
     ComputableInPolyTime (fun ⟨n, pk, m₀, m₁⟩ => validBoundedWords maxLen n pk m₀ m₁)
       (encChallengePairInput encBits) encBool := by
-  have hmaxT := hmax.tidy
-  exact ComputableInPolyTime.of_tidy (by unfold validBoundedWords; polytime)
+  unfold validBoundedWords
+  polytime
 
 /-- Chosen-message experiment for `encryptWord` under a given public-key `PMF` law and
 `validBoundedWords maxLen`. -/
@@ -1225,10 +1225,8 @@ theorem jacobiAttackAdversary_isPPT : jacobiAttackAdversary.IsPPT where
       (ComputableInPolyTime.snd encUnary (encPair encBits encBits)).fst'
     have hc := ComputableInPolyTime.bitsToNat.comp'
       (ComputableInPolyTime.snd encUnary (encPair encBits encBits)).snd'
-    exact (ComputableInPolyTime.of_tidy
-      (ComputableTidilyInPolyTime.decide_eq'
-        (ComputableInPolyTime.binary_jacobiSym' hc hN).tidy
-        (ComputableTidilyInPolyTime.const (-1 : ℤ)))).isPPTOn
+    exact ((ComputableInPolyTime.binary_jacobiSym' hc hN).decide_eq'
+      (ComputableInPolyTime.const (-1 : ℤ))).isPPTOn
 
 /-- **Necessity of `z ∈ QNR_N^{+1}`** ([KatzLindell2020], Section 15.4.4): if `z ∈ jacobiNegSet p q`
 (`J_N(z) = -1`), `jacobiAttackAdversary` distinguishes `encrypt` of `false` from `true` with exact

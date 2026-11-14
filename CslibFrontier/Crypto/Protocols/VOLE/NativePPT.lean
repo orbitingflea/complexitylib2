@@ -93,7 +93,7 @@ theorem computableInPolyTime_weights {count : α → ℕ} {r : α → List F}
     ComputableInPolyTime (fun a => weights (count a) (r a)) input (encList eF) := by
   unfold weights
   apply ComputableInPolyTime.mapWithInput
-    ((ComputableInPolyTime.of_tidy ComputableTidilyInPolyTime.range).comp hcount)
+    (ComputableInPolyTime.range.comp hcount)
   exact (ComputableInPolyTime.listGetD (encA := eF) 0).comp
     ((hr.comp (.fst _ _)).prod (.snd _ _))
 
@@ -143,11 +143,11 @@ theorem computableInPolyTime_checkValue
         unfold e; fun_prop
       have hq : ComputableInPolyTime (fun p => p.1.2.1.tags.getD (index p) 0)
           (encPair e (encPair encGate eF)) eF :=
-        .of_tidy (ComputableTidilyInPolyTime.listGetD_binary 0 htags.tidy hi.tidy)
+        ComputableInPolyTime.listGetD_binary (encA := eF) 0 htags hi
       have hd : ComputableInPolyTime (fun p => p.1.2.2.1.getD (index p) 0)
           (encPair e (encPair encGate eF)) eF :=
-        .of_tidy (ComputableTidilyInPolyTime.listGetD_binary 0
-          (by unfold e; fun_prop) hi.tidy)
+        ComputableInPolyTime.listGetD_binary (encA := eF) 0
+          (by unfold e; fun_prop) hi
       unfold e at *
       polytime
     have hl := hlookup (fun p => p.2.1.left) (by fun_prop)

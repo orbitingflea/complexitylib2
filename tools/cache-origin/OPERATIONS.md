@@ -220,7 +220,10 @@ service drop-in also bounds its memory and task count; the Go services retain th
 ## Usage statistics
 
 The [dashboard](DASHBOARD.md) presents these aggregates as a static public status page.
-Its guide covers installation, metric definitions, validation and rollback.
+Its guide covers installation, metric definitions, validation and rollback. Monitoring does not
+acquire the publication/GC lock; concurrent changes can defer an inventory refresh. A successful
+dashboard timer does not guarantee fresh storage statistics: inspect `storage.stale`, its
+snapshot timestamp and the collector's journal warning.
 
 The second nginx access sink writes one JSON record per completed HTTPS request into the
 **separate** `cache-origin-usage` journal namespace. It includes timestamp, method, object path,

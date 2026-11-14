@@ -4,9 +4,15 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Erik Demaine
 -/
 
+module
+
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.DPi
 
-/-! Dependent finite tables with unbounded words, an empty alphabet, and no indices. -/
+/-! Dependent and canonical-order finite tables with unbounded words, an empty alphabet, and no
+indices. -/
+
+-- This regression module checks ordinary imports and exports no test fixtures.
+set_option linter.privateModule false
 
 namespace CslibFrontierTests.DependentTable
 
@@ -59,5 +65,42 @@ example : encDPi (fun i : Empty => i.elim) (Empty.elim : Empty → Empty) = [] :
   apply List.length_eq_zero_iff.mp
   rw [length_encDPi]
   simp
+
+-- Computable canonical-order `Fin` unary codes via `encFinEnum (Fin count)` equal `encUnary i.val`
+-- and have length strictly less than `count`.
+example (i : Fin 5) : encFinEnum (Fin 5) i = encUnary i.val :=
+  encFinEnum_fin_apply i
+
+example (i : Fin 5) : (encFinEnum (Fin 5) i).length < Nat.card (Fin 5) :=
+  length_encFinEnum_lt i
+
+-- Construct and index a canonical-order `Fin 3 → List Bool` table of unbounded words without
+-- importing BCS.
+private def wordFamily (bits : List Bool) : Fin 3 → List Bool
+  | ⟨0, _⟩ => bits
+  | ⟨1, _⟩ => bits.reverse
+  | ⟨_ + 2, _⟩ => bits ++ bits
+
+private theorem computableInPolyTime_wordFamily :
+    ComputableInPolyTime wordFamily encBits (encFinFn 3 encBits) := by
+  apply finFn
+  intro i
+  fin_cases i
+  · exact id'
+  · exact bitsReverse
+  · exact bitsAppend id' id'
+
+example :
+    ComputableInPolyTime
+      (fun p : List Bool × Fin 3 => wordFamily p.1 p.2)
+      (encPair encBits (encFinEnum (Fin 3))) encBits :=
+  finFn_apply'
+    (computableInPolyTime_wordFamily.comp (fst encBits (encFinEnum (Fin 3))))
+    (snd encBits (encFinEnum (Fin 3)))
+
+example :
+    wordFamily [true, false] ⟨1, by decide⟩ = [false, true] ∧
+      wordFamily [true, false] ⟨2, by decide⟩ = [true, false, true, false] :=
+  ⟨rfl, rfl⟩
 
 end CslibFrontierTests.DependentTable

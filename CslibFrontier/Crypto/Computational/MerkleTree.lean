@@ -76,6 +76,7 @@ certificates, which suits trees with polynomially many leaves.
 * `Cslib.Crypto.isCollision_extractMerkleCollision`: a second opening of a position yields a
   collision.
 * `Cslib.Crypto.computableInPolyTime_merkleRoot`, `Cslib.Crypto.computableInPolyTime_merklePath`,
+  `Cslib.Crypto.computableInPolyTime_merkleInputs`,
   `Cslib.Crypto.computableInPolyTime_merkleRootOfPath`,
   `Cslib.Crypto.computableInPolyTime_extractMerkleCollision`: plain polynomial-time certificates.
 
@@ -614,7 +615,10 @@ theorem computableInPolyTime_merklePath
     have := hinv.2.1
     omega
 
-private theorem computableInPolyTime_merkleInputs
+/-- Computing the list of hash inputs along a Merkle authentication path is polynomial-time for a
+polynomial-time keyed hash whose digests have the length of the key. -/
+@[program_certificate]
+theorem computableInPolyTime_merkleInputs
     (hH : ComputableInPolyTime (fun p : List Bool × List Bool => H p.1 p.2)
       (encPair encBits encBits) encBits)
     (hlen : ∀ k x, (H k x).length = k.length)

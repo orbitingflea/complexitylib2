@@ -13,9 +13,9 @@ from __future__ import annotations
 import argparse
 from array import array
 from collections import Counter
-from contextlib import contextmanager
 from datetime import datetime, timezone
 import json
+import logging
 import math
 import os
 from pathlib import Path
@@ -31,6 +31,7 @@ ARTIFACT = re.compile(r"a0/" + SCOPE + r"/([0-9a-f]{16})\.art\Z")
 MAPPING = re.compile(r"r0/" + SCOPE + r"/tc/([A-Za-z0-9_.+-]{1,160})/([0-9a-f]{40})\.jsonl\Z")
 PUBLISH = re.compile(r"publish/[0-9a-f]{40}\Z")
 ROW = re.compile(r"[0-9a-f]{16}\Z")
+ARCHIVE = re.compile(r"[0-9a-f]{16}\.ltar\Z")
 SUMMARY = re.compile(r"cache_gc_summary applied=true artifacts=([0-9]+) mappings=([0-9]+) bytes=([0-9]+)\Z")
 HOUR, DAY, WEEK = 3600, 86400, 604800
 MAX_ENTRIES = 100000
@@ -40,7 +41,7 @@ MAX_MAPPING_TOTAL = 64 << 20
 MAX_OUTPUT_BYTES = 1 << 20
 MAX_JOURNAL_BYTES = 96 << 20
 MAX_POPULAR_KEYS = 10000
-STORE_SECONDS = 5
+STORE_SECONDS = 30
 COMMAND_SECONDS = 25
 
 
@@ -234,109 +235,141 @@ def safe_directory(path, owner=None):
     return info
 
 
-@contextmanager
-def store_lock(root):
-    import fcntl
-    owner = safe_directory(root).st_uid
-    safe_directory(root / "state", owner)
-    path = root / "state/lock"
-    descriptor = os.open(path, os.O_RDONLY | os.O_CLOEXEC | os.O_NOFOLLOW)
-    try:
-        info = os.fstat(descriptor)
-        current = path.lstat()
-        if (not stat.S_ISREG(info.st_mode) or info.st_uid != owner or stat.S_IMODE(info.st_mode) != 0o600
-                or info.st_nlink != 1 or (info.st_dev, info.st_ino) != (current.st_dev, current.st_ino)):
-            raise SnapshotUnavailable("unsafe lock")
-        try:
-            fcntl.flock(descriptor, fcntl.LOCK_SH | fcntl.LOCK_NB)
-        except BlockingIOError as error:
-            raise SnapshotUnavailable("store busy") from error
-        yield owner
-    finally:
-        os.close(descriptor)
+class SnapshotChanged(SnapshotUnavailable):
+    """An expected concurrent publication/GC change, eligible for one retry."""
+
+
+def file_identity(info):
+    return (info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns, info.st_nlink)
 
 
 def storage_snapshot(root, now, mapping_requests):
-    """Read a snapshot under the existing lock, never create it or block a writer."""
+    """Read approximate statistics without opening the publisher's lock file.
+
+    Retry one incomplete sample after a concurrent namespace change. Both
+    attempts share the same elapsed-time budget; persistent failures retain the
+    previous inventory. The publisher and GC retain their own exclusive lock.
+    """
     deadline = time.monotonic() + STORE_SECONDS
-    with store_lock(root) as owner:
-        public = root / "public"
-        safe_directory(public, owner)
-        artifacts = {}
-        mappings = []
-        count = 1
-        queue = [public]
-        while queue:
-            directory = queue.pop()
-            with os.scandir(directory) as entries:
-                for entry in entries:
-                    count += 1
-                    if count > MAX_ENTRIES or time.monotonic() > deadline:
-                        raise SnapshotUnavailable("scan limit")
-                    info = entry.stat(follow_symlinks=False)
-                    if info.st_uid != owner or info.st_mode & 0o022:
-                        raise SnapshotUnavailable("unsafe entry")
-                    path = Path(entry.path)
-                    if stat.S_ISDIR(info.st_mode):
-                        queue.append(path)
-                        continue
-                    if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
-                        raise SnapshotUnavailable("unexpected entry")
-                    key = path.relative_to(public).as_posix()
-                    if match := ARTIFACT.fullmatch(key):
-                        artifacts[match[1]] = info.st_size
-                    elif match := MAPPING.fullmatch(key):
-                        if info.st_size > MAX_MAPPING_BYTES or info.st_mtime > now:
-                            raise SnapshotUnavailable("invalid mapping")
-                        mappings.append((path, info.st_size, info.st_mtime, match[1], match[2]))
+    for attempt in range(2):
+        try:
+            return storage_attempt(root, now, mapping_requests, deadline)
+        except (FileNotFoundError, SnapshotChanged) as error:
+            if attempt or time.monotonic() >= deadline:
+                raise SnapshotUnavailable("store changed during scan") from error
+
+
+def storage_attempt(root, now, mapping_requests, deadline):
+    owner = safe_directory(root).st_uid
+    public = root / "public"
+    safe_directory(public, owner)
+    artifacts = {}
+    mappings = []
+    count = 1
+    queue = [public]
+    deferred_artifacts = None
+    while queue:
+        if time.monotonic() > deadline:
+            raise SnapshotUnavailable("scan deadline")
+        directory = queue.pop()
+        safe_directory(directory, owner)
+        with os.scandir(directory) as entries:
+            for entry in entries:
+                count += 1
+                if count > MAX_ENTRIES or time.monotonic() > deadline:
+                    raise SnapshotUnavailable("scan limit")
+                info = entry.stat(follow_symlinks=False)
+                if info.st_uid != owner or info.st_mode & 0o022:
+                    raise SnapshotUnavailable("unsafe entry")
+                path = Path(entry.path)
+                if stat.S_ISDIR(info.st_mode):
+                    if path == public / "a0":
+                        deferred_artifacts = path
                     else:
-                        raise SnapshotUnavailable("unexpected entry")
-        if sum(item[1] for item in mappings) > MAX_MAPPING_TOTAL:
-            raise SnapshotUnavailable("mapping scan limit")
-        builds, logical, missing = [], 0, 0
-        for path, size, modified, toolchain, revision in mappings:
-            if time.monotonic() > deadline:
-                raise SnapshotUnavailable("scan deadline")
-            refs, inputs, modules = set(), set(), 0
-            with path.open("rb") as stream:
-                if stream.readline(4097) != b'"2026-03-17"\n':
-                    raise SnapshotUnavailable("unsupported mapping")
-                total = stream.tell()
-                while line := stream.readline(4097):
-                    total += len(line)
-                    if total > size or len(line) > 4096 or modules >= MAX_ENTRIES:
-                        raise SnapshotUnavailable("mapping limit")
-                    row = json.loads(line)
-                    if (not isinstance(row, list) or len(row) != 2 or not all(isinstance(x, str) for x in row)
-                            or not ROW.fullmatch(row[0]) or row[0] in inputs
-                            or not re.fullmatch(r"[0-9a-f]{16}\.ltar", row[1])):
-                        raise SnapshotUnavailable("invalid mapping row")
-                    modules += 1
-                    inputs.add(row[0])
-                    refs.add(row[1][:16])
-                    if modules % 128 == 0 and time.monotonic() > deadline:
-                        raise SnapshotUnavailable("scan deadline")
-            if not refs or total != size:
-                raise SnapshotUnavailable("invalid mapping size")
-            referenced_bytes = sum(artifacts.get(ref, 0) for ref in refs)
-            missing += sum(ref not in artifacts for ref in refs)
-            logical += referenced_bytes
-            builds.append({"revision": revision, "toolchain": toolchain, "published_at": iso(modified),
-                           "module_count": modules, "artifact_count": len(refs), "artifact_bytes": referenced_bytes,
-                           "mapping_requests": mapping_requests.get("/" + path.relative_to(public).as_posix(), 0)})
-        usage = os.statvfs(root)
-        total_bytes, free_bytes = usage.f_blocks * usage.f_frsize, usage.f_bfree * usage.f_frsize
-        artifact_bytes = sum(artifacts.values())
-        builds.sort(key=lambda build: (build["published_at"], build["revision"]), reverse=True)
-        storage = {"snapshot_at": iso(now), "stale": False, "entry_count": count,
-                   "artifact_count": len(artifacts), "mapping_count": len(mappings), "artifact_bytes": artifact_bytes,
-                   "mapping_bytes": sum(item[1] for item in mappings), "logical_retained_bytes": logical,
-                   "saved_bytes": max(0, logical - artifact_bytes),
-                   "dedup_ratio": logical / artifact_bytes if artifact_bytes else None, "missing_artifacts": missing,
-                   "disk": {"total_bytes": total_bytes, "used_bytes": total_bytes - free_bytes,
-                            "available_bytes": usage.f_bavail * usage.f_frsize,
-                            "inodes_total": usage.f_files, "inodes_available": usage.f_favail}}
-        return {"storage": storage, "latest": builds[0] if builds else None, "builds": builds[:20]}
+                        queue.append(path)
+                    continue
+                if not stat.S_ISREG(info.st_mode):
+                    raise SnapshotUnavailable("unexpected entry")
+                if info.st_nlink != 1:
+                    # Installation briefly links staging and public names.
+                    raise SnapshotChanged("file links changed during scan")
+                key = path.relative_to(public).as_posix()
+                if match := ARTIFACT.fullmatch(key):
+                    artifacts[match[1]] = info.st_size
+                elif match := MAPPING.fullmatch(key):
+                    if info.st_size > MAX_MAPPING_BYTES or info.st_mtime > time.time():
+                        raise SnapshotUnavailable("invalid mapping")
+                    mappings.append((path, info, match[1], match[2]))
+                else:
+                    raise SnapshotUnavailable("unexpected entry")
+        # Capture mappings before artifact metadata: a later publication may
+        # add artifacts, but cannot add a captured mapping referencing missed
+        # artifacts. New builds simply appear in a subsequent sample.
+        if not queue and deferred_artifacts is not None:
+            queue.append(deferred_artifacts)
+            deferred_artifacts = None
+    if time.monotonic() > deadline:
+        raise SnapshotUnavailable("scan deadline")
+    if sum(item[1].st_size for item in mappings) > MAX_MAPPING_TOTAL:
+        raise SnapshotUnavailable("mapping scan limit")
+    builds, logical, missing = [], 0, 0
+    for path, expected, toolchain, revision in mappings:
+        size, modified = expected.st_size, expected.st_mtime
+        if time.monotonic() > deadline:
+            raise SnapshotUnavailable("scan deadline")
+        refs, inputs, modules = set(), set(), 0
+        descriptor = os.open(path, os.O_RDONLY | os.O_CLOEXEC | os.O_NOFOLLOW | os.O_NONBLOCK)
+        with os.fdopen(descriptor, "rb") as stream:
+            actual = os.fstat(stream.fileno())
+            if not stat.S_ISREG(actual.st_mode) or actual.st_uid != owner or actual.st_mode & 0o022:
+                raise SnapshotUnavailable("unsafe mapping file")
+            if file_identity(actual) != file_identity(expected):
+                raise SnapshotChanged("mapping changed during scan")
+            if stream.readline(4097) != b'"2026-03-17"\n':
+                raise SnapshotUnavailable("unsupported mapping")
+            total = stream.tell()
+            while line := stream.readline(4097):
+                total += len(line)
+                if total > size or len(line) > 4096 or modules >= MAX_ENTRIES:
+                    raise SnapshotUnavailable("mapping limit")
+                row = json.loads(line)
+                if (not isinstance(row, list) or len(row) != 2 or not all(isinstance(x, str) for x in row)
+                        or not ROW.fullmatch(row[0]) or row[0] in inputs
+                        or not ARCHIVE.fullmatch(row[1])):
+                    raise SnapshotUnavailable("invalid mapping row")
+                modules += 1
+                inputs.add(row[0])
+                refs.add(row[1][:16])
+                if modules % 128 == 0 and time.monotonic() > deadline:
+                    raise SnapshotUnavailable("scan deadline")
+        if not refs or total != size:
+            raise SnapshotUnavailable("invalid mapping size")
+        referenced_bytes = sum(artifacts.get(ref, 0) for ref in refs)
+        missing += sum(ref not in artifacts for ref in refs)
+        logical += referenced_bytes
+        builds.append({"revision": revision, "toolchain": toolchain, "published_at": iso(modified),
+                       "module_count": modules, "artifact_count": len(refs), "artifact_bytes": referenced_bytes,
+                       "mapping_requests": mapping_requests.get("/" + path.relative_to(public).as_posix(), 0)})
+    # GC removes mappings before their artifacts. Discard a sample containing
+    # an expired mapping rather than presenting its old references as missing.
+    for path, expected, _, _ in mappings:
+        if time.monotonic() > deadline:
+            raise SnapshotUnavailable("scan deadline")
+        if file_identity(path.lstat()) != file_identity(expected):
+            raise SnapshotChanged("mapping changed during scan")
+    usage = os.statvfs(root)
+    total_bytes, free_bytes = usage.f_blocks * usage.f_frsize, usage.f_bfree * usage.f_frsize
+    artifact_bytes = sum(artifacts.values())
+    builds.sort(key=lambda build: (build["published_at"], build["revision"]), reverse=True)
+    storage = {"snapshot_at": iso(now), "stale": False, "entry_count": count,
+               "artifact_count": len(artifacts), "mapping_count": len(mappings), "artifact_bytes": artifact_bytes,
+               "mapping_bytes": sum(item[1].st_size for item in mappings), "logical_retained_bytes": logical,
+               "saved_bytes": max(0, logical - artifact_bytes),
+               "dedup_ratio": logical / artifact_bytes if artifact_bytes else None, "missing_artifacts": missing,
+               "disk": {"total_bytes": total_bytes, "used_bytes": total_bytes - free_bytes,
+                        "available_bytes": usage.f_bavail * usage.f_frsize,
+                        "inodes_total": usage.f_files, "inodes_available": usage.f_favail}}
+    return {"storage": storage, "latest": builds[0] if builds else None, "builds": builds[:20]}
 
 
 def unavailable_storage(previous):
@@ -516,8 +549,11 @@ def collect(root, output, *, now=None):
         traffic.limited = True
     snapshot = {"schema": 1, "generated_at": iso(now), "refresh_seconds": 300, **traffic.result()}
     try:
-        snapshot.update(storage_snapshot(root, now, traffic.mapping_requests))
-    except (OSError, ValueError, SnapshotUnavailable):
+        snapshot.update(storage_snapshot(root, time.time(), traffic.mapping_requests))
+    except (OSError, ValueError, SnapshotUnavailable) as error:
+        # Keep raw filesystem/JSON details out of both public JSON and logs.
+        reason = str(error) if isinstance(error, SnapshotUnavailable) else type(error).__name__
+        logging.warning("Storage snapshot unavailable (%s); retaining previous inventory", reason)
         snapshot.update(unavailable_storage(previous))
     snapshot["gc"] = gc_snapshot(now, previous)
     write_snapshot(output, snapshot)

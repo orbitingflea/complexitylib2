@@ -4,6 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Samuel Schlesinger
 -/
 
+module
+
 import CslibFrontier.Crypto.Protocols.BCS.Basic
 
 /-!
@@ -16,6 +18,9 @@ Exercises a concrete two-round (`r = 2`), depth-one (`d = 1`) public-coin IOP an
    when a cheating proof opens a committed leaf to the opposite bit under a colliding hash.
 4. Straight-line knowledge extraction via `bcs_knowledge_or_merkleCollision`.
 -/
+
+-- This regression module checks ordinary imports and exports no test fixtures.
+set_option linter.privateModule false
 
 namespace CslibFrontierTests.Crypto.BCSTransform
 
@@ -169,5 +174,171 @@ example :
       isCollision constHash (fun _ _ => true) 2 [false, true] col.1 col.2 = true :=
   bcs_knowledge_or_merkleCollision encSym_injective (fun _ => rfl) (by decide)
     (fun h => by revert h; decide) 2
+
+/-! ### Polynomial-time collision extraction and standard-model `CollisionResistant` reductions -/
+
+open Cslib Cslib.Probability Turing.MultiTapeTM
+
+/-- Constant Fiat–Shamir oracle used to exercise uniform polynomial-time reductions. -/
+def constFS (_ : Bool) (_ : List (List Bool)) : Bool := false
+
+/-- Single-round, depth-one IOP querying entry `0` of round `0` and checking equality with `x`. -/
+def ksIOP : PublicCoinIOP 1 1 Bool Bool Bool Bool where
+  proveRound _ _ w _ := fun _ => w
+  queries _ _ := [(⟨0, by decide⟩, ⟨0, by decide⟩)]
+  decide x _ answers := answers == [x]
+
+/-- Straight-line knowledge extractor for `ksIOP` reading entry `0` of round `0`. -/
+def ksExtract (_ : Bool) (oracles : Fin 1 → OracleTable 1 Bool) : Bool :=
+  oracles ⟨0, by decide⟩ ⟨0, by decide⟩
+
+theorem ksIOP_knowledgeSound : IOPKnowledgeSoundness ksIOP toyRel ksExtract := by
+  intro x chals oracles hver
+  simp only [iopVerify, iopAnswers, ksIOP, List.map_cons, List.map_nil, beq_iff_eq,
+    List.cons.injEq, and_true] at hver
+  exact hver.symm
+
+theorem computableInPolyTime_constHash :
+    ComputableInPolyTime (fun p : List Bool × List Bool => constHash p.1 p.2)
+      (encPair encBits encBits) encBits :=
+  ComputableInPolyTime.fst encBits encBits
+
+theorem computableInPolyTime_ksIOP_queries :
+    ComputableInPolyTime (fun p : Bool × (Fin 1 → Bool) => ksIOP.queries p.1 p.2)
+      (encPair encBool (encFinFn 1 encBool))
+      (encList (encPair (encFinEnum (Fin 1)) (encFinEnum (Fin 2)))) :=
+  ComputableInPolyTime.const _
+
+theorem computableInPolyTime_constFS :
+    ComputableInPolyTime (fun p : Bool × List (List Bool) => constFS p.1 p.2)
+      (encPair encBool (encList encBits)) encBool :=
+  ComputableInPolyTime.const false
+
+/-- Input-dependent conflicting table-committing output for `ksIOP` under `constHash`: commits to
+the `w = false` table (whose depth-1 root under `constHash k` is `k`), claims statement `true`, and
+opens position `0` to `true` with sibling path `[k]`. -/
+def cheatingTableOutput (k : List Bool) : BCSTableCommitOutput 1 1 Bool Bool where
+  stmt := true
+  oracles := fun _ _ => false
+  proof := { roots := fun _ => k, openings := [⟨true, [k]⟩] }
+
+/-- Input-dependent strict-PPT table-committing BCS adversary returning `cheatingTableOutput k`. -/
+def cheatingTableAdversary : BCSTableCommitAdversary 1 1 Bool Bool :=
+  fun _ k => pure (cheatingTableOutput k)
+
+theorem computableInPolyTime_cheatingTableOutput :
+    ComputableInPolyTime cheatingTableOutput encBits
+      (encBCSTableCommitOutput 1 1 Bool Bool encBool encBool) :=
+  encBCSTableCommitOutput_mk_polyTime 1 1 Bool Bool encBool encBool
+    (ComputableInPolyTime.const true)
+    (ComputableInPolyTime.const (fun _ _ => false))
+    (encBCSProof_mk_polyTime 1 Bool encBool
+      (ComputableInPolyTime.finFn fun _ => ComputableInPolyTime.id')
+      ((encMerkleOpeningOf_mk_polyTime Bool encBool
+        (ComputableInPolyTime.const true)
+        ((ComputableInPolyTime.id').cons' (ComputableInPolyTime.const []))).cons'
+        (ComputableInPolyTime.const [])))
+
+theorem isPPTOn_cheatingTableAdversary :
+    IsPPTOn (encPair encUnary encBits) (encBCSTableCommitOutput 1 1 Bool Bool encBool encBool)
+      (fun ⟨n, k⟩ => cheatingTableAdversary n k) :=
+  (computableInPolyTime_cheatingTableOutput.comp
+    (ComputableInPolyTime.snd encUnary encBits)).tidy.isPPTOn
+
+-- 5. Poly-time certificate for `bcsExtractTableCollision`, concrete extraction and edge case, and
+-- `isPPT_bcsTableCollisionFinder`.
+-- Edge case: when the opening agrees with the committed table, `bcsExtractTableCollision` returns
+-- the default empty pair `([], [])`.
+example :
+    bcsExtractTableCollision ksIOP constHash [false, true] (fun b => encBool b) constFS false
+      (fun _ _ => false)
+      { roots := fun _ => [false, true], openings := [⟨false, [[false, true]]⟩] } =
+      ([], []) := by decide
+
+-- On `cheatingTableOutput [false, true]`, `bcsBreaksTableBinding` holds under `constHash`, the
+-- committed table violates `toyRel`, and `bcsExtractTableCollision` extracts a valid collision.
+example :
+    let out := cheatingTableOutput [false, true]
+    bcsBreaksTableBinding ksIOP constHash [false, true] (fun b => encBool b) constFS out = true ∧
+      decide (¬ toyRel out.stmt (ksExtract out.stmt out.oracles)) = true ∧
+      let col := bcsExtractTableCollision ksIOP constHash [false, true] (fun b => encBool b)
+        constFS out.stmt out.oracles out.proof
+      isCollision constHash (fun _ _ => true) 2 [false, true] col.1 col.2 = true := by
+  decide
+
+example :
+    ComputableInPolyTime
+      (fun p : List Bool × BCSTableCommitOutput 1 1 Bool Bool =>
+        bcsExtractTableCollision ksIOP constHash p.1 (fun b => encBool b) constFS
+          p.2.stmt p.2.oracles p.2.proof)
+      (encPair encBits (encBCSTableCommitOutput 1 1 Bool Bool encBool encBool))
+      (encPair encBits encBits) :=
+  computableInPolyTime_bcsExtractTableCollision computableInPolyTime_constHash (fun _ _ => rfl)
+    computableInPolyTime_ksIOP_queries computableInPolyTime_constFS
+    (ComputableInPolyTime.fst encBits _)
+    ((encBCSTableCommitOutput_stmt_polyTime 1 1 Bool Bool encBool encBool
+      (ComputableInPolyTime.snd encBits _)))
+    ((encBCSTableCommitOutput_oracles_polyTime 1 1 Bool Bool encBool encBool
+      (ComputableInPolyTime.snd encBits _)))
+    ((encBCSTableCommitOutput_proof_polyTime 1 1 Bool Bool encBool encBool
+      (ComputableInPolyTime.snd encBits _)))
+
+example :
+    IsPPT (encPair encBits encBits)
+      (bcsTableCollisionFinder ksIOP constHash (fun b => encBool b) constFS
+        cheatingTableAdversary) :=
+  isPPT_bcsTableCollisionFinder computableInPolyTime_constHash (fun _ _ => rfl)
+    computableInPolyTime_ksIOP_queries computableInPolyTime_constFS isPPTOn_cheatingTableAdversary
+
+-- Concrete probability reductions under the colliding toy hash `constHash` (without assuming
+-- `CollisionResistant constHash`).
+example (n : ℕ) :
+    Game.succProbability (ProbComp.eval
+      (bcsTableBindingGame ksIOP constHash (fun b => encBool b) constFS
+        cheatingTableAdversary n)) ≤
+    Game.succProbability (ProbComp.eval
+      (collisionGame constHash (fun _ _ => true)
+        (bcsTableCollisionFinder ksIOP constHash (fun b => encBool b) constFS
+          cheatingTableAdversary) n)) :=
+  succProbability_bcsTableBindingGame_le ksIOP constHash encBool.injective constFS
+    cheatingTableAdversary n
+
+example (n : ℕ) :
+    Game.succProbability (ProbComp.eval
+      (bcsTableKnowledgeGame ksIOP toyRel ksExtract constHash (fun b => encBool b) constFS
+        cheatingTableAdversary n)) ≤
+    Game.succProbability (ProbComp.eval
+      (collisionGame constHash (fun _ _ => true)
+        (bcsTableCollisionFinder ksIOP constHash (fun b => encBool b) constFS
+          cheatingTableAdversary) n)) :=
+  succProbability_bcsTableKnowledgeGame_le ksIOP_knowledgeSound constHash encBool.injective
+    constFS cheatingTableAdversary n
+
+-- 6. Standard-model reductions from BCS table binding and knowledge soundness to
+-- `CollisionResistant H` and `HashFamily H` for any efficient length-preserving keyed hash `H` and
+-- uniform strict-PPT `adversary`.
+example (H : List Bool → List Bool → List Bool) (hCR : CollisionResistant H)
+    (hH : ComputableInPolyTime (fun p : List Bool × List Bool => H p.1 p.2)
+      (encPair encBits encBits) encBits)
+    (hlen : ∀ k x, (H k x).length = k.length)
+    (adversary : BCSTableCommitAdversary 1 1 Bool Bool)
+    (hadv : IsPPTOn (encPair encUnary encBits)
+      (encBCSTableCommitOutput 1 1 Bool Bool encBool encBool)
+      (fun ⟨n, k⟩ => adversary n k)) :
+    Negligible (fun n => Game.succProbability (ProbComp.eval
+      (bcsTableBindingGame ksIOP H (fun b => encBool b) constFS adversary n))) :=
+  CollisionResistant.bcsTableBinding_negligible hCR hH hlen
+    computableInPolyTime_ksIOP_queries computableInPolyTime_constFS hadv
+
+example (H : List Bool → List Bool → List Bool) (hf : HashFamily H)
+    (adversary : BCSTableCommitAdversary 1 1 Bool Bool)
+    (hadv : IsPPTOn (encPair encUnary encBits)
+      (encBCSTableCommitOutput 1 1 Bool Bool encBool encBool)
+      (fun ⟨n, k⟩ => adversary n k)) :
+    Negligible (fun n => Game.succProbability (ProbComp.eval
+      (bcsTableKnowledgeGame ksIOP toyRel ksExtract H (fun b => encBool b) constFS
+        adversary n))) :=
+  HashFamily.bcsTableKnowledge_negligible ksIOP_knowledgeSound hf
+    computableInPolyTime_ksIOP_queries computableInPolyTime_constFS hadv
 
 end CslibFrontierTests.Crypto.BCSTransform

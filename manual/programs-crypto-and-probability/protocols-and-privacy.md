@@ -160,7 +160,7 @@ Merkle root. `micaliVerify_micaliProve_eq_true` and
 oracles and in the lazy random-oracle experiment `micaliHonestGame` (checked
 in [`CslibFrontierTests/Crypto/Micali.lean`](../../CslibFrontierTests/Crypto/Micali.lean)).
 
-In the random-oracle model, [`CslibFrontier/Crypto/Computational/MerkleTree/ROMExtract.lean`](../../CslibFrontier/Crypto/Computational/MerkleTree/ROMExtract.lean) replaces two-transcript rewinding with straight-line extraction from a recorded hash query-answer trace `tr : List (List Bool × List Bool)` ([bcs16][bcs16]; Chiesa–Yogev Construction 18.5.3 and Lemma 18.5.7): `findPreimageInTrace` inverts `encPair encBits encBits` via `(unframe, dropFrame)`, `extractNodeFromTrace` and `extractLeafFromTrace` walk `d` levels down from the Merkle root `rt` along the bits of position `i`, and `extractTableFromTrace` reconstructs all `2 ^ d` leaves. When `tr` is collision-free (`TraceCollisionFree tr`) and records every hash step along a valid opening (`PathQueriedInTrace H k tr i leaf path` and `merkleVerify H k d rt i leaf path = true`), `extractLeafFromTrace_eq_some_of_merkleVerify` and `getD_extractTableFromTrace_eq_of_merkleVerify` prove that the extracted leaf and table entry equal `leaf`; conversely, when `tr` is consistent with `H k` (`TraceConsistentWith (H k) tr`) and an accepted queried opening disagrees with `extractLeafFromTrace`, `extractTraceCollision` deterministically extracts a hash collision in `tr` (`extractTraceCollision_spec`, `isCollision_extractTraceCollision`). For a lazy uniform `m`-bit random oracle `memoize (fun _ => BitString.uniformList m)`, `toOuterMeasure_uniformList_mem_list_le`, `toOuterMeasure_memoize_not_traceCollisionFree_step` and `toOuterMeasure_run_memoize_not_traceCollisionFree_le` bound the preimage-hitting probability and the `Q * (Q * (1 / 2 ^ m))` collision probability of any `IsQueryBounded program Q` computation; executable checks are in [`CslibFrontierTests/Crypto/ROMMerkleExtract.lean`](../../CslibFrontierTests/Crypto/ROMMerkleExtract.lean).
+In the random-oracle model, [`CslibFrontier/Crypto/Computational/MerkleTree/ROMExtract.lean`](../../CslibFrontier/Crypto/Computational/MerkleTree/ROMExtract.lean) replaces two-transcript rewinding with straight-line extraction from a recorded hash query-answer trace `tr : List (List Bool × List Bool)` ([bcs16][bcs16]; Chiesa–Yogev Construction 18.5.3 and Lemma 18.5.7): `findPreimageInTrace` inverts `encPair encBits encBits` via `(unframe, dropFrame)`, `extractNodeFromTrace` and `extractLeafFromTrace` walk `d` levels down from the Merkle root `rt` along the bits of position `i`, and `extractTableFromTrace` reconstructs all `2 ^ d` leaves. When `tr` is collision-free (`TraceCollisionFree tr`) and records every hash step along a valid opening (`PathQueriedInTrace H k tr i leaf path` and `merkleVerify H k d rt i leaf path = true`), `extractLeafFromTrace_eq_some_of_merkleVerify` and `getD_extractTableFromTrace_eq_of_merkleVerify` prove that the extracted leaf and table entry equal `leaf`; conversely, when `tr` is consistent with `H k` (`TraceConsistentWith (H k) tr`) and an accepted queried opening disagrees with `extractLeafFromTrace`, `extractTraceCollision` deterministically extracts a hash collision in `tr` (`extractTraceCollision_spec`, `isCollision_extractTraceCollision`). With `encMerkleTrace` and `computableInPolyTime_merkleInputs` ([`MerkleTree.lean`](../../CslibFrontier/Crypto/Computational/MerkleTree.lean)), `computableInPolyTime_findQueryInTrace`, `computableInPolyTime_findPreimageInTrace`, `computableInPolyTime_extractNodeFromTrace`, `computableInPolyTime_extractLeafFromTrace`, `computableInPolyTime_extractTableFromTrace`, `computableInPolyTime_extractTraceCollision`, `computableInPolyTime_decide_traceConsistentWith`, and `computableInPolyTime_decide_pathQueriedInTrace` certify that straight-line trace extraction, trace collision extraction, and trace-consistency checks run in polynomial time. For a lazy uniform `m`-bit random oracle `memoize (fun _ => BitString.uniformList m)`, `toOuterMeasure_uniformList_mem_list_le`, `toOuterMeasure_memoize_not_traceCollisionFree_step` and `toOuterMeasure_run_memoize_not_traceCollisionFree_le` bound the preimage-hitting probability and the `Q * (Q * (1 / 2 ^ m))` collision probability of any `IsQueryBounded program Q` computation; executable checks are in [`CslibFrontierTests/Crypto/ROMMerkleExtract.lean`](../../CslibFrontierTests/Crypto/ROMMerkleExtract.lean).
 
 [`CslibFrontier/Crypto/Computational/Kilian/MicaliSoundness.lean`](../../CslibFrontier/Crypto/Computational/Kilian/MicaliSoundness.lean) combines straight-line Merkle extraction with Fiat–Shamir challenge analysis to prove soundness for an unsalted, two-channel Micali variant in the random-oracle model (Micali 2000; compare Chiesa–Yogev Construction 21.1.1 and Theorem 21.2.1, March 25, 2026 version, pp. 239–242):
 
@@ -199,7 +199,7 @@ into a non-interactive proof (`BCSProof r Sym`, `bcsProve`, `bcsVerify`):
   on the full challenge vector `bcsHonestChallenges`, yielding perfect
   completeness (`bcsVerify_bcsProve_eq_true`) for every hash `H k` and every
   Fiat–Shamir function `hFS`.
-- **Binding and knowledge-extraction reductions:** against committed round
+- **Binding, knowledge-extraction, and standard-model `CollisionResistant` reductions:** against committed round
   tables `oracles : Fin r → OracleTable d Sym` with injective symbol encoding
   `encSym`, `bcs_sound_or_merkleCollision` proves that any accepted `BCSProof`
   either makes `iopVerify` accept `oracles` at `bcsChallenge hFS x prf.roots` or
@@ -209,8 +209,30 @@ into a non-interactive proof (`BCSProof r Sym`, `bcsProve`, `bcsVerify`):
   `iopExtract`, `bcs_knowledge_or_soundness_violation_or_collision` and
   `bcs_knowledge_or_merkleCollision` reduce an accepting BCS proof to a valid
   extracted witness `rel x (iopExtract x oracles)`, an IOP knowledge-soundness
-  violation at the Fiat–Shamir challenge, or an explicit `H k` collision. Checked
-  examples for these deterministic algebraic reductions are in
+  violation at the Fiat–Shamir challenge, or an explicit `H k` collision. For a
+  fixed round count `r` and tree depth `d` outside the security parameter, using
+  the encodings `encFinEnum (Fin ...)` (`encFinEnum_fin_apply`) and `encFinFn` (from
+  [`Encodings/DPi.lean`](../../CslibFrontier/Computability/Machines/Turing/MultiTape/Encodings/DPi.lean))
+  together with `encOracleTable`, `encFSTranscript`, `encIOPQuery`,
+  `encIOPQueryList`, `encIOPTranscript`, `encMerkleOpeningOf`, `encBCSProof`,
+  and `encBCSTableCommitOutput`, `computableInPolyTime_bcsChallenge`,
+  `computableInPolyTime_bcsFindConflict`, and
+  `computableInPolyTime_bcsExtractTableCollision` certify polynomial-time
+  collision extraction (`isPPT_bcsTableCollisionFinder` for
+  `bcsTableCollisionFinder`) under an efficient length-preserving keyed hash
+  `H`, polynomial-time `iop.queries`, and deterministic polynomial-time `hFS`.
+  In `bcsTableBindingGame` and `bcsTableKnowledgeGame`, the game checks that the
+  proof roots match adversary-supplied full tables `oracles`;
+  `succProbability_bcsTableBindingGame_le`,
+  `succProbability_bcsTableKnowledgeGame_le`,
+  `CollisionResistant.bcsTableBinding_negligible`,
+  `CollisionResistant.bcsTableKnowledge_negligible`,
+  `HashFamily.bcsTableBinding_negligible`, and
+  `HashFamily.bcsTableKnowledge_negligible` reduce those table-committing games
+  against any uniform strict-PPT `BCSTableCommitAdversary` to
+  `CollisionResistant H` (where the knowledge failure bounds assume semantic
+  zero-error `IOPKnowledgeSoundness` without certifying efficient witness
+  extraction). Checked examples are in
   [`CslibFrontierTests/Crypto/BCSTransform.lean`](../../CslibFrontierTests/Crypto/BCSTransform.lean).
 
 For unconditional random-oracle soundness and straight-line knowledge extraction, import
@@ -233,15 +255,34 @@ trace extraction from Construction 18.5.3 and Lemma 18.5.7, pp. 199 and 207):
   `evalPure_bcsVerifyROM` identify `bcsProveROM` and `bcsVerifyROM` with `bcsProve` and `bcsVerify`
   instantiated with `chainedFS f`, giving perfect completeness in the lazy two-channel ROM
   (`bcsHonestROMGame_eq_pure_true`).
-- **Straight-line multi-round oracle reconstruction:** given `Function.LeftInverse decSym encSym`
-  and `defaultSym : Sym`, `bcsExtractTable`, `bcsExtractOracles`, and `bcsExtractWitness`
+- **Straight-line multi-round oracle reconstruction and standard-model `CollisionResistant` reduction:** given `Function.LeftInverse decSym encSym`
+  and `defaultSym : Sym` for fixed `r` and `d` outside the security parameter,
+  `bcsExtractTable`, `bcsExtractOracles`, and `bcsExtractWitness`
   reconstruct all `r` committed round tables and a candidate witness directly from a Merkle trace
-  `tr_MT` via `extractLeafFromTrace` without rewinding. Under `TraceCollisionFree tr_MT` and
-  `BCSOpeningsQueriedInTrace`, `iopVerify_bcsExtractOracles_of_bcsVerify` proves that `iopVerify`
-  accepts `bcsExtractOracles`, `exists_collision_of_bcsVerify_of_iopVerify_eq_false` extracts a
-  trace collision whenever `iopVerify` rejects, and `bcsExtractTable_cons_of_ne` /
-  `bcsExtractOracles_cons_of_ne` prove invariance under fresh Merkle answers that avoid target roots
-  and child digests.
+  `tr_MT` via `extractLeafFromTrace` without rewinding: when the symbol decoder `decSym` is
+  polynomial-time, `computableInPolyTime_bcsExtractTable` and
+  `computableInPolyTime_bcsExtractOracles` certify polynomial-time table and oracle reconstruction
+  (a semantic left inverse `Function.LeftInverse decSym encSym` alone does not supply decoder
+  efficiency), and `computableInPolyTime_bcsExtractWitness` additionally requires polynomial-time
+  `iopExtract`. Under
+  `TraceCollisionFree tr_MT` and `BCSOpeningsQueriedInTrace`, `iopVerify_bcsExtractOracles_of_bcsVerify`
+  proves that `iopVerify` accepts `bcsExtractOracles`, `exists_collision_of_bcsVerify_of_iopVerify_eq_false`
+  and `bcsExtractTraceCollision` (`bcsFindTraceConflict`, `bcs_trace_sound_or_collision`,
+  `isCollision_bcsExtractTraceCollision`, `bcs_trace_knowledge_or_collision`,
+  `computableInPolyTime_bcsFindTraceConflict`, `computableInPolyTime_bcsExtractTraceCollision`)
+  extract an explicit trace collision in polynomial time whenever `iopVerify` rejects, and
+  `bcsExtractTable_cons_of_ne` / `bcsExtractOracles_cons_of_ne` prove invariance under fresh Merkle
+  answers that avoid target roots and child digests. For standard-model efficient length-preserving
+  keyed hashes, polynomial-time `iop.queries`, and deterministic polynomial-time `hFS`,
+  `bcsTraceCollisionFinder` (`isPPT_bcsTraceCollisionFinder`), `succProbability_bcsTraceBindingGame_le`,
+  `succProbability_bcsTraceKnowledgeGame_le`, `CollisionResistant.bcsTraceBinding_negligible`,
+  `CollisionResistant.bcsTraceKnowledge_negligible`, `HashFamily.bcsTraceBinding_negligible`, and
+  `HashFamily.bcsTraceKnowledge_negligible` reduce `bcsTraceBindingGame` and `bcsTraceKnowledgeGame`
+  against any uniform strict-PPT `BCSTraceAdversary` (`BCSTraceOutput`, `encBCSTraceOutput`) to
+  `CollisionResistant H`. Here the adversary supplies an `H k`-consistent trace covering every
+  opened path (rather than a transcript generated by an adaptive lazy-ROM prover), and the
+  knowledge failure bounds assume semantic zero-error `IOPKnowledgeSoundness` (which alone does not
+  establish efficient proof of knowledge without `computableInPolyTime_bcsExtractWitness`).
 - **Adaptive two-channel ROM soundness:** under `IOPRoundByRoundSoundness iop lang doomed goodStep`
   with per-round challenge escape probability `≤ ε_rbr`, `BCSGoodState` combines
   `TraceCollisionFree tr_MT` with `BCSChainDoomed` across recorded Fiat–Shamir chains of length
@@ -280,12 +321,7 @@ transcript-chained Fiat–Shamir channel) and derives the explicit additive loss
 round-by-round escape hypotheses (`IOPRoundByRoundSoundness`, `IOPRoundByRoundKnowledgeSoundness`,
 whose deterministic `extract_of_doomed` on complete `doomed` transcripts is stronger than
 Definition 31.1.6's two-phase per-round experiment) and two-channel query budgets (`bcsMTCost`,
-`bcsFSCost`), counting all oracle queries including malformed opening paths. Straight-line
-extraction (`bcsExtractWitness` on the prover's pre-verifier Merkle trace `tr_P`; compare
-Construction 26.1.3) and the soundness games establish exact `OracleComp` probability bounds without
-machine-level (`IsPPT` / native Turing-machine) verifier or multi-extractor runtime certificates
-(compare Chiesa–Yogev Remark 18.5.8), digest truncation accounting, NP-witness-to-IOP encoding
-runtime, or zero-knowledge simulation.
+`bcsFSCost`), counting all oracle queries including malformed opening paths. For fixed `r` and `d`, straight-line extraction (`bcsExtractTable`, `bcsExtractOracles`, `bcsExtractWitness`) and explicit table/trace collision extraction (`bcsExtractTableCollision`, `bcsExtractTraceCollision`, `bcsTableCollisionFinder`, `bcsTraceCollisionFinder`) carry polynomial-time certificates and standard-model `CollisionResistant H` reductions on adversary-supplied tables or `H k`-consistent traces; the two-channel ROM soundness games (`bcsSoundnessGame`, `bcsKnowledgeSoundnessGame`) establish exact `OracleComp` probability bounds without parameter-growing IOP/Merkle families, adaptive PPT ROM reductions, machine-level (`IsPPT` / native Turing-machine) verifier or multi-extractor runtime certificates (compare Chiesa–Yogev Remark 18.5.8), digest truncation accounting, NP-witness-to-IOP encoding runtime, or zero-knowledge simulation.
 
 ## Shared random oracles and ideal permutations
 

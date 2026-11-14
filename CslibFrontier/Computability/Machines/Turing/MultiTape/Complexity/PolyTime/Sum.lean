@@ -10,15 +10,15 @@ module
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Encodings.Sum
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Basic
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.PolyTime
-import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
-import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
+import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.BigO.Sum
+import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.BigO.Bounds
 
 /-!
 # Polynomial-time sum constructors
 
 The two injections retain the supplied payload encoding and add its tag bit. Their certificates
-reuse the existing bit-string constructor and charge the entire payload, with no finite-domain
-assumption on either summand.
+reuse the linear time and space certificates of `ComputableInO.inl` and `.inr`, forgetting
+only their explicit bounds. There is no finite-domain assumption on either summand.
 
 ## Main results
 
@@ -35,14 +35,12 @@ variable {α β : Type}
 @[fun_prop]
 theorem sumInl (left : α ↪ List Bool) (right : β ↪ List Bool) :
     ComputableInPolyTime (Sum.inl (α := α) (β := β)) left (encSum left right) :=
-  ((const false).bitsCons
-    (of_eq (f := left) (encIn := left) (encOut := encBits) fun _ => rfl)).of_enc_eq fun _ => rfl
+  (ComputableInO.inl left right).computableInPolyTime .self .self
 
 /-- Tag an encoded value as belonging to the right summand. -/
 @[fun_prop]
 theorem sumInr (left : α ↪ List Bool) (right : β ↪ List Bool) :
     ComputableInPolyTime (Sum.inr (α := α) (β := β)) right (encSum left right) :=
-  ((const true).bitsCons
-    (of_eq (f := right) (encIn := right) (encOut := encBits) fun _ => rfl)).of_enc_eq fun _ => rfl
+  (ComputableInO.inr left right).computableInPolyTime .self .self
 
 end Turing.MultiTapeTM.ComputableInPolyTime

@@ -48,11 +48,24 @@ nginx (`0755` for directories, `0644` for files):
 Only the three static assets are installed in the web directory. Test fixtures and the collector
 source are not served. The service creates `/var/lib/cache-dashboard/`, which contains only its
 bounded public aggregate JSON. It runs with a read-only view of the cache, restricted write
-access, a 128 MiB memory ceiling and a 90-second timeout. A busy store keeps the previous storage
-snapshot rather than waiting on the publication lock. A failed collector leaves the last good
-JSON in place; the page marks old data stale. The dashboard adds no email notifications.
-The shared storage scan has a five-second budget; a coincident publication may need to retry
-while that scan holds the lock.
+access, a 128 MiB memory ceiling and a 90-second timeout. Monitoring never opens or acquires the
+publication/GC lock: uploads, publication and GC can continue throughout the scan. The publisher
+and GC still coordinate with their existing exclusive lock.
+
+Storage statistics are an approximate observation rather than an atomic snapshot. The collector
+visits mappings before artifact metadata, so a build committed during the scan may appear on
+the next refresh. A file disappearing during a read, or a captured mapping changing, discards
+the sample and triggers one retry; both attempts share a 30-second scan budget. Object and
+metadata size bounds still apply.
+If the inventory remains unavailable, traffic can refresh while previous build/storage details
+are retained. The page warns that those details are stale and shows their age. A wholly failed
+collector leaves the last good JSON in place. The dashboard adds no email notifications.
+
+Inspect `journalctl -u cache-dashboard.service` for sanitized storage failure reasons such as
+`scan deadline` or `store changed during scan`. A successful oneshot can still contain a stale
+inventory: check `storage.stale` and `storage.snapshot_at` in `/stats.json`, not just the unit's
+exit status or the top-level `generated_at`. No raw filesystem error, private path or log record
+is exported to the public JSON.
 
 Merge only the dashboard locations from `examples/nginx.conf` into the existing host site,
 preserving actual TLS paths, upload authentication, limits, temporary directories and usage/error
@@ -77,9 +90,12 @@ sudo systemctl enable --now cache-dashboard.timer
 ```
 
 Inspect `/` at desktop and phone widths, switching each time window and checking empty/stale
-states. Verify that real aggregates agree with the journal/store, page refreshes do not inflate
-cache download counts, private paths remain blocked, and ordinary artifact/mapping GET/HEAD and
-publication still work. Confirm the collector's peak memory and runtime on the actual VM.
+states. Compare aggregates with the journal/store allowing for concurrent changes; verify that
+page refreshes do not inflate cache download counts and private paths remain blocked. Check
+ordinary artifact/mapping GET/HEAD and publication, and confirm that a scan succeeds even while
+a separate process holds the permanent publication lock. Test publication and GC overlap with
+isolated fixtures, not live data deletion. Confirm the collector's peak memory and runtime on
+the actual VM.
 
 ## Rollback
 
@@ -101,7 +117,9 @@ node scripts/test_cache_dashboard_frontend.cjs
 ```
 
 The frontend check uses `dashboard/preview-data.json` as development data. Never install that
-fixture on the web server. For collector testing with actual journals, run the installed oneshot
+fixture on the web server. Pass a captured live JSON file as an optional argument to the Node
+check to validate and render-check that export without editing the fixture or test clock.
+For collector testing with actual journals, run the installed oneshot
 and inspect its JSON; preserve the existing store and lock. The HTTP origin CI job also exercises
 all four dashboard routes through nginx. Both manuals retain the same roles and handoffs;
 the Operator's Manual reaches this procedure through the origin runbook.

@@ -9,6 +9,7 @@ module
 
 public import CslibFrontier.Crypto.Computational.SchnorrProtocol
 public import CslibFrontier.Computability.Interactive.Security.Repeat
+import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Captured
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Binary
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.BinaryDiv
@@ -522,17 +523,16 @@ theorem isPPTOn_schnorrRealTranscript {γ : Type} {encIn : γ ↪ List Bool}
   have hq := F.computableInPolyTime_order.comp hd'
   have hg := F.computableInPolyTime_generator.comp hd'
   have ht := F.computableInPolyTime_smul.comp (hd'.prod (hr.prod hg))
-  have hc_nat : ComputableTidilyInPolyTime (fun p : (γ × ℕ) × List Bool => ofBits p.2)
+  have hc_nat : ComputableInPolyTime (fun p : (γ × ℕ) × List Bool => ofBits p.2)
       encMid encNat :=
-    ComputableTidilyInPolyTime.bitsToNat.comp hc.tidy
+    ComputableInPolyTime.bitsToNat.comp hc
   have hz : ComputableInPolyTime
       (fun p : (γ × ℕ) × List Bool =>
         ((p.1.2 + ofBits p.2 * (α p.1.1 % F.order (d p.1.1))) % F.order (d p.1.1)).bits)
       encMid encBits :=
-    .of_tidy (ComputableTidilyInPolyTime.natBits.comp
-      (.binary_mod'
-        (.binary_add' hr.tidy (.binary_mul' hc_nat (.binary_mod' hα'.tidy hq.tidy)))
-        hq.tidy))
+    (ComputableInPolyTime.binary_mod'
+      (.binary_add' hr (.binary_mul' hc_nat (.binary_mod' hα' hq))) hq).of_enc_eq
+        fun _ => rfl
   exact (ht.prod (hc.prod hz)).isPPTOn
 
 /-- `schnorrSimulatedTranscript` is uniform strict PPT when the security parameter, group
@@ -545,16 +545,13 @@ theorem isPPTOn_schnorrSimulatedTranscript {γ : Type} {encIn : γ ↪ List Bool
     (hm : ComputableInPolyTime m encIn encUnary) :
     IsPPTOn encIn encTranscript
       (fun a => F.schnorrSimulatedTranscript (n a) (d a) (u a) (m a)) := by
-  have hn_t := hn.tidy
-  have hd_t := hd.tidy
-  have hu_t := hu.tidy
   have hsim := F.isPPTOn_schnorrSimulateWord
   unfold schnorrSimulatedTranscript
   refine hm.sampleList.bind_with ?_
   refine (hsim.preprocess
     (prepare := fun p : γ × List Bool => ((n p.1, d p.1), u p.1, p.2))
     (by fun_prop)).bind_with ?_
-  exact ComputableTidilyInPolyTime.isPPTOn (by fun_prop)
+  exact ComputableInPolyTime.isPPTOn (by fun_prop)
 
 /-- **The direct impersonator `A.toDirect k Q` is uniform strict PPT** when the eavesdropping
 adversary `A` is and both `k` and `Q` are computable in polynomial time. -/
@@ -565,8 +562,6 @@ theorem isPPT_toDirect {k Q : ℕ → ℕ}
     (A.toDirect k Q).IsPPT := by
   refine ⟨?_, hA.2⟩
   let encIn := encPair encUnary (encPair F.encDesc encBits)
-  have hk_t := hk.tidy
-  have hQ_t := hQ.tidy
   have hn : ComputableInPolyTime (fun p : ℕ × F.Desc × List Bool => p.1) encIn encUnary := by
     fun_prop
   have hd : ComputableInPolyTime (fun p : ℕ × F.Desc × List Bool => p.2.1) encIn F.encDesc := by

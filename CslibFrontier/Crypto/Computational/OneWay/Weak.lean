@@ -253,7 +253,6 @@ theorem WeakOneWayAt.normalize {f : List Bool → List Bool} {α : ℕ → ℝ}
     (hf : WeakOneWayAt f α) (bound : ℕ → ℕ)
     (hbound : ComputableInPolyTime bound encUnary encUnary) :
     WeakOneWayAt (OneWayNormalization.normalize f bound) α := by
-  have hbound_tidy := hbound.tidy
   refine ⟨OneWayNormalization.computableInPolyTime_normalize hf.polyTime hbound,
     fun adversary hPPT => ?_⟩
   have hreduce : IsPPT encBits (fun n image =>
@@ -281,13 +280,13 @@ theorem WeakOneWay.exists_fixedOutputLength {f : List Bool → List Bool} (hf : 
       ComputableInPolyTime length encUnary encUnary := by
   obtain ⟨c, d, hsize⟩ := hf.polyTime.polyBounded_length.exists_le
   let bound (n : ℕ) := c * (n + 1) ^ d
-  have hbound : ComputableTidilyInPolyTime bound encUnary encUnary := by
+  have hbound : ComputableInPolyTime bound encUnary encUnary := by
     unfold bound
     fun_prop
-  have hlen : ComputableTidilyInPolyTime (fun n => 2 * bound n + 1) encUnary encUnary := by
+  have hlen : ComputableInPolyTime (fun n => 2 * bound n + 1) encUnary encUnary := by
     fun_prop
   refine ⟨OneWayNormalization.normalize f bound, fun n => 2 * bound n + 1,
-    hf.normalize bound (.of_tidy hbound), ?_, .of_tidy hlen⟩
+    hf.normalize bound hbound, ?_, hlen⟩
   intro input
   exact BitString.length_padWord (hsize input)
 
@@ -318,19 +317,21 @@ def reindex (m : ℕ → ℕ) (core : ℕ → List Bool → List Bool) (x : List
   let n := GeneratorReindex.parameter m x.length
   wrappedImage n (core n (x.take (m n)))
 
-private theorem computableTidilyInPolyTime_reindex {m : ℕ → ℕ} {core : ℕ → List Bool → List Bool}
-    (hm : ComputableTidilyInPolyTime m encUnary encUnary)
-    (hcore : ComputableTidilyInPolyTime (fun p : ℕ × List Bool => core p.1 p.2)
+/-- Reindexing preserves deterministic polynomial-time computability. -/
+@[fun_prop]
+theorem computableInPolyTime_reindex {m : ℕ → ℕ} {core : ℕ → List Bool → List Bool}
+    (hm : ComputableInPolyTime m encUnary encUnary)
+    (hcore : ComputableInPolyTime (fun p : ℕ × List Bool => core p.1 p.2)
       (encPair encUnary encBits) encBits) :
-    ComputableTidilyInPolyTime (reindex m core) encBits encBits := by
-  have hparam : ComputableTidilyInPolyTime
+    ComputableInPolyTime (reindex m core) encBits encBits := by
+  have hparam : ComputableInPolyTime
       (fun x : List Bool => GeneratorReindex.parameter m x.length) encBits encUnary :=
-    (GeneratorReindex.isPolyTime_parameter (.of_tidy hm)
-      (ComputableInPolyTime.encoding_length encBits)).tidy
-  have htake : ComputableTidilyInPolyTime
+    GeneratorReindex.isPolyTime_parameter hm
+      (ComputableInPolyTime.encoding_length encBits)
+  have htake : ComputableInPolyTime
       (fun x : List Bool => x.take (m (GeneratorReindex.parameter m x.length))) encBits encBits :=
-    ComputableTidilyInPolyTime.bitsTakeWithInput ComputableTidilyInPolyTime.id' (hm.comp hparam)
-  have hpair : ComputableTidilyInPolyTime
+    ComputableInPolyTime.bitsTakeWithInput ComputableInPolyTime.id' (hm.comp hparam)
+  have hpair : ComputableInPolyTime
       (fun x : List Bool =>
         (GeneratorReindex.parameter m x.length,
           core (GeneratorReindex.parameter m x.length)
@@ -338,15 +339,6 @@ private theorem computableTidilyInPolyTime_reindex {m : ℕ → ℕ} {core : ℕ
       encBits (encPair encUnary encBits) :=
     hparam.prod (hcore.comp (hparam.prod htake))
   exact hpair.of_enc_eq fun _ => rfl
-
-/-- Reindexing preserves deterministic polynomial-time computability. -/
-@[fun_prop]
-theorem computableInPolyTime_reindex {m : ℕ → ℕ} {core : ℕ → List Bool → List Bool}
-    (hm : ComputableInPolyTime m encUnary encUnary)
-    (hcore : ComputableInPolyTime (fun p : ℕ × List Bool => core p.1 p.2)
-      (encPair encUnary encBits) encBits) :
-    ComputableInPolyTime (reindex m core) encBits encBits :=
-  .of_tidy (computableTidilyInPolyTime_reindex hm.tidy hcore.tidy)
 
 /-- The parameter-indexed inversion game for `core` at input length `m n`.
 Scores `core n (candidate.take (m n)) == core n input` by truncating the inverter's candidate to
@@ -408,70 +400,69 @@ private noncomputable def familyInverter (m : ℕ → ℕ) (core : ℕ → List 
   fun n y => searchCandidate m core evaluate n y <$> BitString.sampleList (coinBudget m c d n y)
 
 private theorem isPPT_familyInverter {m : ℕ → ℕ} {core : ℕ → List Bool → List Bool}
-    (hm : ComputableTidilyInPolyTime m encUnary encUnary)
-    (hcore : ComputableTidilyInPolyTime (fun p : ℕ × List Bool => core p.1 p.2)
+    (hm : ComputableInPolyTime m encUnary encUnary)
+    (hcore : ComputableInPolyTime (fun p : ℕ × List Bool => core p.1 p.2)
       (encPair encUnary encBits) encBits)
     {c d : ℕ} {evaluate : (ℕ × List Bool) → List Bool → List Bool}
-    (heval : ComputableTidilyInPolyTime (fun p : (ℕ × List Bool) × List Bool => evaluate p.1 p.2)
+    (heval : ComputableInPolyTime (fun p : (ℕ × List Bool) × List Bool => evaluate p.1 p.2)
       (encPair (encPair encUnary encBits) encBits) encBits) :
     IsPPT encBits (familyInverter m core c d evaluate) := by
   apply IsPPTOn.isPPT
   let E1 := encPair encUnary encBits
   let E2 := encPair E1 encBits
   let E3 := encPair E2 encUnary
-  have hwrap : ComputableTidilyInPolyTime
+  have hwrap : ComputableInPolyTime
       (fun p : ℕ × List Bool => wrappedImage p.1 p.2) E1 encBits :=
-    ComputableTidilyInPolyTime.of_enc_eq ComputableTidilyInPolyTime.id' fun _ => rfl
-  have hm_succ : ComputableTidilyInPolyTime (fun p : ℕ × List Bool => m (p.1 + 1)) E1 encUnary := by
+    ComputableInPolyTime.of_enc_eq ComputableInPolyTime.id' fun _ => rfl
+  have hm_succ : ComputableInPolyTime (fun p : ℕ × List Bool => m (p.1 + 1)) E1 encUnary := by
     fun_prop
-  have hbudget : ComputableTidilyInPolyTime
+  have hbudget : ComputableInPolyTime
       (fun p : ℕ × List Bool => coinBudget m c d p.1 p.2) E1 encUnary := by
     unfold coinBudget
-    have hlen := (ComputableTidilyInPolyTime.encoding_length encBits).comp hwrap
+    have hlen := (ComputableInPolyTime.encoding_length encBits).comp hwrap
     fun_prop
-  have htry : ComputableTidilyInPolyTime
+  have htry : ComputableInPolyTime
       (fun q : ((ℕ × List Bool) × List Bool) × ℕ =>
         decide (tryLength m core evaluate q.1.1.1 q.1.1.2 q.1.2 q.2 = true))
       E3 encBool := by
     simp only [tryLength]
-    have hn : ComputableTidilyInPolyTime (fun q : ((ℕ × List Bool) × List Bool) × ℕ => q.1.1.1)
-        E3 encUnary := (ComputableTidilyInPolyTime.fst _ _).fst'.fst'
-    have hy : ComputableTidilyInPolyTime (fun q : ((ℕ × List Bool) × List Bool) × ℕ => q.1.1.2)
-        E3 encBits := (ComputableTidilyInPolyTime.fst _ _).fst'.snd'
-    have hcoins : ComputableTidilyInPolyTime (fun q : ((ℕ × List Bool) × List Bool) × ℕ => q.1.2)
-        E3 encBits := (ComputableTidilyInPolyTime.fst _ _).snd'
-    have hM : ComputableTidilyInPolyTime (fun q : ((ℕ × List Bool) × List Bool) × ℕ => q.2)
-        E3 encUnary := ComputableTidilyInPolyTime.snd _ _
-    have hw : ComputableTidilyInPolyTime
+    have hn : ComputableInPolyTime (fun q : ((ℕ × List Bool) × List Bool) × ℕ => q.1.1.1)
+        E3 encUnary := (ComputableInPolyTime.fst _ _).fst'.fst'
+    have hy : ComputableInPolyTime (fun q : ((ℕ × List Bool) × List Bool) × ℕ => q.1.1.2)
+        E3 encBits := (ComputableInPolyTime.fst _ _).fst'.snd'
+    have hcoins : ComputableInPolyTime (fun q : ((ℕ × List Bool) × List Bool) × ℕ => q.1.2)
+        E3 encBits := (ComputableInPolyTime.fst _ _).snd'
+    have hM : ComputableInPolyTime (fun q : ((ℕ × List Bool) × List Bool) × ℕ => q.2)
+        E3 encUnary := ComputableInPolyTime.snd _ _
+    have hw : ComputableInPolyTime
         (fun q : ((ℕ × List Bool) × List Bool) × ℕ => wrappedImage q.1.1.1 q.1.1.2)
-        E3 encBits := hwrap.comp (ComputableTidilyInPolyTime.fst _ _).fst'
-    have hev : ComputableTidilyInPolyTime
+        E3 encBits := hwrap.comp (ComputableInPolyTime.fst _ _).fst'
+    have hev : ComputableInPolyTime
         (fun q : ((ℕ × List Bool) × List Bool) × ℕ =>
           evaluate (q.2, wrappedImage q.1.1.1 q.1.1.2) q.1.2)
         E3 encBits := heval.comp ((hM.prod hw).prod hcoins)
-    have htk : ComputableTidilyInPolyTime
+    have htk : ComputableInPolyTime
         (fun q : ((ℕ × List Bool) × List Bool) × ℕ =>
           (evaluate (q.2, wrappedImage q.1.1.1 q.1.1.2) q.1.2).take (m q.1.1.1))
-        E3 encBits := ComputableTidilyInPolyTime.bitsTakeWithInput hev (hm.comp hn)
-    have hcr : ComputableTidilyInPolyTime
+        E3 encBits := ComputableInPolyTime.bitsTakeWithInput hev (hm.comp hn)
+    have hcr : ComputableInPolyTime
         (fun q : ((ℕ × List Bool) × List Bool) × ℕ =>
           core q.1.1.1 ((evaluate (q.2, wrappedImage q.1.1.1 q.1.1.2) q.1.2).take (m q.1.1.1)))
         E3 encBits := hcore.comp (hn.prod htk)
     exact hcr.beq hy
-  have hbest : ComputableTidilyInPolyTime
+  have hbest : ComputableInPolyTime
       (fun p : (ℕ × List Bool) × List Bool =>
         bestLength m core evaluate p.1.1 p.1.2 p.2) E2 encUnary :=
-    (ComputableInPolyTime.findGreatest
-      (hm_succ.comp (ComputableTidilyInPolyTime.fst _ _)).computableInPolyTime
-      htry.computableInPolyTime).tidy
-  have hsearch : ComputableTidilyInPolyTime
+    ComputableInPolyTime.findGreatest
+      (hm_succ.comp (ComputableInPolyTime.fst _ _)) htry
+  have hsearch : ComputableInPolyTime
       (fun p : (ℕ × List Bool) × List Bool =>
         searchCandidate m core evaluate p.1.1 p.1.2 p.2) E2 encBits := by
     unfold searchCandidate
-    have hw := hwrap.comp (ComputableTidilyInPolyTime.fst E1 encBits)
-    have hcoins := ComputableTidilyInPolyTime.snd E1 encBits
+    have hw := hwrap.comp (ComputableInPolyTime.fst E1 encBits)
+    have hcoins := ComputableInPolyTime.snd E1 encBits
     exact heval.comp ((hbest.prod hw).prod hcoins)
-  exact IsPPTOn.map_with (ComputableInPolyTime.of_tidy hbudget).sampleList (.of_tidy hsearch)
+  exact IsPPTOn.map_with hbudget.sampleList hsearch
 
 /-- **Fundamental schedule-reindexing reduction
 (`OneWayReindex.exists_familyInverter_inversion_le`).**
@@ -491,7 +482,7 @@ theorem exists_familyInverter_inversion_le {m : ℕ → ℕ} {core : ℕ → Lis
           Game.succProbability (ProbComp.eval (familyInversionGame m core familyAdv
             (GeneratorReindex.parameter m M))) := by
   obtain ⟨c, d, evaluate, heval, _, hlaw⟩ := hPPT.on.exists_total_seeded_evaluator
-  refine ⟨familyInverter m core c d evaluate, isPPT_familyInverter hm.tidy hcore.tidy heval.tidy,
+  refine ⟨familyInverter m core c d evaluate, isPPT_familyInverter hm hcore heval,
     fun {M} hM0 => ?_⟩
   let n := GeneratorReindex.parameter m M
   have hfits : m n ≤ M := GeneratorReindex.parameter_fits hM0
@@ -600,7 +591,7 @@ theorem oneWay {m : ℕ → ℕ} {core : ℕ → List Bool → List Bool}
     exists_familyInverter_inversion_le hm hge hcore adversary hPPT
   have hneg := hsecure familyAdv hfamilyPPT
   have hdecay := hneg.comp_of_polynomial_bound (GeneratorReindex.parameter_tendsto m)
-    (hm.tidy.polynomiallyBounded.comp (PolynomiallyBounded.id.add (.const 1)))
+    (hm.polynomiallyBounded.comp (PolynomiallyBounded.id.add (.const 1)))
     (Eventually.of_forall fun M => (GeneratorReindex.lt_length_succ_parameter hge M).le)
   apply negligible_of_eventually_le hdecay
   filter_upwards [eventually_ge_atTop (m 0)] with M hM0

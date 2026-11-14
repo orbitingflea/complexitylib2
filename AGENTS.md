@@ -14,11 +14,21 @@ in `CONTRIBUTING.md`; when submitting upstream, follow that repository's current
 `ROADMAP.md` records outstanding directions; `CONTRIBUTING.md` (Upstreaming) lists live upstream
 coordination threads.
 
-At the start of work and when resuming, read the current checkout's instructions. Old task text
-and copied policy snapshots may describe superseded decisions. Surface material conflicts with
-current user instructions rather than silently following stale policy; explicit user directions
-control. Keep policy changes focused on recurring problems, and update linked guidance and
-templates together instead of adding another exception for each incident.
+At the start of work and when resuming, read the full applicable instructions. Coordinators
+also check the instruction revisions on current `main` before assigning reviews, reviewing or
+integrating work. Fetch in an authorized checkout and keep your own clean `main` current with
+fast-forward updates; preserve occupied checkouts, other contributors' work and approved PR heads.
+When local Git operations are restricted, read the files remotely at a pinned current-main commit.
+A feature worktree or automatically supplied instruction snapshot can remain stale.
+
+Compare with the revisions recorded in your private handoff. Read changed `AGENTS.md`,
+`CONTRIBUTING.md`, applicable upstream guidance and relevant manual sections, and pass material
+changes to retained workers and reviewers before affected work continues. Record the checked
+main commit and instruction revisions in that handoff; a fetched branch or an old conversation
+summary alone does not establish that the guidance was read. Apply any additional instructions
+for the files being changed. Explicit user directions still control; surface material conflicts.
+Keep policy changes focused on recurring problems, and update linked guidance and templates
+together instead of adding another exception for each incident.
 
 ## Writing in issues and PRs
 

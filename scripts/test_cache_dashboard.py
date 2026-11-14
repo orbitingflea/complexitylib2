@@ -169,12 +169,20 @@ class StoreTests(unittest.TestCase):
         finally:
             os.umask(previous)
 
-    def test_busy_lock_is_nonblocking_and_previous_snapshot_remains_stale(self):
+    def test_monitoring_works_while_publication_lock_is_held_or_absent(self):
         import fcntl
+        self.artifact(1, b"one")
+        self.mapping("a" * 40, [1])
         with self.lock.open("rb") as lock:
             fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
-            with self.assertRaises(collector.SnapshotUnavailable):
-                collector.storage_snapshot(self.root, NOW, {})
+            snapshot = collector.storage_snapshot(self.root, NOW, {})
+            self.assertEqual(snapshot["storage"]["artifact_count"], 1)
+        self.assertEqual(self.lock.stat().st_ino, self.old_inode)
+        self.lock.unlink()
+        collector.storage_snapshot(self.root, NOW, {})
+        self.assertFalse(self.lock.exists())
+
+    def test_previous_snapshot_remains_stale_without_modifying_it(self):
         previous = {"storage": {"snapshot_at": collector.iso(NOW - 100), "artifact_count": 8, "stale": False},
                     "latest": {"revision": "a" * 40}, "builds": []}
         stale = collector.unavailable_storage(previous)
@@ -182,7 +190,7 @@ class StoreTests(unittest.TestCase):
         self.assertEqual(stale["storage"]["artifact_count"], 8)
         self.assertFalse(previous["storage"]["stale"])
 
-    def test_unknown_entries_symlinks_and_bad_lock_fail_closed(self):
+    def test_unknown_entries_and_symlinks_fail_closed(self):
         bad = self.root / "public/unknown"
         bad.write_text("private path must not leak")
         with self.assertRaises(collector.SnapshotUnavailable):
@@ -192,9 +200,111 @@ class StoreTests(unittest.TestCase):
         with self.assertRaises(collector.SnapshotUnavailable):
             collector.storage_snapshot(self.root, NOW, {})
         bad.unlink()
-        self.lock.chmod(0o666)
-        with self.assertRaises(collector.SnapshotUnavailable):
-            collector.storage_snapshot(self.root, NOW, {})
+
+    def test_publication_can_commit_during_the_scan(self):
+        import fcntl
+        self.artifact(1, b"one")
+        self.mapping("a" * 40, [1], 100)
+        original = collector.safe_directory
+        published = False
+
+        def publish_when_artifact_scan_starts(path, owner=None):
+            nonlocal published
+            if path == self.root / "public/a0" and not published:
+                with self.lock.open("rb") as lock:
+                    # A publisher must remain able to acquire its exclusive lock.
+                    fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                    self.artifact(2, b"new")
+                    self.mapping("b" * 40, [1, 2])
+                    published = True
+            return original(path, owner)
+
+        with patch.object(collector, "safe_directory", side_effect=publish_when_artifact_scan_starts):
+            snapshot = collector.storage_snapshot(self.root, NOW, {})
+        self.assertTrue(published)
+        self.assertEqual(snapshot["storage"]["mapping_count"], 1)
+        self.assertEqual(snapshot["storage"]["missing_artifacts"], 0)
+        following = collector.storage_snapshot(self.root, NOW, {})
+        self.assertEqual(following["storage"]["mapping_count"], 2)
+        self.assertEqual(following["latest"]["revision"], "b" * 40)
+
+    def test_gc_can_remove_an_open_mapping_and_sample_is_retried(self):
+        import fcntl
+        self.artifact(1, b"one")
+        mapping = self.mapping("a" * 40, [1])
+        original = collector.json.loads
+        collected = False
+
+        def gc_during_parse(line):
+            nonlocal collected
+            if not collected:
+                with self.lock.open("rb") as lock:
+                    fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                    mapping.unlink()
+                    (self.root / "public/a0" / collector.SCOPE / "0000000000000001.art").unlink()
+                    collected = True
+            return original(line)
+
+        with patch.object(collector.json, "loads", side_effect=gc_during_parse):
+            snapshot = collector.storage_snapshot(self.root, NOW, {})
+        self.assertTrue(collected)
+        self.assertEqual(snapshot["storage"]["mapping_count"], 0)
+        self.assertEqual(snapshot["storage"]["artifact_count"], 0)
+        self.assertEqual(snapshot["storage"]["missing_artifacts"], 0)
+        self.assertIsNone(snapshot["latest"])
+
+    def test_namespace_churn_has_one_retry_and_one_shared_time_budget(self):
+        with patch.object(collector, "storage_attempt", side_effect=FileNotFoundError) as attempt:
+            with self.assertRaisesRegex(collector.SnapshotUnavailable, "store changed"):
+                collector.storage_snapshot(self.root, NOW, {})
+        self.assertEqual(attempt.call_count, 2)
+        self.assertEqual(attempt.call_args_list[0].args[-1], attempt.call_args_list[1].args[-1])
+        with patch.object(collector, "STORE_SECONDS", 0), patch.object(
+                collector, "storage_attempt", side_effect=FileNotFoundError) as attempt:
+            with self.assertRaisesRegex(collector.SnapshotUnavailable, "store changed"):
+                collector.storage_snapshot(self.root, NOW, {})
+        self.assertEqual(attempt.call_count, 1)
+
+    def test_mapping_installed_after_traffic_start_is_not_future_data(self):
+        self.artifact(1, b"one")
+        self.mapping("a" * 40, [1], -5)
+        with patch.object(collector.time, "time", return_value=NOW + 10):
+            snapshot = collector.storage_snapshot(self.root, NOW, {})
+        self.assertEqual(snapshot["latest"]["revision"], "a" * 40)
+
+    def test_deadline_also_bounds_traversal_of_empty_directories(self):
+        self.public_directory("empty-one")
+        self.public_directory("empty-two")
+        clock, visited = [0], []
+        original = collector.safe_directory
+
+        def slow_directory(path, owner=None):
+            if path.parent == self.root / "public":
+                visited.append(path)
+                clock[0] = collector.STORE_SECONDS + 1
+            return original(path, owner)
+
+        with patch.object(collector.time, "monotonic", side_effect=lambda: clock[0]), patch.object(
+                collector, "safe_directory", side_effect=slow_directory):
+            with self.assertRaisesRegex(collector.SnapshotUnavailable, "scan deadline"):
+                collector.storage_snapshot(self.root, NOW, {})
+        self.assertEqual(len(visited), 1)
+
+    def test_failed_inventory_logs_a_safe_reason_and_keeps_old_data(self):
+        output = self.root / "output/stats.json"
+        previous = {"schema": 1, **collector.unavailable_storage(None)}
+        previous["storage"].update(snapshot_at=collector.iso(NOW - 100), artifact_count=8, stale=False)
+        collector.write_snapshot(output, previous)
+        with patch.object(collector, "stream_command", return_value=True), patch.object(
+                collector, "storage_snapshot", side_effect=OSError("private/path/token")), patch.object(
+                collector, "gc_snapshot", return_value={}), self.assertLogs(level="WARNING") as logs:
+            snapshot = collector.collect(self.root, output, now=NOW)
+        self.assertTrue(snapshot["storage"]["stale"])
+        self.assertEqual(snapshot["storage"]["artifact_count"], 8)
+        self.assertEqual(snapshot["storage"]["snapshot_at"], collector.iso(NOW - 100))
+        self.assertIn("OSError", " ".join(logs.output))
+        self.assertNotIn("private/path/token", " ".join(logs.output))
+        self.assertNotIn("private/path/token", output.read_text())
 
     def test_entry_and_mapping_limits_preserve_source_contents(self):
         self.artifact(1, b"one")

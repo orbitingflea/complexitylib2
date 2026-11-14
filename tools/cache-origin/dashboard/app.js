@@ -105,7 +105,7 @@
     const secondsOld = (Date.now() - date(snapshot.generated_at)) / 1000;
     const stale = fetchFailed || secondsOld > Math.max(900, (snapshot.refresh_seconds || 300) * 3);
     byId("live-dot").className = "live-dot " + (stale ? "stale" : "live");
-    text("freshness", (stale ? "Snapshot from " : "Updated ") + age(snapshot.generated_at));
+    text("freshness", (stale ? "Snapshot from " : snapshot.storage.stale ? "Traffic updated " : "Updated ") + age(snapshot.generated_at));
     const notice = byId("notice");
     if (fetchFailed) {
       notice.textContent = "The latest snapshot could not be loaded. Showing the last available data.";
@@ -113,6 +113,12 @@
       notice.hidden = false;
     } else if (stale) {
       notice.textContent = "These statistics have not refreshed recently. Cache downloads may still be available.";
+      notice.className = "notice warning";
+      notice.hidden = false;
+    } else if (snapshot.storage.stale) {
+      notice.textContent = date(snapshot.storage.snapshot_at) === null
+        ? "Build and storage details are not available yet. Traffic statistics were refreshed separately."
+        : "Build and storage details are stale; last updated " + age(snapshot.storage.snapshot_at) + ". Traffic statistics were refreshed separately.";
       notice.className = "notice warning";
       notice.hidden = false;
     } else if (snapshot.storage.missing_artifacts > 0) {
@@ -201,9 +207,9 @@
     text("artifact-size", bytes(store.artifact_bytes));
     text("artifact-count", count(store.artifact_count));
     text("inode-free", count(disk.inodes_available));
-    text("sharing-label", finite(store.mapping_count) && finite(store.artifact_count) ? count(store.mapping_count) + " retained builds sharing " + count(store.artifact_count) + " artifact files" : "The storage snapshot will appear when the cache is idle.");
+    text("sharing-label", finite(store.mapping_count) && finite(store.artifact_count) ? count(store.mapping_count) + " retained builds sharing " + count(store.artifact_count) + " artifact files" : "Storage details are not available yet.");
     text("retained-count", count(store.mapping_count) + " builds");
-    text("storage-freshness", store.stale ? (date(store.snapshot_at) === null ? "Waiting for first snapshot" : "Storage snapshot is stale") : "");
+    text("storage-freshness", store.stale ? (date(store.snapshot_at) === null ? "Waiting for first snapshot" : "Stale · updated " + age(store.snapshot_at)) : "");
     text("saved-bytes", bytes(store.saved_bytes) + " saved");
     text("dedup-ratio", finite(store.dedup_ratio) ? decimal(store.dedup_ratio, 1) + "×" : "—");
     text("physical-bytes", bytes(store.artifact_bytes) + " actual");
