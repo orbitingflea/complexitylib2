@@ -64,7 +64,7 @@ open Cslib.Probability Cslib.ProbComp Cslib.Circuits Turing.MultiTapeTM
 namespace PolyTimeRunner
 
 open Cslib.Circuits Cslib.Circuits.Boolean
-open Turing.MultiTapeTM ComputableTidilyInPolyTime
+open Turing.MultiTapeTM ComputableInPolyTime
 
 /-! #### Sub-part 4C.4: Step 3 (`outputSteps`) Equivalence -/
 
@@ -1531,7 +1531,7 @@ theorem familyIsOraclePPT_gmwOT14RandomizedProtocol {α : Type} {enc : α ↪ Li
       (fun a => gmwOT14RandomizedProtocol m (coins a) (n a) (k a) (C a))
       (fun a => encGMWPartyView m (coins a) (n a) (k a) (C a)) (fun _ _ y => List.ofFn y) := by
   have hD := computableInPolyTime_code_comp_xorPreludeCircuit m hn hcoins hC
-  exact (PolyTimeRunner.isOraclePPTOn_realRunWord m hcoins.tidy hn.tidy hk.tidy hD.tidy).congr
+  exact (PolyTimeRunner.isOraclePPTOn_realRunWord m hcoins hn hk hD).congr
     (fun inp _ oracle s =>
       PolyTimeRunner.runWith_realRunWord_eq_runEncoded m coins n k C inp oracle s)
 
@@ -1549,7 +1549,7 @@ theorem familyIsPPT_gmwOT14RandomizedSim {α : Type} {enc : α ↪ List Bool}
       (fun a => encGMWPartyView m (coins a) (n a) (k a) (C a))
       (fun a => gmwOT14RandomizedSim m (coins a) (n a) (k a) (C a) I) := by
   have hD := computableInPolyTime_code_comp_xorPreludeCircuit m hn hcoins hC
-  exact (PolyTimeRunner.isPPTOn_simRunWord m I hcoins.tidy hn.tidy hk.tidy hD.tidy).congr
+  exact (PolyTimeRunner.isPPTOn_simRunWord m I hcoins hn hk hD).congr
     (PolyTimeRunner.eval_simRunWord_eq_gmwOT14RandomizedSim m coins n k C I)
 
 end Cslib.Crypto.Protocols.MPC

@@ -15,6 +15,7 @@ import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Finite
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Eq
+import CslibFrontier.Computability.Probabilistic.Adaptive
 import CslibFrontier.Computability.Probabilistic.Oracle.Composition
 import CslibFrontier.Computability.Probabilistic.Oracle.Substitution
 import CslibFrontier.Computability.Probabilistic.PPT.Capture
@@ -631,23 +632,6 @@ private theorem exists_ots_of_mem_support_appendTraceStep {k : ℕ} {Control : T
     obtain ⟨ots, hots, rfl⟩ := hnext
     exact ⟨ots, rfl, Or.inr ⟨msg, hots⟩⟩
 
-private theorem isPPTOn_iterateWith_of_bounded_growth' {α State : Type}
-    {input : α ↪ List Bool} {stateEncoding : State ↪ List Bool}
-    {initial : α → State} {count : α → ℕ} {step : α → State → ProbComp State}
-    (hcount : ComputableInPolyTime count input encUnary)
-    (hinitial : ComputableInPolyTime initial input stateEncoding)
-    (hstep : IsPPTOn (encPair input stateEncoding) stateEncoding
-      (fun pair => step pair.1 pair.2))
-    {growth : α → ℕ} (hpoly : PolyBounded (fun a => (input a).length) growth)
-    (hgrowth : ∀ a state next, next ∈ (ProbComp.eval (step a state)).support →
-      (stateEncoding next).length ≤ (stateEncoding state).length + growth a) :
-    IsPPTOn input stateEncoding (fun a => OracleComp.iterate (count a) (step a) (initial a)) := by
-  have hloop := IsOraclePPTOn.iterateWith_of_bounded_growth' hcount hinitial
-    (hstep.isOraclePPTOn (Operation := Empty)) hpoly fun a state next hnext =>
-      hgrowth a state next ((ProbOracleComp.support_sample _).subset hnext)
-  apply IsOraclePPTOn.isPPTOn
-  simpa only [ProbOracleComp.sample, OracleComp.interpret_iterate] using hloop
-
 private theorem isPPTOn_iterate_sampleStep {k : ℕ} {Control α : Type} [Finite Control]
     {input : α ↪ List Bool}
     (S : SignatureScheme) (H : KeyedHashFamily)
@@ -704,7 +688,7 @@ private theorem isPPTOn_iterate_sampleStep {k : ℕ} {Control α : Type} [Finite
   have hpolyGrowth : PolyBounded (fun a => (input a).length) growth :=
     (((PolyBounded.const 4).mul (H.keyLen_polyTime.comp hn).polyBounded).add
       ((PolyBounded.const 2).mul hpolySig)).add (.const 10)
-  refine isPPTOn_iterateWith_of_bounded_growth' hcount hinit hstep hpolyGrowth ?_
+  refine IsPPTOn.iterateWith_of_bounded_growth' hcount hinit hstep hpolyGrowth ?_
   intro a tr next hnext
   simp only [sampleStep, ProbComp.eval_bind, ProbComp.eval_uniform, BitString.eval_sampleList,
     PMF.mem_support_bind_iff] at hnext

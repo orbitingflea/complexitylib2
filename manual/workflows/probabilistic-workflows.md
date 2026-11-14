@@ -1611,6 +1611,22 @@ example {A : ℕ → List Bool → ProbComp (List Bool)} (hA : IsPPT encBits A) 
 
 The inverters in the [InaccessibleEntropy development](../../CslibFrontier/Crypto/Computational/InaccessibleEntropy/OneWay.lean) are certified this way. In November 2026 a `ppt` call there cost about 11,000–14,000 heartbeats even on small goals, against a few hundred for the explicit proof. Without the right definition hints, a call could exhaust Aesop's rule limit.
 
+### Plain certificates for closed adaptive loops
+
+Import [Adaptive.lean](../../CslibFrontier/Computability/Probabilistic/Adaptive.lean).
+`IsPPTOn.iterate_spec'` and `iterateWith_spec'` take plain `ComputableInPolyTime`
+certificates for the unary count and initial state. Use `iterate_of_bounded_growth'`
+for fixed additive encoded-state growth, `iterateWith_of_bounded_growth'` for growth
+polynomially bounded in the captured input, and `iterate_of_length_le'` when the
+step never increases encoded size. The growth premises cover every supported result.
+The unprimed entry points retain their existing tidy premises during #862 migration.
+
+The [layered evaluator](../../CslibFrontier/Crypto/Computational/Homomorphic/Layered/PolyTime.lean)
+passes its existing `hcount` and `hinit` directly to the captured-growth rule. Its bound
+still covers malformed public inputs. The ordinary-import
+[adaptive regression client](../../CslibFrontierTests/AdaptivePPT.lean) applies the plain
+constant-growth rule to a quadratic number of random bit-prepending steps.
+
 ## Bound a centered-binomial sampler tail
 
 [CenteredBinomial/Concentration.lean](../../CslibFrontier/Languages/Probabilistic/CenteredBinomial/Concentration.lean)

@@ -10,6 +10,7 @@ module
 public import CslibFrontier.Crypto.Computational.DiffieHellman.MultiDDH
 public import CslibFrontier.Crypto.Game.Hybrid
 public import CslibFrontier.Foundations.Data.BitString.Basic
+import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Binary
 import CslibFrontier.Probability.PMF.Uniform
@@ -333,27 +334,27 @@ theorem computableInPolyTime_naorReingoldWordSuffix :
       (fun input : F.Desc × List Bool × List ℕ × List Bool => input.2.1)
       (encPair F.encDesc (encPair encBits (encPair (encList encNat) encBits))) encBits := by
     fun_prop
-  have hαs : ComputableTidilyInPolyTime
+  have hαs : ComputableInPolyTime
       (fun input : F.Desc × List Bool × List ℕ × List Bool => input.2.2.1)
       (encPair F.encDesc (encPair encBits (encPair (encList encNat) encBits)))
       (encList encNat) := by
     fun_prop
-  have hxs : ComputableTidilyInPolyTime
+  have hxs : ComputableInPolyTime
       (fun input : F.Desc × List Bool × List ℕ × List Bool => input.2.2.2)
       (encPair F.encDesc (encPair encBits (encPair (encList encNat) encBits)))
       (encList encBool) :=
-    ComputableTidilyInPolyTime.bitsToList.comp (by fun_prop)
-  have hzip : ComputableTidilyInPolyTime
+    ComputableInPolyTime.bitsToList.comp (by fun_prop)
+  have hzip : ComputableInPolyTime
       (fun input : F.Desc × List Bool × List ℕ × List Bool => input.2.2.1.zip input.2.2.2)
       (encPair F.encDesc (encPair encBits (encPair (encList encNat) encBits)))
       (encList (encPair encNat encBool)) :=
-    (ComputableTidilyInPolyTime.zip encNat encBool).comp (hαs.prod hxs)
+    (ComputableInPolyTime.zip encNat encBool).comp (hαs.prod hxs)
   have hprod : ComputableInPolyTime
       (fun input : F.Desc × List Bool × List ℕ × List Bool =>
         naorReingoldProdNat 1 (input.2.2.1.zip input.2.2.2))
       (encPair F.encDesc (encPair encBits (encPair (encList encNat) encBits))) encNat :=
     computableInPolyTime_naorReingoldProdNat.comp
-      ((ComputableInPolyTime.const 1).prod hzip.computableInPolyTime)
+      ((ComputableInPolyTime.const 1).prod hzip)
   exact F.computableInPolyTime_smul.comp (hd.prod (hprod.prod hu))
 
 /-- `naorReingoldWordEval` is computable in polynomial time. -/
@@ -370,25 +371,25 @@ theorem computableInPolyTime_naorReingoldWordEval :
       (fun input : F.Desc × ℕ × List ℕ × List Bool => input.2.1)
       (encPair F.encDesc (encPair encNat (encPair (encList encNat) encBits))) encNat := by
     fun_prop
-  have hαs : ComputableTidilyInPolyTime
+  have hαs : ComputableInPolyTime
       (fun input : F.Desc × ℕ × List ℕ × List Bool => input.2.2.1)
       (encPair F.encDesc (encPair encNat (encPair (encList encNat) encBits))) (encList encNat) := by
     fun_prop
-  have hxs : ComputableTidilyInPolyTime
+  have hxs : ComputableInPolyTime
       (fun input : F.Desc × ℕ × List ℕ × List Bool => input.2.2.2)
       (encPair F.encDesc (encPair encNat (encPair (encList encNat) encBits)))
       (encList encBool) :=
-    ComputableTidilyInPolyTime.bitsToList.comp (by fun_prop)
-  have hzip : ComputableTidilyInPolyTime
+    ComputableInPolyTime.bitsToList.comp (by fun_prop)
+  have hzip : ComputableInPolyTime
       (fun input : F.Desc × ℕ × List ℕ × List Bool => input.2.2.1.zip input.2.2.2)
       (encPair F.encDesc (encPair encNat (encPair (encList encNat) encBits)))
       (encList (encPair encNat encBool)) :=
-    (ComputableTidilyInPolyTime.zip encNat encBool).comp (hαs.prod hxs)
+    (ComputableInPolyTime.zip encNat encBool).comp (hαs.prod hxs)
   have hprod : ComputableInPolyTime
       (fun input : F.Desc × ℕ × List ℕ × List Bool =>
         naorReingoldProdNat input.2.1 (input.2.2.1.zip input.2.2.2))
       (encPair F.encDesc (encPair encNat (encPair (encList encNat) encBits))) encNat :=
-    computableInPolyTime_naorReingoldProdNat.comp (hα₀.prod hzip.computableInPolyTime)
+    computableInPolyTime_naorReingoldProdNat.comp (hα₀.prod hzip)
   have hgen : ComputableInPolyTime
       (fun input : F.Desc × ℕ × List ℕ × List Bool => F.encode input.1 (F.generator input.1))
       (encPair F.encDesc (encPair encNat (encPair (encList encNat) encBits))) encBits :=
