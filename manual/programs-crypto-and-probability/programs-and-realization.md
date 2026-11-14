@@ -136,9 +136,12 @@ reduction built on it is in
 [`SchnorrSignature/Security.lean`](../../CslibFrontier/Crypto/Computational/SchnorrSignature/Security.lean).
 
 [`Oracle/ReplayParameter.lean`](../../CslibFrontier/Computability/Probabilistic/Oracle/ReplayParameter.lean)
-starts from a public-key length bound `keyC * (n + 1)^keyD`.
-`IsOraclePPT.exists_savedCoins_of_length_le` uses one uniform tape of length
-`c * (2*n + 2 + keyC*(n + 1)^keyD)^d`, independent of the key. Replay takes only the prefix
+starts from a public-key length bound `keyC * (n + 1)^keyD` and defines the shared polynomial
+budget `savedCoinBudget c d keyC keyD n = c * (2*n + 2 + keyC*(n + 1)^keyD)^d`
+(`polynomiallyBounded_savedCoinBudget`, `computableInPolyTime_savedCoinBudget`,
+`clock_le_savedCoinBudget`), reused by ROM signatures, tree signatures and the word-level
+Fujisaki–Okamoto bridge. `IsOraclePPT.exists_savedCoins_of_length_le` uses one uniform tape of
+length `savedCoinBudget c d keyC keyD n`, independent of the key. Replay takes only the prefix
 specified by the original full-input machine clock. Equality holds for every key within the
 bound and retains the complete external state; the handler's own randomness stays external.
 `IsOraclePPT.exists_savedCoins_of_keyGen` derives the bound from actual strict-PPT key generation.

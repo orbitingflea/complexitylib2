@@ -58,4 +58,18 @@ example (γ d c : ℕ) (leaf : ℕ → ℕ)
 -- The complete missing-leaf control still times out under both default and 256-step
 -- search; it remains open in #1155, with its failed source/logs preserved separately.
 
+-- The converse core accepts every clock and input word, including a zero clock and empty word.
+example : ComputableInPolyTime
+    (fun p : ℕ × List Bool => LiuPassConverse.liuPassCore (fun _ => 0) p.1 p.2)
+    (encPair encUnary encBits) encBits :=
+  LiuPassConverse.computableInPolyTime_liuPassCore (ComputableInPolyTime.const 0)
+
+example : ComputableInPolyTime LiuPassConverse.inputSchedule encUnary encUnary :=
+  LiuPassConverse.computableInPolyTime_inputSchedule
+
+-- Retain the public conditional construction and the native converse clock hypothesis.
+example := @OneWay.exists_condEPPRG
+example := @weakOneWay_reindex_liuPassCore
+example := @exists_oneWay_of_exists_mildlyHardOnAverage_timeBoundedNat
+
 end Cslib.Crypto.AutomationLiuPassTests

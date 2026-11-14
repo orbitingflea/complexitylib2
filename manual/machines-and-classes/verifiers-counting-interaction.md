@@ -23,6 +23,14 @@ A worked one-sided-error client is the Miller–Rabin test in [MillerRabin.lean]
 
 The Solovay–Strassen test compares `a ^ ((n - 1) / 2)` with the Jacobi symbol `J(a | n)` modulo `n`; its Euler-liar bound is [two_mul_card_eulerLiars_le](../../CslibFrontier/Foundations/NumberTheory/Primality/EulerLiars.lean#L147). The symbol itself is certified by [binary_jacobiSym](../../CslibFrontier/Computability/Machines/Turing/MultiTape/Complexity/PolyTime/Nat/Jacobi.lean#L287): Mathlib's `jacobiSym` on binary naturals, with a binary signed result, for every `a` and `n` (even `n` and `n = 0` included). The proof runs the reciprocity reductions as a counted loop of `2 * Nat.size n` steps, each of which at least halves `a * n` ([jacobiReadout_iterate_jacobiStep](../../CslibFrontier/Computability/Machines/Turing/MultiTape/Complexity/PolyTime/Nat/Jacobi.lean#L244)), and `intBin_jacobiSym` extends it to a signed numerator. [JacobiPolyTime](../../CslibFrontierTests/JacobiPolyTime.lean) composes it into the Solovay–Strassen comparison and runs the loop on concrete inputs. The Solovay–Strassen `coRP` verifier is not yet stated ([#2958](https://github.com/cslib-community/cslib-frontier/issues/2958)).
 
+The modular-power certificate `ComputableInPolyTime.binary_powMod` composes plain input and
+fold-step certificates. Its square-and-multiply fold keeps every accumulator below the positive
+modulus, preserving the prefix encoding-size bound. For an unconstrained modulus, use
+`computableInPolyTime_powMod`: its total function `powMod` returns `1` when the modulus is zero.
+The [ordinary-module client](../../CslibFrontierTests/PowModPlain.lean) exercises both
+contracts and the zero, unit and positive modulus cases.
+
+
 [ZPP](https://github.com/cslib-community/cslib-frontier/blob/13e6a31951bf1c89a1a6258c44f9444aecbbefd8/Complexity/Computability/Complexity/Classes/ZPP.lean#L19) changes the result type to `Option Bool`. A returned Boolean is always correct; at least half of all seeds yield an answer. The remaining seeds return `none`. The source proves `ZPP = RP ∩ coRP`. Expected polynomial running time is not modeled by this definition, and no equivalence with an expected-time operational semantics is claimed here.
 
 ## Counting and acceptance variants

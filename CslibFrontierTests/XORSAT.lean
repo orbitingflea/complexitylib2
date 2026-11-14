@@ -4,9 +4,14 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Samuel Schlesinger
 -/
 
-import CslibFrontier.Computability.Complexity.Problems.XORSAT
+module
+-- upstream: local-only (regression tests)
+
+public import CslibFrontier.Computability.Complexity.Problems.XORSAT
 
 /-! Affine normal forms and native XOR-SAT, including degenerate systems and sparse labels. -/
+
+set_option linter.privateModule false
 
 open Cslib Cslib.Logic Cslib.Logic.PL Cslib.Complexity
 
@@ -128,3 +133,12 @@ example : ¬∃ a : ℕ → Bool, AffineSystem.Holds [⟨[5, 5], true⟩] a := b
   have ht := (XORSAT.solve_eq_true_iff _).mpr h
   have hf : XORSAT.solve [⟨[5, 5], true⟩] = false := by decide
   exact Bool.false_ne_true (hf.symm.trans ht)
+
+-- Both public certificates remain usable through an ordinary importing module.
+example : Turing.MultiTapeTM.ComputableInPolyTime XORSAT.Dense.decide
+    XORSAT.Dense.encInput Turing.MultiTapeTM.encBool :=
+  XORSAT.Dense.computableInPolyTime_decide
+
+example : Turing.MultiTapeTM.ComputableInPolyTime XORSAT.solve
+    XORSAT.encoding Turing.MultiTapeTM.encBool :=
+  XORSAT.computableInPolyTime_solve
