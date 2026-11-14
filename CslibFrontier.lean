@@ -4965,7 +4965,9 @@ public import CslibFrontier.DataStructure.CountMin.Basic
 public import CslibFrontier.DataStructure.CountMin.LinearHash
 public import CslibFrontier.DataStructure.CountMin.Probability
 public import CslibFrontier.DataStructure.CountMin.Program
+public import CslibFrontier.DataStructure.Dictionary.CellProbe.Consistency
 public import CslibFrontier.DataStructure.Dictionary.CellProbe.HardDist
+public import CslibFrontier.DataStructure.Dictionary.CellProbe.InnerGame
 public import CslibFrontier.DataStructure.Dictionary.CellProbe.MetaTree
 public import CslibFrontier.DataStructure.Dictionary.CuckooHashing
 public import CslibFrontier.DataStructure.Dictionary.CuckooHashing.Basic
@@ -4995,6 +4997,12 @@ public import CslibFrontier.DataStructure.Dictionary.WordRAM.CuckooHashing.Analy
 public import CslibFrontier.DataStructure.Dictionary.WordRAM.CuckooHashing.HashFamily
 public import CslibFrontier.DataStructure.Dictionary.WordRAM.LinearProbing
 public import CslibFrontier.DataStructure.Dictionary.WordRAM.LinearProbing.FiveWise
+public import CslibFrontier.DataStructure.Dictionary.WordRAM.ResizableSuccinct.Accessors
+public import CslibFrontier.DataStructure.Dictionary.WordRAM.ResizableSuccinct.Compaction
+public import CslibFrontier.DataStructure.Dictionary.WordRAM.ResizableSuccinct.InEpoch
+public import CslibFrontier.DataStructure.Dictionary.WordRAM.ResizableSuccinct.MetaSync
+public import CslibFrontier.DataStructure.Dictionary.WordRAM.ResizableSuccinct.Params
+public import CslibFrontier.DataStructure.Dictionary.WordRAM.ResizableSuccinct.WindowOps
 public import CslibFrontier.DataStructure.Dictionary.WordRAM.Succinct
 public import CslibFrontier.DataStructure.Dictionary.WordRAM.SuccinctBucketOps
 public import CslibFrontier.DataStructure.Dictionary.WordRAM.SuccinctChainOps
@@ -5062,6 +5070,9 @@ public import CslibFrontier.DataStructure.HashFamily.WordRAM.DoubleTabulation
 public import CslibFrontier.DataStructure.HashFamily.WordRAM.KWise
 public import CslibFrontier.DataStructure.HashFamily.WordRAM.MultiplyShift
 public import CslibFrontier.DataStructure.HashFamily.WordRAM.ReducedKWise
+public import CslibFrontier.DataStructure.HashFamily.WordRAM.RuntimeReducedKWise
+public import CslibFrontier.DataStructure.HashFamily.WordRAM.RuntimeReducedKWise.Horner
+public import CslibFrontier.DataStructure.HashFamily.WordRAM.RuntimeReducedKWise.ParamsInit
 public import CslibFrontier.DataStructure.HashFamily.WordRAM.Tabulation
 public import CslibFrontier.DataStructure.KServer.Basic
 public import CslibFrontier.DataStructure.KServer.DoubleCoverage
@@ -5497,6 +5508,7 @@ public import CslibFrontier.Foundations.Combinatorics.GreedySchedules
 public import CslibFrontier.Foundations.Combinatorics.Hoeffding
 public import CslibFrontier.Foundations.Combinatorics.HybridPrediction
 public import CslibFrontier.Foundations.Combinatorics.Hypergeometric
+public import CslibFrontier.Foundations.Combinatorics.Hypergeometric.IntersectionTail
 public import CslibFrontier.Foundations.Combinatorics.Hypergeometric.Miss
 public import CslibFrontier.Foundations.Combinatorics.HypergraphCut
 public import CslibFrontier.Foundations.Combinatorics.InclusionExclusion
@@ -5774,6 +5786,7 @@ public import CslibFrontier.Foundations.Data.Finset.Markov
 public import CslibFrontier.Foundations.Data.Finset.Median
 public import CslibFrontier.Foundations.Data.Finset.NatGap
 public import CslibFrontier.Foundations.Data.Finset.OffDiag
+public import CslibFrontier.Foundations.Data.Finset.OrderEmb
 public import CslibFrontier.Foundations.Data.Finset.OrderGlue
 public import CslibFrontier.Foundations.Data.Finset.OrderedFilter
 public import CslibFrontier.Foundations.Data.Finset.PaleyZygmund
