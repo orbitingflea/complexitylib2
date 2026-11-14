@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import CslibFrontier.Crypto.Protocols.KEM.FujisakiOkamoto.WordGame
-import CslibFrontier.Computability.Probabilistic.Oracle.ReplayParameter
+public import CslibFrontier.Computability.Probabilistic.Oracle.ReplayParameter
 import Mathlib.Data.Set.Finite.List
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Probabilistic.CoinTape.QueryBounds
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Probabilistic.CoinTape.Substitution
@@ -208,7 +208,7 @@ noncomputable def typedQuery (n : ℕ) : CCAOp → List Bool →
 
 /-- **The saved-coin view of a native adversary** at parameter `n`, as a randomized adversary of
 the typed ROM IND-CCA game of `finiteScheme n`. Its coins are a uniform tape of
-`c * (2 n + 2 + keyC (n + 1) ^ keyD) ^ d` bits. On the challenge `(pk, c*, k*)` it replays the
+`savedCoinBudget c d keyC keyD n` bits. On the challenge `(pk, c*, k*)` it replays the
 coin-tape machine `machine` on `(1ⁿ, encKEMChallenge (pk, k*, c*))` with the tape cut at the
 machine's clock, sends each request through `typedQuery`, and decodes the output bit. A challenge
 word longer than `keyC (n + 1) ^ keyD` gets `false` without any query. -/
@@ -217,7 +217,7 @@ noncomputable def savedCoinAdversary {k : ℕ} {Control : Type}
     RandomizedROAdversary (List Bool) (BitString (P.msgLen n)) (BitString (P.coinLen n))
       (P.Ciphertext n) (BitString (keyLen n)) where
   Coins := List Bool
-  coins := BitString.sampleList (c * (2 * n + 2 + keyC * (n + 1) ^ keyD) ^ d)
+  coins := BitString.sampleList (savedCoinBudget c d keyC keyD n)
   run tape := fun ⟨pk, ct, key⟩ =>
     if (Encryption.encKEMChallenge (pk, List.ofFn key, ct.val)).length ≤ keyC * (n + 1) ^ keyD then
       Decoder.bool.decode <$> machine.runCoins (P.typedQuery keyLen n)
@@ -848,18 +848,18 @@ private theorem isQueryBounded_typedQuery (n : ℕ) (op : CCAOp) (w : List Bool)
     · exact .pure _ _
 
 /-- **Query bounds of the saved-coin view.** Every coin value and challenge makes at most
-`c * (2 n + 2 + keyC (n + 1) ^ keyD) ^ d` queries to `G` and as many to `H`. -/
+`savedCoinBudget c d keyC keyD n` queries to `G` and as many to `H`. -/
 theorem savedCoinAdversary_queryBounds {k : ℕ} {Control : Type}
     (machine : _root_.Turing.MultiTapePTM k Bool Control CCAOp) (c d keyC keyD n : ℕ) :
     (P.savedCoinAdversary keyLen machine c d keyC keyD n).QueryBounds
-      (c * (2 * n + 2 + keyC * (n + 1) ^ keyD) ^ d)
-      (c * (2 * n + 2 + keyC * (n + 1) ^ keyD) ^ d) := by
+      (savedCoinBudget c d keyC keyD n)
+      (savedCoinBudget c d keyC keyD n) := by
   intro ω ch
   change List Bool at ω
   obtain ⟨pk, ct, key⟩ := ch
   have htotal : OracleComp.IsQueryBounded
       ((P.savedCoinAdversary keyLen machine c d keyC keyD n).run ω ⟨pk, ct, key⟩)
-      (c * (2 * n + 2 + keyC * (n + 1) ^ keyD) ^ d) := by
+      (savedCoinBudget c d keyC keyD n) := by
     simp only [savedCoinAdversary]
     split
     · rename_i hlen
@@ -867,11 +867,7 @@ theorem savedCoinAdversary_queryBounds {k : ℕ} {Control : Type}
       apply (machine.isCostBounded_runCoins (P.typedQuery keyLen n) 1
         (isQueryBounded_typedQuery n) _ _).mono
       simp only [List.length_take, Nat.mul_one]
-      apply (Nat.min_le_left _ _).trans
-      apply Nat.mul_le_mul_left c
-      apply Nat.pow_le_pow_left
-      simp only [length_encPair, encUnary_apply, List.length_replicate, encBits_apply] at *
-      omega
+      exact (Nat.min_le_left _ _).trans (clock_le_savedCoinBudget c d keyC keyD n hlen)
     · exact .pure _ _
   exact ⟨htotal.of_le fun q => by cases q <;> simp, htotal.of_le fun q => by cases q <;> simp⟩
 
@@ -1120,7 +1116,7 @@ theorem IsEfficient.exists_typedAdversary (hP : P.IsEfficient)
           (P.finitePKE n).cpaAdvantage ((P.finiteScheme keyLen n).romCpaReduction (B n))) := by
   obtain ⟨k, Control, -, machine, c, d, keyC, keyD, hrun⟩ := exists_savedCoins hP hkeyLen hA
   refine ⟨fun n => P.savedCoinAdversary keyLen machine c d keyC keyD n,
-    fun n => c * (2 * n + 2 + keyC * (n + 1) ^ keyD) ^ d, by fun_prop,
+    savedCoinBudget c d keyC keyD, polynomiallyBounded_savedCoinBudget c d keyC keyD,
     fun n => savedCoinAdversary_queryBounds machine c d keyC keyD n, fun hfit n =>
       ⟨fun b => eval_romIndCcaGameWord_eq hfit machine c d keyC keyD (hrun n) b, ?_⟩⟩
   simp only [Encryption.advantage, ExplicitCoinPKE.cpaAdvantage, Experiment.advantage,

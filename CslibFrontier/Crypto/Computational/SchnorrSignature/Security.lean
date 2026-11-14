@@ -215,9 +215,8 @@ theorem isPPTOn_schnorrForkingAdversary {k : ℕ} {Control : Type} [Finite Contr
     fun_prop
   have hpk : ComputableInPolyTime (fun a : ℕ × F.Desc × List Bool => a.2.2) E encBits := by
     fun_prop
-  have hB : ComputableInPolyTime (fun n => savedCoinBudget c e keyC keyD n) encUnary encUnary := by
-    unfold savedCoinBudget
-    fun_prop
+  have hB : ComputableInPolyTime (fun n => savedCoinBudget c e keyC keyD n) encUnary encUnary :=
+    computableInPolyTime_savedCoinBudget c e keyC keyD
   have hbudget : ComputableInPolyTime
       (fun a : ℕ × F.Desc × List Bool => savedCoinBudget c e keyC keyD a.1) E encUnary :=
     hB.comp hn

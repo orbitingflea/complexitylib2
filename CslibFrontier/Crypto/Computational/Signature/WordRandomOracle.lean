@@ -181,16 +181,6 @@ end EUFCMA
 
 /-! ### Saved-coin replay -/
 
-/-- One polynomial budget for the source clock on every admitted public key. -/
-def savedCoinBudget (c d keyC keyD n : ℕ) : ℕ :=
-  c * (2 * n + 2 + keyC * (n + 1) ^ keyD) ^ d
-
-/-- The saved-coin budget is polynomial in the security parameter. -/
-theorem polynomiallyBounded_savedCoinBudget (c d keyC keyD : ℕ) :
-    PolynomiallyBounded (savedCoinBudget c d keyC keyD) := by
-  unfold savedCoinBudget
-  fun_prop
-
 /-- Input `(1ⁿ, pk, tape)` of a saved-coin replay (`savedWordReplay`): the security parameter `n`
 in unary, then the public key and the saved coin tape as bit words. The parameter and the public
 key are framed. -/
@@ -277,12 +267,7 @@ theorem isQueryBounded_savedWordReplay {k : ℕ} {Control Query : Type} {spec : 
       (encPair encUnary encBits (n, pk))
     apply h.mono
     simp only [List.length_take, Nat.mul_one]
-    apply (Nat.min_le_left _ _).trans
-    apply Nat.mul_le_mul_left c
-    apply Nat.pow_le_pow_left
-    simp only [length_encPair, encUnary_apply,
-      List.length_replicate, encBits_apply] at *
-    omega
+    exact (Nat.min_le_left _ _).trans (clock_le_savedCoinBudget c d keyC keyD n hpk)
   · exact .pure _ _
 
 /-- Use the existing total pair decoder after native replay. Oversized keys make no calls; all
