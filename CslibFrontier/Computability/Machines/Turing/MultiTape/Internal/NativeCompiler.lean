@@ -34,6 +34,11 @@ exact encoded source and emitted-result lengths; `time` and `workspace` apply on
 machine is executed.
 In particular, using a precompiled result does not pay compiler runtime, but a result used as code
 still carries its `outputBits` program-size charge. No scalar total is built into this kernel.
+Each coordinate counts one concrete artifact occurrence: a separately stored copy must be charged
+again by the enclosing certificate. Thus a payload hardwired into the compiler description and a
+copy emitted as output are distinct artifacts, not double counting. The constructor clocks charge
+their actual copying, framing, rewinding and intermediate marshalling; they provide no free scan of
+an encoded program through finite control.
 
 The constructors use the existing machine combinators directly. In particular, they do not select
 a machine from `ComputableInPolyTime`, `ComputableInO`, `ComputableInDegree`, or a normal-form
@@ -45,6 +50,8 @@ The constructors assemble fixed machine terms at the proof level; they are not a
 generator. The functions and encodings in their types specify behavior and resource expressions,
 not callbacks executed outside the packaged machine. A compiler that receives descriptions at
 runtime must itself be a `NativeCompiler` whose machine performs that encoded transformation.
+Oracle handlers, query/service implementations and universal interpretation are not coordinates of
+this deterministic kernel and must be added separately by constructions that use them.
 
 This is a bounded internal prerequisite for concrete compilers. It does not claim that an arbitrary
 existential computability proof can be extracted into a `NativeCompiler`.

@@ -169,6 +169,14 @@ cover local registrations and both reducibility cases.
 
 Plain and internal tidy predicates have separate search rules at this snapshot. The preferred plain tactic does not change the user's goal to tidy computability or silently restate hypotheses. Machine-level proofs may still use tidy witnesses internally. This is the implemented direction even where older prose or issues describe a stronger prohibition on tidy use inside proofs.
 
+For numbered framed lists, import `Complexity.PolyTime.List` and use the plain
+`ComputableInPolyTime.zipIdx` rule. It stores each index in `encUnary` and needs no inhabitant
+or decoder for the element type. `Complexity.PolyTime.Captured` provides `listSetWithInput` for replacement at
+a computed unary index; an out-of-range index leaves the list unchanged. Both rules compose
+with plain certificates for the original input. The ordinary-import regression client
+[`ListZipIdx.lean`](../../CslibFrontierTests/ListZipIdx.lean) covers empty element types,
+computed lists, and in-range and out-of-range replacement.
+
 Import [`CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Captured`](../../CslibFrontier/Computability/Machines/Turing/MultiTape/Complexity/PolyTime/Captured.lean) for shared-input plain composition rules (`CslibFrontier.Tactic.PolyTime` does not import it). It registers `fun_prop` rules for `_root_.cond`, `List.take` and `List.drop` (requiring `encUnary` count premises), `List.head?`, `List.headD`, `List.count` (returning its count in `encUnary`), and fixed-list `List.any` (`anyConst`, whose fixed list needs no index encoding). Rules whose result encoding hides an element encoding (`listHead?WithInput`, `listHeadDWithInput`, `countWithInput`) also carry `program_certificate hlist` so `polytime` infers the element encoding from the `encList E` list premise before checking element arguments or outer projections. Binary remainder `ComputableInPolyTime.binary_mod'` on `encNat` stays explicit alongside `binary_div'` so `HMod.hMod` automation on `encUnary` remains unambiguous, and [`PolyTime.Nat.Max`](../../CslibFrontier/Computability/Machines/Turing/MultiTape/Complexity/PolyTime/Nat/Max.lean) registers `unary_min`, `unary_max`, and `unary_max'` with `fun_prop` while keeping `unary_min'` explicit alongside `binary_min_unary'`; see the complete checked client [`PolyTimeCaptured.lean`](../../CslibFrontierTests/PolyTimeCaptured.lean).
 
 ## Rewrite option matches before resource automation
@@ -472,6 +480,16 @@ complete [checked clients](../../CslibFrontierTests/EncLenTactic.lean) cover nes
 pairs, leaf encodings, framed list constructors, local encodings, locations, scaling facts and
 diagnostics. This proves encoding arithmetic; it does not construct a computation or resource
 certificate.
+
+When replacing a consecutive `simp only [length_encPair, encUnary_apply, …]` and `omega`
+proof, keep any additional unfolding or arithmetic lemmas as arguments to `enc_len` and preserve
+the original location. For example, a local record equation still belongs in
+`enc_len [encInstance_apply]`; the tactic does not discover that equation. Keep nonlinear
+monotonicity steps outside this replacement, and validate the importing clients after adding
+the tactic import. Preserve outer proof steps when the simplification proves a nested
+`have`. A `lia` closure may normalize arithmetic expressions or identify reducible encoding
+names that `omega` treats as distinct atoms; retain the explicit proof when `enc_len` does
+not fit.
 
 By default only the current goal is expanded. Supply a local encoding lemma explicitly with
 `enc_len [eFoo_apply]`. Use `enc_len at h ⊢` to expand one hypothesis and the goal, or `enc_len at *`

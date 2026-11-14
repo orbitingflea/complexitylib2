@@ -145,6 +145,12 @@ example (b : Bool) :
     pipeline.outputBits b = (encPair encBool encBool (b, true)).length :=
   rfl
 
+-- The emitted pair coordinate includes both the framing of the dynamic bit and the fixed tag.
+example (b : Bool) : pipeline.outputBits b =
+    2 * (encBool b).length + 1 + (encBool true).length := by
+  change (encPair encBool encBool (b, true)).length = _
+  exact length_encPair (b, true)
+
 -- Both branches compute, and the checked pipeline is genuinely nonconstant.
 example : pipeline.machine.ComputesTidilyInTimeAndSpace
     (encBool false) (encPair encBool encBool (false, true))

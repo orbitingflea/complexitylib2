@@ -29,6 +29,11 @@ scalar total. A concrete specialization certificate must still separate controll
 program sizes and account for its wrapper transitions, layout and interpreter use.
 The identity, constant, composition and pairing constructors assemble fixed machine terms; their
 semantic functions and encodings are specifications, not free callbacks or a runtime compiler.
+Every size coordinate counts one stored artifact occurrence, so a distinct copy is charged again;
+a hardwired payload inside the compiler and the emitted payload are separate artifacts. The core
+clock formulas charge copying, framing, rewinding and intermediate marshalling rather than treating
+a whole-code scan as finite-control work. Oracle handlers, query/service implementations and their
+codec/dispatch/interpreter costs remain outside this deterministic kernel.
 
 ## Abstract description methods
 
