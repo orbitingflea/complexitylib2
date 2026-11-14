@@ -194,16 +194,16 @@ private theorem labels_polyTime :
   fun_prop
 
 private theorem sum_polyTime :
-    ComputableTidilyInPolyTime (fun l : List Bool => l.sum) encBits encBool := by
+    ComputableInPolyTime (fun l : List Bool => l.sum) encBits encBool := by
   simpa only [List.sum_eq_foldl, Bool.add_eq_xor, Bool.zero_eq_false] using
-    ComputableTidilyInPolyTime.bitsFoldlWithInput Bool.xor
-      (ComputableTidilyInPolyTime.id' (encIn := encBits))
-      (ComputableTidilyInPolyTime.const false)
+    ComputableInPolyTime.bitsFoldlWithInput Bool.xor
+      (ComputableInPolyTime.id' (encIn := encBits))
+      (ComputableInPolyTime.const false)
 
-@[fun_prop] private theorem coefficient_polyTime : ComputableTidilyInPolyTime
+@[fun_prop] private theorem coefficient_polyTime : ComputableInPolyTime
     (fun q : List ℕ × ℕ => coefficient q.1 q.2)
       (encPair (encList encNat) encNat) encBool := by
-  have hbits : ComputableTidilyInPolyTime
+  have hbits : ComputableInPolyTime
       (fun q : List ℕ × ℕ => q.1.map fun w => Decidable.decide (w = q.2))
       (encPair (encList encNat) encNat) encBits := by
     fun_prop
@@ -216,7 +216,7 @@ open scoped _root_.Cslib.Complexity.XORSAT.Dense
 compared, never expanded into a table indexed by their numerical value. -/
 theorem computableInPolyTime_compile : ComputableInPolyTime compile encoding Dense.encInput := by
   have hvars := labels_polyTime
-  have hcoeff := coefficient_polyTime.computableInPolyTime
+  have hcoeff := coefficient_polyTime
   unfold compile
   unfold encoding at hvars ⊢
   fun_prop
