@@ -8,6 +8,7 @@ module
 
 public import CslibFrontier.Computability.Circuit.Quantum.Oracle.Controller.ProgramSemantics
 public import CslibFrontier.Computability.Circuit.Quantum.Oracle.Controller.Boundary
+public import CslibFrontier.Computability.Circuit.Quantum.Oracle.RandomOracle
 public import CslibFrontierTests.QuantumControllerFixture
 public import CslibFrontierTests.QuantumOracleInteraction
 import CslibFrontierTests.QuantumCircuitFixture
@@ -154,8 +155,8 @@ theorem measure_memory (key : Bool) (wire : Fin 8) (hw : wire = 5 ∨ wire = 6) 
   rw [h₈_baseWord] at hx
   simp [hne] at hx
 
-theorem run_prepare (H : Hash) :
-    ProbOracleComp.runWith (deviceWordHandler H (service H)) prepare initial =
+theorem run_prepare (H Hservice : Hash) :
+    ProbOracleComp.runWith (deviceWordHandler H (service Hservice)) prepare initial =
       PMF.pure ((), memory false) := by
   simp only [prepare, ProbOracleComp.runWith_bind, runWith_gate, PMF.pure_bind]
   unfold initial
@@ -164,14 +165,14 @@ theorem run_prepare (H : Hash) :
   rw [pureDevice_instruction H _ h₈ (by rfl)]
   rfl
 
-theorem run_requestKey (H : Hash) (s : DeviceState 8 Unit Unit) :
-    ProbOracleComp.runWith (deviceWordHandler H (service H)) requestKey s =
-      PMF.pure (H (fun _ => false) 0, s) := by
-  have hhandler := deviceWordHandler_encode (κ := Unit) H (service H)
+theorem run_requestKey (H Hservice : Hash) (s : DeviceState 8 Unit Unit) :
+    ProbOracleComp.runWith (deviceWordHandler H (service Hservice)) requestKey s =
+      PMF.pure (Hservice (fun _ => false) 0, s) := by
+  have hhandler := deviceWordHandler_encode (κ := Unit) H (service Hservice)
     (DeviceRequest.service (m := 8) () [false, false])
   simp only [DeviceRequest.encode] at hhandler
-  have hs : service H ((), [false, false]) () =
-      PMF.pure (![true, H (fun _ => false) 0], ()) := by
+  have hs : service Hservice ((), [false, false]) () =
+      PMF.pure (![true, Hservice (fun _ => false) 0], ()) := by
     unfold service
     have hword : (fun i : Fin 2 => [false, false].getD i.val false) = fun _ => false := by
       ext i
@@ -185,8 +186,8 @@ theorem run_requestKey (H : Hash) (s : DeviceState 8 Unit Unit) :
   have hu : s.serviceState = () := Subsingleton.elim _ _
   simp [hu, hs, hstate, List.ofFn_succ]
 
-theorem run_initializeKey (H : Hash) (key : Bool) :
-    ProbOracleComp.runWith (deviceWordHandler H (service H))
+theorem run_initializeKey (H Hservice : Hash) (key : Bool) :
+    ProbOracleComp.runWith (deviceWordHandler H (service Hservice))
       (initializeKey key) (memory false) =
         PMF.pure ((), memory key) := by
   unfold initializeKey
@@ -197,8 +198,8 @@ theorem run_initializeKey (H : Hash) (key : Bool) :
       show (OracleGateCode.gate (false, false, 4, [])).toPlacedGate? 8 H = some x₄ by rfl]
     simp only [x₄_memory]
 
-theorem run_finish (H : Hash) (key : Bool) :
-    ProbOracleComp.runWith (deviceWordHandler H (service H)) (finish key) (memory false) =
+theorem run_finish (H Hservice : Hash) (key : Bool) :
+    ProbOracleComp.runWith (deviceWordHandler H (service Hservice)) (finish key) (memory false) =
       PMF.pure ((), pureDevice (ket (answerWord H key false)) (norm_ket _)) := by
   simp only [finish, ProbOracleComp.runWith_bind, run_initializeKey, PMF.pure_bind,
     runWith_gate, runWith_query]
@@ -214,10 +215,10 @@ theorem run_finish (H : Hash) (key : Bool) :
   simp only [compareReply_queriedWord]
 
 /-- The actual native controller realizes the previously checked one-boundary state on its
-known preallocated layout, using the same oracle for its service and its coherent query. -/
-theorem run_program (H : Hash) (n : ℕ) (input : List Bool) :
-    ProbOracleComp.runWith (deviceWordHandler H (service H)) (program n input) initial =
-      PMF.pure ((), pureDevice (ket (answerWord H (H (fun _ => false) 0) false))
+known preallocated layout. Separate table parameters also support the negative redraw test. -/
+theorem run_program (H Hservice : Hash) (n : ℕ) (input : List Bool) :
+    ProbOracleComp.runWith (deviceWordHandler H (service Hservice)) (program n input) initial =
+      PMF.pure ((), pureDevice (ket (answerWord H (Hservice (fun _ => false) 0) false))
         (norm_ket _)) := by
   simp only [program, ProbOracleComp.runWith_bind, run_prepare, PMF.pure_bind]
   rw [show encUnary 5 = encUnary (5 : Fin 8).val from rfl, runWith_measure,
@@ -227,19 +228,91 @@ theorem run_program (H : Hash) (n : ℕ) (input : List Bool) :
 
 /-- Forgetting the terminal classical value identifies the complete controller density with
 `runClassicalQuery`, rather than merely equating one acceptance bit. -/
-theorem run_program_density (H : Hash) (n : ℕ) (input : List Bool) :
-    (ProbOracleComp.runWith (deviceWordHandler H (service H)) (program n input) initial).map
-      (fun p => p.2.density) = PMF.pure (nativeState H H) := by
+theorem run_program_density (H Hservice : Hash) (n : ℕ) (input : List Bool) :
+    (ProbOracleComp.runWith (deviceWordHandler H (service Hservice))
+      (program n input) initial).map (fun p => p.2.density) =
+        PMF.pure (nativeState H Hservice) := by
   rw [run_program, PMF.pure_map, pureDevice_density, nativeState_eq]
 
 /-- The saved work qubit is decoded to zero after the genuine classical service boundary. -/
-theorem run_program_memory (H : Hash) (n : ℕ) (input : List Bool) :
-    (ProbOracleComp.runWith (deviceWordHandler H (service H)) (program n input) initial).bind
+theorem run_program_memory (H Hservice : Hash) (n : ℕ) (input : List Bool) :
+    (ProbOracleComp.runWith (deviceWordHandler H (service Hservice))
+      (program n input) initial).bind
       (fun p => (POVM.basis.measureDensity p.2.density p.2.isDensityMatrix).map
         (fun z => z.1 7)) = PMF.pure false := by
   rw [run_program, PMF.pure_bind]
   simp only [pureDevice_density, prodState_ket,
     POVM.measureDensity_pureState _ _ (norm_ket _), POVM.measure_basis,
     measure_ket, PMF.pure_map, answerWord_memory]
+
+/-- Read the comparison wire after the complete physical controller. Keeping the two table
+arguments explicit also exposes the invalid independent-service redraw experiment below. -/
+noncomputable def readProgram (H Hservice : Hash) (n : ℕ) (input : List Bool) : PMF Bool :=
+  (ProbOracleComp.runWith (deviceWordHandler H (service Hservice))
+    (program n input) initial).bind fun p =>
+      (POVM.basis.measureDensity p.2.density p.2.isDensityMatrix).map (fun z => z.1 1)
+
+/-- The controller-level observation is the same observation already calculated for the native
+two-stage boundary, for shared or independently redrawn tables. -/
+theorem readProgram_eq (H Hservice : Hash) (n : ℕ) (input : List Bool) :
+    readProgram H Hservice n input = nativeRead H Hservice 1 := by
+  unfold readProgram
+  rw [run_program, PMF.pure_bind, nativeRead_eq]
+  simp only [pureDevice_density, prodState_ket,
+    POVM.measureDensity_pureState _ _ (norm_ket _), POVM.measure_basis,
+    measure_ket, PMF.pure_map]
+
+/-- The adapter samples one table and gives it to both the classical service and coherent query
+of the actual fixed-layout controller. -/
+@[expose] noncomputable def sampledProgram (n : ℕ) (input : List Bool) : PMF Bool :=
+  (Quantum.RandomOracle.runWith service (program n input) initial).bind fun p =>
+    (POVM.basis.measureDensity p.2.density p.2.isDensityMatrix).map (fun z => z.1 1)
+
+theorem sampledProgram_eq_sharedExperiment (n : ℕ) (input : List Bool) :
+    sampledProgram n input = sharedExperiment := by
+  rw [sharedExperiment_eq_uniform_bind]
+  unfold sampledProgram
+  simp only [Quantum.RandomOracle.runWith_eq, PMF.bind_bind]
+  congr 1
+  funext H
+  exact readProgram_eq H H n input
+
+/-- Sharing the adapter's sampled table makes the service/query comparison false certainly. -/
+theorem sampledProgram_eq (n : ℕ) (input : List Bool) :
+    sampledProgram n input = PMF.pure false := by
+  rw [sampledProgram_eq_sharedExperiment, sharedExperiment_eq]
+
+/-- In the negative experiment only the classical service receives an independent table. -/
+noncomputable def redrawnProgram (n : ℕ) (input : List Bool) : PMF Bool := do
+  let H ← Probability.PMF.uniformOfFintype Hash
+  let Hservice ← Probability.PMF.uniformOfFintype Hash
+  readProgram H Hservice n input
+
+theorem redrawnProgram_eq_redrawnExperiment (n : ℕ) (input : List Bool) :
+    redrawnProgram n input = redrawnExperiment := by
+  rw [redrawnExperiment_eq_uniform_bind_bind]
+  unfold redrawnProgram
+  congr 1
+  funext H
+  congr 1
+  funext Hservice
+  exact readProgram_eq H Hservice n input
+
+/-- Redrawing the service table makes the actual controller's comparison bit uniform. -/
+theorem redrawnProgram_eq (n : ℕ) (input : List Bool) :
+    redrawnProgram n input = Probability.PMF.uniformOfFintype Bool := by
+  rw [redrawnProgram_eq_redrawnExperiment, redrawnExperiment_eq]
+
+/-- The genuine controller detects shared-table reuse certainly, while independently redrawing
+the service table reduces the same comparison to probability one half. -/
+example (n : ℕ) (input : List Bool) :
+    sampledProgram n input false = 1 ∧ redrawnProgram n input false = 1 / 2 := by
+  rw [sampledProgram_eq, redrawnProgram_eq]
+  norm_num [Probability.PMF.uniformOfFintype_apply]
+
+-- A no-query experiment is independent of its table, including at zero input/output widths.
+example : Quantum.RandomOracle.sample (a := 0) (b := 0) (fun _ => PMF.pure true) =
+    PMF.pure true := by
+  simp
 
 end CslibFrontierTests.QuantumControllerBoundary

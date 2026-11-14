@@ -71,7 +71,6 @@ section Efficiency
 
 variable {α : Type} {input : α ↪ List Bool} {evaluate : List Bool → List Bool → Bool}
 
-attribute [local fun_prop] ComputableInPolyTime.tidy in
 /-- Final selection composes the evaluator, source, stored state, and encoded parameters. -/
 @[program_certificate]
 theorem isPPTOn_finish {source : α → ProbComp (List Bool × Bool)} {params : α → Parameters}
@@ -83,9 +82,6 @@ theorem isPPTOn_finish {source : α → ProbComp (List Bool × Bool)} {params : 
     (hparams : ComputableInPolyTime params input Parameters.encoding) :
     IsPPTOn input (encPair State.encoding encUnary)
       (fun a => finish evaluate (source a) (params a) (state a)) := by
-  have hevaluate := hevaluate.tidy
-  have hstate := hstate.tidy
-  have hparams := hparams.tidy
   unfold finish
   fun_prop
 
@@ -103,7 +99,6 @@ theorem isPPTOn_train {source : α → ProbComp (List Bool × Bool)}
   unfold train
   ppt
 
-attribute [local fun_prop] ComputableInPolyTime.tidy in
 /-- Applying a trained predictor requires only efficient observations and the stored description. -/
 @[program_certificate]
 theorem isPPTOn_predict {precision : α → ℕ} {model : α → State × ℕ}
@@ -115,10 +110,6 @@ theorem isPPTOn_predict {precision : α → ℕ} {model : α → State × ℕ}
     (hobservation : ComputableInPolyTime observation input encBits) :
     IsPPTOn input encBool
       (fun a => predict evaluate (precision a) (model a) (observation a)) := by
-  have hevaluate := hevaluate.tidy
-  have hprecision := hprecision.tidy
-  have hmodel := hmodel.tidy
-  have hobservation := hobservation.tidy
   unfold predict
   ppt
 
