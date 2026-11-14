@@ -9,6 +9,8 @@ module
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Internal.DegreeOptionPrimitives
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.Degree.Bounds
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Internal.PolyTimePrimitives
+import CslibFrontier.Computability.Machines.Turing.MultiTape.Internal.OOptionPrimitives
+import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.BigO.PolyTime
 
 /-!
 # Direct plain polynomial-time option operations
@@ -44,30 +46,6 @@ theorem optionIsSome {value : α → Option β}
     ComputableInPolyTime (fun a => (value a).isSome) encA encBool :=
   (ComputableInDegree.isSome encB).computableInPolyTime.comp hvalue
 
-/-- Read an option with a fallback supplied as part of the input. -/
-@[fun_prop]
-theorem optionGetD (enc : α ↪ List Bool) :
-    ComputableInPolyTime (fun p : Option α × α => p.1.getD p.2)
-      (encPair (encOption enc) enc) enc := by
-  rcases isEmpty_or_nonempty α with h | h
-  · exact of_finite _
-  · obtain ⟨fallback⟩ := h
-    have hread := ComputableInPolyTime.ite (encC := encBool)
-      ((ComputableInDegree.isSome enc).computableInPolyTime.comp (fst (encOption enc) enc))
-      ((ComputableInDegree.getD fallback).computableInPolyTime.comp (fst (encOption enc) enc))
-      (snd (encOption enc) enc)
-    convert hread using 1
-    funext ⟨value, d⟩
-    cases value <;> rfl
-
-/-- Read a computed option with a computed fallback, using their shared value encoding. -/
-@[fun_prop]
-theorem optionGetDWithInput {value : α → Option β} {fallback : α → β}
-    (hvalue : ComputableInPolyTime value encA (encOption encB))
-    (hfallback : ComputableInPolyTime fallback encA encB) :
-    ComputableInPolyTime (fun a => (value a).getD (fallback a)) encA encB :=
-  (optionGetD encB).comp (hvalue.prod hfallback)
-
 /-- Branch on a computed option, charging its full value and any captured original input. -/
 @[fun_prop]
 theorem optionElimWithInput {γ : Type} {encC : γ ↪ List Bool}
@@ -87,12 +65,41 @@ theorem optionElimWithInput {γ : Type} {encC : γ ↪ List Bool}
   · obtain ⟨b⟩ := h
     have hget : ComputableInPolyTime (fun a => (value a).getD b) encA encB :=
       (ComputableInDegree.getD b).computableInPolyTime.comp hvalue
-    have hbranch := ComputableInPolyTime.ite (encC := encBool) hvalue.optionIsSome
-      (hbody.comp (id'.prod hget)) hfallback
-    convert hbranch using 1
-    funext a
-    dsimp only [Function.comp_def]
-    cases value a <;> rfl
+    obtain ⟨Tv, Sv, hTv, hSv, hv⟩ := hvalue.exists_computableInO
+    obtain ⟨Tn, Sn, hTn, hSn, hn⟩ := hfallback.exists_computableInO
+    obtain ⟨Tb, Sb, hTb, hSb, hb⟩ := hbody.exists_computableInO
+    have hp := (id'.prod hget).polyBounded_length
+    have hTbranch : PolyBounded (fun a => (encA a).length)
+        (fun a => (value a).elim (Tn a) (fun b => Tb (a, b))) :=
+      (hTn.add (hTb.comp hp)).mono fun a => by
+        cases value a <;> simp
+    have hSbranch : PolyBounded (fun a => (encA a).length)
+        (fun a => (value a).elim (Sn a) (fun b => Sb (a, b))) :=
+      (hSn.add (hSb.comp hp)).mono fun a => by
+        cases value a <;> simp
+    exact (ComputableInO.optionElimWithInput hv hn hb).computableInPolyTime
+      ((((PolyBounded.const 2).mul hTv).add .self).add hTbranch)
+      ((((PolyBounded.const 2).mul hSv).add .self).add hSbranch)
+
+/-- Read an option with a fallback supplied as part of the input. -/
+@[fun_prop]
+theorem optionGetD (enc : α ↪ List Bool) :
+    ComputableInPolyTime (fun p : Option α × α => p.1.getD p.2)
+      (encPair (encOption enc) enc) enc := by
+  have h := optionElimWithInput (body := fun (_ : Option α × α) (a : α) => a)
+    (fst (encOption enc) enc) (snd (encOption enc) enc)
+    (snd (encPair (encOption enc) enc) enc)
+  convert h using 1
+  funext p
+  cases p.1 <;> rfl
+
+/-- Read a computed option with a computed fallback, using their shared value encoding. -/
+@[fun_prop]
+theorem optionGetDWithInput {value : α → Option β} {fallback : α → β}
+    (hvalue : ComputableInPolyTime value encA (encOption encB))
+    (hfallback : ComputableInPolyTime fallback encA encB) :
+    ComputableInPolyTime (fun a => (value a).getD (fallback a)) encA encB :=
+  (optionGetD encB).comp (hvalue.prod hfallback)
 
 /-- Map a computed option, charging the callback jointly with its captured input. -/
 @[fun_prop]

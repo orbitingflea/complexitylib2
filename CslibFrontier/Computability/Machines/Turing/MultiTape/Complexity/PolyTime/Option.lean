@@ -51,14 +51,14 @@ variable {α β : Type} {encA : α ↪ List Bool} {encB : β ↪ List Bool}
 @[fun_prop]
 theorem optionSome (enc : α ↪ List Bool) :
     ComputableTidilyInPolyTime (some (α := α)) enc (encOption enc) :=
-  of_linear (Internal.NormalForm.linear OptionEncoding.some)
+  (ComputableInPolyTime.optionSome enc).tidy
 
 /-- Test whether a computed option contains a value, without requiring a default value. -/
 @[fun_prop]
 theorem optionIsSome {value : α → Option β}
     (hvalue : ComputableTidilyInPolyTime value encA (encOption encB)) :
     ComputableTidilyInPolyTime (fun a => (value a).isSome) encA encBool :=
-  (ComputableTidilyInDegree.isSome encB).computableTidilyInPolyTime.comp hvalue
+  (ComputableInPolyTime.optionIsSome hvalue.computableInPolyTime).tidy
 
 /-- Read an option with a fallback supplied as part of the input. -/
 @[fun_prop]
