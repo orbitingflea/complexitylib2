@@ -4922,6 +4922,8 @@ public import CslibFrontier.DataStructure.BTree.PredSucc
 public import CslibFrontier.DataStructure.BTree.Range
 public import CslibFrontier.DataStructure.BTree.Rank
 public import CslibFrontier.DataStructure.BTree.TreeMap
+public import CslibFrontier.DataStructure.BallsToSlots.KickTree
+public import CslibFrontier.DataStructure.BallsToSlots.Spec
 public import CslibFrontier.DataStructure.CellProbe.OfWordRAM
 public import CslibFrontier.DataStructure.CellProbe.Randomized.ObliviousSequence
 public import CslibFrontier.DataStructure.CellProbe.Randomized.StateTransition
@@ -4940,6 +4942,9 @@ public import CslibFrontier.DataStructure.Dictionary.Dynamic.Spec
 public import CslibFrontier.DataStructure.Dictionary.DynamicMatching
 public import CslibFrontier.DataStructure.Dictionary.FeistelPerm
 public import CslibFrontier.DataStructure.Dictionary.FeistelQuotient
+public import CslibFrontier.DataStructure.Dictionary.KickTree.QuotientPerm
+public import CslibFrontier.DataStructure.Dictionary.KickTree.RoundSeed
+public import CslibFrontier.DataStructure.Dictionary.KickTree.SmallUniversePerm
 public import CslibFrontier.DataStructure.Dictionary.Memory
 public import CslibFrontier.DataStructure.Dictionary.Minimap
 public import CslibFrontier.DataStructure.Dictionary.PerfectHashing.Construction
@@ -5880,6 +5885,7 @@ public import CslibFrontier.Foundations.Data.Nat.Choose.Vandermonde
 public import CslibFrontier.Foundations.Data.Nat.Clog
 public import CslibFrontier.Foundations.Data.Nat.ClogPow
 public import CslibFrontier.Foundations.Data.Nat.ConstantDivision
+public import CslibFrontier.Foundations.Data.Nat.DescFactorial
 public import CslibFrontier.Foundations.Data.Nat.Div
 public import CslibFrontier.Foundations.Data.Nat.Doubling
 public import CslibFrontier.Foundations.Data.Nat.Factorial
@@ -7201,6 +7207,7 @@ public import CslibFrontier.Probability.SubGaussian
 public import CslibFrontier.Probability.TupleSampler
 public import CslibFrontier.Probability.Uniform
 public import CslibFrontier.Probability.Uniform.Translate
+public import CslibFrontier.Probability.UniformEmbedding
 public import CslibFrontier.Probability.UniformNat
 public import CslibFrontier.Probability.UniformOrder
 public import CslibFrontier.Probability.UniversalHash
