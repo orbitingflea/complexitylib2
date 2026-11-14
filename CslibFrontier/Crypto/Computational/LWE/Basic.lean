@@ -183,19 +183,6 @@ noncomputable def advantage (secretLaw : PMF (Fin n → R)) (errorLaw : PMF (Fin
     (distinguisher : Matrix (Fin m) (Fin n) R → (Fin m → R) → ProbComp Bool) : ℝ≥0 :=
   Game.advantage (realGame secretLaw errorLaw distinguisher) (randomGame distinguisher)
 
-/-- The real game depends on the distinguisher only through its output distributions. -/
-theorem realGame_congr {secretLaw : PMF (Fin n → R)} {errorLaw : PMF (Fin m → R)}
-    {D D' : Matrix (Fin m) (Fin n) R → (Fin m → R) → ProbComp Bool}
-    (h : ∀ A b, ProbComp.eval (D A b) = ProbComp.eval (D' A b)) :
-    realGame secretLaw errorLaw D = realGame secretLaw errorLaw D' := by
-  simp only [realGame, eval_realExperiment, h]
-
-/-- The random game depends on the distinguisher only through its output distributions. -/
-theorem randomGame_congr {D D' : Matrix (Fin m) (Fin n) R → (Fin m → R) → ProbComp Bool}
-    (h : ∀ A b, ProbComp.eval (D A b) = ProbComp.eval (D' A b)) :
-    randomGame D = randomGame D' := by
-  simp only [randomGame, eval_randomExperiment, h]
-
 /-- With uniform errors the real game is the random game, for every secret law: `A *ᵥ s + e` is
 uniform and independent of `(A, s)`. -/
 theorem realGame_uniform_error_eq_randomGame (secretLaw : PMF (Fin n → R))
