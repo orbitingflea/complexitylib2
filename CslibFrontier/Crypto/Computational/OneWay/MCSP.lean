@@ -99,7 +99,7 @@ thresholds `⌊2 ^ m / (5 m)⌋`. The parts of the distinguisher live in the nam
 
 namespace Cslib.Crypto
 
-open Probability Turing.MultiTapeTM ComputableTidilyInPolyTime Complexity Circuits
+open Probability Turing.MultiTapeTM ComputableInPolyTime Complexity Circuits
   Circuits.Boolean
 open scoped BigOperators
 
@@ -248,11 +248,10 @@ theorem computableInPolyTime_tableQueries (d : ℕ) :
     ComputableInPolyTime (fun input : ℕ × List Bool =>
       tableQueries input.1 (tableArity d input.1)) (encPair encUnary encBits)
       (encList encBits) := by
-  refine .of_tidy ?_
   unfold tableQueries
-  have harity : ComputableTidilyInPolyTime (fun input : ℕ × List Bool => tableArity d input.1)
+  have harity : ComputableInPolyTime (fun input : ℕ × List Bool => tableArity d input.1)
       (encPair encUnary encBits) encUnary :=
-    (computableInPolyTime_tableArity d).tidy.comp (fst _ _)
+    (computableInPolyTime_tableArity d).comp (fst _ _)
   refine mapWithInput (bitsEnumList harity
     (size := fun L => (2 * (L + 1)) ^ d * (2 * (d * (2 * (L + 1))) + 1)) (by fun_prop)
     fun input => ?_) ?_
@@ -269,7 +268,7 @@ theorem computableInPolyTime_tableQueries (d : ℕ) :
     · have := Nat.mul_le_mul_left d hclog
       rw [tableArity]
       omega
-  · have hsub : ComputableTidilyInPolyTime (fun p : (ℕ × List Bool) × List Bool =>
+  · have hsub : ComputableInPolyTime (fun p : (ℕ × List Bool) × List Bool =>
         p.1.1 - tableArity d p.1.1) (encPair (encPair encUnary encBits) encBits) encUnary :=
       unary_sub.comp ((fst _ _).fst'.prod (harity.comp (fst _ _)))
     exact bitsAppend ((bitsReplicate false).comp hsub) (snd _ _)
@@ -280,14 +279,13 @@ theorem computableInPolyTime_tableInstance (d : ℕ) :
     ComputableInPolyTime (fun pair : (ℕ × List Bool) × List Bool =>
       tableInstance (tableArity d pair.1.1) pair.2) (encPair (encPair encUnary encBits) encBits)
       MCSP.encInstance := by
-  refine .of_tidy ?_
-  have harity : ComputableTidilyInPolyTime (fun pair : (ℕ × List Bool) × List Bool =>
+  have harity : ComputableInPolyTime (fun pair : (ℕ × List Bool) × List Bool =>
       tableArity d pair.1.1) (encPair (encPair encUnary encBits) encBits) encUnary :=
-    (computableInPolyTime_tableArity d).tidy.comp (fst _ _).fst'
-  have hsize : ComputableTidilyInPolyTime (fun pair : (ℕ × List Bool) × List Bool =>
+    (computableInPolyTime_tableArity d).comp (fst _ _).fst'
+  have hsize : ComputableInPolyTime (fun pair : (ℕ × List Bool) × List Bool =>
       2 ^ tableArity d pair.1.1) (encPair (encPair encUnary encBits) encBits) encUnary :=
-    (computableInPolyTime_two_pow_tableArity d).tidy.comp (fst _ _).fst'
-  have hraw : ComputableTidilyInPolyTime (fun pair : (ℕ × List Bool) × List Bool =>
+    (computableInPolyTime_two_pow_tableArity d).comp (fst _ _).fst'
+  have hraw : ComputableInPolyTime (fun pair : (ℕ × List Bool) × List Bool =>
       ((pair.2 ++ List.replicate (2 ^ tableArity d pair.1.1) false).take
         (2 ^ tableArity d pair.1.1), 2 ^ tableArity d pair.1.1 / (5 * tableArity d pair.1.1)))
       (encPair (encPair encUnary encBits) encBits) (encPair encBits encNat) :=

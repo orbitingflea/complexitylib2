@@ -76,7 +76,7 @@ randomized version, for a decision procedure in `BPP`, is in
 
 namespace Cslib.Crypto
 
-open Complexity Probability Turing.MultiTapeTM ComputableTidilyInPolyTime
+open Complexity Probability Turing.MultiTapeTM ComputableInPolyTime
 
 /-- **The preimage-prefix problem** of `f`: the instances `(n, y, u)` such that some input `x` of
 length `n` that starts with `u` satisfies `f x = y`. -/
@@ -149,8 +149,7 @@ theorem computableInPolyTime_preimagePrefixVerifier
 time. -/
 theorem preimagePrefix_mem_NP (hf : ComputableInPolyTime f encBits encBits) :
     preimagePrefix f ∈ NP encPreimagePrefix := by
-  have hf := hf.tidy
-  exact ⟨_, _, (computableInPolyTime_preimagePrefixVerifier (.of_tidy hf)),
+  exact ⟨_, _, (computableInPolyTime_preimagePrefixVerifier hf),
     isVerifier_preimagePrefixVerifier f⟩
 
 /-! ### Search to decision -/
@@ -241,12 +240,9 @@ theorem computableInPolyTime_preimageSearch_of_input {γ : Type} {encIn : γ ↪
       (encPair encIn encPreimagePrefix) encBool)
     (hq : ComputableInPolyTime q encIn (encPair encUnary encBits)) :
     ComputableInPolyTime (fun x => preimageSearch (D x) (q x)) encIn encBits := by
-  have hD := hD.tidy
-  have hq := hq.tidy
-  refine .of_tidy ?_
   unfold preimageSearch
   refine iterateWithInput_of_bounded_growth hq.fst' (const []) ?_ ⟨.const 1, fun x u => ?_⟩
-  · have hinst : ComputableTidilyInPolyTime (fun p : γ × List Bool =>
+  · have hinst : ComputableInPolyTime (fun p : γ × List Bool =>
         (p.1, ((q p.1).1, (q p.1).2, p.2 ++ [false])))
         (encPair encIn encBits) (encPair encIn encPreimagePrefix) :=
       (fst _ _).prod ((hq.comp (fst _ _)).fst'.prod ((hq.comp (fst _ _)).snd'.prod
@@ -270,9 +266,8 @@ theorem exists_inverse_of_preimagePrefix_mem_P (h : preimagePrefix f ∈ P encPr
     ∃ inverse : ℕ × List Bool → List Bool,
       ComputableInPolyTime inverse (encPair encUnary encBits) encBits ∧
         ∀ x, f (inverse (x.length, f x)) = f x := by
-  simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime]
   obtain ⟨D, hD, hDf⟩ := h
-  exact ⟨preimageSearch D, (computableInPolyTime_preimageSearch hD).tidy,
+  exact ⟨preimageSearch D, computableInPolyTime_preimageSearch hD,
     apply_preimageSearch hDf⟩
 
 /-! ### One-way functions -/
@@ -283,7 +278,6 @@ is `Cslib.Crypto.not_oneWay_of_inverse` for an inverter certified on the pair en
 theorem not_oneWay_of_lengthInverse (inverse : ℕ × List Bool → List Bool)
     (hinverse : ComputableInPolyTime inverse (encPair encUnary encBits) encBits)
     (h : ∀ x, f (inverse (x.length, f x)) = f x) : ¬ OneWay f := by
-  simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime] at hinverse
   exact not_oneWay_of_inverse f (fun n y => inverse (n, y)) hinverse.isPPTOn.isPPT h
 
 /-- **One-way functions have hard preimage-prefix problems**: the preimage-prefix problem of a

@@ -70,7 +70,7 @@ as well (`Cslib.Crypto.OneWay.SAT_notMem_BPP`).
 
 namespace Cslib.Crypto
 
-open Complexity Probability Turing.MultiTapeTM ComputableTidilyInPolyTime
+open Complexity Probability Turing.MultiTapeTM ComputableInPolyTime
 
 variable {f : List Bool → List Bool}
 
@@ -94,15 +94,14 @@ theorem isPPT_randomizedPreimageSearch {p : Polynomial ℕ}
     {V : (ℕ × List Bool × List Bool) × List Bool → Bool}
     (hV : ComputableInPolyTime V (encPair encPreimagePrefix encBits) encBool) :
     IsPPT encBits (randomizedPreimageSearch p V) := by
-  have hV := hV.tidy
   apply IsPPTOn.isPPT
-  have hlen : ComputableTidilyInPolyTime (fun q : ℕ × List Bool => searchCoinLength p q)
+  have hlen : ComputableInPolyTime (fun q : ℕ × List Bool => searchCoinLength p q)
       (encPair encUnary encBits) encUnary := by
     unfold searchCoinLength
     exact (unary_eval p).comp ((encoding_length encPreimagePrefix).comp
       ((fst _ _).prod ((snd _ _).prod ((bitsReplicate false).comp (fst _ _)))))
-  refine IsPPTOn.map_with (ComputableInPolyTime.of_tidy hlen).sampleList
-    (computableInPolyTime_preimageSearch_of_input (.of_tidy ?_) (.of_tidy (fst _ _)))
+  refine IsPPTOn.map_with hlen.sampleList
+    (computableInPolyTime_preimageSearch_of_input (?_) (fst _ _))
   exact hV.comp ((snd _ _).prod (bitsTakeWithInput (fst _ _).snd'
     ((unary_eval p).comp ((encoding_length encPreimagePrefix).comp (snd _ _)))))
 

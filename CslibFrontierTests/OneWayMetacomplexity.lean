@@ -99,4 +99,22 @@ example : Probability.IsOraclePPT Turing.MultiTapeTM.encBool
     (KabanetsCai.mcspDistinguisher 0 (fun x => x.2.isEmpty) 3) :=
   KabanetsCai.isOraclePPT_mcspDistinguisher 3 (by fun_prop)
 
+-- Ordinary imports expose the plain input-dependent search contract. The decider can retain
+-- the original image while the prefix grows; no tidy certificate is supplied by the caller.
+example : ComputableInPolyTime
+    (fun y : List Bool => preimageSearch (fun _ => y.isEmpty) (y.length, y))
+    encBits encBits :=
+  computableInPolyTime_preimageSearch_of_input (by fun_prop) (by fun_prop)
+
+-- The randomized search still accepts a plain verifier, including the zero-coin schedule.
+example : Cslib.Probability.IsPPT encBits
+    (randomizedPreimageSearch 0 (fun p => p.2.isEmpty)) :=
+  isPPT_randomizedPreimageSearch (by fun_prop)
+
+-- The complete encoded query-list budget includes the zero-arity case.
+example : ComputableInPolyTime
+    (fun p : ℕ × List Bool => KabanetsCai.tableQueries p.1 (KabanetsCai.tableArity 0 p.1))
+    (encPair encUnary encBits) (encList encBits) :=
+  KabanetsCai.computableInPolyTime_tableQueries 0
+
 end CslibFrontierTests.OneWayMetacomplexity
