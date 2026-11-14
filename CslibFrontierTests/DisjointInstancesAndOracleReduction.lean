@@ -49,7 +49,7 @@ def dupBitsReduction : SizeSensitiveReduction encBits encBits List.length List.l
   scale := 2
   offset := 0
   computableInPolyTime_toFun :=
-    (ComputableTidilyInPolyTime.bitsAppend .id' .id').computableInPolyTime
+    (ComputableInPolyTime.bitsAppend .id' .id')
   measure_le w := by
     simp only [List.length_append]
     omega
@@ -127,15 +127,14 @@ def splitWordBatchReduction :
   scale := 1
   offset := 0
   computableInPolyTime_toBatch := by
-    have htake : ComputableTidilyInPolyTime (fun w : List Bool => w.take 1) encBits encBits :=
-      ComputableTidilyInPolyTime.bitsTake.comp
-        (ComputableTidilyInPolyTime.id'.prod (.const 1))
-    have hdrop : ComputableTidilyInPolyTime (fun w : List Bool => w.drop 1) encBits encBits :=
-      ComputableTidilyInPolyTime.bitsDropWithInput .id' (.const 1)
+    have htake : ComputableInPolyTime (fun w : List Bool => w.take 1) encBits encBits :=
+      ComputableInPolyTime.bitsTakeWithInput .id' (.const 1)
+    have hdrop : ComputableInPolyTime (fun w : List Bool => w.drop 1) encBits encBits :=
+      ComputableInPolyTime.bitsDropWithInput .id' (.const 1)
     have hlist : ComputableInPolyTime (fun w : List Bool => [w.take 1, w.drop 1])
         encBits (encList encBits) :=
-      (ComputableTidilyInPolyTime.cons' htake
-        (ComputableTidilyInPolyTime.cons' hdrop (.const []))).computableInPolyTime
+      (ComputableInPolyTime.cons' htake
+        (ComputableInPolyTime.cons' hdrop (.const [])))
     exact computableInPolyTime_instanceBatch_mk hlist
   sumMeasure_le w := by
     simp only [InstanceBatch.sumMeasure, List.map_cons, List.map_nil, List.sum_cons,
@@ -205,26 +204,26 @@ def countdownStackSpec :
   combine p := p.acc.add p.leafVal
   computableInPolyTime_initCtx := .const ()
   computableInPolyTime_initStack := by
-    exact (ComputableTidilyInPolyTime.cons' ComputableTidilyInPolyTime.unary_to_binary
-      (.const [])).computableInPolyTime
+    exact (ComputableInPolyTime.cons' ComputableInPolyTime.unary_to_binary
+      (.const []))
   computableInPolyTime_initAcc := by
     exact CappedNatAcc.computableInPolyTime_init
-      ComputableTidilyInPolyTime.binary_two_pow.computableInPolyTime
+      ComputableInPolyTime.binary_two_pow
   computableInPolyTime_rounds := by
-    have hpow := ComputableTidilyInPolyTime.binary_two_pow
-    exact ((ComputableTidilyInPolyTime.const 2).binary_mul' hpow).computableInPolyTime
+    have hpow := ComputableInPolyTime.binary_two_pow
+    exact ((ComputableInPolyTime.const 2).binary_mul' hpow)
   computableInPolyTime_isLeaf := by
     have hnd := computableInPolyTime_stackNodeInput_node
       (encK := encFinEnum Unit) (encS := encNat) .id'
-    exact (hnd.tidy.decide_eq' (.const 0)).computableInPolyTime
+    exact (hnd.decide_eq' (.const 0))
   computableInPolyTime_leafInstance :=
     computableInPolyTime_stackNodeInput_node (encK := encFinEnum Unit) (encS := encNat) .id'
   computableInPolyTime_expand := by
     have hnd := computableInPolyTime_stackNodeInput_node
       (encK := encFinEnum Unit) (encS := encNat) .id'
-    have hsub := hnd.tidy.binary_sub' (.const 1)
-    exact (ComputableTidilyInPolyTime.cons' hsub
-      (ComputableTidilyInPolyTime.cons' hsub (.const []))).computableInPolyTime
+    have hsub := hnd.binary_sub' (.const 1)
+    exact (ComputableInPolyTime.cons' hsub
+      (ComputableInPolyTime.cons' hsub (.const [])))
   computableInPolyTime_combine := by
     have hacc := computableInPolyTime_stackCombineInput_acc
       (encK := encFinEnum Unit) (encD := encCappedNatAcc) (encG := encNat) .id'
@@ -311,7 +310,7 @@ def appendTrueOracle (w : List Bool) : List Bool := w ++ [true]
 
 theorem computableInPolyTime_appendTrueOracle :
     ComputableInPolyTime appendTrueOracle encBits encBits :=
-  (ComputableTidilyInPolyTime.bitsAppend .id' (.const [true])).computableInPolyTime
+  (ComputableInPolyTime.bitsAppend .id' (.const [true]))
 
 /-- Identity multi-bit `BoundedOracleProgram` for `appendTrueOracle` (`alenCap w = |w| + 1`). -/
 @[expose]
@@ -368,8 +367,8 @@ example {δ : ℝ} (hδ : 0 ≤ δ)
     {w : List Bool | w ≠ []} ∈ PSPACE encBits ∧
     DecidableInExpTime {w : List Bool | w ≠ []} encBits List.length (2 * δ) := by
   have hlen_pt : ComputableInPolyTime List.length encBits encNat :=
-    (ComputableTidilyInPolyTime.unary_to_binary.comp
-      (ComputableTidilyInPolyTime.encoding_length encBits)).computableInPolyTime
+    (ComputableInPolyTime.unary_to_binary.comp
+      (ComputableInPolyTime.encoding_length encBits))
   have hcomp := nonemptyOracleRed.trans nonemptyOracleRed
   have hExpA := nonemptyOracleRed.decidableInExpTime Decoder.bits hlen_pt hlen_pt
     (scale := 2) (offset := 0)

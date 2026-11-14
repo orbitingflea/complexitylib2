@@ -460,17 +460,14 @@ theorem computableInPolyTime_add :
       (encPair encCappedNatAcc encNat) encCappedNatAcc := by
   have hsum : ComputableInPolyTime (fun p : CappedNatAcc × ℕ => p.1.total + p.2)
       (encPair encCappedNatAcc encNat) encNat :=
-    ComputableTidilyInPolyTime.computableInPolyTime <|
-      ComputableTidilyInPolyTime.binary_add.comp
-        ((encCappedNatAcc_total_polyTime (fst encCappedNatAcc encNat)).tidy.prod
-          (snd encCappedNatAcc encNat).tidy)
+    binary_add' (encCappedNatAcc_total_polyTime (fst encCappedNatAcc encNat))
+      (snd encCappedNatAcc encNat)
   have hcap : ComputableInPolyTime (fun p : CappedNatAcc × ℕ => p.1.cap)
       (encPair encCappedNatAcc encNat) encNat :=
     encCappedNatAcc_cap_polyTime (fst encCappedNatAcc encNat)
   have hle : ComputableInPolyTime (fun p : CappedNatAcc × ℕ => decide (p.1.cap ≤ p.1.total + p.2))
       (encPair encCappedNatAcc encNat) encBool :=
-    ComputableTidilyInPolyTime.computableInPolyTime <|
-      ComputableTidilyInPolyTime.binary_le.comp (hcap.tidy.prod hsum.tidy)
+    binary_le' hcap hsum
   have hmin : ComputableInPolyTime
       (fun p : CappedNatAcc × ℕ => min p.1.cap (p.1.total + p.2))
       (encPair encCappedNatAcc encNat) encNat :=
@@ -523,8 +520,7 @@ def ofSizeSensitive (r : SizeSensitiveReduction encA encB μA μB) :
   offset := r.offset
   computableInPolyTime_toBatch := by
     have hcons : ComputableInPolyTime (fun a => [r.toFun a]) encA (encList encB) :=
-      ComputableTidilyInPolyTime.computableInPolyTime <|
-        ComputableTidilyInPolyTime.cons' r.computableInPolyTime_toFun.tidy (.const [])
+      ComputableInPolyTime.cons' r.computableInPolyTime_toFun (.const [])
     exact computableInPolyTime_instanceBatch_mk hcons
   sumMeasure_le a := by
     rw [InstanceBatch.sumMeasure_singleton]
@@ -833,8 +829,7 @@ theorem exists_computableInO_cappedSum (r : DisjointBatchReduction encA encB μA
       ∀ a, (T a : ℝ) ≤
         C₀ * (2 ^ ((r.scale * δ) * μA a) * (((encA a).length : ℝ) + 1) ^ E) + C₀ := by
   have hcapPow : ComputableInPolyTime (fun a => 2 ^ capBits a) encA encNat :=
-    ComputableTidilyInPolyTime.computableInPolyTime <|
-      ComputableTidilyInPolyTime.binary_two_pow.comp hcap.tidy
+    ComputableInPolyTime.binary_two_pow.comp hcap
   have hinit : ComputableInPolyTime (fun a => CappedNatAcc.init (2 ^ capBits a))
       encA encCappedNatAcc :=
     CappedNatAcc.computableInPolyTime_init hcapPow
@@ -1217,16 +1212,13 @@ theorem exists_computableInO_step (S : StackAccumulationSpec encA encK encS encB
     computableInPolyTime_stackSearchState_acc .id'
   have hdone : ComputableInPolyTime (fun st : StackSearchState κ σ δ => st.stack.isEmpty)
       encSt encBool :=
-    ComputableTidilyInPolyTime.computableInPolyTime <|
-      (ComputableTidilyInPolyTime.listIsEmpty' encS).comp hstk.tidy
+    (listIsEmpty (encA := encS) (encL := encList encS)).comp hstk
   have hhead : ComputableInPolyTime
       (fun st : StackSearchState κ σ δ => st.stack.headD S.defaultNode) encSt encS :=
-    ComputableTidilyInPolyTime.computableInPolyTime <|
-      (ComputableTidilyInPolyTime.headD S.defaultNode).comp hstk.tidy
+    (headD S.defaultNode).comp hstk
   have htail : ComputableInPolyTime (fun st : StackSearchState κ σ δ => st.stack.tail)
       encSt (encList encS) :=
-    ComputableTidilyInPolyTime.computableInPolyTime <|
-      (ComputableTidilyInPolyTime.listTail encS).comp hstk.tidy
+    (tail (encA := encS) (encL := encList encS)).comp hstk
   have htopNode : ComputableInPolyTime S.topNode encSt (encStackNodeInput encK encS) :=
     computableInPolyTime_stackNodeInput_mk hctx hhead
   have hleaf : ComputableInPolyTime (fun st => S.isLeaf (S.topNode st)) encSt encBool :=
@@ -1236,9 +1228,7 @@ theorem exists_computableInO_step (S : StackAccumulationSpec encA encK encS encB
   have hexpList : ComputableInPolyTime
       (fun st : StackSearchState κ σ δ => S.expand (S.topNode st) ++ st.stack.tail)
       encSt (encList encS) :=
-    ComputableTidilyInPolyTime.computableInPolyTime <|
-      ComputableTidilyInPolyTime.listAppend'
-        (S.computableInPolyTime_expand.comp htopNode).tidy htail.tidy
+    listAppend' (S.computableInPolyTime_expand.comp htopNode) htail
   have hexpand : ComputableInPolyTime
       (fun st : StackSearchState κ σ δ =>
         StackSearchState.mk st.ctx (S.expand (S.topNode st) ++ st.stack.tail) st.acc)
