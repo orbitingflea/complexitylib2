@@ -108,12 +108,6 @@ theorem getElem_wire (sites : List Point) (r : Route) (i : ℕ) (hi : i < r.leng
         signal sites r[i] (r.getD (i + 1) r[i]) lane) := by
   simp only [wire, List.getElem_map, List.getElem_zipIdx, Nat.zero_add, List.getElem_dropLast]
 
-/-- The side lookup recovers each cardinal neighbor's side. -/
-theorem side_neighbor (p : Point) (s : Fin 4) :
-    side p (p + PairedPorts.neighbor s) = s := by
-  rcases p with ⟨x, y⟩
-  fin_cases s <;> simp [side, PlanarCompile.side, PairedPorts.neighbor]
-
 /-- All four actual entry and exit values within each retained wire cell agree. -/
 theorem wire_cells_agree {φ : CNF ℕ}
     (hw : ∀ c ∈ φ, c.length ≤ 3) (hv : ∀ v, φ.vars.count v ≤ 3)
@@ -187,7 +181,7 @@ theorem wire_first_value {φ : CNF ℕ} {σ : Variable → Bool}
     (h : (rawFormula φ).eval σ = true) {o : Occurrence ℕ}
     (ho : o ∈ Cslib.Logic.PL.occurrences φ) (fallback : PairedWire.Cell Variable) :
     σ (((wire (crossingSites φ) (occurrencePath φ o)).headD fallback 0).1) =
-      sourceValue φ σ o.2.2.1 := by
+      sourceValue φ σ o.lit.1 := by
   have hlen := PlanarCompile.occurrencePath_length_ge_two ho
   change 2 ≤ (occurrencePath φ o).length at hlen
   have hwpos : 0 < (wire (crossingSites φ) (occurrencePath φ o)).length := by
@@ -202,9 +196,9 @@ theorem wire_first_value {φ : CNF ℕ} {σ : Variable → Bool}
   have hp := (PlanarCompile.occurrencePath_endpoints ho).1
   change (occurrencePath φ o).head? = _ at hp
   rw [List.head?_eq_getElem?, List.getElem?_eq_getElem (by omega)] at hp
-  have hp' : (occurrencePath φ o)[0] = Layout.center (φ.distinctVars.idxOf o.2.2.1) :=
+  have hp' : (occurrencePath φ o)[0] = Layout.center (φ.distinctVars.idxOf o.lit.1) :=
     Option.some.inj hp
-  have hret : Layout.center (φ.distinctVars.idxOf o.2.2.1) ∈
+  have hret : Layout.center (φ.distinctVars.idxOf o.lit.1) ∈
       (occurrencePath φ o).dropLast := by
     rw [← hp']
     have hdrop : 0 < (occurrencePath φ o).dropLast.length := by
@@ -226,8 +220,8 @@ theorem wire_values_source {φ : CNF ℕ}
     {σ : Variable → Bool} (h : (rawFormula φ).eval σ = true)
     {o : Occurrence ℕ} (ho : o ∈ Cslib.Logic.PL.occurrences φ) :
     ∀ c ∈ wire (crossingSites φ) (occurrencePath φ o), ∀ lane,
-      σ (c lane).1 = sourceValue φ σ o.2.2.1 ∧
-        σ (c lane).2 = sourceValue φ σ o.2.2.1 := by
+      σ (c lane).1 = sourceValue φ σ o.lit.1 ∧
+        σ (c lane).2 = sourceValue φ σ o.lit.1 := by
   let fallback : PairedWire.Cell Variable := fun _ => (((0, 0), Sum.inl (0, 0)),
     ((0, 0), Sum.inl (0, 0)))
   have hl := ((eval_rawFormula_iff φ σ).1 h).2.2.2 o ho
@@ -260,8 +254,8 @@ theorem lastLiteral_value {φ : CNF ℕ}
     (hw : ∀ c ∈ φ, c.length ≤ 3) (hv : ∀ v, φ.vars.count v ≤ 3)
     {σ : Variable → Bool} (h : (rawFormula φ).eval σ = true)
     {o : Occurrence ℕ} (ho : o ∈ Cslib.Logic.PL.occurrences φ) :
-    σ (lastLiteral (crossingSites φ) (occurrencePath φ o) o.2.2.2).1.1 =
-      sourceValue φ σ o.2.2.1 :=
+    σ (lastLiteral (crossingSites φ) (occurrencePath φ o) o.lit.2).1.1 =
+      sourceValue φ σ o.lit.1 :=
   lastLiteral_value_of_wire _ _ _ _ σ (PlanarCompile.occurrencePath_length_ge_two ho)
     (wire_values_source hw hv h ho)
 
@@ -269,23 +263,22 @@ theorem lastLiteral_value {φ : CNF ℕ}
 theorem eval_originalClauses_of_values (φ : CNF ℕ) (sites : List Point)
     (σ : Variable → Bool) (τ : ℕ → Bool)
     (hvalues : ∀ o ∈ Cslib.Logic.PL.occurrences φ,
-      σ (lastLiteral sites (occurrencePath φ o) o.2.2.2).1.1 = τ o.2.2.1) :
+      σ (lastLiteral sites (occurrencePath φ o) o.lit.2).1.1 = τ o.lit.1) :
     CNF.eval σ ((originalClauses φ sites).map Prod.fst) = φ.eval τ := by
   have hc (c : Clause ℕ × ℕ) (hc : c ∈ φ.zipIdx) :
       Clause.eval σ (c.1.zipIdx.map fun l =>
-        (lastLiteral sites (occurrencePath φ (c.2, l.2, l.1)) l.1.2).1) =
+        (lastLiteral sites (occurrencePath φ ⟨c.2, l.2, l.1⟩) l.1.2).1) =
           c.1.eval τ := by
     have hm :
         (c.1.zipIdx.map fun l =>
-          (lastLiteral sites (occurrencePath φ (c.2, l.2, l.1)) l.1.2).1).map
+          (lastLiteral sites (occurrencePath φ ⟨c.2, l.2, l.1⟩) l.1.2).1).map
             (Literal.eval σ) = c.1.map (Literal.eval τ) := by
       calc
         _ = c.1.zipIdx.map (fun l => Literal.eval τ l.1) := by
           rw [List.map_map]
           apply List.map_congr_left
           intro l hl
-          have ho : (c.2, l.2, l.1) ∈ Cslib.Logic.PL.occurrences φ :=
-            List.mem_flatMap.mpr ⟨c, hc, List.mem_map.mpr ⟨l, hl, rfl⟩⟩
+          have ho := mk_mem_occurrences_of_mem_zipIdx hc hl
           simp only [Function.comp_def, Literal.eval]
           rw [hvalues _ ho]
           rfl
@@ -345,7 +338,7 @@ theorem exists_compatible_assignment {φ : CNF ℕ}
     ∃ σ : Variable → Bool,
       (∀ o ∈ Cslib.Logic.PL.occurrences φ,
         ∀ c ∈ wire (crossingSites φ) (occurrencePath φ o), ∀ lane,
-          σ (c lane).1 = τ o.2.2.1 ∧ σ (c lane).2 = τ o.2.2.1) ∧
+          σ (c lane).1 = τ o.lit.1 ∧ σ (c lane).2 = τ o.lit.1) ∧
       (∀ p ∈ ordinaryCells φ,
         OrdinaryRing.formula.eval (fun v => σ (p, Sum.inl v)) = true) ∧
       (∀ p ∈ crossingSites φ,
@@ -366,11 +359,11 @@ theorem exists_compatible_assignment {φ : CNF ℕ}
   · intro p _
     exact PairedCrossover.eval_canonicalExtension _ _
 
-/-- Compatible local assignments satisfy the actual output exactly when the source holds. -/
+/-- Compatible local assignments satisfy the actual output if the source holds. -/
 theorem eval_rawFormula_of_compatible {φ : CNF ℕ} (τ : ℕ → Bool) (σ : Variable → Bool)
     (hcompat : ∀ o ∈ Cslib.Logic.PL.occurrences φ,
       ∀ c ∈ wire (crossingSites φ) (occurrencePath φ o), ∀ lane,
-        σ (c lane).1 = τ o.2.2.1 ∧ σ (c lane).2 = τ o.2.2.1)
+        σ (c lane).1 = τ o.lit.1 ∧ σ (c lane).2 = τ o.lit.1)
     (hord : ∀ p ∈ ordinaryCells φ,
       OrdinaryRing.formula.eval (fun v => σ (p, Sum.inl v)) = true)
     (hcross : ∀ p ∈ crossingSites φ,
@@ -385,7 +378,7 @@ theorem eval_rawFormula_of_compatible {φ : CNF ℕ} (τ : ℕ → Bool) (σ : V
         (PlanarCompile.occurrencePath_length_ge_two ho) (hcompat o ho)
   · intro o ho
     rw [map_fst_links]
-    exact PairedWire.eval_links_of_constant σ (τ o.2.2.1) _ (hcompat o ho)
+    exact PairedWire.eval_links_of_constant σ (τ o.lit.1) _ (hcompat o ho)
 
 
 

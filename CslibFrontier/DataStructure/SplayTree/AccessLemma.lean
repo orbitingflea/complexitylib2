@@ -11,6 +11,7 @@ public import CslibFrontier.Init
 public import CslibFrontier.DataStructure.SplayTree.Basic
 public import Mathlib.Algebra.BigOperators.Group.Finset.Basic
 public import Mathlib.Analysis.SpecialFunctions.Log.Base
+import CslibFrontier.Foundations.Analysis.SpecialFunctions.Logb
 
 /-!
 # Sleator–Tarjan's Access Lemma, Static Optimality, and Update Bounds
@@ -285,7 +286,7 @@ private theorem two_add_logb_two_add_le {a b s : ℝ} (ha : 0 < a) (hb : 0 < b) 
     Real.logb_le_logb_of_le (by norm_num) (mul_pos (by norm_num) (mul_pos ha hb)) hsq
   have h4 : Real.logb 2 4 = 2 := by
     have hpow : (4 : ℝ) = (2 : ℝ) ^ (2 : ℕ) := by norm_num
-    rw [hpow, Real.logb_pow, Real.logb_self_eq_one (by norm_num)]
+    rw [hpow, Real.logb_two_pow]
     norm_num
   rw [Real.logb_mul (by norm_num) (mul_ne_zero ha.ne' hb.ne'),
     Real.logb_mul ha.ne' hb.ne', h4, Real.logb_pow] at hlog
@@ -571,8 +572,8 @@ private theorem focus_splayUp_amortized_le {w : α → ℝ} (hw : ∀ y, 0 < w y
 
 /-- **Access Lemma (general key-weight form)** ([SleatorTarjan1985b], Section 2, Lemma 1, p. 658;
 Section 3, p. 664): on any non-empty `Ordered` tree `t` and any query `x` (present or absent),
-there exists a splayed key `u ∈ elements t` (equal to `x` if `x ∈ elements t`) such that the
-amortized `splayTime` of `splay x t` is at most `3 log₂(W / w(u)) + 1`. -/
+there exists a key `u ∈ elements t` (equal to `x` if `x ∈ elements t`, and otherwise unspecified)
+such that the amortized `splayTime` of `splay x t` is at most `3 log₂(W / w(u)) + 1`. -/
 theorem exists_mem_splay_splayTime_amortized_le {w : α → ℝ} (hw : ∀ y, 0 < w y)
     {t : BinaryTree α} (ht : Ordered t) (hne : t ≠ .nil) (x : α) :
     ∃ u ∈ elements t, (x ∈ elements t → u = x) ∧

@@ -41,7 +41,7 @@ Adapted from Crypto/Computational/GGM/Security.lean on the cslib `crypto` branch
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`, using the shared typed oracle and game calculus.
 -/
 
-@[expose] public section
+public section
 
 namespace Cslib.Crypto
 
@@ -64,8 +64,9 @@ theorem GGM.pseudorandomFunction_of_indistinguishable {generator : List Bool →
     (fun _ _ => negligible_zero)
     fun adversary count n hquery => ?_
   have h := reduction_advantage generator adversary count n hquery
-  simpa only [distinguishingGame, PMF.monad_bind_eq_bind, ProbComp.eval_bind, ProbComp.eval_map,
-    BitString.eval_sampleList, generatorEnsemble, Nat.cast_mul, add_zero] using h.le
+  simpa only [distinguishingGame_eq_bind, PMF.monad_bind_eq_bind, ProbComp.eval_bind,
+    ProbComp.eval_map, BitString.eval_sampleList, generatorEnsemble, Nat.cast_mul,
+    add_zero] using h.le
 
 /-- A secure generator providing at least two full labels gives the GGM pseudorandom function.
 Surplus bits are ignored; the hypothesis accommodates seed length zero. -/

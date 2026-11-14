@@ -56,6 +56,9 @@ certified efficiency, and security in declaration docstrings.
 For documentation-only changes, check links, claims against source, and Lean examples with the
 imports shown. Record the scope of validation and review accurately.
 
+Prepare the PR using the [writing guidance](AGENTS.md#writing-in-issues-and-prs) and
+[template](.github/pull_request_template.md), adapting the explanation to the reader and change.
+
 ## Library quality standard
 
 The bar is Mathlib's [style guidelines](https://leanprover-community.github.io/contribute/style.html)
@@ -100,6 +103,28 @@ Mathlib's standard linter set already enforces the mechanical part; reviews enfo
    Preserve existing guarantees when rewriting tests: exact bounds or probabilities must not
    become weaker inequalities, and regression cases must not become tautologies.
 
+For changed APIs and reuse refactors, authors and reviewers
+[check the API through its callers](AGENTS.md#check-the-api-through-its-callers): inspect named
+access, semantic matcher/range facts, shared operational definitions, representation bridges and
+the intended public surface. Identify a representative caller that benefits, with evidence
+proportional to the change; a successful build alone does not establish these design properties.
+
+**Structures for domain objects and records**
+([#4385](https://github.com/cslib-community/cslib-frontier/issues/4385)). Model domain objects,
+problem instances, certificates, configurations, and multi-field algorithm contexts, states or
+records as documented `structure`s with named, documented fields, and declare their field-tuple
+encodings with `enc_structure` ([AGENTS.md](AGENTS.md#structures-for-domain-objects-and-records)).
+A migration keeps the encoded words, with a checked equality; a left-grouped tuple needs nested
+sub-records or `encOfEquiv` ([encoding rule 5](AGENTS.md#encodings-in-statements)).
+Do not introduce tuple type synonyms such as
+`abbrev HittingSetInstance := (List ℕ × List (List ℕ)) × ℕ` or bare-product problem sets such as
+`Set (List (ℕ × ℕ) × ℕ × ℕ)` or `Set (Graph × ℕ)`. Named fields document the mathematical
+components in `doc-gen4`, enable dot-notation, and eliminate positional projections before they
+start, while `enc_structure` supplies the embedding and its `fun_prop` projection and constructor
+certificates across degree, `ComputableInO`, `ComputableInSpace` and `ComputableInPolyTime`. Keep
+ordinary `Prod` (`×`) for generic binary combinators, Cartesian products and uncurried
+multi-argument inputs such as an NP verifier `Instance × List Bool → Bool`.
+
 **Named components instead of positional projections**
 ([#1764](https://github.com/cslib-community/cslib-frontier/issues/1764)). Public statements and
 the bodies of public definitions do not reach into nested tuples with projection chains such as
@@ -111,7 +136,8 @@ preference:
 2. Use `Function.uncurry`, `Prod.map` or composed projections, as the plain calculus rules
    already do.
 3. Turn a recurring tuple context into a small `structure` with named fields.
-4. If restructuring is too invasive, add named `abbrev` accessors such as `Ctx.desc`.
+4. If restructuring is too invasive, add named `abbrev` accessors such as
+   `LocalIncidence.route`.
 
 The rewritten form should stay definitionally equal to the old one, so that clients and automation
 (`fun_prop`, `@[program_certificate]`) keep working. Single projections (`p.1`) and
@@ -129,6 +155,16 @@ Two places keep projections, as standing exceptions:
   ([#1764](https://github.com/cslib-community/cslib-frontier/issues/1764)). Use projections there,
   or bind the hypothesis in the theorem's own signature.
 
+`scripts/check_projection_chains.py` counts the chains of depth 2 or more in each module's public
+statements and public definition bodies, leaving out proofs, these two exceptions and named
+accessors. CI fails a pull request when a module it changes has more chains than its entry in
+`scripts/projection_chains_baseline.json`, or than it had at the merge base unless the pull request
+raises the entry; a new module starts at 0. Removing chains needs no baseline edit, which keeps
+pull requests from colliding on neighbouring lines of the baseline in the merge queue; a periodic
+`--update-baseline --all` prunes stale entries. Edit the baseline only to raise an entry on
+purpose, as for a moved module (`--update-baseline --allow-increase`). `--list PREFIX` shows the
+remaining chains of an area.
+
 **Readable encodings** ([#1656](https://github.com/cslib-community/cslib-frontier/issues/1656)).
 An encoding is part of what a statement claims, so statements show it; they should not make the
 reader parse the same nested encoding again and again. Name a compound encoding that recurs in a
@@ -142,7 +178,7 @@ state paired with the bit read, with the state framed. Because the name is reduc
 statement is definitionally unchanged, and `enc_len`, `fun_prop` and the combinators' simp lemmas
 see through it; syntactic tools such as `omega` do not. New and changed statements follow the
 exact rules in [AGENTS.md](AGENTS.md#encodings-in-statements); the encoding-readability lint
-checks the repetition rule.
+checks the repetition rule and rejects compound-encoding `local notation`s.
 
 To sweep an area, `python3 scripts/check_encoding_readability.py --list CslibFrontier/Logics` lists
 its repeated compound encodings with their declarations, ignoring the baseline, and the local
@@ -171,12 +207,32 @@ statements about `evalWith`; see `CslibFrontier/Languages/Probabilistic/Semantic
 Under an ordinary `import`, importers rebuild only when a module's exported `.olean` changes. That
 file holds public statements, exposed bodies, attributes of public declarations, and the axioms
 each public declaration depends on. Editing docstrings, private declarations, proofs or
-non-exposed bodies leaves it unchanged, unless a proof edit changes that axiom set. `import all`
-also loads private information, so such edits do reach its clients.
+non-exposed bodies leaves it unchanged, with two exceptions: a proof edit that changes that axiom
+set, and a body that the module itself rewrites with `simp [f]` or `rw [f]`. That rewrite
+generates the equation lemma `f.eq_1`, whose statement is the body, and stores it in the exported
+file even when `f` is private (Lean v4.36; `unfold f`, `dsimp only [f]` and `rfl` did not in our
+tests, [#4243](https://github.com/cslib-community/cslib-frontier/issues/4243)). `import all` also
+loads private information, so such edits do reach its clients.
+
+Evidence that a public API is usable must include a representative `module` client with ordinary
+imports of that API, exercising intended operations through exposed bodies or public equations.
+[QuantumOracleModule.lean](CslibFrontierTests/QuantumOracleModule.lean) is an example.
+A test without `module`, or using `import all` for that API, has broader access and cannot
+establish usability for ordinary clients. Intentional internal, metaprogramming and axiom tests
+keep their documented access and supplement this representative evidence.
 
 - **What is a helper.** A helper is proof plumbing: a step meaningful only inside one proof, or a
   fact about a module-local construction, encoding or intermediate quantity. Helpers are `private`
   by default. Keep `@[expose]` for bodies that downstream proofs unfold.
+- **What `@[expose]` reaches.** A section-level `@[expose]` affects only the section's `def`-kind
+  declarations and derived instances. Theorems, structures and inductives ignore it, and
+  abbreviations and non-Prop instances are exposed without it. A header over a section with
+  nothing to expose only suggests that bodies are exported; `check_changed_files.py` rejects one in
+  a changed file, so write `public section`. When a public proof needs a body that is not exposed,
+  Lean may report `Expected a definition with an exposed body`, or only an indirect failure:
+  `omega`, `decide` or a projection that cannot see through the definition in a client, or the
+  definition's own `@[simps]` lemmas rejected as not `rfl`. Expose that definition, or state the
+  lemma the client needs.
 - **What stays public, even if nothing outside the module uses it yet.** Facts stated only in terms
   of public definitions that a user of those definitions would expect: characterizations (`_iff`),
   bounds, monotonicity and closure properties, simp and extensionality equations, invariance
@@ -192,6 +248,12 @@ also loads private information, so such edits do reach its clients.
 - Ordinary imports cannot name private declarations. When privatizing, update the tests and
   results inventory entries that name them in the same PR, or give a companion module
   `import all`.
+- **Before reaching for `import all`.** Prefer a public lemma, such as an equation lemma for an
+  unexposed definition, or `@[expose]` on the one definition whose body importers unfold. An
+  exposed body is interface, so editing it rebuilds every importer; through `import all`, private
+  and body edits rebuild only that client. Each remaining `import all` states its reason in one
+  sentence, in the importer's module docstring or a comment beside the import, naming the private
+  lemmas or unexposed bodies it reads.
 - For an audit, `python3 scripts/audit_queries.py references PREFIX` lists where each declaration
   under a source path is referenced, and `duplicates` lists declarations with alpha-equivalent
   statements in different modules. Uses through `rfl`, `decide`, simp sets or instances leave no
@@ -202,8 +264,8 @@ Tidy computability (`ComputableTidily…`, `ComputesTidily…`, `IsTidy…`) may
 proofs, through `.tidy`, `.of_tidy`, a proof-local `attribute [local fun_prop] … in` or a tidy
 `have`. It never appears in a public statement: a theorem's type, or a definition's type, exposed
 body or fields. Only the raw machine constructions in `scripts/tidy_allowlist.txt` are exempt.
-CI enforces this with `scripts/check_tidy_surface.py`. The existing tidy statements, which #456 is
-restating, are counted per module in `scripts/tidy_surface_baseline.json`, and CI fails when a
+CI enforces this with `scripts/check_tidy_surface.py`. The existing tidy statements, which #862 is
+removing, are counted per module in `scripts/tidy_surface_baseline.json`, and CI fails when a
 module's count differs from its entry. When you remove some, lower the baseline in the same PR
 with `python3 scripts/check_tidy_surface.py --update`, so that they cannot come back. Until your
 PR lands, any other merge that removes tidy statements makes your baseline stale: rebase and
@@ -224,6 +286,14 @@ when focused local checks or hosted CI supply the required evidence. `scripts/bu
 elaboration with `scripts/cache/ensure.sh`; retry for missing outputs or changed dependencies,
 not merely a new commit with warm artifacts. See the
 [cache guide](scripts/cache/README.md#automatic-restoration) for actual retries and opt-out.
+
+For ordinary edits, use editor/MCP diagnostics or a targeted
+`scripts/build.sh <modules and representative clients> --wfail --iofail`. At a local checkpoint,
+use `scripts/check.sh --quick --no-full-fallback`. Status 3 means quick mode cannot plan the
+change: run the relevant focused checks and use hosted CI for full validation. Run a full local
+`scripts/check.sh` only when explicitly requested or hosted coverage is unavailable; do not
+repeat it after successful CI covering the final revision. The restored-source audit belongs to
+the validation helpers and recovers missing warning/info logs; ordinary builds still reuse caches.
 
 The test suite audits the axiom dependencies of every declaration stored in imported `CslibFrontier`
 modules. Named `#print axioms` checks are added only for results meant to depend on fewer axioms
@@ -250,11 +320,15 @@ statements with inline links
 (pass `--check-simp` to also run the heuristic check for non-terminal bare `simp` calls in
 candidate modules). After a build,
 `python3 scripts/check_changed_files.py` checks the files your branch adds or changes: each name
-listed in a module docstring's "Main …" sections must exist, and a new test file must do more
-than restate signatures with `example … := name`. CI runs both, and also
+listed in a module docstring's "Main …" sections must exist, a new test file must do more
+than restate signatures with `example … := name`, and an `@[expose] … section` header must have a
+definition to expose; `--source-only` runs the last two without build outputs, as
+`scripts/check.sh --quick` does. CI runs both, and also
 `python3 scripts/check_encoding_readability.py`, the ratchet on repeated compound encodings in
-public statements ([#1656](https://github.com/cslib-community/cslib-frontier/issues/1656)). It
-enforces its baseline only in the modules a pull request changes, and merge groups only report,
+public statements and check against compound-encoding `local notation`s
+([#1656](https://github.com/cslib-community/cslib-frontier/issues/1656)). It
+enforces its baseline and the `local notation` rule only in the modules a pull request changes,
+and merge groups only report,
 so `main` can drift above the baseline; the next change to a drifted module names the encoding
 or records it with `--update-baseline --allow-increase`. Its docstring gives the rule and the
 options. On pull requests CI also runs
@@ -262,9 +336,15 @@ options. On pull requests CI also runs
 public definitions sharing a large anonymized subterm with an existing one, or merely renaming one.
 With `--theorems` it lists new or changed theorems, private ones included, whose statement another
 library theorem or a Lean core, Batteries, Mathlib or cslib theorem already has, up to binder names,
-universe levels, the order of hypotheses and instance arguments, and the notations `≥`, `>`, `≠`;
+universe levels, the order of hypotheses and instance arguments, and the notations `≥`, `>`, `≠`.
+It also handles reversed equalities and built-in list lookup by a `Fin` index versus its natural
+value, ignoring that lookup's bounds proof while retaining the list and index. It does not unfold
+arbitrary definitions or custom indexing instances, or match specializations of a general theorem.
 CI runs that notice too. `--all` examines the whole library: `python3 scripts/parallel_defs.py
 --theorems --all --limit 1000` lists every such group, the candidates of #949 item A.2.
+The reports link project declarations at the checked revision and disclose skipped or incomplete
+comparisons. Reviewers inspect the notices and resolve relevant candidates before approval under
+[the review cycle](AGENTS.md#review-cycle); a successful advisory exit alone is not a clean audit.
 On pull requests CI also runs a third advisory notice, `python3 scripts/proof_copies.py`, which
 reads only the sources. It lists tactic blocks of four or more lines, on lines a change adds or
 modifies, that repeat a block of another proof, or of the same proof, in the same file or
@@ -327,9 +407,9 @@ should meet it, with checked Lean examples whose names link to the API documenta
 When a chapter needs proof plumbing or a missing lemma, improve the library rather than
 documenting around it.
 
-The [README](README.md#build-and-use) explains how to generate API documentation using
-[doc-gen4](https://github.com/leanprover/doc-gen4) and how to build the guide with
-[Verso](https://github.com/leanprover/verso). Their separate `docbuild` and `guide` projects share
+The [build instructions](manual/BUILD.md#build-the-api-reference) explain how to generate API
+documentation using [doc-gen4](https://github.com/leanprover/doc-gen4) and how to build the guide
+with [Verso](https://github.com/leanprover/verso). Their separate `docbuild` and `guide` projects share
 the library's toolchain and dependency checkouts, and `docbuild` its bibliography. After changing
 library dependencies, run `MATHLIB_NO_CACHE_ON_UPDATE=1 lake -d docbuild update cslib-frontier`
 and the same with `-d guide`. When changing the Lean toolchain, also update the doc-gen4 tag in
@@ -363,7 +443,8 @@ maintained account without repeating the investigation or relying on earlier con
 Keep the Agent Operator's Manual short and directed at the person driving the agents; put
 participant procedures in the Operator's Manual and historical evidence in its supplement.
 Place a new section where its topic belongs in a chapter rather than at the end: sections that
-concurrent PRs append at the same place conflict in the merge queue.
+concurrent PRs append at the same place conflict in the merge queue. Put a new algorithm endpoint
+on the matching topic page listed under `manual/algorithms-and-memory/index.md`, in topic order.
 
 Keep executable Lean examples in `CslibFrontierTests/` or the checked Verso guide and link their
 complete source, including imports and local context. Use checked excerpts rather than a second
@@ -457,20 +538,22 @@ not a decision.
   [#858](https://github.com/leanprover/cslib/pull/858).
   [#966](https://github.com/leanprover/cslib/pull/966) would make `sampleComplexity` and `vcDim`
   `ℕ∞`-valued; if it lands, restate the bounds in `FiniteClass`, `VCUpperBound`,
-  `AgnosticFiniteClass` and `GrowthFunction`. Before submission, reconcile names with
-  [`feat/pac-learning-ehkv-headline`](https://github.com/SamuelSchlesinger/cslib/tree/feat/pac-learning-ehkv-headline),
-  which proves the EHKV `Ω(d/ε)` lower bound; do not reprove it locally.
+  `AgnosticFiniteClass`, `AgnosticVC` and `GrowthFunction`. `PACLearning/SampleComplexityLower*`
+  vendors the EHKV `Ω(d/ε)` lower bound from
+  [`feat/pac-learning-ehkv-headline`](https://github.com/SamuelSchlesinger/cslib/tree/feat/pac-learning-ehkv-headline);
+  submit or update it through that branch, not as a competing copy, and reconcile `VCLowerBound`
+  and `FundamentalTheorem` with its names before submitting them.
 * **Tree decompositions.** Upstream `SimpleGraph/TreeDecomposition` through Justin Lai's
   [mathlib4#38334](https://github.com/leanprover-community/mathlib4/pull/38334),
   [#39939](https://github.com/leanprover-community/mathlib4/pull/39939) and
   [#39864](https://github.com/leanprover-community/mathlib4/pull/39864), not as a competing
   candidate; the module docstring records the differences. Renaming to match the unmerged PRs is
   not required.
-* **Oracle codes.** Upstream `Foundations/Computability/RecursiveInCode` by reconciling with
+* **Oracle codes.** Upstream `Foundations/Computability/{RecursiveInCode,RecursiveInEvalnPrimrec,KleenePost,KleenePostJump}` by reconciling with
   [mathlib4#38973](https://github.com/leanprover-community/mathlib4/pull/38973) (oracle codes, a
   relativized `evaln` and the jump), not by competing with it; the module docstring records the
-  design differences. The prefix-based `evaln`, the use principle and `KleenePost` are what that PR
-  lacks.
+  design differences. The prefix-based `evaln`, the use principle and `KleenePost` / `KleenePostJump`
+  are what that PR lacks.
 * **Withdrawn submissions.** The redos of
   [#1099](https://github.com/leanprover/cslib/pull/1099)–[#1101](https://github.com/leanprover/cslib/pull/1101)
   (`Circuit/Boolean/{PPoly,MachineSimulation,PolynomialTime}`) should answer the review requests

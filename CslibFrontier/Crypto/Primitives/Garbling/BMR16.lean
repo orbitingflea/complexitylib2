@@ -9,6 +9,7 @@ module
 
 public import CslibFrontier.Crypto.Primitives.Garbling.MixedModulus
 import CslibFrontier.Probability.Product
+import CslibFrontier.Probability.Product.Split
 import CslibFrontier.Probability.Uniform
 
 /-!
@@ -359,7 +360,7 @@ theorem View.run_simulateWith (H : MixedModulusHash T μ ℓ) (tw : ℕ → T)
 /-- Against a fixed oracle `f`, the value the reduction encrypts in the row of input value `x` of
 a projection gate with tweak `t` reading a wire with active label `W` and value `v`: `H(t, W)`
 for `x = v`, and otherwise the reply to the query `(t, W, x - v, φ x - φ v)`. -/
-def rowsWith (f : (q : T × CCRInput μ ℓ) → Label μ ℓ q.2.2.1) (H : MixedModulusHash T μ ℓ)
+def rowsWith (f : (q : T × CCRInput μ ℓ) → Label μ ℓ q.2.target) (H : MixedModulusHash T μ ℓ)
     (t : T) {i j : ι} (W : Label μ ℓ i) (v : ZMod (μ i)) (φ : Projection μ i j) (x : ZMod (μ i)) :
     Label μ ℓ j :=
   if x = v then H t i W j else f (t, ⟨i, j, W, x - v, φ x - φ v⟩)
@@ -367,7 +368,7 @@ def rowsWith (f : (q : T × CCRInput μ ℓ) → Label μ ℓ q.2.2.1) (H : Mixe
 /-- The reduction's run against a fixed oracle `f`, from gate number `k` on, given the active
 labels `A` and values `V` of the wires so far: the tables and the active labels of the output
 wires that it builds. -/
-def reduceWith (f : (q : T × CCRInput μ ℓ) → Label μ ℓ q.2.2.1) (H : MixedModulusHash T μ ℓ)
+def reduceWith (f : (q : T × CCRInput μ ℓ) → Label μ ℓ q.2.target) (H : MixedModulusHash T μ ℓ)
     (tw : ℕ → T) : {Γ Θ : List ι} → ℕ → (C : MixedModulusCircuit μ (Projection μ) Γ Θ) →
       Env (Label μ ℓ) Γ → Env (Residue μ) Γ → Tables ℓ C × Env (Label μ ℓ) Θ
   | _, _, _, .output outs, A, _ => (PUnit.unit, A.gather outs)
@@ -481,7 +482,8 @@ theorem reduceWith_ccrOracle (H : MixedModulusHash T μ ℓ) (tw : ℕ → T)
       · rw [hx, add_sub_cancel_right]
       · have hx' : V.get a • offset δ i + (x - V.get a) • offset δ i = x • offset δ i := by
           rw [← add_smul, add_sub_cancel]
-        simp only [ccrOracle, get_encode]
+        simp only [ccrOracle, CCRInput.source, CCRInput.target, CCRInput.label, CCRInput.a,
+          CCRInput.b, get_encode]
         rw [add_assoc, hx', sub_smul, add_sub_assoc]
     have hτ : ((encode δ E V).get a).2 - V.get a = (E.get a).2 := by
       rw [get_encode, snd_add_smul_offset, add_sub_cancel_right]
@@ -533,7 +535,7 @@ theorem map_encode_uniformOfFintype (δ : ∀ i, Fin (ℓ i) → ZMod (μ i)) (V
 omit [Fintype ι] [DecidableEq ι] [∀ i, NeZero (μ i)] in
 /-- Interpreting the queries of a projection gate against a fixed oracle `f` reads `rowsWith f`
 on the listed values. -/
-theorem interpret_queryRows (f : (q : T × CCRInput μ ℓ) → Label μ ℓ q.2.2.1)
+theorem interpret_queryRows (f : (q : T × CCRInput μ ℓ) → Label μ ℓ q.2.target)
     (H : MixedModulusHash T μ ℓ) (t : T) {i j : ι} (W : Label μ ℓ i) (v : ZMod (μ i))
     (φ : Projection μ i j) (xs : List (ZMod (μ i))) :
     OracleComp.interpret (OracleComp.sumHandler ProbComp.unifFin fun q => (pure (f q) : ProbComp _))
@@ -562,7 +564,7 @@ theorem interpret_queryRows (f : (q : T × CCRInput μ ℓ) → Label μ ℓ q.2
 
 omit [Fintype ι] [DecidableEq ι] in
 /-- Interpreting the adaptive reduction against a fixed oracle `f` is its run `reduceWith f`. -/
-theorem interpret_reduceM (f : (q : T × CCRInput μ ℓ) → Label μ ℓ q.2.2.1)
+theorem interpret_reduceM (f : (q : T × CCRInput μ ℓ) → Label μ ℓ q.2.target)
     (H : MixedModulusHash T μ ℓ) (tw : ℕ → T) {Γ Θ : List ι} (k : ℕ)
     (C : MixedModulusCircuit μ (Projection μ) Γ Θ) (A : Env (Label μ ℓ) Γ)
     (V : Env (Residue μ) Γ) :
@@ -580,7 +582,7 @@ theorem interpret_reduceM (f : (q : T × CCRInput μ ℓ) → Label μ ℓ q.2.2
 omit [Fintype ι] [DecidableEq ι] [∀ i, NeZero (μ i)] in
 /-- **Locality**: the reduction's run from gate `k` on reads the oracle only at the tweaks of the
 remaining gates. -/
-theorem reduceWith_congr {f g : (q : T × CCRInput μ ℓ) → Label μ ℓ q.2.2.1}
+theorem reduceWith_congr {f g : (q : T × CCRInput μ ℓ) → Label μ ℓ q.2.target}
     (H : MixedModulusHash T μ ℓ) (tw : ℕ → T) {Γ Θ : List ι} (k : ℕ)
     (C : MixedModulusCircuit μ (Projection μ) Γ Θ) (A : Env (Label μ ℓ) Γ)
     (V : Env (Residue μ) Γ)
@@ -607,28 +609,6 @@ theorem reduceWith_congr {f g : (q : T × CCRInput μ ℓ) → Label μ ℓ q.2.
     simp only [reduceWith, hrows]
     rw [ih (k + 1) _ _ fun n h₁ h₂ r => hfg n (by omega) (by
       simp only [MixedModulusCircuit.size]; omega) r]
-
-omit [Fintype ι] [DecidableEq ι] [∀ i, NeZero (μ i)] in
-/-- Restricting a uniform dependent function along an injective map gives a uniform function. -/
-private theorem uniformOfFintype_map_comp_of_injective {α S : Type} [Fintype α] [DecidableEq α]
-    {π : α → Type} [∀ a, Fintype (π a)] [∀ a, Nonempty (π a)] [∀ a, AddGroup (π a)] [Fintype S]
-    [DecidableEq S] (q : S → α) (hq : Function.Injective q) :
-    (PMF.uniformOfFintype (∀ a, π a)).map (fun f s => f (q s)) =
-      PMF.uniformOfFintype (∀ s, π (q s)) := by
-  classical
-  apply Cslib.Probability.PMF.uniformOfFintype_map_of_shift
-  intro c
-  let d : ∀ a, π a := fun a =>
-    if h : ∃ s, q s = a then cast (congrArg π h.choose_spec) (c h.choose) else 0
-  have hcast : ∀ s s' (h : q s' = q s), s' = s → cast (congrArg π h) (c s') = c s := by
-    rintro s s' h rfl
-    rfl
-  refine ⟨Equiv.addRight d, fun f => funext fun s => ?_⟩
-  have hd : d (q s) = c s := by
-    have h : ∃ s', q s' = q s := ⟨s, rfl⟩
-    simp only [d, dite_eq_left_of_eq_true (eq_true h)]
-    exact hcast s h.choose h.choose_spec (hq h.choose_spec)
-  simp only [Equiv.coe_addRight, Pi.add_apply, hd]
 
 omit [Fintype ι] [DecidableEq ι] [∀ i, NeZero (μ i)] in
 /-- The rows of a projection gate are uniform when the values of all input values but the active
@@ -733,7 +713,7 @@ theorem bind_reduceWith_uniformOfFintype [Fintype T] [DecidableEq T] {β : Type}
         funext s
         simp only [G, Function.comp_apply, pt, dite_eq_ite]
         rfl
-      rw [hG, ← PMF.map_comp, uniformOfFintype_map_comp_of_injective pt hpt]
+      rw [hG, ← PMF.map_comp, Cslib.Probability.PMF.uniformOfFintype_map_comp_dep hpt]
       exact map_reduceRows_uniformOfFintype v (W.2 - v) (H t i W j)
     calc (PMF.uniformOfFintype (T → CCRTable μ ℓ)).bind
           (fun f => κ (reduceWith (fun q => f q.1 q.2) H tw k (.proj a φ next) A V))
@@ -765,11 +745,9 @@ theorem realGame_eq_ccrRealGame (H : MixedModulusHash T μ ℓ) (tw : ℕ → T)
     (C : MixedModulusCircuit μ (Projection μ) Γ Θ) (x : Env (Residue μ) Γ)
     (D : View ℓ C → ProbComp Bool) :
     realGame H tw C x D = ccrRealGame H (reduction H tw C x D) := by
-  have hself : ∀ {α : Type} (p : ProbComp α), OracleComp.interpret ProbComp.unifFin p = p :=
-    fun p => OracleComp.interpret_query_eq_self p
   simp only [realGame, ccrRealGame, reduction, garble, OracleComp.interpret_bind,
-    ProbOracleComp.interpret_sample, hself, interpret_reduceM, pure_bind, bind_assoc,
-    ProbComp.eval_bind, ProbComp.eval_uniform]
+    ProbOracleComp.interpret_sample, ProbComp.interpret_unifFin, interpret_reduceM, pure_bind,
+    bind_assoc, ProbComp.eval_bind, ProbComp.eval_uniform]
   refine congrArg (PMF.bind _) (funext fun δ => ?_)
   conv_rhs => rw [← map_encode_uniformOfFintype δ x]
   rw [PMF.bind_map]
@@ -783,11 +761,9 @@ theorem simGame_eq_ccrIdealGame [Fintype T] [DecidableEq T] (H : MixedModulusHas
     (tw : ℕ → T) (C : MixedModulusCircuit μ (Projection μ) Γ Θ) (x : Env (Residue μ) Γ)
     (D : View ℓ C → ProbComp Bool) (htw : Set.InjOn tw (Set.Iio C.size)) :
     simGame H tw C x D = ccrIdealGame (reduction H tw C x D) := by
-  have hself : ∀ {α : Type} (p : ProbComp α), OracleComp.interpret ProbComp.unifFin p = p :=
-    fun p => OracleComp.interpret_query_eq_self p
   simp only [simGame, ccrIdealGame, simulate, reduction, OracleComp.interpret_bind,
-    ProbOracleComp.interpret_sample, hself, interpret_reduceM, pure_bind, bind_assoc,
-    ProbComp.eval_bind, ProbComp.eval_uniform]
+    ProbOracleComp.interpret_sample, ProbComp.interpret_unifFin, interpret_reduceM, pure_bind,
+    bind_assoc, ProbComp.eval_bind, ProbComp.eval_uniform]
   conv_rhs => rw [PMF.bind_comm]
   refine congrArg (PMF.bind _) (funext fun A => ?_)
   rw [bind_reduceWith_uniformOfFintype H tw 0 C A x (htw.mono fun n hn => by
@@ -861,7 +837,7 @@ private theorem mem_filterMap_getRight_queryRows (H : MixedModulusHash T μ ℓ)
 tweak is the tweak of one of these gates, and a query is determined by its tweak, source sort,
 label and multiplier `a`. -/
 private def GoodQueries (tw : ℕ → T) (k n : ℕ) (qs : List (T × CCRInput μ ℓ)) : Prop :=
-  (∀ q ∈ qs, q.2.2.2.2.1 ≠ 0 ∧ ∃ m, k ≤ m ∧ m < k + n ∧ q.1 = tw m) ∧
+  (∀ q ∈ qs, q.2.a ≠ 0 ∧ ∃ m, k ≤ m ∧ m < k + n ∧ q.1 = tw m) ∧
     ∀ q ∈ qs, ∀ q' ∈ qs, ccrKey q = ccrKey q' → q = q'
 
 private theorem goodQueries_append (tw : ℕ → T) (k n : ℕ) {i j : ι} (W : Label μ ℓ i)

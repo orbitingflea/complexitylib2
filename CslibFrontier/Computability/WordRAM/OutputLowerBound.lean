@@ -15,17 +15,18 @@ public import CslibFrontier.Computability.WordRAM.ListOutput
 
 Every changed memory cell costs a store instruction. The statements count changed cells rather
 than output length alone: returning the initialized input is free apart from the halt. In
-particular, materializing a nonzero dense `n × n` matrix in initially zero memory costs at least
-`n²` continuing instructions, and returning a freshly materialized nonzero list costs its length
-plus the halt. These are instruction-count bounds in the existing native memory-output model.
+particular, materializing the all-one `n × n` matrix from an all-zero input costs at least
+`n²` continuing instructions, and returning a nonzero constant list from an all-zero input costs
+at least its length plus the halt. These are instruction-count bounds in the existing native
+memory-output model.
 
 ## Main results
 
 * `Runs.card_changed_le`: a finite family of changed cells is bounded by the step count.
 * `Runs.block_lowerBound`: every changed cell of an output block must be written.
-* `ExecutesList.replicate_lowerBound`: a nonzero dense list returned from zero input requires
+* `ExecutesList.replicate_lowerBound`: a nonzero constant list returned from zero input requires
   at least its length plus one instructions, including the final halt.
-* `ExecutesList.denseMatrix_lowerBound`: the square-output specialization.
+* `ExecutesList.denseMatrix_lowerBound`: the specialization to the all-one `n × n` matrix.
 -/
 
 public section
@@ -69,7 +70,7 @@ reuse the input-length header. The output-length header may require an additiona
 theorem ExecutesList.replicate_lowerBound {w m k n v : ℕ} {p : Program B r}
     (h : ExecutesList w p (.init (List.replicate m 0)) (List.replicate k v) n)
     (hv : v ≠ 0) : k + 1 ≤ n := by
-  obtain ⟨t, steps, base, hr, _, hout, rfl⟩ := h
+  obtain ⟨t, steps, base, hr, _, hout, _, rfl⟩ := h
   have hl := (outputList_eq_iff.mp hout).2
   have hb : k ≤ steps := hr.block_lowerBound ⟨base + 1, k⟩ (by
     intro i

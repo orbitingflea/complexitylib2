@@ -98,7 +98,7 @@ theorem hybridGame_zero (generator : List Bool → List Bool) (adversary : Oracl
     root (fun request => hstep request.2) (adversary n []) []
   simp only [funext (ProbOracleComp.runWith_readOnly _ _)] at h
   have houtput := congrArg (PMF.map Prod.fst) h
-  simpa [hybridGame, prfRealGame, ProbOracleComp.eval_run_interpret_eq_runWith,
+  simpa [hybridGame, prfRealGame, ProbOracleComp.run, ProbOracleComp.eval_run_interpret_eq_runWith,
     ProbOracleComp.eval_interpret, BitString.eval_sampleList, root, PMF.map,
     Function.comp_def, OracleComp.evalWith] using houtput
 
@@ -179,13 +179,12 @@ theorem isPPTOn_hybridGame {generator : List Bool → List Bool}
     {adversary : OracleDistinguisher} (hadversary : IsOraclePPT encBool adversary) :
     IsPPTOn (encPair encUnary encUnary) encBool
       (fun pair => hybridGame generator adversary pair.1 pair.2) := by
-  have hgenerator := hgenerator.tidy
   have hrun : IsPPTOn (encPair encUnary encUnary) (encPair encBool cacheEncoding)
       (fun pair : ℕ × ℕ => (OracleComp.interpret
         (OracleComp.sumHandler (fun k => StateT.lift (ProbComp.unifFin k))
           (fun request => frontierOracle generator pair.1 pair.2 request.2))
             (adversary pair.1 [])).run []) := by
-    apply hadversary.run_interpret_preprocess (operationEncoding := encFinEnum Unit)
+    apply hadversary.run_interpret_preprocess' (operationEncoding := encFinEnum Unit)
       (prepare := fun pair : ℕ × ℕ => (pair.1, []))
       (resources := fun pair query => 4 * query.length + 2 * pair.1 + 3)
       (by fun_prop) (by fun_prop) (by fun_prop)

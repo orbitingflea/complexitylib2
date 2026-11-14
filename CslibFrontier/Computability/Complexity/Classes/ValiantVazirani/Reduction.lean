@@ -13,8 +13,10 @@ public import CslibFrontier.Foundations.Data.BitString.List
 public import CslibFrontier.Foundations.Data.BitString.List.Binary
 public import CslibFrontier.Foundations.Data.BitString.WordCount
 public import CslibFrontier.Languages.Probabilistic.Iteration
+public import CslibFrontier.Logics.Propositional.CNF.Encoding
 public import CslibFrontier.Probability.BitString.AffineHash
 public import CslibFrontier.Probability.UniformNat
+import CslibFrontier.Logics.Propositional.CNF.Vars
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Log
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Sum
@@ -121,8 +123,7 @@ def reduce (x : CNF ℕ × List Bool) : CNF ℕ :=
 theorem computableInPolyTime_stepClauses :
     ComputableInPolyTime (fun p : Bool × Var × Var × Var =>
       stepClauses p.1 p.2.1 p.2.2.1 p.2.2.2)
-      (encPair encBool (encPair encVar (encPair encVar encVar)))
-      (encList (encList (encPair encVar encBool))) := by
+      (encPair encBool (encPair encVar (encPair encVar encVar))) (encCNFOver encVar) := by
   unfold stepClauses encVar
   fun_prop
 
@@ -132,7 +133,7 @@ theorem computableInPolyTime_rowClauses :
     ComputableInPolyTime (fun p : List ℕ × ℕ × List Bool × Bool =>
       rowClauses p.1 p.2.1 p.2.2.1 p.2.2.2)
       (encPair (encList encNat) (encPair encUnary (encPair encBits encBool)))
-      (encList (encList (encPair encVar encBool))) := by
+      (encCNFOver encVar) := by
   unfold rowClauses encVar
   fun_prop
 
@@ -140,8 +141,7 @@ theorem computableInPolyTime_rowClauses :
 @[fun_prop]
 theorem computableInPolyTime_hashCNF :
     ComputableInPolyTime (fun p : List ℕ × ℕ × List Bool => hashCNF p.1 p.2.1 p.2.2)
-      (encPair (encList encNat) (encPair encUnary encBits))
-      (encList (encList (encPair encVar encBool))) := by
+      (encPair (encList encNat) (encPair encUnary encBits)) (encCNFOver encVar) := by
   unfold hashCNF
   fun_prop
 
@@ -440,9 +440,9 @@ theorem reduceWith_mem_USAT {φ : CNF ℕ} {k : ℕ} {w : List Bool}
   obtain ⟨u, hu, rfl⟩ := List.mem_map.1 ((CNF.vars_relabel _ _) ▸ hvψ)
   rw [splitVarToNat_injective.extend_apply]
   change (τ ∘ splitVarToNat) u = σ' u
-  rw [CNF.vars, List.flatten_append, List.map_append, List.mem_append] at hu
+  rw [CNF.vars_append, List.mem_append] at hu
   rcases hu with hu | hu
-  · rw [← CNF.vars, CNF.vars_relabel] at hu
+  · rw [CNF.vars_relabel] at hu
     obtain ⟨v, hv, rfl⟩ := List.mem_map.1 hu
     obtain ⟨j, hj, rfl⟩ := List.getElem_of_mem hv
     exact congrFun hpoint ⟨j, hj⟩

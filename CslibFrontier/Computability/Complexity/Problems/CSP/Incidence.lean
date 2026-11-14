@@ -71,7 +71,7 @@ theorem length_vertices_incidenceGraph (F : CSP Rel V) :
 
 /-- Edge count includes each argument occurrence, even repeated variables. -/
 theorem length_edges_incidenceGraph (F : CSP Rel V) :
-    (incidenceGraph F).2.length = (F.map fun c => c.2.length).sum := by
+    (incidenceGraph F).2.length = (F.map fun c => c.scope.length).sum := by
   rw [incidenceGraph_edges, List.length_map, CSP.length_occurrences]
 
 /-- Every listed edge joins the variable part to the constraint-position part. -/
@@ -84,6 +84,17 @@ theorem incidenceGraph_bipartite {e : ℕ × ℕ} (he : e ∈ (incidenceGraph F)
 theorem incidenceGraph_endpoints {e : ℕ × ℕ} (he : e ∈ (incidenceGraph F).2) :
     e.1 ∈ (incidenceGraph F).1 ∧ e.2 ∈ (incidenceGraph F).1 :=
   SAT.incidenceGraph_endpoints he
+
+/-- Every entry of the flattened incidence-endpoint list is a declared graph vertex. -/
+theorem incidenceVertices_declared (F : CSP Rel V) :
+    ∀ v ∈ (incidenceGraph F).incidenceVertices, v ∈ (incidenceGraph F).1 := by
+  intro v hv
+  obtain ⟨e, he, hv⟩ := List.mem_flatMap.mp hv
+  rcases List.mem_cons.mp hv with rfl | hv
+  · exact (incidenceGraph_endpoints he).1
+  · have hv' := List.mem_singleton.mp hv
+    subst v
+    exact (incidenceGraph_endpoints he).2
 
 /-- The two vertex intervals are disjoint, so incidence edges are never loops. -/
 theorem incidenceGraph_loopless {e : ℕ × ℕ} (he : e ∈ (incidenceGraph F).2) : e.1 ≠ e.2 :=

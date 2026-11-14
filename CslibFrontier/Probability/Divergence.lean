@@ -9,6 +9,7 @@ module
 
 public import CslibFrontier.Probability.Entropy
 public import CslibFrontier.Probability.StatisticalDistance
+public import CslibFrontier.Probability.StatisticalDistance.TotalVariation
 public import Mathlib.InformationTheory.KullbackLeibler.Basic
 import CslibFrontier.Probability.Pinsker
 import CslibFrontier.Probability.PMF.Expect
@@ -65,7 +66,7 @@ Divergences are in nats and entropies in bits, so the bridges divide by `log 2`.
   Theorem 2.4.1 (mutual information) and Lemma 11.6.1 (Pinsker).
 -/
 
-@[expose] public section
+public section
 
 namespace Cslib.Probability
 

@@ -13,7 +13,7 @@ public import Mathlib.Data.ZMod.Units
 public import Mathlib.GroupTheory.OrderOfElement
 import CslibFrontier.Foundations.Data.Nat.Totient
 import Mathlib.FieldTheory.Finite.Basic
-import Mathlib.NumberTheory.Multiplicity
+import Mathlib.NumberTheory.Basic
 
 /-!
 # Residues modulo a square
@@ -29,6 +29,7 @@ theorem with exponent `φ(N ^ 2) = N * φ(N)`. These facts underlie Paillier enc
 * `ZMod.natCast_mul_self_eq_zero`: `N * N = 0` in `ZMod (N ^ 2)`.
 * `ZMod.one_add_natCast_pow`, `ZMod.one_add_natCast_pow_self`, `ZMod.orderOf_one_add_natCast`:
   `(1 + N) ^ a = 1 + a * N`, so `(1 + N) ^ N = 1`, and `1 + N` has order `N` when `0 < N`.
+* `ZMod.val_one_add_natCast_mul`: the least representative of `1 + k * N` is `1 + (k % N) * N`.
 * `ZMod.add_natCast_mul_pow_self`, `ZMod.natCast_pow_self_mod`: an `N`-th power modulo `N ^ 2`
   only depends on the base modulo `N`.
 * `ZMod.natCast_pow_mul_totient`: `r ^ (N * φ(N)) = 1` modulo `N ^ 2` for `r` coprime to `N`.
@@ -57,6 +58,18 @@ theorem one_add_natCast_pow (N a : ℕ) :
     push_cast
     linear_combination (a : ZMod (N ^ 2)) * natCast_mul_self_eq_zero N
 
+/-- For `1 < N`, the least representative of `1 + k * N` modulo `N ^ 2` is `1 + (k % N) * N`. -/
+theorem val_one_add_natCast_mul {N : ℕ} (hN : 1 < N) (k : ℕ) :
+    (1 + (k : ZMod (N ^ 2)) * N).val = 1 + k % N * N := by
+  have hlt : 1 + k % N * N < N ^ 2 := by
+    have := Nat.mod_lt k (by lia : 0 < N)
+    nlinarith
+  rw [← ZMod.val_cast_of_lt hlt]
+  congr 1
+  conv_lhs => rw [← Nat.mod_add_div k N]
+  push_cast
+  linear_combination ((k / N : ℕ) : ZMod (N ^ 2)) * natCast_mul_self_eq_zero N
+
 /-- `(1 + N) ^ N = 1` in `ZMod (N ^ 2)` ([KatzLindell2020], Claim 15.8). -/
 theorem one_add_natCast_pow_self (N : ℕ) : (1 + (N : ZMod (N ^ 2))) ^ N = 1 := by
   rw [one_add_natCast_pow, natCast_mul_self_eq_zero, add_zero]
@@ -74,15 +87,9 @@ theorem orderOf_one_add_natCast {N : ℕ} (hN : 0 < N) :
 /-- Adding a multiple of `N` does not change an `N`-th power in `ZMod (N ^ 2)`. -/
 theorem add_natCast_mul_pow_self (N : ℕ) (v k : ZMod (N ^ 2)) :
     (v + (N : ZMod (N ^ 2)) * k) ^ N = v ^ N := by
-  have hdvd := sq_dvd_add_pow_sub_sub ((N : ZMod (N ^ 2)) * k) v N
-  have hN := natCast_mul_self_eq_zero N
-  have hmid : v ^ (N - 1) * (N * k) * (N : ZMod (N ^ 2)) = 0 := by
-    calc v ^ (N - 1) * (N * k) * (N : ZMod (N ^ 2))
-        = v ^ (N - 1) * k * ((N : ZMod (N ^ 2)) * N) := by ring
-      _ = 0 := by rw [hN, mul_zero]
-  rw [mul_pow, pow_two (N : ZMod (N ^ 2)), hN, zero_mul, zero_dvd_iff, hmid, sub_zero,
-    sub_eq_zero] at hdvd
-  exact hdvd
+  have h := dvd_sub_pow_of_dvd_sub (p := N) (a := v + N * k) (b := v) ⟨k, by ring⟩ 1
+  rwa [pow_one, one_add_one_eq_two, pow_two (N : ZMod (N ^ 2)), natCast_mul_self_eq_zero,
+    zero_dvd_iff, sub_eq_zero] at h
 
 /-- The `N`-th power of a natural number in `ZMod (N ^ 2)` depends only on its residue
 modulo `N`. -/

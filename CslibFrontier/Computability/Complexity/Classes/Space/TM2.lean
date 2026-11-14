@@ -29,7 +29,7 @@ standard finite-symbol encodings; the final Boolean answer is recoded to `encBoo
 * [M. Sipser, *Introduction to the Theory of Computation*, Section 8.1][Sipser2013]
 -/
 
-@[expose] public section
+public section
 
 namespace Cslib.Complexity
 
@@ -55,7 +55,6 @@ theorem mem_PSPACE_of_tm2 {α αΓ βΓ : Type} [Finite αΓ] [Finite βΓ]
     ha hb hspace hstacks
   have hbool := ComputableInPolyTime.of_finite (id : Bool → Bool)
     (encIn := (⟨eb, hb⟩ : Bool ↪ List βΓ).trans (encList (encFinite βΓ))) (encOut := encBool)
-  exact mem_PSPACE_of_computableInPolySpace ((ComputableInPolySpace.of_polyTime hbool).comp hf)
-    hA
+  exact ⟨_, (ComputableInPolySpace.of_polyTime hbool).comp hf, hA⟩
 
 end Cslib.Complexity

@@ -93,19 +93,14 @@ abbrev MultiKeyDistinguisher (t : ℕ) := ℕ → List Bool → WordOracleComp (
 @[expose] noncomputable def prfMultiRealGame (family : List Bool → List Bool → List Bool) (t : ℕ)
     (adversary : MultiKeyDistinguisher t) (n : ℕ) : ProbComp Bool := do
   let key ← BitString.sampleList (t * n)
-  OracleComp.interpret
-    (OracleComp.sumHandler ProbComp.unifFin (fun request =>
-      pure (prfOracle family n (keyBlock n request.1 key) request.2)))
-    (adversary n [])
+  (adversary n []).run fun request =>
+    pure (prfOracle family n (keyBlock n request.1 key) request.2)
 
 /-- The ideal multi-key experiment: `t` independent uniform random functions. -/
 @[expose] noncomputable def prfMultiIdealGame (t : ℕ) (adversary : MultiKeyDistinguisher t)
     (n : ℕ) : ProbComp Bool := do
   let tables ← ProbComp.uniform (Fin t → BitString n → BitString n)
-  OracleComp.interpret
-    (OracleComp.sumHandler ProbComp.unifFin (fun request =>
-      pure (randomFunctionOracle n (tables request.1) request.2)))
-    (adversary n [])
+  (adversary n []).run fun request => pure (randomFunctionOracle n (tables request.1) request.2)
 
 /-- The cache of the hybrid reduction, keyed by channel and query. -/
 abbrev MultiKeyCache (t : ℕ) := List ((Fin t × List Bool) × List Bool)
@@ -142,9 +137,11 @@ section Efficiency
 
 variable {family : List Bool → List Bool → List Bool}
 
-/-- The encoding of the reduction's cache. -/
+/-- The encoding of the reduction's cache: the memoization cache encoding (`encMemoCache`) whose
+keys pair a key index (`encFinEnum`, framed) with a query (`encBits`) and whose values are
+`encBits`. -/
 private abbrev cacheEncoding (t : ℕ) : MultiKeyCache t ↪ List Bool :=
-  encList (encPair (encPair (encFinEnum (Fin t)) encBits) encBits)
+  encMemoCache (encPair (encFinEnum (Fin t)) encBits) encBits
 
 /-- The input of one handler call: the caller `((n, aux), key)`, the request and the cache. -/
 private abbrev HandlerInput (t : ℕ) :=
@@ -454,7 +451,7 @@ private theorem eval_prfMultiRealGame (family : List Bool → List Bool → List
     (adversary : MultiKeyDistinguisher t) (n : ℕ) :
     ProbComp.eval (prfMultiRealGame family t adversary n) = hybridGame family t 0 adversary n := by
   simp only [prfMultiRealGame, ProbComp.eval_bind, BitString.eval_sampleList,
-    ProbOracleComp.eval_interpret, ProbComp.eval_pure]
+    ProbOracleComp.eval_run, ProbComp.eval_pure]
   refine (uniformList_bind_keyBlock t n (fun blocks =>
     OracleComp.interpret (OracleComp.sumHandler ProbComp.unifOracle
       (fun request : Fin t × List Bool =>
@@ -466,7 +463,7 @@ private theorem eval_prfMultiIdealGame (family : List Bool → List Bool → Lis
     (adversary : MultiKeyDistinguisher t) (n : ℕ) :
     ProbComp.eval (prfMultiIdealGame t adversary n) = hybridGame family t t adversary n := by
   simp only [pmf_norm, prfMultiIdealGame, hybridGame, hybridOracle, Fin.is_lt, ↓reduceIte,
-    PMF.bind_const, ProbComp.eval_uniform, ProbOracleComp.eval_interpret]
+    PMF.bind_const, ProbComp.eval_uniform, ProbOracleComp.eval_run]
 
 /-- Against the real PRF game, the `j`-th reduction is the `j`-th hybrid. -/
 private theorem eval_prfRealGame_prfMultiReduction (hfamily : PseudorandomFunction family)
@@ -474,7 +471,7 @@ private theorem eval_prfRealGame_prfMultiReduction (hfamily : PseudorandomFuncti
     ProbComp.eval (prfRealGame family (prfMultiReduction family t j adversary) n) =
       hybridGame family t j adversary n := by
   classical
-  simp only [prfRealGame, ProbComp.eval_bind, BitString.eval_sampleList,
+  simp only [prfRealGame, ProbOracleComp.run, ProbComp.eval_bind, BitString.eval_sampleList,
     ProbOracleComp.eval_interpret, ProbComp.eval_pure, interpret_prfMultiReduction,
     run_semanticHandler]
   simp only [hybridGame, PMF.monad_bind_eq_bind]
@@ -504,7 +501,7 @@ private theorem eval_prfIdealGame_prfMultiReduction (hfamily : PseudorandomFunct
     ProbComp.eval (prfIdealGame (prfMultiReduction family t j adversary) n) =
       hybridGame family t (j + 1) adversary n := by
   classical
-  simp only [prfIdealGame, ProbComp.eval_bind, ProbComp.eval_uniform,
+  simp only [prfIdealGame, ProbOracleComp.run, ProbComp.eval_bind, ProbComp.eval_uniform,
     ProbOracleComp.eval_interpret, ProbComp.eval_pure, interpret_prfMultiReduction,
     run_semanticHandler]
   simp only [hybridGame, PMF.monad_bind_eq_bind]

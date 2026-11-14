@@ -57,7 +57,9 @@ has more than `2 ^ (⌊√⌊√n⌋⌋ / 2)` gates, where `⌊√⌊√n⌋⌋ 
   for bounded arithmetic*][Krajicek1997]; Theorem 7.2 is numbered as in the author's preprint.
 -/
 
-@[expose] public section
+public section
+
+open Cslib.BitString.Graph
 
 namespace Cslib.Circuits.Monotone
 

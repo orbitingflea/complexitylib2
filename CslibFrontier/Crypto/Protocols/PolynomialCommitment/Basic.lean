@@ -28,7 +28,13 @@ from an admissible class `ValidPoly` and opens evaluations `eval p z = y` with s
 evaluation completeness (`PolyCommitScheme.EvalComplete`), commitment binding
 (`PolyCommitScheme.CommitmentBinding`, `PolyCommitScheme.CommitmentBindingExtract`), and evaluation
 binding at each query point (`PolyCommitScheme.EvaluationBinding`,
-`PolyCommitScheme.EvaluationBindingExtract`).
+`PolyCommitScheme.EvaluationBindingExtract`). `PolyCommitScheme.CommitmentBinding` and
+`PolyCommitScheme.EvaluationBinding` are perfect binding: they quantify over all valid polynomials
+and randomness, respectively all commitments and pairs of accepting openings, with no adversary,
+probability or setup. The two `Extract` predicates ask a given function `extract` to map every
+binding break to a witness satisfying a given predicate `Collision`; a constant `extract` meets
+them for every scheme whenever some witness satisfies `Collision`. No binding notion against
+bounded adversaries is defined here.
 
 When a prover claims `k` evaluations `eval (p i) z = y i` at a point `z`, random-linear-combination
 batching (`Cslib.Crypto.Protocols.batchEvalReduction`) samples a uniform challenge vector
@@ -48,13 +54,23 @@ proximity and row-wise consistency, the verifier sends a random challenge `r : F
 prover replies with the row combination `v = ligeroRowComb r U = r ᵥ* U : Fin l → F`, and the
 verifier checks `(v ᵥ* G) j = (r ᵥ* M) j` at queried columns `j` (`ligeroColumnCheck`,
 `ligeroEvalCheck`). Associativity of vector-matrix multiplication (`Matrix.vecMul_vecMul`) gives
-perfect completeness (`ligeroRowComb_mul`), while any row `i₀` where `M i₀ j ≠ ((U i₀) ᵥ* G) j` is
-caught at column `j` with probability `1 - 1 / |F|` (`toOuterMeasure_ligeroRowComb_eq`,
-`LigeroMatrixIOP.columnReduction_sound`).
+perfect completeness (`ligeroRowComb_mul`). If some row `i₀` has `M i₀ j ≠ ((U i₀) ᵥ* G) j`, the
+honest row combination `r ᵥ* U` passes the check at column `j` with probability exactly `1 / |F|`
+(`toOuterMeasure_ligeroRowComb_eq`), and against every prover the verifier accepts a response
+equal to `r ᵥ* U` with probability at most `1 / |F|` (`LigeroMatrixIOP.columnReduction_sound`).
+
+This module formalizes one column check as an interactive reduction
+(`LigeroMatrixIOP.columnReduction`): the column `j` is the input statement, `M` is a parameter of
+the verifier rather than an oracle, the response `v` is read in full, and consistency is measured
+against the fixed matrix `U` of the bundle. `LigeroMatrixIOP.columnReduction_sound` does not bound
+the probability that the verifier accepts a response other than `r ᵥ* U`, and no statement here
+says that the rows of `M` are codewords of `G` or close to codewords.
 
 ## Main definitions
 
 * `Cslib.Crypto.Protocols.PolyCommitScheme`: syntax of a polynomial commitment scheme.
+* `Cslib.Crypto.Protocols.PolyCommitScheme.Opening`: an evaluation opening, a claimed value and
+  its proof.
 * `Cslib.Crypto.Protocols.PolyCommitScheme.EvalComplete`,
   `Cslib.Crypto.Protocols.PolyCommitScheme.OpenValueCorrect`,
   `Cslib.Crypto.Protocols.PolyCommitScheme.CommitmentBinding`,
@@ -109,6 +125,14 @@ universe u
 
 /-! ### Polynomial commitment scheme interface -/
 
+/-- An evaluation opening: the claimed value of a committed polynomial at a query point, with the
+proof that the verifier checks against the commitment. -/
+structure PolyCommitScheme.Opening (F Proof : Type u) where
+  /-- The claimed evaluation. -/
+  value : F
+  /-- The opening proof. -/
+  proof : Proof
+
 /-- A polynomial commitment scheme over polynomial representation `Poly`, commitment randomness
 `Randomness`, evaluation point type `Point`, value type `F`, commitment type `Commit`, and opening
 proof type `Proof` [Kate, Zaverucha and Goldberg][KateZaveruchaGoldberg2010]. -/
@@ -120,7 +144,7 @@ structure PolyCommitScheme (Poly Randomness Point F Commit Proof : Type u) where
   /-- Commit to a polynomial using explicit randomness. -/
   commit : Poly → Randomness → Commit
   /-- Open a committed polynomial at a point, returning the claimed value and an opening proof. -/
-  openEval : Poly → Randomness → Point → F × Proof
+  openEval : Poly → Randomness → Point → PolyCommitScheme.Opening F Proof
   /-- Deterministic verification of a claimed evaluation `(y, π)` at point `z` against `c`. -/
   verifyEval : Commit → Point → F → Proof → Bool
 
@@ -137,15 +161,15 @@ instance (c : Commit) (z : Point) (y : F) (π : Proof) : Decidable (S.AcceptsEva
   inferInstanceAs (Decidable (S.verifyEval c z y π = true))
 
 /-- Evaluation completeness: for every valid polynomial `p`, commitment randomness `r`, and query
-point `z`, the honest opening proof `(openEval p r z).2` is accepted for the true evaluation
+point `z`, the honest opening proof `(openEval p r z).proof` is accepted for the true evaluation
 `eval p z` on `commit p r`. -/
 @[expose] def EvalComplete : Prop :=
   ∀ p r z, S.ValidPoly p →
-    S.verifyEval (S.commit p r) z (S.eval p z) (S.openEval p r z).2 = true
+    S.verifyEval (S.commit p r) z (S.eval p z) (S.openEval p r z).proof = true
 
-/-- Honest opening value correctness: the value component of `openEval p r z` is `eval p z`. -/
+/-- Honest opening value correctness: the value of `openEval p r z` is `eval p z`. -/
 @[expose] def OpenValueCorrect : Prop :=
-  ∀ p r z, S.ValidPoly p → (S.openEval p r z).1 = S.eval p z
+  ∀ p r z, S.ValidPoly p → (S.openEval p r z).value = S.eval p z
 
 /-- Commitment binding: no two distinct valid polynomials produce the same commitment. -/
 @[expose] def CommitmentBinding : Prop :=
@@ -154,7 +178,10 @@ point `z`, the honest opening proof `(openEval p r z).2` is accepted for the tru
 
 /-- Witness-extracting commitment binding: from any two distinct valid polynomials with the same
 commitment, `extract` recovers a witness satisfying `Collision` (such as a hash collision or
-discrete-logarithm relation). -/
+discrete-logarithm relation). Here `extract` is an arbitrary function with no efficiency
+requirement, and a constant `extract` at a witness satisfying `Collision` satisfies the predicate
+for every scheme, so this is a statement about the named `extract` rather than a binding property
+of the scheme alone. -/
 @[expose] def CommitmentBindingExtract {Witness : Type*} (Collision : Witness → Prop)
     (extract : Poly → Randomness → Poly → Randomness → Witness) : Prop :=
   ∀ p₁ r₁ p₂ r₂, S.ValidPoly p₁ → S.ValidPoly p₂ →
@@ -168,7 +195,9 @@ discrete-logarithm relation). -/
 
 /-- Witness-extracting evaluation binding: from any two accepting openings `(y₁, π₁)` and `(y₂, π₂)`
 of the same commitment `c` at point `z` with `y₁ ≠ y₂`, `extract` recovers a witness satisfying
-`Collision`. -/
+`Collision`. As for `CommitmentBindingExtract`, `extract` is an arbitrary function with no
+efficiency requirement, and a constant `extract` at a witness satisfying `Collision` satisfies the
+predicate for every scheme. -/
 @[expose] def EvaluationBindingExtract {Witness : Type*} (Collision : Witness → Prop)
     (extract : Commit → Point → F → Proof → F → Proof → Witness) : Prop :=
   ∀ c z y₁ π₁ y₂ π₂, y₁ ≠ y₂ →
@@ -180,7 +209,7 @@ variable {S}
 /-- Under `EvalComplete` and `OpenValueCorrect`, both components of `openEval p r z` verify. -/
 theorem EvalComplete.verifyEval_openEval (hcomp : S.EvalComplete) (hval : S.OpenValueCorrect)
     {p : Poly} (hp : S.ValidPoly p) (r : Randomness) (z : Point) :
-    S.verifyEval (S.commit p r) z (S.openEval p r z).1 (S.openEval p r z).2 = true := by
+    S.verifyEval (S.commit p r) z (S.openEval p r z).value (S.openEval p r z).proof = true := by
   rw [hval p r z hp]
   exact hcomp p r z hp
 
@@ -190,7 +219,7 @@ theorem EvaluationBinding.eq_eval_of_verifyEval (hbind : S.EvaluationBinding)
     (hcomp : S.EvalComplete) {p : Poly} (hp : S.ValidPoly p) (r : Randomness) (z : Point)
     {y : F} {π : Proof} (hver : S.verifyEval (S.commit p r) z y π = true) :
     y = S.eval p z :=
-  hbind (S.commit p r) z y π (S.eval p z) (S.openEval p r z).2 hver (hcomp p r z hp)
+  hbind (S.commit p r) z y π (S.eval p z) (S.openEval p r z).proof hver (hcomp p r z hp)
 
 /-- If evaluation completeness and evaluation binding hold, and valid polynomials are determined by
 their evaluations, then commitment binding holds. -/
@@ -227,7 +256,7 @@ evaluation. -/
   eval p z := p.eval z
   ValidPoly p := p.natDegree ≤ d
   commit p _ := p
-  openEval p _ z := (p.eval z, ())
+  openEval p _ z := { value := p.eval z, proof := () }
   verifyEval c z y _ := decide (c.natDegree ≤ d ∧ c.eval z = y)
 
 theorem direct_evalComplete (F : Type) [CommSemiring F] [DecidableEq F] (d : ℕ) :
@@ -395,18 +424,12 @@ theorem ligeroRowComb_mul [Semiring F] (r : Fin m → F) (U : Matrix (Fin m) (Fi
     ligeroRowComb r U ᵥ* G = r ᵥ* (U * G) :=
   Matrix.vecMul_vecMul r U G
 
-/-- Pointwise form of `ligeroRowComb_mul` at column `j`. -/
-theorem ligeroRowComb_mul_apply [Semiring F] (r : Fin m → F) (U : Matrix (Fin m) (Fin l) F)
-    (G : Matrix (Fin l) (Fin n) F) (j : Fin n) :
-    (ligeroRowComb r U ᵥ* G) j = (r ᵥ* (U * G)) j :=
-  congrFun (ligeroRowComb_mul r U G) j
-
 /-- Expanding `((ligeroRowComb r U) ᵥ* G) j` as a linear combination of the encoded witness rows
 `((U i) ᵥ* G) j`. -/
 theorem ligeroRowComb_mul_eq_sum [CommSemiring F] (r : Fin m → F) (U : Matrix (Fin m) (Fin l) F)
     (G : Matrix (Fin l) (Fin n) F) (j : Fin n) :
     (ligeroRowComb r U ᵥ* G) j = ∑ i : Fin m, r i * ((U i) ᵥ* G) j := by
-  rw [ligeroRowComb_mul_apply]
+  rw [ligeroRowComb_mul]
   rfl
 
 /-- Target bilinear evaluation `(b ᵥ* U) ⬝ᵥ c` of a witness matrix `U : Matrix (Fin m) (Fin l) F` at
@@ -433,14 +456,14 @@ column check passes at every column `j`. -/
 theorem ligeroColumnCheck_honest [Semiring F] [DecidableEq F] (G : Matrix (Fin l) (Fin n) F)
     (U : Matrix (Fin m) (Fin l) F) (r : Fin m → F) (j : Fin n) :
     ligeroColumnCheck G (U * G) r (ligeroRowComb r U) j = true := by
-  simp [ligeroColumnCheck, ligeroRowComb_mul_apply]
+  simp [ligeroColumnCheck, ligeroRowComb_mul]
 
 /-- **Completeness of the Ligero evaluation check**: when `M = U * G`, `w = ligeroEval U b c`, and
 `v = ligeroRowComb b U`, the evaluation check passes at every column `j`. -/
 theorem ligeroEvalCheck_honest [Semiring F] [DecidableEq F] (G : Matrix (Fin l) (Fin n) F)
     (U : Matrix (Fin m) (Fin l) F) (b : Fin m → F) (c : Fin l → F) (j : Fin n) :
     ligeroEvalCheck G (U * G) b c (ligeroEval U b c) (ligeroRowComb b U) j = true := by
-  simp [ligeroEvalCheck, ligeroEval, ligeroRowComb_mul_apply]
+  simp [ligeroEvalCheck, ligeroEval, ligeroRowComb_mul]
 
 /-- **Ligero row-consistency soundness (exact probability)**: if some row `i₀` of `M` disagrees with
 the encoded witness row `(U i₀) ᵥ* G` at column `j`, then over a uniform challenge `r : Fin m → F`,

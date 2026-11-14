@@ -34,7 +34,8 @@ public section
 namespace Cslib.Algorithms.Lean.Dijkstra.Native
 
 open Cslib.WordRAM Cslib.WordRAM.Realization Cslib.DataStructure Cslib.DataStructure.Memory
-open Cslib.Algorithms.WordRAM.Dijkstra (ListInstance encodeDist)
+open Cslib.Algorithms.Dijkstra (ListInstance)
+open Cslib.Algorithms.WordRAM.Dijkstra (encodeDist)
 
 /-- **The flat export of a native Dijkstra memory client.** Let `p` be uniformly realized on the
 input words of every graph at every word size that holds `8 (n + m + 2) (W + 2)`, and on those
@@ -102,7 +103,7 @@ theorem exists_program_state {p : Memory.Prog Unit} (c : ListInstance → ℕ)
   change steps + 1 ≤ C * (memoryCost (do p; pure 0)
     (Memory.State.init G.encode) + 0 + 1) + 1 at htime
   rw [hm] at htime
-  have hr : (Memory.spec w).clientResult (inputState G.encode) (do p; pure 0) = 0 := by
+  have hr : (Memory.spec w).clientResult (Memory.State.init G.encode) (do p; pure 0) = 0 := by
     simp only [client_simps]
   rw [hr] at hhalt
   rw [← memoryCost_eq_totalCost w] at hcost

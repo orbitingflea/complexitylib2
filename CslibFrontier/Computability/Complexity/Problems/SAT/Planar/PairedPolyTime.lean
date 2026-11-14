@@ -11,7 +11,6 @@ public import CslibFrontier.Computability.Complexity.Problems.SAT.Planar.PairedC
 public import CslibFrontier.Computability.Complexity.Problems.SAT.Planar.PathPolyTime
 import CslibFrontier.Computability.Geometry.Orthogonal.PointPolyTime
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Int.Binary
-import CslibFrontier.Computability.PolyTime.Int.Compare
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Membership
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
@@ -268,7 +267,7 @@ private theorem computable_originalClauses :
       ((CNF.computableInPolyTime_distinctVars encNat).comp
         (ComputableInPolyTime.fst encCNF encRoute))
   dsimp only [originalClauses]
-  unfold encPlacedClause encCNF Cslib.Logic.PL.encOccurrence at *
+  unfold encPlacedClause encCNF at *
   fun_prop
 
 private theorem computable_templateClauses {A : Type} [FinEnum A]
@@ -334,7 +333,7 @@ theorem computableInPolyTime_placedClauses :
   have ho := Cslib.Logic.PL.computableInPolyTime_occurrences encNat
   change ComputableInPolyTime (fun φ => placedClauses φ) _ _
   dsimp only [placedClauses]
-  unfold encCNF Cslib.Logic.PL.encOccurrence at *
+  unfold encCNF at *
   fun_prop
 
 /-- Projecting the actual records computes the structured output formula. -/

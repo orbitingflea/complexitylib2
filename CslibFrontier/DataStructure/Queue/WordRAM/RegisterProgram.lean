@@ -43,7 +43,10 @@ open Cslib.WordRAM Cslib.WordRAM.Realization
 open RegisterMetadata
 open Cslib.DataStructure.Queue
 
-/-- One fixed family contains both method bodies. Runtime arguments select no new code. -/
+/-- One fixed family contains both method bodies. Runtime arguments select no new code.
+`Certificate.ofRealizes` takes each body, its scratch size and its exchange factor by classical
+choice from an existential `Realizes` proof, so `registers` and `Backend.factor family` are fixed
+natural numbers whose values this construction does not determine. -/
 noncomputable abbrev family : Bool → Certificate .standard
   | false => Certificate.ofRealizes realizes_enqueue_standard
   | true => Certificate.ofRealizes realizes_dequeue_standard
@@ -86,9 +89,25 @@ noncomputable def implementation (w capacity : ℕ) :
   encode o i := if i = tag then
     match o with | .enqueue _ => 0 | .dequeue => 1
     else match o with | .enqueue v => v | .dequeue => 0
-  decode o regs := match o with
-    | .enqueue _ => some ()
-    | .dequeue => some (if regs (result 2) = 0 then none else some (regs (result 3)))
+  resultBank i := if i = 0 then result 2 else result 3
+  resultType o := match o with
+    | .enqueue _ => .unit
+    | .dequeue => .option .nat
+  resultType_eq o := by cases o <;> rfl
+
+@[simp] theorem decode_enqueue (w capacity v : ℕ) (regs : Fin registers → ℕ) :
+    (implementation w capacity).decode (.enqueue v) regs = some () := rfl
+
+/-- A dequeue observes only a canonical zero/one option tag and its unmodified payload word. -/
+theorem decode_dequeue (w capacity : ℕ) (regs : Fin registers → ℕ) :
+    (implementation w capacity).decode .dequeue regs =
+      if regs (result 2) = 0 then some none
+      else if regs (result 2) = 1 then some (some (regs (result 3))) else none := by
+  by_cases h0 : regs (result 2) = 0
+  · simp [DynamicProgram.decode, implementation, ResultType.decode, h0]; rfl
+  · by_cases h1 : regs (result 2) = 1
+    · simp [DynamicProgram.decode, implementation, ResultType.decode, h1]; rfl
+    · simp [DynamicProgram.decode, implementation, ResultType.decode, h0, h1]
 
 /-- The existing two-array representation, with counts and layout in the shared input bank.
 Unused cells and the delivered tag/payload impose no extra memory or register premise. -/

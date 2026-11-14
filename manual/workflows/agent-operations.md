@@ -5,7 +5,7 @@ human or agent. It covers task ownership, isolated work, validation evidence and
 The human directing agents should start with the separate
 [Agent Operator's Manual](../AGENT_OPERATORS.md) for assignment and intervention procedures.
 A short Lean proof can certify an unintended statement; a merged milestone can leave the
-original objective unresolved. The [development study](../development-history/index.md)
+original objective unresolved. The [development study](../history/development.md)
 supplies historical evidence separately. [cslib-frontier][complexitylib]
 
 ## Specify a bounded task and a visible endpoint
@@ -41,15 +41,36 @@ Inspect existing definitions before introducing abstractions. Require the exact 
 
 Assign review by the unanswered question. One non-authoring reviewer may cover correctness and API quality; add another for specific uncovered expertise. Give reviewers the revision, intended endpoint and validation evidence, and require inspection of definitions. Restating the author's summary is not independent source review.
 
-The [semantic-withdrawal cases](../development-history/case-studies.md) explain why hypotheses, adversary power and realizability need attention after successful Lean checking. They are historical diagnoses, not asserted defects in the reviewed snapshot. The circuit-synthesis case illustrates a concrete API review question: does simplifying construction preserve wire sharing and charge the actual gates?
+The [semantic-withdrawal cases](../history/case-studies.md) explain why hypotheses, adversary power and realizability need attention after successful Lean checking. They are historical diagnoses, not asserted defects in the reviewed snapshot. The circuit-synthesis case illustrates a concrete API review question: does simplifying construction preserve wire sharing and charge the actual gates?
 
 ## Queue approved work and keep its approval
 
-A reviewer with write access who approves a PR queues the approved head in the same step, with `python3 scripts/queue_pr.py <PR> <approved head>`. The script refuses any other head, a draft, a stacked PR still based on another branch, a conflict and failed checks. The reviewer does not queue when human review has been requested in the PR or its issue, or when the approval names a hold; [Approve and queue](../../AGENTS.md#approve-and-queue) gives the rule.
+A reviewer with write access who approves a PR queues the approved head in the same step. Use
+`scripts/queue_pr.py` from a trusted checkout of current `main`, or an isolated copy obtained from
+a pinned revision of current `main`. Keep the approved PR head; do not refresh its branch to get the
+tool or execute the PR branch's copy. From any working directory, substitute the trusted script's
+path and the target PR/head below; pass the repository explicitly when working from private scratch:
 
-Merge `main` into an approved PR only when it conflicts, needs a change on `main` to pass CI, or a lower stacked PR has landed; the merge queue already tests each PR on top of the current `main`. After such a restack, `python3 scripts/check_restack.py <approved head> <new head>`, run from a checkout of current `origin/main` after `git fetch origin`, replays the approved change onto the new head's `main` and compares the result with the new head. When they match and CI passes, the approval carries over: post the result line, and the non-author who queues the new head reruns the command it names. Otherwise review the paths and diffs it prints. See [Restacks](../../AGENTS.md#restacks).
+```bash
+python3 /path/to/trusted-main/scripts/queue_pr.py <PR> <approved-head> \
+  --repo cslib-community/cslib-frontier
+```
+
+The script refuses any other head, a draft, a stacked PR still based on another branch, a conflict and failed checks. It reads every page of check results for that commit before choosing the latest attempt from the required GitHub App; a later page cannot hide a failed or running rerun behind an older success. The reviewer does not queue when human review has been requested in the PR or its issue, or when the approval names a hold. Do not start `--wait` while completing CI will produce unread notices or manual pages; [Approve and queue](../../AGENTS.md#approve-and-queue) gives the rule. Updating `main` does not upgrade an already-running copy; its owner stops an old waiter before replacing it after holds clear.
+
+Merge `main` into an approved PR only when it conflicts, needs a change on `main` to pass CI, or a lower stacked PR has landed; the merge queue already tests each PR on top of the current `main`. GitHub declines any push to the branch of a PR still in the merge queue, even when its entry is unmergeable, so whoever restacks a queued PR first removes it with **Remove from queue** on the PR page or the `dequeuePullRequest` command in [Restacks](../../AGENTS.md#restacks). Dequeueing merges nothing; a non-author queues the new head again under the rules below. After such a restack, `python3 scripts/check_restack.py <approved head> <new head>`, run from a checkout of current `origin/main` after `git fetch origin`, replays the approved change onto the new head's `main` and compares the result with the new head. For a PR approved while stacked on another branch, add `--approved-base <lower head at approval>`, even when the approved head had also merged a newer `main` than that head: the script then replays from the merge of the two, so `main`'s changes are not counted as the PR's own. When the replay and the new head match and CI passes, the approval carries over: post the result line, and the non-author who queues the new head reruns the command it names. Otherwise review the paths and diffs it prints. When the only conflicts are in the `mk_all` aggregates or `references.bib`, `python3 scripts/restack_mechanical.py <PR> --approved-head <approved head>` checks that the head is the approved change, merges with the drivers, writes the aggregates as `lake exe mk_all` would and runs this check, without running the PR's code, then prints the check's result line and the `queue_pr.py` command for after CI. It refuses any other conflict, pushes only with `--push` (and only if the check passes and the branch has not moved), and never queues or comments. See [Restacks](../../AGENTS.md#restacks).
 
 ## Record evidence at the level of the claim
+
+During ordinary edits, use MCP diagnostics or targeted
+`scripts/build.sh <modules and representative clients> --wfail --iofail`. Use
+`scripts/check.sh --quick --no-full-fallback` at local validation checkpoints. Status 3 means
+the change needs focused checks plus hosted full validation; do not automatically retry with a
+local full check. Run full `scripts/check.sh` only when explicitly requested or hosted coverage
+is unavailable, and do not duplicate successful CI covering the final revision. The local
+[restored-source audit](troubleshooting.md#diagnose-warnings-that-only-ci-reports) recovers
+warning/info logs and streams its count, current source and elapsed time. It can repeat
+elaboration on unchanged restored sources, so it belongs to validation rather than every edit.
 
 | Outcome | Evidence to retain |
 |---|---|
@@ -64,9 +85,9 @@ The issue owns scope and remaining work; the PR owns the final change, validatio
 
 ## Interpret timing and transcript records
 
-Commit times, provider completion durations, conversation spans, CI runtime and PR elapsed time measure different things. Concurrent sessions overlap; summed duration is not elapsed wall-clock time or human effort. The [timing chapter](../development-history/timings.md) retains units and denominators. Its selected runs and cases do not estimate an automation success rate or causal speedup.
+Commit times, provider completion durations, conversation spans, CI runtime and PR elapsed time measure different things. Concurrent sessions overlap; summed duration is not elapsed wall-clock time or human effort. The [timing chapter](../history/timings.md) retains units and denominators. Its selected runs and cases do not estimate an automation success rate or causal speedup.
 
-For new records, retain the initial objective, task/session identities, parent-child links, source revisions, reviews, failed attempts and dispositions. Preserve emitted timestamps and define their event semantics before deriving durations. Retain appropriate excerpts and provenance. The [extraction methods](../development-history/methods.md) describe deduplication; [study design](../development-history/study-design.md) identifies evidence needed for comparisons. Desktop conversations remain absent, so this edition's historical corpus is explicitly incomplete.
+For new records, retain the initial objective, task/session identities, parent-child links, source revisions, reviews, failed attempts and dispositions. Preserve emitted timestamps and define their event semantics before deriving durations. Retain appropriate excerpts and provenance. The [extraction methods](../history/methods.md) describe deduplication; [study design](../history/study-design.md) identifies evidence needed for comparisons. Desktop conversations remain absent, so this edition's historical corpus is explicitly incomplete.
 
 [complexitylib]: ../sources.md#complexitylib
 

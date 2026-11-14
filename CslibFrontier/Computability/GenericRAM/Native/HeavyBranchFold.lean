@@ -174,18 +174,13 @@ theorem toFinset_heavyVarList_eq_heavyVars (n b₀ : ℕ) (sys : List (List (Lis
   ext v; simp only [List.mem_toFinset, mem_heavyVarList_iff, heavyVars, Finset.mem_filter,
     Finset.mem_range, varIncidence_eq_varDegree]
 
-/-- **Markov heavy-variable bound (§5.5, p. 38)**: for `0 < b₀` and variables `< n`,
+/-- **Markov heavy-variable bound (§5.5, p. 38)**: for `0 < b₀`,
 `(heavyVarList n b₀ sys).length ≤ (sys.map fun eq => (equationVars eq).length).sum / b₀`. -/
-theorem length_heavyVarList_le_div {n b₀ : ℕ} {sys : List (List (List ℕ))}
-    (hb₀ : 0 < b₀) (hvars : ∀ eq ∈ sys, ∀ m ∈ eq, ∀ v ∈ m, v < n) :
+theorem length_heavyVarList_le_div (n : ℕ) (sys : List (List (List ℕ))) {b₀ : ℕ} (hb₀ : 0 < b₀) :
     (heavyVarList n b₀ sys).length ≤ (sys.map fun eq => (equationVars eq).length).sum / b₀ := by
   rw [← List.toFinset_card_of_nodup (nodup_heavyVarList n b₀ sys),
     toFinset_heavyVarList_eq_heavyVars]
-  have hU : ∀ i ∈ (Finset.univ : Finset (Fin sys.length)),
-      (equationVars sys[i]).toFinset ⊆ Finset.range n := fun i _ v hv => by
-    obtain ⟨m, hm, hvm⟩ := mem_equationVars.mp (List.mem_toFinset.mp hv)
-    exact Finset.mem_range.mpr (hvars sys[i] (List.getElem_mem i.2) m hm v hvm)
-  refine (card_heavyVars_le_div _ _ _ hb₀ hU).trans (Nat.div_le_div_right (le_of_eq ?_))
+  refine (card_heavyVars_le_div _ _ _ hb₀).trans (Nat.div_le_div_right (le_of_eq ?_))
   rw [totalIncidence, ← List.toFinset_finRange, List.sum_toFinset _ (List.nodup_finRange _)]
   conv_rhs => rw [← (List.ofFn_eq_map.symm.trans (List.ofFn_getElem (xs := sys))), List.map_map]
   exact congrArg List.sum (List.map_congr_left fun i _ => by simp only [Function.comp_apply,
@@ -554,9 +549,8 @@ private noncomputable def fiberEquiv {n : ℕ} {S : List ℕ} {vals : List Bool}
     simp only [mergeAssignment, u.2, ↓reduceDIte, Subtype.eta, Equiv.apply_symm_apply, u]
   right_inv := fun ⟨σ, hσ⟩ => by
     apply Subtype.ext; funext i; simp only [mergeAssignment]; split_ifs with hiS
-    · have hk : S.idxOf (i : ℕ) < S.length := List.idxOf_lt_length_of_mem hiS
-      rw [← hσ, List.getD_eq_getElem _ false (by rw [List.length_map]; exact hk)]
-      simp only [List.getElem_map, List.getElem_idxOf hk, extendAssignment_coe]
+    · rw [← hσ]
+      simp [List.getD_eq_getElem?_getD, hiS, extendAssignment_coe]
     · simp only [Equiv.symm_apply_apply]
 
 private theorem evalSystem_mergeAssignment {n : ℕ} {S : List ℕ} {vals : List Bool}
@@ -1071,7 +1065,7 @@ private theorem branchCountCertificate_bounds {solver : ℕ → List (List (List
 theorem computableInPolyTime_prepareStep :
     ComputableInPolyTime (fun p : PrepareStepInput =>
       prepareBranch p.inp.numVars p.inp.vars p.vals p.inp.system)
-      (encPair (encPair encUnary encBits) (encPair encBranchInput encNat)) encBranchOutcome := by
+      (BooleanFold.encCallbackInput (encPair encBranchInput encNat)) encBranchOutcome := by
   unfold encBranchInput; fun_prop
 private theorem computableInPolyTime_dim :
     ComputableInPolyTime (fun inp : BranchInput => inp.2.1.length) encBranchInput encUnary := by
@@ -1092,7 +1086,7 @@ noncomputable def branchBodyCertificate {solver : ℕ → List (List (List ℕ))
     (csolver : NativeCertificate (fun p : ℕ × List (List (List ℕ)) => solver p.1 p.2)
       (encPair encUnary encSparseSystem) encNat) :
     NativeCertificate (branchBody solver)
-      (encPair (encPair encUnary encBits) (encPair encBranchInput encNat))
+      (BooleanFold.encCallbackInput (encPair encBranchInput encNat))
       (encPair encBranchInput encNat) :=
   let cpay := NativeCertificate.payload (encPair encUnary encBits) (encPair encBranchInput encNat)
   (cpay.fst).prod
@@ -1102,7 +1096,7 @@ noncomputable def certificate {solver : ℕ → List (List (List ℕ)) → ℕ}
     (csolver : NativeCertificate (fun p : ℕ × List (List (List ℕ)) => solver p.1 p.2)
       (encPair encUnary encSparseSystem) encNat) :
     NativeCertificate (streamBranches solver)
-      encBranchInput (encPair encNat (encPair encUnary (encPair encBranchInput encNat))) :=
+      encBranchInput (BooleanFold.encStreamState (encPair encBranchInput encNat)) :=
   BooleanFold.certificate dimCert initAccCert (branchBodyCertificate csolver)
 /-- Full streaming native certificate for `countByBranching solver` (for a fixed `solver`). -/
 noncomputable def countCertificate {solver : ℕ → List (List (List ℕ)) → ℕ}
@@ -1349,7 +1343,7 @@ theorem streamBranches_computableInO {solver : ℕ → List (List (List ℕ)) �
         .reduced n' sys' →
       csolver.space (n', sys') ≤ Q_solver inp) :
     ComputableInO (streamBranches solver)
-      encBranchInput (encPair encNat (encPair encUnary (encPair encBranchInput encNat)))
+      encBranchInput (BooleanFold.encStreamState (encPair encBranchInput encNat))
       (fun inp =>
         stepOverhead (encBranchInput inp).length +
           (2 ^ inp.vars.length + 1) * (stepOverhead (encBranchInput inp).length + R_solver inp))

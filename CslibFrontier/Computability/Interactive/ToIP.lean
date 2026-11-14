@@ -494,9 +494,10 @@ theorem Reduction.Complete.acceptProb_wordVerifier
   rw [acceptProb_wordVerifier_honestWordProver R.verifier codecs hLawful x (R.prover x w)]
   have hfail := hComp x w hrel
   let μ := World.plain.eval (R.run x w)
-  let S : Set (Transcript s × Option OutStmt × (OutStmt × OutWit)) := {r | r.2.1.isSome}
-  have hcompl : Sᶜ ⊆ {r | ¬ (r.2.1 = some r.2.2.1 ∧ relOut r.2.2.1 r.2.2.2)} := by
-    rintro r (hr : ¬ r.2.1.isSome) ⟨h1, _⟩
+  let S : Set (Execution s OutStmt (OutStmt × OutWit)) := {r | r.output.isSome}
+  have hcompl :
+      Sᶜ ⊆ {r | ¬ (r.output = some r.result.1 ∧ relOut r.result.1 r.result.2)} := by
+    rintro r (hr : ¬ r.output.isSome) ⟨h1, _⟩
     exact hr (by simp [h1])
   have hSc : μ.toOuterMeasure Sᶜ ≤ ε_c :=
     (MeasureTheory.OuterMeasure.mono _ hcompl).trans hfail
@@ -858,14 +859,13 @@ theorem isOraclePPTOn_runWordRounds {α : Type} (encIn : α ↪ List Bool) :
         (fun _ : α => runWordRounds s codecs smp)
   | [], (), (), (), _ => by
       change IsOraclePPTOn encIn (encPair encBool encUnit) (fun _ : α => pure (true, ()))
-      exact (ComputableTidilyInPolyTime.const (true, ())).isOraclePPTOn
+      exact (ComputableInPolyTime.const (true, ())).isOraclePPTOn
   | .prover M _ :: s, (encM, encs), (c, cs), smp, ⟨⟨hValid, hDec⟩, hcs⟩ => by
       simp only [runWordRounds, RoundEncodings.transcript]
       have hq : IsOraclePPTOn encIn encBits
           (fun _ : α => List.take c.limit <$> ProbOracleComp.query ((), [])) :=
-        IsOraclePPTOn.query_take' ()
-          (.of_tidy (ComputableTidilyInPolyTime.const []))
-          (.of_tidy (ComputableTidilyInPolyTime.const c.limit))
+        IsOraclePPTOn.query_take' () (ComputableInPolyTime.const [])
+          (ComputableInPolyTime.const c.limit)
       have hrest := isOraclePPTOn_runWordRounds (encPair encIn encBits) s encs cs smp hcs
       have hpost : ComputableInPolyTime
           (fun p : (α × List Bool) × (Bool × Transcript s) =>
@@ -888,8 +888,7 @@ theorem isOraclePPTOn_runWordRounds {α : Type} (encIn : α ↪ List Bool) :
   | .verifier C :: s, (encC, encs), (c, cs), (smp, smps), ⟨⟨hsmp, hEnc⟩, hcs⟩ => by
       simp only [runWordRounds, RoundEncodings.transcript]
       have hsample : IsOraclePPTOn encIn encC (fun _ : α => ProbOracleComp.sample smp) :=
-        (hsmp.isOraclePPTOn (Operation := Unit)).preprocess'
-          (.of_tidy (ComputableTidilyInPolyTime.const ()))
+        (hsmp.isOraclePPTOn (Operation := Unit)).preprocess' (ComputableInPolyTime.const ())
       have hsend : IsOraclePPTOn (encPair encIn encC) encBits
           (fun p : α × C => List.take 0 <$> ProbOracleComp.query ((), c.encode p.2)) := by
         have hpayload : ComputableInPolyTime (fun p : α × C => c.encode p.2)

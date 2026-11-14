@@ -44,14 +44,16 @@ and lifts it to `Cslib.WordRAM.Basis.standard`:
    - `impl` and `obliviousSequenceImpl` package `doubleTabHash` as a Word-RAM hash family realizing
      `DataStructure.HashFamily.whpKWiseSpec k U (2 ^ M) δ` with failure probability
      `δ = doubleTabFailureProb c d b k`, bounded for `d = 8 * c` by
-     `card_not_isKUnique_eight_mul_le`.
+     `card_not_isKUnique_eight_mul_le` when `1 ≤ c` and
+     `2 * doubleTabCodeBound c (8 * c) 4 k ≤ 2 ^ (3 * b)`.
    - `provableImpl` and `provableObliviousSequenceImpl` combine `KWise` (`trinomialPolyHash`
      with `δ = 0` for `n_max < doubleTabThreshold c_exp`) and `DoubleTabulation`
-     (`c = 2 * max c_exp 1`, `d = 8 * c`, `b = (1 + Nat.clog 2 (max n_max 4)) / 2` for
-     `doubleTabThreshold c_exp ≤ n_max`), achieving `O_{c_exp, k}(1)` worst-case evaluation time
-     (`provableEvalBound c_exp k`, independent of `n_max`, `U`, and `M`) and
-     `O_{c_exp, k}(n_max + 1)` words of space across every `n_max : ℕ` whenever
-     `U ≤ max n_max 4 ^ c_exp`.
+     (`c = 2 * max c_exp 1`, `d = 8 * c`, `b = (1 + Nat.clog 2 (max n_max 4)) / 2` and
+     `δ = doubleTabFailureProb c d b k`, bounded under the condition on `k` above, for
+     `doubleTabThreshold c_exp ≤ n_max`). They use `O_{c_exp, k}(n_max + 1)` words of space for
+     every `n_max : ℕ` and, whenever `U ≤ max n_max 4 ^ c_exp` and
+     `M ≤ max c_exp 1 * Nat.clog 2 (max n_max 4) + 5`, evaluate within
+     `provableEvalBound c_exp k` instructions, independent of `n_max`, `U`, and `M`.
 
 ## Main definitions
 
@@ -85,11 +87,13 @@ and lifts it to `Cslib.WordRAM.Basis.standard`:
   `Cslib.DataStructure.HashFamily.WordRAM.DoubleTabulation.evalCode_execWithin`: deterministic
   `O(c * d)` evaluation of `doubleTabHash c d b U M T₁ T₂ u`.
 * `Cslib.DataStructure.HashFamily.WordRAM.DoubleTabulation.doubleTabFailureProb_eight_mul_le`:
-  explicit high-probability `k`-uniqueness failure bound for `d = 8 * c`.
+  explicit high-probability `k`-uniqueness failure bound for `d = 8 * c` when `1 ≤ c` and
+  `2 * doubleTabCodeBound c (8 * c) 4 k ≤ 2 ^ (3 * b)`.
 * `Cslib.DataStructure.HashFamily.WordRAM.DoubleTabulation.provableImpl_evalSteps_le`,
   `Cslib.DataStructure.HashFamily.WordRAM.DoubleTabulation.provableSpace_le`: uniform
   `O_{c_exp, k}(1)` evaluation time and `O_{c_exp, k}(n_max + 1)` space bounds across all
-  `n_max : ℕ`.
+  `n_max : ℕ`, the time bound assuming `U ≤ max n_max 4 ^ c_exp` and
+  `M ≤ max c_exp 1 * Nat.clog 2 (max n_max 4) + 5`.
 * `Cslib.DataStructure.HashFamily.WordRAM.DoubleTabulation.provableImpl_evalSteps_of_le`:
   `k`-independent evaluation time `evalSteps (provableC c_exp) (provableD c_exp)` once
   `doubleTabThreshold c_exp ≤ n_max`.
@@ -219,17 +223,17 @@ theorem val_topIndexEquiv (c d b : ℕ) (i : Fin c) (j : Fin d) (ch : Fin (2 ^ b
 theorem extractTop_apply (base c d b : ℕ) (mem : ℕ → ℕ)
     (i : Fin c) (j : Fin d) (ch : Fin (2 ^ b)) :
     extractTop base c d b mem i j ch =
-      Tabulation.extractWord b (mem (topAddr base c b i j ch)) := by
-  change Tabulation.extractWord b (mem (base + (topIndexEquiv c d b (i, j, ch)).val)) =
-    Tabulation.extractWord b (mem (topAddr base c b i j ch))
+      Cslib.WordRAM.wordOfNat b (mem (topAddr base c b i j ch)) := by
+  change Cslib.WordRAM.wordOfNat b (mem (base + (topIndexEquiv c d b (i, j, ch)).val)) =
+    Cslib.WordRAM.wordOfNat b (mem (topAddr base c b i j ch))
   rw [val_topIndexEquiv, topAddr, Nat.add_assoc]
 
 theorem extractBot_apply (base c d b M : ℕ) (mem : ℕ → ℕ)
     (j : Fin d) (y : Fin (2 ^ b)) :
     extractBot base c d b M mem j y =
-      Tabulation.extractWord M (mem (botAddr base c d b j y)) := by
-  change Tabulation.extractWord M (mem ((base + c * d * 2 ^ b) + (finProdFinEquiv (j, y)).val)) =
-    Tabulation.extractWord M (mem (botAddr base c d b j y))
+      Cslib.WordRAM.wordOfNat M (mem (botAddr base c d b j y)) := by
+  change Cslib.WordRAM.wordOfNat M (mem ((base + c * d * 2 ^ b) + (finProdFinEquiv (j, y)).val)) =
+    Cslib.WordRAM.wordOfNat M (mem (botAddr base c d b j y))
   rw [finProdFinEquiv_apply_val, botAddr]
   congr 2
   ring
@@ -246,10 +250,10 @@ theorem extractSeed_eq_of_seedRep {base c d b M : ℕ}
   congr 1
   · funext i j ch
     ext
-    rw [extractTop_apply, h1 i j ch, Tabulation.extractWord_val_of_lt (T₁ i j ch).isLt]
+    rw [extractTop_apply, h1 i j ch, Cslib.WordRAM.wordOfNat_val_of_lt (T₁ i j ch).isLt]
   · funext j y
     ext
-    rw [extractBot_apply, h2 j y, Tabulation.extractWord_val_of_lt (T₂ j y).isLt]
+    rw [extractBot_apply, h2 j y, Cslib.WordRAM.wordOfNat_val_of_lt (T₂ j y).isLt]
 
 theorem SeedRep.congr_mem {base c d b M : ℕ}
     {θ : DoubleTabTopSeed c d b × DoubleTabBotSeed d b M} {mem mem' : ℕ → ℕ}
@@ -525,7 +529,7 @@ theorem mem_support_resampleComp {base c d b M : ℕ} {x : Data 12}
       rw [Nat.add_assoc]
       exact hlt1 _ hidx_lt
     change z2.1.mem (topAddr base c b i j ch) = (extractTop base c d b z2.1.mem i j ch).val
-    rw [extractTop_apply, hm_eq, Tabulation.extractWord_val_of_lt hlt_val]
+    rw [extractTop_apply, hm_eq, Cslib.WordRAM.wordOfNat_val_of_lt hlt_val]
   · intro j y
     have hidx_lt : j.val * 2 ^ b + y.val < d * 2 ^ b := by
       calc j.val * 2 ^ b + y.val < j.val * 2 ^ b + 2 ^ b := Nat.add_lt_add_left y.isLt _
@@ -536,7 +540,7 @@ theorem mem_support_resampleComp {base c d b M : ℕ} {x : Data 12}
       rw [Nat.add_assoc (base + c * d * 2 ^ b)]
       exact hlt2 _ hidx_lt
     change z2.1.mem (botAddr base c d b j y) = (extractBot base c d b M z2.1.mem j y).val
-    rw [extractBot_apply, Tabulation.extractWord_val_of_lt hlt_val]
+    rw [extractBot_apply, Cslib.WordRAM.wordOfNat_val_of_lt hlt_val]
   · intro a ha
     have ha2 : a < base + c * d * 2 ^ b ∨ base + c * d * 2 ^ b + d * 2 ^ b ≤ a := by
       dsimp only [topWords, botWords] at hsp
@@ -1387,7 +1391,9 @@ shares the exact register signature of `kWiseImpl`. -/
 /-- Failure probability `δ` of `provableObliviousSequenceImpl c_exp k n_max U M`:
 `0` (`(((Finset.univ \ {()}).card : ℝ≥0∞) / Fintype.card Unit)`) when
 `n_max < doubleTabThreshold c_exp`, and
-`doubleTabFailureProb (provableC c_exp) (provableD c_exp) (provableB n_max) k` otherwise. -/
+`doubleTabFailureProb (provableC c_exp) (provableD c_exp) (provableB n_max) k` otherwise. The
+latter is bounded by `doubleTabFailureProb_eight_mul_le` when
+`2 * doubleTabCodeBound (provableC c_exp) (provableD c_exp) 4 k ≤ 2 ^ (3 * provableB n_max)`. -/
 @[expose] noncomputable def provableFailureProb (c_exp k n_max : ℕ) : ℝ≥0∞ :=
   if n_max < doubleTabThreshold c_exp then
     (((Finset.univ \ ({()} : Finset Unit)).card : ℝ≥0∞) /

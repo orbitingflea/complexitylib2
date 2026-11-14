@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import CslibFrontier.Crypto.Computational.Pseudoentropy.Seed
+public import CslibFrontier.Crypto.Computational.Pseudoentropy.SeedSchedule
 public import CslibFrontier.Probability.UniformNat
 public import CslibFrontier.Crypto.Computational.Pseudoentropy.MatrixExtraction
 import CslibFrontier.Computability.Probabilistic.PPT.Capture
@@ -25,18 +26,16 @@ truncated or padded with false before hashing.
 
 ## Main definitions
 
+* `encWordExtractionOutput`: the encoding of an extraction output `(xs, seed, digest)`.
 * `extractWordLabels`, `extractWordLabelsIdeal`: actual and ideal matrix-extraction programs.
 
 ## Main results
 
 * `isPPTOn_extractWordLabels`: certify sampling, normalization, hashing and copying.
 * `isPPTOn_extractedWordTest`: the extracted word test is strict PPT.
-* `SamplablePair.HasGapWithAdvice.extract_indexed_word_labels`,
-  `SamplablePair.HasGap.extract_indexed_word_labels`: computational extraction for one
-  uniformly efficient family of tests and arbitrary valid index choices, relative to fixed advice
-  and in the uniform case.
-* `SamplablePair.HasGapWithAdvice.extract_word_labels`,
-  `SamplablePair.HasGap.extract_word_labels`: the single-test interface.
+* `SamplablePair.HasGapWithAdvice.extract_indexed_word_labels`: computational extraction for one
+  uniformly efficient family of tests and arbitrary valid index choices.
+* `SamplablePair.HasGapWithAdvice.extract_word_labels`: the single-test interface.
 
 ## References
 
@@ -55,6 +54,12 @@ namespace Cslib.Crypto.Pseudoentropy
 
 open Probability BitString Turing.MultiTapeTM
 
+/-- Output `(xs, seed, digest)` of word-label extraction: the list of retained observation words,
+then the hash seed and the digest as bit words. The list and the seed are framed; within the list,
+each observation is framed. -/
+abbrev encWordExtractionOutput : List (List Bool) × List Bool × List Bool ↪ List Bool :=
+  encPair (encList encBits) (encPair encBits encBits)
+
 /-- Extract labels using an explicitly sampled matrix, retaining observations and the full seed. -/
 noncomputable def extractWordLabels (count outputBits : ℕ) (samples : List (List Bool × Bool)) :
     ProbComp (List (List Bool) × List Bool × List Bool) :=
@@ -71,9 +76,8 @@ theorem isPPTOn_extractWordLabels {α : Type} {input : α ↪ List Bool} {count 
     {samples : α → List (List Bool × Bool)}
     (hcount : ComputableInPolyTime count input encUnary)
     (houtput : ComputableInPolyTime outputBits input encUnary)
-    (hsamples : ComputableInPolyTime samples input (encList (encPair encBits encBool))) :
-    IsPPTOn input
-      (encPair (encList encBits) (encPair encBits encBits))
+    (hsamples : ComputableInPolyTime samples input encLabeledSamples) :
+    IsPPTOn input encWordExtractionOutput
       (fun a => extractWordLabels (count a) (outputBits a) (samples a)) :=
   isPPTOn_extractMatrixLabels hcount houtput
     ((bits_encList_polyTime encBool).2.comp (.snd input (encList encBool))) hsamples
@@ -104,12 +108,11 @@ theorem. Sampling, padding, hashing, and encoding the public data are all charge
 The test and dimensions may depend on any encoded runtime parameter. -/
 theorem isPPTOn_extractedWordTest {α : Type} {input : α ↪ List Bool} {count outputBits : α → ℕ}
     (test : α → List (List Bool) × List Bool × List Bool → ProbComp Bool)
-    (htest : IsPPTOn (encPair input (encPair (encList encBits)
-      (encPair encBits encBits))) encBool (fun input => test input.1 input.2))
+    (htest : IsPPTOn (encPair input encWordExtractionOutput) encBool
+      (fun input => test input.1 input.2))
     (hcount : ComputableInPolyTime count input encUnary)
     (houtput : ComputableInPolyTime outputBits input encUnary) :
-    IsPPTOn (encPair input
-      (encList (encPair encBits encBool))) encBool
+    IsPPTOn (encPair input encLabeledSamples) encBool
       (fun input => do
         let result ← extractLabels
           (ProbComp.uniform (BitString (outputBits input.1 * count input.1)))
@@ -149,14 +152,13 @@ theorem SamplablePair.HasGapWithAdvice.extract_indexed_word_labels {pair : Sampl
         PMF.conditionalEntropy (pair.joint n) + gap n)
     (hbudget : ∀ᶠ n in atTop,
       outputBits n (choose n) +
-        2 * (ExtractionSchedule.slack n (realization.length n) (inverseSlack n) : ℝ) ≤
-        ExtractionSchedule.count n (realization.length n) (inverseSlack n) *
+        2 * (realization.sampleSlack inverseSlack n : ℝ) ≤
+        realization.sampleCount inverseSlack n *
           ((numerator n (choose n) : ℝ) / dyadicSize (densityBound n)))
     (test : ℕ × List Bool → ℕ → List (List Bool) × List Bool × List Bool → ProbComp Bool)
     (htest : IsPPTOn (encPair (encPair (encPair encUnary encBits) encUnary)
-      (encPair (encList encBits) (encPair encBits encBits)))
-      encBool (fun ((a, i), result) => test a i result)) :
-    let count := fun n => ExtractionSchedule.count n (realization.length n) (inverseSlack n)
+      encWordExtractionOutput) encBool (fun ((a, i), result) => test a i result)) :
+    let count := realization.sampleCount inverseSlack
     Negligible (fun n => Game.advantage
       (ProbComp.eval (do
         let samples ← OracleComp.replicate (count n) (pair.sample n)
@@ -164,9 +166,8 @@ theorem SamplablePair.HasGapWithAdvice.extract_indexed_word_labels {pair : Sampl
         test (n, advice n) (choose n) result))
       (ProbComp.eval (extractWordLabelsIdeal (Prod.fst <$> pair.sample n) (count n)
         (outputBits n (choose n)) >>= test (n, advice n) (choose n)))) := by
-  let count := fun n => ExtractionSchedule.count n (realization.length n) (inverseSlack n)
-  have hcount := ExtractionSchedule.isPolyTime_count .id'
-    realization.length_isPolyTime hslack
+  let count := realization.sampleCount inverseSlack
+  have hcount := realization.isPolyTime_sampleCount hslack
   have hn := (ComputableInPolyTime.fst (encPair encUnary encBits) encUnary).fst'
   have h := hpair.extract_indexed_labels realization choose
     (inverseSlack := inverseSlack)
@@ -186,54 +187,10 @@ theorem SamplablePair.HasGapWithAdvice.extract_indexed_word_labels {pair : Sampl
   have hpublic : ProbComp.eval ((fun value => pair.encode n value.1) <$>
       pair.latentSample n) = ProbComp.eval (Prod.fst <$> pair.sample n) := by
     simp only [pmf_norm, pair.eval_latentSample, pair.eval_sample]
-  simp only [count, ProbComp.eval_bind, eval_extractWordLabels,
-    eval_extractWordLabelsIdeal, PMF.bind_map, Function.comp_def, extractLabelsIdeal,
+  simp only [count, ProbComp.eval_bind, eval_extractWordLabels, eval_extractWordLabelsIdeal,
+    PMF.bind_map, PMF.bind_bind, Function.comp_def, extractLabelsIdeal,
     ProbComp.eval_replicate_congr hpublic
-      (ExtractionSchedule.count n (realization.length n) (inverseSlack n))]
-
-open Filter in
-/-- An efficient indexed family of word extractors is computationally uniform along any bounded
-choice satisfying the entropy budget. The choice is used only in the proof and need not be
-efficient; the reduction certifies the whole family of tests. -/
-theorem SamplablePair.HasGap.extract_indexed_word_labels {pair : SamplablePair} {gap : ℕ → ℝ}
-    (hpair : pair.HasGap gap) (realization : pair.SeedRealization) (choose : ℕ → ℕ)
-    {candidates inverseSlack densityBound : ℕ → ℕ} {outputBits numerator : ℕ → ℕ → ℕ}
-    (hcandidates : ComputableInPolyTime candidates encUnary encUnary)
-    (houtput : ComputableInPolyTime (fun input => outputBits input.1 input.2)
-      (encPair encUnary encUnary) encUnary)
-    (hslack : ComputableInPolyTime inverseSlack encUnary encUnary)
-    (hnumerator : ComputableInPolyTime (fun input => numerator input.1 input.2)
-      (encPair encUnary encUnary) encUnary)
-    (hdensity : ComputableInPolyTime densityBound encUnary encUnary)
-    (hchoose : ∀ᶠ n in atTop, choose n < candidates n)
-    (hvalid : ∀ᶠ n in atTop, 0 < numerator n (choose n) ∧
-      numerator n (choose n) ≤ dyadicSize (densityBound n) ∧
-      (numerator n (choose n) : ℝ) / dyadicSize (densityBound n) ≤
-        PMF.conditionalEntropy (pair.joint n) + gap n)
-    (hbudget : ∀ᶠ n in atTop,
-      outputBits n (choose n) +
-        2 * (ExtractionSchedule.slack n (realization.length n) (inverseSlack n) : ℝ) ≤
-        ExtractionSchedule.count n (realization.length n) (inverseSlack n) *
-          ((numerator n (choose n) : ℝ) / dyadicSize (densityBound n)))
-    (test : ℕ → ℕ → List (List Bool) × List Bool × List Bool → ProbComp Bool)
-    (htest : IsPPTOn (encPair (encPair encUnary encUnary)
-      (encPair (encList encBits) (encPair encBits encBits)))
-      encBool (fun ((n, i), result) => test n i result)) :
-    let count := fun n => ExtractionSchedule.count n (realization.length n) (inverseSlack n)
-    Negligible (fun n => Game.advantage
-      (ProbComp.eval (do
-        let samples ← OracleComp.replicate (count n) (pair.sample n)
-        let result ← extractWordLabels (count n) (outputBits n (choose n)) samples
-        test n (choose n) result))
-      (ProbComp.eval (extractWordLabelsIdeal (Prod.fst <$> pair.sample n) (count n)
-        (outputBits n (choose n)) >>= test n (choose n)))) := by
-  have houter := ComputableInPolyTime.fst (encPair (encPair encUnary encBits) encUnary)
-    (encPair (encList encBits) (encPair encBits encBits))
-  have h := (SamplablePair.hasGap_iff_hasGapWithAdvice_nil.mp hpair).extract_indexed_word_labels
-    realization choose hcandidates houtput hslack hnumerator hdensity hchoose hvalid hbudget
-    (fun a => test a.1) (htest.preprocess ((houter.fst'.fst'.prod houter.snd').prod (.snd _ _)))
-  dsimp only at h ⊢
-  exact h
+      (realization.sampleCount inverseSlack n)]
 
 open Filter in
 /-- Computational label extraction relative to fixed advice as two ordinary word programs. The
@@ -251,13 +208,13 @@ theorem SamplablePair.HasGapWithAdvice.extract_word_labels {pair : SamplablePair
       (numerator n : ℝ) / dyadicSize (densityBound n) ≤
         PMF.conditionalEntropy (pair.joint n) + gap n)
     (hbudget : ∀ᶠ n in atTop,
-      outputBits n + 2 * (ExtractionSchedule.slack n (realization.length n) (inverseSlack n) : ℝ) ≤
-        ExtractionSchedule.count n (realization.length n) (inverseSlack n) *
+      outputBits n + 2 * (realization.sampleSlack inverseSlack n : ℝ) ≤
+        realization.sampleCount inverseSlack n *
           ((numerator n : ℝ) / dyadicSize (densityBound n)))
     (test : ℕ × List Bool → List (List Bool) × List Bool × List Bool → ProbComp Bool)
-    (htest : IsPPTOn (encPair (encPair encUnary encBits) (encPair (encList encBits)
-      (encPair encBits encBits))) encBool (fun input => test input.1 input.2)) :
-    let count := fun n => ExtractionSchedule.count n (realization.length n) (inverseSlack n)
+    (htest : IsPPTOn (encPair (encPair encUnary encBits) encWordExtractionOutput) encBool
+      (fun input => test input.1 input.2)) :
+    let count := realization.sampleCount inverseSlack
     Negligible (fun n => Game.advantage
       (ProbComp.eval (do
         let samples ← OracleComp.replicate (count n) (pair.sample n)
@@ -273,42 +230,5 @@ theorem SamplablePair.HasGapWithAdvice.extract_word_labels {pair : SamplablePair
     (.const 1) (houtput.comp hn) hslack (hnumerator.comp hn) hdensity
     (Eventually.of_forall (by intro n; decide)) hvalid hbudget (fun a _ => test a)
     (htest.preprocess (houter.fst'.prod (.snd _ _)))
-
-open Filter in
-/-- Computational label extraction as two ordinary word programs. The client supplies the
-entropy budget and a certified test; matrix sampling, finite representations, and the uniform
-prediction reduction are discharged by the library. -/
-theorem SamplablePair.HasGap.extract_word_labels {pair : SamplablePair} {gap : ℕ → ℝ}
-    (hpair : pair.HasGap gap) (realization : pair.SeedRealization)
-    {outputBits inverseSlack numerator densityBound : ℕ → ℕ}
-    (houtput : ComputableInPolyTime outputBits encUnary encUnary)
-    (hslack : ComputableInPolyTime inverseSlack encUnary encUnary)
-    (hnumerator : ComputableInPolyTime numerator encUnary encUnary)
-    (hdensity : ComputableInPolyTime densityBound encUnary encUnary)
-    (hvalid : ∀ᶠ n in atTop, 0 < numerator n ∧ numerator n ≤ dyadicSize (densityBound n) ∧
-      (numerator n : ℝ) / dyadicSize (densityBound n) ≤
-        PMF.conditionalEntropy (pair.joint n) + gap n)
-    (hbudget : ∀ᶠ n in atTop,
-      outputBits n + 2 * (ExtractionSchedule.slack n (realization.length n) (inverseSlack n) : ℝ) ≤
-        ExtractionSchedule.count n (realization.length n) (inverseSlack n) *
-          ((numerator n : ℝ) / dyadicSize (densityBound n)))
-    (test : ℕ → List (List Bool) × List Bool × List Bool → ProbComp Bool)
-    (htest : IsPPTOn (encPair encUnary (encPair (encList encBits)
-      (encPair encBits encBits))) encBool (fun input => test input.1 input.2)) :
-    let count := fun n => ExtractionSchedule.count n (realization.length n) (inverseSlack n)
-    Negligible (fun n => Game.advantage
-      (ProbComp.eval (do
-        let samples ← OracleComp.replicate (count n) (pair.sample n)
-        let result ← extractWordLabels (count n) (outputBits n) samples
-        test n result))
-      (ProbComp.eval (extractWordLabelsIdeal (Prod.fst <$> pair.sample n) (count n)
-        (outputBits n) >>= test n))) := by
-  have houter := ComputableInPolyTime.fst (encPair encUnary encBits)
-    (encPair (encList encBits) (encPair encBits encBits))
-  have h := (SamplablePair.hasGap_iff_hasGapWithAdvice_nil.mp hpair).extract_word_labels
-    realization houtput hslack hnumerator hdensity hvalid hbudget
-    (fun a => test a.1) (htest.preprocess (houter.fst'.prod (.snd _ _)))
-  dsimp only at h ⊢
-  exact h
 
 end Cslib.Crypto.Pseudoentropy

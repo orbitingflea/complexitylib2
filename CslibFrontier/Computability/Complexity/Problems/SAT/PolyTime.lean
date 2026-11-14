@@ -44,6 +44,8 @@ Together with `Cslib.Complexity.SAT.isVerifier`, this proves membership in `NP`
   `Cslib.Complexity.SAT.computableInPolyTime_vars_length`: literal, clause and
   variable-occurrence counts for natural-number variables, in unary (`fun_prop` versions of the
   generic `Cslib.Logic.PL.CNF` lemmas).
+* `Cslib.Complexity.computableInPolyTime_all_length_le`: checking that every clause has at most
+  `k` literals, the guard of `k`-SAT, is polynomial-time.
 * `Cslib.Complexity.SAT.mem_NP`: satisfiability belongs to NP.
 * `Cslib.Complexity.UNSAT_mem_coNP`: unsatisfiability belongs to coNP.
 
@@ -128,7 +130,7 @@ theorem computableInPolyTime_literal :
     ComputableInPolyTime
       (fun p : (CNF ℕ × List Bool) × Literal ℕ => Literal.eval (assignment p.1.1 p.1.2) p.2)
       (encPair (encPair encCNF encBits) (encPair encNat encBool)) encBool := by
-  fun_prop [Literal.eval, assignment]
+  fun_prop [assignment]
 
 /-- Evaluating a clause with the certificate assignment is polynomial-time. -/
 @[fun_prop]
@@ -136,19 +138,28 @@ theorem computableInPolyTime_clause :
     ComputableInPolyTime
       (fun p : (CNF ℕ × List Bool) × Clause ℕ => Clause.eval (assignment p.1.1 p.1.2) p.2)
       (encPair (encPair encCNF encBits) (encList (encPair encNat encBool))) encBool := by
-  fun_prop [Clause.eval, Literal.eval, assignment]
+  fun_prop [assignment]
 
 /-- The SAT verifier is polynomial-time, including on certificates of arbitrary length. -/
 @[fun_prop]
 theorem computableInPolyTime_verifier :
     ComputableInPolyTime verifier (encPair encCNF encBits) encBool := by
-  fun_prop [verifier, CNF.eval]
+  fun_prop [verifier]
 
 /-- Satisfiability is in NP, with certificates of length equal to the encoded formula length. -/
 theorem mem_NP : SAT ∈ NP encCNF :=
   ⟨Polynomial.X, verifier, computableInPolyTime_verifier, isVerifier⟩
 
 end SAT
+
+open ComputableInPolyTime in
+/-- Checking that every clause has at most `k` literals is polynomial-time. -/
+@[fun_prop]
+theorem computableInPolyTime_all_length_le (k : ℕ) :
+    ComputableInPolyTime (fun φ : CNF ℕ => φ.all fun c => decide (c.length ≤ k)) encCNF
+      encBool := by
+  unfold encCNF
+  fun_prop
 
 /-- Unsatisfiability is in coNP. -/
 theorem UNSAT_mem_coNP : UNSAT ∈ coNP encCNF := by

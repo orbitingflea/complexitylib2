@@ -61,8 +61,8 @@ theorem writeRead_native : ∃ r C pc : ℕ, ∃ prog : Program .exact r,
     rcases ha with rfl | rfl
     · exact h3.of_le (by decide)
     · exact hv
-  have hvalid : (Memory.spec w).ValidHistory (inputState [1, v])
-      ((Memory.spec w).clientHistory (inputState [1, v]) (writeRead (1, v))) := by
+  have hvalid : (Memory.spec w).ValidHistory (Memory.State.init [1, v])
+      ((Memory.spec w).clientHistory (Memory.State.init [1, v]) (writeRead (1, v))) := by
     change (1 < 3 ∧ Fits w v) ∧ 1 < 3 ∧ True
     exact ⟨⟨by decide, hv⟩, by decide, trivial⟩
   obtain ⟨y, n, hr, hh, hm, hout, hn⟩ := he w (1, v)
@@ -109,7 +109,7 @@ private theorem readHeader_realizes :
 reads its first header word for every adjacency-list instance, preserving all input memory. -/
 theorem graphHeader_native : ∃ r C pc : ℕ, ∃ prog : Program .exact r,
     ∃ frontier result : Fin r,
-    ∀ w (G : Cslib.Algorithms.WordRAM.Dijkstra.ListInstance),
+    ∀ w (G : Cslib.Algorithms.Dijkstra.ListInstance),
       Fits w (G.encode.length + 1) → InputFits w G.encode →
       ∃ y n, Runs w prog (State.init G.encode) ⟨pc, y⟩ n ∧
         step w prog ⟨pc, y⟩ = .halt G.n ∧
@@ -120,8 +120,8 @@ theorem graphHeader_native : ∃ r C pc : ℕ, ∃ prog : Program .exact r,
     readHeader_realizes.exists_standard_init_program_state_from_words 0
   refine ⟨r, C, pc, prog, frontier, out 0, ?_⟩
   intro w G hw hin
-  have hvalid : (Memory.spec w).ValidHistory (inputState G.encode)
-      ((Memory.spec w).clientHistory (inputState G.encode) (Memory.read 1)) := by
+  have hvalid : (Memory.spec w).ValidHistory (Memory.State.init G.encode)
+      ((Memory.spec w).clientHistory (Memory.State.init G.encode) (Memory.read 1)) := by
     change 1 < G.encode.length + 1 ∧ True
     rw [G.encode_length]
     exact ⟨by omega, trivial⟩
@@ -130,10 +130,10 @@ theorem graphHeader_native : ∃ r C pc : ℕ, ∃ prog : Program .exact r,
   exact ⟨y, n, hr, hh, congrArg Memory.State.mem hm,
     congrArg Memory.State.frontier hm, hout 0, hn⟩
 
-private def isolatedVertex : Cslib.Algorithms.WordRAM.Dijkstra.ListInstance :=
+private def isolatedVertex : Cslib.Algorithms.Dijkstra.ListInstance :=
   ⟨1, fun _ => [], 0⟩
 
-private def maximumEdge : Cslib.Algorithms.WordRAM.Dijkstra.ListInstance :=
+private def maximumEdge : Cslib.Algorithms.Dijkstra.ListInstance :=
   ⟨2, fun u => if u.val = 0 then [(1, 15)] else [], 0⟩
 
 -- Two different graph memories share one program; the maximum fitting edge weight survives.

@@ -191,8 +191,8 @@ The [module census script](data/census.py) can enumerate every tracked Lean sour
 | `comparison-tree` | [Monotone/separable comparison queries](circuits-logic-and-other-models/index.md) | information-access |
 | `randomized-query` | [Finite-support randomized decision trees](circuits-logic-and-other-models/index.md) | information-access |
 | `distributional-query` | [Distributional decision-tree complexity](circuits-logic-and-other-models/index.md) | information-access |
-| `cell-probe` | [Adaptive cell-probe trees and deterministic schemes](circuits-logic-and-other-models/query-and-communication.md) | information-access |
-| `randomized-cell-probe` | [Internal-coin cell-probe schemes and zero-error Yao averaging](circuits-logic-and-other-models/query-and-communication.md) | information-access |
+| `cell-probe` | [Adaptive cell-probe trees, deterministic schemes, and Word-RAM simulation](circuits-logic-and-other-models/query-and-communication.md) | information-access |
+| `randomized-cell-probe` | [Internal-coin cell-probe schemes, zero-error Yao averaging, and Las Vegas simulation](circuits-logic-and-other-models/query-and-communication.md) | information-access |
 | `quantum-query` | [Phase-oracle quantum query algorithms](circuits-logic-and-other-models/index.md) | quantum |
 | `deterministic-communication` | [Two-party bit communication trees](circuits-logic-and-other-models/index.md) | communication |
 | `local-oriented-cycle` | [Deterministic LOCAL algorithms on oriented cycles](circuits-logic-and-other-models/query-and-communication.md) | distributed |
@@ -216,6 +216,7 @@ The [module census script](data/census.py) can enumerate every tracked Lean sour
 | `ordered-structure` | [Canonical ordered finite structures with BIT](circuits-logic-and-other-models/index.md) | finite-logic |
 | `ordered-domain` | [Ordered restricted-domain interpretations with numeric certificates](circuits-logic-and-other-models/index.md) | finite-logic |
 | `fulltuple` | [Positive-dimensional full-tuple ordered interpretations](circuits-logic-and-other-models/index.md) | finite-logic |
+| `sql-scalar` | [SQL values with `NULL`, three-valued logic and strict scalar operators](circuits-logic-and-other-models/sql-semantics.md) | query-language |
 | `cnf` | [Literal lists, CNF and assignment counting](circuits-logic-and-other-models/index.md) | propositional-models |
 | `clause-set` | [Finite-set CNF for sparsification](circuits-logic-and-other-models/index.md) | propositional-models |
 | `csp` | [Relation-alphabet constraint satisfaction problems](circuits-logic-and-other-models/index.md) | propositional-models |
@@ -232,6 +233,8 @@ The [module census script](data/census.py) can enumerate every tracked Lean sour
 | `membership-learning` | [Randomized membership-query learners](circuits-logic-and-other-models/index.md) | learning |
 | `mistake-bound` | [Realizable online mistake-bound learners](circuits-logic-and-other-models/learning-and-testing.md) | learning |
 | `linearity-test` | [Decision-tree property testers for Boolean linearity](circuits-logic-and-other-models/index.md) | learning |
+| `replicable-algorithm` | [Shared-seed replicable sample algorithms (`Algorithm` and weak/strong `ρ`-replicability)](circuits-logic-and-other-models/learning-and-testing.md#replicable-algorithms) | learning |
+| `replicable-program` | [`ProbComp`-backed shared-seed replicable programs (`Program`)](circuits-logic-and-other-models/learning-and-testing.md#replicable-algorithms) | learning |
 | `mcsp` | [Total truth-table minimum circuit size](circuits-logic-and-other-models/index.md) | metacomplexity |
 | `partial-mcsp` | [Partial truth-table circuit minimization](circuits-logic-and-other-models/index.md) | metacomplexity |
 | `succinct-mcsp` | [Sample-set succinct MCSP](circuits-logic-and-other-models/index.md) | metacomplexity |
@@ -265,7 +268,7 @@ The [module census script](data/census.py) can enumerate every tracked Lean sour
 | `crypto-mpc` | [Synchronous typed oracle-aided MPC](programs-crypto-and-probability/protocols-and-privacy.md) | protocols |
 | `crypto-uc` | [Call-bounded UC execution and emulation](programs-crypto-and-probability/protocols-and-privacy.md) | protocols |
 | `crypto-perfect-secrecy` | [Perfect-secrecy encryption](programs-crypto-and-probability/protocols-and-privacy.md) | information-theoretic-crypto |
-| `crypto-secret-sharing` | [Authorized-coalition secret sharing](programs-crypto-and-probability/protocols-and-privacy.md) | information-theoretic-crypto |
+| `crypto-secret-sharing` | [Authorized-coalition, access-structure, and distribution-design secret sharing](programs-crypto-and-probability/protocols-and-privacy.md#secret-sharing-for-general-access-structures-and-distribution-designs) | information-theoretic-crypto |
 | `privacy-differential` | [Differential privacy of output laws for an explicit adjacency relation](programs-crypto-and-probability/protocols-and-privacy.md) | privacy |
 | `average-exact-ppt` | [MildlyHardOnAverage](programs-crypto-and-probability/average-case-hardness.md) | average-case-hardness |
 | `average-symmetric-ppt` | [MildlyHardOnAverageToApprox](programs-crypto-and-probability/average-case-hardness.md) | average-case-hardness |
@@ -301,17 +304,20 @@ The [module census script](data/census.py) can enumerate every tracked Lean sour
 | `wordram-randomized` | [Exact finite-uniform randomized Word-RAM](algorithms-and-memory/wordram-and-bridges.md) | word-ram |
 | `wordram-expected` | [Expected Word-RAM execution and Las Vegas loops](algorithms-and-memory/wordram-and-bridges.md) | word-ram |
 | `wordram-structured` | [Structured programs with exact native counts](algorithms-and-memory/wordram-and-bridges.md) | word-ram |
+| `wordram-resizable` | [Word-granular Resizable Word RAM and adaptive-adversary execution](algorithms-and-memory/wordram-and-bridges.md) | word-ram |
 | `state-transition` | [Relational adaptive data-structure clients](algorithms-and-memory/memory-specifications.md) | state-transition |
 | `randomized-state-transition` | [Randomized state transitions and refinement](algorithms-and-memory/memory-specifications.md) | state-transition |
 | `oblivious-sequence` | [Oblivious operation/transcript contracts](algorithms-and-memory/memory-specifications.md) | state-transition |
-| `cell-probe-data-structure` | [Cell-probe state-transition and oblivious-sequence implementations](algorithms-and-memory/memory-specifications.md) | state-transition |
+| `cell-probe-data-structure` | [Cell-probe data-structure implementations and Word-RAM lower-bound transfer](algorithms-and-memory/memory-specifications.md) | state-transition |
+| `wordram-resizable-data-structure` | [Resizable Word RAM state-transition and oblivious-sequence implementations](algorithms-and-memory/memory-specifications.md#resizable-word-ram-state-transition-and-oblivious-sequence-implementations) | state-transition |
 | `memory-oracle` | [Allocated word-memory oracle](algorithms-and-memory/memory-specifications.md) | memory |
+| `resizable-memory-oracle` | [Word-granular resizable memory specification](algorithms-and-memory/memory-specifications.md) | memory |
 | `native-callable` | [Dynamic programs, controllers and graded realization](algorithms-and-memory/memory-specifications.md) | memory |
 | `ram-footprints-traces` | [RAM footprints, traces and memory windows](algorithms-and-memory/memory-specifications.md) | memory |
 | `online-deterministic` | [Deterministic online competitive problems](algorithms-and-memory/online-and-streaming.md) | online |
 | `count-min-stream` | [Weighted insertion Count-Min sketch](algorithms-and-memory/online-and-streaming.md) | streaming |
 | `native-stream-fold` | [Native input-stream folds](algorithms-and-memory/online-and-streaming.md) | streaming |
-| `cost-game` | [Finite strategic games in cost form, mixed Nash equilibria, potentials and coarse correlated equilibria](algorithms-and-memory/strategic-games.md) | game-theory |
+| `cost-game` | [Finite strategic games in cost form, mixed Nash, correlated and coarse correlated equilibria, potentials](algorithms-and-memory/strategic-games.md) | game-theory |
 | `atomic-congestion-game` | [Atomic congestion games with Rosenthal's potential](algorithms-and-memory/strategic-games.md) | game-theory |
 | `nonatomic-routing` | [Nonatomic selfish routing and Wardrop flows](algorithms-and-memory/strategic-games.md) | game-theory |
 | `hedge-dynamics` | [No-regret (Hedge) dynamics in finite games and their price of anarchy](algorithms-and-memory/strategic-games.md) | game-theory |
@@ -325,3 +331,4 @@ The [module census script](data/census.py) can enumerate every tracked Lean sour
 | `mechanism-general-vcg` | [General-valuation mechanisms and VCG](algorithms-and-memory/mechanism-design.md) | mechanism-design |
 | `mechanism-bayes-nash` | [Bayes–Nash equilibrium, revenue equivalence and the first-price auction](algorithms-and-memory/mechanism-design.md) | mechanism-design |
 | `social-welfare-function` | [Social welfare functions on strict rankings and Arrow's theorem](algorithms-and-memory/mechanism-design.md) | social-choice |
+| `facility-location-mechanism` | [Randomized facility-location mechanisms, strategyproofness, and median optimality](algorithms-and-memory/mechanism-design.md) | facility-location |

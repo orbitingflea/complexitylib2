@@ -25,6 +25,8 @@ a power of two.
 
 ## Main results
 
+* `Cslib.Probability.PMF.uniformOfFintype_fin_bind`: for nonzero `M`, uniform draws from `Fin M`
+  and `ZMod M` agree.
 * `Cslib.Probability.PMF.dist_map_natCast_uniformOfFintype_le`: distance at most `(N mod q) / N`.
 * `Cslib.Probability.PMF.dist_map_natCast_uniformOfFintype_le_div`: distance at most `q / N`.
 
@@ -34,9 +36,16 @@ a power of two.
   Version 0.6][BonehShoup2023], Section 3.11.
 -/
 
-@[expose] public section
+public section
 
 namespace Cslib.Probability.PMF
+
+/-- A uniform draw from `Fin M` is a uniform draw from `ZMod M`, read through `val`. -/
+theorem uniformOfFintype_fin_bind {α : Type*} (M : ℕ) [NeZero M] (f : ℕ → PMF α) :
+    ((PMF.uniformOfFintype (Fin M)).bind fun i => f i.val) =
+      (PMF.uniformOfFintype (ZMod M)).bind fun r => f r.val := by
+  rcases Nat.exists_eq_succ_of_ne_zero (NeZero.ne M) with ⟨m, rfl⟩
+  rfl
 
 /-- The mass of a residue: `⌊N / q⌋` preimages, plus one for the residues below `N mod q`. -/
 private theorem toReal_map_natCast_apply (N q : ℕ) [NeZero N] [NeZero q] (r : ZMod q) :

@@ -18,6 +18,7 @@ import CslibFrontier.Languages.Probabilistic.Simulation
 import CslibFrontier.Probability.BitString
 import CslibFrontier.Probability.PMF.Bind
 import CslibFrontier.Probability.PMF.Uniform
+import CslibFrontier.Probability.PMF.UniformPoint
 import CslibFrontier.Probability.Uniform
 import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.Ring
@@ -709,21 +710,13 @@ noncomputable def preWhitenKeyRecoveryIdealGame (x : G) : Game := do
     preWhitenKeyRecoveryRealGame x = PMF.pure true := by
   simp [preWhitenKeyRecoveryRealGame, PMF.bind_const]
 
-omit [AddGroup G] in
-/-- A uniform draw from `G` hits a fixed `a` with probability `|G|⁻¹`. -/
-private theorem uniformOfFintype_bind_decide_eq_apply_true (a : G) :
-    ((PMF.uniformOfFintype G).bind fun k => PMF.pure (decide (a = k))) true =
-      (Fintype.card G : ℝ≥0∞)⁻¹ := by
-  rw [PMF.bind_apply, tsum_eq_single a fun k hk => by simp [Ne.symm hk]]
-  simp [PMF.uniformOfFintype_apply]
-
 /-- In the ideal game, `preWhitenKeyRecoveryAttack x` outputs the uniform target `k₀` with
 probability `|G|⁻¹`. -/
 theorem preWhitenKeyRecoveryIdealGame_true_toReal (x : G) :
     (preWhitenKeyRecoveryIdealGame x true).toReal = (Fintype.card G : ℝ)⁻¹ := by
   simp only [preWhitenKeyRecoveryIdealGame, PMF.monad_bind_eq_bind, PMF.monad_pure_eq_pure]
   rw [PMF.bind_apply_of_forall _ fun E => PMF.bind_apply_of_forall _ fun π =>
-      uniformOfFintype_bind_decide_eq_apply_true _,
+      PMF.uniformOfFintype_bind_decide_eq_apply_true _,
     ENNReal.toReal_inv, ENNReal.toReal_natCast]
 
 /-- **2-query break of pre-whitening-only Even–Mansour** ([BonehShoup2023], Section 4.7):
@@ -768,7 +761,7 @@ theorem postWhitenKeyRecoveryIdealGame_true_toReal (x : G) :
     (postWhitenKeyRecoveryIdealGame x true).toReal = (Fintype.card G : ℝ)⁻¹ := by
   simp only [postWhitenKeyRecoveryIdealGame, PMF.monad_bind_eq_bind, PMF.monad_pure_eq_pure]
   rw [PMF.bind_apply_of_forall _ fun E => PMF.bind_apply_of_forall _ fun π =>
-      uniformOfFintype_bind_decide_eq_apply_true _,
+      PMF.uniformOfFintype_bind_decide_eq_apply_true _,
     ENNReal.toReal_inv, ENNReal.toReal_natCast]
 
 /-- **2-query break of post-whitening-only Even–Mansour** ([BonehShoup2023], Section 4.7):
@@ -878,11 +871,8 @@ private theorem toOuterMeasure_uniformOfFintype_singleton_pred {p : G → Prop} 
     (target : G) (htarget : ∀ k, p k ↔ k = target) :
     (PMF.uniformOfFintype G).toOuterMeasure {k : G | decide (p k) = true} =
       (Fintype.card G : ℝ≥0∞)⁻¹ := by
-  rw [PMF.toOuterMeasure_uniformOfFintype]
-  have hfilter : Finset.univ.filter (· ∈ {k : G | decide (p k) = true}) = {target} := by
-    ext k
-    simp [htarget k]
-  rw [hfilter, Finset.card_singleton, Nat.cast_one, one_mul]
+  rw [show {k : G | decide (p k) = true} = {target} by ext k; simp [htarget k],
+    PMF.toOuterMeasure_apply_singleton, PMF.uniformOfFintype_apply]
 
 /-- Under a uniform key `k₀ ← G`, the probability of an input collision `x + k₀ = u` is exactly
 `|G|⁻¹`. -/
@@ -1157,9 +1147,11 @@ private theorem IsCallBounded.badKey_toReal_le {State γ K : Type}
   refine (hbad (transcriptCipher T) (transcriptPerm T)).trans ?_
   gcongr
 
-/-- **Boneh–Shoup Theorem 4.14 for adaptive call-bounded distinguishers (two-key)**: on any
-supported transcript `T` of a distinguisher satisfying `IsCallBounded program Q_e Q_π`, a uniform
-key pair `(k₀, k₁) ← G × G` is bad with real probability at most `2 * Q_e * Q_π / |G|`. -/
+/-- **Boneh–Shoup Theorem 4.14 bad-key union bound on call-bounded transcripts (two-key)**:
+against any stateful bidirectional oracle, on any supported transcript `T` of a distinguisher
+satisfying `IsCallBounded program Q_e Q_π`, a fresh uniform key pair `(k₀, k₁) ← G × G`, sampled
+independently of `T`, is bad for `transcriptCipher T` and `transcriptPerm T` with real
+probability at most `2 * Q_e * Q_π / |G|`. -/
 theorem IsCallBounded.badEvenMansourKey_toReal_le {State γ : Type}
     {program : OracleComp (EvenMansourSpec G) γ} {Q_e Q_π : ℕ}
     (h : IsCallBounded program Q_e Q_π)
@@ -1172,9 +1164,11 @@ theorem IsCallBounded.badEvenMansourKey_toReal_le {State γ : Type}
       2 * (Q_e : ℝ) * (Q_π : ℝ) / (Fintype.card G : ℝ) :=
   h.badKey_toReal_le oracle hmem _ isBadEvenMansourKey toOuterMeasure_isBadEvenMansourKey_toReal_le
 
-/-- **Boneh–Shoup Theorem 4.14 for adaptive call-bounded distinguishers (single-key)**: on any
-supported transcript `T` of a distinguisher satisfying `IsCallBounded program Q_e Q_π`, a single
-uniform key `k ← G` is bad with real probability at most `2 * Q_e * Q_π / |G|`. -/
+/-- **Boneh–Shoup Theorem 4.14 bad-key union bound on call-bounded transcripts (single-key)**:
+against any stateful bidirectional oracle, on any supported transcript `T` of a distinguisher
+satisfying `IsCallBounded program Q_e Q_π`, a single fresh uniform key `k ← G`, sampled
+independently of `T`, is bad for `transcriptCipher T` and `transcriptPerm T` with real
+probability at most `2 * Q_e * Q_π / |G|`. -/
 theorem IsCallBounded.badSingleKeyEvenMansour_toReal_le {State γ : Type}
     {program : OracleComp (EvenMansourSpec G) γ} {Q_e Q_π : ℕ}
     (h : IsCallBounded program Q_e Q_π)

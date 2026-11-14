@@ -244,7 +244,7 @@ theorem not_weakOneWay_of_inverse {f : List Bool → List Bool}
 /-- Constant functions are not weakly one-way: the empty word is always a preimage. -/
 theorem not_weakOneWay_const (word : List Bool) : ¬ WeakOneWay (fun _ => word) :=
   not_weakOneWay_of_inverse (fun _ _ => [])
-    (ComputableTidilyInPolyTime.const []).isPPT (fun _ => rfl)
+    (ComputableInPolyTime.const []).isPPT (fun _ => rfl)
 
 /-! ### Output-length normalization for weak one-way functions -/
 
@@ -506,8 +506,8 @@ theorem exists_familyInverter_inversion_le {m : ℕ → ℕ} {core : ℕ → Lis
           (ProbComp.eval (adversary M (wrappedImage n (core n x₀)))).map fun candidate =>
             reindex m core candidate == wrappedImage n (core n x₀)) := by
       rw [PMF.bind_map]
-      simp only [inversionGame, ProbComp.eval_bind, BitString.eval_sampleList, ProbComp.eval_pure,
-        PMF.map]
+      simp only [inversionGame, inversionExperiment, ProbComp.eval_bind, BitString.eval_sampleList,
+        ProbComp.eval_pure, PMF.map]
       apply PMF.bind_congr_on_support
       intro input hinput
       have hlen : input.length = M := BitString.length_of_mem_support_uniformList hinput

@@ -8,6 +8,8 @@ module
 -- upstream: candidate
 
 public import CslibFrontier.Crypto.Computational.RSATrapdoor
+public import CslibFrontier.Foundations.Data.BitString.List.Binary
+import CslibFrontier.Computability.Probabilistic.PPT.Extension
 import CslibFrontier.Probability.PMF.Bind
 import Mathlib.Data.Nat.Size
 
@@ -20,21 +22,24 @@ the exact inversion of RSA from a perfect least-significant-bit predictor.
 For odd `N` and `k ≥ 1`, the parity of `2 ^ k * x % N` is the parity of `⌊2 ^ k * x / N⌋`
 (`two_pow_mul_mod_mod_two`), and `2 ^ k * x % N` is the RSA preimage of `2 ^ (k * e) * y % N`
 when `y = x ^ e % N`. So the parities answered on the `m` public queries `2 ^ (k * e) * y % N`,
-`k = 1, …, m`, are the binary digits of `⌊2 ^ m * x / N⌋` (`lsbDigits`), which determines `x`
-once `N ≤ 2 ^ m` (`lsbRecover`). The inverter `lsbInverter` runs a predictor on these queries and
+`k = 1, …, m`, are the most-significant-first binary digits (`BitString.binaryValue`) of
+`⌊2 ^ m * x / N⌋` (`binaryValue_testBit_two_pow_mul_mod`), which determines `x` once
+`N ≤ 2 ^ m` (`lsbRecover`). The inverter `lsbInverter` runs a predictor on these queries and
 recovers `x` exactly whenever the predictor is always correct on the modulus (`eval_lsbInverter`).
 
 ## Main definitions
 
-* `Cslib.Crypto.rsaLSBGame`, `Cslib.Crypto.RSAHardCoreLSB`: the least-significant-bit prediction
-  experiment and the assumption that every uniform PPT predictor has negligible bias.
-* `Cslib.Crypto.lsbQueries`, `Cslib.Crypto.lsbDigits`, `Cslib.Crypto.lsbRecover`: the doubling
-  queries, the most-significant-first value of answered parities and the final rounding.
+* `Cslib.Crypto.RSAPredictor`, `Cslib.Crypto.RSAPredictor.IsPPT`, `Cslib.Crypto.rsaLSBGame`,
+  `Cslib.Crypto.RSAHardCoreLSB`: the least-significant-bit prediction experiment and the
+  assumption that every PPT predictor has negligible bias.
+* `Cslib.Crypto.lsbQueries`, `Cslib.Crypto.lsbRecover`: the doubling queries, and the final
+  rounding of the most-significant-first value of the answered parities.
 * `Cslib.Crypto.lsbInverter`: the inverter that queries a predictor on the `N.size` doubling
   queries.
 
 ## Main results
 
+* `Cslib.Crypto.rsaHardCoreLSB_iff_encoded`: `RSAHardCoreLSB` is the word-level assumption.
 * `Cslib.Crypto.two_pow_mul_mod_mod_two`: parity of a doubled residue modulo an odd modulus.
 * `Cslib.Crypto.lsbRecover_lsbQueries`: a correct parity oracle determines the RSA preimage.
 * `Cslib.Crypto.eval_lsbInverter`, `Cslib.Crypto.succProbability_rsaInversionGame_lsbInverter`:
@@ -42,8 +47,14 @@ recovers `x` exactly whenever the predictor is always correct on the modulus (`e
 
 ## Implementation notes
 
-As in `rsaInversionGame`, `rsaLSBGame` samples `x` uniformly from `Fin N` rather than from
-`(ZMod N)ˣ`. [KatzLindell2020], Theorem 12.31, states that the least significant bit is hard-core
+`rsaLSBGame` runs `Cslib.Crypto.predictionExperiment` on `x` drawn uniformly from `Fin N`, as
+`rsaInversionGame` does, rather than from `(ZMod N)ˣ`. An `RSAPredictor` receives the public key
+and a challenge residue; `RSAPredictor.IsPPT` reads `encRSAInput`, like `RSAInverter.IsPPT`, and
+writes a bit. Since the output is a bit, `rsaHardCoreLSB_iff_encoded` shows that `RSAHardCoreLSB` is
+the assumption over word-level predictors reading the same layout on keys with `0 < N`
+(`IsPPTOn.exists_bool_extension`).
+
+[KatzLindell2020], Theorem 12.31, states that the least significant bit is hard-core
 for RSA whenever RSA is hard. Its proof must handle predictors that are only noticeably better than
 a fair guess; that reconstruction is not formalized here, so `RSAHardCoreLSB` is a separate
 assumption, and the inversion from a perfect predictor (by repeated doubling) is only the
@@ -66,25 +77,79 @@ open Probability Turing.MultiTapeTM
 
 /-! ### The prediction experiment -/
 
-/-- The RSA least-significant-bit experiment: sample `desc ← gen n` and a uniform `x ← Fin N`,
-pass `(pk, x ^ e % N)` to the predictor and test whether it returns the least significant bit
-`x.testBit 0` of `x`. -/
-@[expose] noncomputable def rsaLSBGame (gen : RSAGen) (A : ℕ → RSAPublicKey × ℕ → ProbComp Bool)
-    (n : ℕ) : Game := do
-  let desc ← gen n
-  have : NeZero desc.modulus := ⟨Nat.ne_of_gt desc.modulus_pos⟩
-  let x ← PMF.uniformOfFintype (Fin desc.modulus)
-  let guess ← ProbComp.eval (A n (desc.publicKey, rsaEval desc.modulus desc.e x.1))
-  return guess == x.1.testBit 0
+/-- A least-significant-bit predictor for RSA: given the security parameter, a public key
+`(N, e)` and a residue modulo `N`, it outputs a bit. `RSAPredictor.IsPPT` states its efficiency
+on encodings. -/
+abbrev RSAPredictor : Type :=
+  ℕ → (pk : RSAPublicKey) → Fin pk.N → ProbComp Bool
 
-/-- The least significant bit is hard-core for RSA relative to `gen`: every uniform strict PPT
-predictor receiving `(1^n, ((N, e), y))` guesses the least significant bit of the preimage with
-negligible bias from one half. -/
+/-- An RSA predictor is PPT when one uniform strict PPT machine reads `encRSAInput` and writes the
+predicted bit. -/
+@[expose] def RSAPredictor.IsPPT (predictor : RSAPredictor) : Prop :=
+  IsPPTOn encRSAInput encBool fun x => predictor x.secParam x.publicKey x.challenge
+
+/-- The RSA least-significant-bit experiment: sample `desc ← gen n` and run
+`Cslib.Crypto.predictionExperiment` on a uniform residue `x` modulo `N`. The predictor receives
+`(pk, x ^ e % N)` and wins when it returns the least significant bit `x.testBit 0` of `x`. -/
+@[expose] noncomputable def rsaLSBGame (gen : RSAGen) (predictor : RSAPredictor) (n : ℕ) :
+    Game := do
+  let desc ← gen n
+  ProbComp.eval (predictionExperiment (ProbComp.uniform (Fin desc.modulus)) desc.publicKey.eval
+    (fun x => (x : ℕ).testBit 0) (predictor n desc.publicKey))
+
+/-- The least significant bit is hard-core for RSA relative to `gen`: every PPT predictor guesses
+the least significant bit of a uniform residue from its RSA image with negligible bias from one
+half. -/
 @[expose] def RSAHardCoreLSB (gen : RSAGen) : Prop :=
-  ∀ A : ℕ → RSAPublicKey × ℕ → ProbComp Bool,
-    IsPPTOn (encPair encUnary (encPair encRSAPublicKey encNat)) encBool
-      (fun input => A input.1 input.2) →
-    Negligible (fun n => Game.guessingAdvantage (rsaLSBGame gen A n))
+  ∀ predictor : RSAPredictor, predictor.IsPPT →
+    Negligible fun n => Game.guessingAdvantage (rsaLSBGame gen predictor n)
+
+/-- `rsaLSBGame` written out: the predictor sees the RSA image of a uniform residue `x`. -/
+theorem rsaLSBGame_eq (gen : RSAGen) (predictor : RSAPredictor) (n : ℕ) :
+    rsaLSBGame gen predictor n = (do
+      let desc ← gen n
+      let x ← PMF.uniformOfFintype (Fin desc.modulus)
+      let guess ← ProbComp.eval (predictor n desc.publicKey (desc.publicKey.eval x))
+      return guess == (x : ℕ).testBit 0) := by
+  simp only [rsaLSBGame, predictionExperiment, ProbComp.eval_bind, ProbComp.eval_uniform,
+    ProbComp.eval_pure]
+  rfl
+
+/-- **`RSAHardCoreLSB` is the word-level assumption.** Quantifying over predictors that read
+`(1ⁿ, (N, e), y)` with binary numbers on keys with `0 < N`, each with one uniform strict PPT
+machine, gives the same assumption as quantifying over typed predictors. A typed predictor's machine
+reads exactly that layout; conversely, a typed predictor extends to all words by rerunning its
+machine (`IsPPTOn.exists_bool_extension`), since its output is a single bit. -/
+theorem rsaHardCoreLSB_iff_encoded (gen : RSAGen) :
+    RSAHardCoreLSB gen ↔ ∀ W : ℕ → {pk : RSAPublicKey // 0 < pk.N} × ℕ → ProbComp Bool,
+      IsPPTOn (encPair encUnary (encPair
+          ((Function.Embedding.subtype fun pk : RSAPublicKey => 0 < pk.N).trans encRSAPublicKey)
+          encNat)) encBool (fun x => W x.1 x.2) →
+      Negligible fun n => Game.guessingAdvantage (do
+        let desc ← gen n
+        let x ← PMF.uniformOfFintype (Fin desc.modulus)
+        let guess ← ProbComp.eval
+          (W n (⟨desc.publicKey, desc.modulus_pos⟩, rsaEval desc.modulus desc.e x))
+        return guess == (x : ℕ).testBit 0) := by
+  constructor
+  · intro h W hW
+    have := h (fun n pk y => W n (⟨pk, y.pos⟩, y)) (hW.preprocess (prepare := fun x : RSAInput =>
+      (x.secParam, (⟨x.publicKey, x.challenge.pos⟩ : {pk : RSAPublicKey // 0 < pk.N}),
+        (x.challenge : ℕ))) (.of_eq (encIn := encRSAInput) fun _ => rfl))
+    simpa only [rsaLSBGame_eq, RSAPublicKey.val_eval] using this
+  · intro h P hP
+    obtain ⟨E, hEppt, hE⟩ := hP.exists_bool_extension
+    set E' := encPair encUnary (encPair
+      ((Function.Embedding.subtype fun pk : RSAPublicKey => 0 < pk.N).trans encRSAPublicKey)
+      encNat)
+    have hold := h (fun n t => E (E' (n, t)))
+      (hEppt.preprocess ComputableInPolyTime.id'.encoding_comp)
+    have hrun (n : ℕ) (desc : RSADesc) (x : Fin desc.modulus) :
+        ProbComp.eval
+            (E (E' (n, ⟨desc.publicKey, desc.modulus_pos⟩, rsaEval desc.modulus desc.e x))) =
+          ProbComp.eval (P n desc.publicKey (desc.publicKey.eval x)) :=
+      hE ⟨n, desc.publicKey, desc.publicKey.eval x⟩
+    simpa only [rsaLSBGame_eq, hrun] using hold
 
 /-! ### Doubling and parity -/
 
@@ -112,27 +177,24 @@ theorem two_pow_mul_rsaEval (N e k x : ℕ) :
 @[expose] def lsbQueries (N e y m : ℕ) : List ℕ :=
   (List.range m).map fun k => 2 ^ ((k + 1) * e) * y % N
 
-/-- The value of a list of binary digits read most significant first. -/
-@[expose] def lsbDigits (bits : List Bool) : ℕ :=
-  bits.foldl (fun value bit => 2 * value + bit.toNat) 0
-
-/-- Recover `x` from `q = ⌊2 ^ m * x / N⌋` as `⌈q * N / 2 ^ m⌉`. -/
+/-- Recover `x` from the most-significant-first digits `bits` of `q = ⌊2 ^ m * x / N⌋` as
+`⌈q * N / 2 ^ m⌉`. -/
 @[expose] def lsbRecover (N m : ℕ) (bits : List Bool) : ℕ :=
-  (lsbDigits bits * N + 2 ^ m - 1) / 2 ^ m
+  (BitString.binaryValue bits * N + 2 ^ m - 1) / 2 ^ m
 
 private theorem toNat_decide_mod_two (v : ℕ) : (decide (v % 2 = 1)).toNat = v % 2 := by
   rcases Nat.mod_two_eq_zero_or_one v with h | h <;> simp [h]
 
 /-- The parities of the doubled residues are the binary digits of `⌊2 ^ m * x / N⌋`. -/
-theorem lsbDigits_testBit {N x : ℕ} (hN : Odd N) (hx : x < N) (m : ℕ) :
-    lsbDigits ((List.range m).map fun k => (2 ^ (k + 1) * x % N).testBit 0) =
+theorem binaryValue_testBit_two_pow_mul_mod {N x : ℕ} (hN : Odd N) (hx : x < N) (m : ℕ) :
+    BitString.binaryValue ((List.range m).map fun k => (2 ^ (k + 1) * x % N).testBit 0) =
       2 ^ m * x / N := by
   induction m with
-  | zero => simp [lsbDigits, Nat.div_eq_of_lt hx]
+  | zero => simp [BitString.binaryValue, Nat.div_eq_of_lt hx]
   | succ m ih =>
-    rw [List.range_succ, List.map_append, lsbDigits, List.foldl_append, ← lsbDigits, ih]
-    simp only [List.map_cons, List.map_nil, List.foldl_cons, List.foldl_nil, Nat.testBit_zero,
-      toNat_decide_mod_two, two_pow_mul_mod_mod_two hN (k := m + 1) (by omega)]
+    rw [List.range_succ, List.map_append, List.map_singleton, BitString.binaryValue_snoc, ih]
+    simp only [Nat.testBit_zero, toNat_decide_mod_two,
+      two_pow_mul_mod_mod_two hN (k := m + 1) (by omega)]
     have hhalf : 2 ^ (m + 1) * x / N / 2 = 2 ^ m * x / N := by
       rw [Nat.div_div_eq_div_mul, pow_succ, mul_comm (2 ^ m) 2, mul_assoc, mul_comm N 2,
         Nat.mul_div_mul_left _ _ two_pos]
@@ -141,7 +203,7 @@ theorem lsbDigits_testBit {N x : ℕ} (hN : Odd N) (hx : x < N) (m : ℕ) :
 
 /-- Rounding `⌊2 ^ m * x / N⌋ * N / 2 ^ m` up recovers `x` once `N ≤ 2 ^ m`. -/
 theorem lsbRecover_eq {N x m : ℕ} (hx : x < N) (hm : N ≤ 2 ^ m) (bits : List Bool)
-    (hbits : lsbDigits bits = 2 ^ m * x / N) : lsbRecover N m bits = x := by
+    (hbits : BitString.binaryValue bits = 2 ^ m * x / N) : lsbRecover N m bits = x := by
   have hN : 0 < N := by omega
   have hP : 0 < 2 ^ m := Nat.two_pow_pos m
   unfold lsbRecover
@@ -160,7 +222,7 @@ theorem lsbRecover_lsbQueries {N e x m : ℕ} (hN : Odd N) (hx : x < N) (hm : N 
     (oracle : ℕ → Bool) (horacle : ∀ z < N, oracle (rsaEval N e z) = z.testBit 0) :
     lsbRecover N m ((lsbQueries N e (rsaEval N e x) m).map oracle) = x := by
   apply lsbRecover_eq hx hm
-  rw [← lsbDigits_testBit hN hx m, lsbQueries, List.map_map]
+  rw [← binaryValue_testBit_two_pow_mul_mod hN hx m, lsbQueries, List.map_map]
   congr 1
   apply List.map_congr_left
   intro k _
@@ -169,13 +231,12 @@ theorem lsbRecover_lsbQueries {N e x m : ℕ} (hN : Odd N) (hx : x < N) (hm : N 
 
 /-! ### The inverter -/
 
-/-- The inverter built from a least-significant-bit predictor `A`: on `(pk, y)` with `pk = (N, e)`,
-run `A` on the `N.size` doubling queries and round the value of the answers. -/
-@[expose] noncomputable def lsbInverter (A : ℕ → RSAPublicKey × ℕ → ProbComp Bool) (n : ℕ)
-    (input : RSAPublicKey × ℕ) : ProbComp ℕ := do
-  let bits ← (lsbQueries input.1.N input.1.e input.2 input.1.N.size).mapM
-    fun query => A n (input.1, query)
-  return lsbRecover input.1.N input.1.N.size bits
+/-- The inverter built from a least-significant-bit predictor `P`: on `(pk, y)` with
+`pk = (N, e)`, run `P` on the `N.size` doubling queries and round the value of the answers. -/
+@[expose] noncomputable def lsbInverter (P : RSAPredictor) : RSAInverter := fun n pk y => do
+  let bits ← (lsbQueries pk.N pk.e y pk.N.size).mapM
+    fun query => P n pk ⟨query % pk.N, Nat.mod_lt _ y.pos⟩
+  return ⟨lsbRecover pk.N pk.N.size bits % pk.N, Nat.mod_lt _ y.pos⟩
 
 private theorem eval_mapM_of_pure {α β : Type} (f : α → ProbComp β) (g : α → β) :
     ∀ list : List α, (∀ a ∈ list, ProbComp.eval (f a) = PMF.pure (g a)) →
@@ -186,57 +247,62 @@ private theorem eval_mapM_of_pure {α β : Type} (f : α → ProbComp β) (g : �
     simp only [ProbComp.eval_bind, ProbComp.eval_pure, h a List.mem_cons_self, PMF.pure_bind,
       eval_mapM_of_pure f g list fun b hb => h b (List.mem_cons_of_mem a hb), List.map_cons]
 
-/-- If `A` predicts the least significant bit correctly with certainty on every RSA image modulo
-an odd `N`, then `lsbInverter A` returns the preimage of every `y = x ^ e % N` with certainty. -/
-theorem eval_lsbInverter {A : ℕ → RSAPublicKey × ℕ → ProbComp Bool} {n : ℕ}
-    {pk : RSAPublicKey} (hN : Odd pk.N)
-    (hA : ∀ z < pk.N, ProbComp.eval (A n (pk, rsaEval pk.N pk.e z)) = PMF.pure (z.testBit 0))
-    {x : ℕ} (hx : x < pk.N) :
-    ProbComp.eval (lsbInverter A n (pk, rsaEval pk.N pk.e x)) = PMF.pure x := by
+/-- If `P` predicts the least significant bit correctly with certainty on every RSA image modulo
+an odd `N`, then `lsbInverter P` returns the preimage of every `y = x ^ e % N` with certainty. -/
+theorem eval_lsbInverter {P : RSAPredictor} {n : ℕ} {pk : RSAPublicKey} (hN : Odd pk.N)
+    (hP : ∀ z : Fin pk.N, ProbComp.eval (P n pk (pk.eval z)) = PMF.pure ((z : ℕ).testBit 0))
+    (x : Fin pk.N) : ProbComp.eval (lsbInverter P n pk (pk.eval x)) = PMF.pure x := by
   classical
+  have hpos : 0 < pk.N := x.pos
   let oracle : ℕ → Bool := fun query =>
-    if h : ∃ z < pk.N, rsaEval pk.N pk.e z = query then (Classical.choose h).testBit 0 else false
+    if h : ∃ z : Fin pk.N, rsaEval pk.N pk.e z = query then (Classical.choose h).val.testBit 0
+    else false
   have hcorrect : ∀ z < pk.N, oracle (rsaEval pk.N pk.e z) = z.testBit 0 := by
     intro z hz
-    have hex : ∃ z' < pk.N, rsaEval pk.N pk.e z' = rsaEval pk.N pk.e z := ⟨z, hz, rfl⟩
-    obtain ⟨hlt, heq⟩ := Classical.choose_spec hex
-    have h1 := congrArg PMF.support (hA _ hlt)
-    rw [heq, hA z hz, PMF.support_pure, PMF.support_pure,
+    have hex : ∃ z' : Fin pk.N, rsaEval pk.N pk.e z' = rsaEval pk.N pk.e z := ⟨⟨z, hz⟩, rfl⟩
+    have heq : pk.eval (Classical.choose hex) = pk.eval ⟨z, hz⟩ :=
+      Fin.ext (Classical.choose_spec hex)
+    have h1 := congrArg PMF.support (hP (Classical.choose hex))
+    rw [heq, hP ⟨z, hz⟩, PMF.support_pure, PMF.support_pure,
       Set.singleton_eq_singleton_iff] at h1
     simp only [oracle, dite_eq_left_of_eq_true (eq_true hex)]
     exact h1.symm
-  have hqueries : ∀ query ∈ lsbQueries pk.N pk.e (rsaEval pk.N pk.e x) pk.N.size,
-      ProbComp.eval (A n (pk, query)) = PMF.pure (oracle query) := by
+  have hqueries : ∀ query ∈ lsbQueries pk.N pk.e (pk.eval x) pk.N.size,
+      ProbComp.eval (P n pk ⟨query % pk.N, Nat.mod_lt _ (pk.eval x).pos⟩) =
+        PMF.pure (oracle query) := by
     intro query hq
     simp only [lsbQueries, List.mem_map, List.mem_range] at hq
     obtain ⟨k, -, rfl⟩ := hq
-    rw [two_pow_mul_rsaEval, hA _ (Nat.mod_lt _ (by grind)),
-      hcorrect _ (Nat.mod_lt _ (by grind))]
+    have hpoint : (⟨2 ^ ((k + 1) * pk.e) * (pk.eval x : ℕ) % pk.N % pk.N,
+        Nat.mod_lt _ (pk.eval x).pos⟩ : Fin pk.N) =
+        pk.eval ⟨2 ^ (k + 1) * x % pk.N, Nat.mod_lt _ hpos⟩ := by
+      ext
+      simp only [RSAPublicKey.val_eval, two_pow_mul_rsaEval]
+      exact Nat.mod_mod _ _
+    rw [hpoint, hP, RSAPublicKey.val_eval, two_pow_mul_rsaEval,
+      hcorrect _ (Nat.mod_lt _ hpos)]
   simp only [lsbInverter, ProbComp.eval_bind, ProbComp.eval_pure,
     eval_mapM_of_pure _ oracle _ hqueries, PMF.pure_bind]
-  exact congrArg PMF.pure (lsbRecover_lsbQueries hN hx (Nat.lt_size_self pk.N).le oracle hcorrect)
+  congr 1
+  ext
+  simp only [RSAPublicKey.val_eval]
+  rw [lsbRecover_lsbQueries hN x.isLt (Nat.lt_size_self pk.N).le oracle hcorrect,
+    Nat.mod_eq_of_lt x.isLt]
 
 /-- A predictor that is always correct on the odd moduli produced by `gen n` yields an inverter
 that wins the RSA inversion experiment with probability one. -/
-theorem succProbability_rsaInversionGame_lsbInverter {gen : RSAGen}
-    {A : ℕ → RSAPublicKey × ℕ → ProbComp Bool} {n : ℕ}
+theorem succProbability_rsaInversionGame_lsbInverter {gen : RSAGen} {P : RSAPredictor} {n : ℕ}
     (hodd : ∀ desc ∈ (gen n).support, Odd desc.modulus)
-    (hA : ∀ desc ∈ (gen n).support, ∀ z < desc.modulus,
-      ProbComp.eval (A n (desc.publicKey, rsaEval desc.modulus desc.e z)) =
-        PMF.pure (z.testBit 0)) :
-    Game.succProbability (rsaInversionGame gen (lsbInverter A) n) = 1 := by
-  have hgame : rsaInversionGame gen (lsbInverter A) n = PMF.pure true := by
-    unfold rsaInversionGame
-    rw [← PMF.bind_const (gen n) (PMF.pure true)]
-    apply PMF.bind_congr_on_support
-    intro desc hdesc
-    have : NeZero desc.modulus := ⟨Nat.ne_of_gt desc.modulus_pos⟩
-    simp only [PMF.monad_bind_eq_bind, PMF.monad_pure_eq_pure]
+    (hP : ∀ desc ∈ (gen n).support, ∀ z : Fin desc.modulus,
+      ProbComp.eval (P n desc.publicKey (desc.publicKey.eval z)) = PMF.pure ((z : ℕ).testBit 0)) :
+    Game.succProbability (rsaInversionGame gen (lsbInverter P) n) = 1 := by
+  have hgame : rsaInversionGame gen (lsbInverter P) n = PMF.pure true := by
+    rw [rsaInversionGame_eq, ← PMF.bind_const (gen n) (PMF.pure true)]
+    refine PMF.bind_congr_on_support _ _ _ fun desc hdesc => ?_
     rw [← PMF.bind_const (PMF.uniformOfFintype (Fin desc.modulus)) (PMF.pure true)]
     refine PMF.bind_congr_on_support _ _ _ fun x _ => ?_
-    change (ProbComp.eval (lsbInverter A n
-      (desc.publicKey, rsaEval desc.publicKey.N desc.publicKey.e x))).bind _ = _
-    rw [eval_lsbInverter (pk := desc.publicKey) (hodd desc hdesc) (hA desc hdesc) x.2,
+    simp only [PMF.monad_bind_eq_bind, PMF.monad_pure_eq_pure]
+    rw [eval_lsbInverter (pk := desc.publicKey) (hodd desc hdesc) (hP desc hdesc) x,
       PMF.pure_bind, decide_eq_true rfl]
   rw [hgame]
   simp [Game.succProbability]

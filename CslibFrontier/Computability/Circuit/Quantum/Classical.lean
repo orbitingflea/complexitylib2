@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import CslibFrontier.Computability.Circuit.Quantum.Code
+import Mathlib.Data.List.GetD
 
 /-!
 # Classical gate codes on basis states
@@ -27,11 +28,12 @@ Bits of a basis string are read by their number (`Cslib.Quantum.readBit`), as in
 ## Main definitions
 
 * `Cslib.Quantum.readBit`: bit `c` of a basis string, `false` past its end.
-* `Cslib.Quantum.GateCode.classicalStep`: the permutation of a classical gate code.
+* `Cslib.Quantum.GateCode.classicalStep`: the action of a classical gate code on basis strings, a
+  permutation when the target is not a control.
 * `Cslib.Quantum.GateCode.IsClassical`: a list of well-formed classical gate codes.
 * `Cslib.Quantum.GateCode.classicalRun`, `Cslib.Quantum.GateCode.classicalUnrun`: the composed
-  permutation of a list of classical codes and its inverse.
-* `Cslib.Quantum.GateCode.swapCodes`: three CNOT gates moving a qubit into qubit `0`.
+  action of a list of classical codes and, for a list of well-formed classical codes, its inverse.
+* `Cslib.Quantum.GateCode.swapCodes`: three CNOT gates moving qubit `a ≠ 0` into qubit `0`.
 
 ## Main results
 
@@ -65,10 +67,27 @@ theorem readBit_of_le (x : Fin m → Bool) {c : ℕ} (h : m ≤ c) : readBit x c
 theorem funext_readBit {x y : Fin m → Bool} (h : ∀ c, readBit x c = readBit y c) : x = y :=
   funext fun i => by simpa using h i
 
+/-- The bits of the input state past the end of the input are zero. -/
+theorem readBit_inputState_of_le {x : List Bool} {c : ℕ} (hc : x.length ≤ c) :
+    readBit (inputState m x) c = false := by
+  by_cases h : c < m
+  · rw [readBit_of_lt _ h]
+    exact List.getD_eq_default x false hc
+  · exact readBit_of_le _ (not_lt.mp h)
+
+/-- The bits of the input state are those of the input, when the input fits in the register. -/
+theorem readBit_inputState {x : List Bool} (hx : x.length ≤ m) (c : ℕ) :
+    readBit (inputState m x) c = x.getD c false := by
+  by_cases hc : c < m
+  · rw [readBit_of_lt _ hc]
+    rfl
+  · rw [readBit_inputState_of_le (by omega), List.getD_eq_default x false (by omega)]
+
 namespace GateCode
 
-/-- The permutation of basis strings of the classical gate code `(false, t, cs)`: bit `t` flips when
-every bit of `cs` is one. It is the identity when `t` is out of range. -/
+/-- The action on basis strings of the classical gate code `(false, t, cs)`: bit `t` flips when
+every bit of `cs` is one. It is the identity when `t` is out of range, and a permutation when `t`
+is not in `cs` (`classicalStep_classicalStep`). -/
 def classicalStep (g : GateCode) (x : Fin m → Bool) : Fin m → Bool :=
   if h : g.2.1 < m then Function.update x ⟨g.2.1, h⟩ (x ⟨g.2.1, h⟩ ^^ g.2.2.all (readBit x))
   else x
@@ -135,11 +154,12 @@ theorem target_notMem_of_wellFormed {g : GateCode} (h₁ : g.1 = false) (h₂ : 
   subst h₁
   exact (List.nodup_cons.mp h₂.2.1).1
 
-/-- The composed permutation of a list of classical codes, applied first to last. -/
+/-- The composed action of a list of classical codes, applied first to last. -/
 def classicalRun (gs : List GateCode) (x : Fin m → Bool) : Fin m → Bool :=
   gs.foldl (fun y g => classicalStep g y) x
 
-/-- The inverse of `classicalRun`: the permutations applied last to first. -/
+/-- The steps of `classicalRun` applied last to first: the inverse of `classicalRun` when
+`IsClassical m gs` (`classicalUnrun_classicalRun`, `classicalRun_classicalUnrun`). -/
 def classicalUnrun (gs : List GateCode) (y : Fin m → Bool) : Fin m → Bool :=
   gs.foldr (fun g y => classicalStep g y) y
 
@@ -274,7 +294,7 @@ theorem exists_toPlacedGate?_eval_apply {g : GateCode} (h₁ : g.1 = false) (h�
 
 /-! ### Swapping a qubit into qubit `0` -/
 
-/-- Three CNOT gates swapping qubit `a` into qubit `0`. -/
+/-- For `a ≠ 0`, three CNOT gates swapping qubit `a` into qubit `0`. -/
 def swapCodes (a : ℕ) : List GateCode := [(false, 0, [a]), (false, a, [0]), (false, 0, [a])]
 
 theorem isClassical_swapCodes {N a : ℕ} (ha : 0 < a) (hN : a < N) :

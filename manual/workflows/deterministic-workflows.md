@@ -32,12 +32,19 @@ The [automation reference](../design-and-assurance/automation.md) explains regis
 
 For binary sign-magnitude integers, import
 `CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Int.Binary`.
-The plain `ComputableInPolyTime.intBin_natAbs`, `intBin_isNeg`, `intBin_signMagnitude`,
-`intBin_prod` and `intBin_pow` rules compose through `fun_prop`; `intBin_pow'` accepts computed
+The plain `ComputableInPolyTime.intBin_*` rules (sign and magnitude, ring operations,
+comparisons, list sums and products, unary powers) compose through `fun_prop`; `intBin_pow'` accepts computed
 base and unary exponent certificates. The complete
-[IntBinary client](../../CslibFrontierTests/RationalHitting/IntBinary.lean) checks composed products, powers,
+[IntBinary client](../../CslibFrontierTests/RationalHitting/IntBinary.lean) checks composed ring operations, products, powers,
 magnitudes and signs. A binary exponent has a different output-size obligation: do not replace
 the unary exponent encoding merely to make a goal match.
+
+For rational numbers `ℚ` encoded as `(q.num, q.den)` under
+`Turing.MultiTapeTM.encRat` ([Encodings/Rat.lean](../../CslibFrontier/Computability/Machines/Turing/MultiTape/Encodings/Rat.lean)),
+import
+`CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Rat`
+for `ComputableInPolyTime.rat_num`, `rat_den`, `rat_intCast`, `rat_divInt`, `rat_neg`, `rat_inv`,
+`rat_add`, `rat_sub`, `rat_mul`, `rat_div`, `rat_lt`, and `rat_le`.
 
 For a padded integer dot product, import
 [PolyTime/Int/DotProduct.lean](../../CslibFrontier/Computability/PolyTime/Int/DotProduct.lean)
@@ -115,6 +122,12 @@ For a step capturing a parameter, use `iterateWith_spec` and certify the joint `
 
 For a space bound on a loop whose number of rounds is not computable, or would cost too much to compute, import `CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.InSpace.IterateUntil` and apply [ComputableInSpace.iterateUntil](../../CslibFrontier/Computability/Machines/Turing/MultiTape/Complexity/InSpace/IterateUntil.lean). Supply space certificates for the initial state, the step and a Boolean `done` test, and give the number of rounds `n x` as a function with no certificate. Show that `done` holds after `n x` rounds and fails before. Then bound the space of the step and the test, and the encoded state, at every round up to `n x`. The loop stops when the test first holds, and its space is that of the start, the rounds and the states, with no counter. `ComputableInSpace.iterate` instead charges a binary counter, and it needs a certificate for the count. The [BitGame client](../../CslibFrontierTests/BitGame.lean) counts down from `n` in `n` rounds within `O(|encNat n|)` space.
 
+## Build a course-of-values stage table
+
+**Goal:** build `[val 0, …, val (n - 1)]` or compute `val n`, where `val i = step [val 0, …, val (i - 1)]` reads all earlier values. Separate the stage definition from its complexity certificate by importing [List.courseOfValues](../../CslibFrontier/Foundations/Data/List/CourseOfValues.lean) where `step` and `List.courseOfValuesVal` are defined (for instance in [Ladner.Basic](../../CslibFrontier/Computability/Complexity/Classes/Ladner/Basic.lean)), then import `CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.CourseOfValues` ([PolyTime.CourseOfValues](../../CslibFrontier/Computability/Machines/Turing/MultiTape/Complexity/PolyTime/CourseOfValues.lean)) for the polynomial-time proof.
+
+For framed-list tables (`encList encElem`), `ComputableInPolyTime.courseOfValues`, `courseOfValuesVal`, `courseOfValuesWith` and `courseOfValuesWithInput` require a `PolyBounded` or `PolynomiallyBounded` bound on `(encElem (List.courseOfValuesVal … i)).length` along reachable prefixes (`i < count x` or `i < n`), without re-proving `length_encList_le` or `List.courseOfValues_eq_iterate`. For raw Boolean stage tables (`encBits`), `bitsCourseOfValues`, `bitsCourseOfValuesVal` and `bitsCourseOfValuesWith` need no separate element bound because each stage appends one bit. A polynomial number of efficient steps still fails the framed-list bound if `val i` grows exponentially. The [course-of-values regression client](../../CslibFrontierTests/Machines/Turing/MultiTape/Complexity/PolyTime/CourseOfValues.lean) exercises pure prefix identities, positive framed-list and raw-bit certificates, and the failing exponential growth check; production clients include [Ladner.PolyTime](../../CslibFrontier/Computability/Complexity/Classes/Ladner/PolyTime.lean), [UniformDiagonalization](../../CslibFrontier/Computability/Complexity/Classes/UniformDiagonalization.lean), [Immune.Construction](../../CslibFrontier/Computability/Complexity/Classes/Immune/Construction.lean) and [Immune.RecursiveCore](../../CslibFrontier/Computability/Complexity/Classes/Immune/RecursiveCore.lean).
+
 ## Derandomize an averaging argument
 
 **Goal:** turn an averaging proof that some choice of bits is good into a deterministic
@@ -147,6 +160,27 @@ uses the fact that setting a variable does not lengthen the encoded formula. The
 [JohnsonMaxSAT client](../../CslibFrontierTests/JohnsonMaxSAT.lean) checks a tight `7 / 8`
 instance and a formula with an empty clause, where the `1 / 2` bound fails without its
 hypothesis. Build it with `scripts/build.sh CslibFrontierTests.JohnsonMaxSAT`.
+
+To charge estimator and branch evaluations explicitly or package the Turing-machine transfer once,
+use [Algorithms/Lean/PessimisticEstimator.lean](../../CslibFrontier/Algorithms/Lean/PessimisticEstimator.lean)
+and [Computability/PolyTime/PessimisticEstimator.lean](../../CslibFrontier/Computability/PolyTime/PessimisticEstimator.lean).
+`CostedGreedy` runs binary greedy rounds in `TimeM ℕ`, proving agreement with `greedy` (`ret_runM`)
+together with `runM_spec` and `runM_spec_of_add_le` (`2 * branchBound r + 2 * estBound r + compareCost`
+ticks per round); `CostedProductDerandomizer` extends this to general finite product distributions
+`PMF.pi p` (`derandomizeM_spec`, via `PMF.condExpect` in
+[Product/ConditionalExpectation.lean](../../CslibFrontier/Probability/Product/ConditionalExpectation.lean)).
+On multi-tape Turing machines, `PolyTimeGreedyInput` (`computableInPolyTime_run`,
+`computableInPolyTime_run_nat`, `run_polyTime_spec`) discharges `foldlWithInput_of_bounded_growth`
+from polynomial-time `rounds`, `init`, `branch` (on `encBranchInput`), `estimate`, order comparison
+on estimator values `M` (`hle`, supplied automatically for binary `ℕ` by
+`computableInPolyTime_run_nat`), and an additive per-round encoded-state growth bound. Weighted
+`MaxCut` instantiates both layers in
+[MaxCut/Derandomized.lean](../../CslibFrontier/Algorithms/Lean/MaxCut/Derandomized.lean) and
+[Problems/MaxCut/Derandomized.lean](../../CslibFrontier/Computability/Complexity/Problems/MaxCut/Derandomized.lean),
+proving the deterministic `1 / 2`-approximation `cutWeight_le_two_mul_derandomizedCutSide`, the
+`(distinctVertices edges).length * (2 * edges.length + 3)` `TimeM` bound (`derandomizedCutM_spec`),
+and `computableInPolyTime_derandomizedCut`; see
+[FairBitRejectionAndCondExp.lean](../../CslibFrontierTests/FairBitRejectionAndCondExp.lean).
 
 When the averaging argument uses only `k`-wise independence, you can search a small sample
 space instead of fixing bits one by one. For satisfiability,
@@ -294,13 +328,15 @@ For NP, additionally supply a verifier and a polynomial certificate-length condi
 ```lean
 /-- For NP, the verifier also needs a proved certificate bound: here exactly the encoded
 instance length, represented by the polynomial `X`. -/
-theorem clique_mem_NP : Clique ∈ NP (encPair encGraph encNat) :=
+theorem clique_mem_NP : Clique ∈ NP encCliqueInstance :=
   ⟨Polynomial.X, Clique.verifier, by fun_prop, Clique.isVerifier⟩
 ```
 
 **Result:** the first example supplies P membership and then NP membership by inclusion; the second supplies Clique's NP membership using the existing verifier and its exact witness-length theorem. These are applications of the library's class interfaces.
 
 **When it fails:** separate a failed computation certificate from a failed membership or witness-length equivalence. Check the verifier's encoding and exact length convention before trying a different tactic.
+
+**Shortcuts:** when witnesses are values with a decoder, [mem_NP_of_check](../../CslibFrontier/Computability/Complexity/Classes/NP/Witness.lean) takes a polynomial-time check that accepts witnesses only for members and accepts a short witness for every member, and handles the exact-length convention. When a certificate selects entries of a list computed from the instance, [mem_NP_of_subsetWitness](../../CslibFrontier/Computability/Complexity/Classes/NP/Witness.lean) takes a set of distinct entries, as for dominating sets and set covers, and [mem_NP_of_subMultisetWitness](../../CslibFrontier/Computability/Complexity/Classes/NP/Witness.lean) a sub-multiset. Both take polynomial-time code for the list and for the check of the selected entries, and a proof `hP` that the check decides the intended property on every admissible selection: the duplicate-free lists of candidates for subsets, the sublists of the entries for sub-multisets. Problems that keep a named verifier, such as cliques, vertex covers, subset sum and knapsack, use `isVerifier_subsetVerifier` or `isVerifier_maskVerifier` with the matching `computableInPolyTime_*` lemma. When the problem is an `NP` problem restricted by a polynomial-time syntax test, [mem_NP_of_guard](../../CslibFrontier/Computability/Complexity/Classes/NP/Closure.lean) takes the test and `a ∈ L ↔ c a = true ∧ a ∈ A`.
 
 <!-- /worked-example -->
 
@@ -317,18 +353,20 @@ Continue in [NPCompleteness](../../CslibFrontierTests/NPCompleteness.lean), keep
 /-- A reduction has a map, its polynomial-time certificate, and a membership equivalence.
 The equivalence must point from the source problem to the image in the target problem. -/
 theorem independentSet_to_clique :
-    PolyTimeReducible (encPair encGraph encNat) (encPair encGraph encNat) IndependentSet Clique :=
+    PolyTimeReducible encIndependentSetInstance encCliqueInstance IndependentSet Clique :=
   ⟨complementInstance, by fun_prop,
     fun ⟨G, k⟩ => (Graph.compl_mem_Clique_iff G k).symm⟩
 
 /-- Combine NP membership with hardness transferred from the known hard source problem. -/
-theorem clique_npComplete : NPComplete (encPair encGraph encNat) Clique :=
+theorem clique_npComplete : NPComplete encCliqueInstance Clique :=
   ⟨clique_mem_NP, IndependentSet_npHard.trans independentSet_to_clique⟩
 ```
 
 **Result:** `.symm` aligns the correctness lemma with the source-to-target membership equivalence, and `NPHard.trans` transports hardness forward. The final proof combines that hardness with `clique_mem_NP`. This client reuses known results; it is not a new completeness theorem.
 
 **When it fails:** check the reduction's direction and both encodings, then isolate its computation and equivalence obligations. A new problem still needs the verifier, certificate length, reduction cost and equivalence. Check empty instances and boundary targets as the client does.
+
+**Guarded maps:** when the map is faithful only on instances that pass a polynomial-time syntax test, use [PolyTimeReducible.of_guard](../../CslibFrontier/Computability/Complexity/Reduction/Guard.lean). It sends failing instances to a fixed instance `b₀`, so you prove `b₀ ∉ B`, `a ∈ A ↔ g a = true ∧ f a ∈ B` and the two cost certificates.
 
 <!-- /worked-example -->
 

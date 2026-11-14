@@ -23,7 +23,7 @@ public import CslibFrontier.Logics.Propositional.CNF.Compact.Relabel
 This is an elementary consequence of the existing first-occurrence numbering conventions.
 -/
 
-@[expose] public section
+public section
 
 namespace Cslib.Complexity.SAT
 
@@ -37,10 +37,8 @@ theorem incidenceGraph_compact {V : Type} [DecidableEq V] (φ : CNF V) :
   simp only [CNF.compact, occurrences_relabel, List.map_map, Function.comp_def]
   apply List.map_congr_left
   intro o ho
-  have hv : o.2.2.1 ∈ φ.vars := by
-    rw [← Cslib.Logic.PL.map_occurrences]
-    exact List.mem_map_of_mem ho
   congr 1
-  simpa only [CNF.distinctVars_compact] using CNF.idxOf_distinctVars_compact φ hv
+  simpa only [CNF.distinctVars_compact] using
+    CNF.idxOf_distinctVars_compact φ (variable_mem_of_mem_occurrences ho)
 
 end Cslib.Complexity.SAT

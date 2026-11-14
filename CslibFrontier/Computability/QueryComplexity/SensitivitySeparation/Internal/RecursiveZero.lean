@@ -34,7 +34,7 @@ on a single child, which is charged to the joint sensitivity.
   [Schlesinger2026Sensitivity] at revision add0aca8ee0d71e68969f2cb45cf91554a50f787.
 -/
 
-@[expose] public section
+public section
 
 namespace Cslib.QueryComplexity.SensitivitySeparation
 
@@ -74,13 +74,8 @@ theorem recursive_sensitivity_zero_at {k r h : ℕ} {I : Type} [Fintype I]
     rcases rowClause_repair_cases T A.label F q x i j c a hioff hi with
       ⟨hit, hji, htoff, hton⟩ | ⟨hig, hij, rfl, hgon, hgoff⟩
     · subst j
-      have hc := targetWitness_unique T A.label F q x hr i hit c htoff
-      apply Finset.mem_union_left
-      apply Finset.mem_biUnion.mpr
-      refine ⟨i, hit, ?_⟩
-      have hn : F (Fin.last h) (BitString.flipOn {a} (recursiveChild x i c)) ≠
-          F (Fin.last h) (recursiveChild x i c) := by simp [hton, htoff]
-      simpa [childChanges, hc] using hn
+      exact Finset.mem_union_left _
+        (mem_targetCandidates_biUnion_of_flip T A.label F hr q x hit htoff hton)
     · have hj := gateWitness_unique T A.label F q x i hig j hij hgon
       apply Finset.mem_union_right
       by_cases hs : i ∈ SC

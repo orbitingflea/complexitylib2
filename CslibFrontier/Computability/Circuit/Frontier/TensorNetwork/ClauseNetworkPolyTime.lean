@@ -54,16 +54,16 @@ namespace Cslib.Circuits.Frontier.ClauseNetwork
 
 open Turing.MultiTapeTM ComputableInPolyTime Cslib.Logic.PL
 open Cslib.Complexity (encCNF)
-open ExplicitTensorNetwork (computableInPolyTime_boundedTable ports_unary_to_binary)
+open ExplicitTensorNetwork (computableInPolyTime_boundedTable encVertex ports_unary_to_binary)
 
 variable {α : Type} {inp : α ↪ List Bool}
 
 /-- The encoding of occurrence lists: unary clause and position indices and a binary literal. -/
-local notation "encOs" => encList (encOccurrence encNat)
+abbrev encOccurrences : List (Occurrence ℕ) ↪ List Bool := encList (encOccurrence encNat)
 
 section Data
 
-variable {os : α → List (Occurrence ℕ)} (hos : ComputableInPolyTime os inp encOs)
+variable {os : α → List (Occurrence ℕ)} (hos : ComputableInPolyTime os inp encOccurrences)
 include hos
 
 theorem computableInPolyTime_occ {u : α → ℕ} (hu : ComputableInPolyTime u inp encUnary) :
@@ -72,15 +72,15 @@ theorem computableInPolyTime_occ {u : α → ℕ} (hu : ComputableInPolyTime u i
 
 theorem computableInPolyTime_var {u : α → ℕ} (hu : ComputableInPolyTime u inp encUnary) :
     ComputableInPolyTime (fun a => var (os a) (u a)) inp encNat :=
-  (fst _ _).comp ((snd _ _).comp ((snd _ _).comp (computableInPolyTime_occ hos hu)))
+  (fst _ _).comp (encOccurrence_lit_polyTime encNat (computableInPolyTime_occ hos hu))
 
 theorem computableInPolyTime_pol {u : α → ℕ} (hu : ComputableInPolyTime u inp encUnary) :
     ComputableInPolyTime (fun a => pol (os a) (u a)) inp encBool :=
-  (snd _ _).comp ((snd _ _).comp ((snd _ _).comp (computableInPolyTime_occ hos hu)))
+  (snd _ _).comp (encOccurrence_lit_polyTime encNat (computableInPolyTime_occ hos hu))
 
 theorem computableInPolyTime_clauseOf {u : α → ℕ} (hu : ComputableInPolyTime u inp encUnary) :
     ComputableInPolyTime (fun a => clauseOf (os a) (u a)) inp encUnary :=
-  (fst _ _).comp (computableInPolyTime_occ hos hu)
+  encOccurrence_clause_polyTime encNat (computableInPolyTime_occ hos hu)
 
 theorem computableInPolyTime_prev {u : α → ℕ} (hu : ComputableInPolyTime u inp encUnary) :
     ComputableInPolyTime (fun a => prev (os a) (u a)) inp encUnary := by
@@ -116,7 +116,7 @@ end Data
 
 /-- The falsifying word of a list of unary ports. -/
 theorem computableInPolyTime_falsifier {os : α → List (Occurrence ℕ)}
-    (hos : ComputableInPolyTime os inp encOs) {ps : α → List ℕ}
+    (hos : ComputableInPolyTime os inp encOccurrences) {ps : α → List ℕ}
     (hps : ComputableInPolyTime ps inp (encList encUnary)) :
     ComputableInPolyTime (fun a => falsifier (os a) (ps a)) inp encNat := by
   have hlist : ComputableInPolyTime (fun a => (ps a).map fun j => !pol (os a) (j / 3)) inp
@@ -130,12 +130,11 @@ theorem computableInPolyTime_falsifier {os : α → List (Occurrence ℕ)}
 /-- **Row vertices are polynomial-time** when every entry of the row tables, at a fixed word
 value, is polynomial-time in the input and the unary row number. -/
 theorem computableInPolyTime_rowVertex (B : ℕ) {os : α → List (Occurrence ℕ)}
-    (hos : ComputableInPolyTime os inp encOs) {row : α → ℕ → ℕ → ℕ}
+    (hos : ComputableInPolyTime os inp encOccurrences) {row : α → ℕ → ℕ → ℕ}
     (hrow : ∀ idx, ComputableInPolyTime (fun p : α × ℕ => row p.1 p.2 idx)
       (encPair inp encUnary) encNat)
     {i : α → ℕ} (hi : ComputableInPolyTime i inp encUnary) :
-    ComputableInPolyTime (fun a => rowVertex (os a) B (row a) (i a)) inp
-      (encPair (encList encNat) (encList encNat)) := by
+    ComputableInPolyTime (fun a => rowVertex (os a) B (row a) (i a)) inp encVertex := by
   have hps := computableInPolyTime_clausePorts hos hi
   unfold rowVertex
   exact (ports_unary_to_binary hps).prod
@@ -144,7 +143,7 @@ theorem computableInPolyTime_rowVertex (B : ℕ) {os : α → List (Occurrence �
 
 /-- The entries of the clause tables are polynomial-time at every fixed word value. -/
 theorem computableInPolyTime_clauseRow {os : α → List (Occurrence ℕ)}
-    (hos : ComputableInPolyTime os inp encOs) (idx : ℕ) :
+    (hos : ComputableInPolyTime os inp encOccurrences) (idx : ℕ) :
     ComputableInPolyTime (fun p : α × ℕ => clauseRow (os p.1) p.2 idx)
       (encPair inp encUnary) encNat := by
   have hz := computableInPolyTime_falsifier (hos.comp (fst _ _))
@@ -154,10 +153,9 @@ theorem computableInPolyTime_clauseRow {os : α → List (Occurrence ℕ)}
 
 /-- **Equality vertices are polynomial-time.** -/
 theorem computableInPolyTime_qVertex (B : ℕ) {os : α → List (Occurrence ℕ)}
-    (hos : ComputableInPolyTime os inp encOs) {w : α → ℕ}
+    (hos : ComputableInPolyTime os inp encOccurrences) {w : α → ℕ}
     (hw : ComputableInPolyTime w inp encUnary) :
-    ComputableInPolyTime (fun a => qVertex (os a) B (w a)) inp
-      (encPair (encList encNat) (encList encNat)) := by
+    ComputableInPolyTime (fun a => qVertex (os a) B (w a)) inp encVertex := by
   have hps := computableInPolyTime_qPorts hos hw
   have hlen := (length_list _).comp hps
   unfold qVertex
@@ -168,8 +166,7 @@ theorem computableInPolyTime_qVertex (B : ℕ) {os : α → List (Occurrence ℕ
 
 /-- **Link vertices are polynomial-time.** -/
 theorem computableInPolyTime_linkVertex {u : α → ℕ} (hu : ComputableInPolyTime u inp encUnary) :
-    ComputableInPolyTime (fun a => linkVertex (u a)) inp
-      (encPair (encList encNat) (encList encNat)) := by
+    ComputableInPolyTime (fun a => linkVertex (u a)) inp encVertex := by
   unfold linkVertex
   refine (ports_unary_to_binary (cons' (unary_add' (unary_mul' (const 3) hu) (const 1))
     (cons' (unary_add' (unary_mul' (const 3) hu) (const 2)) (const [])))).prod (const _)
@@ -177,7 +174,7 @@ theorem computableInPolyTime_linkVertex {u : α → ℕ} (hu : ComputableInPolyT
 /-- **The network of an occurrence list is polynomial-time**, with its number of rows in binary,
 when the entries of its row tables are. -/
 theorem computableInPolyTime_network (B : ℕ) {os : α → List (Occurrence ℕ)}
-    (hos : ComputableInPolyTime os inp encOs) {m : α → ℕ}
+    (hos : ComputableInPolyTime os inp encOccurrences) {m : α → ℕ}
     (hm : ComputableInPolyTime m inp encUnary) {row : α → ℕ → ℕ → ℕ}
     (hrow : ∀ idx, ComputableInPolyTime (fun p : α × ℕ => row p.1 p.2 idx)
       (encPair inp encUnary) encNat) :
@@ -185,14 +182,12 @@ theorem computableInPolyTime_network (B : ℕ) {os : α → List (Occurrence ℕ
       (encPair encNat ExplicitTensorNetwork.encExplicitNetwork) := by
   have hN := computableInPolyTime_length hos
   have hout : ComputableInPolyTime (DescribedNetwork.equivProd (T := List ℕ)).symm
-      (encPair encUnary (encList (encPair (encList encNat) (encList encNat))))
-      ExplicitTensorNetwork.encExplicitNetwork :=
+      (encPair encUnary (encList encVertex)) ExplicitTensorNetwork.encExplicitNetwork :=
     ComputableInPolyTime.of_eq fun _ => rfl
   have hverts : ComputableInPolyTime (fun a =>
       (List.range (m a)).map (rowVertex (os a) B (row a)) ++
         (List.range (os a).length).map linkVertex ++
-        (List.range (os a).length).map (qVertex (os a) B)) inp
-      (encList (encPair (encList encNat) (encList encNat))) :=
+        (List.range (os a).length).map (qVertex (os a) B)) inp (encList encVertex) :=
     listAppend' (listAppend'
       (mapWithInput (range.comp hm) (computableInPolyTime_rowVertex B (hos.comp (fst _ _))
         (fun idx => (hrow idx).comp ((fst _ _).comp (fst _ _) |>.prod (snd _ _))) (snd _ _)))

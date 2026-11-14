@@ -52,7 +52,7 @@ Reckhow][CookReckhow1973].
 * [S. A. Cook and R. A. Reckhow, *Time bounded random access machines*][CookReckhow1973]
 -/
 
-@[expose] public section
+public section
 
 namespace Cslib.WordRAM
 
@@ -77,7 +77,7 @@ over `B` computes it on the bits `(encIn a).map Bool.toNat` of its input, within
 instructions at every word size of at least `W |encIn a|`, for polynomially bounded `T` and `W`. -/
 theorem turingComputableInPolyTime_iff_exists_computesInTime (φ : Basis.additive.Hom B)
     (hop : ∀ op : B.Op, Turing.MultiTapeTM.ComputableInPolyTime (B.genericModel.checkedOp op)
-      (encPair encUnary (encPi encNat)) (encOption encNat)) {f : α → ℕ} :
+      encWidthOperands (encOption encNat)) {f : α → ℕ} :
     Turing.MultiTapeTM.ComputableInPolyTime f encIn encNat ↔
       ∃ (r : ℕ) (p : Program B r) (T W : ℕ → ℕ), PolynomiallyBounded T ∧
         PolynomiallyBounded W ∧ p.ComputesInTime (fun _ a => (encIn a).map Bool.toNat)
@@ -127,7 +127,7 @@ theorem UniformComputableInPolyTime.polyBounded {f : α → ℕ}
     (h : UniformComputableInPolyTime B f (fun _ a => (encIn a).map Bool.toNat)
       (fun a => (encIn a).length)) :
     PolyBounded (fun a => (encIn a).length) f := by
-  obtain ⟨T, -, k, hk, r, p, hp⟩ := h
+  obtain ⟨T, -, k, hk, r, p, hp, _⟩ := h
   refine ⟨fun n => 2 ^ k * (n + 1) ^ k, .of_forall_le (2 ^ k) k fun _ => le_rfl, fun a => ?_⟩
   have hi := inputFits_map_toNat (encIn := encIn) hk a le_rfl
   obtain ⟨n, hex, -⟩ := hp a _ le_rfl hi
@@ -144,7 +144,7 @@ word-RAM side (`Cslib.WordRAM.UniformComputableInPolyTime.polyBounded`); without
 `Cslib.WordRAM.turingComputableInPolyTime_iff_exists_computesInTime`. -/
 theorem turingComputableInPolyTime_iff_uniformComputableInPolyTime (φ : Basis.additive.Hom B)
     (hop : ∀ op : B.Op, Turing.MultiTapeTM.ComputableInPolyTime (B.genericModel.checkedOp op)
-      (encPair encUnary (encPi encNat)) (encOption encNat)) {f : α → ℕ}
+      encWidthOperands (encOption encNat)) {f : α → ℕ}
     (hf : PolyBounded (fun a => (encIn a).length) f) :
     Turing.MultiTapeTM.ComputableInPolyTime f encIn encNat ↔
       UniformComputableInPolyTime B f (fun _ a => (encIn a).map Bool.toNat)
@@ -162,7 +162,8 @@ theorem turingComputableInPolyTime_iff_uniformComputableInPolyTime (φ : Basis.a
   obtain ⟨D', e', hD'⟩ := polynomiallyBounded_iff_le.1 hbound
   refine ⟨fun n => simTime K (Fintype.card Q) (t n), ?_, D + e + D' + e' + 1, by omega, regs K,
     _, Program.ComputesInTime.mapOp (p := simProgram tm.tr tm.q₀ (Fintype.equivFin Q)) φ
-      fun a w hw _ => ?_⟩
+      fun a w hw _ => ?_,
+    inputAdmissible_of_widthIndependent _ _⟩
   · unfold simTime
     exact (PolynomiallyBounded.const _).add (ht.mul (.const _))
   · obtain ⟨hhalt, hout⟩ := (htm a).runFrom_of_le le_rfl

@@ -8,6 +8,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import check_changed_files as c  # noqa: E402
@@ -170,6 +171,45 @@ class RestatementTests(unittest.TestCase):
         self.assertFalse(c.restatement_only(self.HEADER + "theorem t : True := trivial\n"))
 
 
+class ExposeSectionTests(unittest.TestCase):
+    HEADER = "module\n-- upstream: candidate\n\npublic import CslibFrontier.Init\n\n"
+
+    def test_a_section_without_definitions_fails(self) -> None:
+        for header in ("@[expose] public section", "@[expose] public noncomputable section",
+                       "@[expose] section Inner", "  @[expose] public meta section"):
+            with self.subTest(header=header):
+                text = self.HEADER + header + "\n\ntheorem t : True := trivial\n"
+                expected = [] if "meta" in header else [6]
+                self.assertEqual(c.noop_expose_sections(text), expected)
+
+    def test_every_header_is_reported(self) -> None:
+        text = (self.HEADER + "@[expose] public section\n\ntheorem t : True := trivial\n\nend\n\n"
+                "@[expose] public section\n\nlemma u : True := trivial\n")
+        self.assertEqual(c.noop_expose_sections(text), [6, 12])
+
+    def test_a_definition_anywhere_keeps_the_header(self) -> None:
+        for decl in ("def f := 1", "private noncomputable def f := 1", "abbrev T := Nat",
+                     "instance : Inhabited Nat := ⟨0⟩", "structure S where\n  x : Nat",
+                     "inductive I | a", "irreducible_def f := 1", "alias g := Nat.succ",
+                     "@[simps] theorem t : True := trivial", "notation \"ω\" => 1",
+                     "theorem t : True := h where h := trivial", "deriving instance Repr for S",
+                     "macro \"go\" : tactic => `(tactic| rfl)", "#eval 1"):
+            with self.subTest(decl=decl):
+                text = self.HEADER + decl + "\n\n@[expose] public section\n\nend\n"
+                self.assertEqual(c.noop_expose_sections(text), [])
+
+    def test_comments_strings_and_identifiers_are_not_definitions(self) -> None:
+        body = ("/-- See `def f`, an `instance`. -/\ntheorem foo_def : True := trivial\n"
+                "-- def g := 1\ntheorem t : \"def\" = \"def\" := rfl\n"
+                "theorem u : True := Foo.def.elim (definedness := trivial)\n")
+        text = self.HEADER + "@[expose] public section\n\n" + body
+        self.assertEqual(c.noop_expose_sections(text), [6])
+
+    def test_plain_sections_pass(self) -> None:
+        self.assertEqual(c.noop_expose_sections(
+            self.HEADER + "public section\n\ntheorem t : True := trivial\n"), [])
+
+
 class ChangedFileTests(unittest.TestCase):
     def setUp(self) -> None:
         tmp = tempfile.TemporaryDirectory()
@@ -193,13 +233,34 @@ class ChangedFileTests(unittest.TestCase):
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(text)
 
-    def run_main(self) -> tuple[int, str]:
+    def run_main(self, *flags: str) -> tuple[int, str]:
         import contextlib
         import io
-        err = io.StringIO()
-        with contextlib.redirect_stderr(err), contextlib.redirect_stdout(io.StringIO()):
-            code = c.main(["--no-build-check"], root=self.root)
+        err, self.out = io.StringIO(), io.StringIO()
+        with contextlib.redirect_stderr(err), contextlib.redirect_stdout(self.out):
+            code = c.main(list(flags or ["--no-build-check"]), root=self.root)
         return code, err.getvalue()
+
+    def test_source_only_runs_the_source_lints_without_build_outputs(self) -> None:
+        # A missing "Main" name would need `.ilean` outputs; the source-only run must not load them.
+        self.write("CslibFrontier/Kept.lean",
+                   "/-! # Kept\n\n## Main results\n\n* `missing`: x\n-/\n"
+                   "@[expose] public section\n\ntheorem t : True := trivial\n")
+        self.write("CslibFrontierTests/New.lean", "example := @kept\n")
+        with mock.patch.object(c.lo, "check_outputs", side_effect=AssertionError("build read")):
+            code, err = self.run_main("--source-only")
+        self.assertEqual(code, 1)
+        self.assertEqual(err.count("ERROR"), 2)
+        self.assertIn("CslibFrontier/Kept.lean:7: this `@[expose]` section", err)
+        self.assertIn("CslibFrontierTests/New.lean: every example only restates", err)
+        self.assertIn("Skipped the module-doc name lint", self.out.getvalue())
+        self.write("CslibFrontier/Kept.lean", "def kept := 1\n")
+        self.write("CslibFrontierTests/New.lean", "example : kept = 1 := rfl\n")
+        self.assertEqual(self.run_main("--source-only"), (0, ""))
+        self.assertIn("Changed-file source lints passed", self.out.getvalue())
+        self.assertIn("Skipped the module-doc name lint", self.out.getvalue())
+        with self.assertRaises(SystemExit):
+            self.run_main("--source-only", "--no-build-check")
 
     def test_only_added_and_modified_files_are_checked(self) -> None:
         self.write("CslibFrontier/Kept.lean", "def kept := 2\n")
@@ -216,6 +277,18 @@ class ChangedFileTests(unittest.TestCase):
         self.assertEqual(code, 1)
         self.assertEqual(err.count("ERROR"), 1)
         self.assertIn("ERROR: CslibFrontierTests/New.lean: every example only restates", err)
+
+    def test_only_changed_files_get_the_expose_lint(self) -> None:
+        noop = "@[expose] public section\n\ntheorem t : True := trivial\n"
+        self.write("CslibFrontier/Untouched.lean", noop)
+        self.git("add", ".")
+        self.git("commit", "-qm", "untouched no-op header")
+        self.git("update-ref", "refs/remotes/origin/main", "HEAD")
+        self.write("CslibFrontier/Kept.lean", noop)
+        code, err = self.run_main()
+        self.assertEqual(code, 1)
+        self.assertEqual(err.count("ERROR"), 1)
+        self.assertIn("ERROR: CslibFrontier/Kept.lean:1: this `@[expose]` section has no", err)
 
     def test_base_without_merge_base_is_compared_directly(self) -> None:
         self.git("checkout", "-q", "--orphan", "unrelated")

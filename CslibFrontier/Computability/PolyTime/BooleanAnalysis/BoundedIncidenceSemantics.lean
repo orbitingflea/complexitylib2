@@ -22,6 +22,7 @@ import Mathlib.Data.List.GetD
 import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.Positivity
 import Mathlib.Tactic.Ring
+import CslibFrontier.Foundations.Data.List.GetD
 import CslibFrontier.Foundations.Data.List.Lookup
 
 /-!
@@ -35,9 +36,10 @@ refinement on feasible prepared inputs (`prepareBranchEvalInput (n', eqs')` unde
 `checkBranchFeasible N₀_branch (n', eqs') = true`), and Stage-2 local assignment/cube bridges for
 Proposition 5.3 of [OpenAI, *The Exponential Time Hypothesis is False*][OpenAI2026ETH]
 (§§3.4–3.5, §4.6, §§5.3–5.5, Proposition 5.3, and Appendix B.2–B.3, pp. 24–26, 33–34, 37–39,
-48–50). Invalid raw inputs return `0`, `validDesignShape` enforces unary resource-dimension bounds
-rather than semantic validity of arbitrary designs, and exact root-count recovery on feasible
-prepared inputs follows in `BoundedIncidenceExactness`.
+48–50). Raw inputs rejected by `validBranchEvalParams` or `validDesignShape` return `0`; neither
+guard tests that the input is a feasible prepared input. `validDesignShape` enforces unary
+resource-dimension bounds rather than semantic validity of arbitrary designs, and exact root-count
+recovery on feasible prepared inputs follows in `BoundedIncidenceExactness`.
 
 Given `inp = ((n', k'), (b, w, M', β), (r, Q, R, A₀), eqs') : BranchEvalInput`:
 
@@ -240,9 +242,11 @@ pp. 37–39): on feasible prepared inputs (`prepareBranchEvalInput (n', eqs')` w
 `checkBranchFeasible N₀_branch (n', eqs') = true`), evaluates the exact number of common `𝔽₂`
 roots of `eqs'` on `{0, 1}^{n'}` via greedy balanced scheduling, Lemma 4.7 replacement-design
 construction, two-pass measurement-fiber Taylor jet accumulation, and Hermite–Cramer modular
-recovery. Invalid raw `BranchEvalInput` tuples fail `validBranchEvalParams` or the unary
+recovery. Raw `BranchEvalInput` tuples rejected by `validBranchEvalParams` or by the unary
 resource-dimension guard `validDesignShape` (which bounds measurement and group dimensions rather
-than certifying arbitrary designs) and return `0`. -/
+than certifying arbitrary designs) return `0`. Neither guard checks that the tuple is a feasible
+prepared input, and `M'` and `β` are not read. For an accepted tuple that is not a feasible
+prepared input, only the bound `evalBoundedIncidenceBranch_le_two_pow` is proved. -/
 def evalBoundedIncidenceBranch (inp : BranchEvalInput) : ℕ :=
   if !validBranchEvalParams inp then 0
   else
@@ -440,8 +444,7 @@ private theorem getD_normalizeScheduleWord_eq_wordToSchedule {Q r : ℕ} (hr : 1
     (normalizeScheduleWord Q r w).getD t.1 0 = (BalancedSchedules.wordToSchedule hr Q w t).1 := by
   have hx : w.getD t.1 0 < r := by
     by_cases ht : t.1 < w.length
-    · rw [List.getD_eq_getElem _ 0 ht]
-      simpa only [Nat.max_eq_left hr] using hw _ (List.getElem_mem ht)
+    · simpa only [Nat.max_eq_left hr] using hw _ (List.getD_mem 0 ht)
     · rw [List.getD_eq_default _ 0 (not_lt.mp ht)]; exact hr
   simp only [normalizeScheduleWord, List.getD_map_range _ 0 t.2, Nat.max_eq_left hr,
     Nat.mod_eq_of_lt hx, BalancedSchedules.wordToSchedule, hx, ↓reduceDIte]
@@ -518,10 +521,8 @@ private theorem balancedSchedule_construct_of_scopes {n' Q r b w : ℕ}
       rw [BalancedSchedules.length_fst_constructBalancedSchedules]; exact v.2
     rw [val_varAssignOfList, normalizeVarSchedules, List.getD_map_range _ [] v.2]
     dsimp only [scheds]
-    rw [List.getD_eq_getElem _ [] hv_lt,
-      getD_normalizeScheduleWord_eq_wordToSchedule hr (hwf.1 _ (List.getElem_mem hv_lt)).2 t]
+    rw [getD_normalizeScheduleWord_eq_wordToSchedule hr (hwf.1 _ (List.getD_mem [] hv_lt)).2 t]
     simp only [a, BalancedSchedules.constructedVarSchedule]
-    rw [← List.getD_eq_getElem _ [] hv_lt]
   have hd_eq : factorAssignOfList hr n' Q augScopes scheds.2 = d := by
     funext f t; apply Fin.ext
     by_cases hemp : scope f = ∅
@@ -540,10 +541,8 @@ private theorem balancedSchedule_construct_of_scopes {n' Q r b w : ℕ}
       rw [val_factorAssignOfList, normalizeScopeSchedules, List.getD_map_range _ [] f.2]
       simp only [hfalse, Bool.false_eq_true, ↓reduceIte]
       dsimp only [scheds]
-      rw [List.getD_eq_getElem _ [] hf_lt,
-        getD_normalizeScheduleWord_eq_wordToSchedule hr (hwf.2 _ (List.getElem_mem hf_lt)).2 t]
+      rw [getD_normalizeScheduleWord_eq_wordToSchedule hr (hwf.2 _ (List.getD_mem [] hf_lt)).2 t]
       simp only [d, BalancedSchedules.constructedFactorSchedule]
-      rw [← List.getD_eq_getElem _ [] hf_lt]
   refine ⟨fun u => ?_, fun t g => ?_⟩
   · rw [ha_eq, hd_eq]
     have hcard_inc : Fintype.card (ScopeIncidence scope) = edges.length := by
@@ -770,9 +769,7 @@ private theorem getD_applyGroupBits_not_mem {n' v : ℕ} {Vg : List ℕ} (hv_lt 
     (applyGroupBits n' Vg ug base).getD v false = base.getD v false := by
   rw [applyGroupBits, List.getD_map_range _ false hv_lt]
   refine foldl_applyGroupBits_of_ne Vg ug (fun j hj => ?_) _
-  rw [List.mem_range] at hj
-  rw [List.getD_eq_getElem Vg n' hj]
-  exact fun heq => hnot (heq ▸ List.getElem_mem hj)
+  exact fun heq => hnot (heq ▸ List.getD_mem n' (List.mem_range.mp hj))
 
 private noncomputable def groupIdxEquiv {n' r : ℕ} {vGroups_t : List (List ℕ)}
     {varAssign : Fin n' → Fin r}

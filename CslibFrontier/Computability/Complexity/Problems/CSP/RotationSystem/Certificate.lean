@@ -56,7 +56,7 @@ variable {Rel V : Type} [DecidableEq V] {F : CSP Rel V}
 /-- A constraint's actual scope length, read from the input list. Missing constraints return zero;
 relation arities are never used as clocks. -/
 @[expose] def scopeLength (F : CSP Rel V) (i : ℕ) : ℕ :=
-  (F.map fun c => c.2.length).getD i 0
+  (F.map fun c => c.scope.length).getD i 0
 
 /-- Edge position of the next argument, with last-to-first wraparound in its original scope. -/
 @[expose] def argumentNextIndex (F : CSP Rel V) (i j : ℕ) : ℕ :=
@@ -86,7 +86,7 @@ private theorem getElem_argumentPositions (o : F.Occurrence) :
 omit [DecidableEq V] in
 /-- The executable length reader uses the occurrence's actual scope. -/
 theorem scopeLength_occurrence (o : F.Occurrence) :
-    scopeLength F o.1 = F[o.1.val].2.length := by
+    scopeLength F o.1 = F[o.1.val].scope.length := by
   unfold scopeLength
   rw [List.getD_eq_getElem _ _ (by simpa only [List.length_map] using o.1.isLt)]
   simp only [List.getElem_map]
@@ -183,16 +183,6 @@ theorem verifyRotationCertificate_eq_true_iff (F : CSP Rel V) (c : Graph.Rotatio
     exact ⟨(Graph.RotationCertificate.verifyGenusZero_eq_true_iff _ _).mpr ⟨h, he⟩,
       (verifyArgumentOrder_eq_true_iff h).mpr ho⟩
 
-private theorem incidenceVertices_declared (F : CSP Rel V) :
-    ∀ v ∈ (incidenceGraph F).incidenceVertices, v ∈ (incidenceGraph F).1 := by
-  intro v hv
-  obtain ⟨e, he, hv⟩ := List.mem_flatMap.mp hv
-  rcases List.mem_cons.mp hv with rfl | hv
-  · exact (incidenceGraph_endpoints he).1
-  · have hv' := List.mem_singleton.mp hv
-    subst v
-    exact (incidenceGraph_endpoints he).2
-
 /-- Every existing ordered numerical genus-zero incidence rotation has an accepted finite
 certificate. Original scope positions are retained; no embedding construction is assumed. -/
 theorem verifyRotationCertificate_ofRotation
@@ -249,7 +239,11 @@ private theorem scopeLength_polyTime (encRel : Rel ↪ List Bool) (encV : V ↪ 
   fun_prop
 
 omit [DecidableEq V] in
-private theorem argumentNextIndex_polyTime (encRel : Rel ↪ List Bool) (encV : V ↪ List Bool) :
+/-- Compute a cyclic argument successor from unary constraint and argument occurrence indices.
+The clock comes from actual scope/occurrence lists. This native runtime certificate covers
+all raw CSPs and indices, including missing positions, without arity or rotation-validity
+premises. -/
+theorem argumentNextIndex_polyTime (encRel : Rel ↪ List Bool) (encV : V ↪ List Bool) :
     ComputableInPolyTime (fun p : (CSP Rel V × ℕ) × ℕ => argumentNextIndex p.1.1 p.1.2 p.2)
       (encPair (encPair (encCSP encRel encV) encUnary) encUnary) encUnary := by
   have hpos := argumentPositions_polyTime encRel encV

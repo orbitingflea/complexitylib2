@@ -21,6 +21,7 @@ import CslibFrontier.Probability.PMF
 import CslibFrontier.Probability.PMF.Map
 import CslibFrontier.Tactic.EncLen
 import Cslib.Foundations.Data.Polynomial.Monotone
+import CslibFrontier.Probability.PMF.Bool
 
 /-!
 # One-way functions put NP outside BPP
@@ -150,7 +151,7 @@ theorem half_le_succProbability_inversionGame {p : Polynomial ℕ}
         (BitString.uniformList (searchCoinLength p (n, f x))).map fun coins =>
           f (preimageSearch (fun inst =>
             V (inst, coins.take (p.eval (encPreimagePrefix inst).length))) (n, f x)) == f x := by
-    simp [inversionGame, randomizedPreimageSearch]
+    simp [inversionGame, inversionExperiment, randomizedPreimageSearch]
   have hhalf : (1 / 2 : ENNReal) ≤
       ProbComp.eval (inversionGame f (randomizedPreimageSearch p V) n) true := by
     rw [hgame]
@@ -205,8 +206,8 @@ theorem half_le_succProbability_inversionGame {p : Polynomial ℕ}
                   exact_mod_cast Nat.lt_two_pow_self.le
               _ = 1 / 2 := by
                   rw [← mul_div_assoc, ENNReal.mul_div_mul_left _ _ (by simp) (by simp)]
-    have hsum : (μ.map g) true + (μ.map g) false = 1 := by
-      rw [add_comm, ← tsum_bool, PMF.tsum_coe]
+    have hsum : (μ.map g) true + (μ.map g) false = 1 :=
+      Probability.PMF.apply_true_add_apply_false _
     calc (1 / 2 : ENNReal) = 1 - 1 / 2 := by rw [one_div, ENNReal.one_sub_inv_two]
       _ ≤ 1 - (μ.map g) false := tsub_le_tsub_left hfail 1
       _ = (μ.map g) true := by

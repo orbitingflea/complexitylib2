@@ -22,30 +22,6 @@ namespace CslibFrontierTests.Crypto.TCRSignature
 open Cslib Cslib.Crypto Cslib.Probability Turing.MultiTapeTM
 open scoped NNReal
 
-private theorem computableInPolyTime_unary_decide_eq {α : Type} {input : α ↪ List Bool}
-    {f g : α → ℕ} (hf : ComputableInPolyTime f input encUnary)
-    (hg : ComputableInPolyTime g input encUnary) :
-    ComputableInPolyTime (fun a => decide (f a = g a)) input encBool := by
-  have hiff : ∀ a, decide (f a = g a) = (decide (f a ≤ g a) && decide (g a ≤ f a)) := by
-    intro a
-    by_cases h : f a = g a
-    · simp [h]
-    · rcases Nat.lt_or_gt_of_ne h with hlt | hgt
-      · have hnot : ¬ g a ≤ f a := Nat.not_le_of_gt hlt
-        simp [h, hnot]
-      · have hnot : ¬ f a ≤ g a := Nat.not_le_of_gt hgt
-        simp [h, hnot]
-  simpa only [hiff] using (hf.unary_le' hg).bool_and' (hg.unary_le' hf)
-
-private theorem computableInPolyTime_unary_beq {α : Type} {input : α ↪ List Bool}
-    {f g : α → ℕ} (hf : ComputableInPolyTime f input encUnary)
-    (hg : ComputableInPolyTime g input encUnary) :
-    ComputableInPolyTime (fun a => f a == g a) input encBool := by
-  have hiff : ∀ a, (f a == g a) = decide (f a = g a) := by
-    intro a
-    cases h : (f a == g a) <;> simp_all
-  simpa only [hiff] using computableInPolyTime_unary_decide_eq hf hg
-
 /-! ### Concrete checks for `IndexedSignatureScheme.double` -/
 
 /-- Toy deterministic capacity-`1` indexed scheme whose valid signatures at index `0` have length
@@ -65,7 +41,7 @@ noncomputable def lengthIdxOne : IndexedSignatureScheme where
     have hrest := ComputableInPolyTime.snd encBits (encPair encUnary encBits)
     have hu := hrest.fst'
     have hmsg := hrest.snd'
-    have hcond := computableInPolyTime_unary_beq hu (.const 0)
+    have hcond := ComputableInPolyTime.unary_beq' hu (.const 0)
     have happ := ComputableInPolyTime.bitsAppend hsk hmsg
     exact ((hcond.ite happ (.const (encIn := encIn) (encOut := encBits) [])).of_enc_eq
       fun _ => rfl).isPPTOn
@@ -77,8 +53,8 @@ noncomputable def lengthIdxOne : IndexedSignatureScheme where
     have hu := hrest.fst'
     have hmsgLen := hrest.snd'.fst'.trans ComputableInPolyTime.length_bits
     have hsigLen := hrest.snd'.snd'.trans ComputableInPolyTime.length_bits
-    exact ((computableInPolyTime_unary_beq hu (.const 0)).bool_and'
-      (computableInPolyTime_unary_beq hsigLen (hpkLen.unary_add' hmsgLen))).of_enc_eq fun _ => rfl
+    exact ((ComputableInPolyTime.unary_beq' hu (.const 0)).bool_and'
+      (hsigLen.unary_beq' (hpkLen.unary_add' hmsgLen))).of_enc_eq fun _ => rfl
   verify_sign n keys hkeys u hu msg sig hsig := by
     have hu0 : u = 0 := by omega
     subst hu0
@@ -154,8 +130,8 @@ noncomputable def lengthOneTime : SignatureScheme where
     have hrest := ComputableInPolyTime.snd encBits encRest
     have hmsgLen := hrest.fst'.trans ComputableInPolyTime.length_bits
     have hsigLen := hrest.snd'.trans ComputableInPolyTime.length_bits
-    exact ((computableInPolyTime_unary_beq hpkLen hmsgLen).bool_and'
-      (computableInPolyTime_unary_beq hsigLen hmsgLen)).of_enc_eq fun _ => rfl
+    exact ((hpkLen.unary_beq' hmsgLen).bool_and'
+      (hsigLen.unary_beq' hmsgLen)).of_enc_eq fun _ => rfl
   verify_sign n keys hkeys msg hmsg sig hsig := by
     simp only [ProbComp.eval_pure, PMF.mem_support_pure_iff] at hkeys hsig
     subst hkeys
@@ -252,20 +228,9 @@ family allows `constHashForger` to win `indexedEufCmaGame` with probability `1` 
 theorem not_indexedEUFCMA_tcrSignature_constHash (S : SignatureScheme) :
     ¬ (TCRSignature.scheme S constHash).IndexedEUFCMA := by
   intro hsec
-  obtain ⟨ckg, dkg, hkgLen⟩ := S.keyGen_ppt.length_le
-  obtain ⟨csg, dsg, hsgLen⟩ := S.sign_ppt.length_le
-  let sigBound (n : ℕ) : ℕ :=
-    let M := TCRSignature.otsParam constHash n
-    csg * (2 * (ckg * (M + 1) ^ dkg) + M + 2) ^ dsg
+  obtain ⟨_, _, sigBound, hsigBoundPoly, _, hsigBoundLe⟩ :=
+    TCRSignature.exists_ots_bounds S constHash
   let replyBound (n : ℕ) : ℕ := 2 * n + 1 + sigBound n
-  have hsigBoundPoly : ComputableInPolyTime sigBound encUnary encUnary := by
-    have hM := TCRSignature.computableInPolyTime_otsParam constHash
-    have hkgPow := (ComputableInPolyTime.unary_pow dkg).comp (hM.unary_add' (.const 1))
-    have hkgTerm := (ComputableInPolyTime.const 2).unary_mul'
-      ((ComputableInPolyTime.const ckg).unary_mul' hkgPow)
-    have hinner := (hkgTerm.unary_add' hM).unary_add' (.const 2)
-    exact (ComputableInPolyTime.const csg).unary_mul'
-      ((ComputableInPolyTime.unary_pow dsg).comp hinner)
   have hreplyBoundPoly : ComputableInPolyTime replyBound encUnary encUnary :=
     (((ComputableInPolyTime.const 2).unary_mul' .id').unary_add' (.const 1)).unary_add'
       hsigBoundPoly
@@ -321,32 +286,13 @@ theorem not_indexedEUFCMA_tcrSignature_constHash (S : SignatureScheme) :
                                   (List.replicate (n + 1) false)))).bind
                               (fun _ => PMF.pure true) := by
                               refine PMF.bind_congr_on_support _ _ _ fun ots hots => ?_
-                              have hkPair := hkgLen (TCRSignature.otsParam constHash n) keys hkeys
-                              simp only [length_encPair, encBits_apply, encUnary_apply,
-                                List.length_replicate] at hkPair
-                              have hskLen :
-                                  keys.2.length ≤
-                                    ckg * (TCRSignature.otsParam constHash n + 1) ^ dkg := by
-                                omega
                               have hmsgLen :
                                   (TCRSignature.otsMsg constHash n k
                                     (List.replicate (n + 1) false)).length =
                                     TCRSignature.otsParam constHash n :=
                                 TCRSignature.length_otsMsg constHash n k _
-                              have hsPair :=
-                                hsgLen
-                                  (keys.2,
-                                    TCRSignature.otsMsg constHash n k
-                                      (List.replicate (n + 1) false)) ots hots
-                              simp only [length_encPair, encBits_apply, hmsgLen] at hsPair
-                              have hbaseLe :
-                                  2 * keys.2.length + 1 + TCRSignature.otsParam constHash n + 1 ≤
-                                    2 * (ckg * (TCRSignature.otsParam constHash n + 1) ^ dkg) +
-                                      TCRSignature.otsParam constHash n + 2 := by
-                                omega
                               have hotsLen : ots.length ≤ sigBound n :=
-                                hsPair.trans
-                                  (Nat.mul_le_mul_left csg (Nat.pow_le_pow_left hbaseLe dsg))
+                                hsigBoundLe n keys hkeys _ hmsgLen ots hots
                               have hsigLen :
                                   (encPair encBits encBits (k, ots)).length ≤ replyBound n := by
                                 simp only [length_encPair, encBits_apply, hkLen, replyBound]

@@ -9,6 +9,7 @@ module
 
 public import CslibFrontier.Languages.Probabilistic.Oracle
 public import CslibFrontier.Languages.Probabilistic.Oracle.Interaction
+import CslibFrontier.Languages.Probabilistic.Sum.Lift
 
 /-!
 # Stateful simulation with private randomness
@@ -44,7 +45,7 @@ Adapts the cslib `crypto` branch's state simulation API at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8` to the typed sum of sampling and external calls.
 -/
 
-@[expose] public section
+public section
 
 namespace Cslib.ProbOracleComp
 
@@ -60,16 +61,8 @@ theorem run_interpret_readOnly (oracle : (q : Query) → State → PMF (spec q))
       (sumHandler (fun n => StateT.lift (ProbComp.unifOracle n))
         (fun q state => (oracle q state).map (·, state))) program).run s =
       (OracleComp.interpret
-        (sumHandler ProbComp.unifOracle (fun q => oracle q s)) program).map (·, s) := by
-  have hhandler : sumHandler (fun n => StateT.lift (ProbComp.unifOracle n))
-      (fun q state => (oracle q state).map (·, state)) =
-      fun q state =>
-        (sumHandler ProbComp.unifOracle (fun q => oracle q state) q).map (·, state) := by
-    funext q state
-    cases q <;> rfl
-  rw [hhandler]
-  exact OracleComp.run_interpret_readOnly
-    (fun q state => sumHandler ProbComp.unifOracle (fun q => oracle q state) q) program s
+        (sumHandler ProbComp.unifOracle (fun q => oracle q s)) program).map (·, s) :=
+  OracleComp.run_interpret_sumHandler_readOnly ProbComp.unifOracle oracle program s
 
 /-- Reading a fixed external environment retains it, independently of the client's private draws:
 the run evaluates the program against the environment at the starting state. -/

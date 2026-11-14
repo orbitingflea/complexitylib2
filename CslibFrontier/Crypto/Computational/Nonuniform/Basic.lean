@@ -7,6 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
+public import CslibFrontier.Crypto.Computational.Nonuniform.Advice
 public import CslibFrontier.Crypto.Computational.OneWay
 public import CslibFrontier.Crypto.Computational.PseudorandomGenerator
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
@@ -63,6 +64,7 @@ These are definitions, not assertions that such primitives exist.
   indistinguishability is indistinguishability with empty advice.
 * `Cslib.Crypto.IndistinguishableWithAdvice.map`: efficient postprocessing.
 * `Cslib.Crypto.IndistinguishableWithAdvice.negligible_encoded`,
+  `Cslib.Crypto.IndistinguishableWithAdvice.of_negligible_encoded`,
   `Cslib.Crypto.InversionHardWithAdvice.inversion_negligible_encoded`: advice of any encoded type.
 * `Cslib.Crypto.oneWay_iff_inversionHardWithAdvice_nil`: uniform one-wayness is hardness of
   inversion with empty advice.
@@ -82,14 +84,6 @@ namespace Cslib.Crypto
 open Probability Turing.MultiTapeTM
 open scoped NNReal ENNReal
 
-/-- A uniform adversary is an advice adversary that ignores its advice. -/
-private theorem isPPTOn_dropAdvice {β : Type} {output : β ↪ List Bool}
-    {adversary : ℕ → List Bool → ProbComp β} (h : IsPPT output adversary) :
-    IsPPTOn (encPair (encPair encUnary encBits) encBits) output
-      (fun input : (ℕ × List Bool) × List Bool => adversary input.1.1 input.2) :=
-  h.on.preprocess (input := encPair (encPair encUnary encBits) encBits)
-    (prepare := fun input : (ℕ × List Bool) × List Bool => (input.1.1, input.2)) (by fun_prop)
-
 /-- Two ensembles are **indistinguishable with advice** `advice` when each uniform strict PPT
 test reading the parameter `n`, the advice word `advice n` and a sample has negligible advantage.
 The advice family is not bounded here; its length is charged to the test's clock, which is
@@ -103,7 +97,7 @@ def IndistinguishableWithAdvice (advice : ℕ → List Bool) (X Y : ℕ → PMF 
     (fun (test : (ℕ × List Bool) × List Bool → ProbComp Bool) n =>
       distinguishingGame (X n) (fun word => test ((n, advice n), word)))
     (fun test n => distinguishingGame (Y n) (fun word => test ((n, advice n), word)))
-    (IsPPTOn (encPair (encPair encUnary encBits) encBits) encBool)
+    (IsPPTOn encAdvisedInput encBool)
 
 /-- Two ensembles are **nonuniformly indistinguishable** when they are indistinguishable with
 every polynomially bounded advice family. -/
@@ -118,12 +112,9 @@ theorem computationallyIndistinguishable_iff_indistinguishableWithAdvice_nil
     ComputationallyIndistinguishable X Y ↔ IndistinguishableWithAdvice (fun _ => []) X Y := by
   constructor
   · intro h test htest
-    have hprepare : ComputableInPolyTime (fun input : ℕ × List Bool => ((input.1, []), input.2))
-        (encPair encUnary encBits) (encPair (encPair encUnary encBits) encBits) := by fun_prop
-    exact h (fun n word => test ((n, []), word)) (htest.preprocess hprepare)
+    exact h (fun n word => test ((n, []), word)) htest.nilAdvice
   · intro h adversary hadversary
-    have hneg := h (fun input => adversary input.1.1 input.2) (isPPTOn_dropAdvice hadversary)
-    simpa only using hneg
+    exact h (fun input => adversary input.1.1 input.2) hadversary.dropAdvice
 
 /-- Efficient parameter-dependent deterministic postprocessing preserves indistinguishability
 with advice. -/
@@ -134,14 +125,13 @@ theorem IndistinguishableWithAdvice.map {advice : ℕ → List Bool} {X Y : ℕ 
   intro test htest
   have hprepare : ComputableInPolyTime
       (fun input : (ℕ × List Bool) × List Bool => (input.1, f input.1.1 input.2))
-      (encPair (encPair encUnary encBits) encBits)
-      (encPair (encPair encUnary encBits) encBits) := by
+      encAdvisedInput encAdvisedInput := by
     have hpair : ComputableInPolyTime (fun input : (ℕ × List Bool) × List Bool =>
-        (input.1.1, input.2)) (encPair (encPair encUnary encBits) encBits)
+        (input.1.1, input.2)) encAdvisedInput
         (encPair encUnary encBits) := by fun_prop
     exact (ComputableInPolyTime.fst _ _).prod (hf.comp hpair)
   have hneg := h (fun input => test (input.1, f input.1.1 input.2)) (htest.preprocess hprepare)
-  simpa only [distinguishingGame, PMF.monad_bind_eq_bind, PMF.bind_map, Function.comp_def]
+  simpa only [distinguishingGame_eq_bind, PMF.monad_bind_eq_bind, PMF.bind_map, Function.comp_def]
     using hneg
 
 /-- Every ensemble is nonuniformly indistinguishable from itself. -/
@@ -170,26 +160,35 @@ theorem NonuniformlyIndistinguishable.computationallyIndistinguishable
 /-- **Advice of any encoded type.** Indistinguishability with the advice words
 `encAdvice (advice n)` covers every uniform strict PPT test that reads the advice value
 `advice n` itself, of an arbitrary type `γ` under an arbitrary encoding. The test need not be able
-to decode the advice word: the proof runs its machine on that word
-(`Cslib.Probability.IsPPTOn.exists_extension`). -/
+to decode the advice word: the test is a word test run on that word
+(`Cslib.Probability.IsPPTOn.exists_bool_factor`). -/
 theorem IndistinguishableWithAdvice.negligible_encoded {X Y : ℕ → PMF (List Bool)}
     {γ : Type} {encAdvice : γ ↪ List Bool} {advice : ℕ → γ}
     (h : IndistinguishableWithAdvice (fun n => encAdvice (advice n)) X Y)
     {test : (ℕ × γ) × List Bool → ProbComp Bool}
-    (htest : IsPPTOn (encPair (encPair encUnary encAdvice) encBits) encBool test) :
+    (htest : IsPPTOn (encAdvisedInputWith encAdvice) encBool test) :
     Negligible (fun n => Game.advantage
       (distinguishingGame (X n) (fun word => test ((n, advice n), word)))
       (distinguishingGame (Y n) (fun word => test ((n, advice n), word)))) := by
-  obtain ⟨extension, hextension, heq⟩ :=
-    htest.exists_extension (ComputableInPolyTime.headD false) (fun _ => rfl)
-  have hword : IsPPTOn (encPair (encPair encUnary encBits) encBits) encBool
-      (fun input => extension (encPair (encPair encUnary encBits) encBits input)) :=
-    hextension.preprocess (ComputableInPolyTime.of_eq fun _ => rfl)
-  have hkey (n : ℕ) (word : List Bool) :
-      ProbComp.eval (extension (encPair (encPair encUnary encBits) encBits
-        ((n, encAdvice (advice n)), word))) = ProbComp.eval (test ((n, advice n), word)) :=
-    heq ((n, advice n), word)
-  simpa only [distinguishingGame, hkey] using h _ hword
+  obtain ⟨W, hW, hWtest⟩ := htest.exists_bool_factor (words := encAdvisedInput)
+    (toWords := fun x => ((x.1.1, encAdvice x.1.2), x.2)) fun _ => rfl
+  obtain rfl : test = _ := funext hWtest
+  exact h W hW
+
+/-- **Typed advice tests suffice.** The converse of `negligible_encoded`: if every uniform strict
+PPT test that reads the advice value `advice n` itself has negligible advantage, the ensembles are
+indistinguishable with the advice words `encAdvice (advice n)`. A word test is a typed test that
+first exposes the encoded advice. -/
+theorem IndistinguishableWithAdvice.of_negligible_encoded {X Y : ℕ → PMF (List Bool)}
+    {γ : Type} {encAdvice : γ ↪ List Bool} {advice : ℕ → γ}
+    (h : ∀ test : (ℕ × γ) × List Bool → ProbComp Bool,
+      IsPPTOn (encAdvisedInputWith encAdvice) encBool test →
+      Negligible (fun n => Game.advantage
+        (distinguishingGame (X n) (fun word => test ((n, advice n), word)))
+        (distinguishingGame (Y n) (fun word => test ((n, advice n), word))))) :
+    IndistinguishableWithAdvice (fun n => encAdvice (advice n)) X Y := fun test htest =>
+  h (fun input => test ((input.1.1, encAdvice input.1.2), input.2))
+    (htest.preprocess (ComputableInPolyTime.of_eq fun _ => rfl))
 
 /-- **Fixed words are distinguishable from uniform words**, already by a uniform test: the first
 bit of `PMF.pure (target n)` is constant, while that of a uniform word of positive length is a fair
@@ -207,11 +206,11 @@ theorem not_computationallyIndistinguishable_pure_uniformList (target : ℕ → 
   obtain ⟨m, hm⟩ : ∃ m, length n = m + 1 := ⟨length n - 1, by omega⟩
   have hreal : distinguishingGame (PMF.pure (target n)) (fun word => pure (word.headD false)) =
       PMF.pure ((target n).headD false) := by
-    simp [distinguishingGame]
+    simp [distinguishingGame_eq_bind]
   have hideal : distinguishingGame (BitString.uniformList (length n))
       (fun word => pure (word.headD false)) = PMF.uniformOfFintype Bool := by
     rw [hm, BitString.uniformList_succ]
-    simp [distinguishingGame, PMF.bind_map, Function.comp_def]
+    simp [distinguishingGame_eq_bind, PMF.bind_map, Function.comp_def]
   rw [← NNReal.coe_le_coe, Game.coe_advantage, hreal, hideal]
   cases (target n).headD false <;> norm_num [Game.succProbability, ENNReal.toNNReal_ofNat]
 
@@ -233,13 +232,13 @@ def InversionHardWithAdvice (f : List Bool → List Bool) (advice : ℕ → List
   Game.Indistinguishable
     (fun (adversary : (ℕ × List Bool) × List Bool → ProbComp (List Bool)) n =>
       ProbComp.eval (inversionGame f (fun n image => adversary ((n, advice n), image)) n))
-    (fun _ _ => PMF.pure false) (IsPPTOn (encPair (encPair encUnary encBits) encBits) encBits)
+    (fun _ _ => PMF.pure false) (IsPPTOn encAdvisedInput encBits)
 
 /-- Each efficient inverter with the given advice has negligible success. -/
 theorem InversionHardWithAdvice.inversion_negligible {f : List Bool → List Bool}
     {advice : ℕ → List Bool} (h : InversionHardWithAdvice f advice)
     (adversary : (ℕ × List Bool) × List Bool → ProbComp (List Bool))
-    (hPPT : IsPPTOn (encPair (encPair encUnary encBits) encBits) encBits adversary) :
+    (hPPT : IsPPTOn encAdvisedInput encBits adversary) :
     Negligible (fun n => Game.succProbability (ProbComp.eval
       (inversionGame f (fun n image => adversary ((n, advice n), image)) n))) := by
   simpa only [Game.advantage_pure_false] using h adversary hPPT
@@ -249,7 +248,7 @@ probability. -/
 theorem InversionHardWithAdvice.of_inversion_negligible {f : List Bool → List Bool}
     {advice : ℕ → List Bool}
     (h : ∀ adversary : (ℕ × List Bool) × List Bool → ProbComp (List Bool),
-      IsPPTOn (encPair (encPair encUnary encBits) encBits) encBits adversary →
+      IsPPTOn encAdvisedInput encBits adversary →
         Negligible (fun n => Game.succProbability (ProbComp.eval
           (inversionGame f (fun n image => adversary ((n, advice n), image)) n)))) :
     InversionHardWithAdvice f advice := fun adversary hPPT => by
@@ -262,24 +261,14 @@ theorem InversionHardWithAdvice.inversion_negligible_encoded {f : List Bool → 
     {γ : Type} {encAdvice : γ ↪ List Bool} {advice : ℕ → γ}
     (h : InversionHardWithAdvice f (fun n => encAdvice (advice n)))
     {adversary : (ℕ × γ) × List Bool → ProbComp (List Bool)}
-    (hPPT : IsPPTOn (encPair (encPair encUnary encAdvice) encBits) encBits adversary) :
+    (hPPT : IsPPTOn (encAdvisedInputWith encAdvice) encBits adversary) :
     Negligible (fun n => Game.succProbability (ProbComp.eval
       (inversionGame f (fun n image => adversary ((n, advice n), image)) n))) := by
-  obtain ⟨extension, hextension, heq⟩ :=
-    hPPT.exists_extension (decode := id) (ComputableInPolyTime.of_eq fun _ => rfl) (fun _ => rfl)
-  have hword : IsPPTOn (encPair (encPair encUnary encBits) encBits) encBits
-      (fun input => extension (encPair (encPair encUnary encBits) encBits input)) :=
-    hextension.preprocess (ComputableInPolyTime.of_eq fun _ => rfl)
-  have hkey (n : ℕ) (image : List Bool) :
-      ProbComp.eval (extension (encPair (encPair encUnary encBits) encBits
-        ((n, encAdvice (advice n)), image))) = ProbComp.eval (adversary ((n, advice n), image)) :=
-    heq ((n, advice n), image)
-  have hgame (n : ℕ) :
-      ProbComp.eval (inversionGame f (fun n image => extension
-        (encPair (encPair encUnary encBits) encBits ((n, encAdvice (advice n)), image))) n) =
-      ProbComp.eval (inversionGame f (fun n image => adversary ((n, advice n), image)) n) := by
-    simp only [inversionGame, ProbComp.eval_bind, hkey]
-  simpa only [hgame] using h.inversion_negligible _ hword
+  obtain ⟨W, hW, hWadversary⟩ := hPPT.exists_factor (words := encAdvisedInput)
+    (toWords := fun x => ((x.1.1, encAdvice x.1.2), x.2)) (fun _ => rfl) (decode := id)
+    (ComputableInPolyTime.of_eq fun _ => rfl) (fun _ => rfl)
+  obtain rfl : adversary = _ := funext hWadversary
+  exact h.inversion_negligible W hW
 
 /-- **Uniform one-wayness is the empty-advice case.** A uniform inverter is an advice inverter
 that ignores its advice, and an advice inverter run on empty advice is a uniform inverter. -/
@@ -288,16 +277,11 @@ theorem oneWay_iff_inversionHardWithAdvice_nil {f : List Bool → List Bool} :
       ComputableInPolyTime f encBits encBits ∧ InversionHardWithAdvice f (fun _ => []) := by
   constructor
   · intro h
-    refine ⟨h.polyTime, .of_inversion_negligible fun adversary hPPT => ?_⟩
-    have hprepare : ComputableInPolyTime (fun input : ℕ × List Bool => ((input.1, []), input.2))
-        (encPair encUnary encBits) (encPair (encPair encUnary encBits) encBits) := by fun_prop
-    exact h.inversion_negligible (fun n image => adversary ((n, []), image))
-      (hPPT.preprocess hprepare)
+    exact ⟨h.polyTime, .of_inversion_negligible fun adversary hPPT =>
+      h.inversion_negligible (fun n image => adversary ((n, []), image)) hPPT.nilAdvice⟩
   · rintro ⟨hf, h⟩
-    refine OneWay.of_inversion_negligible hf fun adversary hPPT => ?_
-    have hneg := h.inversion_negligible (fun input => adversary input.1.1 input.2)
-      (isPPTOn_dropAdvice hPPT)
-    simpa only using hneg
+    exact OneWay.of_inversion_negligible hf fun adversary hPPT =>
+      h.inversion_negligible (fun input => adversary input.1.1 input.2) hPPT.dropAdvice
 
 /-- A function is **nonuniformly one-way** when one deterministic polynomial-time algorithm
 evaluates it and inversion is hard with every polynomially bounded advice family. -/
@@ -311,7 +295,7 @@ structure NonuniformOneWay (f : List Bool → List Bool) : Prop where
 /-- Each efficient inverter with polynomially bounded advice has negligible success. -/
 theorem NonuniformOneWay.inversion_negligible {f : List Bool → List Bool}
     (h : NonuniformOneWay f) (adversary : (ℕ × List Bool) × List Bool → ProbComp (List Bool))
-    (hPPT : IsPPTOn (encPair (encPair encUnary encBits) encBits) encBits adversary)
+    (hPPT : IsPPTOn encAdvisedInput encBits adversary)
     {advice : ℕ → List Bool} (hadvice : PolynomiallyBounded (fun n => (advice n).length)) :
     Negligible (fun n => Game.succProbability (ProbComp.eval
       (inversionGame f (fun n image => adversary ((n, advice n), image)) n))) :=
@@ -322,7 +306,7 @@ inverter with polynomially bounded advice. -/
 theorem NonuniformOneWay.of_inversion_negligible {f : List Bool → List Bool}
     (hf : ComputableInPolyTime f encBits encBits)
     (h : ∀ adversary : (ℕ × List Bool) × List Bool → ProbComp (List Bool),
-      IsPPTOn (encPair (encPair encUnary encBits) encBits) encBits adversary →
+      IsPPTOn encAdvisedInput encBits adversary →
       ∀ advice : ℕ → List Bool, PolynomiallyBounded (fun n => (advice n).length) →
         Negligible (fun n => Game.succProbability (ProbComp.eval
           (inversionGame f (fun n image => adversary ((n, advice n), image)) n)))) :

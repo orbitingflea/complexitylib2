@@ -17,6 +17,7 @@ import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 import CslibFrontier.Tactic.PolyTime.Init
 import CslibFrontier.Tactic.EncLen
+import CslibFrontier.Computability.Machines.Turing.MultiTape.ResourceBounds.Polynomial.Automation
 
 /-!
 # Quantitative certificates for polynomial PRG stretch
@@ -142,9 +143,7 @@ theorem polyTime_iterate {α : Type} {input : α ↪ List Bool}
       input encBits := by
   obtain ⟨c, d, hlength⟩ := hgenerator.tidy.polyBounded_length.exists_le
   have hpoly : PolyBounded (fun a => (input a).length)
-      (fun a => c * (2 * (input a).length + seedBits a + 2) ^ d) :=
-    (PolyBounded.const c).mul (((((PolyBounded.const 2).mul .self).add
-      hseedBits.tidy.polyBounded).add (.const 2)).pow d)
+      (fun a => c * (2 * (input a).length + seedBits a + 2) ^ d) := by growth_poly
   have hfst := ComputableTidilyInPolyTime.fst input encBits
   have hsnd := ComputableTidilyInPolyTime.snd input encBits
   have hsb := hseedBits.tidy.comp hfst
@@ -643,7 +642,8 @@ theorem computableInTimeAndSpace_forwardIterate_captured {α : Type}
     (hgen : ComputableInTimeAndSpace (fun p : α × List Bool => generator p.1 p.2)
       (encPair encParam encBits) encBits tGen sGen)
     {Q : (α × List Bool) × ℕ → ℕ}
-    (hspace : ∀ x i, i < x.2 → sGen (x.1.1, seedAt (generator x.1.1) x.1.2 i) ≤ Q x) :
+    (hspace : ∀ a seed count i, i < count →
+      sGen (a, seedAt (generator a) seed i) ≤ Q ((a, seed), count)) :
     ∃ c, ComputableInTimeAndSpace
       (fun x : (α × List Bool) × ℕ => forwardIterate (generator x.1.1) x.2 x.1.2)
       (encPair (encPair encParam encBits) encUnary) encBits
@@ -698,10 +698,10 @@ theorem computableInTimeAndSpace_forwardIterate_captured {α : Type}
         Nat.add_mul, Nat.mul_add, Nat.mul_one, Nat.mul_assoc]
       omega)
     (fun x i hi => by
-      have hs₁ := Nat.mul_le_mul_left (cpair * a) (hspace x i hi)
-      have hs₂ := Nat.mul_le_mul_left a (hspace x i hi)
+      have hs₁ := Nat.mul_le_mul_left (cpair * a) (hspace x.1.1 x.1.2 x.2 i hi)
+      have hs₂ := Nat.mul_le_mul_left a (hspace x.1.1 x.1.2 x.2 i hi)
       simp only [KS, Function.comp_apply, iterate_seedStep_captured, hS, hSd, encBits_apply,
-        hlen, length_seedAt_of_forall (hlen x.1.1), Nat.two_mul, five_mul,
+        hlen, length_seedAt_of_forall (hlen x.1.1), Prod.mk.eta, Nat.two_mul, five_mul,
         Nat.add_mul, Nat.mul_add, Nat.mul_one, Nat.mul_assoc] at hs₁ hs₂ ⊢
       omega)
     (fun x i _ => by simp only [iterate_seedStep_captured, hS]; rfl)
@@ -731,7 +731,8 @@ theorem computableInTimeAndSpace_iterate_captured {α : Type}
     (hgen : ComputableInTimeAndSpace (fun p : α × List Bool => generator p.1 p.2)
       (encPair encParam encBits) encBits tGen sGen)
     {Q : (α × List Bool) × ℕ → ℕ}
-    (hspace : ∀ x i, i < x.2 → sGen (x.1.1, seedAt (generator x.1.1) x.1.2 i) ≤ Q x) :
+    (hspace : ∀ a seed count i, i < count →
+      sGen (a, seedAt (generator a) seed i) ≤ Q ((a, seed), count)) :
     ∃ c, ComputableInTimeAndSpace
       (fun x : (α × List Bool) × ℕ => iterate (generator x.1.1) x.1.2.length x.2 x.1.2)
       (encPair (encPair encParam encBits) encUnary) encBits

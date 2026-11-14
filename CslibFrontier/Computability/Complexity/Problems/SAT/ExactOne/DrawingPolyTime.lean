@@ -30,9 +30,8 @@ Coordinates and original source labels use binary encodings. Clause, literal, an
 use unary counters bounded by the emitted lists. The finite profile and collar choices are fixed
 independently of the input; there is no enumeration of the coordinate rectangle.
 
-## Main definitions
-
-* `DrawingNative.encInput`: the source formula and its supplied binary-coordinate drawing.
+The input, a source formula with its supplied binary-coordinate drawing, is encoded by
+`DrawingFinitePolyTime.encInput`.
 
 ## Main results
 
@@ -49,10 +48,7 @@ These are original native certificates for the explicit drawing construction.
 namespace Cslib.Complexity.SAT.ExactOne.DrawingNative
 
 open Cslib.Logic.PL Orthogonal Turing.MultiTapeTM
-
-/-- The encoded source formula and its supplied drawing. -/
-abbrev encInput : (CNF ℕ × Graph.OrthogonalDrawing) ↪ List Bool :=
-  encPair encCNF Graph.encOrthogonalDrawing
+open DrawingFinitePolyTime (encInput)
 
 /-- Listed graphs retain binary vertex labels; edge positions use unary counters. -/
 abbrev encSourceIndex : ((Graph × Graph.OrthogonalDrawing) × ℕ) ↪ List Bool :=
@@ -207,8 +203,7 @@ theorem sourceEdgeIndex :
     have hl : ComputableTidilyInPolyTime
         (fun p : CNF ℕ × (ℕ × ℕ) => (p.1.getD p.2.1 []).getD p.2.2 (0, true))
         (encPair encCNF (encPair encUnary encUnary)) (encPair encNat encBool) := by fun_prop
-    simpa only [Function.comp_def, sourceOccurrence, Cslib.Logic.PL.encOccurrence] using
-      hi.prod (hj.prod hl)
+    exact (hi.prod (hj.prod hl)).of_enc_eq fun _ => rfl
 
 private theorem graphDrawing :
     ComputableInPolyTime

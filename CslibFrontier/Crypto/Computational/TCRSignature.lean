@@ -22,11 +22,13 @@ import CslibFrontier.Computability.Probabilistic.PPT.Capture
 import CslibFrontier.Computability.Probabilistic.PPT.PairCapture
 import CslibFrontier.Computability.Probabilistic.Sampling
 import CslibFrontier.Crypto.Negligible.Basic
-import CslibFrontier.Languages.Probabilistic.Oracle.Simulation
+import CslibFrontier.Languages.Probabilistic.Oracle.Norm
 import CslibFrontier.Languages.Probabilistic.Oracle.Support
 import CslibFrontier.Probability.PMF
 import CslibFrontier.Probability.PMF.Bind
-import CslibFrontier.Probability.PMF.Event
+import CslibFrontier.Probability.PMF.Bool
+import CslibFrontier.Tactic.GameHop
+import CslibFrontier.Tactic.Negligible
 import CslibFrontier.Tactic.PMFSwap
 import CslibFrontier.Tactic.PolyTime
 import CslibFrontier.Tactic.PPT
@@ -325,7 +327,7 @@ theorem keyGen_ppt (S : SignatureScheme) (H : KeyedHashFamily) :
   exact hkg.map_pair hpost
 
 theorem sign_ppt (S : SignatureScheme) (H : KeyedHashFamily) :
-    IsPPTOn (encPair encBits (encPair encUnary encBits)) encBits
+    IsPPTOn encIndexedSignInput encBits
       (fun p => sign S H p.1 p.2.1 p.2.2) := by
   let In := List Bool × ℕ × List Bool
   let encIn : In ↪ List Bool := encPair encBits (encPair encUnary encBits)
@@ -374,7 +376,7 @@ theorem sign_ppt (S : SignatureScheme) (H : KeyedHashFamily) :
 theorem verify_polyTime (S : SignatureScheme) (H : KeyedHashFamily) :
     ComputableInPolyTime
       (fun p : List Bool × ℕ × List Bool × List Bool => verify S H p.1 p.2.1 p.2.2.1 p.2.2.2)
-      (encPair encBits (encPair encUnary (encPair encBits encBits))) encBool := by
+      (encPair encBits encIndexedSignedMessage) encBool := by
   let In := List Bool × ℕ × List Bool × List Bool
   let encIn : In ↪ List Bool := encPair encBits (encPair encUnary (encPair encBits encBits))
   have hpk : ComputableInPolyTime (fun p : In => p.1) encIn encBits :=
@@ -454,123 +456,12 @@ noncomputable def scheme (S : SignatureScheme) (H : KeyedHashFamily) : IndexedSi
 
 section Simulator
 
-private theorem computableInPolyTime_biTape_mk₁ :
-    ComputableInPolyTime (Cslib.Turing.BiTape.mk₁ (Symbol := Bool))
-      encBits (encBiTape encBool) := by
-  have hhead : ComputableInPolyTime (fun v : List Bool => v[0]?) encBits (encOption encBool) :=
-    ComputableInPolyTime.bitsGetElem? .id' (.const 0)
-  have hright : ComputableInPolyTime
-      (fun v : List Bool => Cslib.Turing.StackTape.mapSome v.tail)
-      encBits (encStackTape encBool) :=
-    (ComputableInPolyTime.stackTape_mapSome encBool).comp
-      (ComputableInPolyTime.bitsToList.comp ComputableInPolyTime.bitsTail)
-  apply (ComputableInPolyTime.biTape_mk hhead (.const Cslib.Turing.StackTape.nil)
-    hright).of_enc_eq
-  intro values
-  cases values <;> rfl
-
-private theorem computableInPolyTime_finiteConfig_parts {k : ℕ} {Control : Type}
-    [Finite Control] :
-    ComputableInPolyTime
-      (fun cfg : FiniteConfig k Bool Control Unit => (cfg.tapes, cfg.channels))
-      encFiniteConfig
-      (encPair encFiniteCfg (encPi (encPair encBits (encBiTape encBool)))) :=
-  .of_eq fun _ => rfl
-
-theorem computableInPolyTime_finiteConfig_tapes {k : ℕ} {Control : Type}
-    [Finite Control] :
-    ComputableInPolyTime
-      (FiniteConfig.tapes (k := k) (Symbol := Bool) (State := Control) (Oracle := Unit))
-      encFiniteConfig encFiniteCfg :=
-  computableInPolyTime_finiteConfig_parts.fst'
-
-theorem computableInPolyTime_finiteConfig_channels {k : ℕ} {Control : Type}
-    [Finite Control] :
-    ComputableInPolyTime
-      (FiniteConfig.channels (k := k) (Symbol := Bool) (State := Control) (Oracle := Unit))
-      encFiniteConfig (encPi (encPair encBits (encBiTape encBool))) :=
-  computableInPolyTime_finiteConfig_parts.snd'
-
-private theorem computableInPolyTime_finiteConfig_mk {k : ℕ} {Control α : Type}
-    [Finite Control] {input : α ↪ List Bool}
-    {tapes : α → FiniteCfg k Bool Control}
-    {channels : α → Unit → List Bool × Cslib.Turing.BiTape Bool}
-    (htapes : ComputableInPolyTime tapes input encFiniteCfg)
-    (hchannels : ComputableInPolyTime channels input
-      (encPi (encPair encBits (encBiTape encBool)))) :
-    ComputableInPolyTime
-      (fun a => (⟨tapes a, channels a⟩ : FiniteConfig k Bool Control Unit))
-      input encFiniteConfig :=
-  (htapes.prod hchannels).of_enc_eq fun _ => rfl
-
-theorem computableInPolyTime_finiteConfig_answerSymbols {k : ℕ} {Control : Type}
-    [Finite Control] :
-    ComputableInPolyTime
-      (FiniteConfig.answerSymbols (k := k) (Symbol := Bool) (State := Control) (Oracle := Unit))
-      encFiniteConfig (encFinite (Unit → Option Bool)) := by
-  have hheads : ComputableInPolyTime
-      (fun cfg : FiniteConfig k Bool Control Unit => fun ch => (cfg.channels ch).2.head)
-      encFiniteConfig (encPi (encOption encBool)) :=
-    ComputableInPolyTime.pi fun ch =>
-      (ComputableInPolyTime.biTape_head encBool).comp
-        (((ComputableInPolyTime.pi_apply _ ch).comp
-          computableInPolyTime_finiteConfig_channels).snd')
-  exact (ComputableInPolyTime.of_finite id).comp hheads
-
-theorem computableInPolyTime_finiteConfig_step {k : ℕ} {Control : Type}
-    [Finite Control] (action : Action k Bool Control)
-    (symbol : Unit → Option Bool) (move : Unit → SignType) :
-    ComputableInPolyTime
-      (fun cfg : FiniteConfig k Bool Control Unit => cfg.step action symbol move)
-      encFiniteConfig encFiniteConfig := by
-  unfold FiniteConfig.step
-  refine computableInPolyTime_finiteConfig_mk
-    ((ComputableInPolyTime.finiteCfg_step action).comp computableInPolyTime_finiteConfig_tapes)
-    (ComputableInPolyTime.pi fun ch => ?_)
-  have hch := (ComputableInPolyTime.pi_apply (encPair encBits (encBiTape encBool)) ch).comp
-    (computableInPolyTime_finiteConfig_channels (k := k) (Control := Control))
-  exact (ComputableInPolyTime.bitsAppend hch.fst' (.const (symbol ch).toList)).prod
-    (ComputableInPolyTime.biTape_step (none, move ch) hch.snd')
-
-theorem computableInPolyTime_finiteConfig_receive {k : ℕ} {Control α : Type}
-    [Finite Control] {input : α ↪ List Bool}
-    {cfg : α → FiniteConfig k Bool Control Unit} {answer : α → List Bool}
-    (hcfg : ComputableInPolyTime cfg input encFiniteConfig)
-    (hanswer : ComputableInPolyTime answer input encBits)
-    (channel : Unit) (next : Control) :
-    ComputableInPolyTime (fun a => (cfg a).receive channel next (answer a))
-      input encFiniteConfig := by
-  unfold FiniteConfig.receive
-  have ht := computableInPolyTime_finiteConfig_tapes.comp hcfg
-  have htapes := ComputableInPolyTime.finiteCfg_mk
-    (ComputableInPolyTime.finiteCfg_input.comp ht)
-    (.const (some next))
-    (ComputableInPolyTime.finiteCfg_inputPos.comp ht)
-    (ComputableInPolyTime.finiteCfg_workTapes.comp ht)
-    (ComputableInPolyTime.finiteCfg_output.comp ht)
-  have hchannels := ComputableInPolyTime.pi_update
-    (computableInPolyTime_finiteConfig_channels.comp hcfg)
-    ((ComputableInPolyTime.const []).prod (computableInPolyTime_biTape_mk₁.comp hanswer))
-    channel
-  exact computableInPolyTime_finiteConfig_mk htapes hchannels
-
-theorem computableInPolyTime_finiteConfig_init {k : ℕ} {Control α : Type}
-    [Finite Control] {input : α ↪ List Bool} {word : α → List Bool}
-    (hword : ComputableInPolyTime word input encBits) (state : Control) :
-    ComputableInPolyTime
-      (fun a => FiniteConfig.init (k := k) (Oracle := Unit) state (word a))
-      input encFiniteConfig := by
-  unfold FiniteConfig.init
-  exact computableInPolyTime_finiteConfig_mk
-    (ComputableInPolyTime.finiteCfg_init hword state)
-    (.const (fun _ => ([], Cslib.Turing.BiTape.nil)))
-
 theorem computableInPolyTime_finiteConfig_reqWord {k : ℕ} {Control α : Type} [Finite Control]
     {encIn : α ↪ List Bool} {cfg : α → FiniteConfig k Bool Control Unit}
     (hcfg : ComputableInPolyTime cfg encIn encFiniteConfig) :
     ComputableInPolyTime (fun a => ((cfg a).channels ()).1) encIn encBits :=
   ((ComputableInPolyTime.pi_apply (encPair encBits (encBiTape encBool)) ()).comp
-    (computableInPolyTime_finiteConfig_channels.comp hcfg)).fst'
+    (ComputableInPolyTime.finiteConfig_channels.comp hcfg)).fst'
 
 /-- Finite-tag transition dispatch on `FiniteConfig`: given polynomial-time projections for a
 `FiniteConfig` `cfg` and a coin `coin`, plus polynomial-time handlers for the halted branch, each
@@ -600,7 +491,7 @@ theorem computableInPolyTime_finiteConfig_cases {k : ℕ} {Control α β : Type}
           | .step action symbol move => onStep action symbol move a
           | .query () next => onQuery next a)
       encIn encOut := by
-  have htapes := computableInPolyTime_finiteConfig_tapes.comp hcfg
+  have htapes := ComputableInPolyTime.finiteConfig_tapes.comp hcfg
   let Tag := Option Control × Option Bool × (Fin k → Option Bool) × (Unit → Option Bool) × Bool
   let encTag : Tag ↪ List Bool :=
     encPair (encFinite (Option Control))
@@ -615,7 +506,7 @@ theorem computableInPolyTime_finiteConfig_cases {k : ℕ} {Control α β : Type}
     (ComputableInPolyTime.finiteCfg_state.comp htapes).prod
       ((ComputableInPolyTime.finiteCfg_inputSymbol.comp htapes).prod
         ((ComputableInPolyTime.finiteCfg_workTapeSymbols.comp htapes).prod
-          ((computableInPolyTime_finiteConfig_answerSymbols.comp hcfg).prod hcoin)))
+          ((ComputableInPolyTime.finiteConfig_answerSymbols.comp hcfg).prod hcoin)))
   let branch (choice : Tag) (a : α) : β :=
     match choice.1 with
     | none => onHalt a
@@ -695,12 +586,12 @@ private theorem computableInPolyTime_simStep {k : ℕ} {Control : Type} [Finite 
   have hcond := hrZero.bool_and' hisNone
   exact (computableInPolyTime_finiteConfig_cases machine hcfg hcoin hacc
     (fun action symbol move =>
-      ((computableInPolyTime_finiteConfig_step action symbol move).comp hcfg).prod hqOpt)
+      ((ComputableInPolyTime.finiteConfig_step action symbol move).comp hcfg).prod hqOpt)
     (fun next =>
       hcond.ite
-        ((computableInPolyTime_finiteConfig_receive hcfg hreply () next).prod
+        ((ComputableInPolyTime.finiteConfig_receive hcfg hreply () next).prod
           ((ComputableInPolyTime.optionSome encBits).comp hr.snd'))
-        ((computableInPolyTime_finiteConfig_receive hcfg (.const []) () next).prod
+        ((ComputableInPolyTime.finiteConfig_receive hcfg (.const []) () next).prod
           hqOpt))).of_enc_eq fun _ => rfl
 
 private theorem computableInPolyTime_simRun_raw {k : ℕ} {Control : Type} [Finite Control]
@@ -722,7 +613,7 @@ private theorem computableInPolyTime_simRun_raw {k : ℕ} {Control : Type} [Fini
   have hinit : ComputableInPolyTime
       (fun p : P => (FiniteConfig.init machine.initial p.1, (none : Option (List Bool))))
       encP encAcc :=
-    (computableInPolyTime_finiteConfig_init hword machine.initial).prod (.const none)
+    (ComputableInPolyTime.finiteConfig_init hword machine.initial).prod (.const none)
   obtain ⟨cCfg, hcCfg⟩ :=
     length_encFiniteConfig_le (k := k) (State := Control) (Oracle := Unit)
   let inv (p : P) (consumed : List Bool) (acc : Acc) : Prop :=
@@ -812,7 +703,8 @@ private theorem computableInPolyTime_simRun_raw {k : ℕ} {Control : Type} [Fini
       encAcc (encPair encBits (encOption encBits)) := by
     have hbuilt :=
       (((ComputableInPolyTime.fst encFiniteConfig (encOption encBits)).trans
-        (computableInPolyTime_finiteConfig_tapes (k := k) (Control := Control))).trans
+        (ComputableInPolyTime.finiteConfig_tapes (k := k) (State := Control)
+          (Oracle := Unit))).trans
         ComputableInPolyTime.finiteCfg_output).prod
         (ComputableInPolyTime.snd encFiniteConfig (encOption encBits))
     exact hbuilt.of_enc_eq fun _ => rfl
@@ -1138,7 +1030,7 @@ section Reductions
 
 /-- Total decoder for raw `IndexedForger` outputs `(u, msg, sig)`. -/
 @[expose]
-def outDecoder : Decoder (encPair encUnary (encPair encBits encBits)) :=
+def outDecoder : Decoder encIndexedSignedMessage :=
   Decoder.unary.pair (Decoder.bits.pair Decoder.bits)
 
 /-- Total decoder for `tcrAdversary` saved state `(keys, coins)`. -/
@@ -1179,15 +1071,15 @@ noncomputable def oneTimeForger {k : ℕ} {Control : Type}
       let r0 := simRun machine word [] coins
       match r0.2 with
       | none =>
-        let out := outDecoder.decode r0.1
-        return otsForgeryOf H n out.2.1 out.2.2
+        let (_, msg, sig) := outDecoder.decode r0.1
+        return otsForgeryOf H n msg sig
       | some m₀ =>
         let ots ← List.take (sigBound n) <$>
           ProbOracleComp.query ((), otsMsg H n hashKey (H.eval n hashKey m₀))
         let reply := (encPair encBits encBits (hashKey, ots)).take fuel
         let r1 := simRun machine word reply coins
-        let out := outDecoder.decode r1.1
-        return otsForgeryOf H n out.2.1 out.2.2
+        let (_, msg, sig) := outDecoder.decode r1.1
+        return otsForgeryOf H n msg sig
     else
       pure ([], [])
 
@@ -1215,12 +1107,14 @@ noncomputable def tcrAdversary {k : ℕ} {Control : Type}
     let r0 := simRun machine word [] coins
     match r0.2 with
     | none =>
-      return (outDecoder.decode r0.1).2.1
+      let (_, m₁, _) := outDecoder.decode r0.1
+      return m₁
     | some m₀ =>
       let ots ← S.sign keys.2 (otsMsg H n hashKey (H.eval n hashKey m₀))
       let reply := (encPair encBits encBits (hashKey, ots)).take fuel
       let r1 := simRun machine word reply coins
-      return (outDecoder.decode r1.1).2.1
+      let (_, m₁, _) := outDecoder.decode r1.1
+      return m₁
 
 theorem computableInPolyTime_wordOf {α : Type} {input : α ↪ List Bool}
     {n : α → ℕ} {pk : α → List Bool}
@@ -1236,10 +1130,9 @@ theorem computableInPolyTime_fuelOf {α : Type} {input : α ↪ List Bool}
     (hn : ComputableInPolyTime n input encUnary)
     (hpk : ComputableInPolyTime pk input encBits) :
     ComputableInPolyTime (fun a => simFuelOf c d (n a) (pk a)) input encUnary := by
-  have hlen := ComputableInPolyTime.length_bits.comp (computableInPolyTime_wordOf hn hpk)
-  have hbase := hlen.unary_add' (.const 1)
-  have hpow := (ComputableInPolyTime.unary_pow d).comp hbase
-  exact (ComputableInPolyTime.const c).unary_mul' hpow
+  have hword := computableInPolyTime_wordOf hn hpk
+  unfold simFuelOf
+  fun_prop
 
 private theorem computableInPolyTime_simReplay_comp {k : ℕ} {Control α : Type}
     [Finite Control] {input : α ↪ List Bool}
@@ -1484,7 +1377,7 @@ theorem succProbability_indexedEufCmaGame_le_of_machine {k : ℕ} {Control : Typ
       (oracle : Unit × List Bool → StateT State PMF (List Bool)) s,
       (OracleComp.interpret
         (OracleComp.sumHandler (fun m => StateT.lift (ProbComp.unifOracle m)) oracle)
-          ((encPair encUnary (encPair encBits encBits)) <$> adversary input.1 input.2)).run s =
+          (encIndexedSignedMessage <$> adversary input.1 input.2)).run s =
       (OracleComp.interpret
         (OracleComp.sumHandler (fun m => StateT.lift (ProbComp.unifOracle m)) oracle)
           (machine.runOracle
@@ -1560,85 +1453,58 @@ theorem succProbability_indexedEufCmaGame_le_of_machine {k : ℕ} {Control : Typ
       simp only [Functor.map_map, outDecoder.decode_enc]
       exact (id_map _).symm
     simp only [IndexedSignatureScheme.indexedEufCmaGame, scheme_keyGen, scheme_verify, keyGen,
-      ProbComp.eval_bind, ProbComp.eval_pure, ProbOracleComp.eval_run_interpret, PMF.bind_bind,
-      PMF.pure_bind, μ, PMF.monad_bind_eq_bind, PMF.map_bind]
-    congr 1
-    funext keys
+      ProbOracleComp.eval_run_interpret, μ, pmf_norm]
+    peel_binds keys
     rw [hdecodeAdv (encPair encUnary encBits (n, keys.1)), OracleComp.interpret_map,
       StateT.run_map, _root_.PMF.monad_map_eq_map,
       hmachine (n, encPair encUnary encBits (n, keys.1)) _ _ []]
     erw [← machine.finiteRunFrom_take_runOracle (fuelOf keys.1) (wordOf keys.1)]
-    simp only [finiteRunFrom, OracleComp.interpret_map, StateT.run_map,
-      _root_.PMF.monad_map_eq_map, PMF.map_comp]
+    simp only [finiteRunFrom, OracleComp.interpret_map, StateT.run_map, pmf_norm]
     rw [iterate_finiteStep_from_empty S H machine n keys.2 (fuelOf keys.1) (fuelOf keys.1)
       (FiniteConfig.init machine.initial (wordOf keys.1))]
-    simp only [PMF.map_bind, PMF.bind_bind]
-    congr 1
-    funext coins
+    simp only [pmf_norm]
+    peel_binds coins
     dsimp only [otsDist, winIdx, finalOut, simRun, wordOf, pkOf, fuelOf,
       simWordOf, simPkOf, simFuelOf]
     cases hopt : ((coins.foldl (simStep machine [])
         (FiniteConfig.init machine.initial
           (encPair encUnary encBits (n, encPair encUnary encBits (n, keys.1))), none)).2) with
     | none =>
-      simp only [PMF.pure_map, PMF.pure_bind, Function.comp_def, hopt, PMF.bind_const]
+      simp only [PMF.bind_const, pmf_norm]
     | some m₀ =>
-      simp only [_root_.PMF.map, PMF.bind_bind, PMF.pure_bind, Function.comp_def, hopt]
+      simp only [_root_.PMF.map, pmf_norm]
   have hotsEq :
       ProbComp.eval (S.eufOneTimeGame (oneTimeForger H sigBound machine c d) (otsParam H n)) =
         μ.map winOts := by
     simp only [SignatureScheme.eufOneTimeGame, oneTimeForger, otsParamInv_otsParam, ↓reduceIte,
-      ProbComp.eval_bind, ProbComp.eval_pure, ProbOracleComp.eval_run_interpret, μ,
-      PMF.monad_bind_eq_bind, PMF.map_bind]
-    refine PMF.bind_congr_on_support _ _ _ fun keys hkeys => ?_
-    simp only [OracleComp.interpret_bind, StateT.run_bind, ProbOracleComp.run_interpret_sample,
-      BitString.eval_sampleList, Probability.PMF.monad_bind_eq_bind, PMF.bind_bind, PMF.bind_map,
-      Function.comp_def]
-    congr 1
-    funext coins
-    congr 1
-    funext hashKey
-    dsimp only [otsDist, winOts, finalOut, wordOf, pkOf, fuelOf,
-      simWordOf, simPkOf, simFuelOf, otsForgeryOf]
+      BitString.eval_sampleList, μ, fuelOf, runWith_norm, pmf_norm]
+    peel_binds keys coins hashKey
+    dsimp only [otsDist, winOts, finalOut, wordOf, pkOf, fuelOf, simWordOf, simPkOf, simFuelOf,
+      otsForgeryOf]
     cases hopt : (simRun machine
         (encPair encUnary encBits (n, encPair encUnary encBits (n, keys.1))) [] coins).2 with
     | none =>
-      simp only [OracleComp.interpret_pure, StateT.run_pure, Probability.PMF.monad_pure_eq_pure,
-        PMF.pure_bind, PMF.pure_map, hopt]
+      simp only [runWith_norm, pmf_norm]
     | some m₀ =>
-      simp only [bind_map_left, OracleComp.interpret_bind, OracleComp.interpret_pure,
-        StateT.run_bind, StateT.run_pure, Probability.PMF.monad_bind_eq_bind,
-        Probability.PMF.monad_pure_eq_pure, ProbOracleComp.interpret_query]
-      simp only [StateT.run, SignatureScheme.oneTimeSigningOracle, List.isEmpty_nil, ↓reduceIte,
-        ProbComp.eval_bind, ProbComp.eval_pure, PMF.bind_bind, PMF.pure_bind,
-        Function.comp_def, _root_.PMF.map]
-      refine PMF.bind_congr_on_support _ _ _ fun ots hots => ?_
+      simp only [SignatureScheme.oneTimeSigningOracle, SignatureScheme.oneTimeSigningOracleOf,
+        List.isEmpty_nil, ↓reduceIte, _root_.PMF.map, runWith_norm, pmf_norm]
+      peel_binds ots
       have htake : ots.take (sigBound n) = ots :=
         List.take_of_length_le
-          (hsigBound n keys hkeys (otsMsg H n hashKey (H.eval n hashKey m₀))
-            (length_otsMsg H n hashKey _) ots hots)
-      simp only [htake, hopt]
+          (hsigBound n keys keys_mem (otsMsg H n hashKey (H.eval n hashKey m₀))
+            (length_otsMsg H n hashKey _) ots ots_mem)
+      simp only [htake]
   have htcrEq :
       ProbComp.eval
         (targetCollisionGame H.keyLen H.eval (fun _ _ => true)
           (tcrAdversary S H machine c d) n) = μ.map winTcr := by
-    simp only [targetCollisionGame, tcrAdversary, ProbComp.eval_bind, ProbComp.eval_pure,
-      BitString.eval_sampleList, PMF.bind_bind, PMF.pure_bind, stateDecoder.decode_enc,
-      μ, PMF.monad_bind_eq_bind, PMF.map_bind]
-    congr 1
-    funext keys
-    congr 1
-    funext coins
-    congr 1
-    funext hashKey
+    simp only [targetCollisionGame, tcrAdversary, BitString.eval_sampleList,
+      stateDecoder.decode_enc, μ, fuelOf, pmf_norm]
+    peel_binds keys coins hashKey
     dsimp only [otsDist, winTcr, finalOut, wordOf, pkOf, fuelOf, simWordOf, simPkOf, simFuelOf]
     cases hopt : (simRun machine
-        (encPair encUnary encBits (n, encPair encUnary encBits (n, keys.1))) [] coins).2 with
-    | none =>
-      simp only [ProbComp.eval_pure, PMF.pure_bind, PMF.pure_map, hopt]
-    | some m₀ =>
-      simp only [ProbComp.eval_bind, ProbComp.eval_pure, PMF.bind_bind, PMF.pure_bind,
-        Function.comp_def, _root_.PMF.map, hopt]
+        (encPair encUnary encBits (n, encPair encUnary encBits (n, keys.1))) [] coins).2 <;>
+      simp only [_root_.PMF.map, pmf_norm]
   have hpointwise : ∀ sample ∈ μ.support,
       winIdx sample = true → winOts sample = true ∨ winTcr sample = true := by
     rintro ⟨keys, coins, hashKey, ots⟩ hsupp hwin
@@ -1711,32 +1577,13 @@ theorem exists_ots_bounds (S : SignatureScheme) (H : KeyedHashFamily) :
         ∀ msg, msg.length = otsParam H n →
         ∀ ots ∈ (ProbComp.eval (S.sign keys.2 msg)).support, ots.length ≤ sigBound n) := by
   obtain ⟨ckg, dkg, hkgLen⟩ := S.keyGen_ppt.length_le
-  obtain ⟨csg, dsg, hsgLen⟩ := S.sign_ppt.length_le
-  let vkBound (n : ℕ) : ℕ := ckg * (otsParam H n + 1) ^ dkg
-  let sigBound (n : ℕ) : ℕ := csg * (2 * vkBound n + otsParam H n + 2) ^ dsg
-  have hM := computableInPolyTime_otsParam H
-  have hvkPoly : ComputableInPolyTime vkBound encUnary encUnary :=
-    (ComputableInPolyTime.const ckg).unary_mul'
-      ((ComputableInPolyTime.unary_pow dkg).comp (hM.unary_add' (.const 1)))
-  have hsigPoly : ComputableInPolyTime sigBound encUnary encUnary :=
-    (ComputableInPolyTime.const csg).unary_mul'
-      ((ComputableInPolyTime.unary_pow dsg).comp
-        ((((ComputableInPolyTime.const 2).unary_mul' hvkPoly).unary_add' hM).unary_add'
-          (.const 2)))
-  refine ⟨ckg, dkg, sigBound, hsigPoly, ?_, ?_⟩
-  · intro n keys hkeys
-    have hkPair := hkgLen (otsParam H n) keys hkeys
-    simp only [length_encPair, encBits_apply, encUnary_apply, List.length_replicate] at hkPair
-    omega
-  · intro n keys hkeys msg hmsg ots hots
-    have hkPair := hkgLen (otsParam H n) keys hkeys
-    simp only [length_encPair, encBits_apply, encUnary_apply, List.length_replicate] at hkPair
-    have hsPair := hsgLen (keys.2, msg) ots hots
-    simp only [length_encPair, encBits_apply, hmsg] at hsPair
-    have hbaseLe : 2 * keys.2.length + 1 + otsParam H n + 1 ≤
-        2 * vkBound n + otsParam H n + 2 := by
-      dsimp only [vkBound]; omega
-    exact hsPair.trans (Nat.mul_le_mul_left csg (Nat.pow_le_pow_left hbaseLe dsg))
+  obtain ⟨bound, hboundPoly, hbound⟩ := S.exists_sign_length_bound_of_length_eq
+  refine ⟨ckg, dkg, fun n => bound (otsParam H n),
+    hboundPoly.comp (computableInPolyTime_otsParam H), fun n keys hkeys => ?_,
+    fun n => hbound (otsParam H n)⟩
+  have hkPair := hkgLen (otsParam H n) keys hkeys
+  simp only [length_encPair, encBits_apply, encUnary_apply, List.length_replicate] at hkPair
+  omega
 
 /-- **Existential reduction for `TCRSignature.scheme`** ([BonehShoup2023], Section 13.2.1,
 Theorem 13.2): every strict oracle-PPT indexed forger `adversary` induces a strict oracle-PPT
@@ -1744,7 +1591,7 @@ one-time forger `otForger` and a strict PPT two-stage `TargetCollisionFinder` `t
 `adversary`'s indexed forging probability at every security parameter `n`. -/
 theorem exists_reduction_indexedEufCmaGame_le (S : SignatureScheme) (H : KeyedHashFamily)
     {adversary : IndexedForger}
-    (hadversary : IsOraclePPT (encPair encUnary (encPair encBits encBits)) adversary) :
+    (hadversary : IsOraclePPT encIndexedSignedMessage adversary) :
     ∃ (otForger : Forger) (tcrAdv : TargetCollisionFinder),
       IsOraclePPT (encPair encBits encBits) otForger ∧
       tcrAdv.IsPPT ∧
@@ -1766,10 +1613,7 @@ end Reductions
 /-- Any `Negligible` function remains `Negligible` after precomposing with `otsParam H`. -/
 theorem negligible_comp_otsParam {f : ℕ → ℝ≥0} (hf : Negligible f) (H : KeyedHashFamily) :
     Negligible (fun n => f (otsParam H n)) :=
-  hf.comp_of_polynomial_bound (bound := id)
-    (Filter.tendsto_atTop_mono (le_otsParam H) Filter.tendsto_id)
-    PolynomiallyBounded.id
-    (Filter.Eventually.of_forall (le_otsParam H))
+  hf.comp_polynomiallyLowerBounded (.mono_of_le .id (le_otsParam H))
 
 end TCRSignature
 
@@ -1782,14 +1626,12 @@ theorem SignatureScheme.OneTimeEUFCMA.indexedEUFCMA_tcrSignature
     {S : SignatureScheme} (hS : S.OneTimeEUFCMA)
     {H : KeyedHashFamily} (hH : H.TargetCollisionResistant) :
     (TCRSignature.scheme S H).IndexedEUFCMA := by
-  apply IndexedSignatureScheme.IndexedEUFCMA.of_negligible
-  intro adversary hadversary
+  refine IndexedSignatureScheme.IndexedEUFCMA.of_negligible fun adversary hadversary => ?_
   obtain ⟨otForger, tcrAdv, hotPPT, htcrPPT, hbound⟩ :=
     TCRSignature.exists_reduction_indexedEufCmaGame_le S H hadversary
-  exact negligible_of_le
-    ((TCRSignature.negligible_comp_otsParam (hS.negligible otForger hotPPT) H).add
-      (hH.negligible tcrAdv htcrPPT))
-    hbound
+  have := TCRSignature.negligible_comp_otsParam (hS.negligible otForger hotPPT) H
+  have := hH.negligible tcrAdv htcrPPT
+  negligible using hbound
 
 /-- **Capacity-`2` indexed signatures from one-way functions and target collision-resistant hash
 families**: combining Lamport's one-time signature scheme (`OneWay.exists_oneTimeSignature`),
