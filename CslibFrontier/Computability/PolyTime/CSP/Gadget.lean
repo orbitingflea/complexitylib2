@@ -56,7 +56,7 @@ theorem computableInPolyTime_instantiate (encRel : Rel ↪ List Bool) (B : ℕ) 
         instantiate B index scope body)
       (encPair (encPair encUnary (encList encNat))
         (encCSP encRel (encPair encBool encUnary))) (encCSP encRel encNat) := by
-  unfold instantiate relabel Constraint.relabel
+  unfold instantiate Cslib.Logic.PL.CSP.relabel Constraint.relabel
   fun_prop
 
 /-- Finite fixed gadget lookup and replacement are native polynomial time, with no

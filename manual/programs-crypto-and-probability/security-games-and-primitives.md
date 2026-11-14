@@ -451,12 +451,22 @@ malformed encodings, salt/message layout, rejection sampling, boundary acceptanc
 decoder/hash fixtures derived from the first official Falcon-512 NIST KAT. The SHAKE client above
 now checks the concrete 20-byte prefix used by that fixture.
 
+[`Falcon/BerExp.lean`](../../CslibFrontier/Crypto/Computational/Falcon/BerExp.lean) isolates
+Algorithm 14's exact distributional threshold step after its floating-point approximation has
+already produced `z : Fin (2^64)`. `Falcon.berExpThresholdCoin` applies the public deterministic
+strict comparison to a sample from the shared fixed 64-fair-bit sampler, and
+`Falcon.eval_berExpThresholdCoin_true` proves acceptance mass exactly `z / 2^64`.
+The [ordinary-import client](../../CslibFrontierTests/Crypto/FalconBerExp.lean) checks the strict
+comparison and the thresholds zero, one, one half and `2^64 - 1`. This denotational interface does
+not model the reference implementation's lazy one-to-eight-byte trace, bound `ApproxExp`'s
+floating-point error, or certify a native runtime, circuit, query or static-program size.
+
 The Falcon frontend deliberately retains a finite XOF-prefix boundary: the concrete SHAKE function
 can supply any requested finite prefix, but the frontend does not choose a universally sufficient
 length for rejection sampling. Full KAT verification, public-key decoding, NTRU key generation,
-FFT/NTT correctness, the adaptive Gaussian trapdoor sampler and rejection law, average-case
-NTRU-SIS, ROM/QROM reductions, certified efficiency, and reconciliation with the still-developing
-FIPS 206 remain separate obligations.
+FFT/NTT correctness, the rest of the adaptive Gaussian trapdoor sampler and its distribution,
+termination and rejection analysis, average-case NTRU-SIS, ROM/QROM reductions, certified
+efficiency, and reconciliation with the still-developing FIPS 206 remain separate obligations.
 
 The source-faithful SLH-DSA WOTS+ digit preprocessing from FIPS 205 is in
 [`SLHDSA/WOTS/Digits.lean`](../../CslibFrontier/Crypto/Primitives/SLHDSA/WOTS/Digits.lean), with

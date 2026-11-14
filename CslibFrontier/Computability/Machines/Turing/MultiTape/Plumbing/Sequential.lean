@@ -6,13 +6,14 @@ Authors: Christian Reitwiessner, Samuel Schlesinger
 
 module
 -- upstream: vendored crei:crei/tidy-universal @7f7c0696 (unsubmitted)
+-- vendored: state relabeling and its resource-preserving specification are local additions
 -- `exists_runPath_seq_space_le` is from cslib PR #1111 @3441fa81.
 -- vendored: `space_seq_le` is stated with the space of run paths since cslib #1122
 -- vendored: the runs of `seq` are stated with `Cfg.mapState` and `handOver` since cslib #1151, and
 -- `exists_runPath_seq_space_le` drops the halting of the second path, as `exists_runPath_seq` does
 
 public import Cslib.Computability.Machines.Turing.MultiTape.Plumbing.Sequential
-public import CslibFrontier.Computability.Machines.Turing.MultiTape.TapeLemmas
+public import CslibFrontier.Computability.Machines.Turing.MultiTape.Plumbing.TransformsTapes
 
 /-!
 # Space of a sequential run
@@ -25,6 +26,8 @@ by equations.
 ## Main results
 
 * `Turing.MultiTapeTM.runFrom_seq`: runs compose.
+* `Turing.MultiTapeTM.relabel`: rename states without changing instructions.
+* `Turing.MultiTapeTM.TransformsTapes.relabel`: preserve independent resource bounds.
 * `Turing.MultiTapeTM.withState_runFrom_seq`: invariants of a sequential run.
 * `Turing.MultiTapeTM.space_seq_le`: the space of a sequential run is at most that of its phases.
 * `Turing.MultiTapeTM.TransformsTapes.seq_eq`: sequential composition of transformations given by
@@ -40,6 +43,47 @@ namespace Turing.MultiTapeTM
 variable {k : ℕ} {Symbol State₀ State₁ : Type*} {input : List Symbol}
 
 variable {tm₀ : MultiTapeTM k Symbol State₀} {tm₁ : MultiTapeTM k Symbol State₁}
+
+/-- Rename control states without changing any instruction or tape. -/
+@[expose] noncomputable def relabel {State' : Type*}
+    (tm : MultiTapeTM k Symbol State₀) (e : State₀ ≃ State') :
+    MultiTapeTM k Symbol State' :=
+  ofTr (e tm.q₀) fun q inp work =>
+    let a := tm.tr (e.symm q) inp work
+    { a with state := a.state.map e }
+
+/-- State renaming commutes with every step, including the stationary halted steps. -/
+theorem runFrom_relabel {State' : Type*} (tm : MultiTapeTM k Symbol State₀)
+    (e : State₀ ≃ State') (cfg : Cfg k Symbol State₀ input) (n : ℕ) :
+    (tm.relabel e).runFrom (cfg.mapState (Option.map e)) n =
+      (tm.runFrom cfg n).mapState (Option.map e) := by
+  refine (Function.Semiconj.iterate_right (fun c => ?_) n cfg).symm
+  cases hq : c.state with
+  | none => rw [step_of_halt hq, step_of_halt (by simp [hq])]
+  | some q =>
+    rw [step_of_state hq, step_of_state (q := e q) (by simp [hq])]
+    -- The observed tape symbols are definitionally unchanged by the control-state map.
+    simp only [relabel, tr_ofTr, Equiv.symm_apply_apply, Cfg.mapState,
+      Action.apply, Cfg.inputSymbol, Cfg.mk.injEq]; repeat' constructor
+
+/-- Renaming states preserves the time and visited-cell bounds independently. -/
+theorem TransformsTapes.relabel {State' : Type*}
+    {P : (input : List Symbol) → (Fin k → List Symbol) → Prop}
+    {Q : (input : List Symbol) → (Fin k → List Symbol) → (Fin k → List Symbol) →
+      List Symbol → Prop} {t s : ℕ}
+    (h : TransformsTapes tm₀ P Q t s) (e : State₀ ≃ State') :
+    TransformsTapes (tm₀.relabel e) P Q t s := by
+  refine transformsTapes_iff_runFrom.mpr fun input ws out hP => ?_
+  obtain ⟨ws', emitted, hrun, hQ, hspace⟩ :=
+    transformsTapes_iff_runFrom.mp h input ws out hP
+  have hstart : wordsCfg input (some (tm₀.relabel e).q₀) ws out =
+      (wordsCfg input (some tm₀.q₀) ws out).mapState (Option.map e) := rfl
+  refine ⟨ws', emitted, ?_, hQ, ?_⟩
+  · rw [hstart, runFrom_relabel, hrun]; rfl
+  · rw [hstart, space_eq_of_workTapePos (tm' := tm₀) _
+      (wordsCfg input (some tm₀.q₀) ws out) t
+      (fun m _ => by rw [runFrom_relabel]; rfl)]
+    exact hspace
 
 /-- **Space of a sequential run.** The run path of `seq` composed from two run paths visits at most
 the cells of the two paths combined. -/

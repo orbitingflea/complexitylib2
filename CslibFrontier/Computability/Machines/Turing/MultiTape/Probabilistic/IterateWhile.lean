@@ -7,6 +7,7 @@ Authors: Christian Reitwiessner, Samuel Schlesinger
 module
 -- upstream: candidate
 
+public import CslibFrontier.Computability.Machines.Turing.MultiTape.Internal.KernelIterateWhile
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Combinators.IterateWhileLayout
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Probabilistic.Loop.Space
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Probabilistic.Tidy
@@ -94,8 +95,7 @@ variable (k) in
 /-- Prepare a round: clear the current tape, copy the next word to it and clear the next tape,
 using `mark` to flag the left end of words. -/
 noncomputable def prepareRound (mark : Bool) : MultiTapeTM (k + 1 + 2) Bool PrepareState :=
-  ((clearWork Bool).extendTapes (tapeEmb (curTape k))).seq
-    ((copyWord (copyEmb k) mark).seq ((clearWork Bool).extendTapes (tapeEmb (nextTape k))))
+  Turing.MultiTapeTM.IterateWhile.prepareRound (k := k) mark
 
 variable (k) in
 /-- Finish the iteration: output the current word and clear its tape. -/
@@ -106,21 +106,8 @@ noncomputable def finish (mark : Bool) : MultiTapeTM (k + 1 + 2) Bool FinishStat
 theorem transformsTapes_prepareRound (mark : Bool) (vp v : List Bool) :
     TransformsTapes (prepareRound k mark) (fun _ ws => ws = words vp v)
       (fun _ _ ws' e => ws' = words v [] ∧ e = [])
-      (3 * vp.length + 6 * v.length + 16) (vp.length + 5 * v.length + 3 * (k + 1 + 2) + 17) := by
-  have hcur := (transformsTapes_clearWork_tapeEmb (curTape k) vp).imp
-    (P' := fun _ ws => ws = words vp v) (Q' := fun _ _ ws' e => ws' = words [] v ∧ e = [])
-    (fun _ _ h => by rw [h, words_cur])
-    (fun _ _ _ _ h ⟨h', he⟩ => ⟨by rw [h', h, update_words_cur], he⟩) le_rfl le_rfl
-  have hcopy := (transformsTapes_copyWord (copyEmb k) mark v).imp
-    (P' := fun _ ws => ws = words [] v) (Q' := fun _ _ ws' e => ws' = words v v ∧ e = [])
-    (fun _ _ h => by subst h; simp)
-    (fun _ _ _ _ h ⟨h', he⟩ => ⟨by rw [h', h, copyEmb_zero, update_words_cur], he⟩) le_rfl le_rfl
-  have hnext := (transformsTapes_clearWork_tapeEmb (nextTape k) v).imp
-    (P' := fun _ ws => ws = words v v) (Q' := fun _ _ ws' e => ws' = words v [] ∧ e = [])
-    (fun _ _ h => by rw [h, words_next])
-    (fun _ _ _ _ h ⟨h', he⟩ => ⟨by rw [h', h, update_words_next], he⟩) le_rfl le_rfl
-  exact (hcur.seq_eq (hcopy.seq_eq hnext)).imp (fun _ _ h => h)
-    (fun _ _ _ _ _ ⟨h', he⟩ => ⟨h', by simp [he]⟩) (by omega) (by omega)
+      (3 * vp.length + 6 * v.length + 16) (vp.length + 5 * v.length + 3 * (k + 1 + 2) + 17) :=
+  Turing.MultiTapeTM.IterateWhile.transformsTapes_prepareRound mark vp v
 
 /-- Finishing outputs the current word `v` and leaves every tape blank. -/
 theorem transformsTapes_finish (mark : Bool) (v : List Bool) :
@@ -174,7 +161,8 @@ theorem RunsWords.iterateWhileRound {tm : MultiTapePTM k Bool State Operation} (
       (3 * vp.length + 6 * v.length + 16 + (t + l + 6)) program (fun v' => words v v')
       (fun _ => []) := by
   have h₁ := RunsWords.of_transformsTapes (Operation := Operation) (x := x) (out₀ := out₀)
-    (transformsTapes_prepareRound (k := k) mark vp v) rfl (ws' := words v []) (emitted := [])
+    (Turing.MultiTapePTM.IterateWhile.transformsTapes_prepareRound (k := k) mark vp v)
+    rfl (ws' := words v []) (emitted := [])
     (fun _ _ hQ => hQ)
   have h₂ : (tm.onWords mark).RunsWords x (words v []) (out₀ ++ []) (t + l + 6) program
       (fun v' => words v v') (fun _ => []) := by

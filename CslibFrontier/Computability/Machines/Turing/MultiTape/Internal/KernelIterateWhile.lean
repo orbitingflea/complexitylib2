@@ -9,6 +9,7 @@ module
 -- The newer version of cslib PR #1112 @0b9e55ce, which is on an older base.
 -- vendored: the loop states are `State ⊕ Unit`, those of `repeatUntilBlank` since cslib #1151
 
+public import CslibFrontier.Computability.Machines.Turing.MultiTape.Plumbing.Sequential
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Combinators.IterateWhileLayout
 public import Mathlib.Basic.Finite.Sum
 public import Mathlib.Order.Interval.Finset.Nat
@@ -51,13 +52,50 @@ section Machine
 
 variable (tm : MultiTapeTM k Symbol State) (mark : Symbol)
 
+/-- Clear the current word, copy the next word to it, then clear the next tape. -/
+@[expose] public noncomputable def IterateWhile.prepareRound :
+    MultiTapeTM (k + 1 + 2) Symbol
+      ((Unit ⊕ RewindWorkState) ⊕
+        (MarkWorkState ⊕ ((Unit ⊕ RewindState) ⊕ RewindWorkState) ⊕ MarkWorkState) ⊕
+          (Unit ⊕ RewindWorkState)) :=
+  ((clearWork Symbol).extendTapes (tapeEmb (curTape k))).seq
+    ((copyWord (copyEmb k) mark).seq
+      ((clearWork Symbol).extendTapes (tapeEmb (nextTape k))))
+
+/-- Reassociate a preparation followed by a body into the original round state layout. -/
+@[expose] public def IterateWhile.roundEquiv (A B C D : Type*) :
+    ((A ⊕ B ⊕ C) ⊕ D) ≃ (A ⊕ B ⊕ C ⊕ D) :=
+  (Equiv.sumAssoc A (B ⊕ C) D).trans
+    (Equiv.sumCongr (Equiv.refl A) (Equiv.sumAssoc B C D))
+
 /-- One round: clear the current tape, copy the next word to it, clear the next tape and apply
 `tm` from the current tape to the next tape, using `mark` to flag the left end of words. -/
 noncomputable def iterateWhileRound :
     MultiTapeTM (k + 1 + 2) Symbol (IterateWhileRoundState State) :=
-  ((clearWork Symbol).extendTapes (tapeEmb (curTape k))).seq
-    ((copyWord (copyEmb k) mark).seq
-      (((clearWork Symbol).extendTapes (tapeEmb (nextTape k))).seq (tm.onWords mark)))
+  ((IterateWhile.prepareRound (k := k) mark).seq (tm.onWords mark)).relabel
+    (IterateWhile.roundEquiv _ _ _ _)
+
+/-- The shared preparation and state reassociation retain the original transition table. -/
+lemma iterateWhileRound_tr (q : IterateWhileRoundState State) (inp : Option Symbol)
+    (work : Fin (k + 1 + 2) → Option Symbol) :
+    (iterateWhileRound tm mark).tr q inp work =
+      (((clearWork Symbol).extendTapes (tapeEmb (curTape k))).seq
+        ((copyWord (copyEmb k) mark).seq
+          (((clearWork Symbol).extendTapes (tapeEmb (nextTape k))).seq
+            (tm.onWords mark)))).tr q inp work := by
+  rcases q with q | q | q | q
+  · cases h : (((clearWork Symbol).extendTapes (tapeEmb (curTape k))).tr q inp work).state <;>
+      simp [iterateWhileRound, prepareRound, relabel, roundEquiv, seq, combine, adaptedTr,
+        MultiTapeNTM.Adapter.mapState, h]
+  · cases h : ((copyWord (copyEmb k) mark).tr q inp work).state <;>
+      simp [iterateWhileRound, prepareRound, relabel, roundEquiv, seq, combine, adaptedTr,
+        MultiTapeNTM.Adapter.mapState, h]
+  · cases h : (((clearWork Symbol).extendTapes (tapeEmb (nextTape k))).tr q inp work).state <;>
+      simp [iterateWhileRound, prepareRound, relabel, roundEquiv, seq, combine, adaptedTr,
+        MultiTapeNTM.Adapter.mapState, h]
+  · cases h : ((tm.onWords mark).tr q inp work).state <;>
+      simp [iterateWhileRound, prepareRound, relabel, roundEquiv, seq, combine, adaptedTr,
+        MultiTapeNTM.Adapter.mapState, h]
 
 /-- `tm`, applied repeatedly while its result is non-empty, using `mark` to flag the left end of
 words: load the input to the next tape, repeat rounds until the next tape is empty, then output
@@ -97,6 +135,17 @@ lemma transformsTapes_copy (mark : Symbol) (v : List Symbol) :
   (transformsTapes_copyWord (copyEmb k) mark v).imp (fun _ _ h => by subst h; simp)
     (fun _ _ _ _ h ⟨h', he⟩ => ⟨by rw [h', h, copyEmb_zero, update_words_cur], he⟩) le_rfl le_rfl
 
+/-- The shared deterministic preparation certificate, with separate time and space bounds. -/
+public lemma transformsTapes_prepareRound (mark : Symbol) (vp v : List Symbol) :
+    TransformsTapes (prepareRound (k := k) mark) (fun _ ws => ws = words vp v)
+      (fun _ _ ws' e => ws' = words v [] ∧ e = [])
+      (3 * vp.length + 6 * v.length + 16)
+      (vp.length + 5 * v.length + 3 * (k + 1 + 2) + 17) :=
+  ((transformsTapes_clearCur Symbol vp v).seq_eq
+    ((transformsTapes_copy mark v).seq_eq (transformsTapes_clearNext Symbol v v))).imp
+    (fun _ _ h => h) (fun _ _ _ _ _ ⟨h', he⟩ => ⟨h', by simp [he]⟩)
+    (by omega) (by omega)
+
 -- vendored: the space bounds of `onWords` and `loadWord` from here on are 3 and 1 cells larger
 -- than in crei:crei/tidy-universal, following the space bounds of cslib #1111
 lemma transformsTapes_onWords_step {tm : MultiTapeTM k Symbol State} (mark : Symbol)
@@ -115,8 +164,8 @@ lemma transformsTapes_iterateWhileRound {tm : MultiTapeTM k Symbol State} (mark 
       (fun _ _ ws' e => ws' = words v v' ∧ e = [])
       (t + 3 * vp.length + 6 * v.length + v'.length + 22)
       (s + vp.length + 7 * v.length + 2 * v'.length + 6 * k + 44) :=
-  ((transformsTapes_clearCur Symbol vp v).seq_eq ((transformsTapes_copy mark v).seq_eq
-    ((transformsTapes_clearNext Symbol v v).seq_eq (transformsTapes_onWords_step mark h)))).imp
+  (((transformsTapes_prepareRound mark vp v).seq_eq
+    (transformsTapes_onWords_step mark h)).relabel (roundEquiv _ _ _ _)).imp
     (fun _ _ h => h) (fun _ _ _ _ _ ⟨h', he⟩ => ⟨h', by simp [he]⟩) (by omega) (by omega)
 
 lemma transformsTapes_load (v : List Symbol) :
