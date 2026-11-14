@@ -26,8 +26,8 @@ re-exported here:
 
 * `CslibFrontier.Computability.Circuit.Boolean.ACC0.Basic`: the definition of `ACC0`, the degenerate
   moduli `q = 0, 1`, divisibility monotonicity `AC0Mod q ⊆ AC0Mod q'` for `q ∣ q'`, Boolean closure,
-  `ACC0 ⊆ TC0`, and the strict inclusions `AC0 ⊂ ACC0` and `AC0Mod p ⊂ ACC0` (`p` an odd prime)
-  obtained from Håstad's and Razborov–Smolensky's lower bounds for parity.
+  `ACC0 ⊆ TC0`, and the strict inclusions `AC0 ⊂ ACC0` and `AC0Mod p ⊂ ACC0` (for every prime
+  `p`) obtained from Håstad's and Razborov–Smolensky's lower bounds for parity and `MOD_3`.
 * `CslibFrontier.Computability.Circuit.Boolean.ACC0.Simulation`: logarithmic-depth simulation of
   `MOD_q` gates by unbounded fan-in circuits, giving `ACMod q i ⊆ AC (i + 1)` and
   `ACC0 ⊆ AC 1 ⊆ NC 2 ⊆ PPoly`, and the polynomial-size simulation of unbounded-depth `MOD_q`
