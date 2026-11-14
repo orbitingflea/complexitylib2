@@ -44,6 +44,17 @@ example : ComputableInPolyTime
       fun _ => Nat.succ_pos _
   fun_prop
 
+-- The total modular-power certificate also accepts an unconstrained, possibly zero modulus.
+example : ComputableInPolyTime (fun p : ℕ × ℕ × ℕ => powMod p.2.2 p.1 p.2.1)
+    (encPair encNat (encPair encNat encNat)) encNat :=
+  computableInPolyTime_powMod (by fun_prop) (by fun_prop) (by fun_prop)
+
+example : powMod 0 7 5 = 1 := by decide +kernel
+
+example : powMod 1 7 0 = 0 := by decide +kernel
+
+example : powMod 13 7 5 = 11 := by decide +kernel
+
 /-! ### Runs of the loop -/
 
 -- `J(1001 | 9907) = -1`, the classic worked example, in `2 * Nat.size 9907 = 28` steps.
