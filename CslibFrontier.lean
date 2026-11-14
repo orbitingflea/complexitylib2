@@ -4982,6 +4982,8 @@ public import CslibFrontier.DataStructure.Dictionary.WordRAM.ChainedHash
 public import CslibFrontier.DataStructure.Dictionary.WordRAM.CuckooHashing
 public import CslibFrontier.DataStructure.Dictionary.WordRAM.CuckooHashing.Analysis
 public import CslibFrontier.DataStructure.Dictionary.WordRAM.CuckooHashing.HashFamily
+public import CslibFrontier.DataStructure.Dictionary.WordRAM.KickTree.Layout
+public import CslibFrontier.DataStructure.Dictionary.WordRAM.KickTree.Prog
 public import CslibFrontier.DataStructure.Dictionary.WordRAM.LinearProbing
 public import CslibFrontier.DataStructure.Dictionary.WordRAM.LinearProbing.FiveWise
 public import CslibFrontier.DataStructure.Dictionary.WordRAM.Succinct
