@@ -284,7 +284,7 @@ example (ops : List PUnit) (hv : unitSpec.ValidHistory PUnit.unit ops) :
       (2 : ℝ≥0∞)⁻¹ ≤
         ((τ_pref.map fun tr => (tr.current.seed, tr.current.data)).bind fun p =>
           evalRand 4 (fastSlowSubroutine.code.program 3) (C.worstCaseTime + 1)
-            ⟨0, C.toDynamicProgram.prepare PUnit.unit p.2⟩).toOuterMeasure
+            ⟨0, C.prepare PUnit.unit p.2⟩).toOuterMeasure
           {cfg | ∃ p q : C.Seed × Data 5,
             p ∈ (τ_pref.map fun tr => (tr.current.seed, tr.current.data)).support ∧
             cfg = .halted (q.2.regs 3) q.2 ∧
@@ -367,7 +367,7 @@ theorem no_noop_highProbImpl_dictionary {r_ds k_init w base : ℕ}
     obtain ⟨_, hm₁, hev₁, _, hq₁⟩ := hstep₁ tr₀.current ht₀
     have hz₁ : (p₁.1.1.data, p₁.2) ∈ (m₁ tr₀.current).eval.support := by
       rw [← hev₁]; exact (PMF.mem_support_map_iff _ _ _).mpr ⟨p₁, hp₁, rfl⟩
-    have hd₁ : p₁.1.1.data = C.toDynamicProgram.prepare (.query k0) tr₀.current.data :=
+    have hd₁ : p₁.1.1.data = C.prepare (.query k0) tr₀.current.data :=
       hnoop hm₁ _ hz₁
     obtain ⟨hst₁, hdec₁, _, _, _⟩ := hq₁ p₁ hp₁
     have ha₁ : p₁.1.2 = none :=
@@ -388,7 +388,7 @@ theorem no_noop_highProbImpl_dictionary {r_ds k_init w base : ℕ}
       obtain ⟨_, hm₂, hev₂, _, hq₂⟩ := hstep₂ tr₁.current ht₁
       have hz₂ : (p₂.1.1.data, p₂.2) ∈ (m₂ tr₁.current).eval.support := by
         rw [← hev₂]; exact (PMF.mem_support_map_iff _ _ _).mpr ⟨p₂, hp₂, rfl⟩
-      have hd₂ : p₂.1.1.data = C.toDynamicProgram.prepare (.insert k0 1) tr₁.current.data :=
+      have hd₂ : p₂.1.1.data = C.prepare (.insert k0 1) tr₁.current.data :=
         hnoop hm₂ _ hz₂
       obtain ⟨hst₂, _, _, _, _⟩ := hq₂ p₂ hp₂
       have hs₂ : p₂.1.1.state = Function.update (Dictionary.empty 2) k0 (some 1) := by
@@ -412,7 +412,7 @@ theorem no_noop_highProbImpl_dictionary {r_ds k_init w base : ℕ}
         obtain ⟨_, hm₃, hev₃, _, hq₃⟩ := hstep₃ tr₂.current ht₂
         have hz₃ : (p₃.1.1.data, p₃.2) ∈ (m₃ tr₂.current).eval.support := by
           rw [← hev₃]; exact (PMF.mem_support_map_iff _ _ _).mpr ⟨p₃, hp₃, rfl⟩
-        have hd₃ : p₃.1.1.data = C.toDynamicProgram.prepare (.query k0) tr₂.current.data :=
+        have hd₃ : p₃.1.1.data = C.prepare (.query k0) tr₂.current.data :=
           hnoop hm₃ _ hz₃
         obtain ⟨hst₃, hdec₃, _, _, _⟩ := hq₃ p₃ hp₃
         have ha₃ : p₃.1.2 = some 1 := by
@@ -422,19 +422,18 @@ theorem no_noop_highProbImpl_dictionary {r_ds k_init w base : ℕ}
           exact h3
         rw [ha₃, hd₃] at hdec₃
         have hregs_eq :
-            (C.toDynamicProgram.prepare (.query k0) tr₂.current.data).regs =
-              (C.toDynamicProgram.prepare (.query k0) tr₀.current.data).regs := by
+            (C.prepare (.query k0) tr₂.current.data).regs =
+              (C.prepare (.query k0) tr₀.current.data).regs := by
           ext i
           by_cases hi : P.input i = true
-          · simp [HighProbStateTransitionImpl.toDynamicProgram, SubroutineCode.toDynamicProgram,
-              DynamicProgram.prepare, hi]
+          · simp [hi]
           · simp only [Bool.not_eq_true] at hi
-            rw [C.toDynamicProgram.prepare_regs_of_not_input hi,
-              C.toDynamicProgram.prepare_regs_of_not_input hi]
+            rw [C.prepare_regs_of_not_input hi,
+              C.prepare_regs_of_not_input hi]
             dsimp only [tr₂, WhpSeqOutcome.appendStep]
-            rw [hd₂, C.toDynamicProgram.prepare_regs_of_not_input hi]
+            rw [hd₂, C.prepare_regs_of_not_input hi]
             dsimp only [tr₁, WhpSeqOutcome.appendStep]
-            rw [hd₁, C.toDynamicProgram.prepare_regs_of_not_input hi]
+            rw [hd₁, C.prepare_regs_of_not_input hi]
         rw [hregs_eq, hdec₁] at hdec₃
         cases hdec₃
 

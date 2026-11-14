@@ -1114,6 +1114,10 @@ theorem prepare_regs_of_not_input (C : HighProbStateTransitionImpl P D w base pa
   dsimp only [prepare]
   exact P.prepare_mem C.encode o x
 
+@[simp] theorem prepare_regs (C : HighProbStateTransitionImpl P D w base params s₀)
+    (o : D.Op) (x : Data r_ds) (i : Fin r_ds) :
+    (C.prepare o x).regs i = if P.input i then C.encode o i else x.regs i := rfl
+
 theorem rep_bounded (C : HighProbStateTransitionImpl P D w base params s₀)
     {θ : C.Seed} {s : D.State} {x : Data r_ds} (hr : C.rep θ s x) : x.Bounded w := by
   obtain ⟨_, hg⟩ := hr
