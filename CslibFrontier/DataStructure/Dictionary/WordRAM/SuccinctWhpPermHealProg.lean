@@ -546,10 +546,13 @@ theorem writeLocStateGenProg_spec {c U V w n_max base b loc val : ℕ} {s : Memo
     unfold writePacked highWidth
     dsimp only
     split_ifs with hlt
-    · have hl : lowWidth 2 w idx = w - bitOffset 2 w idx := by rw [← hk0_eq, ite_eq_left hlt]
+    · have hl : lowWidth 2 w (b * totalLocalCoordsWhp n_max + loc) =
+          w - bitOffset 2 w (b * totalLocalCoordsWhp n_max + loc) := by
+        dsimp only [idx] at hk0_eq; rw [← hk0_eq, ite_eq_left hlt]
       simp only [hl, Nat.one_shiftLeft]
       rfl
-    · have hl : lowWidth 2 w idx = 2 := by rw [← hk0_eq, ite_eq_right hlt]
+    · have hl : lowWidth 2 w (b * totalLocalCoordsWhp n_max + loc) = 2 := by
+        dsimp only [idx] at hk0_eq; rw [← hk0_eq, ite_eq_right hlt]
       simp only [hl, Nat.one_shiftLeft]
       rfl
   · simp only [← PFunctor.FreeM.bind_eq_bind, memoryCost_bind]
@@ -1243,10 +1246,6 @@ theorem realizes_permEvalActDest :
     | exact henv.fits_const (by decide)
     | omega
     | exact henv.fits_of_le_n_max (by omega)
-    | (refine (henv.fits_of_le_n_max hMcb).of_le
-         ((Nat.le_add_right _ _).trans (mul_add_lt_mul ?_ ?_).le)
-       · assumption
-       · first | exact Nat.mod_lt _ (by assumption) | assumption)
     | (refine (henv.fits_of_le_n_max hMcb).of_le (mul_add_lt_mul ?_ ?_).le
        · assumption
        · first | exact Nat.mod_lt _ (by assumption) | assumption)
@@ -1254,8 +1253,6 @@ theorem realizes_permEvalActDest :
        refine pr_bp_safe henv _ (mul_add_lt_mul ?_ ?_)
        · assumption
        · first | exact Nat.mod_lt _ (by assumption) | assumption)
-    | (refine (henv.fits_of_le_n_max hMcf_le).of_le
-         ((Nat.le_add_right _ _).trans (mul_add_lt_mul ?_ ?_).le) <;> assumption)
     | (refine (henv.fits_of_le_n_max hMcf_le).of_le (mul_add_lt_mul ?_ ?_).le <;> assumption)
     | (refine henv.fits_of_le_n_max (front_add_pool_lt_n_max ?_).le; assumption)
     | (apply to_true_exists (w := w); refine pr_bm_safe henv _ ?_; omega)

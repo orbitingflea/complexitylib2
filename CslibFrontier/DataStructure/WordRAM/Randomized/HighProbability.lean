@@ -1092,10 +1092,27 @@ abbrev toStandard {P : SubroutineCode .exact r_ds k_init}
     HighProbStateTransitionImpl P.toStandard D w base params s₀ :=
   C.mapSimulates .exactStandard
 
-/-- Reuse the signature-level dynamic program and argument-delivery API. -/
-@[expose] def toDynamicProgram (C : HighProbStateTransitionImpl P D w base params s₀) :
-    DynamicProgram D r_ds B :=
-  P.toDynamicProgram C.encode C.decode
+/-- Deliver externally encoded arguments, preserving maintained memory and persistent registers.
+This mathematical register replacement is not a charged native instruction sequence. -/
+@[expose] def prepare (C : HighProbStateTransitionImpl P D w base params s₀)
+    (o : D.Op) (x : Data r_ds) : Data r_ds :=
+  P.prepare C.encode o x
+
+theorem prepare_bounded (C : HighProbStateTransitionImpl P D w base params s₀)
+    {o : D.Op} {x : Data r_ds} (hx : x.Bounded w)
+    (ho : ∀ i, P.input i = true → Fits w (C.encode o i)) :
+    (C.prepare o x).Bounded w :=
+  P.prepare_bounded C.encode hx ho
+
+theorem prepare_regs_of_not_input (C : HighProbStateTransitionImpl P D w base params s₀)
+    {i : Fin r_ds} (hi : P.input i = false) (o : D.Op) (x : Data r_ds) :
+    (C.prepare o x).regs i = x.regs i :=
+  P.prepare_regs_of_not_input C.encode hi o x
+
+@[simp] theorem prepare_mem (C : HighProbStateTransitionImpl P D w base params s₀)
+    (o : D.Op) (x : Data r_ds) : (C.prepare o x).mem = x.mem := by
+  dsimp only [prepare]
+  exact P.prepare_mem C.encode o x
 
 theorem rep_bounded (C : HighProbStateTransitionImpl P D w base params s₀)
     {θ : C.Seed} {s : D.State} {x : Data r_ds} (hr : C.rep θ s x) : x.Bounded w := by
@@ -1105,23 +1122,23 @@ theorem rep_bounded (C : HighProbStateTransitionImpl P D w base params s₀)
 theorem prepare_ghostRep (C : HighProbStateTransitionImpl P D w base params s₀)
     {g : C.Ghost} {θ : C.Seed} {s : D.State} {o : D.Op} {x : Data r_ds}
     (hr : C.ghostRep g θ s x) (hv : D.valid s o) :
-    C.ghostRep g θ s (C.toDynamicProgram.prepare o x) :=
+    C.ghostRep g θ s (C.prepare o x) :=
   C.rep_supported
-    (fun _ hi => C.toDynamicProgram.prepare_regs_of_not_input hi o x)
+    (fun _ hi => C.prepare_regs_of_not_input hi o x)
     (fun _ _ => rfl)
-    (C.toDynamicProgram.prepare_bounded (C.bounded hr) (C.arguments_fit _ hv))
+    (C.prepare_bounded (C.bounded hr) (C.arguments_fit _ hv))
     hr
 
 theorem prepare_rep (C : HighProbStateTransitionImpl P D w base params s₀)
     {θ : C.Seed} {s : D.State} {o : D.Op} {x : Data r_ds}
     (hr : C.rep θ s x) (hv : D.valid s o) :
-    C.rep θ s (C.toDynamicProgram.prepare o x) := by
+    C.rep θ s (C.prepare o x) := by
   obtain ⟨g, hg⟩ := hr
   exact ⟨g, C.prepare_ghostRep hg hv⟩
 
 theorem prepare_argMatch (C : HighProbStateTransitionImpl P D w base params s₀)
     (o : D.Op) (x : Data r_ds) :
-    C.argMatch o (C.toDynamicProgram.prepare o x).regs :=
+    C.argMatch o (C.prepare o x).regs :=
   C.encode_matches o x.regs
 
 /-- Execute `P.initFresh` on zeroed `[base, base + C.space)` within `C.initTime` deterministic
@@ -1295,7 +1312,7 @@ theorem step_whp (C : HighProbStateTransitionImpl P D w base params s₀)
     ∃ (m_op : CoupledState C.Seed D.State r_ds → ProbComp (Data r_ds × ℕ))
       (μ_op : CoupledState C.Seed D.State r_ds → PMF (CoupledState C.Seed D.State r_ds × ℕ)),
       (∀ t ∈ ν.support,
-        let x_in := C.toDynamicProgram.prepare o t.data
+        let x_in := C.prepare o t.data
         RandFaultFree w (P.code.program out) ⟨0, x_in⟩ ∧
         ExecRand w P.code x_in (m_op t) ∧
         (μ_op t).map (fun p => (p.1.data, p.2)) = (m_op t).eval ∧
@@ -1316,7 +1333,7 @@ theorem step_whp (C : HighProbStateTransitionImpl P D w base params s₀)
       1 - C.failureProb ≤
         (ν.bind fun t =>
           evalRand w (P.code.program out) (C.worstCaseTime + 1)
-            ⟨0, C.toDynamicProgram.prepare o t.data⟩).toOuterMeasure
+            ⟨0, C.prepare o t.data⟩).toOuterMeasure
           {cfg | ∃ (t : CoupledState C.Seed D.State r_ds) (q : CoupledState C.Seed D.State r_ds)
               (a : D.Result o),
             t ∈ ν.support ∧
@@ -1327,7 +1344,7 @@ theorem step_whp (C : HighProbStateTransitionImpl P D w base params s₀)
             q.data.Bounded w ∧
             Modifies (Block.mk base C.space).footprint t.data.mem q.data.mem} := by
   let prepMap : CoupledState C.Seed D.State r_ds → CoupledState C.Seed D.State r_ds :=
-    fun t => ⟨t.seed, t.state, C.toDynamicProgram.prepare o t.data⟩
+    fun t => ⟨t.seed, t.state, C.prepare o t.data⟩
   let ν_prep : PMF (CoupledState C.Seed D.State r_ds) := ν.map prepMap
   have hsingle_prep : C.singleState → ∃ s, ∀ t' ∈ ν_prep.support, t'.state = s := by
     intro hd
@@ -1426,7 +1443,8 @@ theorem step_whp (C : HighProbStateTransitionImpl P D w base params s₀)
         exact ENNReal.eq_sub_of_add_eq (PMF.toOuterMeasure_ne_top _ _) hsum
       rw [hfail_eq]
       refine (hm_t.one_sub_le_evalRand_program out C.worstCaseTime hQ_t le_rfl).trans ?_
-      refine MeasureTheory.measure_mono fun cfg hcfg => ?_
+      refine (evalRand w (P.code.program out) (C.worstCaseTime + 1)
+        ⟨0, C.prepare o t.data⟩).toOuterMeasure.mono fun cfg hcfg => ?_
       obtain ⟨y, rfl, q, a, rfl, hst, hdec, hrep_q, hbdd_q, hmod_q⟩ := hcfg
       exact ⟨t, q, a, ht, rfl, hst, hdec, hrep_q, hbdd_q, hmod_q⟩
     · rw [(PMF.apply_eq_zero_iff _ _).mpr ht, zero_mul, zero_mul]
@@ -1442,7 +1460,7 @@ theorem step_whp_ofFn (C : HighProbStateTransitionImpl P D w base params s₀)
     1 - C.failureProb ≤
       (ν.bind fun p =>
         evalRand w (P.code.program out) (C.worstCaseTime + 1)
-          ⟨0, C.toDynamicProgram.prepare o p.2⟩).toOuterMeasure
+          ⟨0, C.prepare o p.2⟩).toOuterMeasure
         {cfg | ∃ (p : C.Seed × Data r_ds) (q : C.Seed × Data r_ds),
           p ∈ ν.support ∧
           cfg = .halted (q.2.regs out) q.2 ∧
@@ -1464,13 +1482,14 @@ theorem step_whp_ofFn (C : HighProbStateTransitionImpl P D w base params s₀)
   have hbind_eq :
       (ν_rel.bind fun t =>
           evalRand w (P.code.program out) (C.worstCaseTime + 1)
-            ⟨0, C.toDynamicProgram.prepare o t.data⟩) =
+            ⟨0, C.prepare o t.data⟩) =
         (ν.bind fun p =>
           evalRand w (P.code.program out) (C.worstCaseTime + 1)
-            ⟨0, C.toDynamicProgram.prepare o p.2⟩) := by
+            ⟨0, C.prepare o p.2⟩) := by
     dsimp only [ν_rel]; rw [PMF.bind_map]; rfl
   rw [hbind_eq] at hwhp
-  refine hwhp.trans (MeasureTheory.measure_mono fun cfg hcfg => ?_)
+  refine hwhp.trans ((ν.bind fun p => evalRand w (P.code.program out) (C.worstCaseTime + 1)
+    ⟨0, C.prepare o p.2⟩).toOuterMeasure.mono fun cfg hcfg => ?_)
   obtain ⟨t, q, a, ht, rfl, hst, hdec, hrep_q, hbdd_q, hmod_q⟩ := hcfg
   rw [PMF.mem_support_map_iff] at ht
   obtain ⟨p, hp, rfl⟩ := ht
@@ -1497,7 +1516,7 @@ variable {B : Basis} {r_ds k_init w base : ℕ}
 
 /-- Operational multi-step trajectory execution relation for `C : HighProbStateTransitionImpl`.
 At each operation `o :: ops`, from every supported trajectory prefix `tr ∈ τ.support`, running
-`P.code` on `C.toDynamicProgram.prepare o tr.current.data` executes via `ExecRand` (`m_op`),
+`P.code` on `C.prepare o tr.current.data` executes via `ExecRand` (`m_op`),
 matches `(μ_op tr.current)` in `(data, steps)` distribution (hence reaches `.halted` in `evalRand`
 within `C.worstCaseTime + 1` steps on every branch with `n ≤ C.worstCaseTime`), witnesses a valid
 transition `D.step tr.current.state o q.state a` with `decode o q.data.regs = some a`, `rep`,
@@ -1513,7 +1532,7 @@ inductive ExecWhpSteps (C : HighProbStateTransitionImpl P D w base params s₀) 
         CoupledState C.Seed D.State r_ds →
           PMF ((CoupledState C.Seed D.State r_ds × D.Result o) × ℕ))
       (hstep : ∀ t ∈ (τ.map WhpSeqOutcome.current).support,
-        let x_in := C.toDynamicProgram.prepare o t.data
+        let x_in := C.prepare o t.data
         RandFaultFree w (P.code.program out) ⟨0, x_in⟩ ∧
         ExecRand w P.code x_in (m_op t) ∧
         (μ_step t).map (fun p => (p.1.1.data, p.2)) = (m_op t).eval ∧
@@ -1605,7 +1624,7 @@ theorem steps_whp (C : HighProbStateTransitionImpl P D w base params s₀)
       dsimp only [Function.comp_apply, WhpSeqOutcome.appendStep]
       split_ifs <;> rfl
     have hstep_rel : ∀ t ∈ ν.support,
-        let x_in := C.toDynamicProgram.prepare o t.data
+        let x_in := C.prepare o t.data
         RandFaultFree w (P.code.program out) ⟨0, x_in⟩ ∧
         ExecRand w P.code x_in (m_op t) ∧
         (μ_step t).map (fun p => (p.1.1.data, p.2)) = (m_op t).eval ∧
@@ -1893,7 +1912,7 @@ theorem reachable_step_whp_ofFn (C : HighProbStateTransitionImpl P D w base para
       1 - C.failureProb ≤
         ((τ_pref.map fun tr => (tr.current.seed, tr.current.data)).bind fun p =>
           evalRand w (P.code.program out) (C.worstCaseTime + 1)
-            ⟨0, C.toDynamicProgram.prepare o p.2⟩).toOuterMeasure
+            ⟨0, C.prepare o p.2⟩).toOuterMeasure
           {cfg | ∃ (p : C.Seed × Data r_ds) (q : C.Seed × Data r_ds),
             p ∈ (τ_pref.map fun tr => (tr.current.seed, tr.current.data)).support ∧
             cfg = .halted (q.2.regs out) q.2 ∧
