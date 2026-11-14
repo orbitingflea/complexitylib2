@@ -56,13 +56,21 @@ example : AC0Mod 3 ⊆ AC0Mod 6 :=
 example : AC0 ⊂ TC0 :=
   AC0_ssubset_ACC0.trans_subset ACC0_subset_TC0
 
+example : AC0Mod 2 ⊂ ACC0 :=
+  have : Fact (Nat.Prime 2) := ⟨Nat.prime_two⟩
+  AC0Mod_ssubset_ACC0
+
+example : AC0Mod 2 ⊂ TC0 :=
+  have : Fact (Nat.Prime 2) := ⟨Nat.prime_two⟩
+  AC0Mod_ssubset_ACC0.trans_subset ACC0_subset_TC0
+
 example : AC0Mod 3 ⊂ TC0 :=
   have : Fact (Nat.Prime 3) := ⟨by decide⟩
-  (AC0Mod_ssubset_ACC0 (by decide)).trans_subset ACC0_subset_TC0
+  AC0Mod_ssubset_ACC0.trans_subset ACC0_subset_TC0
 
 example : AC0Mod 5 ⊂ NC 2 :=
   have : Fact (Nat.Prime 5) := ⟨by decide⟩
-  (AC0Mod_ssubset_ACC0 (by decide)).trans_subset ACC0_subset_NC_two
+  AC0Mod_ssubset_ACC0.trans_subset ACC0_subset_NC_two
 
 example : Language.ofSlices (modGate 2) ⊓ Language.ofSlices (modGate 3) ∈ ACC0 :=
   ACC0.inf (modGate_mem_ACC0 2) (modGate_mem_ACC0 3)

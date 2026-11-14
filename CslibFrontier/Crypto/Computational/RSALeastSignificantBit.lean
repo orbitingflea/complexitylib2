@@ -16,7 +16,6 @@ import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Binary
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.BinaryDiv
 import CslibFrontier.Computability.Probabilistic.PPT.Capture
-import CslibFrontier.Computability.Probabilistic.PPT.Extension
 import CslibFrontier.Computability.Probabilistic.Traverse
 import CslibFrontier.Probability.PMF.Bind
 import Mathlib.Data.Nat.Size
@@ -24,8 +23,8 @@ import Mathlib.Data.Nat.Size
 /-!
 # The least significant bit of RSA
 
-The RSA least-significant-bit experiment and the hard-core assumption it defines, together with
-the exact inversion of RSA from a perfect least-significant-bit predictor.
+The RSA least-significant-bit experiment, together with the exact inversion of RSA from a perfect
+least-significant-bit predictor.
 
 For odd `N` and `k ≥ 1`, the parity of `2 ^ k * x % N` is the parity of `⌊2 ^ k * x / N⌋`
 (`two_pow_mul_mod_mod_two`), and `2 ^ k * x % N` is the RSA preimage of `2 ^ (k * e) * y % N`
@@ -37,9 +36,8 @@ recovers `x` exactly whenever the predictor is always correct on the modulus (`e
 
 ## Main definitions
 
-* `Cslib.Crypto.RSAPredictor`, `Cslib.Crypto.RSAPredictor.IsPPT`, `Cslib.Crypto.rsaLSBGame`,
-  `Cslib.Crypto.RSAHardCoreLSB`: the least-significant-bit prediction experiment and the
-  assumption that every PPT predictor has negligible bias.
+* `Cslib.Crypto.RSAPredictor`, `Cslib.Crypto.RSAPredictor.IsPPT`, `Cslib.Crypto.rsaLSBGame`:
+  least-significant-bit predictors and the prediction experiment.
 * `Cslib.Crypto.lsbQueries`, `Cslib.Crypto.lsbRecover`: the doubling queries, and the final
   rounding of the most-significant-first value of the answered parities.
 * `Cslib.Crypto.lsbInverter`: the inverter that queries a predictor on the `N.size` doubling
@@ -47,7 +45,6 @@ recovers `x` exactly whenever the predictor is always correct on the modulus (`e
 
 ## Main results
 
-* `Cslib.Crypto.rsaHardCoreLSB_iff_encoded`: `RSAHardCoreLSB` is the word-level assumption.
 * `Cslib.Crypto.two_pow_mul_mod_mod_two`: parity of a doubled residue modulo an odd modulus.
 * `Cslib.Crypto.lsbRecover_lsbQueries`: a correct parity oracle determines the RSA preimage.
 * `Cslib.Crypto.eval_lsbInverter`, `Cslib.Crypto.succProbability_rsaInversionGame_lsbInverter`:
@@ -63,16 +60,16 @@ recovers `x` exactly whenever the predictor is always correct on the modulus (`e
 `rsaLSBGame` runs `Cslib.Crypto.predictionExperiment` on `x` drawn uniformly from `Fin N`, as
 `rsaInversionGame` does, rather than from `(ZMod N)ˣ`. An `RSAPredictor` receives the public key
 and a challenge residue; `RSAPredictor.IsPPT` reads `encRSAInput`, like `RSAInverter.IsPPT`, and
-writes a bit. Since the output is a bit, `rsaHardCoreLSB_iff_encoded` shows that `RSAHardCoreLSB` is
-the assumption over word-level predictors reading the same layout on keys with `0 < N`
-(`IsPPTOn.exists_bool_extension`).
+writes a bit.
 
 [KatzLindell2020], Theorem 12.31, states that the least significant bit is hard-core
-for RSA whenever RSA is hard. Its proof must handle predictors that are only noticeably better than
-a fair guess; that reconstruction is not formalized here, so `RSAHardCoreLSB` is a separate
-assumption, and `RSAOneWay.not_frequently_alwaysCorrect_lsbPredictor` establishes only the
-noiseless consequence (`isPPT_lsbInverter` plus `succProbability_rsaInversionGame_lsbInverter`) for
-predictors that are always correct on every residue modulo `N`.
+for RSA whenever RSA is hard: under `RSAOneWay gen`, every PPT predictor has negligible
+`Game.guessingAdvantage` in `rsaLSBGame gen`. Its proof must handle predictors that are only
+noticeably better than a fair guess; that reconstruction is not formalized here, and the theorem is
+not stated as an assumption either, since a premise would stand in for its proof (#5578).
+`RSAOneWay.not_frequently_alwaysCorrect_lsbPredictor` establishes only the noiseless consequence
+(`isPPT_lsbInverter` plus `succProbability_rsaInversionGame_lsbInverter`) for predictors that are
+always correct on every residue modulo `N`.
 `HardCore` in `CslibFrontier.Crypto.Computational.HardCore` covers unkeyed functions on uniform bit
 strings, so it cannot express a predicate of a uniform residue under generated RSA keys;
 `rsaLSBGame` is a separate keyed game that reuses `Game.guessingAdvantage`.
@@ -104,19 +101,14 @@ predicted bit. -/
 
 /-- The RSA least-significant-bit experiment: sample `desc ← gen n` and run
 `Cslib.Crypto.predictionExperiment` on a uniform residue `x` modulo `N`. The predictor receives
-`(pk, x ^ e % N)` and wins when it returns the least significant bit `x.testBit 0` of `x`. -/
+`(pk, x ^ e % N)` and wins when it returns the least significant bit `x.testBit 0` of `x`. That
+every PPT predictor has negligible `Game.guessingAdvantage` here under `RSAOneWay gen` is the
+hard-core theorem described in the module documentation, which is not formalized. -/
 @[expose] noncomputable def rsaLSBGame (gen : RSAGen) (predictor : RSAPredictor) (n : ℕ) :
     Game := do
   let desc ← gen n
   ProbComp.eval (predictionExperiment (ProbComp.uniform (Fin desc.modulus)) desc.publicKey.eval
     (fun x => (x : ℕ).testBit 0) (predictor n desc.publicKey))
-
-/-- The least significant bit is hard-core for RSA relative to `gen`: every PPT predictor guesses
-the least significant bit of a uniform residue from its RSA image with negligible bias from one
-half. -/
-@[expose] def RSAHardCoreLSB (gen : RSAGen) : Prop :=
-  ∀ predictor : RSAPredictor, predictor.IsPPT →
-    Negligible fun n => Game.guessingAdvantage (rsaLSBGame gen predictor n)
 
 /-- `rsaLSBGame` written out: the predictor sees the RSA image of a uniform residue `x`. -/
 theorem rsaLSBGame_eq (gen : RSAGen) (predictor : RSAPredictor) (n : ℕ) :
@@ -128,42 +120,6 @@ theorem rsaLSBGame_eq (gen : RSAGen) (predictor : RSAPredictor) (n : ℕ) :
   simp only [rsaLSBGame, predictionExperiment, ProbComp.eval_bind, ProbComp.eval_uniform,
     ProbComp.eval_pure]
   rfl
-
-/-- **`RSAHardCoreLSB` is the word-level assumption.** Quantifying over predictors that read
-`(1ⁿ, (N, e), y)` with binary numbers on keys with `0 < N`, each with one uniform strict PPT
-machine, gives the same assumption as quantifying over typed predictors. A typed predictor's machine
-reads exactly that layout; conversely, a typed predictor extends to all words by rerunning its
-machine (`IsPPTOn.exists_bool_extension`), since its output is a single bit. -/
-theorem rsaHardCoreLSB_iff_encoded (gen : RSAGen) :
-    RSAHardCoreLSB gen ↔ ∀ W : ℕ → {pk : RSAPublicKey // 0 < pk.N} × ℕ → ProbComp Bool,
-      IsPPTOn (encPair encUnary (encPair
-          ((Function.Embedding.subtype fun pk : RSAPublicKey => 0 < pk.N).trans encRSAPublicKey)
-          encNat)) encBool (fun x => W x.1 x.2) →
-      Negligible fun n => Game.guessingAdvantage (do
-        let desc ← gen n
-        let x ← PMF.uniformOfFintype (Fin desc.modulus)
-        let guess ← ProbComp.eval
-          (W n (⟨desc.publicKey, desc.modulus_pos⟩, rsaEval desc.modulus desc.e x))
-        return guess == (x : ℕ).testBit 0) := by
-  constructor
-  · intro h W hW
-    have := h (fun n pk y => W n (⟨pk, y.pos⟩, y)) (hW.preprocess (prepare := fun x : RSAInput =>
-      (x.secParam, (⟨x.publicKey, x.challenge.pos⟩ : {pk : RSAPublicKey // 0 < pk.N}),
-        (x.challenge : ℕ))) (.of_eq (encIn := encRSAInput) fun _ => rfl))
-    simpa only [rsaLSBGame_eq, RSAPublicKey.val_eval] using this
-  · intro h P hP
-    obtain ⟨E, hEppt, hE⟩ := hP.exists_bool_extension
-    set E' := encPair encUnary (encPair
-      ((Function.Embedding.subtype fun pk : RSAPublicKey => 0 < pk.N).trans encRSAPublicKey)
-      encNat)
-    have hold := h (fun n t => E (E' (n, t)))
-      (hEppt.preprocess ComputableInPolyTime.id'.encoding_comp)
-    have hrun (n : ℕ) (desc : RSADesc) (x : Fin desc.modulus) :
-        ProbComp.eval
-            (E (E' (n, ⟨desc.publicKey, desc.modulus_pos⟩, rsaEval desc.modulus desc.e x))) =
-          ProbComp.eval (P n desc.publicKey (desc.publicKey.eval x)) :=
-      hE ⟨n, desc.publicKey, desc.publicKey.eval x⟩
-    simpa only [rsaLSBGame_eq, hrun] using hold
 
 /-! ### Doubling and parity -/
 
