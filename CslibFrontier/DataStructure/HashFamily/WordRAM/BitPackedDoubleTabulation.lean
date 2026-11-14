@@ -455,10 +455,10 @@ theorem extractPackedSlice_eq_packedSliceOfWords {arrBase N k w : ℕ} (hw : 0 <
   rw [Equiv.symm_apply_apply, testBit_readPacked hw hkw mem i.val j.isLt]
   change _ =
     ((BitString.equivFin w).symm
-      (Tabulation.extractWord w (mem (arrBase + (i.val * k + j.val) / w))))
+      (wordOfNat w (mem (arrBase + (i.val * k + j.val) / w))))
       ⟨(i.val * k + j.val) % w, Nat.mod_lt _ hw⟩
   rw [BitString.equivFin_symm_apply,
-    Tabulation.extractWord_val_of_lt (hmem _ (mul_add_div_lt_packedWords hw i.isLt j.isLt))]
+    wordOfNat_val_of_lt (hmem _ (mul_add_div_lt_packedWords hw i.isLt j.isLt))]
 
 /-- Pushforward of `PMF.uniformOfFintype (Fin (packedWords N k w) → Fin (2 ^ w))` along
 `packedSliceOfWords` is `PMF.uniformOfFintype (Fin N → Fin (2 ^ k))`. -/
@@ -478,7 +478,7 @@ theorem uniformOfFintype_map_packedSliceOfWords (N k w : ℕ) (hw : 0 < w) :
 /-- Extract the full seed `(α, T₁, T₂)` from `[base, base + space w c_tab d b_char M_out)`. -/
 @[expose] def extractSeed (base w w₀ c_tab d b_char M_out : ℕ) (mem : ℕ → ℕ) :
     Seed w₀ c_tab d b_char M_out :=
-  (Tabulation.extractWord (w₀ - 1) (mem base),
+  (wordOfNat (w₀ - 1) (mem base),
     DoubleTabulation.topSliceEquiv (c_tab + 1) d b_char
       (extractPackedSlice (base + 1) (topEntries c_tab d b_char) b_char w mem),
     DoubleTabulation.botSliceEquiv d b_char M_out
@@ -499,7 +499,7 @@ theorem seedRep_extractSeed {base w w₀ c_tab d b_char M_out : ℕ} {mem : ℕ 
     (hα : mem base < 2 ^ (w₀ - 1)) :
     SeedRep base w w₀ c_tab d b_char M_out
       (extractSeed base w w₀ c_tab d b_char M_out mem) mem := by
-  refine ⟨(Tabulation.extractWord_val_of_lt hα).symm, ?_, ?_⟩
+  refine ⟨(wordOfNat_val_of_lt hα).symm, ?_, ?_⟩
   · intro i j ch
     change readPacked (base + 1) b_char w mem _ =
       readPacked (base + 1) b_char w mem
@@ -522,7 +522,7 @@ theorem extractSeed_eq_of_seedRep {base w w₀ c_tab d b_char M_out : ℕ}
   apply Prod.ext
   · apply Fin.ext
     dsimp only [extractSeed]
-    rw [hα, Tabulation.extractWord_val_of_lt α.isLt]
+    rw [hα, wordOfNat_val_of_lt α.isLt]
   · apply Prod.ext
     · funext i j ch
       apply Fin.ext
@@ -915,8 +915,8 @@ theorem map_extractSeed_eval_resampleComp {base w w₀ c_tab d b_char M_out : �
       have hmem_base : zf.1.mem base = kα.val := by
         rw [hframe base (Or.inl (by omega))]
         simp [x1, Data.write]
-      have hα_eq : Tabulation.extractWord (w₀ - 1) (zf.1.mem base) = eα kα := by
-        rw [hmem_base, Tabulation.extractWord_unifFin]
+      have hα_eq : wordOfNat (w₀ - 1) (zf.1.mem base) = eα kα := by
+        rw [hmem_base, wordOfNat_unifFin]
       have htop_eq : extractPackedSlice (base + 1) (topEntries c_tab d b_char) b_char w zf.1.mem =
           (Equiv.piCongrRight fun _ => BitString.equivFin b_char)
             (bitPackedProjHom (topEntries c_tab d b_char) b_char w hw
@@ -941,9 +941,9 @@ theorem map_extractSeed_eval_resampleComp {base w w₀ c_tab d b_char M_out : �
         congr 2
         funext q
         change (BitString.equivFin w).symm
-            (Tabulation.extractWord w (zf.1.mem ((base + offBot w c_tab d b_char) + q.val))) =
+            (wordOfNat w (zf.1.mem ((base + offBot w c_tab d b_char) + q.val))) =
           (BitString.equivFin w).symm
-            (Tabulation.extractWord w (zf.1.mem ((base + 1) + (topWords w c_tab d b_char + q.val))))
+            (wordOfNat w (zf.1.mem ((base + 1) + (topWords w c_tab d b_char + q.val))))
         rw [show (base + offBot w c_tab d b_char) + q.val =
           (base + 1) + (topWords w c_tab d b_char + q.val) by unfold offBot; omega]
       dsimp only [Function.comp_apply, extractSeed, tablesOfWords, Data.extend]

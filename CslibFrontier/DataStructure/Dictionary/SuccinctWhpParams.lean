@@ -779,6 +779,15 @@ the large-`n_max` regime (`whpThreshold c ≤ n_max`). -/
 /-- Universal additive `w`-bit word slack (`160` words, independent of `c, U, V, w, n_max`). -/
 @[expose] def whpSpaceConst : ℕ := 160
 
+/-- Worst-case Word-RAM execution instruction bound for each dynamic dictionary operation
+(`query`, `insert`, `delete`) on the fast path (`O_c(1)` independent of `n_max, U, V, w`). -/
+@[expose] def whpTimeBound (c : ℕ) : ℕ :=
+  4 * whpThreshold c + 500000 * (cEff c + 1)
+
+/-- Linear initialization instruction factor (`O_c(1)` independent of `n_max, U, V, w`). -/
+@[expose] def whpInitFactor (c : ℕ) : ℕ :=
+  4 * whpThreshold c + 100000
+
 /-- Universal bit accounting for `n_max` quotients of `quotBitsWhp U n_max` bits and `n_max` values
 of `valBits V` bits across all `n_max ≤ U`. -/
 theorem quotient_val_whp_bits_le_optBits {U V n_max : ℕ} (hnU : n_max ≤ U) :
