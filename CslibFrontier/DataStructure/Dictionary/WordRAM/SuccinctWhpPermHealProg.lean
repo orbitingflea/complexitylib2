@@ -546,13 +546,12 @@ theorem writeLocStateGenProg_spec {c U V w n_max base b loc val : ℕ} {s : Memo
     unfold writePacked highWidth
     dsimp only
     split_ifs with hlt
-    · have hl : lowWidth 2 w (b * totalLocalCoordsWhp n_max + loc) =
-          w - bitOffset 2 w (b * totalLocalCoordsWhp n_max + loc) := by
-        dsimp only [idx] at hk0_eq; rw [← hk0_eq, ite_eq_left hlt]
+    · have hl : lowWidth 2 w idx = w - bitOffset 2 w idx := by
+        rw [← hk0_eq, ite_eq_left hlt]
       simp only [hl, Nat.one_shiftLeft]
       rfl
-    · have hl : lowWidth 2 w (b * totalLocalCoordsWhp n_max + loc) = 2 := by
-        dsimp only [idx] at hk0_eq; rw [← hk0_eq, ite_eq_right hlt]
+    · have hl : lowWidth 2 w idx = 2 := by
+        rw [← hk0_eq, ite_eq_right hlt]
       simp only [hl, Nat.one_shiftLeft]
       rfl
   · simp only [← PFunctor.FreeM.bind_eq_bind, memoryCost_bind]
