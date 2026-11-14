@@ -33,8 +33,6 @@ of `x ++ r` of the same size up to two gates.
 * `Cslib.Circuits.Boolean.frameWiring`, `Cslib.Circuits.Boolean.framedSlice`: the input-and-constant
   substitution building `frame x ++ r` from `x ++ r`, and the slice of a language pulled back along
   that framing.
-* `Cslib.Circuits.Boolean.encodes`, `Cslib.Circuits.Boolean.encodesMember`: the words of length `n`
-  in the image of an encoding `enc`, and the indicator of encoded members of a set `A`.
 
 ## Main results
 
@@ -57,7 +55,7 @@ of `x ++ r` of the same size up to two gates.
 
 namespace Cslib.Circuits.Boolean
 
-open Turing Turing.MultiTapeTM MachineSimulation
+open Language Turing Turing.MultiTapeTM MachineSimulation
 
 /-- The instances on which a Boolean function computable in polynomial time is true are the
 preimage, under the encoding, of a language in `P/poly`. -/
@@ -137,28 +135,6 @@ section Encoded
 
 variable {α : Type} {enc : α ↪ List Bool} {p : Polynomial ℕ} {V : α × List Bool → Bool}
   {L : Language Bool}
-
-/-- The words of length `n` that encode an instance. -/
-def encodes (enc : α ↪ List Bool) (n : ℕ) : Set (Fin n → Bool) := {x | ∃ a, enc a = List.ofFn x}
-
-open scoped Classical in
-/-- Whether the word `x` encodes a member of `A`. -/
-noncomputable def encodesMember (enc : α ↪ List Bool) (A : Set α) (n : ℕ) : BooleanFunction n :=
-  fun x => decide (∃ a ∈ A, enc a = List.ofFn x)
-
-/-- On a word `x` encoding `a`, `encodesMember enc A n x` is `true` iff `a ∈ A`. -/
-theorem encodesMember_eq_true_iff {A : Set α} {n : ℕ} {x : Fin n → Bool} {a : α}
-    (ha : enc a = List.ofFn x) : encodesMember enc A n x = true ↔ a ∈ A := by
-  rw [encodesMember, @decide_eq_true_iff _ (Classical.propDecidable _)]
-  exact ⟨fun ⟨b, hb, hba⟩ => enc.injective (hba.trans ha.symm) ▸ hb, fun h => ⟨a, h, ha⟩⟩
-
-/-- A language agreeing with `encodesMember enc A` on encoded words contains exactly the encodings
-of the members of `A`. -/
-theorem mem_iff_of_slice_eq_encodesMember {A : Set α}
-    (h : ∀ n, ∀ x ∈ encodes enc n, L.slice n x = encodesMember enc A n x) (a : α) :
-    a ∈ A ↔ enc a ∈ L := by
-  have hx : List.ofFn (fun i : Fin (enc a).length => (enc a)[i]) = enc a := List.ofFn_getElem
-  rw [← encodesMember_eq_true_iff hx.symm, ← h _ _ ⟨a, hx.symm⟩, Language.slice_eq_true_iff, hx]
 
 /-- The verifier on an encoded instance, as the framed slice of the language deciding it. -/
 theorem verifier_eq_true_iff (hVL : ∀ y, V y = true ↔ encPair enc encBits y ∈ L) {n : ℕ}

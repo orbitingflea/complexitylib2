@@ -977,9 +977,11 @@ public import CslibFrontier.Computability.BlumComplexity.Naming
 public import CslibFrontier.Computability.BlumComplexity.RecursiveRelatedness
 public import CslibFrontier.Computability.BlumComplexity.Speedup
 public import CslibFrontier.Computability.BlumComplexity.Union
+public import CslibFrontier.Computability.BranchingProgram.Basic
 public import CslibFrontier.Computability.BranchingProgram.MonoidProgram
 public import CslibFrontier.Computability.BranchingProgram.PolyLength
 public import CslibFrontier.Computability.BranchingProgram.ReadOnce
+public import CslibFrontier.Computability.BranchingProgram.Space
 public import CslibFrontier.Computability.BusyBeaver.Partrec
 public import CslibFrontier.Computability.Catalytic.Comparison
 public import CslibFrontier.Computability.Catalytic.VertexEquality

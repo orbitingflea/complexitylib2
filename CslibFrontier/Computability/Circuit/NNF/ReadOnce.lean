@@ -67,14 +67,6 @@ open Cslib.Circuits
 
 variable {L : ℕ} {S ι : Type*} (P : ReadOnceProgram L S Bool) (ord : Fin L → ι)
 
-/-- The state reached from the state `s` at time `t` by reading the rest of the word `y`. -/
-def runFrom (y : Fin L → Bool) (t : ℕ) (s : S) : S :=
-  ((List.ofFn y).drop t).foldlIdx P.stepAt s t
-
-/-- Reading the whole word from the start gives the final state. -/
-theorem runFrom_zero (y : Fin L → Bool) : P.runFrom y 0 P.start = P.finalState y :=
-  (P.finalState_eq y).symm
-
 variable (L S) in
 /-- The nodes of the d-DNNF of a program: states at each time, literals at each time, and the
 conjunctions of a literal with the next state. -/
@@ -136,9 +128,8 @@ theorem eval_state (x : ι → Bool) :
   | zero =>
     intro t q hk
     have ht : L ≤ t := by omega
-    rw [NNF.eval_const (b := P.accept q) (by simp [toNNF, nnfGate, not_lt.mpr ht]), runFrom,
-      List.drop_eq_nil_of_le (by simpa using ht)]
-    rfl
+    rw [NNF.eval_const (b := P.accept q) (by simp [toNNF, nnfGate, not_lt.mpr ht]),
+      P.runFrom_of_le _ ht]
   | succ k ih =>
     intro t q hk
     have ht : t.val < L := by omega
@@ -153,10 +144,7 @@ theorem eval_state (x : ι → Bool) :
       (by simp only [Fin.val_succ]; omega)
     have hrun (b : Bool) (hb : x (ord ⟨t, ht⟩) = b) :
         P.runFrom (x ∘ ord) t q = P.runFrom (x ∘ ord) (t + 1) (P.step ⟨t, ht⟩ q b) := by
-      rw [runFrom, List.drop_eq_getElem_cons (by simpa using ht), List.foldlIdx_cons,
-        List.getElem_ofFn]
-      simp only [stepAt, ht, dite_true, Function.comp_apply, hb]
-      rfl
+      simpa [hb] using P.runFrom_step (x ∘ ord) ht q
     rw [NNF.eval_or hor, NNF.eval_and (hand false), NNF.eval_and (hand true),
       NNF.eval_lit (hlit false), NNF.eval_lit (hlit true), hnext, hnext]
     simp only [Fin.val_succ]
