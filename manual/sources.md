@@ -169,6 +169,11 @@ Eli Ben-Sasson, Alessandro Chiesa and Nicholas Spooner. *Interactive Oracle Proo
 
 Chris Brzuska, Antoine Delignat-Lavaud, Cédric Fournet, Konrad Kohbrok and Markulf Kohlweiss. *State Separation for Code-Based Game-Playing Proofs*. ASIACRYPT 2018, Lecture Notes in Computer Science 11274, 222–249. https://doi.org/10.1007/978-3-030-03332-3_9 . Bibliographic metadata as in the library bibliography. The primary text was not inspected, and no theorem number is claimed. The manual attributes to this paper only the package calculus: packages composed sequentially and side by side, and the reduction and hybrid steps built from them.
 
+<a id="bender24"></a>
+## bender24
+
+Michael A. Bender, Martin Farach-Colton, John Kuszmaul and William Kuszmaul. "Modern Hashing Made Simple." *Proceedings of the 2024 SIAM Symposium on Simplicity in Algorithms (SOSA 2024)*, 363–373, 2024. https://doi.org/10.1137/1.9781611977936.33 . Section 5 (with-high-probability succinct dynamic dictionary with $O_c(1)$ worst-case query, insert, and delete operations taking $\text{OPT} + O_c(n_{\max} \log \log n_{\max})$ space).
+
 <a id="beigelgill92"></a>
 ## beigelgill92
 

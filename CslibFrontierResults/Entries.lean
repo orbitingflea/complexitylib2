@@ -195,6 +195,7 @@ import CslibFrontier.Foundations.Analysis.Convex.ExtendedFormulation.TSP
 import CslibFrontier.DataStructure.NearNeighbor.Angular
 import CslibFrontier.DataStructure.NearNeighbor.PStable
 import CslibFrontier.DataStructure.Paging.Marking
+import CslibFrontier.DataStructure.Dictionary.WordRAM.SuccinctWhp
 import CslibFrontier.Foundations.Algebra.Polynomial.RealRoot.RootBound
 import CslibFrontier.Foundations.Algebra.Polynomial.RealRoot.Sturm
 import CslibFrontier.Foundations.Algebra.Polynomial.RealRoot.TotalIsolation
@@ -5937,3 +5938,18 @@ register_result "tally-np-exp-nexp" where
   scope := "(∀ L ∈ TALLY, L ∈ NP encBits → L ∈ P encBits) → EXP enc = NEXP enc and E enc = NE enc \
     for every encoding enc; TALLY is the set of bit-languages of all-true words. Only this \
     direction of Hartmanis–Immerman–Sewelson is proved."
+
+register_result "succinct-dictionary-whp" where
+  title := "With-high-probability fixed-capacity succinct dynamic dictionary on Word-RAM"
+  topic := "data structures"
+  sources := [
+    { paper := BenderFarachColtonKuszmaulKuszmaul2024, theorem := "Theorem 5.1",
+      locator := "Section 5" }
+  ]
+  theorems := [
+    Cslib.DataStructure.Dictionary.WordRAM.SuccinctWhp.succinctDictionaryWhp_exists
+  ]
+  scope := "Fixed-capacity dynamic dictionary (query, insert, delete) on Word-RAM executing in \
+    O_c(1) worst-case instructions with failure probability at most (max n_max 1)⁻¹ ^ c for \
+    any fixed c ≥ 1 across all U < 2^w, V < 2^w, w ≥ 1, and n_max ≤ U in succinct space \
+    OPT(U, V, n_max) + O_c(n_max log log n_max) words."
