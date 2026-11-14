@@ -87,8 +87,7 @@ input. -/
 theorem computableInPolyTime_coinBudget {α : Type} (enc : α ↪ List Bool) (c d : ℕ) :
     ComputableInPolyTime (fun a => c * ((enc a).length + 1) ^ d) enc encUnary := by
   have hlen : ComputableInPolyTime (fun a => (enc a).length) enc encUnary :=
-    .of_tidy ((ComputableTidilyInPolyTime.length encBool).comp
-      (ComputableTidilyInPolyTime.encode enc))
+    ComputableInPolyTime.encoding_length enc
   polytime
 
 /-- Every indexed scheme has seeded key generation with a polynomial-time budget. -/

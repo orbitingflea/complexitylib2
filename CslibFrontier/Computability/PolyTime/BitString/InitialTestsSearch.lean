@@ -179,7 +179,9 @@ variable {α : Type} {e : α ↪ List Bool} {m B : α → ℕ}
   (hm : ComputableInPolyTime m e encUnary) (hB : ComputableInPolyTime B e encUnary)
 include hm
 private theorem mu_polyTime : ComputableInPolyTime (fun a => Nat.log 2 (m a) + 1) e encUnary :=
-  .unary_add' ((of_tidy ComputableTidilyInPolyTime.unary_log_two).comp hm) (.const 1)
+  .unary_add'
+    ((ComputableInPolyTime.binary_log_two.comp ComputableInPolyTime.unary_to_binary).comp hm)
+    (.const 1)
 include hB
 @[fun_prop] theorem greedyRowListLength_polyTime :
     ComputableInPolyTime (fun a => greedyRowListLength (B a) (m a)) e encUnary :=

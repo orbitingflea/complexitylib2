@@ -71,8 +71,8 @@ theorem IsOraclePPTOn.foldlM_of_bounded_growth
   have htail : ComputableInPolyTime
       (fun state : List Item × Acc => state.1.tail)
       (encPair (encList element) output) (encList element) :=
-    .of_tidy ((ComputableTidilyInPolyTime.listTail element).comp
-      (ComputableTidilyInPolyTime.fst _ _))
+    ((ComputableInPolyTime.tail (encA := element) (encL := encList element)).comp
+      (ComputableInPolyTime.fst _ _))
   have hloopStep : IsOraclePPTOn (encPair (encList element) output)
       (encPair (encList element) output) (foldStep fallback step) :=
     (hstep.preprocess' hprepare).pair' htail

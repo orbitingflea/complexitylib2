@@ -144,7 +144,6 @@ theorem computableInPolyTime_lyubashevskyExtractList :
         (encPair (encPair encBits (encOption (encList encIntBin)))
           (encPair encBits (encOption (encList encIntBin)))))
       (encList encIntBin) := by
-    apply ComputableInPolyTime.of_tidy
     unfold lyubashevskyExtractList
     dsimp only
     fun_prop
@@ -155,7 +154,7 @@ theorem computableInPolyTime_lyubashevskyExtractList :
       (encPair (encPair encUnary encUnary)
         (encPair (encPair encBits (encOption (encList encIntBin)))
           (encPair encBits (encOption (encList encIntBin))))) :=
-    .of_tidy (.of_eq fun _ => rfl)
+    (.of_eq fun _ => rfl)
   -- Elaborating the composite first avoids a costly higher-order unification with the goal.
   exact (htuple.comp hfields :)
 
@@ -197,10 +196,8 @@ for each fixed dimension. -/
 @[fun_prop]
 theorem computableInPolyTime_lyubashevskyExtractWord :
     ComputableInPolyTime lyubashevskyExtractWord encBits encBits := by
-  apply ComputableInPolyTime.of_tidy
-  exact (ComputableTidilyInPolyTime.encode (encList encIntBin)).comp
-    (computableInPolyTime_lyubashevskyExtractList.tidy.comp
-      computableInPolyTime_decodeLyubashevskyExtractInput.tidy)
+  exact (computableInPolyTime_lyubashevskyExtractList.comp
+    computableInPolyTime_decodeLyubashevskyExtractInput).encoding_comp
 
 /-- The word program exactly implements the integer-list extractor on canonical encoded data. -/
 theorem lyubashevskyExtractWord_enc (input : LyubashevskyExtractInput) :

@@ -373,24 +373,17 @@ private theorem computableInPolyTime_decodeResponseList :
 def zmodReduce (q : ℕ) (a : ℤ) : ℤ :=
   if q == 0 then a else ((a % (q : ℤ)).toNat : ℤ)
 
-@[local fun_prop]
-private theorem computableTidilyInPolyTime_zmodReduce :
-    ComputableTidilyInPolyTime (fun p : ℕ × ℤ => zmodReduce p.1 p.2)
+/-- `zmodReduce` is computable in polynomial time. -/
+@[fun_prop]
+theorem computableInPolyTime_zmodReduce :
+    ComputableInPolyTime (fun p : ℕ × ℤ => zmodReduce p.1 p.2)
       (encPair encNat encIntBin) encIntBin := by
   have hmod : ComputableInPolyTime (fun p : ℕ × ℤ => ((p.2 % (p.1 : ℤ)).toNat : ℤ))
       (encPair encNat encIntBin) encIntBin :=
     ComputableInPolyTime.intBin_natCast.comp
       (ComputableInPolyTime.intBin_emodNat' (by fun_prop) (by fun_prop))
-  have hmod_tidy := hmod.tidy
   unfold zmodReduce
   fun_prop
-
-/-- `zmodReduce` is computable in polynomial time. -/
-@[fun_prop]
-theorem computableInPolyTime_zmodReduce :
-    ComputableInPolyTime (fun p : ℕ × ℤ => zmodReduce p.1 p.2)
-      (encPair encNat encIntBin) encIntBin :=
-  .of_tidy computableTidilyInPolyTime_zmodReduce
 
 /-- `zmodReduce q a` equals `ZMod.cast (a : ZMod q)` for every `q : ℕ` and `a : ℤ`. -/
 theorem zmodReduce_eq_cast (q : ℕ) (a : ℤ) :

@@ -927,14 +927,12 @@ private theorem computableInPolyTime_advanceConditionalState (R : SelfReducible 
   have habort := encConditionalWalkState_mk_polyTime hnd hcv hrb (const false)
   have htrueBr := encConditionalWalkState_mk_polyTime
     (R.child_polytime.comp (hnd.prod (const true))) hc1
-    ((ComputableInPolyTime.of_tidy
-      (ComputableTidilyInPolyTime.bitsCons (.const true) hrb.tidy)))
+    (ComputableInPolyTime.bitsCons (.const true) hrb)
     (binary_lt' (const 0) hc1)
   have hc0 := binary_sub' hcv hc1
   have hfalseBr := encConditionalWalkState_mk_polyTime
     (R.child_polytime.comp (hnd.prod (const false))) hc0
-    ((ComputableInPolyTime.of_tidy
-      (ComputableTidilyInPolyTime.bitsCons (.const false) hrb.tidy)))
+    (ComputableInPolyTime.bitsCons (.const false) hrb)
     (binary_lt' (const 0) hc0)
   have hlt : ComputableInPolyTime
       (fun x : (ConditionalWalkState α × ℕ) × Option ℕ => decide (x.2.getD 0 < x.1.2))
@@ -972,7 +970,7 @@ private theorem computableInPolyTime_finishConditionalWalk (R : SelfReducible en
       (encConditionalWalkState enc) (encOption encBits) := by
     have hid : ComputableInPolyTime id
         (encConditionalWalkState enc) (encConditionalWalkState enc) := id'
-    have hrev := (ComputableInPolyTime.of_tidy ComputableTidilyInPolyTime.bitsReverse).comp
+    have hrev := (ComputableInPolyTime.bitsReverse).comp
       (encConditionalWalkState_revBits_polyTime hid)
     fun_prop
   exact (ComputableInPolyTime.ite'

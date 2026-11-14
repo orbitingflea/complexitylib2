@@ -73,7 +73,7 @@ theorem isPPTOn_sampleDyadicIndex {α : Type} {input : α ↪ List Bool} {bound 
     (hbound : ComputableInPolyTime bound input encUnary) :
     IsPPTOn input encUnary (fun a => sampleDyadicIndex (bound a)) := by
   have hlog : ComputableInPolyTime (Nat.log 2) encUnary encUnary :=
-    .of_tidy ComputableTidilyInPolyTime.unary_log_two
+    .(ComputableInPolyTime.binary_log_two.comp ComputableInPolyTime.unary_to_binary)
   have hwidth := ComputableInPolyTime.unary_succ.comp
     (hlog.comp hbound)
   have hsample := isPPTOn_sampleList.preprocess hwidth
@@ -104,7 +104,7 @@ theorem isPPTOn_sampleBoundedIndex {α : Type} {input : α ↪ List Bool} {bound
     (hbound : ComputableInPolyTime bound input encUnary) :
     IsPPTOn input encUnary (fun a => sampleBoundedIndex (bound a)) := by
   have hlog : ComputableInPolyTime (Nat.log 2) encUnary encUnary :=
-    .of_tidy ComputableTidilyInPolyTime.unary_log_two
+    .(ComputableInPolyTime.binary_log_two.comp ComputableInPolyTime.unary_to_binary)
   have hwidth := ComputableInPolyTime.unary_succ.comp
     (hlog.comp hbound)
   have hsample := isPPTOn_sampleList.preprocess hwidth

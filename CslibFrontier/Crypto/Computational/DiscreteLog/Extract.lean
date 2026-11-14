@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import CslibFrontier.Crypto.Computational.DiscreteLog
+import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Captured
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.BinaryDiv
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.PowMod
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
@@ -85,19 +86,18 @@ theorem computableInPolyTime_extractNat {α : Type} {input : α ↪ List Bool}
     (hc' : ComputableInPolyTime c' input encNat) (hz' : ComputableInPolyTime z' input encNat) :
     ComputableInPolyTime (fun a => extractNat (F.order (d a)) (c a) (z a) (c' a) (z' a))
       input encNat := by
-  refine .of_tidy ?_
-  have hq : ComputableTidilyInPolyTime (fun a => F.order (d a)) input encNat :=
-    F.computableInPolyTime_order.tidy.comp hd.tidy
-  have hdiff {x y : α → ℕ} (hx : ComputableTidilyInPolyTime x input encNat)
-      (hy : ComputableTidilyInPolyTime y input encNat) :
-      ComputableTidilyInPolyTime
+  have hq : ComputableInPolyTime (fun a => F.order (d a)) input encNat :=
+    F.computableInPolyTime_order.comp hd
+  have hdiff {x y : α → ℕ} (hx : ComputableInPolyTime x input encNat)
+      (hy : ComputableInPolyTime y input encNat) :
+      ComputableInPolyTime
         (fun a => (x a % F.order (d a) + F.order (d a) - y a % F.order (d a)) % F.order (d a))
         input encNat :=
     .binary_mod' (.binary_sub' (.binary_add' (.binary_mod' hx hq) hq) (.binary_mod' hy hq)) hq
   have hpow := (ComputableInPolyTime.binary_powMod
-    (ComputableInPolyTime.of_tidy (hdiff hc.tidy hc'.tidy))
-    (ComputableInPolyTime.of_tidy (.binary_sub' hq (.const 2)))
-    (ComputableInPolyTime.of_tidy hq) fun a => (F.prime_order (d a)).pos).tidy
-  exact .binary_mod' (.binary_mul' hpow (hdiff hz.tidy hz'.tidy)) hq
+    (hdiff hc hc')
+    (.binary_sub' hq (.const 2))
+    hq fun a => (F.prime_order (d a)).pos)
+  exact .binary_mod' (.binary_mul' hpow (hdiff hz hz')) hq
 
 end Cslib.Crypto.PrimeOrderGroupFamily

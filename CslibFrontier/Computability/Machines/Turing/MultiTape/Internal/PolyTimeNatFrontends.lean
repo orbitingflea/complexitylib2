@@ -10,6 +10,8 @@ public import CslibFrontier.Computability.Machines.Turing.MultiTape.Internal.Pol
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Internal.BinaryPrimitives
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Internal.DegreeUnaryPrimitives
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.Degree.Bounds
+import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.Quantitative
+import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.Degree.BitString.Cut
 import Mathlib.Data.Nat.Size
 import Mathlib.Data.Nat.Bitwise
 import Mathlib.Data.List.GetD
@@ -17,10 +19,11 @@ import Mathlib.Data.List.GetD
 /-!
 # Direct unary comparison and bit-access frontends
 
-These canonical interfaces use direct unary iteration (`ComputableInPolyTime.iterate`): unary
-subtraction iterates predecessor, unary-to-binary conversion iterates the binary successor, and
-indexed access iterates the word tail before using the existing head codec. No higher tidy calculus
-supplies a plain primitive.
+Unary subtraction and indexed word access reuse the existing degree certificates for the same
+functions and encodings. Comparisons compose subtraction with the degree-level zero test;
+bit access composes the linear raw-word drop certificate with the existing head codec.
+Unary-to-binary conversion still iterates binary successor: that representation change has no
+matching degree certificate here. No higher tidy calculus supplies a plain primitive.
 -/
 
 public section
@@ -30,16 +33,8 @@ namespace Turing.MultiTapeTM.ComputableInPolyTime
 @[fun_prop]
 theorem unary_sub :
     ComputableInPolyTime (fun p : ℕ × ℕ => p.1 - p.2)
-      (encPair encUnary encUnary) encUnary := by
-  have h := iterate (count := Prod.snd) (init := Prod.fst) (step := Nat.pred)
-    (snd encUnary encUnary) (fst encUnary encUnary)
-    ComputableInDegree.unary_pred.computableInPolyTime
-    (bound := fun p => (encPair encUnary encUnary p).length) .self (fun p i _ => by
-      rw [Nat.pred_iterate]
-      simp only [encPair_apply, encUnary_apply, List.length_append, length_frame,
-        List.length_replicate]
-      omega)
-  simpa only [Nat.pred_iterate] using h
+      (encPair encUnary encUnary) encUnary :=
+  ComputableInDegree.unary_sub.computableInPolyTime
 
 /-- Comparison of unary naturals. -/
 @[fun_prop]
@@ -88,17 +83,6 @@ theorem unary_to_binary : ComputableInPolyTime (fun n : ℕ => n) encUnary encNa
       simpa [Nat.succ_iterate] using (hsize i).trans hi)
   simpa [Nat.succ_iterate] using h
 
-private theorem bitsDropUnary :
-    ComputableInPolyTime (fun p : List Bool × ℕ => p.1.drop p.2)
-      (encPair encBits encUnary) encBits := by
-  have h := iterate (count := Prod.snd) (init := Prod.fst) (step := List.tail)
-    (snd encBits encUnary) (fst encBits encUnary) bitsTail
-    (bound := fun p => (encPair encBits encUnary p).length) .self (fun p i _ => by
-      rw [List.tail_iterate]
-      simp only [length_encPair, encBits_apply, List.length_drop]
-      omega)
-  simpa only [List.tail_iterate] using h
-
 /-- Read a bit at a unary index with a fixed fallback. Fixing the raw encoding avoids
 guessing a list-encoding instance during compositional proof search. -/
 @[fun_prop]
@@ -109,7 +93,7 @@ theorem bitsGetD (fallback : Bool) :
     exact (ListEncoding.headD
       (enc₁ := encBool) (enc := encBits) fallback).computableInPolyTime
   simpa only [Function.comp_def, List.headD_eq_head?_getD, List.head?_drop,
-    List.getD_eq_getElem?_getD] using hhead.comp bitsDropUnary
+    List.getD_eq_getElem?_getD] using hhead.comp ComputableInDegree.bitsDrop.computableInPolyTime
 
 /-- Read the bit of a computed binary number at a computed unary position. -/
 @[fun_prop]

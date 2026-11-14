@@ -44,12 +44,12 @@ theorem exists_decryption_length_bound {Out : Type} {encOut : Out ↪ List Bool}
       ∀ n keys, keys ∈ (ProbComp.eval (keyGen n)).support →
         ∀ ct, (encOption encOut (decrypt n keys.2 ct)).length ≤ bound n ct := by
   obtain ⟨ck, dk, hlenKey⟩ := hkeyGen.length_le
-  obtain ⟨cd, dd, hlenDec⟩ := hdecrypt.tidy.polyBounded_length.exists_le
+  obtain ⟨cd, dd, hlenDec⟩ := hdecrypt.polyBounded_length.exists_le
   let bound : ℕ → List Bool → ℕ :=
     fun n req => cd * (2 * n + 2 * (ck * (n + 1) ^ dk) + req.length + 5) ^ dd
   refine ⟨bound, ?_, ?_⟩
   · dsimp only [bound]
-    exact ComputableInPolyTime.of_tidy (by fun_prop)
+    fun_prop
   · intro n keys hkeys req
     have hk := hlenKey n keys hkeys
     have hd := hlenDec (n, keys.2, req)

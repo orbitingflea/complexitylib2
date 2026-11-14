@@ -107,15 +107,9 @@ theorem exists_traceSym_ne_top :
 
 /-! ### Explicit binary fields -/
 
-theorem polyOfCode_one : polyOfCode 1 = 1 := by
-  simpa [polyOfCode_zero, ZMod.val_one] using polyOfCode_two_mul_add 0 1
-
-theorem polyOfCode_two : polyOfCode 2 = Polynomial.X := by
-  simpa [polyOfCode_one] using polyOfCode_two_mul_add 1 0
-
 -- The code `3 = 11₂` gives `1 + X`, and the least irreducible polynomial of degree `1` is `X`.
 example : polyOfCode 3 = 1 + Polynomial.X ∧ leastIrreducible 1 = Polynomial.X := by
-  refine ⟨by simpa [polyOfCode_one, ZMod.val_one] using polyOfCode_two_mul_add 1 1, ?_⟩
+  refine ⟨polyOfCode_three, ?_⟩
   obtain ⟨m, h1, h2, heq, hmin⟩ := exists_code_leastIrreducible one_ne_zero
   have hm : m = 2 := by
     by_contra hm

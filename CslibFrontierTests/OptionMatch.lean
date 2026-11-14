@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.BigO.Option
+import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Option
 import CslibFrontier.Tactic.OptionMatch
 
 /-! Tests of `option_match_to_elim` and of `fun_prop` on the resulting `Option.elim`. -/
@@ -84,5 +85,23 @@ example {α : Type} (enc : α ↪ List Bool) :
     rcases p with ⟨_ | a, d⟩ <;>
       simp only [Option.elim_none, Option.elim_some, length_encPair, encOption_some,
         List.length_cons] <;> omega
+
+-- The optional callback retains the captured input as well as the payload.
+example : ComputableInPolyTime
+    (fun p : Option Bool × Bool => p.1.map (fun b => (p.2, b)))
+    (encPair (encOption encBool) encBool) (encOption (encPair encBool encBool)) := by
+  apply ComputableInPolyTime.optionMapWithInput
+    (ComputableInPolyTime.fst (encOption encBool) encBool)
+  exact ((ComputableInPolyTime.snd (encOption encBool) encBool).comp
+    (ComputableInPolyTime.fst (encPair (encOption encBool) encBool) encBool)).prod
+    (ComputableInPolyTime.snd (encPair (encOption encBool) encBool) encBool)
+
+-- Elimination remains available when the payload has no inhabitants.
+example (empty : Empty ↪ List Bool) : ComputableInPolyTime
+    (fun b : Bool => (none : Option Empty).elim b (fun e => Empty.elim e))
+    encBool encBool := by
+  apply ComputableInPolyTime.optionElimWithInput (encB := empty)
+    (ComputableInPolyTime.const none) ComputableInPolyTime.id'
+  exact ComputableInPolyTime.of_finite _
 
 end CslibFrontierTests.OptionMatch

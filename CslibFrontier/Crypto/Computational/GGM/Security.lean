@@ -73,7 +73,7 @@ Surplus bits are ignored; the hypothesis accommodates seed length zero. -/
 theorem PseudorandomGenerator.ggm {generator : List Bool → List Bool} {length : ℕ → ℕ}
     (hgenerator : PseudorandomGenerator generator length) (hdouble : ∀ n, 2 * n ≤ length n) :
     PseudorandomFunction (GGM.eval generator) := by
-  have hpoly := hgenerator.polyTime.tidy
+  have hpoly := hgenerator.polyTime
   have hsecure := hgenerator.indistinguishable.map
     (f := fun n word => word.take (2 * n)) (by polytime)
   have htruncated : ComputationallyIndistinguishable
@@ -82,7 +82,7 @@ theorem PseudorandomGenerator.ggm {generator : List Bool → List Bool} {length 
     simpa only [← generatorEnsemble_postprocess generator (fun n word => word.take (2 * n)),
       BitString.uniformList_take (hdouble _)] using hsecure
   have h := GGM.pseudorandomFunction_of_indistinguishable
-    (generator := fun seed => (generator seed).take (2 * seed.length)) (.of_tidy (by polytime))
+    (generator := fun seed => (generator seed).take (2 * seed.length)) (by polytime)
     (fun seed => by simp [hgenerator.length_eq, Nat.min_eq_left (hdouble _)]) htruncated
   simpa only [GGM.eval_truncate] using h
 

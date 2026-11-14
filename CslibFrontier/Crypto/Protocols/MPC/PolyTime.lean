@@ -148,16 +148,10 @@ theorem exists_perfectSemiHonestPrivate_ot14_of_polyTime {α : Type} {enc : α �
         CoalitionSimulator.Family.IsPPT enc m n k I
           (fun a => encGMWPartyView m (coins a) (n a) (k a) (C a))
           (fun a => gmwOT14RandomizedSim m (coins a) (n a) (k a) (C a) I)) := by
-  have h_in : ComputableInPolyTime (fun a => m * n a + coins a) enc encUnary := by
-    have hmn := ComputableTidilyInPolyTime.comp' ComputableTidilyInPolyTime.unary_mul
-      ((ComputableTidilyInPolyTime.const m).prod hn.tidy)
-    exact ComputableInPolyTime.of_tidy
-      (ComputableTidilyInPolyTime.comp' ComputableTidilyInPolyTime.unary_add
-        (hmn.prod hcoins.tidy))
-  have h_out : ComputableInPolyTime (fun a => m * k a) enc encUnary := by
-    have hmk := ComputableTidilyInPolyTime.comp' ComputableTidilyInPolyTime.unary_mul
-      ((ComputableTidilyInPolyTime.const m).prod hk.tidy)
-    exact ComputableInPolyTime.of_tidy hmk
+  have h_in : ComputableInPolyTime (fun a => m * n a + coins a) enc encUnary :=
+    .unary_add' (.unary_mul' (.const m) hn) hcoins
+  have h_out : ComputableInPolyTime (fun a => m * k a) enc encUnary :=
+    .unary_mul' (.const m) hk
   obtain ⟨C, hC_code, hC_eval⟩ :=
     Cslib.Complexity.CircuitValue.exists_uniformCircuitFamily h_in h_out hF
   refine ⟨C, hC_code, hC_eval, fun a => ?_,

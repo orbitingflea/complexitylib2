@@ -93,7 +93,7 @@ theorem IsOraclePPT.exists_computable_queryBound {Operation β : Type} [Decidabl
           request.2.length ≤ Q (n + aux.length) := by
   obtain ⟨c, d, hbounds⟩ := h.query_bounds
   let Q : ℕ → ℕ := fun m => c * (m + 2) ^ d
-  have hcomp : ComputableInPolyTime Q encUnary encUnary := .of_tidy (by unfold Q; polytime)
+  have hcomp : ComputableInPolyTime Q encUnary encUnary := by unfold Q; polytime
   have hpoly : PolynomiallyBounded Q :=
     (PolynomiallyBounded.const c).mul ((PolynomiallyBounded.id.add (.const 2)).pow d)
   exact ⟨Q, hcomp, hpoly, hbounds⟩

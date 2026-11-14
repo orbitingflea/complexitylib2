@@ -170,7 +170,7 @@ theorem isPPTOn_sampleSeededTrials {α β : Type} {input : α ↪ List Bool}
       (encPair input encBits) (encOption output)) :
     IsPPTOn input (encOption output) (fun a => sampleSeededTrials (spec a) (trials a)) := by
   have hcount : ComputableInPolyTime (fun a => trials a * (spec a).width) input encUnary :=
-    .of_tidy (ComputableTidilyInPolyTime.unary_mul.comp (htrials.tidy.prod hwidth.tidy))
+    (ComputableInPolyTime.unary_mul.comp (htrials.prod hwidth))
   have hdecode := computableInPolyTime_decodeRows htrials hwidth hattempt
   have hseeded := IsPPTOn.of_seeded hcount hdecode
   refine hseeded.congr fun a => ?_

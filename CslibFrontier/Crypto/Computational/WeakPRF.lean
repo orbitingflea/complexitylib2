@@ -159,7 +159,7 @@ theorem isOraclePPT_weakToPrfDistinguisher {adversary : OracleDistinguisher}
   have hres : ComputableInPolyTime
       (fun pair : (ℕ × List Bool) × List Bool => 2 * pair.1.1 + 2)
       (encPair ECaller encBits) encUnary := by
-    dsimp only [ECaller]; exact .of_tidy (by fun_prop)
+    dsimp only [ECaller]; fun_prop
   have hrun : IsOraclePPTOn ECaller encBool
       (fun caller : ℕ × List Bool => OracleComp.interpret
         (OracleComp.sumHandler (fun m => ProbOracleComp.sample (ProbComp.unifFin m))

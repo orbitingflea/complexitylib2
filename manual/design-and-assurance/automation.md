@@ -497,6 +497,23 @@ when expansion of every hypothesis is useful. Each call handles its original goa
 closes it, unrelated sibling goals remain for the caller. The checked multi-goal client exercises
 that case without bullets or `<;>`.
 
+For component bounds that should retain their encoding layout, import
+`CslibFrontier.Computability.Machines.Turing.MultiTape.Encodings.ComponentBounds`.
+The opt-in `simp only [enc_component]` collection handles syntactic pair projections and
+finite-table entries (`encPi`); add a membership proof for an encoded list element.
+The [sparse CNF compiler](../../CslibFrontier/Computability/PolyTime/CNF/SparsePolyCompile.lean)
+uses this before composing component bounds with growth estimates. Keep the intermediate
+container explicit when a bound crosses both a list and a pair. For a concrete pair, simp may
+not match its reduced projection: use `length_le_encPair_left ea eb (a, b)` or the right-hand
+provider directly. List counts and suffixes omit the element encoding from the goal, so they
+are not collection rules: use `SizedListEncoding.length_le (encA := ea) (encL := el) xs` or
+`SizedListEncoding.length_drop_le (encA := ea) (encL := el) xs i`.
+The [regression examples](../../CslibFrontierTests/EncodingComponentBounds.lean) distinguish
+collection proofs from these explicit fallbacks. For a finite table,
+`length_le_encPi enc values i` bounds an entry directly; the
+[GMW configuration-space proof](../../CslibFrontier/Crypto/Computational/GMW/Sequential.lean)
+uses it without reconstructing the table’s list enumeration.
+
 Variable products remain atoms for `omega`. Supply a scaling fact, such as
 `Nat.mul_le_mul_left k h`, before the final call; expanding a product's factors does not prove
 its monotonicity. Prefer the selective location form when hypotheses already state bounds in

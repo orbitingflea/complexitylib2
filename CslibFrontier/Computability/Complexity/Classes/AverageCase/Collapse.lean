@@ -289,16 +289,15 @@ theorem collapse_polyTime (hvalid : ComputableInPolyTime H.valid encBits encBool
   let findHdr : List Bool → List Bool := fun r => r.take (idx r)
   have hrange : Turing.MultiTapeTM.ComputableInPolyTime
       (fun r : List Bool => List.range (r.length + 1)) encBits (encList encUnary) :=
-    (Turing.MultiTapeTM.ComputableInPolyTime.of_tidy
-      Turing.MultiTapeTM.ComputableTidilyInPolyTime.range).comp (by polytime)
+    Turing.MultiTapeTM.ComputableInPolyTime.range.comp (by polytime)
   have hfind : Turing.MultiTapeTM.ComputableInPolyTime
       (fun r : List Bool => (List.range (r.length + 1)).find? (fun k => H.valid (r.take k)))
       encBits (encOption encUnary) :=
     Turing.MultiTapeTM.ComputableInPolyTime.findWithInput hrange (by polytime)
   have hidx : Turing.MultiTapeTM.ComputableInPolyTime idx encBits encUnary :=
-    .of_tidy (Turing.MultiTapeTM.ComputableTidilyInPolyTime.optionGetDWithInput hfind.tidy
+    (Turing.MultiTapeTM.ComputableInPolyTime.optionGetDWithInput hfind
       (Turing.MultiTapeTM.ComputableInPolyTime.const 0
-        (encIn := encBits) (encOut := encUnary)).tidy)
+        (encIn := encBits) (encOut := encUnary)))
   have hfindHdr_pt : Turing.MultiTapeTM.ComputableInPolyTime findHdr encBits encBits := by
     polytime
   have hpoly : ComputableInPolyTime (fun r =>

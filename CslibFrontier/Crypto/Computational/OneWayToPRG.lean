@@ -61,7 +61,7 @@ theorem OneWay.exists_pseudorandomGenerator {f : List Bool → List Bool} (hf : 
     ∃ generator : List Bool → List Bool, PseudorandomGenerator generator (fun n => n + 1) := by
   obtain ⟨pair, hpair⟩ := hf.exists_pseudoentropyPair
   exact hpair.exists_pseudorandomGenerator (densityBound := fun n => 16 * (n + 7))
-    (.of_tidy (by polytime)) (Filter.Eventually.of_forall EntropyGrid.four_steps_le_owf_gap)
+    (by polytime) (Filter.Eventually.of_forall EntropyGrid.four_steps_le_owf_gap)
 
 /-- Every nonuniform one-way function implies a nonuniform pseudorandom generator with one bit of
 stretch at every seed length. -/
@@ -70,7 +70,7 @@ theorem NonuniformOneWay.exists_nonuniformPRG {f : List Bool → List Bool}
     ∃ generator : List Bool → List Bool, NonuniformPRG generator (fun n => n + 1) := by
   obtain ⟨pair, hpair⟩ := hf.exists_pseudoentropyPair
   exact pair.exists_nonuniformPRG hpair (densityBound := fun n => 16 * (n + 7))
-    (.of_tidy (by polytime)) (Filter.Eventually.of_forall EntropyGrid.four_steps_le_owf_gap)
+    (by polytime) (Filter.Eventually.of_forall EntropyGrid.four_steps_le_owf_gap)
 
 /-- Every nonuniform one-way function implies a length-tripling nonuniform pseudorandom generator
 at positive seed lengths (`3 * n + 1` at every seed length `n`). -/

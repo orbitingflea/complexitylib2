@@ -150,7 +150,7 @@ noncomputable def tailFallback (E : SymmetricCipher) : SymmetricCipher where
     have hdec2 := E.computableInPolyTime_decrypt_comp hn hk hctTail
     have hisSome : ComputableInPolyTime
         (fun p : ℕ × List Bool × List Bool => (E.decrypt p.1 p.2.1 p.2.2).isSome) EIn encBool :=
-      .of_tidy hdec1.tidy.optionIsSome
+      hdec1.optionIsSome
     have hisEmpty : ComputableInPolyTime
         (fun p : ℕ × List Bool × List Bool => p.2.2.isEmpty) EIn encBool := by
       dsimp only [EIn]; fun_prop

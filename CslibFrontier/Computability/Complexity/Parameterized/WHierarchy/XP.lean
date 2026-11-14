@@ -386,7 +386,7 @@ private theorem computableInPolyTime_checkCand_state :
       (fun q : CandState => (candInput q.1.1.1.1 (min q.1.1.1.1 q.1.1.2) q.2).map some)
       encCandState (encList (encOption encBool)) :=
     (ComputableInPolyTime.map
-      (ComputableInPolyTime.of_tidy (ComputableTidilyInPolyTime.optionSome encBool))).comp
+      (ComputableInPolyTime.optionSome encBool)).comp
       (ComputableInPolyTime.bitsToList.comp hx_bits)
   have hkleene := computableInPolyTime_kleeneEval hx_some hg
   have hout_opt : ComputableInPolyTime

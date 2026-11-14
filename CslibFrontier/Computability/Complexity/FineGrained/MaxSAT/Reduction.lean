@@ -590,8 +590,7 @@ theorem FixedWidthSATSolver.exists_bruteForce (k : ℕ) :
       rw [Function.iterate_succ_apply', ih, List.range_succ, List.any_append, List.any_cons,
         List.any_nil, Bool.or_false]
   have hrounds_poly : ComputableInPolyTime bfRounds encCNF encNat :=
-    ComputableInPolyTime.of_tidy
-      (ComputableTidilyInPolyTime.binary_two_pow.comp SAT.computableInPolyTime_numVars.tidy)
+    (ComputableInPolyTime.binary_two_pow.comp SAT.computableInPolyTime_numVars)
   have hinit_poly : ComputableInPolyTime bfInit encCNF encBf :=
     (ComputableInPolyTime.id'.prod (const 0)).prod (const false)
   have hstep_poly : ComputableInPolyTime bfStep encBf encBf := by
@@ -732,8 +731,9 @@ private theorem computableInPolyTime_structWorkSize :
       encStructInstance encUnary := by
     have hflat : ComputableInPolyTime (fun F : StructInstance => F.clauses.flatten)
         encStructInstance (encList (encPair encNat encBool)) :=
-      (ComputableInPolyTime.of_tidy
-        (ComputableTidilyInPolyTime.flatten (encPair encNat encBool))).comp hcl
+      by
+      simpa only [List.flatten_eq_flatMap] using
+        (flatMapWithInput hcl (snd _ _))
     refine ((length_list (encPair encNat encBool)).comp hflat).of_enc_eq fun F => ?_
     simp only [Function.comp_apply, CNF.vars, List.length_map]
   exact unary_add' hvars_len ((length_list (encList (encPair encNat encBool))).comp hcl)

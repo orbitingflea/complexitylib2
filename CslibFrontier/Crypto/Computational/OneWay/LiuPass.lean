@@ -220,7 +220,7 @@ private theorem computableInPolyTime_thresholdValue (γ d c : ℕ) :
     ComputableInPolyTime (thresholdValue γ d c) encUnary encUnary := by
   unfold thresholdValue
   have hlog : ComputableInPolyTime (Nat.log 2) encUnary encUnary :=
-    .of_tidy (ComputableTidilyInPolyTime.unary_log_const 2)
+    ComputableInPolyTime.binary_log_two.comp ComputableInPolyTime.unary_to_binary
   have hid : ComputableInPolyTime (fun n : ℕ => n) encUnary encUnary :=
     ComputableInPolyTime.id'
   have hc (k : ℕ) : ComputableInPolyTime (fun _ : ℕ => k) encUnary encUnary :=
@@ -238,7 +238,7 @@ private theorem computableInPolyTime_mul_log_two_succ (d : ℕ) :
   ComputableInPolyTime.unary_to_binary.comp
     (ComputableInPolyTime.unary_mul' (ComputableInPolyTime.const d)
       (ComputableInPolyTime.unary_add'
-        ((ComputableInPolyTime.of_tidy ComputableTidilyInPolyTime.unary_log_two).comp
+        ((ComputableInPolyTime.binary_log_two.comp ComputableInPolyTime.unary_to_binary).comp
           (ComputableInPolyTime.encoding_length encBits))
         (ComputableInPolyTime.const 1)))
 
@@ -255,7 +255,8 @@ private theorem isPPT_thresholdDistinguisher (γ d c : ℕ) {H : List Bool → P
       (fun v => decide (thresholdValue γ d c p.1 ≤ v)) <$>
         H (p.2.take (p.1 + γ * Nat.log 2 p.1 - c)))
   have hp1 := ComputableInPolyTime.fst encUnary encBits
-  have hlog := (ComputableInPolyTime.of_tidy ComputableTidilyInPolyTime.unary_log_two).comp hp1
+  have hlog :=
+    (ComputableInPolyTime.binary_log_two.comp ComputableInPolyTime.unary_to_binary).comp hp1
   have hprep : ComputableInPolyTime
       (fun p : ℕ × List Bool => p.2.take (p.1 + γ * Nat.log 2 p.1 - c))
       (encPair encUnary encBits) encBits :=

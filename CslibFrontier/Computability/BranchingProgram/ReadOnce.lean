@@ -52,6 +52,8 @@ nondeterministic transitions.
 * `Cslib.BranchingPrograms.ReadOnceProgram`: a read-once branching program in standard order.
 * `Cslib.BranchingPrograms.ReadOnceProgram.eval`: its output on a word.
 * `Cslib.BranchingPrograms.ReadOnceProgram.stepAt`: its transition function extended to all times.
+* `Cslib.BranchingPrograms.ReadOnceProgram.runFrom`: the state reached by reading the rest of a
+  word from a given time and state.
 * `Cslib.BranchingPrograms.ReadOnceProgram.blocks`: the program on blocks of `n` letters.
 * `Cslib.BranchingPrograms.ReadOnceProgram.toMonoidProgram`: the program as a monoid program over
   `Function.End S`.
@@ -111,6 +113,28 @@ theorem finalState_eq (x : Fin L → X) :
     P.finalState x = (List.ofFn x).foldlIdx P.stepAt P.start := by
   rw [List.foldlIdx_ofFn]
   simp only [finalState, stepAt, Nat.zero_add, Fin.is_lt, dite_true]
+
+/-- The state reached from the state `s` at time `t` by reading the rest of the word `x`. -/
+def runFrom (x : Fin L → X) (t : ℕ) (s : S) : S :=
+  ((List.ofFn x).drop t).foldlIdx P.stepAt s t
+
+/-- Reading the whole word from the start gives the final state. -/
+theorem runFrom_zero (x : Fin L → X) : P.runFrom x 0 P.start = P.finalState x :=
+  (P.finalState_eq x).symm
+
+/-- From time `L` on, no more letters are read. -/
+theorem runFrom_of_le (x : Fin L → X) {t : ℕ} (ht : L ≤ t) (s : S) :
+    P.runFrom x t s = s := by
+  rw [runFrom, List.drop_eq_nil_of_le (by simpa using ht)]
+  rfl
+
+/-- Before time `L`, one step of `runFrom` reads `x ⟨t, ht⟩` and advances to `t + 1`. -/
+theorem runFrom_step (x : Fin L → X) {t : ℕ} (ht : t < L) (s : S) :
+    P.runFrom x t s = P.runFrom x (t + 1) (P.step ⟨t, ht⟩ s (x ⟨t, ht⟩)) := by
+  rw [runFrom, List.drop_eq_getElem_cons (by simpa using ht), List.foldlIdx_cons,
+    List.getElem_ofFn]
+  simp only [stepAt, ht, dite_true]
+  rfl
 
 /-! ### Blocks -/
 

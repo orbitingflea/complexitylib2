@@ -114,8 +114,7 @@ theorem isPPTOn_sampleUniformIntervalRetry {α : Type} {input : α ↪ List Bool
     fun_prop
   have hjoin : ComputableInPolyTime (Option.join (α := ℕ))
       (encOption (encOption encNat)) (encOption encNat) :=
-    ((ComputableInPolyTime.of_tidy
-      (ComputableTidilyInPolyTime.optionGetD (encOption encNat))).comp
+    ((ComputableInPolyTime.optionGetD (encOption encNat)).comp
         (id'.prod (const none))).of_enc_eq fun oo => by cases oo <;> rfl
   exact (IsPPTOn.retry hattempt hgood hattempts).map hjoin
 

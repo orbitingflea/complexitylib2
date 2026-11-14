@@ -16,6 +16,7 @@ public import CslibFrontier.Foundations.BooleanAnalysis.LowDegree
 public import CslibFrontier.Logics.Propositional.CNF.Encoding
 public import CslibFrontier.Logics.Propositional.CNF.ParityTests
 public import Mathlib.Data.ZMod.Basic
+import CslibFrontier.Computability.Machines.Turing.MultiTape.Encodings.ComponentBounds
 import CslibFrontier.Computability.Complexity.Problems.SAT.PolyTime
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Fold
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
@@ -936,7 +937,8 @@ theorem computableInPolyTime_reduceEquation :
     (growth := fun eq => 2 * (eEq eq).length + 1)
     (((PolyBounded.const 2).mul .self).add (.const 1))
     (fun eq state m hm => by
-      have hmem := SizedListEncoding.length_elem_le (encA := eM) (encL := eEq) eq m hm
+      have hmem : (eM m).length ≤ (eEq eq).length := by
+        simp only [enc_component, hm]
       unfold toggleMonomial; split_ifs
       · exact (length_encList_sublist eM List.filter_sublist).trans (Nat.le_add_right _ _)
       · simp only [eEq, eM, encList_append, encList_cons, encList_nil, List.append_nil,
@@ -957,8 +959,8 @@ private theorem computableInPolyTime_insertSorted :
 private theorem length_encM_sortDedup_le (vs : List ℕ) :
     (encList encNat (sortDedup vs)).length ≤ vs.length * (2 * (encList encNat vs).length + 1) :=
   (length_encList_le encNat (sortDedup vs) fun u hu =>
-    SizedListEncoding.length_elem_le (encA := encNat) (encL := encList encNat)
-      vs u (mem_sortDedup.mp hu)).trans (Nat.mul_le_mul_right _ (length_sortDedup_le vs))
+    by simp only [enc_component, mem_sortDedup.mp hu]).trans
+      (Nat.mul_le_mul_right _ (length_sortDedup_le vs))
 
 private theorem computableInPolyTime_sortDedup :
     ComputableInPolyTime sortDedup (encList encNat) (encList encNat) := by
@@ -989,10 +991,10 @@ private theorem computableInPolyTime_negVars :
   exact computableInPolyTime_sortDedup.comp (by fun_prop)
 
 private theorem length_encNat_le_of_mem_clause {c : Clause ℕ} {v : ℕ} {b : Bool}
-    (h : (v, b) ∈ c) : (encNat v).length ≤ (encList (encPair encNat encBool) c).length :=
-  (length_le_encPair_left encNat encBool (v, b)).trans
-    (SizedListEncoding.length_elem_le
-      (encA := encPair encNat encBool) (encL := encList (encPair encNat encBool)) c (v, b) h)
+    (h : (v, b) ∈ c) : (encNat v).length ≤ (encList (encPair encNat encBool) c).length := by
+  have hpair : (encNat v).length ≤ (encPair encNat encBool (v, b)).length :=
+    length_le_encPair_left encNat encBool (v, b)
+  exact hpair.trans (by simp only [enc_component, h])
 
 private theorem foldl_expand_bounds (l : List ℕ) (B : ℕ) (hl : ∀ u ∈ l, (encNat u).length ≤ B) :
     ∀ (acc : List (List ℕ)) (d : ℕ),
@@ -1190,9 +1192,9 @@ theorem computableInPolyTime_compileParityRowBounded (k : ℕ)
       · have he_lt : e < p.1.length := List.mem_range.mp he
         have hc_sz : (eC (p.1.getD e [])).length ≤ (encPair (encList eC) encRow p).length := by
           rw [List.getD_eq_getElem _ _ he_lt]
-          exact (SizedListEncoding.length_elem_le (encA := eC) (encL := encList eC)
-            p.1 p.1[e] (List.getElem_mem he_lt)).trans
-            (length_le_encPair_left (encList eC) encRow p)
+          have hmem : (eC p.1[e]).length ≤ (encList eC p.1).length := by
+            simp only [enc_component, List.getElem_mem he_lt]
+          exact hmem.trans (by simp only [enc_component])
         have hcb := (length_encEq_compileClauseBounded_le k (p.1.getD e [])).trans
           (Nat.mul_le_mul_left (2 ^ k) (Nat.add_le_add_right (Nat.mul_le_mul_left 2
             (Nat.mul_le_mul_left k (Nat.add_le_add_right (Nat.mul_le_mul_left 2 hc_sz) 1))) 1))

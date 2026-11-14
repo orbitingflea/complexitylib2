@@ -1507,7 +1507,7 @@ private theorem computableInPolyTime_recoverQuery :
           !(x.1.2 ++ [(x.1.1.formula.distinctVars.getD x.1.2.length 0, true)]).any
             (· == (l.1, !l.2)))
         (snd _ _) hkeepLit
-    exact .of_tidy (ComputableTidilyInPolyTime.mapWithInput hf1.tidy hfLit.tidy)
+    exact (ComputableInPolyTime.mapWithInput hf1 hfLit)
   exact encMaxSATQuery_mk_polyTime hap
     (binary_sub' (encMaxSATQuery_target_polyTime (fst _ _)) hsatBy)
 
@@ -1646,7 +1646,7 @@ theorem isOraclePPTOn_recoverProgram :
         (fun pair : MaxSATQuery × List (Literal ℕ) =>
           pair.1.formula.vars.map (lookupVar pair.2))
         (encPair encMaxSATQuery (encList (encPair encNat encBool))) (encList encBool) :=
-      .of_tidy (ComputableTidilyInPolyTime.mapWithInput hvars.tidy hlookup.tidy)
+      (ComputableInPolyTime.mapWithInput hvars hlookup)
     exact listToBits.comp hmap
   simpa only [recoverProgram, OracleComp.interpret_map, OracleComp.interpret_iterate] using
     hit.1.map_with' (f := fun (q : MaxSATQuery) (ans : List (Literal ℕ)) =>
