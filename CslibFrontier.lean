@@ -4245,6 +4245,13 @@ public import CslibFrontier.DataStructure.Dictionary.WordRAM.SuccinctSlabPool
 public import CslibFrontier.DataStructure.Dictionary.WordRAM.SuccinctSlotInv
 public import CslibFrontier.DataStructure.Dictionary.WordRAM.SuccinctTailOps
 public import CslibFrontier.DataStructure.Dictionary.WordRAM.SuccinctValidHistory
+public import CslibFrontier.DataStructure.Dictionary.WordRAM.SuccinctWhpBTreeProg
+public import CslibFrontier.DataStructure.Dictionary.WordRAM.SuccinctWhpBufferTrieProg
+public import CslibFrontier.DataStructure.Dictionary.WordRAM.SuccinctWhpHashProg
+public import CslibFrontier.DataStructure.Dictionary.WordRAM.SuccinctWhpLayout
+public import CslibFrontier.DataStructure.Dictionary.WordRAM.SuccinctWhpPermHealProg
+public import CslibFrontier.DataStructure.Dictionary.WordRAM.SuccinctWhpSmallCsrProg
+public import CslibFrontier.DataStructure.Dictionary.WordRAM.SuccinctWhpSwarProg
 public import CslibFrontier.DataStructure.Dictionary.WordRAM.UniformProbing
 public import CslibFrontier.DataStructure.DisjointSet.Spec
 public import CslibFrontier.DataStructure.DisjointSet.UnionFind
