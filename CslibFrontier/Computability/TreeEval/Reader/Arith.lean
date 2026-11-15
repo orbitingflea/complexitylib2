@@ -11,6 +11,7 @@ public import CslibFrontier.Computability.TreeEval.Reader.Defs
 public import Mathlib.FieldTheory.Finite.Basic
 public import Mathlib.Algebra.BigOperators.Fin
 import CslibFrontier.Foundations.FieldTheory.Finite.Basic
+import CslibFrontier.Foundations.Data.ZMod.NatCast
 
 /-!
 # Residues and registers of the Tree Evaluation read machine
@@ -61,8 +62,7 @@ section Cast
   simp [mulMod]
 
 @[simp] theorem cast_negMod [NeZero p] (a : ℕ) : ((negMod p a : ℕ) : ZMod p) = -a := by
-  rw [negMod, ZMod.natCast_mod, Nat.cast_sub (Nat.mod_lt _ (NeZero.pos p)).le, ZMod.natCast_self,
-    ZMod.natCast_mod, zero_sub]
+  rw [negMod, ZMod.natCast_mod, ZMod.natCast_sub_mod_eq_neg]
 
 @[simp] theorem cast_powMod (a n : ℕ) : ((powMod p a n : ℕ) : ZMod p) = (a : ZMod p) ^ n := by
   induction n with

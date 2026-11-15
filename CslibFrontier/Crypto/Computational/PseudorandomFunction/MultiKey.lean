@@ -468,10 +468,10 @@ private theorem eval_prfMultiIdealGame (family : List Bool → List Bool → Lis
 /-- Against the real PRF game, the `j`-th reduction is the `j`-th hybrid. -/
 private theorem eval_prfRealGame_prfMultiReduction (hfamily : PseudorandomFunction family)
     {j : ℕ} (hj : j < t) (adversary : MultiKeyDistinguisher t) (n : ℕ) :
-    ProbComp.eval (prfRealGame family (prfMultiReduction family t j adversary) n) =
+    ProbComp.eval (prfRealGame id family (prfMultiReduction family t j adversary) n) =
       hybridGame family t j adversary n := by
   classical
-  simp only [prfRealGame, ProbOracleComp.run, ProbComp.eval_bind, BitString.eval_sampleList,
+  simp only [prfRealGame, id_eq, ProbOracleComp.run, ProbComp.eval_bind, BitString.eval_sampleList,
     ProbOracleComp.eval_interpret, ProbComp.eval_pure, interpret_prfMultiReduction,
     run_semanticHandler]
   simp only [hybridGame, PMF.monad_bind_eq_bind]
@@ -498,10 +498,10 @@ private theorem eval_prfRealGame_prfMultiReduction (hfamily : PseudorandomFuncti
 /-- Against the ideal PRF game, the `j`-th reduction is the `(j + 1)`-st hybrid. -/
 private theorem eval_prfIdealGame_prfMultiReduction (hfamily : PseudorandomFunction family)
     {j : ℕ} (hj : j < t) (adversary : MultiKeyDistinguisher t) (n : ℕ) :
-    ProbComp.eval (prfIdealGame (prfMultiReduction family t j adversary) n) =
+    ProbComp.eval (prfIdealGame id id (prfMultiReduction family t j adversary) n) =
       hybridGame family t (j + 1) adversary n := by
   classical
-  simp only [prfIdealGame, ProbOracleComp.run, ProbComp.eval_bind, ProbComp.eval_uniform,
+  simp only [prfIdealGame, id_eq, ProbOracleComp.run, ProbComp.eval_bind, ProbComp.eval_uniform,
     ProbOracleComp.eval_interpret, ProbComp.eval_pure, interpret_prfMultiReduction,
     run_semanticHandler]
   simp only [hybridGame, PMF.monad_bind_eq_bind]
@@ -542,8 +542,8 @@ theorem advantage_prfMultiRealGame_prfMultiIdealGame_le (hfamily : PseudorandomF
         (ProbComp.eval (prfMultiIdealGame t adversary n)) ≤
       ∑ j ∈ Finset.range t,
         Game.advantage
-          (ProbComp.eval (prfRealGame family (prfMultiReduction family t j adversary) n))
-          (ProbComp.eval (prfIdealGame (prfMultiReduction family t j adversary) n)) := by
+          (ProbComp.eval (prfRealGame id family (prfMultiReduction family t j adversary) n))
+          (ProbComp.eval (prfIdealGame id id (prfMultiReduction family t j adversary) n)) := by
   rw [eval_prfMultiRealGame family adversary n, eval_prfMultiIdealGame family adversary n]
   refine (Game.advantage_hybrid_le_sum (fun j => hybridGame family t j adversary n) t).trans
     (Finset.sum_le_sum fun j hj => le_of_eq ?_)

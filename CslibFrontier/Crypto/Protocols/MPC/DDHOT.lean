@@ -90,14 +90,14 @@ Section 23.5.7, Figure 23.17; DDH-based oblivious transfer of this kind goes bac
   advantage equals `Cslib.Crypto.ddhAdvantage q g (ddhOTReduction g q x D)`, the fixed-group DDH
   advantage of `CslibFrontier/Crypto/Computational/DiffieHellman/Finite.lean`. There is no
   security parameter and no efficiency certificate for `ddhOTReduction`, so this is not a
-  computational privacy theorem. `CslibFrontier/Crypto/Protocols/MPC/DDHOT/Family.lean` proves
-  an asymptotic indistinguishability theorem over a `PrimeOrderGroupFamily` from the DDH
-  assumption, with a certified reduction
-  (`Cslib.Crypto.PrimeOrderGroupFamily.DDH.ddhOTRealIdealIndistinguishable_exactSim`), for the
-  simulators `ddhOTSenderSim` and `ddhOTReceiverSim`, which are not shown to be PPT.
+  computational privacy theorem. `CslibFrontier/Crypto/Protocols/MPC/DDHOT/Family.lean` runs the
+  protocol over a `PrimeOrderGroupFamily` and reduces a corrupted receiver to the DDH assumption
+  with a certified reduction (`Cslib.Crypto.PrimeOrderGroupFamily.advantage_ddhOTReceiverGame_le`,
+  `Cslib.Crypto.PrimeOrderGroupFamily.isPPT_ddhOTReceiverToDDHDistinguisher`).
   `CslibFrontier/Crypto/Protocols/MPC/DDHOT/Simulators.lean` runs `ddhOTSenderSimWithCoins` and
-  `ddhOTReceiverSimWithCoins` on approximately uniform exponents, which gives PPT simulators
-  (`Cslib.Crypto.PrimeOrderGroupFamily.DDH.ddhOTStandaloneSemiHonestSecure`).
+  `ddhOTReceiverSimWithCoins` on approximately uniform exponents, which gives PPT simulators and
+  asymptotic semi-honest security
+  (`Cslib.Crypto.PrimeOrderGroupFamily.DDH.ddhOTSemiHonestSecure`).
 * `Cslib.Crypto.Protocols.MPC.ddhOTSenderReply_eq_unchecked_of_add`,
   `Cslib.Crypto.Protocols.MPC.ddhOTSenderReply_eq_zero_of_add_ne`,
   `Cslib.Crypto.Protocols.MPC.ddhOTAttackBothMessages_eq`,
@@ -850,9 +850,9 @@ and distinguisher, the distinguisher's advantage between the ideal joint distrib
 `ddhOTReceiverSim` and the real one equals the fixed-group DDH advantage of `ddhOTReduction`, when
 `g` generates `G`. This is not a computational privacy theorem: there is no security parameter,
 and `ddhOTReduction` has no efficiency certificate.
-`Cslib.Crypto.PrimeOrderGroupFamily.DDH.ddhOTRealIdealIndistinguishable_exactSim` in
-`CslibFrontier/Crypto/Protocols/MPC/DDHOT/Family.lean` is the asymptotic statement for these
-simulators, with a certified reduction. -/
+`Cslib.Crypto.PrimeOrderGroupFamily.advantage_ddhOTReceiverGame_le` in
+`CslibFrontier/Crypto/Protocols/MPC/DDHOT/Family.lean` is the family form, with a certified
+reduction. -/
 theorem semiHonestAdvantage_ddhOT_receiver_eq (g : G) (q : ℕ) [NeZero q] [Module (ZMod q) G]
     (hgen : ∀ y : G, ∃ k : ZMod q, k • g = y)
     (x : (i : Fin 2) → OTIn G i)

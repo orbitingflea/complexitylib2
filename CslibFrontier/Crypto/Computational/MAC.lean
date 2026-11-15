@@ -1417,7 +1417,7 @@ private theorem run_macLogHandler_eq_signingOracle
     prog ([], ())
   simpa only [PMF.map_comp, Function.comp_def] using hsim
 
-/-- Running `macToPrfDistinguisher adversary` in `prfRealGame family` produces the exact same
+/-- Running `macToPrfDistinguisher adversary` in `prfRealGame id family` produces the exact same
 Boolean distribution as the EUF-CMA experiment for `prfMAC family`. -/
 theorem eval_prfRealGame_macToPrfDistinguisher
     {family : List Bool → List Bool → List Bool}
@@ -1425,9 +1425,9 @@ theorem eval_prfRealGame_macToPrfDistinguisher
       (encPair encBits encBits) encBits)
     (hlen : ∀ key query, query.length = key.length → (family key query).length = key.length)
     (adversary : Forger) (n : ℕ) :
-    ProbComp.eval (prfRealGame family (macToPrfDistinguisher adversary) n) =
+    ProbComp.eval (prfRealGame id family (macToPrfDistinguisher adversary) n) =
       ProbComp.eval ((prfMAC family hpoly).eufCmaGame adversary n) := by
-  simp only [prfRealGame, ProbOracleComp.run, MACScheme.eufCmaGame, macToPrfDistinguisher,
+  simp only [prfRealGame, id_eq, ProbOracleComp.run, MACScheme.eufCmaGame, macToPrfDistinguisher,
     OracleComp.interpret_bind, ProbComp.eval_bind, ProbComp.eval_pure]
   refine PMF.bind_congr_on_support _ _ _ fun sk hsk => ?_
   have hsk' : sk ∈ (ProbComp.eval (BitString.sampleList n)).support := hsk
@@ -1458,17 +1458,17 @@ at most `1 / 2 ^ n`: any unqueried `n`-bit forgery message misses the lazy rando
 draws a fresh uniform `n`-bit tag, matching the forger's candidate tag with probability at most
 `1 / 2 ^ n`. -/
 theorem succProbability_prfIdealGame_macToPrfDistinguisher_le (adversary : Forger) (n : ℕ) :
-    Game.succProbability (ProbComp.eval (prfIdealGame (macToPrfDistinguisher adversary) n)) ≤
+    Game.succProbability (ProbComp.eval (prfIdealGame id id (macToPrfDistinguisher adversary) n)) ≤
       (1 : ℝ≥0) / 2 ^ n := by
   classical
-  rw [prfIdealGame_eq_lazy]
+  simp only [prfIdealGame_eq_lazy, id_eq]
   let combinedOracle : Unit × List Bool →
       StateT (List (List Bool) × RandomOracle.Cache (fun _ : BitString n => BitString n))
         PMF (List Bool) :=
     fun q state =>
       ((OracleComp.interpret
         (OracleComp.sumHandler (fun k => StateT.lift (ProbComp.unifOracle k))
-          (fun request => lazyRandomFunctionOracle n request.2))
+          (fun request => lazyRandomFunctionOracle n n request.2))
         ((macLogHandler n q).run state.1)).run state.2).map
           (fun result => (result.1.1, result.1.2, result.2))
   let phase1 := ((OracleComp.interpret
@@ -1480,14 +1480,14 @@ theorem succProbability_prfIdealGame_macToPrfDistinguisher_le (adversary : Forge
       if (out.1.length == n) && !queried.contains out.1 then
         ((OracleComp.interpret
           (OracleComp.sumHandler (fun k => StateT.lift (ProbComp.unifOracle k))
-            (fun request => lazyRandomFunctionOracle n request.2))
+            (fun request => lazyRandomFunctionOracle n n request.2))
           ((· == out.2) <$> (List.take n <$> ProbOracleComp.query ((), out.1)))).run cache).map
             Prod.fst
       else
         PMF.pure false
   have hgame : ((OracleComp.interpret
       (OracleComp.sumHandler (fun k => StateT.lift (ProbComp.unifOracle k))
-        (fun request => lazyRandomFunctionOracle n request.2))
+        (fun request => lazyRandomFunctionOracle n n request.2))
       (macToPrfDistinguisher adversary n [])).run (fun _ => none)).map Prod.fst =
       phase1.bind phase2 := by
     dsimp only [macToPrfDistinguisher, phase1, phase2, combinedOracle]
@@ -1663,7 +1663,7 @@ theorem oneTimeSUFCMA_prfMAC_iff_oneTimeEUFCMA
     (prfMAC family hpoly).OneTimeSUFCMA ↔ (prfMAC family hpoly).OneTimeEUFCMA :=
   (prfMAC family hpoly).oneTimeSUFCMA_iff_oneTimeEUFCMA_of_unique_tag (unique_tag_prfMAC hpoly)
 
-/-- Running `macToPrfDistinguisher adversary` in `prfRealGame family` produces the exact same
+/-- Running `macToPrfDistinguisher adversary` in `prfRealGame id family` produces the exact same
 Boolean distribution as the strong SUF-CMA experiment for `prfMAC family`. -/
 theorem eval_prfRealGame_macToPrfDistinguisher_eq_sufCmaGame
     {family : List Bool → List Bool → List Bool}
@@ -1671,7 +1671,7 @@ theorem eval_prfRealGame_macToPrfDistinguisher_eq_sufCmaGame
       (encPair encBits encBits) encBits)
     (hlen : ∀ key query, query.length = key.length → (family key query).length = key.length)
     (adversary : Forger) (n : ℕ) :
-    ProbComp.eval (prfRealGame family (macToPrfDistinguisher adversary) n) =
+    ProbComp.eval (prfRealGame id family (macToPrfDistinguisher adversary) n) =
       ProbComp.eval ((prfMAC family hpoly).sufCmaGame adversary n) := by
   rw [eval_sufCmaGame_prfMAC hpoly adversary n]
   exact eval_prfRealGame_macToPrfDistinguisher hpoly hlen adversary n
@@ -1688,13 +1688,13 @@ theorem succProbability_eufCmaGame_prfMAC_le
     (adversary : Forger) (n : ℕ) :
     Game.succProbability (ProbComp.eval ((prfMAC family hpoly).eufCmaGame adversary n)) ≤
       Game.advantage
-        (ProbComp.eval (prfRealGame family (macToPrfDistinguisher adversary) n))
-        (ProbComp.eval (prfIdealGame (macToPrfDistinguisher adversary) n)) +
+        (ProbComp.eval (prfRealGame id family (macToPrfDistinguisher adversary) n))
+        (ProbComp.eval (prfIdealGame id id (macToPrfDistinguisher adversary) n)) +
       (1 : ℝ≥0) / 2 ^ n := by
   rw [← eval_prfRealGame_macToPrfDistinguisher hpoly hlen adversary n]
   have htri := Game.advantage_triangle
-    (ProbComp.eval (prfRealGame family (macToPrfDistinguisher adversary) n))
-    (ProbComp.eval (prfIdealGame (macToPrfDistinguisher adversary) n))
+    (ProbComp.eval (prfRealGame id family (macToPrfDistinguisher adversary) n))
+    (ProbComp.eval (prfIdealGame id id (macToPrfDistinguisher adversary) n))
     (PMF.pure false)
   simp only [Game.advantage_pure_false] at htri
   exact htri.trans (add_le_add_right
@@ -1712,8 +1712,8 @@ theorem succProbability_sufCmaGame_prfMAC_le
     (adversary : Forger) (n : ℕ) :
     Game.succProbability (ProbComp.eval ((prfMAC family hpoly).sufCmaGame adversary n)) ≤
       Game.advantage
-        (ProbComp.eval (prfRealGame family (macToPrfDistinguisher adversary) n))
-        (ProbComp.eval (prfIdealGame (macToPrfDistinguisher adversary) n)) +
+        (ProbComp.eval (prfRealGame id family (macToPrfDistinguisher adversary) n))
+        (ProbComp.eval (prfIdealGame id id (macToPrfDistinguisher adversary) n)) +
       (1 : ℝ≥0) / 2 ^ n := by
   rw [eval_sufCmaGame_prfMAC hpoly adversary n]
   exact succProbability_eufCmaGame_prfMAC_le hpoly hlen adversary n

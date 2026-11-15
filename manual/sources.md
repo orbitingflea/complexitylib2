@@ -297,7 +297,7 @@ Markus Bläser and Bodo Manthey. *Smoothed Complexity Theory*. ACM Transactions 
 <a id="bmr16"></a>
 ## bmr16
 
-Marshall Ball, Tal Malkin, Mike Rosulek. "Garbling Gadgets for Boolean and Arithmetic Circuits." *Proceedings of the 2016 ACM SIGSAC Conference on Computer and Communications Security (CCS '16)*, 565–577, 2016. https://doi.org/10.1145/2976749.2978410 . Full version: Cryptology ePrint Archive, Report 2016/969. Bibliographic data from the DOI record. Read in the ePrint text on 2026-11-09. Locators checked there: Figure 1 (the garbling scheme for mixed-moduli simple circuits, with free addition and constant multiplication and projection gates of at most `m - 1` ciphertexts after choosing `W_j^0 = -H(g, W_i^{-τ}) - φ(-τ)Δ_n`), the oracle `O(g, i, j, X, a, c) = H(g, X + aΔ_{m_i}) + cΔ_{m_j}`, and Definition 1 (mixed-modulus circular correlation robustness against adversaries that query their oracle on distinct `g` values and `a ≠ 0`). Section numbers were not checked.
+Marshall Ball, Tal Malkin, Mike Rosulek. "Garbling Gadgets for Boolean and Arithmetic Circuits." *Proceedings of the 2016 ACM SIGSAC Conference on Computer and Communications Security (CCS '16)*, 565–577, 2016. https://doi.org/10.1145/2976749.2978410 . Full version: Cryptology ePrint Archive, Report 2016/969. Bibliographic data from the DOI record. Checked on 2026-11-14 against the ePrint full version dated October 6, 2016 (22 pages, SHA-256 `e9a7cfec82e60b3c71970f8d617015ab0b731bb53d76710fcbf07bbb11a74755`); locators use its printed page numbers, which are also its PDF page numbers. §4.1, p. 5: labels `W^x = W^0 + xΔ_m`, multiplication by a constant `c` coprime to `m`, and key length `λ_m = ⌈λ / log m⌉` (logarithms base 2, §2, p. 3). §4.2, p. 6: each wire has its own modulus, and a projection gate costs `m - 1` ciphertexts after choosing `W_j^0 = -H(g, W_i^{-τ}) - φ(-τ)Δ_n`. Figure 1, p. 7: the garbling scheme for mixed-moduli simple circuits, in which all ciphertexts of a projection gate use that gate's tweak. §4.3, p. 7: the oracle `O(g, i, j, X, a, c) = H(g, X + aΔ_{m_i}) + cΔ_{m_j}`, Definition 1 (mixed-modulus circular correlation robustness against polynomial-time adversaries that query their oracle on distinct `g` values and `a ≠ 0`) and Theorem 1. Proof sketch of Theorem 1, pp. 7–8: it replaces every ciphertext with `a ≠ 0` using only the oracle of Definition 1, hence with `m - 1` queries under one tweak, and states the authenticity bound `1 / 2^λ` (p. 8). Moduli are not restricted to primes: the gadgets use mod-`(b + 1)` wires (§5, p. 8), output modulus `k + 1` (§6.2, p. 11) and `Z_{p+q-1}` (§6.3, pp. 12–13). §4.3 does not analyse zero divisors of composite moduli. An earlier pass read the ePrint text on 2026-11-09.
 
 <a id="bmr90"></a>
 ## bmr90
@@ -1218,6 +1218,11 @@ Carsten Lund, Lance Fortnow, Howard Karloff and Noam Nisan. *Algebraic Methods f
 ## li2023
 
 Xin Li. *Two Source Extractors for Asymptotically Optimal Entropy, and (Many) More*. FOCS 2023, 1271–1281. https://doi.org/10.1109/FOCS57990.2023.00075 . Bibliographic metadata checked; secondary search summaries indicate Definition 3.1 (affine sources), Lemma 3.9 (affine conditioning), Lemma 3.10 (block decomposition), Theorem 7.13 (sumset extractor), and Corollary 7.14 in preprint versions, while the full primary PDF was not read line by line, so individual numbered locators in `AffineSource.lean` remain unverified against the typeset FOCS version.
+
+<a id="lindell17"></a>
+## lindell17
+
+Yehuda Lindell. *How To Simulate It – A Tutorial on the Simulation Proof Technique*. Electronic Colloquium on Computational Complexity, Report TR17-112, 2017. https://eccc.weizmann.ac.il/report/2017/112/ . The ECCC PDF dated June 27, 2017 was read for Section 2 (computational indistinguishability against non-uniform polynomial-time distinguishers with one negligible function for all inputs, p. 3), Section 4.2 (Definition 4.1, security against static semi-honest adversaries for two parties, p. 7) and the remark on auxiliary information (p. 9); page numbers are those printed in the report.
 
 <a id="liptonyoung1994"></a>
 ## liptonyoung1994

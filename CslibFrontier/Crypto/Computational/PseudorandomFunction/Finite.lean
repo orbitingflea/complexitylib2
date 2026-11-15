@@ -20,7 +20,7 @@ adversary `(OracleCodec.bitString n).adapt (A n [])`: it reads `n`-bit requests 
 answers other requests with the empty word without a call, which is the convention of the word
 games. The two views have the same games (`PRF.advantage_atLevel_adapt`): the finite PRF
 advantage of the adapted adversary against `PRF.atLevel family n` is the advantage of `A` between
-`prfRealGame family A n` and `prfIdealGame A n`, for every length-preserving family.
+`prfRealGame id family A n` and `prfIdealGame id id A n`, for every length-preserving family.
 
 So a `PseudorandomFunction` makes the finite advantage of every adapted oracle-PPT distinguisher
 negligible in `n`, and an argument about finite PRF adversaries (a hybrid step, a switching lemma,
@@ -78,20 +78,21 @@ private theorem randomFunctionOracle_atLevel {family : List Bool → List Bool �
 
 /-- **Finite and word PRF games agree.** For a length-preserving family, the finite PRF advantage
 of the adapted word distinguisher against `PRF.atLevel family n` is the advantage of `A` between
-the word games `prfRealGame family A n` and `prfIdealGame A n`. -/
+the word games `prfRealGame id family A n` and `prfIdealGame id id A n`. -/
 theorem advantage_atLevel_adapt {family : List Bool → List Bool → List Bool}
     (hlength : ∀ key query, query.length = key.length → (family key query).length = key.length)
     (A : OracleDistinguisher) (n : ℕ) :
     advantage (atLevel family n) ((OracleCodec.bitString n).adapt (A n [])) =
-      Game.advantage (ProbComp.eval (prfRealGame family A n))
-        (ProbComp.eval (prfIdealGame A n)) := by
+      Game.advantage (ProbComp.eval (prfRealGame id family A n))
+        (ProbComp.eval (prfIdealGame id id A n)) := by
   have hreal : ProbComp.eval (realExperiment (atLevel family n)
-      ((OracleCodec.bitString n).adapt (A n []))) = ProbComp.eval (prfRealGame family A n) := by
-    simp only [realExperiment, prfRealGame, ProbComp.eval_bind, ProbComp.eval_uniform,
+      ((OracleCodec.bitString n).adapt (A n []))) = ProbComp.eval (prfRealGame id family A n) := by
+    simp only [realExperiment, prfRealGame, id_eq, ProbComp.eval_bind, ProbComp.eval_uniform,
       BitString.eval_sampleList, BitString.uniformList, PMF.bind_map, OracleCodec.run_adapt,
       wordOracle_bitString, Function.comp_def, randomFunctionOracle_atLevel hlength]
-  have hideal : idealExperiment ((OracleCodec.bitString n).adapt (A n [])) = prfIdealGame A n := by
-    simp only [idealExperiment, prfIdealGame, OracleCodec.run_adapt, wordOracle_bitString]
+  have hideal :
+      idealExperiment ((OracleCodec.bitString n).adapt (A n [])) = prfIdealGame id id A n := by
+    simp only [idealExperiment, prfIdealGame, id_eq, OracleCodec.run_adapt, wordOracle_bitString]
   rw [advantage, hreal, hideal]
 
 end PRF

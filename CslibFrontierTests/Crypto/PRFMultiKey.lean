@@ -41,8 +41,9 @@ example {family : List Bool → List Bool → List Bool} (hfamily : Pseudorandom
     (adversary : MultiKeyDistinguisher 1) (n : ℕ) :
     Game.advantage (ProbComp.eval (prfMultiRealGame family 1 adversary n))
         (ProbComp.eval (prfMultiIdealGame 1 adversary n)) ≤
-      Game.advantage (ProbComp.eval (prfRealGame family (prfMultiReduction family 1 0 adversary) n))
-        (ProbComp.eval (prfIdealGame (prfMultiReduction family 1 0 adversary) n)) := by
+      Game.advantage
+        (ProbComp.eval (prfRealGame id family (prfMultiReduction family 1 0 adversary) n))
+        (ProbComp.eval (prfIdealGame id id (prfMultiReduction family 1 0 adversary) n)) := by
   simpa using advantage_prfMultiRealGame_prfMultiIdealGame_le hfamily adversary n
 
 end CslibFrontierTests.Crypto.PRFMultiKey

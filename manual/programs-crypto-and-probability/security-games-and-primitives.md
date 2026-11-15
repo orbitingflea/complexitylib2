@@ -256,10 +256,12 @@ is the step that the family bound averages over setup. Random self-reducibility 
 Exercises 10.8–10.10) works on the same types: `ddhRerandomize` maps a triple `(u, v, w)` to a
 uniform real triple when `w` is the Diffie–Hellman element and to a uniform triple otherwise
 (`ddhRerandomizeLaw_real`, `ddhRerandomizeLaw_random`); `ddhSelfReduceDistinguisher` is its
-efficient form, so `ddh_of_worstCase` derives `F.DDH setup` from worst-case indistinguishability of
-fixed triple families with loss `6 / 2 ^ n`; and `ddhAmplifiedDecider` turns a distinguisher with
-inverse-polynomial fixed-group advantage into one that decides every triple except with
-negligible error (`negligible_ddhAmplifiedDecider_error`). For the discrete logarithm and CDH,
+efficient form, so `ddh_of_worstCase` derives `F.DDH setup`, with loss `6 / 2 ^ n`, from worst-case
+hardness: for every PPT distinguisher there are a real and a non-DDH triple family, which may depend
+on the distinguisher, between which its advantage is negligible; and `ddhAmplifiedDecider` turns a
+distinguisher with inverse-polynomial fixed-group advantage into one that decides every triple
+except with negligible error (`negligible_ddhAmplifiedDecider_error`). For the discrete logarithm
+and CDH,
 [`DiffieHellman/SelfReduction.lean`](../../CslibFrontier/Crypto/Computational/DiffieHellman/SelfReduction.lean)
 gives the success probabilities of the self-reductions of [bs23][bs23], Theorem 10.2 and
 Exercise 10.6, in one fixed group: one attempt of `dlSelfReduce q g A` on `α • g` returns `α` with
@@ -416,7 +418,7 @@ behaves against a permutation `σ` as `A` against `j ∘ σ` (`runLabeled_relabe
 examples, including where the proof uses primality, are in
 [`GenericGroupDiscreteLog.lean`](../../CslibFrontierTests/Crypto/GenericGroupDiscreteLog.lean).
 
-For a fixed keyed function or block cipher over finite types, import [`Primitives/PRF/Finite.lean`](../../CslibFrontier/Crypto/Primitives/PRF/Finite.lean) and [`Primitives/PRP/Finite.lean`](../../CslibFrontier/Crypto/Primitives/PRP/Finite.lean) (Boneh–Shoup §4.1–§4.4 [bs23][bs23]). A `PRF.Adversary D R` is an adaptive oracle program with private coins. `PRF.realExperiment F A` and `PRF.idealExperiment A` are `ProbComp Bool` programs answering its queries with `F key` for a uniform key or with a uniform function `D → R`, and `PRF.advantage` is the distance between their laws. For a block cipher `E : Key → Equiv.Perm D`, `PRP.realExperiment E` is the PRF experiment of `E` and `PRP.idealExperiment` samples a uniform permutation. The switching lemma `PRP.advantage_idealExperiment_prfIdealExperiment_le` bounds the distance between the two ideal experiments by `Q.choose 2 / |D|` for a `Q`-query adversary (Theorem 4.4), and `PRP.prfAdvantage_le_advantage_add` is Corollary 4.5. `PRP.strongRealExperiment` and `PRP.strongIdealExperiment` also answer inverse queries through `RandomPermutation.PermOracleSpec D`; `PRP.StrongAdversary.ofForward` runs a forward adversary there with the same advantage (`PRP.strongAdvantage_ofForward`). These statements are single-instance and track no running time. The word-level `BlockCipher.PRP` switching lemma `advantage_prpIdealGame_randomFunctionIdealGame_le` is derived from the finite one. [`Computational/PseudorandomFunction/Finite.lean`](../../CslibFrontier/Crypto/Computational/PseudorandomFunction/Finite.lean) connects the two levels: `PRF.atLevel family n` is a word family read as a keyed function on `n`-bit strings, and `PRF.advantage_atLevel_adapt` shows that, for a length-preserving family, the finite advantage against it of a word distinguisher `A` read through `OracleCodec.bitString n` is the advantage of `A` between `prfRealGame family A n` and `prfIdealGame A n`. A finite argument therefore transfers to `PseudorandomFunction` once its adversary is exhibited as an adapted oracle-PPT word program. Checked examples of the finite experiments and the switching lemma are in [`CslibFrontierTests/Crypto/PseudorandomPermutation.lean`](../../CslibFrontierTests/Crypto/PseudorandomPermutation.lean); the bridge, `PRF.label` and `labelCodec` are checked on concrete families and tables in [`CslibFrontierTests/Crypto/PRFLabel.lean`](../../CslibFrontierTests/Crypto/PRFLabel.lean).
+For a fixed keyed function or block cipher over finite types, import [`Primitives/PRF/Finite.lean`](../../CslibFrontier/Crypto/Primitives/PRF/Finite.lean) and [`Primitives/PRP/Finite.lean`](../../CslibFrontier/Crypto/Primitives/PRP/Finite.lean) (Boneh–Shoup §4.1–§4.4 [bs23][bs23]). A `PRF.Adversary D R` is an adaptive oracle program with private coins. `PRF.realExperiment F A` and `PRF.idealExperiment A` are `ProbComp Bool` programs answering its queries with `F key` for a uniform key or with a uniform function `D → R`, and `PRF.advantage` is the distance between their laws. For a block cipher `E : Key → Equiv.Perm D`, `PRP.realExperiment E` is the PRF experiment of `E` and `PRP.idealExperiment` samples a uniform permutation. The switching lemma `PRP.advantage_idealExperiment_prfIdealExperiment_le` bounds the distance between the two ideal experiments by `Q.choose 2 / |D|` for a `Q`-query adversary (Theorem 4.4), and `PRP.prfAdvantage_le_advantage_add` is Corollary 4.5. `PRP.strongRealExperiment` and `PRP.strongIdealExperiment` also answer inverse queries through `RandomPermutation.PermOracleSpec D`; `PRP.StrongAdversary.ofForward` runs a forward adversary there with the same advantage (`PRP.strongAdvantage_ofForward`). These statements are single-instance and track no running time. The word-level `BlockCipher.PRP` switching lemma `advantage_prpIdealGame_prfIdealGame_le` is derived from the finite one. [`Computational/PseudorandomFunction/Finite.lean`](../../CslibFrontier/Crypto/Computational/PseudorandomFunction/Finite.lean) connects the two levels: `PRF.atLevel family n` is a word family read as a keyed function on `n`-bit strings, and `PRF.advantage_atLevel_adapt` shows that, for a length-preserving family, the finite advantage against it of a word distinguisher `A` read through `OracleCodec.bitString n` is the advantage of `A` between `prfRealGame id family A n` and `prfIdealGame id id A n`. A finite argument therefore transfers to `PseudorandomFunction` once its adversary is exhibited as an adapted oracle-PPT word program. Checked examples of the finite experiments and the switching lemma are in [`CslibFrontierTests/Crypto/PseudorandomPermutation.lean`](../../CslibFrontierTests/Crypto/PseudorandomPermutation.lean); the bridge, `PRF.label` and `labelCodec` are checked on concrete families and tables in [`CslibFrontierTests/Crypto/PRFLabel.lean`](../../CslibFrontierTests/Crypto/PRFLabel.lean).
 
 Several independently keyed copies of a pseudorandom function are again pseudorandom: [`PseudorandomFunction.multiKey`](../../CslibFrontier/Crypto/Computational/PseudorandomFunction/MultiKey.lean) answers `t` word channels with the `n`-bit blocks of one `t * n`-bit key, against `t` independent random functions, for every fixed `t`. Its hybrid reduction `prfMultiReduction` simulates the already random channels with a lazy list cache and is itself oracle PPT; the concrete bound sums `t` PRF advantages (Boneh–Shoup, Exercise 4.26). The number of keys is a constant, not a function of the security parameter; the exercise also allows a polynomially bounded number of keys, which this theorem does not cover. The finite counterpart is [`Primitives/PRF/MultiKey.lean`](../../CslibFrontier/Crypto/Primitives/PRF/MultiKey.lean): for a keyed function `F : Key → D → R` on finite types and an adversary with private coins and `t` channels, `PRF.multiKeyAdvantage_le_sum` bounds the distance between `t` independent uniform keys and `t` independent uniform functions by `∑ j < t, PRF.advantage F (PRF.multiKeyReduction F j A)`. Each reduction is one randomized `PRF.Adversary D R` that samples its own keys, forwards channel `j`, and lazily samples the channels below `j` with a list cache; it makes at most as many queries as `A` (`PRF.isQueryBounded_multiKeyReduction`).
 
@@ -1671,9 +1673,18 @@ uniform below `Q` when `0 < Q`, `listCDHAdvantage_le_mul_cdhAdvantage` gives
 `listCDHAdvantage q g Q A ≤ Q * cdhAdvantage q g (listCDHToCDH g index A)` for every `Q`, every `A`
 and every such `q`, `G` and `g`, with no further hypothesis: at `Q = 0` the list experiment is
 never won (`listCDHAdvantage_zero`), a list shorter than `Q` counts in full, and repeated entries
-are allowed. `eval_listCDHExperiment_le_mul` gives the same bound with a factor `c : ℝ≥0∞` for any
-index sampler `index` under the hypothesis `hindex`: for every list `l` and every
-`x ∈ l.take Q`, `1 ≤ c * (ProbComp.eval index).map (fun i => l.getD i g) x`. The uniform case uses
+are allowed. For any index sampler `index`, `eval_listCDHExperiment_le_mul_add_of_index` takes
+a factor `c : ℝ≥0∞`, a term `ε : ℝ≥0∞` and the hypothesis `hindex`: for every list `l` and
+every `x ∈ l.take Q`, `1 ≤ c * (ProbComp.eval index).map (fun i => l.getD i g) x + ε`. It shows
+that the list experiment accepts with probability at most `c` times that of the CDH experiment
+for `listCDHToCDH g index A`, plus `ε`, in `ℝ≥0∞`. Its proof averages the bound for each
+list over the list and the two exponents with `PMF.bind_apply_le_mul_bind_apply_add` of
+[`Probability/PMF/DensityBounds.lean`](../../CslibFrontier/Probability/PMF/DensityBounds.lean): for
+`p : PMF α`, `f g : α → PMF β`, `c ε : ℝ≥0∞` and an outcome `b`, it takes
+`h : ∀ a, f a b ≤ c * g a b + ε` and shows `p.bind f b ≤ c * p.bind g b + ε`, so the constant `ε`
+is averaged, not multiplied; `PMF.bind_apply_le_mul_bind_apply` is its case `ε = 0`.
+`eval_listCDHExperiment_le_mul` is the case `ε = 0`, with `hindex` read without `+ ε`, and
+gives the bound with a factor `c` alone. The uniform case uses
 `PMF.inv_le_map_uniformOfFintype_getD` of
 [`Probability/PMF/UniformIndex.lean`](../../CslibFrontier/Probability/PMF/UniformIndex.lean): for
 `[NeZero Q]`, any list `l`, any default `d` and `hx : x ∈ l.take Q`, an index uniform on `Fin Q`
@@ -1698,18 +1709,21 @@ one group: for a `ZMod q`-module `G` with `[NeZero q]` and `[DecidableEq G]`, an
 ProbComp.eval (listCDHExperiment q g Q A) true ≤
   Q * ProbComp.eval
       (cdhExperiment q g (listCDHToCDH g (ProbComp.sampleModIndex width Q) A)) true +
-    Q ^ 2 / 2 ^ width
+    Q / 2 ^ width
 ```
 
-The factor is exactly `Q`. The uniform index gives it, and replacing that index by
-`sampleModIndex width Q` costs at most `Q / 2 ^ width` in the CDH experiment, which the factor `Q`
-turns into `Q ^ 2 / 2 ^ width`. For fixed exponents and a fixed list, the swap of the index comes
-from `Game.advantage_bind_sampleModNat_fin_le`, which takes `[NeZero Q]`; the case `Q = 0` is
-separate. The average over the exponents and the list keeps the constant as it is:
-`PMF.bind_apply_le_add_const_on_support` of
-[`Probability/PMF/Bind.lean`](../../CslibFrontier/Probability/PMF/Bind.lean), for `μ : PMF α`,
-`f g : α → PMF β`, an outcome `b` and `c : ℝ≥0∞`, takes `h : ∀ a ∈ μ.support, f a b ≤ g a b + c`
-and shows `μ.bind f b ≤ μ.bind g b + c`.
+The factor is exactly `Q`. Each residue below `Q` is drawn with probability at least
+`1 / Q - 1 / 2 ^ width`: `ProbComp.one_le_mul_eval_sampleModNat_add` of
+[`Languages/Probabilistic/UniformNat/LowerBound.lean`](../../CslibFrontier/Languages/Probabilistic/UniformNat/LowerBound.lean)
+takes `hi : i < m` and shows, for every `w`,
+`1 ≤ m * ProbComp.eval (ProbComp.sampleModNat w m) i + m / 2 ^ w` in `ℝ≥0∞`. With the same
+hypothesis and every `w`, `ProbComp.le_eval_sampleModNat_toReal` in that module states the bound in
+`ℝ`: `(1 - m / 2 ^ w) * m⁻¹ ≤ (ProbComp.eval (ProbComp.sampleModNat w m) i).toReal`. A member
+of the first `Q` entries of a list sits at a position `i` below `Q` and below the length of the
+list, and the reduction returns it whenever it draws `i`, so
+`eval_listCDHExperiment_le_mul_add_of_index` applies with `c = Q` and `ε = Q / 2 ^ width`. Short
+lists and `Q = 0` need no separate case: only the positions of members count, and at `Q = 0` there
+are none.
 
 [`DiffieHellman/ListCDHFamily.lean`](../../CslibFrontier/Crypto/Computational/DiffieHellman/ListCDHFamily.lean)
 gives the family game `listCDHGame setup Q adversary` for a bound `Q : ℕ → ℕ` and the reduction
@@ -1726,26 +1740,25 @@ loss for every `setup`, `width`, `Q`, `adversary` and `n`, with no further hypot
 Game.succProbability (F.listCDHGame setup Q adversary n) ≤
   Q n * Game.succProbability
       (F.cdhGame setup (F.listCDHToCDHAdversary width Q adversary) n) +
-    Q n ^ 2 / 2 ^ width n
+    Q n / 2 ^ width n
 ```
 
 The lift over `setup` averages the one-group bound over the drawn group description with
-`PMF.bind_apply_le_mul_bind_apply_add` of
-[`Probability/PMF/DensityBounds.lean`](../../CslibFrontier/Probability/PMF/DensityBounds.lean): for
-`p : PMF α`, `f g : α → PMF β`, `c ε : ℝ≥0∞` and an outcome `b`, it takes
-`h : ∀ a, f a b ≤ c * g a b + ε` and shows `p.bind f b ≤ c * p.bind g b + ε`, so the constant `ε`
-is averaged, not multiplied; `PMF.bind_apply_le_mul_bind_apply` is its case `ε = 0`. The certified
-loss is the book's factor `Q n` and the additive term `ε = Q n ^ 2 / 2 ^ width n`, which is not
-zero for any `width n` when `Q n ≠ 0`. `succProbability_listCDHGame_mono` takes
-`hle : Q n ≤ Q' n` and shows that the success probability at `n` with the bound `Q'` is at least
-that with the bound `Q`. The conclusion `CDH.negligible_listCDHGame` takes `h : F.CDH setup`, `hQ`
-and an adversary with `hA : adversary.IsPPT`, and shows that its success probability in the list
-game is negligible; its proof takes `width n = n`, and `ε = Q n ^ 2 / 2 ^ n` is negligible because
-`hQ` bounds `Q` polynomially. The
-[list CDH client](../../CslibFrontierTests/Crypto/ListCDH.lean) checks the uniform bound in
-`ZMod 7` at `Q = 0`, at `Q = 1`, at `Q = 3` beyond the length of the list and with a repeated
-solution, the reduction's output past the end of the list, the fair-coin bound at `Q = 0` and at
-`Q = 3`, and the sampler at the bounds `0` and `3` with its certificate. Over any family it checks
+`PMF.bind_apply_le_mul_bind_apply_add`, as above. The certified loss is the book's factor `Q n`
+and the additive term `ε = Q n / 2 ^ width n`, which is not zero for any `width n` when
+`Q n ≠ 0`. In one group, `eval_listCDHExperiment_mono` takes `hle : Q ≤ Q'` and shows that the
+list experiment with the bound `Q'` accepts with probability at least that with the bound `Q`.
+`succProbability_listCDHGame_mono` lifts it over `setup`: it takes `hle : Q n ≤ Q' n` and shows
+that the success probability at `n` with the bound `Q'` is at least that with the bound `Q`. The
+conclusion `CDH.negligible_listCDHGame` takes `h : F.CDH setup`, `hQ` and an adversary with
+`hA : adversary.IsPPT`, and shows that its success probability in the list game is negligible;
+its proof takes `width n = n`, and `ε = Q n / 2 ^ n` is negligible because `hQ` bounds `Q`
+polynomially. The [list CDH client](../../CslibFrontierTests/Crypto/ListCDH.lean) checks the
+uniform bound in `ZMod 7` at `Q = 0`, at `Q = 1`, at `Q = 3` beyond the length of the list and
+with a repeated solution, the reduction's output past the end of the list, the general bound with
+a deterministic index with and without a term, the fair-coin bound at `Q = 0` and at `Q = 3`,
+monotonicity from `Q = 1` to `Q = 3`, the sampler at the bounds `0` and `3` with its certificate,
+and both lower bounds on `sampleModNat` with `2` coins and modulus `3`. Over any family it checks
 the certificate, the loss bound and the conclusion with `width n = n` and `Q n = n`, the loss bound
 with `Q n = 0` and with `Q n = 3`, and monotonicity in `Q`; the conclusion also on Schnorr groups.
 Check it with:

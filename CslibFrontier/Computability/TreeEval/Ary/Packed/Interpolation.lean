@@ -9,6 +9,7 @@ module
 
 public import CslibFrontier.Computability.TreeEval.Reader.Arith
 public import Mathlib.LinearAlgebra.Lagrange
+import CslibFrontier.Foundations.Data.Polynomial.LagrangeEval
 import CslibFrontier.Foundations.FieldTheory.Finite.Basic
 
 /-!
@@ -147,27 +148,11 @@ requires the whole alphabet to embed in the prime field, not merely the chosen s
 theorem cast_basisWeight {s : ℕ} (hs : s ≤ p) (a : Fin s) (x : ℕ) :
     ((basisWeight p s a x : ℕ) : ZMod p) =
       (Lagrange.basis Finset.univ (fun j : Fin s => (j.val : ZMod p)) a).eval (x : ZMod p) := by
-  rw [cast_basisWeight_prod (a.isLt.trans_le hs) hs]
-  rw [Lagrange.basis, Polynomial.eval_prod]
-  rw [Finset.prod_range]
-  calc
-    (∏ j : Fin s, if (j : ℕ) = a.val then (1 : ZMod p)
-      else ((x : ZMod p) - j.val) * ((a.val : ZMod p) - j.val)⁻¹) =
-        ∏ j ∈ Finset.univ.erase a,
-          if (j : ℕ) = a.val then (1 : ZMod p)
-          else ((x : ZMod p) - j.val) * ((a.val : ZMod p) - j.val)⁻¹ := by
-      symm
-      apply Finset.prod_subset (Finset.erase_subset a Finset.univ)
-      intro j _ hj
-      have heq : j = a := by simpa only [Finset.mem_erase, Finset.mem_univ,
-        and_true, not_not] using hj
-      subst j
-      simp
-    _ = _ := by
-      apply Finset.prod_congr rfl
-      intro j hj
-      have hne : (j : ℕ) ≠ a.val := fun heq =>
-        (Finset.mem_erase.mp hj).1 (Fin.ext heq)
-      simp [hne, Lagrange.basisDivisor, mul_comm]
+  rw [cast_basisWeight_prod (a.isLt.trans_le hs) hs, Lagrange.eval_basis, Finset.prod_range,
+    ← Finset.mul_prod_erase _ _ (Finset.mem_univ a)]
+  simp only [↓reduceIte, one_mul]
+  refine Finset.prod_congr rfl fun j hj => ?_
+  have hne : (j : ℕ) ≠ a.val := fun heq => (Finset.mem_erase.mp hj).1 (Fin.ext heq)
+  simp [hne, div_eq_mul_inv]
 
 end Cslib.TreeEval.Ary.Packed

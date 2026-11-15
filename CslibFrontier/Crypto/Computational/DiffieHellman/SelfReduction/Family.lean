@@ -444,8 +444,8 @@ PPT word-level adversary there are instances `α d • g` on which it wins the w
 negligible probability, then `DiscreteLog` holds for the setup law. The instances may depend on
 the adversary. The book states this implication only informally (p. 412: "if it is hard in the
 worst case, then it must be hard on average"); this formulation and `dlWorstCaseGame` are this
-library's. The premise of `Cslib.Crypto.PrimeOrderGroupFamily.ddh_of_worstCase` is stronger: it
-fixes the instances before the distinguisher. -/
+library's. `Cslib.Crypto.PrimeOrderGroupFamily.ddh_of_worstCase` is the DDH analogue, with the
+same quantifier order. -/
 theorem discreteLog_of_worstCase {setup : ℕ → PMF F.Desc}
     (hworst : ∀ adversary : ℕ → F.Desc × List Bool → ProbComp (List Bool),
       IsPPTOn F.encDiscreteLogInput encBits (fun input => adversary input.1 input.2) →
@@ -852,9 +852,9 @@ theorem succProbability_cdhGame_le_cdhWorstCaseGame (setup : ℕ → PMF F.Desc)
 /-- Average-case CDH hardness from worst-case hardness: if for every uniform strict PPT CDH
 adversary there are pairs `(α d • g, β d • g)` on which it wins the worst-case game with negligible
 probability, then `CDH` holds for the setup law. The pairs may depend on the adversary. This
-formulation and `cdhWorstCaseGame` are this library's. The premise of
-`Cslib.Crypto.PrimeOrderGroupFamily.ddh_of_worstCase` is stronger: it fixes the instances before
-the distinguisher. -/
+formulation and `cdhWorstCaseGame` are this library's.
+`Cslib.Crypto.PrimeOrderGroupFamily.ddh_of_worstCase` is the DDH analogue, with the same
+quantifier order. -/
 theorem cdh_of_worstCase {setup : ℕ → PMF F.Desc}
     (hworst : ∀ adversary : F.CDHAdversary, adversary.IsPPT →
       ∃ α β : ∀ d : F.Desc, ZMod (F.order d),

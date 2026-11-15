@@ -1054,9 +1054,10 @@ def prfPadDistinguisher (test : (k : ℕ) → BitString k → ProbComp Bool) :
 `prfPadDist family n`. -/
 theorem eval_prfRealGame_prfPadDistinguisher (family : List Bool → List Bool → List Bool)
     (test : (k : ℕ) → BitString k → ProbComp Bool) (n : ℕ) :
-    ProbComp.eval (prfRealGame family (prfPadDistinguisher test) n) =
+    ProbComp.eval (prfRealGame id family (prfPadDistinguisher test) n) =
       (prfPadDist family n).bind (fun r => ProbComp.eval (test n r)) := by
-  simp only [pmf_norm, prfRealGame, prfPadDistinguisher, prfPadDist, BitString.eval_sampleList]
+  simp only [pmf_norm, prfRealGame, id_eq, prfPadDistinguisher, prfPadDist,
+    BitString.eval_sampleList]
   congr 1
   funext key
   simp [prfOracle]
@@ -1065,13 +1066,13 @@ theorem eval_prfRealGame_prfPadDistinguisher (family : List Bool → List Bool �
 `r ← PMF.uniformOfFintype (BitString n)`. -/
 theorem eval_prfIdealGame_prfPadDistinguisher (test : (k : ℕ) → BitString k → ProbComp Bool)
     (n : ℕ) :
-    ProbComp.eval (prfIdealGame (prfPadDistinguisher test) n) =
+    ProbComp.eval (prfIdealGame id id (prfPadDistinguisher test) n) =
       (PMF.uniformOfFintype (BitString n)).bind (fun r => ProbComp.eval (test n r)) := by
   conv_rhs =>
     rw [← PMF.pi_map_eval (fun _ => PMF.uniformOfFintype (BitString n))
         (BitString.ofList n (List.replicate n false)),
       PMF.pi_uniformOfFintype, PMF.bind_map]
-  simp only [prfIdealGame, prfPadDistinguisher, ProbComp.eval_bind, ProbComp.eval_uniform,
+  simp only [prfIdealGame, id_eq, prfPadDistinguisher, ProbComp.eval_bind, ProbComp.eval_uniform,
     Function.comp_def]
   congr 1
   funext table
@@ -1093,8 +1094,8 @@ theorem prfOneTimeGame_le {n : ℕ} {seed : PMF K} {hash : K → M → BitString
     (prfOneTimeGame seed family n hash forger true).toReal ≤
       ε.toReal +
         (Game.advantage
-          (ProbComp.eval (prfRealGame family (prfPadDistinguisher test) n))
-          (ProbComp.eval (prfIdealGame (prfPadDistinguisher test) n)) : ℝ) := by
+          (ProbComp.eval (prfRealGame id family (prfPadDistinguisher test) n))
+          (ProbComp.eval (prfIdealGame id id (prfPadDistinguisher test) n)) : ℝ) := by
   have hpad : padDistinguisher seed hash forger = fun r => ProbComp.eval (test n r) :=
     funext htest
   rw [eval_prfRealGame_prfPadDistinguisher, eval_prfIdealGame_prfPadDistinguisher, ← hpad]
@@ -1112,8 +1113,8 @@ theorem prfOneTimeStrongGame_le {n : ℕ} {seed : PMF K} {hash : K → M → Bit
     (prfOneTimeStrongGame seed family n hash forger true).toReal ≤
       ε.toReal +
         (Game.advantage
-          (ProbComp.eval (prfRealGame family (prfPadDistinguisher test) n))
-          (ProbComp.eval (prfIdealGame (prfPadDistinguisher test) n)) : ℝ) := by
+          (ProbComp.eval (prfRealGame id family (prfPadDistinguisher test) n))
+          (ProbComp.eval (prfIdealGame id id (prfPadDistinguisher test) n)) : ℝ) := by
   rw [prfOneTimeStrongGame_eq_prfOneTimeGame]
   exact prfOneTimeGame_le hh hε family forger test htest
 
@@ -1131,10 +1132,10 @@ theorem prfOneTimeGame_ofProbComp_le {n : ℕ} {seed : ProbComp K}
       (OneTimeForger.ofProbComp query forge) true).toReal ≤
       ε.toReal +
         (Game.advantage
-          (ProbComp.eval (prfRealGame family
+          (ProbComp.eval (prfRealGame id family
             (prfPadDistinguisher fun _ r =>
               probPadTest seed hash query forge (BitString.ofList n (List.ofFn r))) n))
-          (ProbComp.eval (prfIdealGame
+          (ProbComp.eval (prfIdealGame id id
             (prfPadDistinguisher fun _ r =>
               probPadTest seed hash query forge (BitString.ofList n (List.ofFn r))) n)) : ℝ) := by
   refine prfOneTimeGame_le hh hε family (OneTimeForger.ofProbComp query forge) _ fun r => ?_
@@ -1150,10 +1151,10 @@ theorem prfOneTimeStrongGame_ofProbComp_le {n : ℕ} {seed : ProbComp K}
       (OneTimeForger.ofProbComp query forge) true).toReal ≤
       ε.toReal +
         (Game.advantage
-          (ProbComp.eval (prfRealGame family
+          (ProbComp.eval (prfRealGame id family
             (prfPadDistinguisher fun _ r =>
               probPadTest seed hash query forge (BitString.ofList n (List.ofFn r))) n))
-          (ProbComp.eval (prfIdealGame
+          (ProbComp.eval (prfIdealGame id id
             (prfPadDistinguisher fun _ r =>
               probPadTest seed hash query forge (BitString.ofList n (List.ofFn r))) n)) : ℝ) := by
   rw [prfOneTimeStrongGame_eq_prfOneTimeGame]
@@ -1572,11 +1573,11 @@ theorem eval_prfRealGame_prfMultiPadDistinguisher {n : ℕ} (seed : PMF K)
     (test : (k : ℕ) → (ℕ → BitString k) → ProbComp Bool)
     (htest : ∀ padSeq, counterPadSeqDistinguisher seed hash forger padSeq =
       ProbComp.eval (test n padSeq)) :
-    ProbComp.eval (prfRealGame family (prfMultiPadDistinguisher Q nonce test) n) =
+    ProbComp.eval (prfRealGame id family (prfMultiPadDistinguisher Q nonce test) n) =
       prfCounterSlotGame seed family n (nonce n) hash forger := by
   rw [prfCounterSlotGame, maskedCounterSlotGame_eq_bind_counterPadSeqDistinguisher]
-  simp only [pmf_norm, prfRealGame, ProbOracleComp.run, prfMultiPadDistinguisher, prfPadSeqDist,
-    OracleComp.interpret_bind, interpret_iterate_prfPadCollectStep, List.nil_append,
+  simp only [pmf_norm, prfRealGame, id_eq, ProbOracleComp.run, prfMultiPadDistinguisher,
+    prfPadSeqDist, OracleComp.interpret_bind, interpret_iterate_prfPadCollectStep, List.nil_append,
     List.length_nil, Nat.zero_add, pure_bind, ProbOracleComp.interpret_sample,
     BitString.eval_sampleList]
   simp only [ProbComp.interpret_unifFin]
@@ -1599,9 +1600,9 @@ theorem eval_prfIdealGame_prfMultiPadDistinguisher {n : ℕ} (seed : PMF K)
     (test : (k : ℕ) → (ℕ → BitString k) → ProbComp Bool)
     (htest : ∀ padSeq, counterPadSeqDistinguisher seed hash forger padSeq =
       ProbComp.eval (test n padSeq)) :
-    ProbComp.eval (prfIdealGame (prfMultiPadDistinguisher Q nonce test) n) =
+    ProbComp.eval (prfIdealGame id id (prfMultiPadDistinguisher Q nonce test) n) =
       counterSlotGame seed hash forger := by
-  simp only [prfIdealGame, ProbOracleComp.run, prfMultiPadDistinguisher,
+  simp only [prfIdealGame, id_eq, ProbOracleComp.run, prfMultiPadDistinguisher,
     OracleComp.interpret_bind, interpret_iterate_prfPadCollectStep, List.nil_append,
     List.length_nil, Nat.zero_add, pure_bind, ProbOracleComp.interpret_sample,
     ProbComp.eval_bind, ProbComp.eval_uniform]
@@ -1649,8 +1650,8 @@ theorem prfCounterSlotGame_le {n : ℕ} {seed : PMF K} {hash : K → M → BitSt
     (prfCounterSlotGame seed family n (nonce n) hash forger true).toReal ≤
       ε.toReal +
         (Game.advantage
-          (ProbComp.eval (prfRealGame family (prfMultiPadDistinguisher Q nonce test) n))
-          (ProbComp.eval (prfIdealGame (prfMultiPadDistinguisher Q nonce test) n)) : ℝ) := by
+          (ProbComp.eval (prfRealGame id family (prfMultiPadDistinguisher Q nonce test) n))
+          (ProbComp.eval (prfIdealGame id id (prfMultiPadDistinguisher Q nonce test) n)) : ℝ) := by
   rw [eval_prfRealGame_prfMultiPadDistinguisher seed family Q nonce hash hforger test htest,
     eval_prfIdealGame_prfMultiPadDistinguisher seed Q nonce hash hforger hnonce_len hnonce_inj
       test htest,
@@ -1676,8 +1677,8 @@ theorem prfCounterGame_le {n : ℕ} {seed : PMF K} {hash : K → M → BitString
     (prfCounterGame seed family n (nonce n) hash forger true).toReal ≤
       ε.toReal +
         (Game.advantage
-          (ProbComp.eval (prfRealGame family (prfMultiPadDistinguisher Q nonce test) n))
-          (ProbComp.eval (prfIdealGame (prfMultiPadDistinguisher Q nonce test) n)) : ℝ) := by
+          (ProbComp.eval (prfRealGame id family (prfMultiPadDistinguisher Q nonce test) n))
+          (ProbComp.eval (prfIdealGame id id (prfMultiPadDistinguisher Q nonce test) n)) : ℝ) := by
   have hmono : (prfCounterGame seed family n (nonce n) hash forger true).toReal ≤
       (prfCounterSlotGame seed family n (nonce n) hash forger true).toReal :=
     ENNReal.toReal_mono (PMF.apply_ne_top _ _)
@@ -1701,8 +1702,8 @@ theorem prfCounterStrongGame_le {n : ℕ} {seed : PMF K} {hash : K → M → Bit
     (prfCounterStrongGame seed family n (nonce n) hash forger true).toReal ≤
       ε.toReal +
         (Game.advantage
-          (ProbComp.eval (prfRealGame family (prfMultiPadDistinguisher Q nonce test) n))
-          (ProbComp.eval (prfIdealGame (prfMultiPadDistinguisher Q nonce test) n)) : ℝ) := by
+          (ProbComp.eval (prfRealGame id family (prfMultiPadDistinguisher Q nonce test) n))
+          (ProbComp.eval (prfIdealGame id id (prfMultiPadDistinguisher Q nonce test) n)) : ℝ) := by
   rw [prfCounterStrongGame_eq_prfCounterSlotGame]
   exact prfCounterSlotGame_le hh hε family Q nonce hforger hnonce_len hnonce_inj test htest
 
@@ -2642,7 +2643,7 @@ theorem isOraclePPT_prfNonceToPrfDistinguisher
     simp only [List.contains_eq_mem]
     fun_prop)))
 
-/-- Running `prfNonceToPrfDistinguisher msgLen seed hash adversary` in `prfRealGame family`
+/-- Running `prfNonceToPrfDistinguisher msgLen seed hash adversary` in `prfRealGame id family`
 produces the exact same Boolean distribution as `(carterWegmanNonceMAC ...).sufCmaGame adversary n`.
 -/
 theorem eval_prfRealGame_prfNonceToPrfDistinguisher
@@ -2658,15 +2659,16 @@ theorem eval_prfRealGame_prfNonceToPrfDistinguisher
       (fun p : List Bool × List Bool => family p.1 p.2)
       (encPair encBits encBits) encBits)
     (adversary : NonceMACForger) (n : ℕ) :
-    ProbComp.eval (prfRealGame family (prfNonceToPrfDistinguisher msgLen seed hash adversary) n) =
+    ProbComp.eval
+        (prfRealGame id family (prfNonceToPrfDistinguisher msgLen seed hash adversary) n) =
       ProbComp.eval
         ((carterWegmanNonceMAC msgLen seed hash family hmsgLen hseed hhash hfamily).sufCmaGame
           adversary n) := by
   let M := carterWegmanNonceMAC msgLen seed hash family hmsgLen hseed hhash hfamily
   change ProbComp.eval
-      (prfRealGame family (prfNonceToPrfDistinguisher msgLen seed hash adversary) n) =
+      (prfRealGame id family (prfNonceToPrfDistinguisher msgLen seed hash adversary) n) =
     ProbComp.eval (M.sufCmaGame adversary n)
-  simp only [prfRealGame, ProbOracleComp.run, prfNonceToPrfDistinguisher,
+  simp only [prfRealGame, id_eq, ProbOracleComp.run, prfNonceToPrfDistinguisher,
     NonceMACScheme.sufCmaGame, M,
     carterWegmanNonceMAC, Functor.map_map, OracleComp.interpret_bind, OracleComp.interpret_map,
     ProbOracleComp.interpret_sample, ProbOracleComp.interpret_query, ProbComp.interpret_unifFin,
@@ -2905,7 +2907,8 @@ theorem eval_prfIdealGame_prfNonceToPrfDistinguisher_le
     (hh : IsDeltaUniversalHash (ProbComp.eval (seed n))
       (fun k (m : BitString (msgLen n)) => BitString.ofList n (hash n k (List.ofFn m))) ε)
     (adversary : NonceMACForger) :
-    ProbComp.eval (prfIdealGame (prfNonceToPrfDistinguisher msgLen seed hash adversary) n) true ≤
+    ProbComp.eval
+        (prfIdealGame id id (prfNonceToPrfDistinguisher msgLen seed hash adversary) n) true ≤
       max ε ((2 : ℝ≥0∞) ^ n)⁻¹ := by
   let hashBit : List Bool → BitString (msgLen n) → BitString n :=
     fun k m => BitString.ofList n (hash n k (List.ofFn m))
@@ -2917,14 +2920,15 @@ theorem eval_prfIdealGame_prfNonceToPrfDistinguisher_le
         (adaptNonceStep msgLen n))
       (adversary n [])).run []
   have hle :
-      ProbComp.eval (prfIdealGame (prfNonceToPrfDistinguisher msgLen seed hash adversary) n) true ≤
+      ProbComp.eval
+          (prfIdealGame id id (prfNonceToPrfDistinguisher msgLen seed hash adversary) n) true ≤
         ((ProbComp.eval (seed n)).bind fun k =>
           (PMF.uniformOfFintype (BitString n → BitString n)).bind fun table =>
             (ProbOracleComp.runWith (nonceFnHandler hashBit k table) adaptProg []).bind fun res =>
                 PMF.pure
                   (checkNonceSUF hashBit k table res.2
                     (toBitTriple (msgLen n) n res.1.1))) true := by
-    simp only [pmf_norm, prfIdealGame, ProbOracleComp.run, prfNonceToPrfDistinguisher,
+    simp only [pmf_norm, prfIdealGame, id_eq, ProbOracleComp.run, prfNonceToPrfDistinguisher,
       Functor.map_map,
       OracleComp.interpret_bind, OracleComp.interpret_map, ProbOracleComp.interpret_sample,
       ProbOracleComp.interpret_query, ProbComp.interpret_unifFin, ProbComp.eval_uniform]
@@ -2983,14 +2987,14 @@ theorem sufCmaGame_carterWegmanNonceMAC_toReal_le
       ε.toReal + ((2 : ℝ) ^ n)⁻¹ +
         (Game.advantage
           (ProbComp.eval
-            (prfRealGame family (prfNonceToPrfDistinguisher msgLen seed hash adversary) n))
-          (ProbComp.eval
-            (prfIdealGame (prfNonceToPrfDistinguisher msgLen seed hash adversary) n)) : ℝ) := by
+            (prfRealGame id family (prfNonceToPrfDistinguisher msgLen seed hash adversary) n))
+          (ProbComp.eval (prfIdealGame id id
+            (prfNonceToPrfDistinguisher msgLen seed hash adversary) n)) : ℝ) := by
   rw [← eval_prfRealGame_prfNonceToPrfDistinguisher hmsgLen hseed hhash hfamily adversary n]
   have hinv_ne_top : ((2 : ℝ≥0∞) ^ n)⁻¹ ≠ ⊤ := by simp
   have hideal :
-      (ProbComp.eval
-        (prfIdealGame (prfNonceToPrfDistinguisher msgLen seed hash adversary) n) true).toReal ≤
+      (ProbComp.eval (prfIdealGame id id
+        (prfNonceToPrfDistinguisher msgLen seed hash adversary) n) true).toReal ≤
         ε.toReal + ((2 : ℝ) ^ n)⁻¹ := by
     have hle := (eval_prfIdealGame_prfNonceToPrfDistinguisher_le hh adversary).trans
       (max_le_add_of_nonneg zero_le zero_le)
@@ -2998,10 +3002,10 @@ theorem sufCmaGame_carterWegmanNonceMAC_toReal_le
     simpa only [ENNReal.toReal_inv, ENNReal.toReal_pow, ENNReal.toReal_ofNat] using htr
   rw [Game.coe_advantage, Game.coe_succProbability, Game.coe_succProbability]
   linarith [le_abs_self
-    ((ProbComp.eval
-      (prfRealGame family (prfNonceToPrfDistinguisher msgLen seed hash adversary) n) true).toReal -
-      (ProbComp.eval
-        (prfIdealGame (prfNonceToPrfDistinguisher msgLen seed hash adversary) n) true).toReal)]
+    ((ProbComp.eval (prfRealGame id family
+      (prfNonceToPrfDistinguisher msgLen seed hash adversary) n) true).toReal -
+      (ProbComp.eval (prfIdealGame id id
+        (prfNonceToPrfDistinguisher msgLen seed hash adversary) n) true).toReal)]
 
 /-- **Asymptotic `NonceMACScheme.SUFCMA` security of `carterWegmanNonceMAC`**
 ([BonehShoup2023], Section 7.5.1, Theorem 7.10, p. 274): if `family` is a `PseudorandomFunction`
@@ -3982,7 +3986,7 @@ theorem isOraclePPT_prfRandomNonceToPrfDistinguisher
 
 /-- **Real-game simulation for `prfRandomNonceToPrfDistinguisher`**
 ([BonehShoup2023], Section 7.4, Theorem 7.9, p. 270): running `prfRandomNonceToPrfDistinguisher` in
-`prfRealGame family` at security parameter `n` has the exact same acceptance distribution as the
+`prfRealGame id family` at security parameter `n` has the exact same acceptance distribution as the
 computational `MACScheme.sufCmaGame` of `carterWegmanRandomMAC`. -/
 theorem eval_prfRealGame_prfRandomNonceToPrfDistinguisher
     {msgLen : ℕ → ℕ} {seed : ℕ → ProbComp (List Bool)}
@@ -3997,16 +4001,16 @@ theorem eval_prfRealGame_prfRandomNonceToPrfDistinguisher
       (fun p : List Bool × List Bool => family p.1 p.2)
       (encPair encBits encBits) encBits)
     (adversary : Forger) (n : ℕ) :
-    ProbComp.eval (prfRealGame family
+    ProbComp.eval (prfRealGame id family
       (prfRandomNonceToPrfDistinguisher msgLen seed hash adversary) n) =
     ProbComp.eval
       ((carterWegmanRandomMAC msgLen seed hash family hmsgLen hseed hhash hfamily).sufCmaGame
         adversary n) := by
   let M := carterWegmanRandomMAC msgLen seed hash family hmsgLen hseed hhash hfamily
   change ProbComp.eval
-      (prfRealGame family (prfRandomNonceToPrfDistinguisher msgLen seed hash adversary) n) =
+      (prfRealGame id family (prfRandomNonceToPrfDistinguisher msgLen seed hash adversary) n) =
     ProbComp.eval (M.sufCmaGame adversary n)
-  dsimp only [prfRealGame, ProbOracleComp.run, prfRandomNonceToPrfDistinguisher,
+  dsimp only [prfRealGame, id_eq, ProbOracleComp.run, prfRandomNonceToPrfDistinguisher,
     MACScheme.sufCmaGame, M, carterWegmanRandomMAC]
   simp only [pmf_norm, Functor.map_map, OracleComp.interpret_bind, OracleComp.interpret_map,
     ProbOracleComp.interpret_sample, ProbOracleComp.interpret_query, ProbComp.interpret_unifFin]
@@ -4275,7 +4279,7 @@ theorem eval_prfIdealGame_prfRandomNonceToPrfDistinguisher_le
       (fun k (m : BitString (msgLen n)) => BitString.ofList n (hash n k (List.ofFn m))) ε)
     {adversary : Forger} (hq : (adversary n []).IsQueryBounded Q) :
     ProbComp.eval
-      (prfIdealGame (prfRandomNonceToPrfDistinguisher msgLen seed hash adversary) n) true ≤
+      (prfIdealGame id id (prfRandomNonceToPrfDistinguisher msgLen seed hash adversary) n) true ≤
       (Q : ℝ≥0∞) ^ 2 / (2 * (2 : ℝ≥0∞) ^ n) + ((2 : ℝ≥0∞) ^ n)⁻¹ + ε := by
   let hashBit : List Bool → BitString (msgLen n) → BitString n :=
     fun k m => BitString.ofList n (hash n k (List.ofFn m))
@@ -4288,7 +4292,7 @@ theorem eval_prfIdealGame_prfRandomNonceToPrfDistinguisher_le
       (adversary n [])).run []
   have hle :
       ProbComp.eval
-        (prfIdealGame (prfRandomNonceToPrfDistinguisher msgLen seed hash adversary) n) true ≤
+        (prfIdealGame id id (prfRandomNonceToPrfDistinguisher msgLen seed hash adversary) n) true ≤
         ((ProbComp.eval (seed n)).bind fun k =>
           (PMF.uniformOfFintype (BitString n → BitString n)).bind fun table =>
             (ProbOracleComp.runWith (randomNonceFnHandler hashBit k table) adaptProg
@@ -4296,7 +4300,7 @@ theorem eval_prfIdealGame_prfRandomNonceToPrfDistinguisher_le
                 PMF.pure
                   (checkRandomNonceSUF hashBit k table res.2
                     (toRandomBitTriple msgLen n res.1.1))) true := by
-    simp only [pmf_norm, prfIdealGame, ProbOracleComp.run, prfRandomNonceToPrfDistinguisher,
+    simp only [pmf_norm, prfIdealGame, id_eq, ProbOracleComp.run, prfRandomNonceToPrfDistinguisher,
       Functor.map_map,
       OracleComp.interpret_bind, OracleComp.interpret_map, ProbOracleComp.interpret_sample,
       ProbOracleComp.interpret_query, ProbComp.interpret_unifFin, ProbComp.eval_uniform]
@@ -4341,10 +4345,10 @@ theorem sufCmaGame_carterWegmanRandomMAC_toReal_le
       (Q : ℝ) ^ 2 / (2 * (2 : ℝ) ^ n) + ((2 : ℝ) ^ n)⁻¹ + ε.toReal +
         (Game.advantage
           (ProbComp.eval
-            (prfRealGame family
+            (prfRealGame id family
               (prfRandomNonceToPrfDistinguisher msgLen seed hash adversary) n))
           (ProbComp.eval
-            (prfIdealGame
+            (prfIdealGame id id
               (prfRandomNonceToPrfDistinguisher msgLen seed hash adversary) n)) : ℝ) := by
   rw [← eval_prfRealGame_prfRandomNonceToPrfDistinguisher hmsgLen hseed hhash hfamily adversary n]
   have hcol_ne_top : (Q : ℝ≥0∞) ^ 2 / (2 * (2 : ℝ≥0∞) ^ n) ≠ ⊤ :=
@@ -4353,7 +4357,7 @@ theorem sufCmaGame_carterWegmanRandomMAC_toReal_le
   have hinv_ne_top : ((2 : ℝ≥0∞) ^ n)⁻¹ ≠ ⊤ := by simp
   have hideal :
       (ProbComp.eval
-        (prfIdealGame
+        (prfIdealGame id id
           (prfRandomNonceToPrfDistinguisher msgLen seed hash adversary) n) true).toReal ≤
         (Q : ℝ) ^ 2 / (2 * (2 : ℝ) ^ n) + ((2 : ℝ) ^ n)⁻¹ + ε.toReal := by
     have htr := ENNReal.toReal_le_add
@@ -4365,10 +4369,10 @@ theorem sufCmaGame_carterWegmanRandomMAC_toReal_le
   rw [Game.coe_advantage, Game.coe_succProbability, Game.coe_succProbability]
   linarith [le_abs_self
     ((ProbComp.eval
-      (prfRealGame family
+      (prfRealGame id family
         (prfRandomNonceToPrfDistinguisher msgLen seed hash adversary) n) true).toReal -
       (ProbComp.eval
-        (prfIdealGame
+        (prfIdealGame id id
           (prfRandomNonceToPrfDistinguisher msgLen seed hash adversary) n) true).toReal)]
 
 /-- **Asymptotic `MACScheme.SUFCMA` security of `carterWegmanRandomMAC`**
@@ -4518,8 +4522,8 @@ theorem prfOneTimeGame_linearHash_le (n m : ℕ)
       BitString.LinearHash.hash forger true).toReal ≤
       ((2 : ℝ) ^ m)⁻¹ +
         (Game.advantage
-          (ProbComp.eval (prfRealGame family (prfPadDistinguisher test) m))
-          (ProbComp.eval (prfIdealGame (prfPadDistinguisher test) m)) : ℝ) := by
+          (ProbComp.eval (prfRealGame id family (prfPadDistinguisher test) m))
+          (ProbComp.eval (prfIdealGame id id (prfPadDistinguisher test) m)) : ℝ) := by
   have hε : ((Fintype.card (BitString m) : ℝ≥0∞))⁻¹ ≠ ⊤ := by
     simp
   have h := prfOneTimeGame_le (BitString.LinearHash.isDeltaUniversalHash n m) hε family forger
@@ -4729,11 +4733,11 @@ theorem sufCmaGame_linearHashNonceMAC_toReal_le
       ((2 : ℝ) ^ n)⁻¹ + ((2 : ℝ) ^ n)⁻¹ +
         (Game.advantage
           (ProbComp.eval
-            (prfRealGame family
+            (prfRealGame id family
               (prfNonceToPrfDistinguisher msgLen (fun k => BitString.sampleList (k * msgLen k))
                 BitString.LinearHash.wordHash adversary) n))
           (ProbComp.eval
-            (prfIdealGame
+            (prfIdealGame id id
               (prfNonceToPrfDistinguisher msgLen (fun k => BitString.sampleList (k * msgLen k))
                 BitString.LinearHash.wordHash adversary) n)) : ℝ) := by
   have h := sufCmaGame_carterWegmanNonceMAC_toReal_le hmsgLen (isPPTOn_linearHashSeed hmsgLen)
@@ -4813,12 +4817,12 @@ theorem sufCmaGame_linearHashRandomMAC_toReal_le
       (Q : ℝ) ^ 2 / (2 * (2 : ℝ) ^ n) + ((2 : ℝ) ^ n)⁻¹ + ((2 : ℝ) ^ n)⁻¹ +
         (Game.advantage
           (ProbComp.eval
-            (prfRealGame family
+            (prfRealGame id family
               (prfRandomNonceToPrfDistinguisher msgLen
                 (fun k => BitString.sampleList (k * msgLen k))
                 BitString.LinearHash.wordHash adversary) n))
           (ProbComp.eval
-            (prfIdealGame
+            (prfIdealGame id id
               (prfRandomNonceToPrfDistinguisher msgLen
                 (fun k => BitString.sampleList (k * msgLen k))
                 BitString.LinearHash.wordHash adversary) n)) : ℝ) := by

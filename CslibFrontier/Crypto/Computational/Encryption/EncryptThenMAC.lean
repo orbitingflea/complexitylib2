@@ -1717,7 +1717,7 @@ theorem isOraclePPT_cpaToPrfDistinguisher {adversary : OracleDistinguisher}
   unfold cpaToPrfDistinguisher
   exact (hrun.map' (ComputableInPolyTime.fst encBool (encFinEnum Unit))).isOraclePPT
 
-/-- Running `cpaToPrfDistinguisher adversary bit` in `prfRealGame family` produces the exact same
+/-- Running `cpaToPrfDistinguisher adversary bit` in `prfRealGame id family` produces the exact same
 output distribution as running `adversary` in `(prfCipher family hpoly hlen).cpaGame` at challenge
 bit `bit` ([BonehShoup2023], Section 5.4.1, Theorem 5.2, Game 0, printed pp. 184–185). -/
 theorem eval_prfRealGame_cpaToPrfDistinguisher (family : List Bool → List Bool → List Bool)
@@ -1725,10 +1725,10 @@ theorem eval_prfRealGame_cpaToPrfDistinguisher (family : List Bool → List Bool
       (encPair encBits encBits) encBits)
     (hlen : ∀ key query, query.length = key.length → (family key query).length = key.length)
     (adversary : OracleDistinguisher) (bit : Bool) (n : ℕ) :
-    ProbComp.eval (prfRealGame family (cpaToPrfDistinguisher adversary bit) n) =
+    ProbComp.eval (prfRealGame id family (cpaToPrfDistinguisher adversary bit) n) =
       ProbComp.eval ((prfCipher family hpoly hlen).cpaGame adversary bit n) := by
   have hkeyGen : (prfCipher family hpoly hlen).keyGen = BitString.sampleList := rfl
-  simp only [prfRealGame, ProbOracleComp.run, SymmetricCipher.cpaGame, cpaToPrfDistinguisher,
+  simp only [prfRealGame, id_eq, ProbOracleComp.run, SymmetricCipher.cpaGame, cpaToPrfDistinguisher,
     hkeyGen, runWith_norm, pmf_norm]
   refine PMF.bind_congr_on_support _ _ _ fun k hk => ?_
   rw [BitString.eval_sampleList] at hk
@@ -1801,7 +1801,7 @@ private noncomputable def prfCipherOTPOracle (n : ℕ) (request : Unit × List B
 
 private theorem eval_prfIdealGame_cpaToPrfDistinguisher (adversary : OracleDistinguisher)
     (bit : Bool) (n : ℕ) :
-    ProbComp.eval (prfIdealGame (cpaToPrfDistinguisher adversary bit) n) =
+    ProbComp.eval (prfIdealGame id id (cpaToPrfDistinguisher adversary bit) n) =
       ((OracleComp.interpret
         (OracleComp.sumHandler (fun m => StateT.lift (ProbComp.unifOracle m))
           (prfCipherFaithfulWithBadOracle n bit))
@@ -2142,7 +2142,7 @@ private theorem bad_prfCipherForgetfulWithBadOracle_le {α : Type} (n : ℕ) (bi
 private theorem advantage_prfIdealGame_prfCipherOTPOracle_le (adversary : OracleDistinguisher)
     (bit : Bool) (n Q : ℕ) (hq : (adversary n []).IsQueryBounded Q) :
     (Game.advantage
-      (ProbComp.eval (prfIdealGame (cpaToPrfDistinguisher adversary bit) n))
+      (ProbComp.eval (prfIdealGame id id (cpaToPrfDistinguisher adversary bit) n))
       ((ProbOracleComp.runWith (prfCipherOTPOracle n) (adversary n []) ()).map Prod.fst) : ℝ) ≤
       (Q : ℝ) ^ 2 / (2 : ℝ) ^ n := by
   rw [eval_prfIdealGame_cpaToPrfDistinguisher,
@@ -2184,16 +2184,16 @@ theorem advantage_cpaGame_prfCipher_le (family : List Bool → List Bool → Lis
       (ProbComp.eval ((prfCipher family hpoly hlen).cpaGame adversary false n))
       (ProbComp.eval ((prfCipher family hpoly hlen).cpaGame adversary true n)) : ℝ) ≤
       (Game.advantage
-        (ProbComp.eval (prfRealGame family (cpaToPrfDistinguisher adversary false) n))
-        (ProbComp.eval (prfIdealGame (cpaToPrfDistinguisher adversary false) n)) : ℝ) +
+        (ProbComp.eval (prfRealGame id family (cpaToPrfDistinguisher adversary false) n))
+        (ProbComp.eval (prfIdealGame id id (cpaToPrfDistinguisher adversary false) n)) : ℝ) +
       (Game.advantage
-        (ProbComp.eval (prfRealGame family (cpaToPrfDistinguisher adversary true) n))
-        (ProbComp.eval (prfIdealGame (cpaToPrfDistinguisher adversary true) n)) : ℝ) +
+        (ProbComp.eval (prfRealGame id family (cpaToPrfDistinguisher adversary true) n))
+        (ProbComp.eval (prfIdealGame id id (cpaToPrfDistinguisher adversary true) n)) : ℝ) +
       2 * (Q : ℝ) ^ 2 / (2 : ℝ) ^ n := by
   rw [← eval_prfRealGame_cpaToPrfDistinguisher family hpoly hlen adversary false n,
     ← eval_prfRealGame_cpaToPrfDistinguisher family hpoly hlen adversary true n]
-  let pIdeal0 := ProbComp.eval (prfIdealGame (cpaToPrfDistinguisher adversary false) n)
-  let pIdeal1 := ProbComp.eval (prfIdealGame (cpaToPrfDistinguisher adversary true) n)
+  let pIdeal0 := ProbComp.eval (prfIdealGame id id (cpaToPrfDistinguisher adversary false) n)
+  let pIdeal1 := ProbComp.eval (prfIdealGame id id (cpaToPrfDistinguisher adversary true) n)
   let pOTP := (ProbOracleComp.runWith (prfCipherOTPOracle n) (adversary n []) ()).map Prod.fst
   game_trans [pIdeal0, pOTP, pIdeal1] using
     [le_rfl,

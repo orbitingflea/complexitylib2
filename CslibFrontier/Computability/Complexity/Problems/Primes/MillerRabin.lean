@@ -19,6 +19,7 @@ import CslibFrontier.Computability.Machines.Turing.MultiTape.Encodings.Decoder.N
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Encodings.Nat.OfBits
 import CslibFrontier.Foundations.Data.BitString.Binary
 import CslibFrontier.Foundations.Data.BitString.Counter
+import CslibFrontier.Foundations.Data.ZMod.NatCast
 import Mathlib.Data.Int.CardIntervalMod
 
 /-!
@@ -128,10 +129,7 @@ private theorem pow_mod_eq_one_iff {m a e : ℕ} (hm : 0 < m) :
 
 private theorem pow_mod_eq_neg_one_iff {m a e : ℕ} :
     a ^ e % (m + 1) = m ↔ (a : ZMod (m + 1)) ^ e = -1 := by
-  have hm : ((m : ℕ) : ZMod (m + 1)) = -1 := by
-    have h := ZMod.natCast_self (m + 1)
-    rw [Nat.cast_add, Nat.cast_one] at h
-    exact eq_neg_of_add_eq_zero_left h
+  have hm : ((m : ℕ) : ZMod (m + 1)) = -1 := ZMod.natCast_self_sub_one (m + 1)
   rw [← hm, ← Nat.cast_pow, ZMod.natCast_eq_natCast_iff', Nat.mod_eq_of_lt (Nat.lt_succ_self m)]
 
 /-- For `m > 0`, a Miller–Rabin round for `m + 1` passes exactly on the strong liars. -/

@@ -291,6 +291,21 @@ example (distinguisher : schnorrGroups.DDHDistinguisher) :
   subst hd23
   decide
 
+/-- `ddh_of_worstCase` lets the hard instances depend on the distinguisher, so its premise follows
+from the fixed-instance premise, in which one real and one non-DDH triple family are
+indistinguishable for every PPT distinguisher. -/
+example (F : PrimeOrderGroupFamily) (setup : ℕ → PMF F.Desc)
+    (α β α' β' γ' : ∀ d : F.Desc, ZMod (F.order d))
+    (hγ' : ∀ᶠ n in Filter.atTop, ∀ d ∈ (setup n).support, γ' d ≠ α' d * β' d)
+    (hworst : Game.Indistinguishable
+      (F.ddhWorstCaseGame setup (fun d => α d • F.generator d) (fun d => β d • F.generator d)
+        (fun d => (α d * β d) • F.generator d))
+      (F.ddhWorstCaseGame setup (fun d => α' d • F.generator d) (fun d => β' d • F.generator d)
+        (fun d => γ' d • F.generator d))
+      DDHDistinguisher.IsPPT) :
+    F.DDH setup :=
+  F.ddh_of_worstCase fun distinguisher hD => ⟨α, β, α', β', γ', hγ', hworst distinguisher hD⟩
+
 /-- `1 / 2 ^ n` is negligible. -/
 theorem negligible_inv_two_pow : Negligible fun n => (1 / (2 ^ n : ℕ) : ℝ≥0) := by
   simpa only [Nat.cast_pow, Nat.cast_ofNat, one_div, inv_pow] using

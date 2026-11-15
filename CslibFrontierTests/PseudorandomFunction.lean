@@ -20,7 +20,7 @@ example : IsOraclePPT (Operation := Bool) encBool (fun n word =>
 
 -- The ideal game has a PPT realization for a concrete adaptive oracle distinguisher.
 example :
-    IsPPT encBool (fun n _ => prfIdealGame (fun m word =>
+    IsPPT encBool (fun n _ => prfIdealGame id id (fun m word =>
       pure (decide (word.length ≤ m))) n) :=
   isPPT_prfIdealGame (by fun_prop)
 
@@ -34,13 +34,13 @@ private noncomputable def repeatQuery (n : ℕ) (_ : List Bool) : WordOracleComp
 -- A private random query gets a consistent answer; intervening private randomness stays fresh,
 -- and the executable list cache produces the same uniform distribution.
 example (n : ℕ) :
-    ProbComp.eval (prfIdealGame repeatQuery n) = PMF.uniformOfFintype Bool ∧
+    ProbComp.eval (prfIdealGame id id repeatQuery n) = PMF.uniformOfFintype Bool ∧
       ProbComp.eval (Prod.fst <$> (OracleComp.interpret
         (OracleComp.sumHandler (fun k => StateT.lift (ProbComp.unifFin k))
           (fun request => cachedRandomFunctionOracle n request.2)) (repeatQuery n [])).run []) =
         PMF.uniformOfFintype Bool := by
-  have h : ProbComp.eval (prfIdealGame repeatQuery n) = PMF.uniformOfFintype Bool := by
-    simp only [prfIdealGame, ProbOracleComp.run, ProbComp.eval_bind, ProbComp.eval_uniform,
+  have h : ProbComp.eval (prfIdealGame id id repeatQuery n) = PMF.uniformOfFintype Bool := by
+    simp only [prfIdealGame, id_eq, ProbOracleComp.run, ProbComp.eval_bind, ProbComp.eval_uniform,
       ProbOracleComp.eval_interpret]
     simpa [repeatQuery, OracleComp.interpret_bind, ProbOracleComp.interpret_sample] using
       (show OracleComp.interpret ProbComp.unifOracle (ProbComp.uniform Bool) =

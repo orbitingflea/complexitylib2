@@ -15,6 +15,7 @@ public import CslibFrontier.Foundations.Data.BitString.Enumeration
 import Mathlib.Algebra.CharP.Two
 import Mathlib.Data.List.GetD
 import CslibFrontier.Foundations.Data.List.Lookup
+import CslibFrontier.Foundations.Data.Polynomial.LagrangeEval
 import CslibFrontier.Foundations.FieldTheory.Finite.Basic
 
 /-!
@@ -266,10 +267,7 @@ theorem fieldOfBits_lagrangeVal (hw : 2 ≤ w) {b : ℕ} (hbw : b ≤ w) (a : Bi
   have hw0 : w ≠ 0 := by omega
   rw [lagrangeVal, fieldOfBits_fieldMul (isMulTable_fieldTable hw0), fieldOfBits_fieldInv hw,
     fieldOfBits_lagrangeNum hw0 hbw, fieldOfBits_lagrangeNum hw0 hbw,
-    ← embed_eq_fieldOfBits hw0 hbw, Lagrange.basis, eval_prod, ← prod_inv_distrib,
-    ← prod_mul_distrib]
-  refine Finset.prod_congr rfl fun a' _ => ?_
-  rw [Lagrange.basisDivisor, eval_mul, eval_C, eval_sub, eval_X, eval_C, mul_comm]
+    ← embed_eq_fieldOfBits hw0 hbw, Lagrange.eval_basis, prod_div_distrib, div_eq_mul_inv]
 
 /-- **A term of the extension**: `termVal` computes the product over the blocks of `z` of the
 Lagrange basis polynomials at the coordinates of the point. -/

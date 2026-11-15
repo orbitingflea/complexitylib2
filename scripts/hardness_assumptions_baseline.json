@@ -1,7 +1,6 @@
 {
  "docstrings": {
   "Cslib.Crypto.DecisionLWEWithErrors": "#5578: the declaration cites no source definition; at most its module docstring names a reference.",
-  "Cslib.Crypto.Garbling.MixedModulus.MixedModulusCCR": "#5578 finding 3: the module docstring says it is stronger than BMR16 Definition 1; the declaration should say it is novel to this library.",
   "Cslib.Crypto.PRG.Generator.Secure": "Defined in CSLib (Cslib/Crypto/Primitives/PRG/Defs.lean), whose module docstring cites [BonehShoup2023], Section 3.1 and Attack Game 3.1; the declaration's own docstring is upstream and gains its citation there.",
   "Cslib.Crypto.QuadraticResiduosityHard": "#5578: the declaration cites no source definition; at most its module docstring names a reference.",
   "Cslib.Crypto.RSAOneWay": "#5578: the declaration cites no source definition; at most its module docstring names a reference.",
@@ -14,7 +13,6 @@
   "Cslib.Crypto.DecisionLWEWithErrors": "#5578: FullerMengReyzin2020 is not checked at the source.",
   "Cslib.Crypto.FactoringHard": "#5578: Katz–Lindell locators are not checked at the source (manual/sources.md says the same).",
   "Cslib.Crypto.FuzzyExtractor.ComputationallySecureFor": "#5578: FullerMengReyzin2020 is not checked at the source.",
-  "Cslib.Crypto.Garbling.MixedModulus.MixedModulusCCR": "#5578 finding 3: the closest source, BallMalkinRosulek2016 Definition 1, is not checked at the source; the MixedModulusCCR fix checks it.",
   "Cslib.Crypto.MACScheme.BlockwiseEUFCMA": "#5578: Katz–Lindell locators are not checked at the source (manual/sources.md says the same).",
   "Cslib.Crypto.ModulusFactoringHard": "#5593: Katz–Lindell section titles were checked against the 3rd-edition table of contents, but the numbered locator is not checked at the source (manual/sources.md says the same).",
   "Cslib.Crypto.PRG.IsExponentiallySecure": "#5578: RazborovRudich1997 is not checked at the source.",
@@ -25,7 +23,5 @@
   "Cslib.Crypto.WeakOneWay": "#5578: LiuPass2020 is not checked at the source.",
   "Cslib.Crypto.WeakOneWayAt": "#5578: LiuPass2020 is not checked at the source."
  },
- "headlines": {
-  "Cslib.Crypto.Garbling.BMR16.advantage_realGame_simGame_le_of_reduction_mem": "Algebraic helper (#5338), named `…_of_reduction_mem`; #5578 finding 3: state that MixedModulusCCR is stronger than BMR16 Definition 1."
- }
+ "headlines": {}
 }

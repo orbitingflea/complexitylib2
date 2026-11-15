@@ -11,12 +11,15 @@ public import CslibFrontier.Foundations.Data.BitString.List.Operations
 public import CslibFrontier.Probability.BitString
 import CslibFrontier.Probability.PMF.Bind
 import CslibFrontier.Probability.Product
+import CslibFrontier.Probability.PMF.Uniform
 
 /-!
 # Independent blocks of uniform bit lists
 
 Reading a uniform list of `count * width` bits as fixed-width rows gives exactly `count`
-independent uniform bit strings. This includes zero-width rows and zero rows.
+independent uniform bit strings. This includes zero-width rows and zero rows. Conversely,
+concatenating prefixes of independent uniform strings, for example of the values of a uniform
+function at distinct inputs, gives a uniform list.
 
 ## Main results
 
@@ -30,6 +33,9 @@ independent uniform bit strings. This includes zero-width rows and zero rows.
   `Cslib.BitString.uniformList_map_zipWith_xor`,
   `Cslib.BitString.uniformList_map_take_zipWith_xor`: XOR with a fixed word preserves uniformity
   (both in `listXor m [y, r]` and direct `List.zipWith Bool.xor y r` forms).
+* `Cslib.BitString.uniformOfFintype_map_flatten_take`,
+  `Cslib.BitString.uniformOfFintype_map_readPrefixes`: prefixes of independent uniform strings,
+  or of the values of a uniform function at distinct inputs, form a uniform word.
 
 ## References
 
@@ -169,5 +175,49 @@ theorem uniformList_replaceRow (width count : ℕ) (j : Fin count) :
       List.ofFn (blocksEquiv.symm (Function.update rows j x))))
     (uniformList_blocks count width)
   simpa only [uniformList, PMF.map_comp, Function.comp_def, hrep] using hZ
+
+/-- **Prefixes of independent uniform strings form a uniform word.** Keeping the first `ℓ i ≤ w`
+bits of each of `m` independent uniform `w`-bit strings and concatenating them gives a uniform word
+of `∑ ℓ i` bits. -/
+theorem uniformOfFintype_map_flatten_take {m w : ℕ} (ℓ : Fin m → ℕ) (hℓ : ∀ i, ℓ i ≤ w) :
+    (PMF.uniformOfFintype (Fin m → BitString w)).map
+        (fun values => (List.ofFn fun i => (List.ofFn (values i)).take (ℓ i)).flatten) =
+      uniformList (∑ i, ℓ i) := by
+  induction m with
+  | zero =>
+    have h : (fun values : Fin 0 → BitString w =>
+        (List.ofFn fun i => (List.ofFn (values i)).take (ℓ i)).flatten) = fun _ => [] := by
+      funext values
+      simp
+    rw [h, Finset.univ_eq_empty, Finset.sum_empty, uniformList_zero]
+    exact PMF.map_const _ _
+  | succ m ih =>
+    have hhead : (PMF.uniformOfFintype (BitString w)).map
+        (fun value => (List.ofFn value).take (ℓ 0)) = uniformList (ℓ 0) := by
+      rw [← uniformList_take (hℓ 0), uniformList, PMF.map_comp]
+      rfl
+    have htail := ih (fun i => ℓ i.succ) fun i => hℓ i.succ
+    rw [← PMF.uniformOfFintype_map_equiv (Fin.consEquiv (fun _ : Fin (m + 1) => BitString w)),
+      PMF.map_comp, ← PMF.uniformOfFintype_prod, Fin.sum_univ_succ, uniformList_add, ← hhead,
+      ← htail]
+    simp [PMF.map_bind, PMF.bind_map, PMF.map_comp, Function.comp_def, Fin.consEquiv,
+      List.ofFn_succ]
+
+/-- **A uniform function read at distinct inputs gives a uniform word.** Reading a uniform
+function from `a`-bit to `w`-bit strings at the distinct inputs `x 0, …, x (m - 1)`, keeping the
+first `ℓ i ≤ w` bits of the value at `x i` and concatenating them gives a uniform word of
+`∑ ℓ i` bits. -/
+theorem uniformOfFintype_map_readPrefixes {a w m : ℕ} (x : Fin m ↪ BitString a)
+    (ℓ : Fin m → ℕ) (hℓ : ∀ i, ℓ i ≤ w) :
+    (PMF.uniformOfFintype (BitString a → BitString w)).map
+        (fun table => (List.ofFn fun i => (List.ofFn (table (x i))).take (ℓ i)).flatten) =
+      uniformList (∑ i, ℓ i) := by
+  rw [show (fun table : BitString a → BitString w =>
+      (List.ofFn fun i => (List.ofFn (table (x i))).take (ℓ i)).flatten) =
+      (fun values : Fin m → BitString w =>
+        (List.ofFn fun i => (List.ofFn (values i)).take (ℓ i)).flatten) ∘
+        (fun table i => table (x i)) from rfl, ← PMF.map_comp,
+    PMF.uniformOfFintype_pi_map_comp_embedding x]
+  exact uniformOfFintype_map_flatten_take ℓ hℓ
 
 end Cslib.BitString

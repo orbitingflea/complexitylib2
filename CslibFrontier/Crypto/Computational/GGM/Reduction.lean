@@ -179,8 +179,8 @@ theorem isPPT_reduction {generator : List Bool → List Bool}
 dyadic sampling ranges. This statement is exact, including the zero-width game. -/
 theorem reduction_gap (generator : List Bool → List Bool) (adversary : OracleDistinguisher)
     (count : ℕ → ℕ) (n : ℕ) (hqueries : (adversary n []).IsQueryBounded (count n)) :
-    (Game.succProbability (ProbComp.eval (prfRealGame (eval generator) adversary n)) : ℝ) -
-        (Game.succProbability (ProbComp.eval (prfIdealGame adversary n)) : ℝ) =
+    (Game.succProbability (ProbComp.eval (prfRealGame id (eval generator) adversary n)) : ℝ) -
+        (Game.succProbability (ProbComp.eval (prfIdealGame id id adversary n)) : ℝ) =
       (dyadicSize n : ℝ) * dyadicSize (count n) *
         ((Game.succProbability (ProbComp.eval ((generator <$> BitString.sampleList n) >>=
           reduction generator adversary count n)) : ℝ) -
@@ -203,8 +203,8 @@ theorem reduction_gap (generator : List Bool → List Bool) (adversary : OracleD
 ranges. The loss is polynomial whenever the query budget is polynomial. -/
 theorem reduction_advantage (generator : List Bool → List Bool) (adversary : OracleDistinguisher)
     (count : ℕ → ℕ) (n : ℕ) (hqueries : (adversary n []).IsQueryBounded (count n)) :
-    Game.advantage (ProbComp.eval (prfRealGame (eval generator) adversary n))
-        (ProbComp.eval (prfIdealGame adversary n)) =
+    Game.advantage (ProbComp.eval (prfRealGame id (eval generator) adversary n))
+        (ProbComp.eval (prfIdealGame id id adversary n)) =
       dyadicSize n * dyadicSize (count n) *
         Game.advantage
           (ProbComp.eval ((generator <$> BitString.sampleList n) >>=

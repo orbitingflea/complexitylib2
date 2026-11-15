@@ -16,6 +16,7 @@ import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime
 import CslibFrontier.Computability.Probabilistic.PPT.Capture
 import CslibFrontier.Crypto.Game.Order
 import CslibFrontier.Crypto.Negligible.Basic
+import CslibFrontier.Foundations.Data.ZMod.NatCast
 import CslibFrontier.Tactic.GameHop
 import CslibFrontier.Tactic.Negligible
 import Mathlib.Tactic.Module
@@ -68,7 +69,9 @@ the adversary's PPT predicate.
 
 * `Cslib.Crypto.PrimeOrderGroupFamily.isPPT_blindedCDHToCDHAdversary`,
   `Cslib.Crypto.PrimeOrderGroupFamily.isPPT_blindedCDHPairToCDHAdversary`: the reductions are PPT
-  when the adversaries are.
+  when the adversaries are. The second follows from
+  `Cslib.Crypto.PrimeOrderGroupFamily.isPPTOn_blindedCDHPairToCDHWith`, the same for
+  `Cslib.Crypto.blindedCDHPairToCDHWith` with its blinding exponent read from the input.
 * `Cslib.Crypto.PrimeOrderGroupFamily.advantage_blindedCDHGame_cdhGame_le`,
   `Cslib.Crypto.PrimeOrderGroupFamily.succProbability_blindedCDHPairGame_le`: the sampling losses
   `2 / 2 ^ n` and `1 / 2 ^ n`.
@@ -155,17 +158,12 @@ private def blindedCDHCorrection (d : F.Desc) (μ ν γ : ℕ) (s t : F.Carrier 
   ((γ * ν : ℕ) : ZMod (F.order d)) • s + ((γ * μ : ℕ) : ZMod (F.order d)) • t +
     (((F.order d - 1) * (γ * γ * μ * ν) : ℕ) : ZMod (F.order d)) • F.generator d
 
-/-- `q - 1` is `-1` modulo `q` when `1 ≤ q`. -/
-private theorem natCast_sub_one_eq_neg_one {q : ℕ} (hq : 1 ≤ q) :
-    ((q - 1 : ℕ) : ZMod q) = -1 := by
-  rw [Nat.cast_sub hq, ZMod.natCast_self, Nat.cast_one, zero_sub]
-
 private theorem solve_eq_add_blindedCDHCorrection (d : F.Desc)
     (out : BlindedCDHAnswer (F.order d) (F.Carrier d)) (μ ν : ℕ) (s t : F.Carrier d) :
     out.solve (F.generator d) (μ : ZMod (F.order d)) (ν : ZMod (F.order d)) s t =
       out.value + F.blindedCDHCorrection d μ ν out.exponent.val s t := by
   simp only [BlindedCDHAnswer.solve, blindedCDHCorrection, Nat.cast_mul, ZMod.natCast_zmod_val,
-    natCast_sub_one_eq_neg_one (F.prime_order d).one_le]
+    ZMod.natCast_self_sub_one]
   module
 
 variable {F} in
@@ -373,7 +371,7 @@ private def invSubNat (q c c' : ℕ) : ℕ :=
 private theorem invSubNat_cast {q : ℕ} [Fact q.Prime] (c c' : ℕ) :
     (invSubNat q c c' : ZMod q) = ((c : ZMod q) - c')⁻¹ := by
   have hsub : ((c + (q - 1) * c' : ℕ) : ZMod q) = (c : ZMod q) - c' := by
-    rw [Nat.cast_add, Nat.cast_mul, natCast_sub_one_eq_neg_one (Fact.out : q.Prime).one_le]
+    rw [Nat.cast_add, Nat.cast_mul, ZMod.natCast_self_sub_one]
     ring
   rw [invSubNat, Nat.cast_mul, Nat.cast_mul, hsub]
   by_cases h : (c : ZMod q) = c'
@@ -391,15 +389,23 @@ private theorem pairSolve_eq (d : F.Desc) (out : BlindedCDHPairAnswer (F.order d
         (((F.order d - 1) * μ : ℕ) : ZMod (F.order d)) • out.right +
         (((out.exponent₁.val + out.exponent₂.val) * μ : ℕ) : ZMod (F.order d)) • s := by
   simp only [BlindedCDHPairAnswer.solve, Nat.cast_mul, Nat.cast_add, invSubNat_cast,
-    ZMod.natCast_zmod_val, natCast_sub_one_eq_neg_one (F.prime_order d).one_le]
+    ZMod.natCast_zmod_val, ZMod.natCast_self_sub_one]
   module
 
 variable {F} in
-/-- **The reduction of [BonehShoup2023], Lemma 21.8, is efficient**: it is uniform strict PPT
-whenever the adversary is. -/
-theorem isPPT_blindedCDHPairToCDHAdversary {adversary : F.BlindedCDHPairAdversary}
-    (hA : adversary.IsPPT) : (F.blindedCDHPairToCDHAdversary adversary).IsPPT := by
-  -- the adversary's input, computed from the CDH input and the draw
+/-- **The reduction of [BonehShoup2023], Lemma 21.8, with its blinding exponent read from the
+input, is efficient**: on a CDH input and a number `μ`, running
+`Cslib.Crypto.blindedCDHPairToCDHWith` with the blinding exponent `μ` is uniform strict PPT
+whenever the adversary is. `isPPT_blindedCDHPairToCDHAdversary` draws `μ` with `sampleExp`
+first. -/
+theorem isPPTOn_blindedCDHPairToCDHWith {adversary : F.BlindedCDHPairAdversary}
+    (hA : adversary.IsPPT) :
+    IsPPTOn (encPair F.encCDHInput encNat) encBits fun p : F.CDHInput × ℕ =>
+      F.encode p.1.groupParameters <$>
+        blindedCDHPairToCDHWith (F.order p.1.groupParameters) (F.generator p.1.groupParameters)
+          (adversary p.1.secParam p.1.groupParameters) (p.2 : ZMod (F.order p.1.groupParameters))
+          p.1.leftPublic p.1.rightPublic := by
+  -- the adversary's input, computed from the CDH input and the exponent
   let E := encPair F.encCDHInput encNat
   let prep : F.CDHInput × ℕ → F.BlindedCDHPairInput := fun p =>
     { secParam := p.1.secParam
@@ -445,31 +451,45 @@ theorem isPPT_blindedCDHPairToCDHAdversary {adversary : F.BlindedCDHPairAdversar
         (encBlindedCDHPairAnswerWords_right_polyTime hans))))))).prod
     (computableInPolyTime_encode_natCast_smul hd' ((hγ₁.binary_add' hγ₂).binary_mul' hμ)
       (F.encCDHInput_leftPublic_polyTime hx'))))
+  have hprog : IsPPTOn E encBits (fun p : F.CDHInput × ℕ =>
+      (fun o : BlindedCDHPairAnswerWords => F.add (p.1.groupParameters,
+          F.add (p.1.groupParameters,
+            F.add (p.1.groupParameters,
+              F.smul (p.1.groupParameters,
+                invSubNat (F.order p.1.groupParameters) o.exponent₁ o.exponent₂, o.value₂),
+              F.smul (p.1.groupParameters,
+                invSubNat (F.order p.1.groupParameters) o.exponent₁ o.exponent₂ *
+                  (F.order p.1.groupParameters - 1), o.value₁)),
+            F.smul (p.1.groupParameters, (F.order p.1.groupParameters - 1) * p.2, o.right)),
+          F.encode p.1.groupParameters
+            ((((o.exponent₁ + o.exponent₂) * p.2 : ℕ) : ZMod (F.order p.1.groupParameters)) •
+              p.1.leftPublic))) <$>
+        (F.blindedCDHPairAnswerWords p.1.groupParameters <$>
+          adversary p.1.secParam p.1.groupParameters
+            ((p.2 : ZMod (F.order p.1.groupParameters)) • F.generator p.1.groupParameters)
+            p.1.leftPublic p.1.rightPublic)) :=
+    (hA.preprocess hprep).map_with hout
+  refine hprog.congr fun p => ?_
+  simp only [blindedCDHPairToCDHWith, ProbComp.eval_bind, ProbComp.eval_map, ProbComp.eval_pure,
+    PMF.map_bind, PMF.map_comp, PMF.pure_map, Function.comp_def, blindedCDHPairAnswerWords,
+    F.smul_encode, F.add_encode, pairSolve_eq]
+  rfl
+
+variable {F} in
+/-- **The reduction of [BonehShoup2023], Lemma 21.8, is efficient**: it is uniform strict PPT
+whenever the adversary is. -/
+theorem isPPT_blindedCDHPairToCDHAdversary {adversary : F.BlindedCDHPairAdversary}
+    (hA : adversary.IsPPT) : (F.blindedCDHPairToCDHAdversary adversary).IsPPT := by
   have hprog : IsPPTOn F.encCDHInput encBits (fun x : F.CDHInput =>
       F.sampleExp x.secParam x.groupParameters >>= fun μ =>
-        (fun o : BlindedCDHPairAnswerWords => F.add (x.groupParameters,
-            F.add (x.groupParameters,
-              F.add (x.groupParameters,
-                F.smul (x.groupParameters,
-                  invSubNat (F.order x.groupParameters) o.exponent₁ o.exponent₂, o.value₂),
-                F.smul (x.groupParameters,
-                  invSubNat (F.order x.groupParameters) o.exponent₁ o.exponent₂ *
-                    (F.order x.groupParameters - 1), o.value₁)),
-              F.smul (x.groupParameters, (F.order x.groupParameters - 1) * μ, o.right)),
-            F.encode x.groupParameters
-              ((((o.exponent₁ + o.exponent₂) * μ : ℕ) : ZMod (F.order x.groupParameters)) •
-                x.leftPublic))) <$>
-          (F.blindedCDHPairAnswerWords x.groupParameters <$>
-            adversary x.secParam x.groupParameters
-              ((μ : ZMod (F.order x.groupParameters)) • F.generator x.groupParameters)
-              x.leftPublic x.rightPublic)) := by
-    refine IsPPTOn.bind_with (F.isPPTOn_sampleExp (by fun_prop) (by fun_prop)) ?_
-    exact (hA.preprocess hprep).map_with hout
+        F.encode x.groupParameters <$>
+          blindedCDHPairToCDHWith (F.order x.groupParameters) (F.generator x.groupParameters)
+            (adversary x.secParam x.groupParameters) (μ : ZMod (F.order x.groupParameters))
+            x.leftPublic x.rightPublic) :=
+    IsPPTOn.bind_with (F.isPPTOn_sampleExp (by fun_prop) (by fun_prop))
+      (isPPTOn_blindedCDHPairToCDHWith hA)
   refine hprog.congr fun x => ?_
-  simp only [blindedCDHPairToCDHAdversary, blindedCDHPairToCDHWith, ProbComp.eval_bind,
-    ProbComp.eval_map, ProbComp.eval_pure, PMF.map_bind, PMF.map_comp, PMF.pure_map,
-    Function.comp_def, blindedCDHPairAnswerWords, F.smul_encode, F.add_encode, pairSolve_eq]
-  rfl
+  simp only [blindedCDHPairToCDHAdversary, map_bind]
 
 /-- **Sampling loss of the reduction of [BonehShoup2023], Lemma 21.8**: the two-point blinded CDH
 game is won at most as often as the CDH game of the reduction, up to `1 / 2 ^ n` for its one

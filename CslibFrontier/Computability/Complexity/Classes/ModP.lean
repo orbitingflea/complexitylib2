@@ -10,6 +10,7 @@ module
 public import CslibFrontier.Computability.Complexity.Classes.UP
 public import CslibFrontier.Foundations.Order.BooleanSubalgebra
 public import Mathlib.Data.Nat.Prime.Defs
+import CslibFrontier.Foundations.Data.ZMod.NatCast
 import Mathlib.FieldTheory.Finite.Basic
 
 /-!
@@ -118,12 +119,10 @@ theorem compl_mem_ModP (hk : k.Prime) (hA : A ∈ ModP k enc) : Aᶜ ∈ ModP k 
   refine ⟨1 + (fun _ => k - 1) * f ^ (k - 1),
     SharpP.add_mem SharpP.one_mem
       (SharpP.mul_mem (SharpP.natCast_mem (k - 1)) (SharpP.pow_mem hf (k - 1))), fun a => ?_⟩
-  have hcast : ((k - 1 : ℕ) : ZMod k) = -1 := by
-    rw [Nat.cast_sub hk.one_le, ZMod.natCast_self, Nat.cast_one, zero_sub]
   have hc : ((1 + (k - 1) * f a ^ (k - 1) : ℕ) : ZMod k) =
       1 - (f a : ZMod k) ^ (k - 1) := by
     push_cast
-    rw [hcast]
+    rw [ZMod.natCast_self_sub_one]
     ring
   simp only [Set.mem_compl_iff, hA a, not_not, Pi.add_apply, Pi.one_apply, Pi.mul_apply,
     Pi.pow_apply]

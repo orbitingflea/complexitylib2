@@ -7,344 +7,368 @@ Authors: Christian Reitwiessner, Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import CslibFrontier.Computability.BranchingProgram.ReadOnce
-public import Mathlib.Data.Fintype.Card
-public import Mathlib.Data.Fintype.Prod
+public import CslibFrontier.Init
+public import Mathlib.Data.Fintype.Sort
+public import Mathlib.Order.Prod.Lex.Basic
+public import Mathlib.Order.Fin.Basic
 
 /-!
 # Deterministic branching programs
 
-A *deterministic branching program* over inputs `x : ι → α`, on a type `Node` of nodes, is a
-directed acyclic graph with a distinguished start node `start` in which every node is either a
-terminal sink returning a Boolean output (`.sink b`) or an internal query node reading an input
-coordinate `i : ι` and branching to `next (x i)` (`.branch i next`)
-[Arora and Barak, Section 13.4.4][AroraBarak07]. Unlike read-once branching programs
-(`Cslib.BranchingPrograms.ReadOnceProgram`), any coordinate may be queried at any node and a
-coordinate may be queried multiple times along a path. Acyclicity is witnessed by a topological
-rank `rank : Node → ℕ` that strictly decreases along every outgoing edge of a query node. For a
-finite node type `Node`, the *size* of the program (`BranchingProgram.size`) is its number of
-nodes `Fintype.card Node`. Whereas Arora and Barak's Section 13.4.4 fixes two designated
-outdegree-zero nodes (`ACCEPT` and `REJECT`), `BranchingProgram` allows multiple `.sink b` nodes;
-coalescing equal-output sinks adds at most one node when only one output value appears, and never
-increases `size` when at least two sink nodes exist (as in `MultiTapeTM.toBranchingProgram`).
+A *deterministic branching program* over inputs `x : ι → α` is a directed acyclic graph in which
+every node is either a sink returning a Boolean output or a query node that reads a coordinate
+`i : ι` and moves to the node chosen by the letter `x i`. Its output on `x` is the sink reached
+from a designated start node [Arora and Barak, Section 13.4.4][AroraBarak07],
+[Jukna, Section 1.3][Jukna2012]. Any coordinate may be queried at any node, and a coordinate may be
+queried several times along a path.
 
-Evaluation (`BranchingProgram.evalNode`, `BranchingProgram.eval`) is defined by structural
-recursion on an upper bound for `rank`, so it unfolds directly by `evalNode_sink` and
-`evalNode_branch` and computes by `decide` on concrete finite inputs. Every read-once branching
-program of length `L` and state type `S` embeds as a layered general branching program on
-`Fin (L + 1) × S` (`ReadOnceProgram.toBranchingProgram`, `ReadOnceProgram.eval_toBranchingProgram`,
-`ReadOnceProgram.size_toBranchingProgram`).
+The nodes are listed in a topological order. `BranchingProgram.Nodes ι α n` is a sequence of `n`
+nodes in which a query node moves only to earlier nodes, so acyclicity is part of the
+representation, as it is for the straight-line programs `Cslib.Circuits.Program`. A
+`BranchingProgram` is such a sequence with a start node, and its `size` is its number of nodes, the
+measure `BP(f)` of [Jukna, Section 15.1][Jukna2012]. The output (`BranchingProgram.eval`) is
+defined by structural recursion on the sequence, so it computes by `decide` on a concrete program.
+The sources fix one accepting and one rejecting sink; here any number of nodes may be sinks.
+
+A program is often easier to describe as a graph on a finite type of structured nodes, such as the
+configurations of a machine, with a rank that decreases along every edge
+(`BranchingProgram.Graph`). Listing the nodes of such a graph by rank gives a branching program
+with one node for each node of the graph (`BranchingProgram.Graph.toBranchingProgram`,
+`BranchingProgram.Graph.size_toBranchingProgram`), whose outputs unfold along the edges of the
+graph (`BranchingProgram.Graph.evalNode_sink`, `BranchingProgram.Graph.evalNode_branch`).
 
 ## Main definitions
 
-* `Cslib.BranchingPrograms.BranchingProgram.Step`: the action at a node (a terminal `.sink` or a
-  coordinate query `.branch`).
-* `Cslib.BranchingPrograms.BranchingProgram`: a deterministic acyclic branching program.
-* `Cslib.BranchingPrograms.BranchingProgram.evalNode`,
-  `Cslib.BranchingPrograms.BranchingProgram.eval`: evaluation from a node and from the start node.
-* `Cslib.BranchingPrograms.BranchingProgram.size`: the node count `Fintype.card Node`.
+* `Cslib.BranchingPrograms.BranchingProgram.Step`: the action at a node, a sink or a query.
+* `Cslib.BranchingPrograms.BranchingProgram.Nodes`: a sequence of nodes in topological order.
+* `Cslib.BranchingPrograms.BranchingProgram`: a deterministic branching program.
+* `Cslib.BranchingPrograms.BranchingProgram.eval`: the output of a program on an input.
 * `Cslib.BranchingPrograms.BranchingProgram.const`,
   `Cslib.BranchingPrograms.BranchingProgram.rename`,
-  `Cslib.BranchingPrograms.BranchingProgram.comap`: constant programs and pullbacks along
-  coordinate or alphabet maps.
-* `Cslib.BranchingPrograms.ReadOnceProgram.toBranchingProgram`: a read-once branching program
-  viewed as a general branching program on `Fin (L + 1) × S`.
+  `Cslib.BranchingPrograms.BranchingProgram.comap`: constant programs, and change of coordinates
+  and of alphabet.
+* `Cslib.BranchingPrograms.BranchingProgram.Graph`: a program described as a ranked graph on any
+  node type.
+* `Cslib.BranchingPrograms.BranchingProgram.Graph.toBranchingProgram`: the branching program of a
+  graph on a finite node type.
 
 ## Main results
 
-* `Cslib.BranchingPrograms.BranchingProgram.evalNode_sink`,
-  `Cslib.BranchingPrograms.BranchingProgram.evalNode_branch`: unfolding equations for evaluation.
-* `Cslib.BranchingPrograms.BranchingProgram.induction_on`: well-founded induction along `rank`.
-* `Cslib.BranchingPrograms.ReadOnceProgram.eval_toBranchingProgram`,
-  `Cslib.BranchingPrograms.ReadOnceProgram.size_toBranchingProgram`: semantics and node count of
-  the embedded read-once program.
+* `Cslib.BranchingPrograms.BranchingProgram.Graph.evalNode_sink`,
+  `Cslib.BranchingPrograms.BranchingProgram.Graph.evalNode_branch`: the outputs of the program of
+  a graph follow the edges of the graph.
 
 ## References
 
 * [S. Arora, B. Barak, *Computational Complexity: A Modern Approach* (2007 draft),
   Section 13.4.4][AroraBarak07]
-* [S. Jukna, *Boolean Function Complexity: Advances and Frontiers*, Chapter 14][Jukna2012]
+* [S. Jukna, *Boolean Function Complexity: Advances and Frontiers*, Sections 1.3 and
+  15.1][Jukna2012]
 -/
 
 @[expose] public section
 
 namespace Cslib.BranchingPrograms
 
-/-- The action at a node of a deterministic branching program over inputs `ι → α` with nodes
-`Node`: either a terminal sink returning a Boolean value, or a query node that reads coordinate `i`
-and follows `next` on the letter read. -/
+/-- The action at a node of a deterministic branching program over inputs `ι → α` whose successors
+lie in `Node`: either a sink returning a Boolean value, or a query that reads coordinate `i` and
+moves to `next a` on the letter `a`. -/
 inductive BranchingProgram.Step (ι α Node : Type*) where
-  /-- A terminal sink returning `b`. -/
+  /-- A sink returning `b`. -/
   | sink (b : Bool)
-  /-- An internal query node reading coordinate `i` and moving to `next a` on letter `a`. -/
+  /-- A query reading coordinate `i` and moving to `next a` on the letter `a`. -/
   | branch (i : ι) (next : α → Node)
-
-/-- A *deterministic branching program* over inputs `ι → α` on the nodes `Node`: a directed acyclic
-graph with a start node `start`, where each node is either a terminal sink or a coordinate query
-whose outgoing edges strictly decrease `rank` [Arora and Barak, Section 13.4.4][AroraBarak07].
-For finite `Node`, its size is the node count `Fintype.card Node` (`BranchingProgram.size`). -/
-structure BranchingProgram (ι α Node : Type*) where
-  /-- The start node. -/
-  start : Node
-  /-- The action at each node: a terminal sink or a coordinate query. -/
-  node : Node → BranchingProgram.Step ι α Node
-  /-- A topological rank decreasing along every outgoing edge of a query node. -/
-  rank : Node → ℕ
-  /-- Every outgoing edge of a query node leads to a node of strictly smaller rank. -/
-  rank_lt : ∀ v i next a, node v = .branch i next → rank (next a) < rank v
 
 namespace BranchingProgram
 
-variable {ι κ α β Node : Type*} (P : BranchingProgram ι α Node)
+variable {ι κ α β Node : Type*}
 
-/-- Evaluation of `P` on `x` from a node `v` of rank `< k`, by structural recursion on `k`. -/
-def evalBelow (x : ι → α) : (k : ℕ) → (v : Node) → P.rank v < k → Bool
-  | 0, _, h => absurd h (Nat.not_lt_zero _)
-  | k + 1, v, h =>
-    match hn : P.node v with
-    | .sink b => b
-    | .branch i next =>
-      evalBelow x k (next (x i))
-        (Nat.lt_of_lt_of_le (P.rank_lt v i next (x i) hn) (Nat.le_of_lt_succ h))
+/-- The action that queries `f i` wherever `step` queries `i`. -/
+def Step.rename (f : ι → κ) : Step ι α Node → Step κ α Node
+  | .sink b => .sink b
+  | .branch i next => .branch (f i) next
 
-theorem evalBelow_congr (x : ι → α) :
-    ∀ (k k' : ℕ) (v : Node) (h : P.rank v < k) (h' : P.rank v < k'),
-      P.evalBelow x k v h = P.evalBelow x k' v h'
-  | 0, _, _, h, _ => absurd h (Nat.not_lt_zero _)
-  | _ + 1, 0, _, _, h' => absurd h' (Nat.not_lt_zero _)
-  | k + 1, k' + 1, v, h, h' => by
-    simp only [evalBelow]
-    split
-    · rfl
-    · apply evalBelow_congr
+/-- The action over the alphabet `β` that reads each letter `b` as `g b`. -/
+def Step.comap (g : β → α) : Step ι α Node → Step ι β Node
+  | .sink b => .sink b
+  | .branch i next => .branch i (next ∘ g)
 
-/-- The output of `P` on input `x` when started at node `v`. -/
-def evalNode (x : ι → α) (v : Node) : Bool :=
-  P.evalBelow x (P.rank v + 1) v (Nat.lt_succ_self _)
+/-- A sequence of `n` nodes in topological order: each node is a sink, or queries a coordinate and
+moves to an earlier node. -/
+inductive Nodes (ι α : Type*) : ℕ → Type _ where
+  /-- The empty sequence. -/
+  | empty : Nodes ι α 0
+  /-- The nodes of `P` followed by a node acting by `step`. -/
+  | node {n : ℕ} (P : Nodes ι α n) (step : Step ι α (Fin n)) : Nodes ι α (n + 1)
 
-/-- The output of `P` on input `x`, started at `P.start`. -/
-def eval (x : ι → α) : Bool :=
-  P.evalNode x P.start
+namespace Nodes
 
-/-- The *size* of a branching program on a finite node type: its number of nodes. -/
-@[nolint unusedArguments]
-def size (_P : BranchingProgram ι α Node) [Fintype Node] : ℕ :=
-  Fintype.card Node
+/-- The output reached from each node on the input `x`. -/
+def eval (x : ι → α) : {n : ℕ} → Nodes ι α n → Fin n → Bool
+  | _, empty, v => v.elim0
+  | _, node P step, v =>
+    Fin.lastCases
+      (match step with
+        | .sink b => b
+        | .branch i next => P.eval x (next (x i)))
+      (P.eval x) v
 
-variable {P}
+/-- An earlier node reaches the same output in a longer sequence. -/
+@[simp] theorem eval_node_castSucc {n : ℕ} (P : Nodes ι α n) (step : Step ι α (Fin n))
+    (x : ι → α) (v : Fin n) : (P.node step).eval x v.castSucc = P.eval x v := by
+  simp [eval]
 
-/-- Unfolding `evalNode` at a terminal sink. -/
-theorem evalNode_sink (x : ι → α) {v : Node} {b : Bool} (h : P.node v = .sink b) :
-    P.evalNode x v = b := by
-  conv_lhs => rw [evalNode, evalBelow]
-  split
-  · rename_i b' heq
-    rw [h] at heq
-    injection heq with hb
-    exact hb.symm
-  · rename_i j next' heq
-    rw [h] at heq
-    cases heq
+/-- A sink returns its value. -/
+@[simp] theorem eval_node_last_sink {n : ℕ} (P : Nodes ι α n) (b : Bool) (x : ι → α) :
+    (P.node (.sink b)).eval x (Fin.last n) = b := by
+  simp [eval]
 
-/-- Unfolding `evalNode` at a coordinate query node. -/
-theorem evalNode_branch (x : ι → α) {v : Node} {i : ι} {next : α → Node}
-    (h : P.node v = .branch i next) :
-    P.evalNode x v = P.evalNode x (next (x i)) := by
-  conv_lhs => rw [evalNode, evalBelow]
-  split
-  · rename_i b heq
-    rw [h] at heq
-    cases heq
-  · rename_i j next' heq
-    rw [h] at heq
-    injection heq with hij hnext
-    subst hij hnext
-    exact P.evalBelow_congr x _ _ _ _ _
+/-- A query node reaches the output of the node it moves to. -/
+@[simp] theorem eval_node_last_branch {n : ℕ} (P : Nodes ι α n) (i : ι) (next : α → Fin n)
+    (x : ι → α) : (P.node (.branch i next)).eval x (Fin.last n) = P.eval x (next (x i)) := by
+  simp [eval]
 
-/-- **Induction on nodes** along the topological rank `P.rank`. -/
-theorem induction_on {M : Node → Prop}
-    (h : ∀ v, (∀ u, P.rank u < P.rank v → M u) → M v) (v : Node) : M v := by
-  obtain ⟨n, hn⟩ : ∃ n, P.rank v = n := ⟨_, rfl⟩
-  induction n using Nat.strong_induction_on generalizing v with
-  | _ n ih => exact h v fun u hu => ih (P.rank u) (hn ▸ hu) u rfl
+/-- The sequence that queries `f i` wherever `P` queries `i`. -/
+def rename (f : ι → κ) : {n : ℕ} → Nodes ι α n → Nodes κ α n
+  | _, empty => empty
+  | _, node P step => node (P.rename f) (step.rename f)
 
-/-- The one-node branching program returning the constant `b`. -/
-def const (ι α : Type*) (b : Bool) : BranchingProgram ι α Unit where
-  start := ()
-  node _ := .sink b
-  rank _ := 0
-  rank_lt _ _ _ _ h := by cases h
+/-- Renaming the coordinates by `f` evaluates on `x ∘ f`. -/
+@[simp] theorem eval_rename (f : ι → κ) (x : κ → α) :
+    ∀ {n : ℕ} (P : Nodes ι α n) (v : Fin n), (P.rename f).eval x v = P.eval (x ∘ f) v
+  | _, empty, v => v.elim0
+  | _, node P step, v => by
+    induction v using Fin.lastCases with
+    | last => cases step <;> simp [rename, Step.rename, eval_rename f x P]
+    | cast v => simp [rename, eval_rename f x P]
 
-@[simp]
-theorem eval_const (b : Bool) (x : ι → α) : (const ι α b).eval x = b :=
-  evalNode_sink x rfl
+/-- The sequence over the alphabet `β` that reads each letter `b` as `g b`. -/
+def comap (g : β → α) : {n : ℕ} → Nodes ι α n → Nodes ι β n
+  | _, empty => empty
+  | _, node P step => node (P.comap g) (step.comap g)
 
-@[simp]
-theorem size_const (b : Bool) : (const ι α b).size = 1 :=
-  Fintype.card_unit
+/-- Pulling back along `g` evaluates on `g ∘ x`. -/
+@[simp] theorem eval_comap (g : β → α) (x : ι → β) :
+    ∀ {n : ℕ} (P : Nodes ι α n) (v : Fin n), (P.comap g).eval x v = P.eval (g ∘ x) v
+  | _, empty, v => v.elim0
+  | _, node P step, v => by
+    induction v using Fin.lastCases with
+    | last => cases step <;> simp [comap, Step.comap, eval_comap g x P]
+    | cast v => simp [comap, eval_comap g x P]
 
-/-- A branching program of size at most `1` cannot branch (since any outgoing edge would strictly
-decrease `rank` within a subsingleton), so its evaluation is constant across all inputs. -/
-theorem eval_eq_of_size_le_one [Fintype Node] (hsize : P.size ≤ 1) (x y : ι → α) :
-    P.eval x = P.eval y := by
-  have hsub : Subsingleton Node := Fintype.card_le_one_iff_subsingleton.mp hsize
-  cases hn : P.node P.start with
-  | sink b =>
-    rw [eval, evalNode_sink x hn, eval, evalNode_sink y hn]
-  | branch i next =>
-    exact absurd (Subsingleton.elim (next (x i)) P.start ▸ P.rank_lt P.start i next (x i) hn)
-      (Nat.lt_irrefl _)
+/-- The sequence whose node `k` acts by `f k`. -/
+def ofFn : {n : ℕ} → ((k : ℕ) → k < n → Step ι α (Fin k)) → Nodes ι α n
+  | 0, _ => empty
+  | n + 1, f => node (ofFn fun k hk => f k (Nat.lt_succ_of_lt hk)) (f n (Nat.lt_succ_self n))
 
-/-- The branching program that queries `f i` whenever `P` queries `i`. -/
-def rename (f : ι → κ) (P : BranchingProgram ι α Node) : BranchingProgram κ α Node where
-  start := P.start
-  node v := match P.node v with
-    | .sink b => .sink b
-    | .branch i next => .branch (f i) next
-  rank := P.rank
-  rank_lt v j next a h := by
-    cases hn : P.node v with
-    | sink b =>
-      rw [hn] at h
-      cases h
-    | branch i next' =>
-      rw [hn] at h
-      injection h with _ hnext
-      subst hnext
-      exact P.rank_lt v i next' a hn
+/-- A sink of `ofFn f` returns its value. -/
+theorem eval_ofFn_sink (x : ι → α) :
+    ∀ {n : ℕ} (f : (k : ℕ) → k < n → Step ι α (Fin k)) (k : ℕ) (hk : k < n) {b : Bool},
+      f k hk = .sink b → (ofFn f).eval x ⟨k, hk⟩ = b
+  | 0, _, _, hk, _, _ => absurd hk (Nat.not_lt_zero _)
+  | n + 1, f, k, hk, b, hf => by
+    rcases Nat.lt_succ_iff_lt_or_eq.mp hk with hlt | rfl
+    · exact (eval_node_castSucc _ _ x ⟨k, hlt⟩).trans
+        (eval_ofFn_sink x (fun k hk => f k (Nat.lt_succ_of_lt hk)) k hlt hf)
+    · rw [ofFn, hf]
+      exact eval_node_last_sink _ b x
 
-@[simp]
-theorem evalNode_rename (f : ι → κ) (P : BranchingProgram ι α Node) (x : κ → α) (v : Node) :
-    (P.rename f).evalNode x v = P.evalNode (x ∘ f) v := by
-  induction v using P.induction_on with
-  | h v ih =>
-    cases hn : P.node v with
-    | sink b =>
-      have hn' : (P.rename f).node v = .sink b := by simp [rename, hn]
-      rw [evalNode_sink _ hn', evalNode_sink _ hn]
-    | branch i next =>
-      have hn' : (P.rename f).node v = .branch (f i) next := by simp [rename, hn]
-      rw [evalNode_branch _ hn', evalNode_branch _ hn,
-        ih (next (x (f i))) (P.rank_lt v i next (x (f i)) hn)]
-      rfl
+/-- A query node of `ofFn f` reaches the output of the node it moves to. -/
+theorem eval_ofFn_branch (x : ι → α) :
+    ∀ {n : ℕ} (f : (k : ℕ) → k < n → Step ι α (Fin k)) (k : ℕ) (hk : k < n) {i : ι}
+      {next : α → Fin k}, f k hk = .branch i next →
+        (ofFn f).eval x ⟨k, hk⟩ = (ofFn f).eval x ((next (x i)).castLE hk.le)
+  | 0, _, _, hk, _, _, _ => absurd hk (Nat.not_lt_zero _)
+  | n + 1, f, k, hk, i, next, hf => by
+    rcases Nat.lt_succ_iff_lt_or_eq.mp hk with hlt | rfl
+    · exact (eval_node_castSucc _ _ x ⟨k, hlt⟩).trans
+        ((eval_ofFn_branch x (fun k hk => f k (Nat.lt_succ_of_lt hk)) k hlt hf).trans
+          (eval_node_castSucc _ _ x _).symm)
+    · rw [ofFn, hf]
+      exact (eval_node_last_branch _ i next x).trans (eval_node_castSucc _ _ x _).symm
 
-@[simp]
-theorem eval_rename (f : ι → κ) (P : BranchingProgram ι α Node) (x : κ → α) :
-    (P.rename f).eval x = P.eval (x ∘ f) :=
-  evalNode_rename f P x P.start
-
-@[simp]
-theorem size_rename (f : ι → κ) (P : BranchingProgram ι α Node) [Fintype Node] :
-    (P.rename f).size = P.size :=
-  rfl
-
-/-- The branching program over `β` that translates each input letter along `g : β → α`. -/
-def comap (g : β → α) (P : BranchingProgram ι α Node) : BranchingProgram ι β Node where
-  start := P.start
-  node v := match P.node v with
-    | .sink b => .sink b
-    | .branch i next => .branch i (next ∘ g)
-  rank := P.rank
-  rank_lt v i next b h := by
-    cases hn : P.node v with
-    | sink b' =>
-      rw [hn] at h
-      cases h
-    | branch i' next' =>
-      rw [hn] at h
-      injection h with hi hnext
-      subst hi hnext
-      exact P.rank_lt v i' next' (g b) hn
-
-@[simp]
-theorem evalNode_comap (g : β → α) (P : BranchingProgram ι α Node) (x : ι → β) (v : Node) :
-    (P.comap g).evalNode x v = P.evalNode (g ∘ x) v := by
-  induction v using P.induction_on with
-  | h v ih =>
-    cases hn : P.node v with
-    | sink b =>
-      have hn' : (P.comap g).node v = .sink b := by simp [comap, hn]
-      rw [evalNode_sink _ hn', evalNode_sink _ hn]
-    | branch i next =>
-      have hn' : (P.comap g).node v = .branch i (next ∘ g) := by simp [comap, hn]
-      rw [evalNode_branch _ hn', evalNode_branch _ hn]
-      exact ih (next (g (x i))) (P.rank_lt v i next (g (x i)) hn)
-
-@[simp]
-theorem eval_comap (g : β → α) (P : BranchingProgram ι α Node) (x : ι → β) :
-    (P.comap g).eval x = P.eval (g ∘ x) :=
-  evalNode_comap g P x P.start
-
-@[simp]
-theorem size_comap (g : β → α) (P : BranchingProgram ι α Node) [Fintype Node] :
-    (P.comap g).size = P.size :=
-  rfl
+end Nodes
 
 end BranchingProgram
 
-/-! ### Embedding read-once branching programs -/
+/-- A *deterministic branching program* over inputs `ι → α`: nodes in topological order, each a
+sink or a query moving to an earlier node, with a start node
+[Arora and Barak, Section 13.4.4][AroraBarak07]. Its size is its number of nodes
+[Jukna, Section 15.1][Jukna2012]. -/
+structure BranchingProgram (ι α : Type*) where
+  /-- The number of nodes. -/
+  {size : ℕ}
+  /-- The nodes, in topological order. -/
+  nodes : BranchingProgram.Nodes ι α size
+  /-- The start node. -/
+  start : Fin size
 
-namespace ReadOnceProgram
+namespace BranchingProgram
 
-variable {L : ℕ} {S X : Type*} (P : ReadOnceProgram L S X)
+variable {ι κ α β Node : Type*}
 
-/-- A read-once branching program of length `L` with state type `S` as a general branching program
-on `Fin (L + 1) × S`: at layer `t < L` it queries position `t` and steps to layer `t + 1`, and at
-layer `L` it is a sink returning `P.accept`. -/
-def toBranchingProgram : BranchingProgram (Fin L) X (Fin (L + 1) × S) where
-  start := (0, P.start)
-  node p :=
-    if h : p.1.val < L then
-      .branch ⟨p.1.val, h⟩ fun a => ((⟨p.1.val, h⟩ : Fin L).succ, P.step ⟨p.1.val, h⟩ p.2 a)
-    else
-      .sink (P.accept p.2)
-  rank p := L - p.1.val
-  rank_lt p i next a h := by
-    by_cases ht : p.1.val < L
-    · rw [dite_eq_left ht] at h
-      injection h with _ hnext
-      subst hnext
-      exact Nat.sub_lt_sub_left ht (Nat.lt_succ_self _)
-    · rw [dite_eq_right ht] at h
-      cases h
+/-- The output of `P` on the input `x`: the value of the sink reached from the start node. -/
+def eval (P : BranchingProgram ι α) (x : ι → α) : Bool :=
+  P.nodes.eval x P.start
 
-/-- Evaluating `P.toBranchingProgram` from `(t, s)` runs `P` from time `t` and state `s`. -/
-theorem evalNode_toBranchingProgram (x : Fin L → X) :
-    ∀ (k : ℕ) (t : Fin (L + 1)) (s : S), L - t.val = k →
-      P.toBranchingProgram.evalNode x (t, s) = P.accept (P.runFrom x t.val s) := by
-  intro k
-  induction k with
-  | zero =>
-    intro t s hk
-    have ht : L ≤ t.val := by omega
-    have hnode : P.toBranchingProgram.node (t, s) = .sink (P.accept s) :=
-      dite_eq_right (not_lt.mpr ht)
-    rw [BranchingProgram.evalNode_sink x hnode, P.runFrom_of_le x ht]
-  | succ k ih =>
-    intro t s hk
-    have ht : t.val < L := by omega
-    have hnode : P.toBranchingProgram.node (t, s) =
-        .branch ⟨t.val, ht⟩
-          (fun a => ((⟨t.val, ht⟩ : Fin L).succ, P.step ⟨t.val, ht⟩ s a)) :=
-      dite_eq_left ht
-    rw [BranchingProgram.evalNode_branch x hnode,
-      ih (⟨t.val, ht⟩ : Fin L).succ (P.step ⟨t.val, ht⟩ s (x ⟨t.val, ht⟩))
-        (by simp only [Fin.val_succ]; omega),
-      Fin.val_succ, ← P.runFrom_step x ht s]
+/-- The one-node branching program returning the constant `b`. -/
+def const (ι α : Type*) (b : Bool) : BranchingProgram ι α where
+  nodes := .node .empty (.sink b)
+  start := 0
 
-/-- **Embedding preserves evaluation**: `P.toBranchingProgram` computes the same function as `P`. -/
-@[simp]
-theorem eval_toBranchingProgram (x : Fin L → X) :
-    P.toBranchingProgram.eval x = P.eval x := by
-  rw [BranchingProgram.eval, show P.toBranchingProgram.start = (0, P.start) from rfl,
-    P.evalNode_toBranchingProgram x L 0 P.start (by simp), Fin.val_zero, P.runFrom_zero, eval]
+/-- The constant program returns its value on every input. -/
+@[simp] theorem eval_const (b : Bool) (x : ι → α) : (const ι α b).eval x = b :=
+  Nodes.eval_node_last_sink .empty b x
 
-/-- The embedded read-once program has `(L + 1) * Fintype.card S` nodes. -/
-@[simp]
-theorem size_toBranchingProgram [Fintype S] :
-    P.toBranchingProgram.size = (L + 1) * Fintype.card S := by
-  simp [BranchingProgram.size]
+/-- The constant program has one node. -/
+@[simp] theorem size_const (b : Bool) : (const ι α b).size = 1 :=
+  rfl
 
-end ReadOnceProgram
+/-- A branching program with at most one node cannot query its input, so it is constant. -/
+theorem eval_eq_of_size_le_one (P : BranchingProgram ι α) (hsize : P.size ≤ 1) (x y : ι → α) :
+    P.eval x = P.eval y := by
+  obtain ⟨nodes, start⟩ := P
+  rename_i size
+  obtain rfl : size = 1 := le_antisymm hsize (Nat.one_le_of_lt start.isLt)
+  obtain rfl : start = Fin.last 0 := Subsingleton.elim _ _
+  cases nodes with
+  | node P step =>
+    cases step with
+    | sink b => rfl
+    | branch i next => exact (next (x i)).elim0
+
+/-- The branching program that queries `f i` wherever `P` queries `i`. -/
+def rename (f : ι → κ) (P : BranchingProgram ι α) : BranchingProgram κ α where
+  nodes := P.nodes.rename f
+  start := P.start
+
+/-- Renaming the coordinates by `f` evaluates on `x ∘ f`. -/
+@[simp] theorem eval_rename (f : ι → κ) (P : BranchingProgram ι α) (x : κ → α) :
+    (P.rename f).eval x = P.eval (x ∘ f) :=
+  Nodes.eval_rename f x P.nodes P.start
+
+/-- Renaming the coordinates keeps the nodes. -/
+@[simp] theorem size_rename (f : ι → κ) (P : BranchingProgram ι α) : (P.rename f).size = P.size :=
+  rfl
+
+/-- The branching program over the alphabet `β` that reads each letter `b` as `g b`. -/
+def comap (g : β → α) (P : BranchingProgram ι α) : BranchingProgram ι β where
+  nodes := P.nodes.comap g
+  start := P.start
+
+/-- Pulling back along `g` evaluates on `g ∘ x`. -/
+@[simp] theorem eval_comap (g : β → α) (P : BranchingProgram ι α) (x : ι → β) :
+    (P.comap g).eval x = P.eval (g ∘ x) :=
+  Nodes.eval_comap g x P.nodes P.start
+
+/-- Pulling back along a map of alphabets keeps the nodes. -/
+@[simp] theorem size_comap (g : β → α) (P : BranchingProgram ι α) : (P.comap g).size = P.size :=
+  rfl
+
+/-! ### Programs described as graphs -/
+
+/-- A deterministic branching program described as a graph on the nodes `Node`: each node is a sink
+or a query, and every edge out of a query node leads to a node of strictly smaller `rank`, which
+makes the graph acyclic. For finite `Node`, `Graph.toBranchingProgram` lists the nodes by rank. -/
+structure Graph (ι α Node : Type*) where
+  /-- The start node. -/
+  start : Node
+  /-- The action at each node. -/
+  node : Node → Step ι α Node
+  /-- A rank decreasing along every edge. -/
+  rank : Node → ℕ
+  /-- Every edge out of a query node leads to a node of strictly smaller rank. -/
+  rank_lt : ∀ v i next a, node v = .branch i next → rank (next a) < rank v
+
+namespace Graph
+
+variable [Fintype Node] (G : Graph ι α Node)
+
+/-- A linear order on the nodes in which nodes of smaller rank come first. -/
+@[instance_reducible]
+private noncomputable def rankOrder : LinearOrder Node :=
+  LinearOrder.lift' (fun v => toLex (G.rank v, Fintype.equivFin Node v)) fun _ _ h =>
+    (Fintype.equivFin Node).injective (congrArg (fun p => (ofLex p).2) h)
+
+/-- An enumeration of the nodes in which nodes of smaller rank come first. -/
+private noncomputable def index : Node ≃ Fin (Fintype.card Node) :=
+  letI := G.rankOrder
+  (monoEquivOfFin Node rfl).symm.toEquiv
+
+/-- A node of smaller rank has a smaller index. -/
+private theorem index_lt_index {u v : Node} (h : G.rank u < G.rank v) : G.index u < G.index v := by
+  let := G.rankOrder
+  have huv : u < v := Prod.Lex.toLex_lt_toLex.mpr (Or.inl h)
+  exact (monoEquivOfFin Node rfl).symm.strictMono huv
+
+/-- The action at the node of index `k`, on the indices of its successors. -/
+private noncomputable def stepAt (k : ℕ) (hk : k < Fintype.card Node) : Step ι α (Fin k) :=
+  match h : G.node (G.index.symm ⟨k, hk⟩) with
+  | .sink b => .sink b
+  | .branch i next => .branch i fun a =>
+    ⟨G.index (next a), by
+      have hlt := G.index_lt_index (G.rank_lt _ i next a h)
+      rw [Equiv.apply_symm_apply] at hlt
+      exact hlt⟩
+
+/-- The branching program of a graph on a finite node type: its nodes listed by rank. -/
+@[no_expose]
+noncomputable def toBranchingProgram : BranchingProgram ι α where
+  nodes := Nodes.ofFn G.stepAt
+  start := G.index G.start
+
+/-- The branching program of a graph has one node for each node of the graph. -/
+@[simp] theorem size_toBranchingProgram : G.toBranchingProgram.size = Fintype.card Node := by
+  unfold toBranchingProgram
+  rfl
+
+/-- The output the branching program of `G` reaches from the node `v` on the input `x`. -/
+@[no_expose]
+noncomputable def evalNode (x : ι → α) (v : Node) : Bool :=
+  G.toBranchingProgram.nodes.eval x (G.index v)
+
+/-- The output of the branching program of `G` is the output reached from the start node. -/
+theorem eval_toBranchingProgram (x : ι → α) :
+    G.toBranchingProgram.eval x = G.evalNode x G.start := by
+  unfold evalNode BranchingProgram.eval toBranchingProgram
+  rfl
+
+variable {G}
+
+/-- A sink of the graph returns its value. -/
+theorem evalNode_sink (x : ι → α) {v : Node} {b : Bool} (h : G.node v = .sink b) :
+    G.evalNode x v = b := by
+  have hk : G.node (G.index.symm ⟨G.index v, (G.index v).isLt⟩) = .sink b := by
+    rw [Fin.eta, Equiv.symm_apply_apply, h]
+  have hstep : G.stepAt (G.index v) (G.index v).isLt = .sink b := by
+    unfold stepAt
+    split <;> rename_i heq
+    · rw [hk] at heq
+      cases heq
+      rfl
+    · rw [hk] at heq
+      cases heq
+  exact Nodes.eval_ofFn_sink x G.stepAt _ _ hstep
+
+/-- A query node of the graph reaches the output of the node it moves to. -/
+theorem evalNode_branch (x : ι → α) {v : Node} {i : ι} {next : α → Node}
+    (h : G.node v = .branch i next) : G.evalNode x v = G.evalNode x (next (x i)) := by
+  have hk : G.node (G.index.symm ⟨G.index v, (G.index v).isLt⟩) = .branch i next := by
+    rw [Fin.eta, Equiv.symm_apply_apply, h]
+  have hstep : ∃ hlt : ∀ a, (G.index (next a) : ℕ) < G.index v,
+      G.stepAt (G.index v) (G.index v).isLt = .branch i fun a => ⟨G.index (next a), hlt a⟩ := by
+    unfold stepAt
+    split <;> rename_i heq
+    · rw [hk] at heq
+      cases heq
+    · rw [hk] at heq
+      cases heq
+      exact ⟨fun a => G.index_lt_index (G.rank_lt v i next a h), rfl⟩
+  obtain ⟨hlt, hstep⟩ := hstep
+  exact Nodes.eval_ofFn_branch x G.stepAt _ _ hstep
+
+end Graph
+
+end BranchingProgram
 
 end Cslib.BranchingPrograms

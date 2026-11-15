@@ -21,9 +21,10 @@ import Mathlib.Tactic.Ring
 # Native visited-space computations as branching programs (after Arora–Barak Theorem 13.15)
 
 Every deterministic multi-tape Turing machine running within visited work-tape space `s`
-(`Turing.MultiTapeTM.RunsInSpace`) on inputs of length `n` for `T` steps compiles into an acyclic
-deterministic branching program (`Turing.MultiTapeTM.toBranchingProgram`) over the `n` input bits
-whose nodes (`Turing.MultiTapeTM.SpaceConfigNode`) are input-independent timed configuration cores:
+(`Turing.MultiTapeTM.RunsInSpace`) on inputs of length `n` for `T` steps compiles into a
+deterministic branching program (`Turing.MultiTapeTM.toBranchingProgram`) over the `n` input bits.
+The program is the one of a graph (`Turing.MultiTapeTM.spaceConfigGraph`) whose nodes
+(`Turing.MultiTapeTM.SpaceConfigNode`) are input-independent timed configuration cores:
 * `step : Fin (T + 1)` — the step counter (witnessing acyclicity via `rank v = T - v.step.val`);
 * `inputPos : Fin (n + 2)` — the read-only input-head position;
 * `storage : BoundedStorage Bool State (fun _ : Fin k => s)` — the control state and work-tape
@@ -69,8 +70,9 @@ model difference).
   storages.
 * `Turing.MultiTapeTM.SpaceConfigNode`: a timed bounded configuration core of a space-bounded
   machine.
-* `Turing.MultiTapeTM.toBranchingProgram`: the branching program simulating `T` steps of a
-  machine within visited space `s` on inputs of length `n`.
+* `Turing.MultiTapeTM.spaceConfigGraph`, `Turing.MultiTapeTM.toBranchingProgram`: the graph on
+  timed configuration cores, and its branching program, simulating `T` steps of a machine within
+  visited space `s` on inputs of length `n`.
 * `Turing.MultiTapeTM.spaceBranchingProgramBase`: the explicit base `c` of the `c ^ S n` node-count
   bound.
 
@@ -282,11 +284,10 @@ end SpaceConfigNode
 
 open Cslib.BranchingPrograms
 
-/-- The deterministic branching program over `Fin n → Bool` that simulates `T` steps of `tm`
-within work-tape window `s`. Acyclicity is witnessed by the decreasing remaining-step rank
-`T - v.step.val`. -/
-noncomputable def toBranchingProgram (tm : MultiTapeTM k Bool State) (n s T : ℕ) :
-    BranchingProgram (Fin n) Bool (SpaceConfigNode k State n s T) where
+/-- The graph on timed configuration cores, over inputs `Fin n → Bool`, that simulates `T` steps
+of `tm` within work-tape window `s`. Its rank is the number `T - v.step.val` of remaining steps. -/
+noncomputable def spaceConfigGraph (tm : MultiTapeTM k Bool State) (n s T : ℕ) :
+    BranchingProgram.Graph (Fin n) Bool (SpaceConfigNode k State n s T) where
   start := SpaceConfigNode.init tm n s T
   node v :=
     if hn : 0 < n then
@@ -322,12 +323,19 @@ noncomputable def toBranchingProgram (tm : MultiTapeTM k Bool State) (n s T : �
     · rw [dite_eq_right hn] at h
       cases h
 
-/-- Evaluating `tm.toBranchingProgram n s T` from the node of the `t`-th configuration on an input
-`x` (for `0 < n`) yields the first output bit of the `T`-step configuration. -/
-theorem evalNode_toBranchingProgram_ofCfg {tm : MultiTapeTM k Bool State} {n s T : ℕ}
-    (hn : 0 < n) {x : Fin n → Bool} (hs : tm.RunsInSpace (List.ofFn x) s) :
+/-- The deterministic branching program over `Fin n → Bool` that simulates `T` steps of `tm`
+within work-tape window `s`: the program of `tm.spaceConfigGraph n s T`, with one node for each
+timed configuration core. -/
+noncomputable def toBranchingProgram [Fintype State] (tm : MultiTapeTM k Bool State)
+    (n s T : ℕ) : BranchingProgram (Fin n) Bool :=
+  (tm.spaceConfigGraph n s T).toBranchingProgram
+
+/-- From the node of the `t`-th configuration on an input `x` (for `0 < n`), the graph
+`tm.spaceConfigGraph n s T` reaches the first output bit of the `T`-step configuration. -/
+theorem evalNode_spaceConfigGraph_ofCfg [Fintype State] {tm : MultiTapeTM k Bool State}
+    {n s T : ℕ} (hn : 0 < n) {x : Fin n → Bool} (hs : tm.RunsInSpace (List.ofFn x) s) :
     ∀ (rem : ℕ) (t : Fin (T + 1)), T - t.val = rem →
-      (tm.toBranchingProgram n s T).evalNode x
+      (tm.spaceConfigGraph n s T).evalNode x
         (SpaceConfigNode.ofCfg s t (tm.runFrom (tm.initCfg (List.ofFn x)) t.val)) =
       ((tm.runFrom (tm.initCfg (List.ofFn x)) T).output.head?).getD false := by
   intro rem
@@ -336,12 +344,12 @@ theorem evalNode_toBranchingProgram_ofCfg {tm : MultiTapeTM k Bool State} {n s T
     intro t hrem
     have ht : t.val = T := by have := t.isLt; omega
     have hnotlt : ¬t.val < T := by omega
-    have hnode : (tm.toBranchingProgram n s T).node
+    have hnode : (tm.spaceConfigGraph n s T).node
         (SpaceConfigNode.ofCfg s t (tm.runFrom (tm.initCfg (List.ofFn x)) t.val)) =
         .sink (((tm.runFrom (tm.initCfg (List.ofFn x)) t.val).output.head?).getD false) := by
-      simp only [toBranchingProgram, dite_eq_left hn]
+      simp only [spaceConfigGraph, dite_eq_left hn]
       exact dite_eq_right hnotlt
-    rw [BranchingProgram.evalNode_sink x hnode, ht]
+    rw [BranchingProgram.Graph.evalNode_sink x hnode, ht]
   | succ rem ih =>
     intro t hrem
     have ht : t.val < T := by omega
@@ -353,47 +361,48 @@ theorem evalNode_toBranchingProgram_ofCfg {tm : MultiTapeTM k Bool State} {n s T
       rw [runFrom, Function.iterate_succ_apply', ← runFrom]
     have hvt : v.step.val < T := ht
     by_cases hpos : 1 ≤ v.inputPos.val ∧ v.inputPos.val ≤ n
-    · have hnode : (tm.toBranchingProgram n s T).node v =
+    · have hnode : (tm.spaceConfigGraph n s T).node v =
           .branch ⟨v.inputPos.val - 1, by omega⟩ (fun b => v.stepNode tm (some b) hvt) := by
-        simp only [toBranchingProgram, dite_eq_left hn, dite_eq_left hvt, dite_eq_left hpos]
+        simp only [spaceConfigGraph, dite_eq_left hn, dite_eq_left hvt, dite_eq_left hpos]
       have hinp : c.inputSymbol = some (x ⟨v.inputPos.val - 1, by omega⟩) := by
         have hv : v.inputPos.val = c.inputPos.val := rfl
         have h1 : c.inputPos.val = 1 + (v.inputPos.val - 1) := by omega
         have h2 : v.inputPos.val - 1 < (List.ofFn x).length := by simp; omega
         rw [inputSymbolInner (v.inputPos.val - 1) h1 h2, List.getElem_ofFn]
-      rw [BranchingProgram.evalNode_branch x hnode, ← hinp, hstep, hnext]
+      rw [BranchingProgram.Graph.evalNode_branch x hnode, ← hinp, hstep, hnext]
       exact ih ⟨t.val + 1, Nat.succ_lt_succ ht⟩ (by dsimp only; omega)
-    · have hnode : (tm.toBranchingProgram n s T).node v =
+    · have hnode : (tm.spaceConfigGraph n s T).node v =
           .branch ⟨0, hn⟩ (fun _ => v.stepNode tm none hvt) := by
-        simp only [toBranchingProgram, dite_eq_left hn, dite_eq_left hvt, dite_eq_right hpos]
+        simp only [spaceConfigGraph, dite_eq_left hn, dite_eq_left hvt, dite_eq_right hpos]
       have hinp : c.inputSymbol = none := by
         have hv : v.inputPos.val = c.inputPos.val := rfl
         have hlt := c.inputPos.isLt
         have hlen : (List.ofFn x).length = n := List.length_ofFn
         exact inputSymbol_eq_none_of_boundary (by omega)
-      rw [BranchingProgram.evalNode_branch x hnode, ← hinp, hstep, hnext]
+      rw [BranchingProgram.Graph.evalNode_branch x hnode, ← hinp, hstep, hnext]
       exact ih ⟨t.val + 1, Nat.succ_lt_succ ht⟩ (by dsimp only; omega)
 
 /-- **Correctness of the branching-program compiler**: on every input `x : Fin n → Bool` on which
 `tm` runs within space `s`, `tm.toBranchingProgram n s T` evaluates to the first output bit of the
 `T`-step run of `tm` on `List.ofFn x`. -/
-theorem eval_toBranchingProgram {tm : MultiTapeTM k Bool State} {n s T : ℕ}
+theorem eval_toBranchingProgram [Fintype State] {tm : MultiTapeTM k Bool State} {n s T : ℕ}
     {x : Fin n → Bool} (hs : tm.RunsInSpace (List.ofFn x) s) :
     (tm.toBranchingProgram n s T).eval x =
       ((tm.runFrom (tm.initCfg (List.ofFn x)) T).output.head?).getD false := by
   by_cases hn : 0 < n
-  · have hstart : (tm.toBranchingProgram n s T).start =
+  · have hstart : (tm.spaceConfigGraph n s T).start =
         SpaceConfigNode.ofCfg s ⟨0, Nat.zero_lt_succ T⟩
           (tm.runFrom (tm.initCfg (List.ofFn x)) 0) := by
       ext <;> rfl
-    rw [BranchingProgram.eval, hstart]
-    exact evalNode_toBranchingProgram_ofCfg hn hs T ⟨0, Nat.zero_lt_succ T⟩ (Nat.sub_zero T)
+    rw [toBranchingProgram, BranchingProgram.Graph.eval_toBranchingProgram, hstart]
+    exact evalNode_spaceConfigGraph_ofCfg hn hs T ⟨0, Nat.zero_lt_succ T⟩ (Nat.sub_zero T)
   · obtain rfl : n = 0 := by omega
     have hx : List.ofFn x = [] := List.ofFn_zero
-    have hnode : (tm.toBranchingProgram 0 s T).node (tm.toBranchingProgram 0 s T).start =
+    have hnode : (tm.spaceConfigGraph 0 s T).node (tm.spaceConfigGraph 0 s T).start =
         .sink (((tm.runFrom (tm.initCfg []) T).output.head?).getD false) := by
-      simp [toBranchingProgram]
-    rw [BranchingProgram.eval, BranchingProgram.evalNode_sink x hnode, hx]
+      simp [spaceConfigGraph]
+    rw [toBranchingProgram, BranchingProgram.Graph.eval_toBranchingProgram,
+      BranchingProgram.Graph.evalNode_sink x hnode, hx]
 
 /-! ### Explicit node-count bounds (`2 ^ O(S)`) -/
 
@@ -468,7 +477,8 @@ theorem size_toBranchingProgram_le_pow_max [Fintype State] (tm : MultiTapeTM k B
     omega
   have hsize1 : (tm.toBranchingProgram n s T).size ≤
       6 * B ^ 2 * (n + 2) ^ 2 * 2 ^ (2 * D * s) := by
-    rw [BranchingProgram.size, SpaceConfigNode.card_eq]
+    rw [toBranchingProgram, BranchingProgram.Graph.size_toBranchingProgram,
+      SpaceConfigNode.card_eq]
     calc (T + 1) * (n + 2) * Fintype.card (BoundedStorage Bool State (fun _ : Fin k => s)) * 3
         ≤ (2 * ((n + 2) * (B * 2 ^ (D * s)))) * (n + 2) * (B * 2 ^ (D * s)) * 3 := by
           gcongr
@@ -538,15 +548,15 @@ variable {α : Type} {enc : α ↪ List Bool} {A : Set α} {S : ℕ → ℕ}
 For every problem `A ∈ DSPACE enc S` (where `DSPACE` measures distinct visited work-tape cells) with
 `∀ n, Nat.log 2 n ≤ S n`, there is a constant `c ≥ 2` (depending on the deciding machine's tape
 count, state count, binary work-tape alphabet `Bool`, and linear space constants under `enc`) such
-that for every input length `n`, there is a finite node type `Node` and a deterministic branching
-program `P : BranchingProgram (Fin n) Bool Node` of size at most `c ^ max (S n) 1` (hence
+that for every input length `n`, there is a deterministic branching program
+`P : BranchingProgram (Fin n) Bool` of size at most `c ^ max (S n) 1` (hence
 `≤ c ^ S n` whenever `1 ≤ S n`, and `≤ c ^ (S n + 1)` for all `n`) that computes
 `encodesMember enc A n` on all encoded instances of length `n`. The `max (S n) 1` floor is needed at
 `n = 1, S 1 = 0`, where a nonconstant 1-bit language in `DSPACE 0` requires at least `3 > 1 = c ^ 0`
 nodes. -/
 theorem DSPACE.exists_branchingProgram_of_log_le (hA : A ∈ DSPACE enc S)
     (hS : ∀ n, Nat.log 2 n ≤ S n) :
-    ∃ c ≥ 2, ∀ n, ∃ (Node : Type) (_ : Fintype Node) (P : BranchingProgram (Fin n) Bool Node),
+    ∃ c ≥ 2, ∀ n, ∃ P : BranchingProgram (Fin n) Bool,
       P.size ≤ c ^ max (S n) 1 ∧
       (∀ x ∈ encodes enc n, P.eval x = encodesMember enc A n x) ∧
       (∀ a : α, (h : (enc a).length = n) →
@@ -574,7 +584,7 @@ theorem DSPACE.exists_branchingProgram_of_log_le (hA : A ∈ DSPACE enc S)
       exact output_haltsAt hcard.1 hu
     rw [tm.eval_toBranchingProgram hs, hout]
     rfl
-  refine ⟨SpaceConfigNode k State n s T, inferInstance, tm.toBranchingProgram n s T,
+  refine ⟨tm.toBranchingProgram n s T,
     tm.size_toBranchingProgram_le_pow_max le_rfl (hS n), ?_, ?_⟩
   · rintro x ⟨a, ha⟩
     rw [heval_eq x a ha]
@@ -597,22 +607,22 @@ logarithmic convention `S n ≥ Nat.log 2 n + 1`), every length-`n` slice of `A 
 computed on encoded instances by a branching program of size at most `c ^ S n`. -/
 theorem DSPACE.exists_branchingProgram (hA : A ∈ DSPACE enc S)
     (hS : ∀ n, Nat.log 2 n ≤ S n) (hpos : ∀ n, 1 ≤ S n) :
-    ∃ c ≥ 2, ∀ n, ∃ (Node : Type) (_ : Fintype Node) (P : BranchingProgram (Fin n) Bool Node),
+    ∃ c ≥ 2, ∀ n, ∃ P : BranchingProgram (Fin n) Bool,
       P.size ≤ c ^ S n ∧
       (∀ x ∈ encodes enc n, P.eval x = encodesMember enc A n x) ∧
       (∀ a : α, (h : (enc a).length = n) →
         P.eval (fun i : Fin n => (enc a)[i.val]'(by omega)) = indicator A a) := by
   obtain ⟨c, hc, hP⟩ := DSPACE.exists_branchingProgram_of_log_le hA hS
   refine ⟨c, hc, fun n => ?_⟩
-  obtain ⟨Node, hfin, P, hsize, henc, ha⟩ := hP n
+  obtain ⟨P, hsize, henc, ha⟩ := hP n
   rw [max_eq_left (hpos n)] at hsize
-  exact ⟨Node, hfin, P, hsize, henc, ha⟩
+  exact ⟨P, hsize, henc, ha⟩
 
 /-- **Native visited-space branching-program simulation (after Arora–Barak Theorem 13.15) under
 `S n ≥ Nat.log 2 n + 1`.** -/
 theorem DSPACE.exists_branchingProgram_of_log_add_one_le (hA : A ∈ DSPACE enc S)
     (hS : ∀ n, Nat.log 2 n + 1 ≤ S n) :
-    ∃ c ≥ 2, ∀ n, ∃ (Node : Type) (_ : Fintype Node) (P : BranchingProgram (Fin n) Bool Node),
+    ∃ c ≥ 2, ∀ n, ∃ P : BranchingProgram (Fin n) Bool,
       P.size ≤ c ^ S n ∧
       (∀ x ∈ encodes enc n, P.eval x = encodesMember enc A n x) ∧
       (∀ a : α, (h : (enc a).length = n) →
@@ -628,12 +638,12 @@ For every language `L ∈ DSPACE encBits S` with `∀ n, Nat.log 2 n ≤ S n`, t
 `c ^ S n` whenever `1 ≤ S n`). -/
 theorem DSPACE.exists_branchingProgram_slice {L : Language Bool} (hL : L ∈ DSPACE encBits S)
     (hS : ∀ n, Nat.log 2 n ≤ S n) :
-    ∃ c ≥ 2, ∀ n, ∃ (Node : Type) (_ : Fintype Node) (P : BranchingProgram (Fin n) Bool Node),
+    ∃ c ≥ 2, ∀ n, ∃ P : BranchingProgram (Fin n) Bool,
       P.size ≤ c ^ max (S n) 1 ∧ P.eval = L.slice n := by
   obtain ⟨c, hc, hP⟩ := DSPACE.exists_branchingProgram_of_log_le hL hS
   refine ⟨c, hc, fun n => ?_⟩
-  obtain ⟨Node, hfin, P, hsize, henc, -⟩ := hP n
-  refine ⟨Node, hfin, P, hsize, funext fun x => ?_⟩
+  obtain ⟨P, hsize, henc, -⟩ := hP n
+  refine ⟨P, hsize, funext fun x => ?_⟩
   have hx : x ∈ encodes encBits n := ⟨List.ofFn x, rfl⟩
   have hmem :=
     encodesMember_eq_true_iff (enc := encBits) (A := (L : Set (List Bool)))
@@ -645,7 +655,7 @@ theorem DSPACE.exists_branchingProgram_slice {L : Language Bool} (hL : L ∈ DSP
 most `c ^ (Nat.log 2 n + 1)` at every input length `n` (via the visited-space simulation after
 Arora–Barak Theorem 13.15). -/
 theorem L.exists_branchingProgram (hA : A ∈ L enc) :
-    ∃ c ≥ 2, ∀ n, ∃ (Node : Type) (_ : Fintype Node) (P : BranchingProgram (Fin n) Bool Node),
+    ∃ c ≥ 2, ∀ n, ∃ P : BranchingProgram (Fin n) Bool,
       P.size ≤ c ^ (Nat.log 2 n + 1) ∧
       (∀ x ∈ encodes enc n, P.eval x = encodesMember enc A n x) ∧
       (∀ a : α, (h : (enc a).length = n) →
@@ -661,12 +671,12 @@ theorem L.exists_branchingProgram (hA : A ∈ L enc) :
 deterministic branching program of size at most `c ^ (Nat.log 2 n + 1)` (under native visited
 logarithmic space). -/
 theorem L.exists_branchingProgram_slice {L₀ : Language Bool} (hL : L₀ ∈ L encBits) :
-    ∃ c ≥ 2, ∀ n, ∃ (Node : Type) (_ : Fintype Node) (P : BranchingProgram (Fin n) Bool Node),
+    ∃ c ≥ 2, ∀ n, ∃ P : BranchingProgram (Fin n) Bool,
       P.size ≤ c ^ (Nat.log 2 n + 1) ∧ P.eval = L₀.slice n := by
   obtain ⟨c, hc, hP⟩ := L.exists_branchingProgram hL
   refine ⟨c, hc, fun n => ?_⟩
-  obtain ⟨Node, hfin, P, hsize, henc, -⟩ := hP n
-  refine ⟨Node, hfin, P, hsize, funext fun x => ?_⟩
+  obtain ⟨P, hsize, henc, -⟩ := hP n
+  refine ⟨P, hsize, funext fun x => ?_⟩
   have hmem :=
     encodesMember_eq_true_iff (enc := encBits) (A := (L₀ : Set (List Bool)))
       (x := x) (a := List.ofFn x) rfl

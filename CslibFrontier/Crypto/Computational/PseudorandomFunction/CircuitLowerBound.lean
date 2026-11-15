@@ -198,8 +198,8 @@ theorem booleanPRFRealGame_prfFirstBitEnsemble_eq {family : List Bool → List B
     (hlen : ∀ key query, query.length = key.length → (family key query).length = key.length)
     (adversary : OracleDistinguisher) {n : ℕ} (hn : 0 < n) :
     booleanPRFRealGame (prfFirstBitEnsemble family) adversary n =
-      ProbComp.eval (prfRealGame family (firstBitDistinguisher adversary) n) := by
-  simp only [booleanPRFRealGame, prfFirstBitEnsemble, PMF.bind_map, prfRealGame,
+      ProbComp.eval (prfRealGame id family (firstBitDistinguisher adversary) n) := by
+  simp only [booleanPRFRealGame, prfFirstBitEnsemble, PMF.bind_map, prfRealGame, id_eq,
     ProbOracleComp.run, ProbComp.eval_bind, BitString.eval_sampleList]
   refine PMF.bind_congr_on_support _ _ _ fun key hkey => ?_
   have hklen := BitString.length_of_mem_support_uniformList hkey
@@ -226,9 +226,10 @@ theorem booleanPRFRealGame_prfFirstBitEnsemble_eq {family : List Bool → List B
 theorem booleanPRFIdealGame_eq_prfIdealGame (adversary : OracleDistinguisher) {n : ℕ}
     (hn : 0 < n) :
     booleanPRFIdealGame adversary n =
-      ProbComp.eval (prfIdealGame (firstBitDistinguisher adversary) n) := by
+      ProbComp.eval (prfIdealGame id id (firstBitDistinguisher adversary) n) := by
   rw [booleanPRFIdealGame, ← KabanetsCai.uniformOfFintype_map_restrictTable hn le_rfl,
-    PMF.bind_map, prfIdealGame, ProbComp.eval_bind, ProbComp.eval_uniform]
+    PMF.bind_map]
+  simp only [prfIdealGame, id_eq, ProbComp.eval_bind, ProbComp.eval_uniform]
   refine PMF.bind_congr_on_support _ _ _ fun table _ => ?_
   unfold evalBooleanOracle ProbOracleComp.run
   rw [interpret_firstBitDistinguisher]

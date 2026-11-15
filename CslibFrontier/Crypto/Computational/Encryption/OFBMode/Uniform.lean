@@ -289,7 +289,7 @@ law of `adversary` in the OFB CPA game with challenge bit `bit`. -/
 theorem eval_prfRealGame_ofbToPrfDistinguisher {family : List Bool → List Bool → List Bool}
     (hlen : ∀ key query, query.length = key.length → (family key query).length = key.length)
     (adversary : OracleDistinguisher) (bit : Bool) (n : ℕ) :
-    ProbComp.eval (prfRealGame family (ofbToPrfDistinguisher adversary bit) n) =
+    ProbComp.eval (prfRealGame id family (ofbToPrfDistinguisher adversary bit) n) =
       ProbComp.eval (symmetricCPAGameOn blockPairValid BitString.sampleList
         (ofbWordEncrypt family) adversary bit n) :=
   eval_prfRealGame_ivStreamToPrfDistinguisher
@@ -371,7 +371,7 @@ private theorem run_ofbKeystreamQueries_randomFunction {n : ℕ} (f : BitString 
 private theorem eval_prfIdealGame_ofbToPrfDistinguisher (adversary : OracleDistinguisher)
     (bit : Bool) {n ℓ : ℕ}
     (hℓ : (adversary n []).QueriesSatisfy fun request => request.2.length ≤ ℓ) :
-    ProbComp.eval (prfIdealGame (ofbToPrfDistinguisher adversary bit) n) =
+    ProbComp.eval (prfIdealGame id id (ofbToPrfDistinguisher adversary bit) n) =
       ProbComp.eval (PRF.idealExperiment
         (ofbReduction ℓ bit (blockModeWordAdversary adversary n))) :=
   eval_prfIdealGame_ivStreamToPrfDistinguisher
@@ -395,11 +395,11 @@ theorem advantage_ofbWordCPAGame_le {family : List Bool → List Bool → List B
       (ProbComp.eval (symmetricCPAGameOn blockPairValid BitString.sampleList
         (ofbWordEncrypt family) adversary true n)) : ℝ) ≤
       (Game.advantage
-        (ProbComp.eval (prfRealGame family (ofbToPrfDistinguisher adversary false) n))
-        (ProbComp.eval (prfIdealGame (ofbToPrfDistinguisher adversary false) n)) : ℝ) +
+        (ProbComp.eval (prfRealGame id family (ofbToPrfDistinguisher adversary false) n))
+        (ProbComp.eval (prfIdealGame id id (ofbToPrfDistinguisher adversary false) n)) : ℝ) +
       (Game.advantage
-        (ProbComp.eval (prfRealGame family (ofbToPrfDistinguisher adversary true) n))
-        (ProbComp.eval (prfIdealGame (ofbToPrfDistinguisher adversary true) n)) : ℝ) +
+        (ProbComp.eval (prfRealGame id family (ofbToPrfDistinguisher adversary true) n))
+        (ProbComp.eval (prfIdealGame id id (ofbToPrfDistinguisher adversary true) n)) : ℝ) +
       2 * ((Q : ℝ) * L) * ((Q : ℝ) * L + L) / 2 ^ n := by
   rw [← eval_prfRealGame_ofbToPrfDistinguisher hlen adversary false n,
     ← eval_prfRealGame_ofbToPrfDistinguisher hlen adversary true n]
@@ -409,9 +409,9 @@ theorem advantage_ofbWordCPAGame_le {family : List Bool → List Bool → List B
   rw [← eval_prfIdealGame_ofbToPrfDistinguisher adversary false hL] at h₀
   rw [← eval_prfIdealGame_ofbToPrfDistinguisher adversary true hL] at h₁
   refine (advantage_le_four _
-    (ProbComp.eval (prfIdealGame (ofbToPrfDistinguisher adversary false) n))
+    (ProbComp.eval (prfIdealGame id id (ofbToPrfDistinguisher adversary false) n))
     (ProbComp.eval (blockModeIdealExperiment L (blockModeWordAdversary adversary n)))
-    (ProbComp.eval (prfIdealGame (ofbToPrfDistinguisher adversary true) n)) _).trans ?_
+    (ProbComp.eval (prfIdealGame id id (ofbToPrfDistinguisher adversary true) n)) _).trans ?_
   rw [Nat.cast_mul] at h₀ h₁
   have hsplit : 2 * ((Q : ℝ) * L) * ((Q : ℝ) * L + L) / 2 ^ n =
       (Q : ℝ) * L * ((Q : ℝ) * L + L) / 2 ^ n + (Q : ℝ) * L * ((Q : ℝ) * L + L) / 2 ^ n := by

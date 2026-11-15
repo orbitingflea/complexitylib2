@@ -22,7 +22,8 @@ import CslibFrontier.Computability.Machines.Turing.MultiTape.Encodings.BitString
 
 Valid queries are memoized as ordinary words. Malformed queries receive the empty word and retain
 the cache. Injective key representations and the shared eager/lazy theorem identify this program
-with the ideal PRF game for every randomized adaptive adversary.
+with the length-preserving ideal PRF game `prfIdealGame id id` for every randomized adaptive
+adversary.
 
 ## Main definitions
 
@@ -74,7 +75,7 @@ theorem isPPTOn_cachedRandomFunctionOracle {α : Type} {input : α ↪ List Bool
 /-- An executable list cache realizes the ideal experiment, preserving repeated-query
 consistency and independent private randomness under arbitrary adaptive interaction. -/
 theorem prfIdealGame_eq_cached (adversary : OracleDistinguisher) (n : ℕ) :
-    ProbComp.eval (prfIdealGame adversary n) =
+    ProbComp.eval (prfIdealGame id id adversary n) =
       ProbComp.eval (Prod.fst <$> (OracleComp.interpret
         (OracleComp.sumHandler (fun k => StateT.lift (ProbComp.unifFin k))
           (fun request => cachedRandomFunctionOracle n request.2)) (adversary n [])).run []) := by
@@ -104,7 +105,7 @@ theorem prfIdealGame_eq_cached (adversary : OracleDistinguisher) (n : ℕ) :
         (adapter query) = PMF.pure (randomFunctionOracle n table query) := by
     by_cases hquery : query.length = n <;> simp [adapter, randomFunctionOracle, hquery]
   rw [ProbComp.eval_map, ProbOracleComp.eval_run_interpret]
-  simpa only [prfIdealGame, ProbOracleComp.run, ProbComp.eval_bind, ProbComp.eval_uniform,
+  simpa only [prfIdealGame, id_eq, ProbOracleComp.run, ProbComp.eval_bind, ProbComp.eval_uniform,
     ProbOracleComp.eval_interpret, ProbComp.eval_pure, PMF.pi_uniformOfFintype,
     ProbOracleComp.interpret_simulate,
     Turing.MultiTapeTM.encBitString_apply, hstep, heager, PMF.monad_bind_eq_bind] using h
@@ -114,7 +115,7 @@ open Turing.MultiTapeTM in
 construct the exponentially large eager table; the entire adaptive interaction is certified. -/
 theorem isPPT_prfIdealGame {adversary : OracleDistinguisher}
     (hadversary : IsOraclePPT encBool adversary) :
-    IsPPT encBool (fun n _ => prfIdealGame adversary n) := by
+    IsPPT encBool (fun n _ => prfIdealGame id id adversary n) := by
   have hrun : IsPPTOn (encPair encUnary encBits)
       (encPair encBool (encList (encPair encBits encBits))) (fun pair : ℕ × List Bool =>
         (OracleComp.interpret

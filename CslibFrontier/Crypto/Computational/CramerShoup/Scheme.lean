@@ -20,6 +20,7 @@ import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Option
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 import CslibFrontier.Crypto.Game.Statistical
+import CslibFrontier.Foundations.Data.ZMod.NatCast
 import CslibFrontier.Probability.PMF
 import CslibFrontier.Probability.StatisticalDistance
 import CslibFrontier.Tactic.EncLen
@@ -710,9 +711,7 @@ def encodeGroupNeg (d : F.Desc) (z : List Bool) : List Bool :=
 @[simp]
 theorem encodeGroupNeg_encode (d : F.Desc) (x : F.Carrier d) :
     F.encodeGroupNeg d (F.encode d x) = F.encode d (-x) := by
-  have hneg : ((F.order d - 1 : ℕ) : ZMod (F.order d)) = -1 := by
-    rw [Nat.cast_sub (F.prime_order d).pos, ZMod.natCast_self, Nat.cast_one, zero_sub]
-  simp only [encodeGroupNeg, F.smul_encode, hneg, neg_one_smul]
+  simp only [encodeGroupNeg, F.smul_encode, ZMod.natCast_self_sub_one, neg_one_smul]
 
 /-- Word-level universal projective hash `f_{s,t}(v, w) = s • v + t • w`. -/
 def encodeProjHash (d : F.Desc) (s t : ℕ) (v w : List Bool) : List Bool :=

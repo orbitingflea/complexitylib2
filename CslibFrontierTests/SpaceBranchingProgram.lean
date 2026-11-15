@@ -6,10 +6,10 @@ Authors: Christian Reitwiessner, Samuel Schlesinger
 
 module
 
+public import CslibFrontier.Computability.BranchingProgram.ReadOnce
 public import CslibFrontier.Computability.BranchingProgram.Space
 public import CslibFrontier.Computability.Complexity.Classes.LogSpace.USTCON
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.Streaming
-import Mathlib.Tactic.FinCases
 
 /-! Concrete `module` clients for deterministic branching programs (`BranchingProgram`),
 `ReadOnceProgram.toBranchingProgram`, `MultiTapeTM.toBranchingProgram`, and the native
@@ -26,26 +26,19 @@ open Cslib Cslib.BranchingPrograms Cslib.Complexity Language Turing Turing.Multi
 /-! ### 1. A concrete multi-read deterministic branching program -/
 
 /-- A 5-node branching program over `Fin 2 → Bool` that queries coordinate `0`, then coordinate `1`,
-and then re-queries coordinate `0` before reaching sink `3` (`true`) or `4` (`false`). -/
-def rereadZeroProgram : BranchingProgram (Fin 2) Bool (Fin 5) where
-  start := 0
-  node v :=
-    if v = 0 then .branch 0 fun b => if b then 1 else 4
-    else if v = 1 then .branch 1 fun b => if b then 2 else 4
-    else if v = 2 then .branch 0 fun b => if b then 3 else 4
-    else if v = 3 then .sink true
-    else .sink false
-  rank v := 4 - v.val
-  rank_lt v i next b h := by
-    fin_cases v <;> simp only [Fin.zero_eta, Fin.mk_one, Fin.reduceEq, ↓reduceIte] at h
-    · injection h with _ hnext; subst hnext; cases b <;> decide
-    · injection h with _ hnext; subst hnext; cases b <;> decide
-    · injection h with _ hnext; subst hnext; cases b <;> decide
-    · cases h
-    · cases h
+and then re-queries coordinate `0` before reaching sink `1` (`true`) or `0` (`false`). The nodes
+are listed sinks first; the start node is the last. -/
+def rereadZeroProgram : BranchingProgram (Fin 2) Bool where
+  nodes := BranchingProgram.Nodes.empty
+    |>.node (.sink false)
+    |>.node (.sink true)
+    |>.node (.branch 0 fun b => if b then 1 else 0)
+    |>.node (.branch 1 fun b => if b then 2 else 0)
+    |>.node (.branch 0 fun b => if b then 3 else 0)
+  start := 4
 
-example : rereadZeroProgram.size = 5 := by
-  simp [BranchingProgram.size]
+example : rereadZeroProgram.size = 5 :=
+  rfl
 
 example (x : Fin 2 → Bool) : rereadZeroProgram.eval x = (x 0 && x 1) := by
   revert x
@@ -126,8 +119,8 @@ def FirstBit : Language Bool := {w | w.head? = some true}
 `≤ 1 = c ^ 0` can compute `FirstBit.slice 1`, witnessing that the `max (S n) 1` floor in the native
 visited-space simulation (`DSPACE.exists_branchingProgram_of_log_le`) is necessary when
 `S 1 = 0`. -/
-theorem not_exists_size_le_one_eval_eq_firstBit_slice {Node : Type*} [Fintype Node]
-    (P : BranchingProgram (Fin 1) Bool Node) (hsize : P.size ≤ 1) :
+theorem not_exists_size_le_one_eval_eq_firstBit_slice
+    (P : BranchingProgram (Fin 1) Bool) (hsize : P.size ≤ 1) :
     P.eval ≠ FirstBit.slice 1 := by
   intro heval
   have hconst := P.eval_eq_of_size_le_one hsize (fun _ => false) (fun _ => true)
@@ -148,7 +141,7 @@ theorem not_exists_size_le_one_eval_eq_firstBit_slice {Node : Type*} [Fintype No
 instantiated on Reingold's `USTCON_mem_L`: undirected `s`–`t` connectivity has polynomial-size
 deterministic branching programs of size at most `c ^ (Nat.log 2 n + 1)`. -/
 theorem ustcon_branchingPrograms :
-    ∃ c ≥ 2, ∀ n, ∃ (Node : Type) (_ : Fintype Node) (P : BranchingProgram (Fin n) Bool Node),
+    ∃ c ≥ 2, ∀ n, ∃ P : BranchingProgram (Fin n) Bool,
       P.size ≤ c ^ (Nat.log 2 n + 1) ∧
       (∀ x ∈ encodes encUSTCON n, P.eval x = encodesMember encUSTCON USTCON n x) ∧
       (∀ a : USTCONInstance, (h : (encUSTCON a).length = n) →
@@ -179,9 +172,9 @@ theorem oddOnes_mem_DSPACE :
 /-- Native visited-space branching-program simulation (after Arora–Barak Theorem 13.15)
 instantiated on `OddOnes ∈ DSPACE encBits (log₂ n + 1)` and `L`. -/
 theorem oddOnes_branchingPrograms :
-    (∃ c ≥ 2, ∀ n, ∃ (Node : Type) (_ : Fintype Node) (P : BranchingProgram (Fin n) Bool Node),
+    (∃ c ≥ 2, ∀ n, ∃ P : BranchingProgram (Fin n) Bool,
       P.size ≤ c ^ (Nat.log 2 n + 1) ∧ P.eval = OddOnes.slice n) ∧
-    (∃ c ≥ 2, ∀ n, ∃ (Node : Type) (_ : Fintype Node) (P : BranchingProgram (Fin n) Bool Node),
+    (∃ c ≥ 2, ∀ n, ∃ P : BranchingProgram (Fin n) Bool,
       P.size ≤ c ^ max (Nat.log 2 n + 1) 1 ∧ P.eval = OddOnes.slice n) :=
   ⟨L.exists_branchingProgram_slice oddOnes_mem_L,
    DSPACE.exists_branchingProgram_slice oddOnes_mem_DSPACE fun _ => Nat.le_succ _⟩

@@ -983,6 +983,7 @@ public import CslibFrontier.Computability.BlumComplexity.Speedup
 public import CslibFrontier.Computability.BlumComplexity.Union
 public import CslibFrontier.Computability.BranchingProgram.Basic
 public import CslibFrontier.Computability.BranchingProgram.MonoidProgram
+public import CslibFrontier.Computability.BranchingProgram.Nondeterministic
 public import CslibFrontier.Computability.BranchingProgram.PolyLength
 public import CslibFrontier.Computability.BranchingProgram.ReadOnce
 public import CslibFrontier.Computability.BranchingProgram.Space
@@ -1970,6 +1971,8 @@ public import CslibFrontier.Computability.Complexity.Classes.CountingHierarchy.A
 public import CslibFrontier.Computability.Complexity.Classes.CountingHierarchy.Arithmetic
 public import CslibFrontier.Computability.Complexity.Classes.CountingHierarchy.BoundedSearch
 public import CslibFrontier.Computability.Complexity.Classes.CountingHierarchy.DiscreteLog
+public import CslibFrontier.Computability.Complexity.Classes.CountingHierarchy.DyadicSummation
+public import CslibFrontier.Computability.Complexity.Classes.CountingHierarchy.FirstEventSign
 public import CslibFrontier.Computability.Complexity.Classes.CountingHierarchy.Generator
 public import CslibFrontier.Computability.Complexity.Classes.CountingHierarchy.Primality
 public import CslibFrontier.Computability.Complexity.Classes.CountingHierarchy.Products
@@ -2839,6 +2842,7 @@ public import CslibFrontier.Computability.DecisionTree.Basic
 public import CslibFrontier.Computability.DecisionTree.CanonicalTree
 public import CslibFrontier.Computability.DecisionTree.Certificate
 public import CslibFrontier.Computability.DecisionTree.Composition
+public import CslibFrontier.Computability.DecisionTree.CoordinateCap
 public import CslibFrontier.Computability.DecisionTree.Cost
 public import CslibFrontier.Computability.DecisionTree.Dual
 public import CslibFrontier.Computability.DecisionTree.Evasive
@@ -4087,6 +4091,7 @@ public import CslibFrontier.Computability.QueryComplexity.CertificateComposition
 public import CslibFrontier.Computability.QueryComplexity.Connectivity
 public import CslibFrontier.Computability.QueryComplexity.Degree
 public import CslibFrontier.Computability.QueryComplexity.DeutschJozsa
+public import CslibFrontier.Computability.QueryComplexity.DirectProduct
 public import CslibFrontier.Computability.QueryComplexity.Huang
 public import CslibFrontier.Computability.QueryComplexity.MajorityThree
 public import CslibFrontier.Computability.QueryComplexity.Midrijanis
@@ -4923,6 +4928,7 @@ public import CslibFrontier.Crypto.Protocols.MAC.PolynomialEvaluation
 public import CslibFrontier.Crypto.Protocols.MAC.VariableLength
 public import CslibFrontier.Crypto.Protocols.MPC.Advantage
 public import CslibFrontier.Crypto.Protocols.MPC.AllToAll
+public import CslibFrontier.Crypto.Protocols.MPC.Asymptotic
 public import CslibFrontier.Crypto.Protocols.MPC.BGW
 public import CslibFrontier.Crypto.Protocols.MPC.Basic
 public import CslibFrontier.Crypto.Protocols.MPC.BatchOT
@@ -6615,6 +6621,7 @@ public import CslibFrontier.Languages.Probabilistic.Traverse
 public import CslibFrontier.Languages.Probabilistic.Traverse.CoinTape
 public import CslibFrontier.Languages.Probabilistic.Traverse.SupportWith
 public import CslibFrontier.Languages.Probabilistic.UniformNat
+public import CslibFrontier.Languages.Probabilistic.UniformNat.LowerBound
 public import CslibFrontier.Languages.Probabilistic.UniformNat.ModIndex
 public import CslibFrontier.Languages.Probabilistic.UniformNat.Residue
 public import CslibFrontier.Languages.Probabilistic.UniformNat.Support

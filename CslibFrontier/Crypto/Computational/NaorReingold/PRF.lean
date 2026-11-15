@@ -666,10 +666,10 @@ theorem DDH.pseudorandomFunction_naorReingoldSeeded {F : PrimeOrderGroupFamily}
     dsimp only [need]
     linarith
   have hreal_eq :
-      ProbComp.eval (prfRealGame (F.naorReingoldSeededPRF desc bound expWidth expand)
+      ProbComp.eval (prfRealGame id (F.naorReingoldSeededPRF desc bound expWidth expand)
         adversary n) =
       distinguishingGame (generatorEnsemble expand n) (D_tape n) := by
-    simp only [pmf_norm, prfRealGame, ProbOracleComp.run, distinguishingGame_eq_bind,
+    simp only [pmf_norm, prfRealGame, id_eq, ProbOracleComp.run, distinguishingGame_eq_bind,
       generatorEnsemble, ProbOracleComp.eval_interpret, BitString.eval_sampleList, D_tape,
       eval_prfTapeDistinguisher]
     refine PMF.bind_congr_on_support _ _ _ fun key hkey => ?_
@@ -700,11 +700,11 @@ theorem DDH.pseudorandomFunction_naorReingoldSeeded {F : PrimeOrderGroupFamily}
       dsimp only [OracleComp.sumHandler]
       rw [evalNaorReingoldTape_take F id id desc bound expWidth (limit := need) le_rfl]
   have hideal_eq :
-      ProbComp.eval (prfIdealGame adversary n) =
+      ProbComp.eval (prfIdealGame id id adversary n) =
       F.naorReingoldHashedIdealGame (fun k => PMF.pure (desc k)) id id bound
         (fun k _ => adversary k []) n := by
     rw [naorReingoldHashedIdealGame_pure_const]
-    simp only [prfIdealGame, ProbOracleComp.run, ProbComp.eval_bind, ProbComp.eval_uniform,
+    simp only [prfIdealGame, id_eq, ProbOracleComp.run, ProbComp.eval_bind, ProbComp.eval_uniform,
       ProbOracleComp.eval_interpret, ProbComp.eval_pure, randomFunctionOracle, id_eq]
   dsimp only
   rw [hreal_eq, hideal_eq]

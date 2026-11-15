@@ -15,6 +15,7 @@ public import Mathlib.Algebra.Module.ZMod
 public import Mathlib.Algebra.Polynomial.Monic
 public import Mathlib.Data.ZMod.Basic
 public import Mathlib.LinearAlgebra.Dimension.Finrank
+import CslibFrontier.Foundations.Data.ZMod.NatCast
 import Mathlib.Algebra.CharP.Algebra
 import Mathlib.Algebra.CharP.Lemmas
 import Mathlib.Algebra.Polynomial.Degree.IsMonicOfDegree
@@ -491,7 +492,7 @@ private theorem coeffPattern_zero_ne [Finite F] {n d : ℕ} [NeZero n]
   intro h0
   set b : ZMod n → F := fun j => a (j - ((n - 1 : ℕ) : ZMod n)) ^ 2 ^ (n - 1)
   have hshift : ∀ j : ZMod n, j - ((n - 1 : ℕ) : ZMod n) = j + 1 := fun j => by
-    rw [Nat.cast_sub NeZero.one_le, ZMod.natCast_self, Nat.cast_one, zero_sub, sub_neg_eq_add]
+    rw [ZMod.natCast_self_sub_one, sub_neg_eq_add]
   have hb : ∀ j : ZMod n, n - d ≤ j.val → b j = 0 := by
     intro j hj
     simp only [b, hshift]

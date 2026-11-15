@@ -21,6 +21,7 @@ import CslibFrontier.Computability.Probabilistic.Adaptive
 import CslibFrontier.Computability.Probabilistic.PPT.Capture
 import CslibFrontier.Computability.Probabilistic.Sampling
 import CslibFrontier.Computability.Probabilistic.UniformNat
+import CslibFrontier.Languages.Probabilistic.UniformNat.LowerBound
 import CslibFrontier.Languages.Probabilistic.UniformNat.Support
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
@@ -125,74 +126,6 @@ of `fairWalk w`. -/
 noncomputable def fairTrial [Fintype V] (w : ℕ) (φ : CNF V) : PMF (V → Bool) :=
   (PMF.uniformOfFintype (V → Bool)).bind (fairWalk w φ (3 * Fintype.card V))
 
-/-- Pointwise lower bound on `sampleModNat w m`: every residue `i < m` has probability at least
-`(1 - m / 2 ^ w) / m`. -/
-theorem le_eval_sampleModNat_toReal {w m i : ℕ} (hi : i < m) :
-    (1 - (m : ℝ) / (2 : ℝ) ^ w) * (m : ℝ)⁻¹ ≤
-      (ProbComp.eval (ProbComp.sampleModNat w m) i).toReal := by
-  have hm : 0 < m := Nat.lt_of_le_of_lt (Nat.zero_le _) hi
-  have hmR : (0 : ℝ) < m := by exact_mod_cast hm
-  have h2w : (0 : ℝ) < (2 : ℝ) ^ w := by positivity
-  let Q := 2 ^ w / m
-  let emb : Fin Q ↪ Fin (2 ^ w) :=
-    ⟨fun q => ⟨q.val * m + i, by
-      have hqm : (q.val + 1) * m ≤ Q * m := Nat.mul_le_mul_right m q.isLt
-      have hdiv : Q * m ≤ 2 ^ w := Nat.div_mul_le_self (2 ^ w) m
-      linarith⟩, by
-      intro a b hab
-      simp only [Fin.mk.injEq] at hab
-      exact Fin.ext (Nat.mul_right_cancel hm (by omega))⟩
-  have hmod (q : Fin Q) : (emb q).val % m = i := by
-    change (q.val * m + i) % m = i
-    rw [Nat.add_comm, Nat.add_mul_mod_self_right, Nat.mod_eq_of_lt hi]
-  have hcard : Q ≤ (Finset.univ.filter (fun x : Fin (2 ^ w) => x.val % m = i)).card := by
-    calc Q = (Finset.univ.map emb).card := by simp only [Finset.card_map, Finset.card_fin]
-      _ ≤ (Finset.univ.filter (fun x : Fin (2 ^ w) => x.val % m = i)).card := by
-        apply Finset.card_le_card
-        intro x hx
-        obtain ⟨q, -, rfl⟩ := Finset.mem_map.mp hx
-        exact Finset.mem_filter.mpr ⟨Finset.mem_univ _, hmod q⟩
-  have hpmf : (ProbComp.eval (ProbComp.sampleModNat w m) i).toReal =
-      ((Finset.univ.filter (fun x : Fin (2 ^ w) => x.val % m = i)).card : ℝ) / (2 : ℝ) ^ w := by
-    rw [ProbComp.eval_sampleModNat, PMF.map_apply, tsum_fintype]
-    simp only [PMF.uniformOfFintype_apply, Fintype.card_fin, Nat.cast_pow, Nat.cast_ofNat]
-    have hfin : ∀ x : Fin (2 ^ w),
-        (if i = x.val % m then (((2 : ℝ≥0∞) ^ w)⁻¹ : ℝ≥0∞) else 0) ≠ ⊤ := by
-      intro x
-      split_ifs
-      · exact ENNReal.inv_ne_top.mpr (pow_ne_zero w two_ne_zero)
-      · exact ENNReal.zero_ne_top
-    rw [ENNReal.toReal_sum (fun x _ => hfin x)]
-    calc ∑ x : Fin (2 ^ w), (if i = x.val % m then (((2 : ℝ≥0∞) ^ w)⁻¹ : ℝ≥0∞) else 0).toReal
-        = ∑ x : Fin (2 ^ w), if x.val % m = i then ((2 : ℝ) ^ w)⁻¹ else 0 := by
-          refine Finset.sum_congr rfl fun x _ => ?_
-          by_cases hx : x.val % m = i
-          · simp only [hx, ↓reduceIte, ENNReal.toReal_inv, ENNReal.toReal_pow, ENNReal.toReal_ofNat]
-          · have hx' : i ≠ x.val % m := Ne.symm hx
-            simp only [hx, hx', ↓reduceIte, ENNReal.toReal_zero]
-      _ = ((Finset.univ.filter (fun x : Fin (2 ^ w) => x.val % m = i)).card : ℝ) *
-            ((2 : ℝ) ^ w)⁻¹ := by
-          rw [← Finset.sum_filter, Finset.sum_const, nsmul_eq_mul]
-      _ = ((Finset.univ.filter (fun x : Fin (2 ^ w) => x.val % m = i)).card : ℝ) / (2 : ℝ) ^ w :=
-          div_eq_mul_inv _ _
-  rw [hpmf]
-  have hQ_ineq : (2 : ℝ) ^ w - m ≤ (Q : ℝ) * m := by
-    have hrem : 2 ^ w < (Q + 1) * m := by
-      dsimp only [Q]
-      have h1 := Nat.div_add_mod (2 ^ w) m
-      have h2 := Nat.mod_lt (2 ^ w) hm
-      nlinarith
-    have hremR : (2 : ℝ) ^ w ≤ ((Q : ℝ) + 1) * m := by exact_mod_cast hrem.le
-    linarith
-  have hQ_le : (Q : ℝ) ≤ (Finset.univ.filter (fun x : Fin (2 ^ w) => x.val % m = i)).card := by
-    exact_mod_cast hcard
-  calc (1 - (m : ℝ) / (2 : ℝ) ^ w) * (m : ℝ)⁻¹
-      = ((2 : ℝ) ^ w - m) / ((m : ℝ) * (2 : ℝ) ^ w) := by field_simp
-    _ ≤ ((Q : ℝ) * m) / ((m : ℝ) * (2 : ℝ) ^ w) := by gcongr
-    _ = (Q : ℝ) / (2 : ℝ) ^ w := by field_simp
-    _ ≤ ((Finset.univ.filter (fun x : Fin (2 ^ w) => x.val % m = i)).card : ℝ) / (2 : ℝ) ^ w := by
-        gcongr
-
 /-- Pointwise domination of one transition when `c.length ≤ k`. -/
 theorem le_fairFlipStep_toReal {w k : ℕ} {c : Clause V} (hclen : c.length ≤ k)
     (σ τ : V → Bool) :
@@ -273,7 +206,7 @@ theorem le_fairFlipStep_toReal {w k : ℕ} {c : Clause V} (hclen : c.length ≤ 
     refine Finset.sum_le_sum fun i _ => ?_
     by_cases hτ : τ = flipOn {(c.get i).1} σ
     · simp only [hτ, ↓reduceIte]
-      have hstep := le_eval_sampleModNat_toReal (w := w) i.isLt
+      have hstep := ProbComp.le_eval_sampleModNat_toReal (w := w) i.isLt
       have hcpos : (0 : ℝ) ≤ (c.length : ℝ)⁻¹ := by positivity
       exact (mul_le_mul_of_nonneg_right hα_m hcpos).trans hstep
     · simp only [hτ, ↓reduceIte, mul_zero, le_refl]

@@ -21,6 +21,7 @@ import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Option
 import CslibFrontier.Computability.Probabilistic.PPT.Capture
 import CslibFrontier.Foundations.Data.List.Counting
+import CslibFrontier.Foundations.Data.ZMod.NatCast
 import Mathlib.Data.List.GetD
 import Mathlib.Data.Nat.Size
 
@@ -103,8 +104,7 @@ variable {p : ℕ}
 
 theorem natCast_subMod [NeZero p] (a b : ℕ) : ((subMod p a b : ℕ) : ZMod p) = a - b := by
   unfold subMod
-  rw [ZMod.natCast_mod, Nat.cast_add, Nat.cast_sub (Nat.mod_lt _ (NeZero.pos p)).le,
-    ZMod.natCast_mod, ZMod.natCast_self, ZMod.natCast_mod]
+  rw [ZMod.natCast_mod, Nat.cast_add, ZMod.natCast_sub_mod_eq_neg, ZMod.natCast_mod]
   ring
 
 theorem natCast_connectiveMod [NeZero p] (o : ArithQBF.Connective) (a b : ℕ) :

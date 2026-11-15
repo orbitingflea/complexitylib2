@@ -10,6 +10,7 @@ module
 public import CslibFrontier.Computability.TreeEval.Ary.Packed.RawController
 import CslibFrontier.Computability.TreeEval.Ary.IterativeCorrect
 import CslibFrontier.Computability.TreeEval.Ary.IterativeBounds
+import CslibFrontier.Foundations.Data.ZMod.NatCast
 
 /-!
 # Raw-controller transition correspondence
@@ -79,9 +80,6 @@ private theorem toCfg_call (hd : 0 < d) (bank : List ℕ)
       ⟨toRegs p d r bank, st, .call (c : ZMod p) t⟩ := by
   simp only [toCfg, toMode, List.map_map, Function.comp_def, toFrame_ofFrame,
     List.map_id_fun', id_eq, Nat.mod_eq_of_lt t.isLt]
-
-private theorem cast_negOne : ((p - 1 : ℕ) : ZMod p) = -1 := by
-  rw [Nat.cast_sub (Fact.out : p.Prime).one_lt.le, ZMod.natCast_self, Nat.cast_one, zero_sub]
 
 private theorem unitAt_units {j : ℕ} (hj : j < p - 1) :
     ((j + 1 : ℕ) : ZMod p) = (Ary.Iter.unitAt (units p) j : ZMod p) := by
@@ -204,7 +202,8 @@ theorem toCfg_step_ofCfg (hd : 0 < d)
             (scaleBank p r (reg d fr.target fr.child) (Reader.unitInv p fr.round) (ofRegs S),
               ({ fr with child := child, undo := true } :: st).map ofFrame,
               some (p - 1, (Ary.reg fr.target child).val)) = _
-          rw [toCfg_call, cast_negOne, toRegs_scale_inverse S fr.target fr.child fr.round hr]
+          rw [toCfg_call, ZMod.natCast_self_sub_one,
+            toRegs_scale_inverse S fr.target fr.child fr.round hr]
         · by_cases hi : fr.round + 1 < p - 1
           · rw [Ary.Iter.step_ret_undo_round hd e E (units p) read S fr st hu hj]
             · simp only [step, hvalid, ↓reduceIte, stepCore, ofFrame, hu, hj, hi, ↓reduceIte]
@@ -244,7 +243,7 @@ theorem toCfg_step_ofCfg (hd : 0 < d)
             (subBank p r fr.target fr.coeff.val reply.2 (ofRegs S),
               ({ fr with child := ⟨0, hd⟩, undo := true } :: st).map ofFrame,
               some (p - 1, (Ary.reg fr.target ⟨0, hd⟩).val)) = _
-          rw [toCfg_call, cast_negOne, toRegs_subBank_expected E read S st fr.coeff
+          rw [toCfg_call, ZMod.natCast_self_sub_one, toRegs_subBank_expected E read S st fr.coeff
             fr.target reply.2 hv]
 
 /-- Canonical padded cells retain exactly one modulus offset. -/

@@ -4189,9 +4189,9 @@ theorem succProbability_eufCmaGame_scheme_le (S : IndexedSignatureScheme) (T : S
         ((scheme S T (prfCoins family) N depth hcoins hN hdepth hcap hdepth_pos).eufCmaGame
           adversary n)) ≤
       Game.advantage
-        (ProbComp.eval (prfRealGame family
+        (ProbComp.eval (prfRealGame id family
           (coinDistinguisher (treeCoinAdversary S T depth N inv adversary)) (N n)))
-        (ProbComp.eval (prfIdealGame
+        (ProbComp.eval (prfIdealGame id id
           (coinDistinguisher (treeCoinAdversary S T depth N inv adversary)) (N n))) +
       dyadicSize (slotBound n) * Game.succProbability
         (ProbComp.eval

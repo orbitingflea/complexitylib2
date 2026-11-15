@@ -228,8 +228,8 @@ theorem advantage_label_atLevel {family : List Bool → List Bool → List Bool}
     (hlength : ∀ key query, query.length = key.length → (family key query).length = key.length)
     (W : OracleDistinguisher) (n : ℕ) :
     PRF.advantage (PRF.label (PRF.atLevel family (n + 1))) ((labelCodec n).adapt (W n [])) =
-      Game.advantage (ProbComp.eval (prfRealGame family (labelReduction W) (n + 1)))
-        (ProbComp.eval (prfIdealGame (labelReduction W) (n + 1))) := by
+      Game.advantage (ProbComp.eval (prfRealGame id family (labelReduction W) (n + 1)))
+        (ProbComp.eval (prfIdealGame id id (labelReduction W) (n + 1))) := by
   rw [PRF.advantage_label, ← PRF.advantage_atLevel_adapt hlength]
   simp only [PRF.advantage, PRF.realExperiment, PRF.idealExperiment, run_adapt_labelReduction]
 

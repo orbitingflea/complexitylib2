@@ -11,6 +11,7 @@ import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime
 import CslibFrontier.Crypto.Computational.DiscreteLog.SchnorrGroup
 import CslibFrontier.Computability.Probabilistic.UniformNat.ModIndex
 import CslibFrontier.Crypto.Negligible.Basic
+import CslibFrontier.Languages.Probabilistic.UniformNat.LowerBound
 import CslibFrontier.Probability.PMF.DensityBounds
 import CslibFrontier.Probability.PMF.UniformIndex
 
@@ -19,24 +20,27 @@ import CslibFrontier.Probability.PMF.UniformIndex
 
 An ordinary `module` client of `CslibFrontier.Crypto.Computational.DiffieHellman.ListCDH` and
 `CslibFrontier.Crypto.Computational.DiffieHellman.ListCDHFamily` ([BonehShoup2023],
-Section 21.11.4), of the probability lemmas they use, and of the capped residue sampler
-`Cslib.ProbComp.sampleModIndex` and its certificate.
+Section 21.11.4), of the probability lemmas they use, of the capped residue sampler
+`Cslib.ProbComp.sampleModIndex` and its certificate, and of the lower bounds on `sampleModNat`.
 
 * A uniform index below `3` selects the only entry of a one-entry list with probability at least
   `1 / 3`, and a uniform index below `2` selects `x` from `[x, x]` with probability `1`. A bound
   at one outcome of every continuation survives an initial draw even where it fails at the other
   outcome, and so does an affine bound, whose constant is not multiplied.
 * `sampleModIndex width 0` returns `0`, `sampleModIndex width 3` is `sampleModNat width 3`, and the
-  sampler is PPT with `width n = n` and bound `3`.
+  sampler is PPT with `width n = n` and bound `3`. With `2` coins and modulus `3`, residue `2`
+  satisfies both lower bounds, in `ℝ` and in `ℝ≥0∞`.
 * In `ZMod 7` with `g = 1`: at `Q = 0` the list experiment is never won; an adversary that returns
   the Diffie–Hellman value always wins for every `Q ≠ 0`, and the bound makes the reduction always
   right at `Q = 1` and right with probability at least `1 / 3` at `Q = 3`, larger than the list's
   length; an adversary that returns the Diffie–Hellman value twice is handled by the same bound;
   past the end of its list the reduction returns `g`; an entry beyond the first `Q` does not
-  count; and the general bound applies to the deterministic index `0` at `Q = 1` with factor `1`.
-  With the fair-coin index, the bound at `Q = 0` says the list experiment is never won, and at
-  `Q = 3`, not a power of two, it gives `1 ≤ 3 * p + 9 / 2 ^ width` for the reduction's success
-  probability `p`.
+  count; the general bound applies to the deterministic index `0` at `Q = 1` with factor `1`, and
+  its additive form at `Q = 2` with factor `1` and term `1`, which covers the second entry that
+  the index never reads. With the fair-coin index, the bound at `Q = 0` says the list experiment is
+  never won, and at `Q = 3`, not a power of two, it gives `1 ≤ 3 * p + 3 / 2 ^ width` for the
+  reduction's success probability `p`. The success probability does not decrease from `Q = 1` to
+  `Q = 3`.
 * Over any prime-order group family, the game unfolds to the fixed-group experiment, the PPT
   predicate is satisfied by the adversary that returns its two inputs, and the certificate, the
   loss bound and the conclusion under CDH apply to it with `width n = n` and `Q n = n`, including
@@ -107,6 +111,15 @@ example (width : ℕ) : ProbComp.sampleModIndex width 3 = ProbComp.sampleModNat 
 example : IsPPTOn encUnary encUnary fun n : ℕ => ProbComp.sampleModIndex n 3 :=
   isPPTOn_sampleModIndex (width := fun n => n) .id' (ComputableInPolyTime.const 3)
 
+/-- With `2` coins and modulus `3`, residue `2` has probability at least `(1 - 3 / 4) / 3`. -/
+example : (1 - (3 : ℝ) / (2 : ℝ) ^ 2) * (3 : ℝ)⁻¹ ≤
+    (ProbComp.eval (ProbComp.sampleModNat 2 3) 2).toReal := by
+  exact_mod_cast ProbComp.le_eval_sampleModNat_toReal (w := 2) (m := 3) (i := 2) (by decide)
+
+/-- The same bound without subtraction: `1 ≤ 3 * Pr[2] + 3 / 2 ^ 2`. -/
+example : 1 ≤ (3 : ℝ≥0∞) * ProbComp.eval (ProbComp.sampleModNat 2 3) 2 + 3 / 2 ^ 2 := by
+  exact_mod_cast ProbComp.one_le_mul_eval_sampleModNat_add (w := 2) (m := 3) (i := 2) (by decide)
+
 /-! ### The fixed-group experiment in `ZMod 7` with `g = 1` -/
 
 /-- At `Q = 0` the list experiment is never won, whatever the adversary returns. -/
@@ -175,11 +188,11 @@ example (width : ℕ) (A : ZMod 7 → ZMod 7 → ProbComp (List (ZMod 7))) :
   simpa using eval_listCDHExperiment_le_mul_add 7 (1 : ZMod 7) width 0 A
 
 /-- With the fair-coin index at `Q = 3`, which is not a power of two, `productList` gives
-`1 ≤ 3 * p + 9 / 2 ^ width` for the reduction's success probability `p`. -/
+`1 ≤ 3 * p + 3 / 2 ^ width` for the reduction's success probability `p`. -/
 example (width : ℕ) :
     1 ≤ 3 * ProbComp.eval (cdhExperiment 7 (1 : ZMod 7)
         (listCDHToCDH (1 : ZMod 7) (ProbComp.sampleModIndex width 3) productList)) true +
-      9 / 2 ^ width := by
+      3 / 2 ^ width := by
   have h := eval_listCDHExperiment_le_mul_add 7 (1 : ZMod 7) width 3 productList
   have h1 : ProbComp.eval (listCDHExperiment 7 (1 : ZMod 7) 3 productList) true = 1 := by
     have h' := listCDHAdvantage_productList three_ne_zero
@@ -201,6 +214,19 @@ example (A : ZMod 7 → ZMod 7 → ProbComp (List (ZMod 7))) :
       simp only [List.take_succ_cons, List.take_zero, List.mem_singleton] at hx
       subst hx
       simp [ProbComp.eval_pure]) A
+
+/-- The additive form with the deterministic index `0` at `Q = 2`: the second entry may never be
+read, and the term `1`, added once and not multiplied by the factor `1`, covers it. -/
+example (A : ZMod 7 → ZMod 7 → ProbComp (List (ZMod 7))) :
+    ProbComp.eval (listCDHExperiment 7 (1 : ZMod 7) 2 A) true ≤
+      1 * ProbComp.eval (cdhExperiment 7 (1 : ZMod 7) (listCDHToCDH 1 (pure 0) A)) true + 1 :=
+  eval_listCDHExperiment_le_mul_add_of_index 7 1 2 (pure 0) (fun _ _ _ => le_add_self) A
+
+/-- Raising the bound from `Q = 1` to `Q = 3` does not lower the success probability. -/
+example (A : ZMod 7 → ZMod 7 → ProbComp (List (ZMod 7))) :
+    ProbComp.eval (listCDHExperiment 7 (1 : ZMod 7) 1 A) true ≤
+      ProbComp.eval (listCDHExperiment 7 (1 : ZMod 7) 3 A) true :=
+  eval_listCDHExperiment_mono 7 1 (by decide) A
 
 /-! ### The family layer -/
 
@@ -242,7 +268,7 @@ example (setup : ℕ → PMF F.Desc) (n : ℕ) :
     Game.succProbability (F.listCDHGame setup (fun n => n) (inputsListAdversary F) n) ≤
       n * Game.succProbability (F.cdhGame setup
           (F.listCDHToCDHAdversary (fun n => n) (fun n => n) (inputsListAdversary F)) n) +
-        n ^ 2 / 2 ^ n :=
+        n / 2 ^ n :=
   F.succProbability_listCDHGame_le setup (fun n => n) (fun n => n) _ n
 
 /-- The loss bound with `Q n = 0`: the list game is never won. -/
@@ -256,7 +282,7 @@ example (setup : ℕ → PMF F.Desc) (adversary : F.ListCDHAdversary) (n : ℕ) 
     Game.succProbability (F.listCDHGame setup (fun _ => 3) adversary n) ≤
       3 * Game.succProbability
           (F.cdhGame setup (F.listCDHToCDHAdversary (fun n => n) (fun _ => 3) adversary) n) +
-        9 / 2 ^ n := by
+        3 / 2 ^ n := by
   have h := F.succProbability_listCDHGame_le setup (fun n => n) (fun _ => 3) adversary n
   norm_num at h
   exact h

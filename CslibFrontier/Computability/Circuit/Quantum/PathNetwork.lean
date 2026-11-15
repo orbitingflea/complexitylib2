@@ -12,6 +12,7 @@ public import CslibFrontier.Computability.Circuit.Frontier.TensorNetwork.Explici
 import CslibFrontier.Foundations.Data.List.Boole
 import CslibFrontier.Foundations.Data.List.GetD
 import CslibFrontier.Foundations.Data.List.SumIndicator
+import CslibFrontier.Foundations.Data.ZMod.NatCast
 import Mathlib.Data.List.GetD
 import Mathlib.Data.List.OfFn
 import Mathlib.Logic.Equiv.Fin.Basic
@@ -885,10 +886,9 @@ theorem contraction_network_mod (S : List ℕ) (X : List Bool) (gs : List GateCo
     exact this.trans_lt (Nat.pow_lt_pow_right (by norm_num) hP)
   have hcast : ((network (2 ^ P - 1 : ℕ) S X gs).2.contraction : ZMod (2 ^ P)) =
       ((onesGap S gs X).toNat : ZMod (2 ^ P)) := by
-    have hneg : ((2 ^ P - 1 : ℕ) : ZMod (2 ^ P)) = -1 := by
-      rw [Nat.cast_sub Nat.one_le_two_pow, ZMod.natCast_self, Nat.cast_one, zero_sub]
     rw [← Nat.coe_castRingHom, ExplicitTensorNetwork.map_contraction, network_mapTables,
-      Nat.coe_castRingHom, hneg, contraction_network S X gs hgs, ← Int.toNat_of_nonneg h0]
+      Nat.coe_castRingHom, ZMod.natCast_self_sub_one (2 ^ P), contraction_network S X gs hgs,
+      ← Int.toNat_of_nonneg h0]
     simp
   rw [ZMod.natCast_eq_natCast_iff'] at hcast
   rw [hcast, Nat.mod_eq_of_lt hlt]

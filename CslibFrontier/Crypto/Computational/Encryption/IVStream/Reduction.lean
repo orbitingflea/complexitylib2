@@ -243,11 +243,11 @@ theorem eval_prfRealGame_ivStreamToPrfDistinguisher
       (keystreamQueries n iv blocks).run (fun request => pure (prfOracle family n k request.2)) =
         pure (keystream n k iv blocks))
     (adversary : OracleDistinguisher) (bit : Bool) :
-    ProbComp.eval (prfRealGame family (ivStreamToPrfDistinguisher keystreamQueries adversary bit)
+    ProbComp.eval (prfRealGame id family (ivStreamToPrfDistinguisher keystreamQueries adversary bit)
         n) =
       ProbComp.eval (symmetricCPAGameOn blockPairValid BitString.sampleList
         (ivStreamEncrypt keystream) adversary bit n) := by
-  simp only [prfRealGame, symmetricCPAGameOn, ivStreamToPrfDistinguisher,
+  simp only [prfRealGame, id_eq, symmetricCPAGameOn, ivStreamToPrfDistinguisher,
     ProbOracleComp.run_simulate, ProbComp.eval_bind, BitString.eval_sampleList]
   refine PMF.bind_congr_on_support _ _ _ fun k hk => ?_
   have hkLen : k.length = n := BitString.length_of_mem_support_uniformList hk
@@ -322,11 +322,12 @@ theorem eval_prfIdealGame_ivStreamToPrfDistinguisher
           pure ((keystreamBlocks f iv blocks).flatMap List.ofFn))
     (adversary : OracleDistinguisher) (bit : Bool) {ℓ : ℕ}
     (hℓ : (adversary n []).QueriesSatisfy fun request => request.2.length ≤ ℓ) :
-    ProbComp.eval (prfIdealGame (ivStreamToPrfDistinguisher keystreamQueries adversary bit) n) =
+    ProbComp.eval
+        (prfIdealGame id id (ivStreamToPrfDistinguisher keystreamQueries adversary bit) n) =
       ProbComp.eval (PRF.idealExperiment
         (blockModeReduction typedQueries ℓ bit (blockModeWordAdversary adversary n))) := by
-  simp only [prfIdealGame, PRF.idealExperiment, ivStreamToPrfDistinguisher, blockModeReduction,
-    blockModeWordAdversary, ProbOracleComp.run_simulate, ProbComp.eval_bind]
+  simp only [prfIdealGame, id_eq, PRF.idealExperiment, ivStreamToPrfDistinguisher,
+    blockModeReduction, blockModeWordAdversary, ProbOracleComp.run_simulate, ProbComp.eval_bind]
   exact congrArg _ (funext fun f =>
     hℓ.eval_run_congr fun request hrequest =>
       eval_run_ivStreamPrfHandler_randomFunction (hlen f) (htyped f) (hword f) ℓ bit request

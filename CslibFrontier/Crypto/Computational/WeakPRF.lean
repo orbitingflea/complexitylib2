@@ -207,9 +207,9 @@ private theorem eval_interpret_weakToPrfDistinguisher (adversary : OracleDisting
 theorem eval_prfRealGame_weakToPrfDistinguisher (family : List Bool → List Bool → List Bool)
     (hlen : ∀ key query, query.length = key.length → (family key query).length = key.length)
     (adversary : OracleDistinguisher) (n : ℕ) :
-    ProbComp.eval (prfRealGame family (weakToPrfDistinguisher adversary) n) =
+    ProbComp.eval (prfRealGame id family (weakToPrfDistinguisher adversary) n) =
       ProbComp.eval (weakPrfRealGame family adversary n) := by
-  simp only [prfRealGame, weakPrfRealGame, ProbComp.eval_bind]
+  simp only [prfRealGame, id_eq, weakPrfRealGame, ProbComp.eval_bind]
   refine PMF.bind_congr_on_support _ _ _ fun key hkey => ?_
   rw [BitString.eval_sampleList] at hkey
   have hkeyLen : key.length = n := BitString.length_of_mem_support_uniformList hkey
@@ -219,9 +219,9 @@ theorem eval_prfRealGame_weakToPrfDistinguisher (family : List Bool → List Boo
 
 /-- The reduction turns the adaptive ideal game into the weak ideal game. -/
 theorem eval_prfIdealGame_weakToPrfDistinguisher (adversary : OracleDistinguisher) (n : ℕ) :
-    ProbComp.eval (prfIdealGame (weakToPrfDistinguisher adversary) n) =
+    ProbComp.eval (prfIdealGame id id (weakToPrfDistinguisher adversary) n) =
       ProbComp.eval (weakPrfIdealGame adversary n) := by
-  simp only [prfIdealGame, weakPrfIdealGame, ProbComp.eval_bind]
+  simp only [prfIdealGame, id_eq, weakPrfIdealGame, ProbComp.eval_bind]
   congr 1
   funext table
   refine eval_interpret_weakToPrfDistinguisher adversary n _ fun point hpoint => ?_

@@ -4,17 +4,24 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Karn Seth
 -/
 
+module
+
 import CslibFrontier.Crypto.Primitives.Garbling.BMR16
 import CslibFrontier.Probability.PMF.Uniform
 import CslibFrontier.Probability.Product
 
 /-! # BMR16 garbling of mixed-modulus circuits: checked instances
 
-A two-gate circuit with a projection `ℤ₂ → ℤ₃` followed by an addition modulo `3`, evaluated by
-computation; the number of ciphertexts of a projection gate; correctness, simulator correctness,
-legality of the reduction and the privacy theorem instantiated with injective tweaks; the
+Clients of the BMR16 API under module encapsulation, with ordinary imports. A two-gate circuit
+with a projection `ℤ₂ → ℤ₃` followed by an addition modulo `3`, evaluated by computation; the
+number of ciphertexts of a projection gate; correctness, simulator correctness, legality of the
+reduction, the privacy equality instantiated with injective tweaks and the algebraic helper
+`advantage_realGame_simGame_le_of_mixedModulusCCR_of_reduction_mem` applied to it; the
 mixed-modulus CCR games on an adversary that makes no query; and a legal one-query adversary
 showing that the constant zero hash is not mixed-modulus CCR for any bound below `1 / 2`. -/
+
+-- This regression module checks ordinary imports and exports no test fixtures.
+set_option linter.privateModule false
 
 namespace CslibFrontierTests.GarblingBMR16
 
@@ -108,6 +115,14 @@ example (x : Env (Residue μ) [0, 1]) (D : View ℓ crossC → ProbComp Bool) :
     Game.advantage (realGame toyH tw crossC x D) (simGame toyH tw crossC x D) =
       ccrAdvantage toyH (reduction toyH tw crossC x D) :=
   advantage_realGame_simGame toyH tw crossC x D tw_injOn
+
+-- The algebraic helper: for every hash, a `MixedModulusCCR` bound `ε` against a class containing
+-- the reduction bounds the advantage of the distinguisher by `ε`.
+example (H : MixedModulusHash (Fin 2) μ ℓ) (x : Env (Residue μ) [0, 1])
+    (D : View ℓ crossC → ProbComp Bool) {𝒟 : Set (CCRAdversary (Fin 2) μ ℓ)} {ε : NNReal}
+    (hH : MixedModulusCCR H 𝒟 ε) (hD : reduction H tw crossC x D ∈ 𝒟) :
+    Game.advantage (realGame H tw crossC x D) (simGame H tw crossC x D) ≤ ε :=
+  advantage_realGame_simGame_le_of_mixedModulusCCR_of_reduction_mem H tw crossC x D tw_injOn hH hD
 
 -- An adversary that makes no query is legal and has advantage zero, so `MixedModulusCCR` with
 -- bound `0` is satisfiable for that class.

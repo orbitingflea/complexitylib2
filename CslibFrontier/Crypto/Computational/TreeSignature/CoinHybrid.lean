@@ -523,9 +523,9 @@ theorem succProbability_treeGame_le_prf (adversary : Forger) (n : ℕ) :
     Game.succProbability (ProbComp.eval (treeGame S T depth N (prfCoins family) adversary n)) ≤
       Game.succProbability (ProbComp.eval (treeIdealGame S T depth N adversary n)) +
         Game.advantage
-          (ProbComp.eval (prfRealGame family
+          (ProbComp.eval (prfRealGame id family
             (coinDistinguisher (treeCoinAdversary S T depth N inv adversary)) (N n)))
-          (ProbComp.eval (prfIdealGame
+          (ProbComp.eval (prfIdealGame id id
             (coinDistinguisher (treeCoinAdversary S T depth N inv adversary)) (N n))) := by
   rw [← eval_coinRealGame, ← eval_coinIdealGame]
   exact succProbability_treeGame_le family hinv adversary n

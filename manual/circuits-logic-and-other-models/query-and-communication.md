@@ -38,6 +38,30 @@ The [superquadratic sensitivity separation](https://github.com/cslib-community/c
 
 [RandomizedDecisionTree](https://github.com/cslib-community/cslib-frontier/blob/13e6a31951bf1c89a1a6258c44f9444aecbbefd8/Complexity/Computability/QueryComplexity/Randomized.lean#L78) is a finite-support real simplex over deterministic trees. Its cost is the largest structural depth of any supported tree, and its error bound holds separately on every input. This is a worst-case randomized-query model, not an expected-query model. `RandomizedDecisionTree.mapOutput g` post-processes the output by relabelling leaves with `DecisionTree.map g`. It adds no depth (`depth_mapOutput_le`) and no error against `g ∘ f` (`errorProb_mapOutput_le`), so lower bounds for `g ∘ f` transfer to `f`. More generally, `RandomizedDecisionTree.mapTree φ` applies a tree transformation `φ` to the drawn tree. It adds the depth that `φ` adds (`depth_mapTree_le`) and no error when `φ` preserves correctness (`errorProb_mapTree_le`). The Simon search lower bounds are derived from the decision version in these two ways: `mapOutput` for the variant that includes `s = 0`, and a verification appended by `mapTree` for the problem with `s ≠ 0`. For search problems with many distinct answers, `RandomizedDecisionTree.card_mul_one_sub_le_two_pow_depth` ([Randomized/Counting.lean](../../CslibFrontier/Computability/QueryComplexity/Randomized/Counting.lean)) gives the counting lower bound `|S| (1 − ε) ≤ 2^q`; Bernstein–Vazirani uses it.
 
+For independent inputs with separate query caps, import
+[DirectProduct](../../CslibFrontier/Computability/QueryComplexity/DirectProduct.lean).
+`DecisionTree.Capped t c` says that a tree on `J × ι` queries block `j` at most `c j` times on
+every structural path. It uses `weightedDepth` with indicator costs, so repeated queries and
+unreachable branches still count. For each block, provide a partial function
+`f j : (ι → Bool) → Option β`, nonnegative weights `ν j`, and a bound `b j` on the weighted
+success of every tree of depth at most `c j`; `ι`, `J` and the nonempty output type `β` are
+finite. `DecisionTree.productSuccess_le_prod` then bounds the weighted probability that a
+capped tree answers every block correctly by `∏ j, b j`, even when it chooses adaptively which
+block to query. With `r` copies of one problem, cap `L` and bound `b`, this is `b ^ r`, the
+direct product lemma of OpenAI's quartic separation preprint (Lemma 4.1).
+
+`DecisionTree.sum_mul_productSuccess_le_prod` averages over independent side information drawn
+from a `StdSimplex`, and `RandomizedDecisionTree.sum_mul_productSuccess_le_prod` applies to a
+`RandomizedDecisionTree`; every tree with positive weight must respect the caps. A total-depth
+bound no larger than every cap suffices (`productSuccess_le_prod_of_depth_le`). The weights need
+not sum to one. An input mapped to `none` contributes no success; for a probability statement,
+supply normalised weights supported on the promise. The caps cannot be replaced by a total
+budget of `∑ j, c j` queries or by caps on the expected number of queries: the
+[test module](../../CslibFrontierTests/QueryComplexity/DirectProduct.lean) checks a counterexample
+to each, together with a tight instance with success `1/4 = (1/2)^2`. From the repository root,
+check it with
+`scripts/build.sh --wfail --iofail CslibFrontierTests.QueryComplexity.DirectProduct`.
+
 The [zero-error module](../../CslibFrontier/Computability/QueryComplexity/Randomized/ZeroError.lean) adds the expected-query view on the same simplex type, not a second randomized-tree type. `RandomizedDecisionTree.expectedCost` is the weighted average of the queries the drawn tree actually makes on one input (`DecisionTree.cost`, counting repeats), and `QueryComplexity.zeroErrorComplexity` is the real-valued Las Vegas complexity `R₀`, which takes the infimum over always-correct trees of the worst-input expected cost. It satisfies `R₀ <= D`. Worst-case `randomizedComplexity 0` equals `D`, so `R₀` is the measure that can drop below it. `RandomizedDecisionTree.uniformMixture` builds the algorithm whose coins select a deterministic tree uniformly. For the complete binary AND–OR tree `T_{2,k}` on `n = 4^k` leaves, with AND at the root as in Motwani–Raghavan, every deterministic tree reads all leaves on some input, so `D = n`. This is in [AndOrTree](../../CslibFrontier/Computability/QueryComplexity/AndOrTree.lean), via the Rivest–Vuillemin top-Fourier-coefficient criterion in [Evasive](../../CslibFrontier/Computability/DecisionTree/Evasive.lean). The directional algorithm in [AndOrTree/Randomized](../../CslibFrontier/Computability/QueryComplexity/AndOrTree/Randomized.lean) has an exact expected-cost recurrence. From it come Motwani–Raghavan's `R₀ <= 3^k = n^(log₄ 3)` and Snir's sharp `R₀ <= (α - 1/2) n^(log₂ α)` with `α = (1 + √33)/4`, about `n^0.7537`. Nonconstant functions have `1 <= R₀`. The AND-rooted and OR-rooted orientations transfer through [dual trees](../../CslibFrontier/Computability/DecisionTree/Dual.lean), which swap children and negate leaves. The matching Saks–Wigderson lower bound `Ω(n^(log₂ α))` is not formalized.
 
 For zero-error expected cost, import

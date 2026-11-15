@@ -202,8 +202,16 @@ noncomputable def blindedCDHToCDH
   blindedCDHToCDHWith q g A μ ν s t
 
 /-- The reduction of [BonehShoup2023], Lemma 21.8, with an exactly uniform blinding exponent. Its
-bound, `blindedCDHPairAdvantage_le_cdhAdvantage`, needs `q` prime. -/
-noncomputable def blindedCDHPairToCDH
+bound, `blindedCDHPairAdvantage_le_cdhAdvantage`, needs `q` prime. It is an `abbrev`, so that the
+program it runs after the draw is visibly `blindedCDHPairToCDHWith`, whose efficiency over a group
+family is `PrimeOrderGroupFamily.isPPTOn_blindedCDHPairToCDHWith`. The exactly uniform draw is
+outside that certificate: a strict fair-coin machine outputs each value with a dyadic probability,
+so it can make the draw only when `q` is a power of two. The efficient reduction is
+`PrimeOrderGroupFamily.blindedCDHPairToCDHAdversary` (certified by
+`PrimeOrderGroupFamily.isPPT_blindedCDHPairToCDHAdversary`), which draws with
+`PrimeOrderGroupFamily.sampleExp` and loses `1 / 2 ^ n`
+(`PrimeOrderGroupFamily.succProbability_blindedCDHPairGame_le`). -/
+noncomputable abbrev blindedCDHPairToCDH
     (A : G → G → G → ProbComp (BlindedCDHPairAnswer q G)) (s t : G) : ProbComp G := do
   let μ ← $ᵗ ZMod q
   blindedCDHPairToCDHWith q g A μ s t

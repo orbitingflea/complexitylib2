@@ -53,11 +53,13 @@ example {family : List Bool → List Bool → List Bool}
       (ProbComp.eval (symmetricCPAGameOn blockPairValid BitString.sampleList
         (ofbWordEncrypt family) oneBlockAdversary true 16)) : ℝ) ≤
       (Game.advantage
-        (ProbComp.eval (prfRealGame family (ofbToPrfDistinguisher oneBlockAdversary false) 16))
-        (ProbComp.eval (prfIdealGame (ofbToPrfDistinguisher oneBlockAdversary false) 16)) : ℝ) +
+        (ProbComp.eval (prfRealGame id family (ofbToPrfDistinguisher oneBlockAdversary false) 16))
+        (ProbComp.eval
+          (prfIdealGame id id (ofbToPrfDistinguisher oneBlockAdversary false) 16)) : ℝ) +
       (Game.advantage
-        (ProbComp.eval (prfRealGame family (ofbToPrfDistinguisher oneBlockAdversary true) 16))
-        (ProbComp.eval (prfIdealGame (ofbToPrfDistinguisher oneBlockAdversary true) 16)) : ℝ) +
+        (ProbComp.eval (prfRealGame id family (ofbToPrfDistinguisher oneBlockAdversary true) 16))
+        (ProbComp.eval
+          (prfIdealGame id id (ofbToPrfDistinguisher oneBlockAdversary true) 16)) : ℝ) +
       2 * (((1 : ℕ) : ℝ) * ((50 : ℕ) : ℝ)) *
         (((1 : ℕ) : ℝ) * ((50 : ℕ) : ℝ) + ((50 : ℕ) : ℝ)) / 2 ^ 16 :=
   advantage_ofbWordCPAGame_le hlen oneBlockAdversary (isQueryBounded_oneBlockAdversary 16)

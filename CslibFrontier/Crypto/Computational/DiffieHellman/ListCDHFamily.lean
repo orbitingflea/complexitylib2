@@ -38,10 +38,10 @@ strict PPT machine reads `encCDHInput` and writes the framed list of the words o
 A machine with fair coins cannot draw an exactly uniform position below every `Q n`, so the
 reduction draws its position with `Cslib.ProbComp.sampleModIndex (width n) (Q n)`: the residue
 modulo `Q n` of a number written with `width n` fair coins, capped at `Q n` (which matters only at
-`Q n = 0`). The coin count `width` is a parameter of the reduction. The position is within
-`Q n / 2 ^ width n` of uniform below `Q n`, so the reduction keeps the book's factor `Q n` and adds
-the term `Q n ^ 2 / 2 ^ width n`. With `width n = n` that term is negligible when `Q` is
-polynomially bounded, which gives the conclusion under the CDH assumption.
+`Q n = 0`). The coin count `width` is a parameter of the reduction. Each position below `Q n` is
+drawn with probability at least `1 / Q n - 1 / 2 ^ width n`, so the reduction keeps the book's
+factor `Q n` and adds the term `Q n / 2 ^ width n`. With `width n = n` that term is negligible when
+`Q` is polynomially bounded, which gives the conclusion under the CDH assumption.
 
 ## Main definitions
 
@@ -56,7 +56,7 @@ polynomially bounded, which gives the conclusion under the CDH assumption.
 * `Cslib.Crypto.PrimeOrderGroupFamily.isPPT_listCDHToCDHAdversary`: the reduction is PPT when the
   list adversary is and `width` and `Q` are computable in polynomial time in unary.
 * `Cslib.Crypto.PrimeOrderGroupFamily.succProbability_listCDHGame_le`: the loss, the factor `Q n`
-  plus the term `Q n ^ 2 / 2 ^ width n`, for every `width` and `Q`.
+  plus the term `Q n / 2 ^ width n`, for every `width` and `Q`.
 * `Cslib.Crypto.PrimeOrderGroupFamily.succProbability_listCDHGame_mono`: the success probability
   does not decrease when the bound `Q n` grows.
 * `Cslib.Crypto.PrimeOrderGroupFamily.CDH.negligible_listCDHGame`: under the CDH assumption every
@@ -157,7 +157,7 @@ theorem isPPT_listCDHToCDHAdversary {width Q : ℕ → ℕ}
 
 /-- **Loss of the guessing reduction**: the list form of CDH with bound `Q` is won with probability
 at most `Q n` times the success probability of the reduction in the CDH game, plus
-`Q n ^ 2 / 2 ^ width n`. The factor is the book's `Q` ([BonehShoup2023], Section 21.11.4, p. 908,
+`Q n / 2 ^ width n`. The factor is the book's `Q` ([BonehShoup2023], Section 21.11.4, p. 908,
 and equation (11.12), p. 448); the additive term, which the book does not have, is the cost of
 drawing the position from `width n` fair coins. It holds for every setup law, every `width`, every
 `Q`, including `Q n = 0`, and every adversary. -/
@@ -166,10 +166,10 @@ theorem succProbability_listCDHGame_le (setup : ℕ → PMF F.Desc) (width Q : �
     Game.succProbability (F.listCDHGame setup Q adversary n) ≤
       Q n * Game.succProbability
           (F.cdhGame setup (F.listCDHToCDHAdversary width Q adversary) n) +
-        Q n ^ 2 / 2 ^ width n := by
+        Q n / 2 ^ width n := by
   have hle : F.listCDHGame setup Q adversary n true ≤
       (Q n : ℝ≥0∞) * F.cdhGame setup (F.listCDHToCDHAdversary width Q adversary) n true +
-        (Q n : ℝ≥0∞) ^ 2 / 2 ^ width n :=
+        (Q n : ℝ≥0∞) / 2 ^ width n :=
     PMF.bind_apply_le_mul_bind_apply_add _ fun d =>
       eval_listCDHExperiment_le_mul_add (F.order d) (F.generator d) (width n) (Q n) (adversary n d)
   simp only [Game.succProbability]
@@ -180,19 +180,14 @@ theorem succProbability_listCDHGame_le (setup : ℕ → PMF F.Desc) (width Q : �
 
 /-- **More entries that count cannot hurt the adversary**: if `Q n ≤ Q' n`, the list form of CDH
 with bound `Q'` is won at `n` with probability at least that with bound `Q`, since the first `Q n`
-entries of a list are among its first `Q' n`. -/
+entries of a list are among its first `Q' n` (`Cslib.Crypto.eval_listCDHExperiment_mono` in each
+group). -/
 theorem succProbability_listCDHGame_mono (setup : ℕ → PMF F.Desc) {Q Q' : ℕ → ℕ} {n : ℕ}
     (hle : Q n ≤ Q' n) (adversary : F.ListCDHAdversary) :
     Game.succProbability (F.listCDHGame setup Q adversary n) ≤
-      Game.succProbability (F.listCDHGame setup Q' adversary n) := by
-  refine Game.succProbability_mono (PMF.bind_apply_mono_on_support _ _ fun d _ => ?_)
-  simp only [listCDHExperiment, ProbComp.eval_bind, ProbComp.eval_pure]
-  refine PMF.bind_apply_mono_on_support _ _ fun a _ => ?_
-  refine PMF.bind_apply_mono_on_support _ _ fun b _ => ?_
-  refine PMF.bind_apply_mono_on_support _ _ fun l _ => ?_
-  by_cases hx : (a * b) • F.generator d ∈ l.take (Q n)
-  · simp [hx, List.take_subset_take_left l hle hx]
-  · simp [hx]
+      Game.succProbability (F.listCDHGame setup Q' adversary n) :=
+  Game.succProbability_mono (PMF.bind_apply_mono_on_support _ _ fun d _ =>
+    eval_listCDHExperiment_mono (F.order d) (F.generator d) hle (adversary n d))
 
 /-- **The list form of CDH is hard under CDH** ([BonehShoup2023], Section 21.11.4, p. 908): under
 the CDH assumption, every PPT list adversary wins the list form of CDH with negligible probability,

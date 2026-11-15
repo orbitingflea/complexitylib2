@@ -177,17 +177,17 @@ example (n Q : ℕ) (cpaAdv : OracleDistinguisher)
         (ProbComp.eval (echoPrfEtM.cpaGame cpaAdv true n)) : ℝ) ≤
       (Game.advantage
         (ProbComp.eval
-          (prfRealGame echoFamily
+          (prfRealGame id echoFamily
             (cpaToPrfDistinguisher (etmToCPAAdversary echoPrfMAC cpaAdv) false) n))
         (ProbComp.eval
-          (prfIdealGame
+          (prfIdealGame id id
             (cpaToPrfDistinguisher (etmToCPAAdversary echoPrfMAC cpaAdv) false) n)) : ℝ) +
       (Game.advantage
         (ProbComp.eval
-          (prfRealGame echoFamily
+          (prfRealGame id echoFamily
             (cpaToPrfDistinguisher (etmToCPAAdversary echoPrfMAC cpaAdv) true) n))
         (ProbComp.eval
-          (prfIdealGame
+          (prfIdealGame id id
             (cpaToPrfDistinguisher (etmToCPAAdversary echoPrfMAC cpaAdv) true) n)) : ℝ) +
       2 * (Q : ℝ) ^ 2 / (2 : ℝ) ^ n := by
   have heq :
@@ -211,11 +211,12 @@ example (n : ℕ) :
         (ProbComp.eval (echoPrfCipher.cpaGame zeroCPAAdversary false n))
         (ProbComp.eval (echoPrfCipher.cpaGame zeroCPAAdversary true n)) : ℝ) ≤
       (Game.advantage
-        (ProbComp.eval (prfRealGame echoFamily (cpaToPrfDistinguisher zeroCPAAdversary false) n))
-        (ProbComp.eval (prfIdealGame (cpaToPrfDistinguisher zeroCPAAdversary false) n)) : ℝ) +
+        (ProbComp.eval (prfRealGame id echoFamily (cpaToPrfDistinguisher zeroCPAAdversary false) n))
+        (ProbComp.eval (prfIdealGame id id (cpaToPrfDistinguisher zeroCPAAdversary false) n)) : ℝ) +
       (Game.advantage
-        (ProbComp.eval (prfRealGame echoFamily (cpaToPrfDistinguisher zeroCPAAdversary true) n))
-        (ProbComp.eval (prfIdealGame (cpaToPrfDistinguisher zeroCPAAdversary true) n)) : ℝ) := by
+        (ProbComp.eval (prfRealGame id echoFamily (cpaToPrfDistinguisher zeroCPAAdversary true) n))
+        (ProbComp.eval
+          (prfIdealGame id id (cpaToPrfDistinguisher zeroCPAAdversary true) n)) : ℝ) := by
   have h := advantage_cpaGame_prfCipher_le echoFamily echoFamily_polyTime echoFamily_length
     zeroCPAAdversary n 0 (isQueryBounded_zeroCPAAdversary n)
   simpa [echoPrfCipher] using h

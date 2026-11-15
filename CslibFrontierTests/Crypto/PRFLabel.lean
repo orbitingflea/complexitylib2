@@ -85,8 +85,8 @@ example (g : BitString 1 → BitString 2 × Bool) :
 -- The key-echo family is length-preserving by `rfl`, and at parameter `n` its keyed function
 -- ignores the input. So its word PRF advantage is the finite advantage against `fun key _ => key`.
 example (A : OracleDistinguisher) (n : ℕ) :
-    Game.advantage (ProbComp.eval (prfRealGame (fun key _ => key) A n))
-        (ProbComp.eval (prfIdealGame A n)) =
+    Game.advantage (ProbComp.eval (prfRealGame id (fun key _ => key) A n))
+        (ProbComp.eval (prfIdealGame id id A n)) =
       PRF.advantage (fun (key _ : BitString n) => key)
         ((OracleCodec.bitString n).adapt (A n [])) := by
   have hecho : PRF.atLevel (fun key _ => key) n = fun key _ => key := by

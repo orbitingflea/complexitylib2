@@ -31,9 +31,11 @@ pseudorandom generators and hard-core predicates are elsewhere.
   security parameter.
 * **IND-CPA and IND-CCA2.** Sending the plaintext bit as the ciphertext is neither `INDCPA` nor
   `INDCCA2`: copying the ciphertext guesses the challenge bit with advantage `1`.
-* **Pseudorandom functions.** The family answering every query with zeros has answers of the
-  declared width but is not a `PseudorandomFunction`: asking for the first answer bit at the zero
-  word has advantage `1 / 2` at every positive parameter.
+* **Pseudorandom functions.** The family answering every query with zeros of the declared width
+  is not a `PseudorandomFunctionOver` on `n`-bit inputs, for any output length that is positive at
+  positive parameters: asking for the first answer bit at the zero word has advantage `1 / 2` at
+  every positive parameter. At equal input and output lengths it is not a `PseudorandomFunction`
+  either.
 * **Factoring, Rabin, quadratic residuosity, composite residuosity, and RSA.** For every fixed
   composite modulus `N = p * q` (`1 < p`, `1 < q`), outputting `(p, q)` solves
   `modulusFactoringGame` with probability `1`, so `ModulusFactoringHard` fails for
@@ -190,9 +192,10 @@ theorem not_indcca2_plaintext (decrypt : ℕ → List Bool → List Bool → Opt
 
 /-! ### Pseudorandom functions -/
 
-/-- The all-zero family: every query gets the zero word of its own length. -/
-def zeroFamily : List Bool → List Bool → List Bool :=
-  fun _ query => List.replicate query.length false
+/-- The all-zero family with `outLen m`-bit answers: every `m`-bit query gets the zero word of
+`outLen m` bits. -/
+def zeroFamily (outLen : ℕ → ℕ) : List Bool → List Bool → List Bool :=
+  fun _ query => List.replicate (outLen query.length) false
 
 /-- Query the zero word and accept when the first answer bit is `false`. -/
 noncomputable def firstBitZero : OracleDistinguisher := fun n _ => do
@@ -212,28 +215,37 @@ theorem firstBitZero_isOraclePPT : IsOraclePPT encBool firstBitZero := by
   unfold firstBitZero
   exact ((IsOraclePPTOn.query_take' () hq hlim).bind_with hout.isOraclePPTOn).isOraclePPT
 
-theorem eval_prfRealGame_firstBitZero (n : ℕ) :
-    ProbComp.eval (prfRealGame zeroFamily firstBitZero (n + 1)) = PMF.pure true := by
-  simp only [prfRealGame, ProbOracleComp.run, firstBitZero, zeroFamily, prfOracle,
-    List.replicate_succ,
-    List.headD_eq_head?_getD, bind_pure_comp, Functor.map_map, OracleComp.interpret_map,
-    ProbOracleComp.interpret_query, List.length_cons, List.length_replicate, ↓reduceIte, map_pure,
-    ProbComp.eval_map, BitString.eval_sampleList]
+theorem eval_prfRealGame_firstBitZero {outLen : ℕ → ℕ} (hout : ∀ n, 0 < outLen (n + 1))
+    (n : ℕ) :
+    ProbComp.eval (prfRealGame id (zeroFamily outLen) firstBitZero (n + 1)) =
+      PMF.pure true := by
+  obtain ⟨m, hm⟩ : ∃ m, outLen (n + 1) = m + 1 := ⟨outLen (n + 1) - 1, by have := hout n; omega⟩
+  simp only [prfRealGame, id_eq, ProbOracleComp.run, firstBitZero, zeroFamily, prfOracle,
+    List.length_cons, List.length_replicate, ↓reduceIte, hm, List.replicate_succ,
+    List.headD_eq_head?_getD,
+    bind_pure_comp, Functor.map_map, OracleComp.interpret_map, ProbOracleComp.interpret_query,
+    map_pure, List.take_succ_cons, List.head?_cons, Option.getD_some, ProbComp.eval_map,
+    BitString.eval_sampleList]
   exact PMF.map_const _ _
 
-theorem eval_prfIdealGame_firstBitZero (n : ℕ) :
-    ProbComp.eval (prfIdealGame firstBitZero (n + 1)) = PMF.uniformOfFintype Bool := by
-  simp only [prfIdealGame, ProbOracleComp.run, firstBitZero, randomFunctionOracle, List.ofFn_succ,
-    List.headD_eq_head?_getD, bind_pure_comp, Functor.map_map, OracleComp.interpret_map,
-    ProbOracleComp.interpret_query, List.length_replicate, ↓reduceIte, map_pure,
-    List.take_succ_cons, List.head?_cons, Option.getD_some, ProbComp.eval_map,
-    ProbComp.eval_uniform]
-  have h1 : (PMF.uniformOfFintype (BitString (n + 1) → BitString (n + 1))).map
-      (fun table => table (BitString.ofList (n + 1) (List.replicate (n + 1) false))) =
-        PMF.uniformOfFintype (BitString (n + 1)) := by
-    rw [← Cslib.Probability.PMF.pi_uniformOfFintype, Cslib.Probability.PMF.pi_map_eval]
-  have h2 : (PMF.uniformOfFintype (BitString (n + 1))).map (fun word => word 0) =
+theorem eval_prfIdealGame_firstBitZero {outLen : ℕ → ℕ} (hout : ∀ n, 0 < outLen (n + 1))
+    (n : ℕ) :
+    ProbComp.eval (prfIdealGame id outLen firstBitZero (n + 1)) =
       PMF.uniformOfFintype Bool := by
+  have hhead (word : BitString (outLen (n + 1))) :
+      (List.take (n + 1) (List.ofFn word)).headD true = word ⟨0, hout n⟩ := by
+    rw [List.headD_eq_head?_getD, List.head?_take, List.head?_eq_getElem?, List.getElem?_ofFn]
+    simp [hout n]
+  simp only [prfIdealGame, id_eq, ProbOracleComp.run, firstBitZero, randomFunctionOracle,
+    bind_pure_comp, Functor.map_map, OracleComp.interpret_map, ProbOracleComp.interpret_query,
+    List.length_replicate, ↓reduceIte, map_pure, hhead, ProbComp.eval_map,
+    ProbComp.eval_uniform]
+  have h1 : (PMF.uniformOfFintype (BitString (n + 1) → BitString (outLen (n + 1)))).map
+      (fun table => table (BitString.ofList (n + 1) (List.replicate (n + 1) false))) =
+        PMF.uniformOfFintype (BitString (outLen (n + 1))) := by
+    rw [← Cslib.Probability.PMF.pi_uniformOfFintype, Cslib.Probability.PMF.pi_map_eval]
+  have h2 : (PMF.uniformOfFintype (BitString (outLen (n + 1)))).map
+      (fun word => word ⟨0, hout n⟩) = PMF.uniformOfFintype Bool := by
     rw [← Cslib.Probability.PMF.pi_uniformOfFintype, Cslib.Probability.PMF.pi_map_eval]
   have h3 : (PMF.uniformOfFintype Bool).map Bool.not = PMF.uniformOfFintype Bool := by
     ext b
@@ -241,19 +253,28 @@ theorem eval_prfIdealGame_firstBitZero (n : ℕ) :
   rw [← h3, ← h2, ← h1, PMF.map_comp, PMF.map_comp]
   rfl
 
-/-- **The all-zero family is not a pseudorandom function**: at every positive parameter the real
-experiment always accepts and the ideal one accepts with probability `1 / 2`. -/
-theorem not_pseudorandomFunction_zeroFamily : ¬ PseudorandomFunction zeroFamily := by
+/-- **The all-zero family is not a pseudorandom function over `n`-bit inputs**, for any output
+length that is positive at positive parameters: at every positive parameter the real experiment
+always accepts and the ideal one accepts with probability `1 / 2`. -/
+theorem not_pseudorandomFunctionOver_zeroFamily {outLen : ℕ → ℕ}
+    (hout : ∀ n, 0 < outLen (n + 1)) :
+    ¬ PseudorandomFunctionOver id outLen (zeroFamily outLen) := by
   intro h
   have hneg := h.secure firstBitZero firstBitZero_isOraclePPT
   have hshift : Negligible fun n => Game.advantage
-      (ProbComp.eval (prfRealGame zeroFamily firstBitZero (n + 1)))
-      (ProbComp.eval (prfIdealGame firstBitZero (n + 1))) :=
+      (ProbComp.eval (prfRealGame id (zeroFamily outLen) firstBitZero (n + 1)))
+      (ProbComp.eval (prfIdealGame id outLen firstBitZero (n + 1))) :=
     hneg.shift 1
-  simp only [eval_prfRealGame_firstBitZero, eval_prfIdealGame_firstBitZero] at hshift
+  simp only [eval_prfRealGame_firstBitZero hout, eval_prfIdealGame_firstBitZero hout]
+    at hshift
   refine not_negligible_const ?_ hshift
   norm_num [Game.advantage, Game.succProbability, PMF.uniformOfFintype_apply,
     ENNReal.toNNReal_ofNat]
+
+/-- **The all-zero family is not a pseudorandom function.** `PseudorandomFunction` is the case
+`inLen = outLen = id` of `PseudorandomFunctionOver`, where the attack above applies. -/
+theorem not_pseudorandomFunction_zeroFamily : ¬ PseudorandomFunction (zeroFamily id) :=
+  not_pseudorandomFunctionOver_zeroFamily Nat.succ_pos
 
 /-! ### Factoring, Rabin, quadratic residuosity, composite residuosity, and RSA -/
 
