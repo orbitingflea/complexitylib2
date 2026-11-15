@@ -10,8 +10,9 @@ import Cslib.Crypto.Primitives.PRG.Basic
 /-! Truth-table languages on concrete words, a `P/poly`-natural property, a large property useful
 against `P/poly`, circuit tests, the Razborov–Rudich distinguisher on the property of hard
 functions at every input length from `16` on, the GGM family on fixed-width labels for a toy
-generator with its circuits and security theorem, and the identity and constant families as
-witnesses that exponential security is consistent and has content. -/
+generator with its circuits and security theorem, the identity and constant families as
+witnesses that exponential security is consistent and has content, and a zero-padding generator
+that is not subexponentially secure. -/
 
 namespace CslibFrontierTests.NaturalProofs
 
@@ -180,12 +181,13 @@ example (G : ∀ k, PRG.Generator (BitString k) (BitString (2 * k)))
     PRG.IsSubexponentiallySecure G 2 :=
   PRG.IsSubexponentiallySecure.of_rpow (by norm_num) hG
 
-/-! ### Exponential security is consistent and has content
+/-! ### Exponential and subexponential security are consistent and have content
 
 The identity family, keyed by the functions themselves, has uniformly random truth tables and so
 is exponentially secure; its members are not of polynomial size, so it does not contradict
 `not_isUseful_PPoly_of_isNatural`. A constant family is not exponentially secure: a test reading
-one bit of the truth table has advantage `1 / 2`. -/
+one bit of the truth table has advantage `1 / 2`. Likewise, padding the seed with zeros is not
+subexponentially secure, for any exponent: a test reading one padding bit has advantage `1 / 2`. -/
 
 /-- The identity family is exponentially secure. -/
 example : IsExponentiallySecure fun n (f : BooleanFunction n) => f := by
@@ -194,11 +196,11 @@ example : IsExponentiallySecure fun n (f : BooleanFunction n) => f := by
     _).mono bot_le
   exact Probability.PMF.uniformOfFintype_map_equiv (truthTable n)
 
-/-- A test reading one bit accepts half of all truth tables. -/
-theorem toReal_idealExperiment_apply_zero (n : ℕ) :
-    (PRG.Generator.idealExperiment (fun T : BitString (2 ^ n) => PMF.pure (T 0)) true).toReal =
+/-- A test reading one bit accepts half of all words. -/
+theorem toReal_idealExperiment_apply {m : ℕ} (i : Fin m) :
+    (PRG.Generator.idealExperiment (fun T : BitString m => PMF.pure (T i)) true).toReal =
       1 / 2 := by
-  obtain ⟨N, hN⟩ : ∃ N, 2 ^ n = N + 1 := ⟨2 ^ n - 1, (Nat.succ_pred_eq_of_pos (by positivity)).symm⟩
+  obtain ⟨N, hN⟩ : ∃ N, m = N + 1 := ⟨m - 1, (Nat.succ_pred_eq_of_pos i.pos).symm⟩
   rw [PRG.Generator.toReal_idealExperiment_pure, dens, ← Fintype.piFinset_univ,
     Fintype.card_filter_piFinset_const_eq_of_mem _ _ (mem_univ true)]
   simp only [card_univ, Fintype.card_bool, Fintype.card_fin, Fintype.card_pi, prod_const]
@@ -207,16 +209,14 @@ theorem toReal_idealExperiment_apply_zero (n : ℕ) :
   field_simp
 
 /-- A constant family is not exponentially secure. -/
-example : ¬ IsExponentiallySecure fun n (_ : Unit) => fun _ : BitString n => false := by
+theorem not_isExponentiallySecure_const :
+    ¬ IsExponentiallySecure fun n (_ : Unit) => fun _ : BitString n => false := by
   intro h
   obtain ⟨n, hsec, hn⟩ := ((h 1).and (eventually_ge_atTop 2)).exists
-  have htest : IsCircuitTest (2 ^ (1 * n)) fun T : BitString (2 ^ n) => PMF.pure (T 0) := by
-    refine ⟨fun T => T 0, ?_, rfl⟩
-    have h0 : (single fun T : BitString (2 ^ n) => T 0) = fun T => T ∘ fun _ : Fin 1 => 0 := rfl
-    rw [h0, complexity_wiring]
-    exact Nat.zero_le _
+  have htest : IsCircuitTest (2 ^ (1 * n)) fun T : BitString (2 ^ n) => PMF.pure (T 0) :=
+    ⟨fun T => T 0, by simp, rfl⟩
   have hadv := hsec _ htest
-  rw [PRG.Generator.advantage, toReal_idealExperiment_apply_zero,
+  rw [PRG.Generator.advantage, toReal_idealExperiment_apply,
     PRG.Generator.toReal_realExperiment_pure] at hadv
   have hfalse : ({u : Unit | (truthTableGenerator fun _ (x : BitString n) => false) u 0 = true} :
       Finset Unit) = ∅ := by
@@ -229,6 +229,29 @@ example : ¬ IsExponentiallySecure fun n (_ : Unit) => fun _ : BitString n => fa
       calc (4 : ℝ) = 2 ^ 2 := by norm_num
         _ ≤ 2 ^ n := pow_le_pow_right₀ one_le_two (by omega))
   linarith
+
+/-- The length-doubling generator that pads its seed with zeros. -/
+def zeroPad (k : ℕ) : PRG.Generator (BitString k) (BitString (2 * k)) :=
+  ⟨fun seed i => if h : (i : ℕ) < k then seed ⟨i, h⟩ else false⟩
+
+/-- Padding the seed with zeros is not subexponentially secure, for any exponent: for long seeds,
+the test reading the first padding bit has no gates and advantage `1 / 2`, more than `2 ^ (-2)`. -/
+theorem not_isSubexponentiallySecure_zeroPad (d : ℕ) :
+    ¬ PRG.IsSubexponentiallySecure zeroPad d := by
+  intro h
+  obtain ⟨k, hsec, hk⟩ := (h.and (eventually_ge_atTop (2 ^ d + 1))).exists
+  have hd : 1 ≤ 2 ^ d := Nat.one_le_two_pow
+  let i : Fin (2 * k) := ⟨k, by omega⟩
+  have htest : IsCircuitTest (2 ^ 2) fun T : BitString (2 * k) => PMF.pure (T i) :=
+    ⟨fun T => T i, by simp, rfl⟩
+  have hadv := hsec 2 (by omega) _ htest
+  rw [PRG.Generator.advantage, toReal_idealExperiment_apply,
+    PRG.Generator.toReal_realExperiment_pure] at hadv
+  have hfalse : ({seed | zeroPad k seed i = true} : Finset (BitString k)) = ∅ := by
+    ext seed
+    simp [zeroPad, i]
+  rw [hfalse, dens_empty, NNRat.cast_zero, zero_sub, abs_neg, abs_of_pos (by norm_num)] at hadv
+  norm_num at hadv
 
 /-! ### The barrier corollaries -/
 

@@ -25,7 +25,7 @@ noncomputable abbrev bitEnsemble (b : Bool) : ℕ → PMF (List Bool) :=
   if b then trueEnsemble else falseEnsemble
 
 private theorem distinguishingGame_bit (b : Bool) (n : ℕ) :
-    distinguishingGame (bitEnsemble b) firstBitFamily n = PMF.pure b := by
+    distinguishingGame (bitEnsemble b) (bitFamily 0) n = PMF.pure b := by
   cases b <;> simp [bitEnsemble, distinguishingGame_true, distinguishingGame_false]
 
 -- One branch has error one and the other has error zero. The same resource budget is passed
@@ -45,21 +45,21 @@ example : IndistinguishableWithin
 -- An actual uniform native circuit attains the averaged bound at every security parameter.
 theorem averaged_bound_attained (n : ℕ) : Game.advantage
     (distinguishingGame
-      (fun n => (PMF.uniformOfFintype Bool).bind (fun _ => trueEnsemble n)) firstBitFamily n)
+      (fun n => (PMF.uniformOfFintype Bool).bind (fun _ => trueEnsemble n)) (bitFamily 0) n)
     (distinguishingGame
-      (fun n => (PMF.uniformOfFintype Bool).bind (fun b => bitEnsemble b n)) firstBitFamily n)
+      (fun n => (PMF.uniformOfFintype Bool).bind (fun b => bitEnsemble b n)) (bitFamily 0) n)
       = 1 / 2 := by
   simp only [distinguishingGame, PMF.bind_bind]
   change Game.advantage
-    ((PMF.uniformOfFintype Bool).bind fun _ => distinguishingGame trueEnsemble firstBitFamily n)
+    ((PMF.uniformOfFintype Bool).bind fun _ => distinguishingGame trueEnsemble (bitFamily 0) n)
     ((PMF.uniformOfFintype Bool).bind fun b =>
-      distinguishingGame (bitEnsemble b) firstBitFamily n) = _
+      distinguishingGame (bitEnsemble b) (bitFamily 0) n) = _
   simp only [distinguishingGame_true, distinguishingGame_bit, PMF.bind_const, PMF.bind_pure]
   rw [Game.advantage_pure_true_left]
   norm_num [Game.failProbability, PMF.uniformOfFintype_apply, ENNReal.toNNReal_ofNat]
 
 -- Opposite branch gaps cancel: the mixed ensembles are identical even though each branch
--- is perfectly distinguishable by firstBitFamily.
+-- is perfectly distinguishable by `bitFamily 0`.
 theorem mixture_complement_eq (n : ℕ) :
     (PMF.uniformOfFintype Bool).bind (fun b => bitEnsemble b n) =
       (PMF.uniformOfFintype Bool).bind (fun b => bitEnsemble (!b) n) := by
@@ -68,16 +68,16 @@ theorem mixture_complement_eq (n : ℕ) :
 
 example (n : ℕ) : Game.advantage
     (distinguishingGame
-      (fun n => (PMF.uniformOfFintype Bool).bind (fun b => bitEnsemble b n)) firstBitFamily n)
+      (fun n => (PMF.uniformOfFintype Bool).bind (fun b => bitEnsemble b n)) (bitFamily 0) n)
     (distinguishingGame
-      (fun n => (PMF.uniformOfFintype Bool).bind (fun b => bitEnsemble (!b) n)) firstBitFamily n)
+      (fun n => (PMF.uniformOfFintype Bool).bind (fun b => bitEnsemble (!b) n)) (bitFamily 0) n)
       = 0 := by
   have h := funext mixture_complement_eq
   rw [h, Game.advantage_self]
 
 example (b : Bool) (n : ℕ) :
-    Game.advantage (distinguishingGame (bitEnsemble b) firstBitFamily n)
-      (distinguishingGame (bitEnsemble (!b)) firstBitFamily n) = 1 := by
+    Game.advantage (distinguishingGame (bitEnsemble b) (bitFamily 0) n)
+      (distinguishingGame (bitEnsemble (!b)) (bitFamily 0) n) = 1 := by
   cases b
   · simpa only [bitEnsemble, Bool.false_eq_true, ↓reduceIte, Bool.not_false] using
       (Game.advantage_comm _ _).trans (advantage_true_false n)
@@ -85,10 +85,10 @@ example (b : Bool) (n : ℕ) :
 
 -- The same first-bit circuit has three gates and no oracle queries, and fits the common cap.
 example (n : ℕ) : Game.WithinOracleCircuits (fun _ => 1) n ⟨2 * n + 3, 3, 0⟩
-    firstBitFamily := by
+    (bitFamily 0) := by
   intro ℓ hℓ
   change ℓ ≤ 1 at hℓ
-  refine ⟨by dsimp [firstBitFamily, firstBitDescription]; omega, ?_, ?_⟩ <;>
+  refine ⟨by dsimp [bitFamily, bitDescription]; omega, ?_, ?_⟩ <;>
     simp [GateCode.swapCodes, OracleCircuit.gateCount,
       OracleCircuit.queryCount, OracleGateCode.isQuery]
 

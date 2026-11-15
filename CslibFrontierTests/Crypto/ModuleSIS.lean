@@ -19,7 +19,7 @@ Concrete evaluations and nonvacuity checks for:
 2. Negacyclic convolution `negacyclicMul` and `rotMatrix` in `R[X] / (X^n + 1)`.
 3. `ModuleSIS.IsSolution`, `expandModuleMatrix`, `flattenPolyVec`,
    `ModuleSIS.isSolution_expandModuleMatrix_iff`, `ModuleLWE.flattenPolyVec_sample`, and
-   nonvacuity of `ModuleSIS`.
+   nonvacuity of `ModuleSIS`, `RingSIS` and `DecisionModuleLWE`.
 -/
 
 namespace CslibFrontierTests.Crypto.ModuleSIS
@@ -134,6 +134,37 @@ theorem not_moduleSIS_zeroRankModuleSIS : ¬ModuleSIS zeroRankModuleSIS := fun h
   refine not_negligible_const one_ne_zero ((h onesModuleSolver ?_).congr hwin)
   exact (ComputableInPolyTime.const
     (ModuleSIS.encodeVec (1 : Fin 1 → Fin 1 → ℤ))).isPPTOn.congr fun _ => rfl
+
+/-- Degenerate `RingSISParams` with `n = 1`, `k = 1`, modulus `q = 2` and bound `β = 2`, so the
+bound reaches the modulus. -/
+def boundAtModulusRingSIS : RingSISParams where
+  n _ := 1
+  k _ := 1
+  q _ := 2
+  β _ := 2
+  hq _ := inferInstance
+
+/-- When `β ≥ q`, the constant polynomial vector `q` is short, nonzero and reduces to `0` mod `q`,
+so it solves every instance. The Ring-SIS solver that always answers `2` therefore wins
+`moduleSISExperiment` with probability `1`. It is a constant PPT machine, so `RingSIS` is not
+vacuous. -/
+theorem not_ringSIS_boundAtModulus : ¬RingSIS boundAtModulusRingSIS := fun h => by
+  let S : boundAtModulusRingSIS.toModuleSISParams.Solver := fun _ _ => pure 2
+  have hwin (κ : ℕ) :
+      moduleSISAdvantage (boundAtModulusRingSIS.q κ) (boundAtModulusRingSIS.β κ) (S κ) = 1 := by
+    have hsol (A : Matrix (Fin 1) (Fin 1) (Fin 1 → ZMod 2)) : ModuleSIS.IsSolution A 2 2 := by
+      refine ⟨by decide, by decide, ?_⟩
+      rw [show (fun j s => ((2 : Fin 1 → Fin 1 → ℤ) j s : ZMod 2)) = 0 by decide]
+      exact moduleSISMap_zero A
+    change Game.succProbability (ProbComp.eval (do
+      let A ← ProbComp.uniform (Matrix (Fin 1) (Fin 1) (Fin 1 → ZMod 2))
+      let z ← pure (2 : Fin 1 → Fin 1 → ℤ)
+      return decide (ModuleSIS.IsSolution A 2 z))) = 1
+    simp only [ProbComp.eval_bind, ProbComp.eval_pure, PMF.pure_bind, hsol, decide_true,
+      PMF.bind_const, Game.succProbability, PMF.pure_apply_self, ENNReal.toNNReal_one]
+  refine not_negligible_const one_ne_zero ((h S ?_).congr hwin)
+  exact (ComputableInPolyTime.const
+    (ModuleSIS.encodeVec (2 : Fin 1 → Fin 1 → ℤ))).isPPTOn.congr fun _ => rfl
 
 /-- Zero polynomial noise for `n = 1`, `q = 2`. -/
 noncomputable def moduleZeroNoise :

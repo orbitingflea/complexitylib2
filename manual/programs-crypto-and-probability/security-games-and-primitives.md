@@ -906,6 +906,26 @@ For two-party key exchange secure against passive eavesdroppers ([katzlindell20]
 
 For the RSA least-significant-bit experiment and algebraic attacks on plain RSA, import [`RSALeastSignificantBit.lean`](../../CslibFrontier/Crypto/Computational/RSALeastSignificantBit.lean) and [`RSAAttacks.lean`](../../CslibFrontier/Crypto/Computational/RSAAttacks.lean) ([katzlindell20][katzlindell20], §9.2.5, pp. 334–336, §12.5.1, pp. 436–440, and §12.5.3, pp. 443–445; checked instances are in [`CslibFrontierTests/Crypto/RSALeastSignificantBit.lean`](../../CslibFrontierTests/Crypto/RSALeastSignificantBit.lean) and [`CslibFrontierTests/Crypto/RSAAttacks.lean`](../../CslibFrontierTests/Crypto/RSAAttacks.lean)). `rsaLSBGame` samples `desc ← gen n` and a uniform residue `x ← Fin desc.modulus` (matching `rsaInversionGame` rather than `(ZMod N)ˣ`) and asks an `RSAPredictor` (with `RSAPredictor.IsPPT`, reading `encRSAInput` and writing a bit) for `x.testBit 0` given `pk.eval x`. The library does not state the hard-core property of this bit as an assumption, since the literature proves it from the RSA assumption ([#5578](https://github.com/cslib-community/cslib-frontier/issues/5578)). For odd `N`, `two_pow_mul_mod_mod_two` equates the parity of `2 ^ k * x % N` (`k ≠ 0`) with that of `⌊2 ^ k * x / N⌋`, `lsbRecover_lsbQueries` recovers `x` from the parities of the preimages of the `m` doubling queries `2 ^ (k * e) * y % N` once `N ≤ 2 ^ m`, and `lsbInverter` wins `rsaInversionGame` with probability `1` given a predictor that is always correct on the modulus (`eval_lsbInverter`, `succProbability_rsaInversionGame_lsbInverter`). `computableInPolyTime_lsbQueries`, `computableInPolyTime_lsbRecover`, and `isPPT_lsbInverter` certify uniform strict-PPT efficiency for `lsbInverter` whenever the predictor is PPT, yielding `RSAOneWay.not_frequently_alwaysCorrect_lsbPredictor` on eventually odd moduli; the noisy reconstruction of Theorem 12.31 for predictors with small noticeable bias, and with it the hard-core theorem, remains open. `RSAAttacks.lean` proves plain-RSA multiplicative malleability (`rsaEval_mul`, `rsaInvert_rsaEval_mul`), common-modulus recovery of units under coprime exponents via `zmodIntPow` (`commonModulusAttack_rsaEval`), unreduced short-message and pairwise-coprime CRT broadcast `e`-th root recovery (`rsaEval_eq_pow_of_pow_lt`, `eq_of_pow_eq_rsaEval`, `chineseRemainderOfList_rsaEval_eq_pow`, `eq_of_pow_eq_chineseRemainderOfList_rsaEval`), factoring `N` from `(N, φ(N))` (`factorOfTotient_eq`, `RSADesc.factorOfTotient_eq`), the general nontrivial-square-root factoring lemmas `gcd_sub_one_proper_of_sq_modEq_one` and `gcd_add_one_proper_of_sq_modEq_one` for any `N` and `y`, and the deterministic steps `RSADesc.pow_mul_sub_one_modEq_one`, `RSADesc.gcd_sub_one_proper`, and `RSADesc.gcd_add_one_proper` of Corollary 9.51 without claiming the randomized factoring bound.
 
+For weak RSA moduli ([bs23][bs23], §16.4.2, pp. 698–699), import
+[`Factoring/WeakModuli.lean`](../../CslibFrontier/Crypto/Computational/Factoring/WeakModuli.lean).
+Moduli sharing a prime are factored by their gcd (`gcd_mul_mul_of_prime_ne`,
+`RSADesc.gcd_modulus_eq_of_p_eq`), which `ComputableInPolyTime.binary_gcd` computes in polynomial
+time. Lemma 16.4 is proved over `ℝ` as printed, with the absolute value in the conclusion
+`|(p + q) / 2 - √(p * q)| < 1 / 2` (`abs_add_div_two_sub_sqrt_mul_lt_half`), and
+`abs_sub_lt_two_mul_rpow_iff` turns its closeness bound `|p - q| < 2 * (p * q) ^ (1 / 4)` into
+`(p - q) ^ 4 < 16 * (p * q)`, which `norm_num` decides on numbers. `fermatFactor n` applies
+`factorOfTotient` to `n + 1 - 2 * ⌈√n⌉`, with `⌈√n⌉` written as the function that
+`binary_ceilSqrt` certifies. The book does not name this algorithm: `fermatFactor` is the
+library's name, and it is a single step of Fermat's method, trying only `A = ⌈√n⌉`. It is a
+polynomial-time function on binary naturals (`computableInPolyTime_fermatFactor`).
+`fermatFactor_mul_eq` shows that it returns `(p, q)` for `q ≤ p` with `p + q` even under the
+closeness bound, which also forces `p` and `q` to be positive; primality is not needed. For an RSA
+modulus with odd primes, `RSADesc.fermatFactor_eq` shows that it returns `(max p q, min p q)`.
+So moduli with close factors are factored in polynomial time; the theorems say nothing about
+other moduli. The [checked examples](../../CslibFrontierTests/Crypto/WeakModuli.lean) factor
+`10403 = 101 * 103` and two moduli sharing `101`, and show that `fermatFactor` does not factor
+`3 * 101` or `3 * 2`.
+
 ### Elliptic curves over finite fields and Hasse's bound
 
 Import [`EllipticCurve/Hasse.lean`](../../CslibFrontier/Foundations/AlgebraicGeometry/EllipticCurve/Hasse.lean)
@@ -1045,6 +1065,37 @@ is essential: the source's Lemma 6.5 omits it, and a constant payoff of `-1` ref
 [Checked examples](../../CslibFrontierTests/Crypto/HQCSupportSampling.lean) include zero/full weight,
 collision replacement, and `n=5`, `count=2`, `width=3`, where `{2,4}` has actual probability
 `1/16` and ideal probability `1/10`. They also distinguish multiply-high from modulo reduction.
+
+For the finite statistical comparison, import
+[`HQC/SupportProbability.lean`](../../CslibFrontier/Crypto/Primitives/HQC/SupportProbability.lean);
+for the native circuit, import
+[`HQC/SupportCircuit/Sampler.lean`](../../CslibFrontier/Crypto/Primitives/HQC/SupportCircuit/Sampler.lean).
+Under `count ≤ n` and `n < 2 ^ bits`, the circuit's measured law is exactly `sampleSupport2`
+mapped through `BitString.indicatorVector`, every output has weight `count`, and
+`supportSamplerDist_closeTo_ideal` bounds its finite discrepancy by
+`1 - (supportLowerDensity width n 0 count).toReal`. This is not exact ideal uniformity.
+`negligible_one_sub_supportLowerDensity` makes the error negligible only along schedules whose
+word width grows sufficiently; it gives no negligibility claim for a fixed width such as `32`.
+
+The construction uses the shared reversible sampler in
+[`Quantum/Reversible/Sampling.lean`](../../CslibFrontier/Computability/Circuit/Quantum/Reversible/Sampling.lean)
+and its [resource API](../../CslibFrontier/Computability/Circuit/Quantum/Reversible/Sampling/Resources.lean).
+For `s = count * width` seed bits, `G` Boolean gates, and `m = n` outputs, it uses exactly
+`s + G + 1 + m` active qubits, at most `s + 3 * G + m` elementary gates, and zero coherent
+queries. It retains the seed and gate garbage, copies a fresh output block, and measures that
+block once at the end; the final measurement is separate from `OracleCircuit.Resources`. The
+encoded-code bound charges framed unary wire indices for the emitted gates. It does not charge
+the static generator description or offline generation time as online attack execution.
+
+The complete ordinary clients in
+[`HQCSupportCircuit.lean`](../../CslibFrontierTests/Crypto/HQCSupportCircuit.lean) and
+[`HQCSupportProbability.lean`](../../CslibFrontierTests/Crypto/HQCSupportProbability.lean) check
+the non-dyadic sampler law, each resource coordinate, finite discrepancy, and the growing-width
+qualification. From the repository root, build them with:
+
+```bash
+scripts/build.sh --wfail --iofail CslibFrontierTests.Crypto.HQCSupportCircuit CslibFrontierTests.Crypto.HQCSupportProbability
+```
 
 Import [`HQC/Syndrome.lean`](../../CslibFrontier/Crypto/Primitives/HQC/Syndrome.lean) for the
 finite 2-QCSD-P/2-DQCSD-P and 3-QCSD-PT/3-DQCSD-PT distributions from Definitions 2.3.6–2.3.9,

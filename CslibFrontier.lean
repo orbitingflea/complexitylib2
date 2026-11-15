@@ -1166,6 +1166,7 @@ public import CslibFrontier.Computability.Circuit.Boolean.CodeTemplate
 public import CslibFrontier.Computability.Circuit.Boolean.Combinators
 public import CslibFrontier.Computability.Circuit.Boolean.CompareSwap
 public import CslibFrontier.Computability.Circuit.Boolean.Comparison
+public import CslibFrontier.Computability.Circuit.Boolean.Comparison.OrderPolyTime
 public import CslibFrontier.Computability.Circuit.Boolean.Comparison.PolyTime
 public import CslibFrontier.Computability.Circuit.Boolean.Conondeterministic
 public import CslibFrontier.Computability.Circuit.Boolean.ConstDepth
@@ -1455,6 +1456,8 @@ public import CslibFrontier.Computability.Circuit.Boolean.WeightedThreshold.Thre
 public import CslibFrontier.Computability.Circuit.Boolean.WeightedThreshold.TranscriptTree
 public import CslibFrontier.Computability.Circuit.Boolean.Word
 public import CslibFrontier.Computability.Circuit.Boolean.Word.Rewire
+public import CslibFrontier.Computability.Circuit.Boolean.WordConstant
+public import CslibFrontier.Computability.Circuit.Boolean.WordConstant.PolyTime
 public import CslibFrontier.Computability.Circuit.Boolean.XorLemma
 public import CslibFrontier.Computability.Circuit.Boolean.XorPowerListSize
 public import CslibFrontier.Computability.Circuit.Boolean.Yablonskii
@@ -1726,6 +1729,8 @@ public import CslibFrontier.Computability.Circuit.Quantum.RealEncoding
 public import CslibFrontier.Computability.Circuit.Quantum.Reversible
 public import CslibFrontier.Computability.Circuit.Quantum.Reversible.Circuit
 public import CslibFrontier.Computability.Circuit.Quantum.Reversible.Resources
+public import CslibFrontier.Computability.Circuit.Quantum.Reversible.Sampling
+public import CslibFrontier.Computability.Circuit.Quantum.Reversible.Sampling.Resources
 public import CslibFrontier.Computability.Circuit.Quantum.SuperdenseCoding
 public import CslibFrontier.Computability.Circuit.Quantum.Teleportation
 public import CslibFrontier.Computability.Circuit.Quantum.Uniform
@@ -4411,6 +4416,7 @@ public import CslibFrontier.Crypto.Computational.Encryption.Scheme
 public import CslibFrontier.Crypto.Computational.Encryption.SymmetricCPA
 public import CslibFrontier.Crypto.Computational.EvenMansour
 public import CslibFrontier.Crypto.Computational.Factoring.PollardRho
+public import CslibFrontier.Crypto.Computational.Factoring.WeakModuli
 public import CslibFrontier.Crypto.Computational.Falcon.BerExp
 public import CslibFrontier.Crypto.Computational.Falcon.Verification
 public import CslibFrontier.Crypto.Computational.Falcon.VerificationFrontend
@@ -4775,7 +4781,17 @@ public import CslibFrontier.Crypto.Primitives.Garbling.Switch.Garble
 public import CslibFrontier.Crypto.Primitives.Garbling.Switch.Oblivious
 public import CslibFrontier.Crypto.Primitives.HQC.Correctness
 public import CslibFrontier.Crypto.Primitives.HQC.PKE
+public import CslibFrontier.Crypto.Primitives.HQC.SupportCircuit
+public import CslibFrontier.Crypto.Primitives.HQC.SupportCircuit.Collision
+public import CslibFrontier.Crypto.Primitives.HQC.SupportCircuit.Collision.PolyTime
+public import CslibFrontier.Crypto.Primitives.HQC.SupportCircuit.PolyTime
+public import CslibFrontier.Crypto.Primitives.HQC.SupportCircuit.Resolve
+public import CslibFrontier.Crypto.Primitives.HQC.SupportCircuit.Resolve.PolyTime
+public import CslibFrontier.Crypto.Primitives.HQC.SupportCircuit.Sampler
+public import CslibFrontier.Crypto.Primitives.HQC.SupportCircuit.Scan
+public import CslibFrontier.Crypto.Primitives.HQC.SupportCircuit.Scan.PolyTime
 public import CslibFrontier.Crypto.Primitives.HQC.SupportDensity
+public import CslibFrontier.Crypto.Primitives.HQC.SupportProbability
 public import CslibFrontier.Crypto.Primitives.HQC.SupportSampling
 public import CslibFrontier.Crypto.Primitives.HQC.Syndrome
 public import CslibFrontier.Crypto.Primitives.Hash.BlockCipherCompression
@@ -5699,6 +5715,7 @@ public import CslibFrontier.Foundations.Data.BitString.Balanced
 public import CslibFrontier.Foundations.Data.BitString.Basic
 public import CslibFrontier.Foundations.Data.BitString.Binary
 public import CslibFrontier.Foundations.Data.BitString.Block
+public import CslibFrontier.Foundations.Data.BitString.Block.Cons
 public import CslibFrontier.Foundations.Data.BitString.BlockPower
 public import CslibFrontier.Foundations.Data.BitString.Circulant
 public import CslibFrontier.Foundations.Data.BitString.Combination
