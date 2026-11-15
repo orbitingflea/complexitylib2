@@ -10,6 +10,7 @@ module
 public import CslibFrontier.Computability.Complexity.Classes.SharpP.Closure
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Int.Binary
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
+import CslibFrontier.Computability.Complexity.Classes.SharpP.Oracle.Closure
 
 /-!
 # Polynomial-time functions and tests in counting classes
@@ -44,27 +45,14 @@ variable {α : Type} {enc : α ↪ List Bool}
 /-- A polynomial-time function with binary natural output is a #P function. -/
 theorem mem_SharpP_of_polyTime {f : α → ℕ} (hf : ComputableInPolyTime f enc encNat) :
     f ∈ SharpP enc := by
-  obtain ⟨p, hb⟩ := hf.polyBounded_length.exists_polynomial
-  refine ⟨p, fun x => decide (BitString.binaryValue x.2 < f x.1), ?_, fun a => ?_⟩
-  · exact ComputableInPolyTime.binary_lt.comp
-      ((ComputableInPolyTime.bitsBinaryValue.comp (.snd enc encBits)).prod
-        (hf.comp (.fst enc encBits)))
-  · symm
-    unfold acceptCount
-    simp only [decide_eq_true_eq]
-    apply BitString.card_filter_binaryValue_lt
-    have hsize : (f a).size ≤ p.eval (enc a).length := by
-      simpa only [encNat_apply, Nat.size_eq_bits_len] using hb a
-    exact (Nat.lt_size_self _).le.trans (Nat.pow_le_pow_right (by lia) hsize)
+  rw [← SharpPWithOracle_eq_SharpP (A := ∅) empty_mem_P enc]
+  exact mem_SharpPWithOracle_of_polyTime (hf.computableInPolyTimeWithOracle ∅)
 
 /-- A polynomial-time function with binary integer output is a GapP function. -/
 theorem mem_GapP_of_polyTime {f : α → ℤ} (hf : ComputableInPolyTime f enc encIntBin) :
     f ∈ GapP enc := by
-  have hp := mem_SharpP_of_polyTime (ComputableInPolyTime.intBin_toNat.comp hf)
-  have hn := mem_SharpP_of_polyTime
-    (ComputableInPolyTime.intBin_toNat.comp
-      (ComputableInPolyTime.intBin_sub.comp ((ComputableInPolyTime.const 0).prod hf)))
-  exact ⟨_, hp, _, hn, fun a => by simp only [Function.comp_apply, zero_sub]; lia⟩
+  rw [← GapPWithOracle_eq_GapP (A := ∅) empty_mem_P enc]
+  exact mem_GapPWithOracle_of_polyTime (hf.computableInPolyTimeWithOracle ∅)
 
 /-- A polynomial-time Boolean test may select between two #P functions on the same input.
 Its two Boolean masks are polynomial-time functions; multiplication and addition select the

@@ -153,3 +153,24 @@ theorem exists_fin_run_pure_false {program : α → WordQueryComp Operation β}
   exact h a answer
 
 end Cslib.Probability.IsOraclePPTOn
+
+namespace Cslib.Complexity
+
+open Probability Turing.MultiTapeTM
+
+/-- A deterministic polynomial-time oracle computation has polynomially bounded encoded output
+length. The bound follows from its strict machine certificate, not from an extra promise. -/
+theorem ComputableInPolyTimeWithOracle.polyBounded_length {α β : Type}
+    {A : Set (List Bool)} {f : α → β} {input : α ↪ List Bool} {output : β ↪ List Bool}
+    (hf : ComputableInPolyTimeWithOracle A f input output) :
+    PolyBounded (fun a => (input a).length) (fun a => (output (f a)).length) := by
+  obtain ⟨program, hcert, hprogram⟩ := hf
+  obtain ⟨c, d, hbound⟩ := hcert.length_le
+  refine PolyBounded.of_forall_le c d fun a => ?_
+  have h := hbound a Unit (fun q s => PMF.pure (languageOracle A q, s)) () ()
+    (OracleComp.interpret (m := Id) (languageOracle A) (program a))
+  rw [ProbOracleComp.runWith, OracleComp.runWith,
+    Probability.IsOraclePPTOn.run_interpret_interpret_query] at h
+  simpa only [hprogram a] using h (by simp)
+
+end Cslib.Complexity

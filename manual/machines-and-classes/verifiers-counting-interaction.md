@@ -106,6 +106,42 @@ For strict native PPT and oracle-PPT execution (where coin budgets are worst-cas
 
 Counting arguments for matchings and permanents can use the deterministic upper bound [Bregman.lean](../../CslibFrontier/Foundations/Combinatorics/Bregman.lean) (`import CslibFrontier.Foundations.Combinatorics.Bregman`), which proves Brégman's theorem (Minc's conjecture) [bregman73][bregman73]. For a 0/1 matrix `A : Matrix n n ℕ` (every entry at most `1`) with row sums `r i`, `Matrix.permanent_le_prod_factorial_rpow` gives `per A ≤ ∏ i, (r i)! ^ (1 / r i)` in `ℝ`. `Matrix.permanent_le_factorial_rpow_card_div` is the `d`-regular form `per A ≤ d! ^ (n / d)`. A zero row contributes `0! ^ (1 / 0) = 1` under Mathlib's `Real.rpow` convention, and the permanent is then `0`, so there are no positivity hypotheses. The underlying statement `Equiv.card_filter_forall_rel_le_prod_factorial_rpow` counts the bijections `e : α ≃ β` with `R a (e a)` for all `a`. These are the perfect matchings of the bipartite graph `R` (the witnesses of `Cslib.Circuits.BipartiteMatching.HasPerfectMatching` when `α = β`), and `d a = #{b | R a b}` is the left degree. Equality holds for disjoint unions of complete bipartite graphs `K_{d,d}` (`Equiv.card_filter_forall_eq_eq_prod_factorial_rpow`, `Matrix.permanent_eq_prod_factorial_rpow_of_eq_ite`). The proof follows Schrijver's induction on `n` [schrijver78][schrijver78]. It uses the convexity inequality `Real.sum_mul_log_div_card_le` from [LogSum.lean](../../CslibFrontier/Foundations/Analysis/SpecialFunctions/LogSum.lean), not the entropy proof of [radhakrishnan97][radhakrishnan97]. `Matrix.permanent_eq_card_filter_of_le_one`, in [Permanent/ZeroOne.lean](../../CslibFrontier/Foundations/Data/Matrix/Permanent/ZeroOne.lean), identifies the permanent of a 0/1 matrix with this count. Only 0/1 matrices are covered. Extensions of the bound to nonnegative real matrices, the van der Waerden lower bound and the Kahn–Lovász bound for general graphs are not formalized. The [checked examples](../../CslibFrontierTests/Bregman.lean) evaluate `per J₃ = 6` (equality), a `2 × 2` matrix with `1 < √2`, a zero row, the block matrix `K_{2,2} ⊕ K_{1,1}` (equality) and a `2`-regular `4 × 4` instance.
 
+## Counting-hierarchy function levels
+
+Import `CslibFrontier.Computability.Complexity.Classes.CountingHierarchy.Aggregation` for
+`CountingLevel a enc` (C_a P) and `CountingFunction a input output` (F_a).
+The zero levels are P and ordinary polynomial-time computation; the first decision level is PP.
+Successor decision levels use the existing fixed-length relativized majority verifier model.
+Equivalence with probabilistic oracle machines is not asserted here.
+
+A function witness contains one fixed raw-word oracle in C_a P and one uniform strict
+polynomial-time oracle program. Its certificate charges input preparation, adaptive requests,
+reply access and encoded output. Polynomial output length follows from the certificate.
+Use `CountingFunction.comp` and `CountingFunction.prod` to combine functions at the same level;
+`exists_common_oracle` supplies one oracle for a fixed finite family. These results use finite
+tagged unions, without assuming adaptive PP access collapses to PP.
+
+For a uniform evaluator on `(instance, index)`, `CountingFunction.count_bits`, `sum_bits` and
+`sum_bits_int` compute counts, nonnegative sums and signed sums in F_(a+1). The width function
+must be polynomial-time with **unary** output: its value bounds the number of index bits,
+while the domain can contain exponentially many indices. Summands use binary natural or signed
+integer encodings. `sum_bits_restrict` masks a same-level predicate by zero, and `sum_bits_mod`
+reduces a sum modulo a uniformly accessible short modulus. `exists_bits` and `forall_bits`
+also cost one level; `CountingFunction.decision` then turns an F_a Boolean function into a
+C_(a+1) P language.
+
+These aggregation rules take a `Decoder enc`, such as `Decoder.bits` for words or
+`Decoder.pair` for pairs. The decoder gives a total polynomial-time interpretation of raw
+threshold requests, including malformed words. An arbitrary encoding image is not assumed
+efficiently recognizable. Binary search uses one more bit than the witness bound, so it covers
+the maximum count and width-zero indices. The ordinary-module
+[checked clients](../../CslibFrontierTests/CountingHierarchy.lean) exercise those cases,
+binary interval restrictions, signed cancellation and the decision conversion.
+
+The [development issue](https://github.com/cslib-community/cslib-frontier/issues/5619) retains
+the remaining finite-field product and CRT sign-recovery objectives. This foundation alone does
+not certify those bounds or the downstream real-feasibility theorem.
+
 ## Efficient oracle programs
 
 [IsOraclePPTOn](https://github.com/cslib-community/cslib-frontier/blob/13e6a31951bf1c89a1a6258c44f9444aecbbefd8/Complexity/Computability/Probabilistic/Oracle.lean#L63) realizes an open probabilistic word-query program by one finite native oracle PTM under one polynomial clock. The semantic equality quantifies over every state type, stateful oracle handler and initial oracle state, and preserves the joint output and final oracle state. Checking only the output marginal would permit a program to erase externally visible query effects; the joint contract rules this out.

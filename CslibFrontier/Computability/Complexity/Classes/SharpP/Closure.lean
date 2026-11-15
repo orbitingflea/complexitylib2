@@ -11,6 +11,7 @@ public import CslibFrontier.Computability.Complexity.Classes.SharpP
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.Primitives
 public import Mathlib.Algebra.Ring.Subring.Defs
 import CslibFrontier.Computability.Complexity.Classes.SharpP.Combinators
+import CslibFrontier.Computability.Complexity.Classes.SharpP.Oracle.Closure
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 import Mathlib.Algebra.Ring.Subsemiring.Basic
@@ -251,27 +252,23 @@ theorem mem_SharpP_of_polyTime_length {V : α × List Bool → Bool} {r : α →
     (hV : ComputableInPolyTime V (encPair enc encBits) encBool)
     (hr : ComputableInPolyTime r enc encUnary) :
     (fun a => acceptCount V a (r a)) ∈ SharpP enc := by
-  obtain ⟨p, hle⟩ := hr.polyBounded.exists_polynomial
-  exact ⟨p, padVerifier r V, by fun_prop, fun a =>
-    (acceptCount_padVerifier_of_le r V (hle a)).symm⟩
+  rw [← SharpPWithOracle_eq_SharpP (A := ∅) empty_mem_P enc]
+  exact mem_SharpPWithOracle_of_polyTime_length
+    (hV.computableInPolyTimeWithOracle ∅) hr
 
 /-- Polynomial-time precomposition preserves the exact accepting count. Padding bits are
 required to be false, so they do not multiply the number of witnesses. -/
 theorem SharpP.comp_mem {β : Type} {encB : β ↪ List Bool} {f : β → ℕ} {g : α → β}
     (hf : f ∈ SharpP encB) (hg : ComputableInPolyTime g enc encB) :
     f ∘ g ∈ SharpP enc := by
-  obtain ⟨q, W, hW, hWB⟩ := mem_SharpP.mp hf
-  have h := mem_SharpP_of_polyTime_length
-    (V := fun x => W (g x.1, x.2))
-    (r := fun a => q.eval (encB (g a)).length) (by fun_prop) (by fun_prop)
-  change (fun a => acceptCount W (g a) (q.eval (encB (g a)).length)) ∈ SharpP enc at h
-  simpa only [← hWB, Function.comp_def] using h
+  rw [← SharpPWithOracle_eq_SharpP (A := ∅) empty_mem_P enc]
+  exact SharpPWithOracle.comp_mem (SharpP_subset_SharpPWithOracle ∅ encB hf) hg
 
 /-- `GapP` is closed under polynomial-time precomposition. -/
 theorem GapP.comp_mem {β : Type} {encB : β ↪ List Bool} {f : β → ℤ} {g : α → β}
     (hf : f ∈ GapP encB) (hg : ComputableInPolyTime g enc encB) :
     f ∘ g ∈ GapP enc := by
-  obtain ⟨f₁, h₁, f₂, h₂, h⟩ := hf
-  exact ⟨f₁ ∘ g, SharpP.comp_mem h₁ hg, f₂ ∘ g, SharpP.comp_mem h₂ hg, fun a => h (g a)⟩
+  rw [← GapPWithOracle_eq_GapP (A := ∅) empty_mem_P enc]
+  exact GapPWithOracle.comp_mem (GapP_subset_GapPWithOracle ∅ encB hf) hg
 
 end Cslib.Complexity

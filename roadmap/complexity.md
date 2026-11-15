@@ -10,6 +10,8 @@ Containments, separations, closure properties, complete problems and reductions 
 
 ### Structure, time and space
 
+- **Counting-hierarchy arithmetic** ([#5619](https://github.com/cslib-community/cslib-frontier/issues/5619)): reusable decision/function levels, uniform short-index counting and summation, finite-field products, and integer signs from bounded modular-residue access.
+  Prove uniform bit-cost certificates and the proposed level bounds, separating algebraic identities from computational realization; real feasibility belongs to the downstream lean-canny project.
 - **Planar Boolean CSP dichotomy** ([#3091](https://github.com/cslib-community/cslib-frontier/issues/3091)): extend the native Boolean classification to ordered planar instances of arbitrary fixed relation arity, preserving individual incidence occurrences and cyclic argument order.
   The endpoint must prove the embedding and recognition interface, the cyclic-difference reduction, the even delta-matroid edge-CSP algorithm and planar hardness transfer internally, including the additional self-complementary tractable family.
   Supplied-embedding or matching-realizable-only milestones leave it open.

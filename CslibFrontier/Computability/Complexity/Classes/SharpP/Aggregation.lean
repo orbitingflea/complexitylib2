@@ -10,6 +10,7 @@ module
 public import CslibFrontier.Computability.Complexity.Classes.SharpP.Closure
 public import CslibFrontier.Foundations.Data.BitString.List
 import CslibFrontier.Computability.Complexity.Classes.SharpP.Combinators
+import CslibFrontier.Computability.Complexity.Classes.SharpP.Oracle.Closure
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Fold
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
@@ -49,32 +50,18 @@ theorem SharpP.sum_bits_mem {f : α × List Bool → ℕ} {r : α → ℕ}
     (hf : f ∈ SharpP (encPair enc encBits))
     (hr : ComputableInPolyTime r enc encUnary) :
     (fun a => ∑ w : Fin (r a) → Bool, f (a, List.ofFn w)) ∈ SharpP enc := by
-  obtain ⟨p, V, hV, hf⟩ := mem_SharpP.mp hf
-  let q : α → ℕ := fun a => p.eval (2 * (enc a).length + 1 + r a)
-  let W : α × List Bool → Bool := fun x => V ((x.1, x.2.take (r x.1)), x.2.drop (r x.1))
-  have hq : ComputableInPolyTime q enc encUnary := by dsimp [q]; fun_prop
-  have hW : ComputableInPolyTime W (encPair enc encBits) encBool := by dsimp [W]; fun_prop
-  convert mem_SharpP_of_polyTime_length hW
-    ((ComputableInPolyTime.unary_add.comp (hr.prod hq)))
-    using 1
-  ext a
-  change _ = acceptCount W a (r a + q a)
-  rw [acceptCount_add]
-  apply Finset.sum_congr rfl
-  intro w _
-  rw [hf]
-  simp only [length_encPair, encBits_apply, List.length_ofFn]
-  simp only [acceptCount, W, List.take_left' List.length_ofFn,
-    List.drop_left' List.length_ofFn, q]
+  rw [← SharpPWithOracle_eq_SharpP (A := ∅) empty_mem_P enc]
+  exact SharpPWithOracle.sum_bits_mem
+    (SharpP_subset_SharpPWithOracle ∅ (encPair enc encBits) hf) hr
 
 /-- GapP is closed under summing over all words of a polynomial-time unary length. -/
 theorem GapP.sum_bits_mem {g : α × List Bool → ℤ} {r : α → ℕ}
     (hg : g ∈ GapP (encPair enc encBits))
     (hr : ComputableInPolyTime r enc encUnary) :
     (fun a => ∑ w : Fin (r a) → Bool, g (a, List.ofFn w)) ∈ GapP enc := by
-  obtain ⟨f₁, h₁, f₂, h₂, hg⟩ := hg
-  refine ⟨_, SharpP.sum_bits_mem h₁ hr, _, SharpP.sum_bits_mem h₂ hr, fun a => ?_⟩
-  simp only [hg, Finset.sum_sub_distrib, Nat.cast_sum]
+  rw [← GapPWithOracle_eq_GapP (A := ∅) empty_mem_P enc]
+  exact GapPWithOracle.sum_bits_mem
+    (GapP_subset_GapPWithOracle ∅ (encPair enc encBits) hg) hr
 
 namespace SignedProduct
 
