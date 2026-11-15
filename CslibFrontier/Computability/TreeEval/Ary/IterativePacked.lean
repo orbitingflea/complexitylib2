@@ -36,7 +36,7 @@ open Packed
 /-- A packed root call using the counter-based gate extension adds the encoded root value and
 preserves every other global register. The encoding has a left inverse. -/
 theorem exists_runFrom_counter_root {p s d b r : ℕ} [Fact p.Prime]
-    (hd : 0 < d) (hs : 0 < s) (hsp : s ≤ p)
+    (hd : 0 < d) (hs : 0 < s)
     (h : Fin s ↪ ZMod p) (hh : ∀ a, h a = (a.val : ZMod p))
     (encode : (Fin b → Bool) → Fin r → Fin s)
     (decode : (Fin r → Fin s) → Fin b → Bool) (hdecode : Function.LeftInverse decode encode)
@@ -54,7 +54,7 @@ theorem exists_runFrom_counter_root {p s d b r : ℕ} [Fact p.Prime]
   have hE : counterGateExtension (p := p) (d := d) hs encode decode =
       gateExtension h encode decode := by
     funext f x i
-    exact counterGateExtension_eq hs hsp h hh encode decode f x i
+    exact counterGateExtension_eq hs h hh encode decode f x i
   rw [hE, procWith_gateExtension_eq h encode decode hdecode
     (by simpa only [Fintype.card_fin, ZMod.card] using hD) hnd hmem]
 

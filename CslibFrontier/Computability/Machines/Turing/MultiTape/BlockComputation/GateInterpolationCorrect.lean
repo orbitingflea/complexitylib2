@@ -114,7 +114,7 @@ theorem exists_runFrom_gateExtension {p q r m : ℕ} [Fact p.Prime]
     (b : ℕ) [NeZero b] (σ : ℕ) (i : Fin q)
     (x : Fin (k * 3 + 1) → Fin r → ZMod p)
     (hb : Encoding.width k s b ≤ r * m) (hm : 0 < m) (chunk : Fin r)
-    (hsp : 2 ^ m ≤ p) (h : Fin (2 ^ m) ↪ ZMod p)
+    (h : Fin (2 ^ m) ↪ ZMod p)
     (hh : ∀ a, h a = (a.val : ZMod p)) :
     let f := codeGate (MultiTapePTM.ofDeterministic M) w b (scheduleOfNat k q σ)
       (Encoding.encode e) (Encoding.decode e) (i.val + 1)
@@ -127,6 +127,6 @@ theorem exists_runFrom_gateExtension {p q r m : ℕ} [Fact p.Prime]
       (machine M e).halted ((machine M e).runFrom w (initial params) T) = true := by
   obtain ⟨T, z, hrun, hz, hhalt⟩ := exists_runFrom_counterGate M e w b σ i x hb hm chunk
   refine ⟨T, z, hrun, ?_, hhalt⟩
-  exact hz.trans (Packed.counterGateExtension_eq (by positivity) hsp h hh _ _ _ _ _)
+  exact hz.trans (Packed.counterGateExtension_eq (by positivity) h hh _ _ _ _ _)
 
 end Turing.MultiTapePTM.BlockComputation.QueryReplay.Interpolation

@@ -129,7 +129,7 @@ theorem packed_root {h : ℕ} (T : Ary.Tree 2 3 h) (S : Ary.State (ZMod 17) 2 2)
       (Ary.Packed.counterGateExtension (by decide : 0 < 4) encode decode)
       (Finset.univ : Finset (ZMod 17)ˣ).toList T.nodeAt (Ary.Iter.initialCfg S c t) N =
         ⟨Function.update S t (S t + c • fun i => alphabet (encode T.eval i)), [], .ret⟩ := by
-  apply Ary.Iter.exists_runFrom_counter_root (by decide) (by decide) (by decide)
+  apply Ary.Iter.exists_runFrom_counter_root (by decide) (by decide)
     alphabet (fun _ => rfl) encode decode
     (fun v => Ary.Packed.unpackBits_packBits (r := 2) (m := 2) (by decide) v)
     (by decide) (Finset.nodup_toList _) (fun u => Finset.mem_toList.mpr (Finset.mem_univ u))

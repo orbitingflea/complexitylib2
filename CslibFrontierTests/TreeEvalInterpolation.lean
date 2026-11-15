@@ -30,6 +30,17 @@ example : basisWeight 7 3 1 1 = 1 := by decide
 example : basisWeight 7 3 1 2 = 0 := by decide
 example : basisWeight 7 3 1 4 = 6 := by decide
 
+/-- `cast_basisWeight` holds for `s > p` as well, both when `a` collides with another symbol modulo
+`p` (so both sides vanish, including `a.val ≥ p` and `x ≥ p`) and when `a`'s residue is unique in
+`0, …, s - 1`. -/
+example :
+    (Lagrange.basis Finset.univ (fun j : Fin 9 => (j.val : ZMod 7)) ⟨8, by decide⟩).eval
+        ((10 : ℕ) : ZMod 7) = 0 ∧
+      (Lagrange.basis Finset.univ (fun j : Fin 8 => (j.val : ZMod 7)) ⟨2, by decide⟩).eval
+        ((9 : ℕ) : ZMod 7) = 1 := by
+  rw [← cast_basisWeight, ← cast_basisWeight]
+  decide
+
 example : basisWeight 0 0 1 4 = 1 := by decide
 example : basisWeight 0 3 1 4 = 0 := by decide
 example : basisWeight 1 3 1 4 = 0 := by decide
@@ -67,6 +78,6 @@ theorem executable_extension_agrees (h : Fin 3 ↪ ZMod 7)
       Cslib.Code.lowDegreeExtension h
         (fun a : Fin 2 → Fin 3 => (values (finFunctionFinEquiv a) : ZMod 7))
         (fun i => (x.getD i 0 : ZMod 7)) :=
-  cast_interpolateGrid (by decide) (by decide) h hh values x
+  cast_interpolateGrid (by decide) h hh values x
 
 end CslibFrontierTests.TreeEvalInterpolation

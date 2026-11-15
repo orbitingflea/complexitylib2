@@ -16,6 +16,7 @@ import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime
 import CslibFrontier.Computability.Probabilistic.PPT.Capture
 import CslibFrontier.Computability.Probabilistic.PPT.Extension
 import CslibFrontier.Crypto.Computational.DiffieHellman.SampleExp
+import CslibFrontier.Foundations.Data.ZMod.NatCast
 import CslibFrontier.Tactic.PMFSwap
 
 /-!
@@ -472,10 +473,6 @@ theorem isPPT_ddhOTReceiverToDDHDistinguisher {Z : Environment F.ddhOTFamily {1}
   simp only [ddhOTReceiverToDDHDistinguisher, ProbComp.eval_bind, ProbComp.eval_map, PMF.bind_map]
   refine congrArg (PMF.bind _) (funext fun c => congrArg (PMF.bind _) (funext fun b =>
     congrArg (PMF.bind _) (funext fun r => congrArg (PMF.bind _) (funext fun s => ?_))))
-  have hneg : ((F.order x.groupParameters - b % F.order x.groupParameters : ℕ) :
-      ZMod (F.order x.groupParameters)) = -(b : ZMod (F.order x.groupParameters)) := by
-    rw [Nat.cast_sub (Nat.le_of_lt (Nat.mod_lt _ (F.prime_order _).pos)), ZMod.natCast_self,
-      ZMod.natCast_mod, zero_sub]
   obtain ⟨xs, state⟩ := c
   obtain ⟨⟨m₀, m₁⟩, σ, rfl⟩ : ∃ (m : F.Carrier x.groupParameters × F.Carrier x.groupParameters)
       (σ : Bool), xs = fun i =>
@@ -495,15 +492,15 @@ theorem isPPT_ddhOTReceiverToDDHDistinguisher {Z : Environment F.ddhOTFamily {1}
           x.leftPublic ((e, (b : ZMod q) • e + m₀),
             (x.rightPublic, x.candidateShared - (b : ZMod q) • x.rightPublic + m₁)))
       simp only [ddhOTReceiverViewWordsOf, ddhOTReceiverViewWords, ddhOTReceiverView,
-        Bool.false_eq_true, ↓reduceIte, F.add_encode, hneg, neg_smul, ← sub_eq_add_neg,
-        ZMod.val_natCast]
+        Bool.false_eq_true, ↓reduceIte, F.add_encode, ZMod.natCast_sub_mod_eq_neg, neg_smul,
+        ← sub_eq_add_neg, ZMod.val_natCast]
       rfl
     · change F.ddhOTReceiverViewWordsOf x (F.encode _ m₀) (F.encode _ m₁) true b r s =
         F.ddhOTReceiverViewWords x.groupParameters (ddhOTReceiverView true (b : ZMod q)
           x.leftPublic ((x.rightPublic, x.candidateShared - (b : ZMod q) • x.rightPublic + m₀),
             (e, (b : ZMod q) • e + m₁)))
       simp only [ddhOTReceiverViewWordsOf, ddhOTReceiverViewWords, ddhOTReceiverView, ↓reduceIte,
-        F.add_encode, hneg, neg_smul, ← sub_eq_add_neg, ZMod.val_natCast]
+        F.add_encode, ZMod.natCast_sub_mod_eq_neg, neg_smul, ← sub_eq_add_neg, ZMod.val_natCast]
       rfl
   · simp only [ddhOTReceiverGuessWords, ddhOTOutputWords, PartyEncoding.encAll,
       Function.Embedding.coeFn_mk, encDPi_apply]

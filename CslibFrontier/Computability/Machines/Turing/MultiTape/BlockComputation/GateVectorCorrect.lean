@@ -102,7 +102,7 @@ theorem coordinate_supplier_bounded {p q r m : ℕ} [Fact p.Prime] [Finite Q]
     (b : ℕ) [NeZero b] (σ : ℕ) (i : Fin q)
     (x : Fin (k * 3 + 1) → Fin r → ZMod p)
     (hb : Encoding.width k s b ≤ r * m) (hm : 0 < m) (chunk : Fin r)
-    (hsp : 2 ^ m ≤ p) (h : Fin (2 ^ m) ↪ ZMod p) (hh : ∀ a, h a = (a.val : ZMod p)) :
+    (h : Fin (2 ^ m) ↪ ZMod p) (hh : ∀ a, h a = (a.val : ZMod p)) :
     let f := codeGate (MultiTapePTM.ofDeterministic M) w b (scheduleOfNat k q σ)
       (Encoding.encode e) (Encoding.decode e) (i.val + 1)
     let context : Interpolation.Context :=
@@ -122,7 +122,7 @@ theorem coordinate_supplier_bounded {p q r m : ℕ} [Fact p.Prime] [Finite Q]
           Interpolation.calleeSpace k s Q context + 2 := by
   dsimp only
   obtain ⟨U, z, hrun, hz, hhalt, hsize⟩ :=
-    Interpolation.exists_runFrom_gateExtension_bounded M e w b σ i x hb hm chunk hsp h hh
+    Interpolation.exists_runFrom_gateExtension_bounded M e w b σ i x hb hm chunk h hh
   obtain ⟨T, hle, hT, hpre, hstate⟩ := QueryMachine.exists_first_halt_le
     (Interpolation.machine M e) w _ U hhalt
   refine ⟨T, z, hpre, hT, ?_, hz, ?_⟩

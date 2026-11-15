@@ -138,7 +138,7 @@ theorem exists_runFrom_nodeAt_bounded {k q s p r m : ℕ} {Q : Type} [Finite Q] 
       let i : Fin q := ⟨index - 1, by omega⟩
       have hi : i.val + 1 = index := by dsimp only [i]; omega
       obtain ⟨T, values, hrun, hlength, hcanonical, hvalues, hhalt, hsize⟩ :=
-        GateVector.exists_runFrom_gateExtension_bounded M e w b σ i x hb hm hsp h hh
+        GateVector.exists_runFrom_gateExtension_bounded M e w b σ i x hb hm h hh
       have hstart : initial M e (address, params) =
           .inr (GateVector.initial
             (QueryGate.gateParams (s := 2 ^ m)

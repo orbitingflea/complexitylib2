@@ -134,7 +134,7 @@ theorem exists_runFrom_gateExtension_bounded {p q r m : ℕ} [Fact p.Prime]
     (b : ℕ) [NeZero b] (σ : ℕ) (i : Fin q)
     (x : Fin (k * 3 + 1) → Fin r → ZMod p)
     (hb : Encoding.width k s b ≤ r * m) (hm : 0 < m)
-    (hsp : 2 ^ m ≤ p) (h : Fin (2 ^ m) ↪ ZMod p) (hh : ∀ a, h a = (a.val : ZMod p)) :
+    (h : Fin (2 ^ m) ↪ ZMod p) (hh : ∀ a, h a = (a.val : ZMod p)) :
     let f := codeGate (MultiTapePTM.ofDeterministic M) w b (scheduleOfNat k q σ)
       (Encoding.encode e) (Encoding.decode e) (i.val + 1)
     let params : Params := (QueryGate.gateParams (s := 2 ^ m)
@@ -161,7 +161,7 @@ theorem exists_runFrom_gateExtension_bounded {p q r m : ℕ} [Fact p.Prime]
   let B := 16 * ((QueryGate.encParams Interpolation.encContext maxParams).length + 1) +
     Interpolation.calleeSpace k s Q maxContext + 2
   choose times scalars hpre hhalt hans hscalar hsize using fun j : Fin r =>
-    coordinate_supplier_bounded M e w b σ i x hb hm j hsp h hh
+    coordinate_supplier_bounded M e w b σ i x hb hm j h hh
   let values : ℕ → ℕ := fun j => if hj : j < r then scalars ⟨j, hj⟩ else 0
   have hsupplier : ∀ j < params.2, ∃ T,
       (∀ t < T, (Interpolation.machine M e).halted ((Interpolation.machine M e).runFrom w
@@ -220,7 +220,7 @@ theorem exists_runFrom_gateExtension {p q r m : ℕ} [Fact p.Prime]
     (b : ℕ) [NeZero b] (σ : ℕ) (i : Fin q)
     (x : Fin (k * 3 + 1) → Fin r → ZMod p)
     (hb : Encoding.width k s b ≤ r * m) (hm : 0 < m)
-    (hsp : 2 ^ m ≤ p) (h : Fin (2 ^ m) ↪ ZMod p) (hh : ∀ a, h a = (a.val : ZMod p)) :
+    (h : Fin (2 ^ m) ↪ ZMod p) (hh : ∀ a, h a = (a.val : ZMod p)) :
     let f := codeGate (MultiTapePTM.ofDeterministic M) w b (scheduleOfNat k q σ)
       (Encoding.encode e) (Encoding.decode e) (i.val + 1)
     let params : Params := (QueryGate.gateParams (s := 2 ^ m)
@@ -231,7 +231,7 @@ theorem exists_runFrom_gateExtension {p q r m : ℕ} [Fact p.Prime]
         Packed.gateExtension h (Packed.packBits hb) (Packed.unpackBits hb) f x j) ∧
       (machine M e).halted ((machine M e).runFrom w (initial params) T) = true := by
   obtain ⟨T, values, hrun, hlength, hcanonical, hvalues, hhalt, -⟩ :=
-    exists_runFrom_gateExtension_bounded M e w b σ i x hb hm hsp h hh
+    exists_runFrom_gateExtension_bounded M e w b σ i x hb hm h hh
   exact ⟨T, values, hrun, hlength, hcanonical, hvalues, hhalt⟩
 
 end Turing.MultiTapePTM.BlockComputation.QueryReplay.GateVector

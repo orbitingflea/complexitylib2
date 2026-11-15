@@ -61,13 +61,13 @@ def counterGateExtension {p s b d r : ℕ} (hs : 0 < s)
 
 /-- The counter loop computes the same packed extension as the existing low-degree algebra.
 The full alphabet, not only the encoded values, must embed in the selected field. -/
-theorem counterGateExtension_eq {p s b d r : ℕ} [Fact p.Prime] (hs : 0 < s) (hsp : s ≤ p)
+theorem counterGateExtension_eq {p s b d r : ℕ} [Fact p.Prime] (hs : 0 < s)
     (h : Fin s ↪ ZMod p) (hh : ∀ a, h a = (a.val : ZMod p))
     (encode : (Fin b → Bool) → Fin r → Fin s)
     (decode : (Fin r → Fin s) → Fin b → Bool) (f : Gate d b)
     (x : Fin d → Fin r → ZMod p) (i : Fin r) :
     counterGateExtension hs encode decode f x i = gateExtension h encode decode f x i := by
-  rw [counterGateExtension, cast_interpolateGrid hs hsp h hh]
+  rw [counterGateExtension, cast_interpolateGrid hs h hh]
   have htable :
       (fun a : Fin (d * r) → Fin s =>
         ((encode (f fun j => decode
