@@ -1732,8 +1732,10 @@ each phase names only the oracle simulation it needs.
 To bound a substituted program's queries, import
 [Oracle/Substitution/QueryCount.lean](../../CslibFrontier/Languages/Probabilistic/Oracle/Substitution/QueryCount.lean).
 `hQ.simulate hhandler` keeps the adversary's budget `hQ` when every handler program makes at
-most one query, and `isCostBounded_simulate` does the same for general costs. Neither needs a case
-split on the private-sampling branch. The forward lift
+most one query, `isCostBounded_simulate` does the same for general costs, and
+`ProbOracleComp.queriesSatisfy_simulate` propagates a query predicate from every handler to the
+substituted program. Neither query-count rule needs a case split on the private-sampling branch. The
+forward lift
 [PRP.StrongAdversary.isQueryBounded_ofForward](../../CslibFrontier/Crypto/Primitives/PRP/Finite.lean)
 is a one-line client.
 

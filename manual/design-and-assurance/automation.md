@@ -564,6 +564,26 @@ displays the normalized residual `Negligible` goal; supply the missing `Negligib
 `Negligible.sum_range_of_le`. The tactic discharges asymptotic decay from a proved quantitative
 bound; it does not perform game hops or probability rewrites itself.
 
+For inverse-polynomial characterizations, subexponential and logarithmic decay, and
+non-negligibility proofs ([bs23][bs23], §2.3.1, pp. 28–29), import
+`CslibFrontier.Crypto.Negligible.InversePolynomial` (the
+[module source](../../CslibFrontier/Crypto/Negligible/InversePolynomial.lean)). It registers `fun_prop`
+closure for `((2 : ℝ≥0) ^ g n)⁻¹` when `g` is a `Nat.sqrt`-composed `PolynomiallyLowerBounded`
+schedule (`PolynomiallyLowerBounded.sqrt`), `((2 : ℝ≥0) ^ Real.sqrt (n : ℝ))⁻¹`,
+`(2 : ℝ≥0) ^ (-Real.sqrt (n : ℝ))`, `((n : ℝ≥0) ^ Nat.log b n)⁻¹` for `1 < b`,
+`((n : ℝ≥0) ^ Real.log (n : ℝ))⁻¹`, `(n : ℝ≥0) ^ (-Real.log (n : ℝ))`, and
+`PolynomiallyBoundedNNReal` bounds on `Real.toNNReal (Real.log (p n : ℝ))` for natural-valued
+`PolynomiallyBounded p` (`PolynomiallyBoundedNNReal.toNNReal_log`). The main entry points are
+`negligible_iff_eventually_lt_inv_rpow`, `negligible_iff_tendsto_mul_rpow`, and
+`eventually_abs_lt_inv_rpow_iff_tendsto_mul_rpow` for real-exponent characterizations;
+`negligible_inv_rpow_of_tendsto_atTop` for `((n : ℝ≥0) ^ f n)⁻¹` with `f → atTop`;
+`PolynomiallyBounded.not_negligible_inv` and `PolynomiallyBoundedNNReal.not_negligible_inv` for
+reciprocals of frequently positive polynomially bounded functions (`negligible_inv_iff` under
+`(0 : ℝ≥0)⁻¹ = 0`); and `not_negligible_of_frequently_ge` (`c ≠ 0`) for constant lower bounds. The
+[checked clients](../../CslibFrontierTests/Crypto/NegligibleInversePolynomial.lean) cover these
+equivalences, `2 ^ (-√n)`, `n ^ (-log n)`, `1 / (1000 n ^ 4 + n ^ 2 log n)`, `1 / n ^ 100`, and
+Example 2.11; run `scripts/build.sh CslibFrontierTests.Crypto.NegligibleInversePolynomial`.
+
 ## Close word-size bounds
 
 Word-RAM instructions need a fitting condition `Fits w v`, which unfolds to `v < 2 ^ w`, for
@@ -754,4 +774,5 @@ The project asks for nonterminal `simp only` where later steps depend on the res
 
 Readable `do` notation, named intermediate circuit values and named state fields are recurring client-facing priorities. Inspect representative source clients and before/after PRs to assess these benefits; a raw tactic count does not demonstrate usability. The historical study does not measure an automation success rate: such a rate would need a denominator of attempted goals, failures, manual repairs and timeouts.
 
+[bs23]: ../sources.md#bs23
 [complexitylib]: ../sources.md#complexitylib

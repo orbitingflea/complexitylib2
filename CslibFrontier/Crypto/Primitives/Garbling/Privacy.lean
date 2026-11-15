@@ -28,14 +28,14 @@ samples one uniform label per wire, writes in each gate's row named by its argum
 gate's label masked under their keys, fills every other row uniformly, and sets the decoding bits
 so that the output labels decode to the output. It never sees the gate operations or the input.
 
-The main theorem `advantage_realGame_simGame_le` bounds the advantage of every distinguisher `D`
-between the real view and the simulated view, for a circuit `C` and an input `x`, by the sum over
-the `n + C.size` wires of the PRF advantage of an explicit reduction `reduction C I F tw x D j`
-against `F`, provided the tweaks of distinct argument slots are distinct. The proof is a hybrid
-argument over the wires in wire-number order: hybrid `j` replaces by uniform values the rows that
-read an inactive label on a wire numbered below `j`. The reduction for wire `j` embeds the PRF
-key as the inactive key of wire `j`: with the keyed oracle it produces hybrid `j` exactly
-(`PRF.realExperiment` side), and with a random function hybrid `j + 1` exactly
+The concrete per-instance step `advantage_realGame_simGame_le` bounds the advantage of every
+distinguisher `D` between the real view and the simulated view, for a circuit `C` and an input `x`,
+by the sum over the `n + C.size` wires of the PRF advantage of an explicit reduction
+`reduction C I F tw x D j` against `F`, provided the tweaks of distinct argument slots are
+distinct. The proof is a hybrid argument over the wires in wire-number order: hybrid `j` replaces
+by uniform values the rows that read an inactive label on a wire numbered below `j`. The reduction
+for wire `j` embeds the PRF key as the inactive key of wire `j`: with the keyed oracle it produces
+hybrid `j` exactly (`PRF.realExperiment` side), and with a random function hybrid `j + 1` exactly
 (`PRF.idealExperiment` side).
 Each reduction reads the oracle up front at the tweaks of all argument slots, with at most one
 query per slot (`isQueryBounded_reduction`), and runs `D` once. Both laws hold for every `j`
@@ -56,10 +56,13 @@ fixed, so a bound uniform over a class of distinguishers follows by bounding the
 the corresponding reductions. No bound holds for arbitrary distinguishers, since an exhaustive
 key search distinguishes once `K` is fixed. In the prv.sim game of [BellareHoangRogaway2012] the
 adversary itself chooses the circuit and the input, possibly at random and keeping state for its
-guess; a bound for that game follows from this one by averaging over the adversary's choice, since
-the advantage of a mixture is at most the average advantage. That transfer is not formalized here.
-Running time is not tracked either: there are no cost bounds for garbling, evaluation, the
-simulator or the reductions.
+guess. For point-and-permute garbling that game is treated in
+`CslibFrontier.Crypto.Primitives.Garbling.PointPermute.Reduction`, which runs the hybrids and
+reductions of this file on the adversary's choice (`PointPermute.prvSimAdvantage_simWord_eq`), and
+`PseudorandomFunction.prvSim_pointPermute` in
+`CslibFrontier.Crypto.Primitives.Garbling.PointPermute.Privacy` is the asymptotic `prv.sim` theorem
+for that scheme over valid conventional circuits. Running time is not tracked here: there are no
+cost bounds for garbling, evaluation, the simulator or the reductions.
 
 ## Main definitions
 
@@ -77,7 +80,8 @@ simulator or the reductions.
 * `Cslib.Crypto.Garbling.eval_realExperiment_reduction`,
   `Cslib.Crypto.Garbling.eval_idealExperiment_reduction`: reduction `j` plays hybrid `j` against
   the keyed function and hybrid `j + 1` against a random function.
-* `Cslib.Crypto.Garbling.advantage_realGame_simGame_le`: privacy, as a sum of PRF advantages.
+* `Cslib.Crypto.Garbling.advantage_realGame_simGame_le`: the concrete per-instance hybrid bound, a
+  sum of PRF advantages.
 
 ## References
 
@@ -654,10 +658,13 @@ theorem eval_idealExperiment_reduction (C : Circuit σ n m) (I : Interpretation 
   rw [uniformOfFintype_map_eq_of_shift (IsHidden a (j + 1)) z Tl houtL hshiftL,
     uniformOfFintype_map_eq_of_shift (IsHidden a (j + 1)) z Tr houtR hshiftR]
 
-/-- **Simulation privacy of garbled circuits.** For every circuit `C`, input `x` and
-distinguisher `D`, if distinct argument slots have distinct tweaks, the advantage of `D` between
-the real and the simulated view is at most the sum, over the `n + C.size` wires, of the PRF
-advantage of the reduction for that wire against `F`. The hypothesis `htw` cannot be dropped:
+/-- **The per-instance hybrid bound**: a step, not the `prv.sim` theorem of
+[BellareHoangRogaway2012], since the circuit, input and distinguisher are fixed and nothing is
+asymptotic; for point-and-permute garbling that theorem is
+`PseudorandomFunction.prvSim_pointPermute`. For every circuit `C`, input `x` and distinguisher
+`D`, if distinct argument slots have distinct tweaks, the advantage of `D` between the real and the
+simulated view is at most the sum, over the `n + C.size` wires, of the PRF advantage of the
+reduction for that wire against `F`. The hypothesis `htw` cannot be dropped:
 in a row reading one wire twice with the same colour, equal tweaks on the two slots make their
 mask terms cancel in the `Bool` component. The identity tweak map, with `T = Slot C.topology`,
 satisfies it. -/

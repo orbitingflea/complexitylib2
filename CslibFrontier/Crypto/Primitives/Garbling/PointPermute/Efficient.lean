@@ -25,8 +25,9 @@ import CslibFrontier.Foundations.Data.List.Lookup
 efficient garbling scheme (`Scheme.IsEfficient`) whenever the word family `family` is computed in
 polynomial time, as `PseudorandomFunction.polyTime` provides: `PointPermute.scheme_isEfficient`.
 Circuits are encoded by `encValidCircuit` (`n`, `m` in unary, wire numbers in binary). Privacy of
-the scheme, with a polynomial-time simulator and certified reductions, is open under
-[#5293](https://github.com/cslib-community/cslib-frontier/issues/5293).
+the scheme, with a polynomial-time simulator and a certified reduction, is
+`PseudorandomFunction.prvSim_pointPermute` in
+`CslibFrontier.Crypto.Primitives.Garbling.PointPermute.Privacy`.
 
 The garbler writes each gate's block from the gate list of the encoded circuit; wire numbers read
 from that list are capped at the length of the coins, which changes nothing since a wire beyond

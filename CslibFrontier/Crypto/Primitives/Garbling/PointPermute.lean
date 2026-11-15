@@ -27,8 +27,9 @@ over valid conventional circuits (`ValidCircuit`): `PointPermute.scheme family`,
 keyed by a word family `family`. This module gives the definitions and their correctness only.
 Polynomial running times are proved in
 `CslibFrontier.Crypto.Primitives.Garbling.PointPermute.Efficient`. Privacy (`prv.sim` with the
-topology as side information) is open under
-[#5293](https://github.com/cslib-community/cslib-frontier/issues/5293).
+topology as side information) for every pseudorandom family is
+`PseudorandomFunction.prvSim_pointPermute` in
+`CslibFrontier.Crypto.Primitives.Garbling.PointPermute.Privacy`.
 
 The scheme is a variant of `Garble1` of [BellareHoangRogaway2012] (§5.1, Fig. 7) with the
 PRF-based dual-key cipher of §5.5, not `Garble1` itself. In `Garble1` the type of an output wire's
