@@ -7,17 +7,25 @@ Authors: Samuel Schlesinger
 module
 
 import CslibFrontier.Crypto.Primitives.Garbling.PointPermute
+import CslibFrontier.Crypto.Primitives.Garbling.PointPermute.Efficient
 
 /-!
 # Tests for point-and-permute garbling
 
-A client of `CslibFrontier.Crypto.Primitives.Garbling.PointPermute` under module encapsulation.
+A client of `CslibFrontier.Crypto.Primitives.Garbling.PointPermute`,
+`CslibFrontier.Crypto.Primitives.Garbling.Efficient` and
+`CslibFrontier.Crypto.Primitives.Garbling.PointPermute.Efficient` under module encapsulation.
 
 One AND gate is garbled by `PointPermute.scheme` at `k = 2`, with a family that XORs copies of
 the key into the tweak and with fixed coins. Encoding, evaluating and decoding gives the AND of
 the two input bits on all four inputs, by computation. `scheme_isValid` gives the same answer for
 every outcome of the randomized garbler at every `k > 0`, and `ConventionalCircuit.eval_toCircuit`
 shows that the gate's translation to a circuit computes AND.
+
+`Scheme.encGarbled`, declared with `enc_structure`, writes the same words as the former tuple
+encoding `encPair encBits (encPair encBits encBits)` of `(F, e, d)`. `Scheme.IsEfficient` has an
+instance: point-and-permute garbling keyed by the family that returns its input word, which is
+computed in polynomial time.
 -/
 
 -- This regression module checks ordinary imports and exports no test fixtures.
@@ -83,5 +91,22 @@ example (x : Fin 2 → Bool) :
   refine (ConventionalCircuit.eval_toCircuit validAndGate x).trans ?_
   revert x
   decide
+
+/-! ### Efficiency -/
+
+section Efficiency
+
+open Turing.MultiTapeTM
+
+/-- The encoded words of a garbled triple are unchanged by the `enc_structure` declaration. -/
+example (g : Scheme.Garbled) :
+    Scheme.encGarbled g = encPair encBits (encPair encBits encBits) (g.fn, g.encInfo, g.decInfo) :=
+  rfl
+
+/-- Point-and-permute garbling keyed by a polynomial-time family is efficient. -/
+example : (PointPermute.scheme fun _ x => x).IsEfficient encValidCircuit :=
+  PointPermute.scheme_isEfficient (ComputableInPolyTime.snd _ _)
+
+end Efficiency
 
 end CslibFrontierTests.Crypto.GarblingPointPermute

@@ -26,7 +26,7 @@ scheme in the sense of Bellare, Hoang and Rogaway [BellareHoangRogaway2012] (`Ga
 over valid conventional circuits (`ValidCircuit`): `PointPermute.scheme family`, whose masks are
 keyed by a word family `family`. This module gives the definitions and their correctness only.
 Polynomial running times are proved in
-[#5703](https://github.com/cslib-community/cslib-frontier/pull/5703). Privacy (`prv.sim` with the
+`CslibFrontier.Crypto.Primitives.Garbling.PointPermute.Efficient`. Privacy (`prv.sim` with the
 topology as side information) is open under
 [#5293](https://github.com/cslib-community/cslib-frontier/issues/5293).
 
