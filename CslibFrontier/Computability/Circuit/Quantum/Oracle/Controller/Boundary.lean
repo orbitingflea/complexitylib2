@@ -36,12 +36,12 @@ namespace Cslib.Quantum.UniformOracleCircuitFamily
 variable {a b L₁ L₂ : ℕ → ℕ}
     (F G : UniformOracleCircuitFamily)
     (hF : F.HasOracleSignature a b L₁) (hG : G.HasOracleSignature a b L₂)
-    (n : ℕ) (x : List Bool) (hx : x.length ≤ L₁ n) (s : ℕ)
-    (hnext : x.length + (F.description n x.length).outputWidth + s ≤ L₂ n)
-    (hkeep : (G.description n
-      (x.length + (F.description n x.length).outputWidth + s)).quantumInputWidth =
-      (F.description n x.length).width)
+    (n : ℕ) (x : List Bool) (hx : x.length ≤ L₁ n) (s t : ℕ)
+    (hnext : t ≤ L₂ n)
+    (hkeep : (G.description n t).quantumInputWidth = (F.description n x.length).width)
     (H : (Fin (a n) → Bool) → Fin (b n) → Bool)
+    (nextInput : (Fin (F.description n x.length).outputWidth → Bool) →
+      (Fin s → Bool) → Fin t → Bool)
     (service : ((Fin (a n) → Bool) → Fin (b n) → Bool) →
       (Fin (F.description n x.length).outputWidth → Bool) → PMF (Fin s → Bool))
     (κ : Type) [Fintype κ] [DecidableEq κ]
@@ -49,26 +49,29 @@ variable {a b L₁ L₂ : ℕ → ℕ}
 /-- The existing one-boundary terminal law is exactly the finite-prefix device measurement,
 with the whole conditional joint density passed to the existing native second stage. -/
 theorem measureDensity_runClassicalQuery_deviceState {B : Type} [Fintype B]
-    (M : POVM B ((Fin (G.description n
-      (x.length + (F.description n x.length).outputWidth + s)).width → Bool) × κ))
+    (M : POVM B ((Fin (G.description n t).width → Bool) × κ))
     (ρ) (hρ : IsDensityMatrix ρ) :
     let initial : DeviceState (F.description n x.length).width κ Unit :=
       ⟨F.runDensityWithReference n x (hF.oracle n x.length hx H) κ ρ,
         F.isDensityMatrix_runDensityWithReference n x (hF.oracle n x.length hx H) κ hρ, ()⟩
     let read := fun z => fun i => z (Fin.castLEEmb (F.wellFormed n x.length).output_le i)
-    M.measureDensity (G.runClassicalQuery hG n x H κ F hF hx s hnext hkeep service ρ)
-      (G.isDensityMatrix_runClassicalQuery hG n x H κ F hF hx s hnext hkeep service hρ) =
+    M.measureDensity
+      (G.runClassicalQuery hG n x H κ F hF hx s t hnext hkeep nextInput service ρ)
+      (G.isDensityMatrix_runClassicalQuery hG n x H κ F hF hx s t hnext hkeep nextInput service
+        hρ) =
       (initial.measure read).bind fun p =>
         M.measureDensity
-          (G.resumeDensity hG n x hnext hkeep H κ p.1 (service H p.1) p.2.density)
-          (G.isDensityMatrix_resumeDensity hG n x hnext hkeep H κ p.1
+          (G.resumeDensity hG n hnext hkeep H κ nextInput p.1 (service H p.1) p.2.density)
+          (G.isDensityMatrix_resumeDensity hG n hnext hkeep H κ nextInput p.1
             (service H p.1) p.2.isDensityMatrix) := by
   dsimp only
-  rw [G.measureDensity_runClassicalQuery_eq hG n x H κ F hF hx s hnext hkeep service M ρ hρ]
+  rw [G.measureDensity_runClassicalQuery_eq hG n x H κ F hF hx s t hnext hkeep nextInput
+    service M ρ hρ]
   rw [DeviceState.measure_bind (next := fun request state =>
     M.measureDensity
-      (G.resumeDensity hG n x hnext hkeep H κ request (service H request) state.density)
-      (G.isDensityMatrix_resumeDensity hG n x hnext hkeep H κ request
+      (G.resumeDensity hG n hnext hkeep H κ nextInput request
+        (service H request) state.density)
+      (G.isDensityMatrix_resumeDensity hG n hnext hkeep H κ nextInput request
         (service H request) state.isDensityMatrix))]
   rfl
 

@@ -18,6 +18,8 @@ public import CslibFrontier.Probability.PMF.Map
 * `Cslib.Probability.PMF.bind_apply_le_mul_of_le_mul`,
   `Cslib.Probability.PMF.mul_bind_apply_le_of_mul_le`: density bounds multiply under sequential
   sampling, including when the second distribution depends on the first result.
+* `Cslib.Probability.PMF.bind_apply_le_mul_bind_apply`: a bound at one outcome of every
+  continuation survives the initial draw.
 -/
 
 public section
@@ -47,6 +49,16 @@ theorem bind_apply_le_mul_of_le_mul {p q : PMF α} {f g : α → PMF β} {c d : 
   calc
     p a * f a b ≤ (c * q a) * (d * g a b) := mul_le_mul' (hp a) (hf a b)
     _ = c * d * (q a * g a b) := by ac_rfl
+
+/-- A bound by `c` times another continuation at one outcome survives the same initial draw. Unlike
+`bind_apply_le_mul_of_le_mul`, the continuations are compared only at `b`. -/
+theorem bind_apply_le_mul_bind_apply (p : PMF α) {f g : α → PMF β} {c : ℝ≥0∞} {b : β}
+    (h : ∀ a, f a b ≤ c * g a b) : p.bind f b ≤ c * p.bind g b := by
+  simp only [PMF.bind_apply, ← ENNReal.tsum_mul_left]
+  refine tsum_le_tsum fun a => ?_
+  calc
+    p a * f a b ≤ p a * (c * g a b) := mul_le_mul' le_rfl (h a)
+    _ = c * (p a * g a b) := mul_left_comm _ _ _
 
 /-- Lower density factors for the initial draw and every continuation multiply. -/
 theorem mul_bind_apply_le_of_mul_le {p q : PMF α} {f g : α → PMF β} {c d : ℝ≥0∞}

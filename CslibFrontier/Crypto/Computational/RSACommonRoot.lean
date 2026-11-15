@@ -64,13 +64,10 @@ The statement differs from the book's in three ways.
 The certificate covers the computation on encoded numbers. Nothing here concerns an adversary or
 a security game; Theorems 10.5 and 10.7 and the accumulator of §10.9 are not formalized.
 
-`Cslib.Crypto.commonModulusAttack N e₁ e₂ c₁ c₂` in `RSAAttacks.lean` is the same algorithm: it
-computes `c₁ ^ a * c₂ ^ b` in `ZMod N` from the Bézout coefficients `a = Nat.gcdA e₁ e₂` and
-`b = Nat.gcdB e₁ e₂` through `zmodIntPow`, and it has no polynomial-time certificate. Its
-correctness proof `commonModulusAttack_rsaEval` uses the identity `eq_zpow_mul_zpow_of_zpow_eq`.
-A follow-up would prove `commonRoot N e₂ e₁ (rsaEval N e₁ m) (rsaEval N e₂ m) = m % N` as
-`commonRoot_rsaEval`, which gives the attack a certificate, and then remove `commonModulusAttack`
-and `zmodIntPow`, which have no other users.
+The common-modulus attack on plain RSA is this program on two ciphertexts:
+`Cslib.Crypto.commonRoot_rsaEval` in `RSAAttacks.lean` proves that for coprime `e₁`, `e₂` and `m`
+coprime to `N`, `commonRoot N e₂ e₁ (rsaEval N e₁ m) (rsaEval N e₂ m) = m % N`, and
+`computableInPolyTime_commonRoot` is the attack's polynomial-time certificate.
 
 ## References
 

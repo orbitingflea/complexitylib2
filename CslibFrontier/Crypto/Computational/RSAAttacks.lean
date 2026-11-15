@@ -11,6 +11,7 @@ public import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.P
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Gcd
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Sqrt
 public import CslibFrontier.Crypto.Computational.Factoring
+public import CslibFrontier.Crypto.Computational.RSACommonRoot
 public import CslibFrontier.Crypto.Computational.RSATrapdoor
 public import Mathlib.Data.Nat.ChineseRemainder
 import CslibFrontier.Crypto.Negligible.Basic
@@ -30,9 +31,9 @@ reductions connecting `RSAOneWay`, `RSAKeyRecoveryHard`, `TotientHard`, and
 
 * **Malleability.** `rsaEval` is multiplicative, so anyone can turn an encryption of `m` into an
   encryption of `m * s % N`.
-* **Common modulus.** Two encryptions of the same unit `m` under one modulus and coprime exponents
-  `e₁, e₂` reveal `m`: with Bézout coefficients `a * e₁ + b * e₂ = 1`, `c₁ ^ a * c₂ ^ b = m`
-  (`commonModulusAttack`).
+* **Common modulus.** Two encryptions `c₁`, `c₂` of the same unit `m` under one modulus `N` and
+  coprime exponents `e₁, e₂` reveal `m`: Shamir's trick `commonRoot N e₂ e₁ c₁ c₂` from
+  `RSACommonRoot.lean` returns `m % N` (`commonRoot_rsaEval`).
 * **Small messages and the broadcast attack.** If `m ^ e < N`, the ciphertext is `m ^ e` over the
   integers, so `m` is its integer `e`-th root. If the same `m` is sent to receivers with pairwise
   coprime moduli whose product exceeds `m ^ e`, the Chinese remainder combination of the
@@ -54,8 +55,6 @@ reductions connecting `RSAOneWay`, `RSAKeyRecoveryHard`, `TotientHard`, and
 
 ## Main definitions
 
-* `Cslib.Crypto.zmodIntPow`: integer powers of a residue, inverting for negative exponents.
-* `Cslib.Crypto.commonModulusAttack`: the common-modulus recovery `c₁ ^ a * c₂ ^ b` modulo `N`.
 * `Cslib.Crypto.factorOfTotient`: the two factors of `N` computed from `N` and `φ(N)`.
 * `Cslib.Crypto.totientGame`, `Cslib.Crypto.TotientHard`, `Cslib.Crypto.factorToTotient`,
   `Cslib.Crypto.totientToFactor`: the Euler totient computation experiment, assumption, and PPT
@@ -69,7 +68,8 @@ reductions connecting `RSAOneWay`, `RSAKeyRecoveryHard`, `TotientHard`, and
 
 * `Cslib.Crypto.rsaEval_mul`, `Cslib.Crypto.rsaInvert_rsaEval_mul`: plain RSA is multiplicatively
   homomorphic, and the blinded ciphertext decrypts to `m * s % N`.
-* `Cslib.Crypto.commonModulusAttack_rsaEval`: the common-modulus attack recovers every unit `m`.
+* `Cslib.Crypto.commonRoot_rsaEval`: the common-modulus attack `commonRoot N e₂ e₁ c₁ c₂` recovers
+  `m % N` for every unit `m` and coprime `e₁`, `e₂`.
 * `Cslib.Crypto.rsaEval_eq_pow_of_pow_lt`, `Cslib.Crypto.eq_of_pow_eq_rsaEval`: a short message is
   the unique integer `e`-th root of its ciphertext.
 * `Cslib.Crypto.chineseRemainderOfList_rsaEval_eq_pow`: the broadcast attack.
@@ -91,8 +91,11 @@ reductions connecting `RSAOneWay`, `RSAKeyRecoveryHard`, `TotientHard`, and
 
 ## Implementation notes
 
-The common-modulus attack is stated in `ZMod N`, where `zmodIntPow` uses Mathlib's `ZMod.inv`; the
-statement requires `m` to be coprime to `N`. The deterministic polynomial-time reductions
+The common-modulus attack is the program `commonRoot` of `RSACommonRoot.lean` on the two
+ciphertexts, so `computableInPolyTime_commonRoot` is its polynomial-time certificate; its
+correctness statement requires coprime exponents and `m` coprime to `N`.
+
+The deterministic polynomial-time reductions
 `TotientHard gen ↔ ModulusFactoringHard (fun n => (gen n).map RSADesc.modulus)` ([KatzLindell2020],
 Theorem 9.49) and `RSAOneWay gen → RSAKeyRecoveryHard gen → TotientHard gen` are proved in full.
 The two statements on factoring from `(N, e, d)` are the deterministic ingredients of the reverse
@@ -141,42 +144,39 @@ theorem rsaInvert_rsaEval_mul (desc : RSADesc) (m s : ℕ) :
 
 /-! ### Common modulus -/
 
-/-- The integer power `x ^ k` of a residue `x : ZMod N`, computed as `(x⁻¹) ^ (-k)` with
-Mathlib's `ZMod.inv` when `k < 0`. -/
-@[expose] def zmodIntPow {N : ℕ} (x : ZMod N) (k : ℤ) : ZMod N :=
-  if 0 ≤ k then x ^ k.toNat else x⁻¹ ^ (-k).toNat
-
-/-- On units, `zmodIntPow` is the group integer power. -/
-theorem zmodIntPow_units {N : ℕ} (u : (ZMod N)ˣ) (k : ℤ) :
-    zmodIntPow (u : ZMod N) k = ((u ^ k : (ZMod N)ˣ) : ZMod N) := by
-  unfold zmodIntPow
-  split_ifs with hk
-  · obtain ⟨j, rfl⟩ : ∃ j : ℕ, k = j := ⟨k.toNat, by omega⟩
-    rw [Int.toNat_natCast, zpow_natCast, Units.val_pow_eq_pow_val]
-  · obtain ⟨j, rfl⟩ : ∃ j : ℕ, k = -(j : ℤ) := ⟨(-k).toNat, by omega⟩
-    rw [ZMod.inv_coe_unit, neg_neg, Int.toNat_natCast, zpow_neg, zpow_natCast, ← inv_pow,
-      Units.val_pow_eq_pow_val]
-
-/-- The common-modulus attack on plain RSA: given encryptions `c₁, c₂` of one message under the
-same modulus `N` and exponents `e₁, e₂`, output `c₁ ^ a * c₂ ^ b` in `ZMod N`, where
-`a = Nat.gcdA e₁ e₂` and `b = Nat.gcdB e₁ e₂` are Bézout coefficients. -/
-@[expose] def commonModulusAttack (N e₁ e₂ c₁ c₂ : ℕ) : ZMod N :=
-  zmodIntPow (c₁ : ZMod N) (Nat.gcdA e₁ e₂) * zmodIntPow (c₂ : ZMod N) (Nat.gcdB e₁ e₂)
-
-/-- The common-modulus attack recovers the residue of every message `m` coprime to `N` (so `m`
-itself when `m < N`) from its plain RSA encryptions under coprime exponents `e₁, e₂`. -/
-theorem commonModulusAttack_rsaEval {N e₁ e₂ m : ℕ} (he : Nat.Coprime e₁ e₂)
-    (hm : Nat.Coprime m N) :
-    commonModulusAttack N e₁ e₂ (rsaEval N e₁ m) (rsaEval N e₂ m) = m := by
-  let u : (ZMod N)ˣ := ZMod.unitOfCoprime m hm
-  have hcast (k : ℕ) : ((rsaEval N k m : ℕ) : ZMod N) = ((u ^ k : (ZMod N)ˣ) : ZMod N) := by
-    rw [rsaEval, ZMod.natCast_mod, Nat.cast_pow, Units.val_pow_eq_pow_val,
-      ZMod.coe_unitOfCoprime]
-  have hbezout : (e₁ : ℤ) * Nat.gcdA e₁ e₂ + e₂ * Nat.gcdB e₁ e₂ = 1 := by
-    rw [← Nat.gcd_eq_gcd_ab, he.gcd_eq_one, Nat.cast_one]
-  rw [commonModulusAttack, hcast, hcast, ← zpow_natCast, ← zpow_natCast, zmodIntPow_units,
-    zmodIntPow_units, ← Units.val_mul, ← eq_zpow_mul_zpow_of_zpow_eq (c := u) hbezout rfl rfl,
-    ZMod.coe_unitOfCoprime]
+/-- The common-modulus attack on plain RSA: from the encryptions `c₁ = rsaEval N e₁ m` and
+`c₂ = rsaEval N e₂ m` of one message `m` under the same modulus `N` and coprime exponents `e₁`,
+`e₂`, Shamir's trick `commonRoot N e₂ e₁ c₁ c₂` recovers `m % N` whenever `m` is coprime to `N`.
+The attack is therefore the program `commonRoot` on the ciphertexts, and
+`computableInPolyTime_commonRoot` at `(N, e₂, e₁, c₁, c₂)` is its polynomial-time certificate. -/
+theorem commonRoot_rsaEval {N e₁ e₂ m : ℕ} (he : Nat.Coprime e₁ e₂) (hm : Nat.Coprime m N) :
+    commonRoot N e₂ e₁ (rsaEval N e₁ m) (rsaEval N e₂ m) = m % N := by
+  rcases Nat.eq_zero_or_pos N with rfl | hN
+  · obtain rfl : m = 1 := Nat.coprime_zero_right m |>.mp hm
+    simp [commonRoot, rsaEval, Turing.MultiTapeTM.powMod]
+  have hc (k : ℕ) : Nat.Coprime (rsaEval N k m) N :=
+    (Nat.mod_modEq (m ^ k) N).gcd_eq.trans (Nat.Coprime.pow_left k hm)
+  have h : rsaEval N e₁ m ^ e₂ ≡ rsaEval N e₂ m ^ e₁ [MOD N] :=
+    calc rsaEval N e₁ m ^ e₂ ≡ (m ^ e₁) ^ e₂ [MOD N] := (Nat.mod_modEq _ _).pow _
+      _ = (m ^ e₂) ^ e₁ := by rw [← pow_mul, ← pow_mul, mul_comm]
+      _ ≡ rsaEval N e₂ m ^ e₁ [MOD N] := ((Nat.mod_modEq _ _).pow _).symm
+  set x := commonRoot N e₂ e₁ (rsaEval N e₁ m) (rsaEval N e₂ m)
+  obtain ⟨u, hu⟩ : ∃ u : (ZMod N)ˣ, (u : ZMod N) = m := ⟨_, ZMod.coe_unitOfCoprime m hm⟩
+  obtain ⟨v, hv⟩ : ∃ v : (ZMod N)ˣ, (v : ZMod N) = x :=
+    ⟨_, ZMod.coe_unitOfCoprime x (commonRoot_coprime hN he.symm (hc e₁) (hc e₂) h)⟩
+  have hpow (k : ℕ) (hk : x ^ k ≡ rsaEval N k m [MOD N]) : v ^ (k : ℤ) = u ^ (k : ℤ) := by
+    ext
+    rw [zpow_natCast, zpow_natCast, Units.val_pow_eq_pow_val, Units.val_pow_eq_pow_val, hu, hv,
+      ← Nat.cast_pow, ← Nat.cast_pow, (ZMod.natCast_eq_natCast_iff _ _ _).mpr hk, rsaEval,
+      ZMod.natCast_mod]
+  have hbezout : (e₂ : ℤ) * Nat.gcdA e₂ e₁ + e₁ * Nat.gcdB e₂ e₁ = 1 := by
+    rw [← Nat.gcd_eq_gcd_ab, he.symm.gcd_eq_one, Nat.cast_one]
+  have hvu : v = u :=
+    (eq_zpow_mul_zpow_of_zpow_eq hbezout (hpow e₂ (commonRoot_pow_modEq_right hN he.symm (hc e₁) h))
+      (hpow e₁ (commonRoot_pow_modEq_left hN he.symm (hc e₁) h))).trans
+      (eq_zpow_mul_zpow_of_zpow_eq hbezout rfl rfl).symm
+  have hlt : x < N := commonRoot_lt hN _ _ _ _
+  rw [← Nat.mod_eq_of_lt hlt, ← ZMod.natCast_eq_natCast_iff', ← hu, ← hv, hvu]
 
 /-! ### Small messages and the broadcast attack -/
 

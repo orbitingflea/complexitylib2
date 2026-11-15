@@ -38,10 +38,40 @@ example : rsaInvert rsa33.modulus rsa33.d
 /-! ### Common modulus -/
 
 /-- Encryptions of `5` under `N = 33` with the coprime exponents `3` and `7` reveal `5`. -/
-example : commonModulusAttack 33 3 7 (rsaEval 33 3 5) (rsaEval 33 7 5) = 5 :=
-  commonModulusAttack_rsaEval (by decide) (by decide)
+example : commonRoot 33 7 3 (rsaEval 33 3 5) (rsaEval 33 7 5) = 5 :=
+  commonRoot_rsaEval (by decide) (by decide)
 
 example : rsaEval 33 3 5 = 26 ∧ rsaEval 33 7 5 = 14 := by decide
+
+/-- The same recovery, evaluated on the ciphertexts `26` and `14`. -/
+example : commonRoot 33 7 3 26 14 = 5 := by
+  unfold commonRoot BinaryGcd.modInv
+  decide
+
+/-- Coprime exponents are needed: both encryptions of the unit `2` modulo `5` under `e₁ = e₂ = 2`
+are `4`, and the output is `4`, not `2`. -/
+example : Nat.Coprime 2 5 ∧ ¬ Nat.Coprime 2 2 ∧
+    commonRoot 5 2 2 (rsaEval 5 2 2) (rsaEval 5 2 2) ≠ 2 % 5 := by
+  refine ⟨by decide, by decide, ?_⟩
+  unfold commonRoot BinaryGcd.modInv
+  decide
+
+/-- A unit message is needed: `2` is not a unit modulo `4`, its encryptions under the coprime
+exponents `2` and `3` are both `0`, and the output is `0`, not `2`. -/
+example : Nat.Coprime 2 3 ∧ ¬ Nat.Coprime 2 4 ∧
+    commonRoot 4 3 2 (rsaEval 4 2 2) (rsaEval 4 3 2) ≠ 2 % 4 := by
+  refine ⟨by decide, by decide, ?_⟩
+  unfold commonRoot BinaryGcd.modInv
+  decide
+
+/-- The attack's certificate: `computableInPolyTime_commonRoot` for the program
+`commonRoot N e₂ e₁ c₁ c₂` on the ciphertext inputs `(N, e₁, e₂, c₁, c₂)`, read as nested pairs on
+`encNat`. -/
+example : ComputableInPolyTime
+    (fun p : ℕ × ℕ × ℕ × ℕ × ℕ => commonRoot p.1 p.2.2.1 p.2.1 p.2.2.2.1 p.2.2.2.2)
+    (encPair encNat (encPair encNat (encPair encNat (encPair encNat encNat)))) encNat :=
+  computableInPolyTime_commonRoot (by fun_prop) (by fun_prop) (by fun_prop) (by fun_prop)
+    (by fun_prop)
 
 /-! ### Small messages and the broadcast attack -/
 

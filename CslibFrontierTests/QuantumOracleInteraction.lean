@@ -130,15 +130,43 @@ example (n ℓ : ℕ) : (firstFamily.description n ℓ).instructions.queryCount 
 example : ∃ B : ℕ → ℕ, ComputableInPolyTime B encUnary encUnary ∧ PolynomiallyBounded B ∧
     ∀ n ℓ, ℓ ≤ n →
       let first := firstFamily.description n ℓ
-      let next := nextFamily.description n (ℓ + first.outputWidth + 2)
+      let next := nextFamily.description n 4
       first.width + next.width ≤ B n ∧
       first.instructions.gateCount + next.instructions.gateCount ≤ B n ∧
       first.instructions.queryCount + next.instructions.queryCount ≤ B n ∧
       (encOracleCircuitDescription first).length +
         (encOracleCircuitDescription next).length ≤ B n ∧
-      ℓ + first.outputWidth + 2 ≤ B n ∧ 1 ≤ B n :=
+      4 ≤ B n ∧ 1 ≤ B n :=
   firstFamily.exists_classicalQuery_resource_bound nextFamily
-    PolynomiallyBounded.id (PolynomiallyBounded.const 2)
+    PolynomiallyBounded.id (PolynomiallyBounded.const 4)
+
+/-- The legacy toy continuation intentionally receives all four request/reply bits. The shared
+interaction API itself no longer fixes this policy. -/
+abbrev transcriptInput (request reply : Fin 2 → Bool) : Fin 4 → Bool :=
+  ![request 0, request 1, reply 0, reply 1]
+
+/-- A one-bit continuation view that exposes a ciphertext bit but discards the service's hidden
+bit. This is the transcript-hiding policy used by the noninterference client below. -/
+abbrev ciphertextInput (_request reply : Fin 2 → Bool) : Fin 1 → Bool := ![reply 0]
+
+/-- Across the complete measured boundary, changing only a service reply's discarded hidden bit
+leaves the final density identical. The bit is generated after the first stage, so it is absent
+from the retained first-stage register as well as from `ciphertextInput`. -/
+theorem runClassicalQuery_ciphertextInput_independent (H : QuantumOracleDecapsulation.Hash)
+    (ciphertext hidden hidden' : Bool)
+    (ρ : Matrix ((Fin 0 → Bool) × Unit) ((Fin 0 → Bool) × Unit) ℂ) :
+    nextFamily.runClassicalQuery (nextSignature (fun _ => 1)) 0 [] H Unit
+        firstFamily (firstSignature (fun _ => 0)) (by decide) 2 1 (by decide) (by decide)
+        ciphertextInput (fun _ _ => PMF.pure ![ciphertext, hidden]) ρ =
+      nextFamily.runClassicalQuery (nextSignature (fun _ => 1)) 0 [] H Unit
+        firstFamily (firstSignature (fun _ => 0)) (by decide) 2 1 (by decide) (by decide)
+        ciphertextInput (fun _ _ => PMF.pure ![ciphertext, hidden']) ρ := by
+  rw [UniformOracleCircuitFamily.runClassicalQuery_apply,
+    UniformOracleCircuitFamily.runClassicalQuery_apply]
+  apply sum_congr rfl
+  intro request _
+  rw [nextFamily.resumeDensity_pure, nextFamily.resumeDensity_pure]
+  rfl
 
 /-- Use the existing native decapsulation caller and its fixed two-bit replies. -/
 noncomputable def fixedService (H : QuantumOracleDecapsulation.Hash)
@@ -331,15 +359,16 @@ theorem decode_embedded_memory (key memory : Bool) :
 /-- A real second-stage native run consumes the retained superposition and compares its query
 to the service reply. No measurement of the work qubit was inserted at the boundary. -/
 theorem resume_memoryState (H : QuantumOracleDecapsulation.Hash) (key memory : Bool) :
-    nextFamily.resumeRun (nextSignature (fun _ => 4)) 0 [] (by decide)
-      (memory_compatible 0 0) H (fun _ : Fin 2 => false) ![true, key] (memoryState memory) =
+    nextFamily.resumeRun (nextSignature (fun _ => 4)) 0 (by decide)
+      (memory_compatible 0 0) H
+      (transcriptInput (fun _ : Fin 2 => false) ![true, key]) (memoryState memory) =
       ket (answerWord H key memory) := by
   have hr := UniformOracleCircuitFamily.resumeRun_apply nextFamily
-    (nextSignature (fun _ => 4)) 0 [] (by decide) (memory_compatible 0 0)
-    H (fun _ : Fin 2 => false) ![true, key] (memoryState memory)
+    (nextSignature (fun _ => 4)) 0 (by decide) (memory_compatible 0 0)
+    H (transcriptInput (fun _ : Fin 2 => false) ![true, key]) (memoryState memory)
   rw [hr]
   rw [nextSignature_oracle]
-  simp only [nextFamily, nextDescription, List.length_nil, Nat.zero_add, Nat.mul_zero,
+  simp only [nextFamily, nextDescription, Nat.zero_add, Nat.mul_zero,
     Nat.sub_self, Nat.reduceAdd, List.nil_append, List.ofFn_succ, List.ofFn_zero,
     List.cons_append, encPair, encUnary, encBits]
   change Circuit.eval
@@ -357,8 +386,9 @@ theorem resume_memoryState (H : QuantumOracleDecapsulation.Hash) (key memory : B
     query_baseWord, compareReply_queriedWord]
 
 theorem resume_prepared (H : QuantumOracleDecapsulation.Hash) (key : Bool) :
-    nextFamily.resumeRun (nextSignature (fun _ => 4)) 0 [] (by decide)
-      (memory_compatible 0 0) H (fun _ : Fin 2 => false) ![true, key] prepared =
+    nextFamily.resumeRun (nextSignature (fun _ => 4)) 0 (by decide)
+      (memory_compatible 0 0) H
+      (transcriptInput (fun _ : Fin 2 => false) ![true, key]) prepared =
       ket (answerWord H key false) := by
   rw [← memoryState_false, resume_memoryState]
 
@@ -367,8 +397,8 @@ experiment it is the same table as the first argument. -/
 noncomputable def nativeState (H Hservice : QuantumOracleDecapsulation.Hash) :
     Matrix ((Fin 8 → Bool) × Unit) ((Fin 8 → Bool) × Unit) ℂ :=
   nextFamily.runClassicalQuery (nextSignature (fun _ => 4)) 0 [] H Unit
-    firstFamily (firstSignature (fun _ => 0)) (by decide) 2 (by decide)
-    (memory_compatible 0 0) (fun _ => fixedService Hservice)
+    firstFamily (firstSignature (fun _ => 0)) (by decide) 2 4 (by decide)
+    (memory_compatible 0 0) transcriptInput (fun _ => fixedService Hservice)
     (pureState (prodState (ket (fun i => Fin.elim0 i)) (ket ())))
 
 /-- The accepted toy ML-KEM path is executed through the measured native boundary. Its
@@ -386,8 +416,8 @@ theorem nativeState_eq (H Hservice : QuantumOracleDecapsulation.Hash) :
   rw [UniformOracleCircuitFamily.runClassicalQuery_apply]
   rw [firstSignature_oracle]
   change (∑ request : Fin 2 → Bool,
-    nextFamily.resumeDensity (nextSignature (fun _ => 4)) 0 [] (by decide)
-      (memory_compatible 0 0) H Unit request (fixedService Hservice request)
+    nextFamily.resumeDensity (nextSignature (fun _ => 4)) 0 (by decide)
+      (memory_compatible 0 0) H Unit transcriptInput request (fixedService Hservice request)
       (classicalDensityBranch
         (fun z : (Fin 3 → Bool) × Unit => fun i : Fin 2 => z.1 (Fin.castLEEmb (by decide) i))
         request (firstFamily.runDensityWithReference 0 [] H Unit
@@ -395,8 +425,8 @@ theorem nativeState_eq (H Hservice : QuantumOracleDecapsulation.Hash) :
   rw [hfirst]
   simp only [branch_prepared, apply_ite, map_zero, Finset.sum_ite_eq', Finset.mem_univ,
     ite_true, fixedService_honest]
-  rw [nextFamily.resumeDensity_pure (nextSignature (fun _ => 4)) 0 [] (by decide)
-    (memory_compatible 0 0) H Unit, densityConj_kronecker_pureState,
+  rw [nextFamily.resumeDensity_pure (nextSignature (fun _ => 4)) 0 (by decide)
+    (memory_compatible 0 0) H Unit transcriptInput, densityConj_kronecker_pureState,
     LinearEquiv.apply_symm_apply]
   exact congrArg (fun ψ => pureState (prodState ψ (ket ()))) (resume_prepared H _)
 
@@ -451,8 +481,8 @@ theorem full_measurement_prepared :
 classical service and native continuation as the correct boundary. -/
 noncomputable def fullMeasurementState (H Hservice : QuantumOracleDecapsulation.Hash) :
     Matrix ((Fin 8 → Bool) × Unit) ((Fin 8 → Bool) × Unit) ℂ :=
-  nextFamily.resumeDensity (nextSignature (fun _ => 4)) 0 [] (by decide)
-    (memory_compatible 0 0) H Unit (fun _ : Fin 2 => false)
+  nextFamily.resumeDensity (nextSignature (fun _ => 4)) 0 (by decide)
+    (memory_compatible 0 0) H Unit transcriptInput (fun _ : Fin 2 => false)
     (fixedService Hservice (fun _ => false))
     (∑ z : Fin 3 → Bool, classicalDensityBranch Prod.fst z
       (pureState (prodState prepared (ket ()))))
@@ -466,8 +496,8 @@ theorem fullMeasurementState_eq (H Hservice : QuantumOracleDecapsulation.Hash) :
   simp only [LinearMap.map_smul_of_tower, fixedService_honest]
   apply sum_congr rfl
   intro b _
-  rw [nextFamily.resumeDensity_pure (nextSignature (fun _ => 4)) 0 [] (by decide)
-    (memory_compatible 0 0) H Unit, densityConj_kronecker_pureState,
+  rw [nextFamily.resumeDensity_pure (nextSignature (fun _ => 4)) 0 (by decide)
+    (memory_compatible 0 0) H Unit transcriptInput, densityConj_kronecker_pureState,
     LinearEquiv.apply_symm_apply]
   exact congrArg (fun ψ => (Probability.PMF.uniformOfFintype Bool b).toReal •
     pureState (prodState ψ (ket ()))) (resume_memoryState H _ b)
