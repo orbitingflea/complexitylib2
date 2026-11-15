@@ -266,7 +266,7 @@ def ofNP (F : UniformCircuitFamily) (p : Polynomial ℕ) : UniformVerifierFamily
       (p := fun n => p.eval n) (o := fun n => n + p.eval n + 1) (by fun_prop) (by fun_prop)
       (by fun_prop)
     change ComputableInPolyTime (fun n => NPVerifier.gates F p n) encUnary (encList encGateCode)
-    simp only [NPVerifier.gates, hshift, swapCodes]
+    simp only [NPVerifier.gates, hshift, swapCodes, swapWireCodes]
     fun_prop
   le_width n := by unfold NPVerifier.width; omega
   width_pos n := by unfold NPVerifier.width; omega

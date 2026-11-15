@@ -93,10 +93,10 @@ example (n : ℕ) : Game.WithinOracleCircuits (fun _ => 1) n
   change ℓ ≤ 1 at hℓ
   rcases Nat.le_one_iff_eq_zero_or_eq_one.mp hℓ with rfl | rfl
   · refine ⟨by dsimp [bitFamily, bitDescription]; omega, ?_, ?_, le_max_left _ _⟩ <;>
-      simp [GateCode.swapCodes, OracleCircuit.gateCount,
+      simp [GateCode.swapCodes, GateCode.swapWireCodes, OracleCircuit.gateCount,
         OracleCircuit.queryCount, OracleGateCode.isQuery]
   · refine ⟨by dsimp [bitFamily, bitDescription]; omega, ?_, ?_, le_max_right _ _⟩ <;>
-      simp [GateCode.swapCodes, OracleCircuit.gateCount,
+      simp [GateCode.swapCodes, GateCode.swapWireCodes, OracleCircuit.gateCount,
         OracleCircuit.queryCount, OracleGateCode.isQuery]
 
 example : SupportsLength

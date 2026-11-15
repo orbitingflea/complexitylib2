@@ -32,7 +32,7 @@ abbrev bitDescription (j n ℓ : ℕ) : OracleCircuitDescription where
 private theorem polyTime_bitDescription (j : ℕ) : ComputableInPolyTime
     (fun s : OracleInputSize => bitDescription j s.securityParameter s.classicalInputLength)
     encOracleInputSize encOracleCircuitDescription := by
-  dsimp only [bitDescription, GateCode.swapCodes, List.map]
+  dsimp only [bitDescription, GateCode.swapCodes, GateCode.swapWireCodes, List.map]
   fun_prop
 
 private theorem wellFormed_bitDescription (j n ℓ : ℕ) :

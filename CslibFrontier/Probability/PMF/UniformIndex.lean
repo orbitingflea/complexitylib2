@@ -28,8 +28,6 @@ The bound holds for every list. Entries beyond the first `Q` are never selected 
 
 * `Cslib.Probability.PMF.inv_le_map_uniformOfFintype_getD`: a member of `l.take Q` is selected
   with probability at least `1 / Q`.
-* `Cslib.Probability.PMF.inv_le_map_uniformOfFintype_getD_of_length_le`: the same for a member of
-  a list of length at most `Q`.
 
 ## References
 
@@ -62,13 +60,5 @@ theorem inv_le_map_uniformOfFintype_getD {Q : ℕ} [NeZero Q] {l : List α} {x :
   rw [PMF.map_apply]
   refine le_trans (le_of_eq ?_) (le_tsum _ (⟨i, hiQ⟩ : Fin Q))
   simp [hsel, PMF.uniformOfFintype_apply]
-
-/-- **Guessing an entry of a short list**: an index drawn uniformly below `Q`, read as a position
-in a list `l` of length at most `Q` with default `d`, selects a member `x` of `l` with probability
-at least `1 / Q`. -/
-theorem inv_le_map_uniformOfFintype_getD_of_length_le {Q : ℕ} [NeZero Q] {l : List α} {x : α}
-    (d : α) (hl : l.length ≤ Q) (hx : x ∈ l) :
-    (Q : ℝ≥0∞)⁻¹ ≤ (PMF.uniformOfFintype (Fin Q)).map (fun i : Fin Q => l.getD i d) x :=
-  inv_le_map_uniformOfFintype_getD d (by rwa [List.take_of_length_le hl])
 
 end Cslib.Probability.PMF

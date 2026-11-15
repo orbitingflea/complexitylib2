@@ -44,6 +44,15 @@ public lemma frame_cons (b : Bool) (w : List Bool) : frame (b :: w) = true :: b 
 public lemma length_frame (w : List Bool) : (frame w).length = 2 * w.length + 1 := by
   induction w <;> simp [*]; omega
 
+/-- Framing a unary block doubles its run of `true` bits before the delimiter. -/
+public lemma frame_replicate_true (n : ℕ) :
+    frame (List.replicate n true) = List.replicate (2 * n) true ++ [false] := by
+  induction n with
+  | zero => rfl
+  | succ n ih =>
+    rw [List.replicate_succ, frame_cons, ih, show 2 * (n + 1) = 2 * n + 1 + 1 by omega]
+    rfl
+
 @[simp]
 public lemma unframe_frame_append (w u : List Bool) : unframe (frame w ++ u) = w := by
   induction w <;> simp [unframe, *]

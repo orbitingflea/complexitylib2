@@ -10,11 +10,12 @@ module
 public import CslibFrontier.Crypto.Computational.Homomorphic.Leveled.Security
 public import CslibFrontier.Crypto.Computational.Homomorphic.Leveled.Size
 public import CslibFrontier.Crypto.Game.Statistical
+public import CslibFrontier.Languages.Probabilistic.UniformNat.ModIndex
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
-import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Binary
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.BinaryDiv
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Encodings.List.Size
 import CslibFrontier.Computability.Probabilistic.CoinTape.Bounds
+import CslibFrontier.Computability.Probabilistic.UniformNat.ModIndex
 import CslibFrontier.Crypto.Computational.Homomorphic.KeyChain.Size
 import CslibFrontier.Crypto.Game.CloseTo.UniformNat
 import CslibFrontier.Crypto.Game.FourHop
@@ -79,8 +80,6 @@ the theorem's running-time clause:
 * `Cslib.Crypto.Homomorphic.Scheme.exactKeyChainHybridGame`: exact uniform
   `Fin depth × Fin capacity` key-chain hybrid game.
 * `Cslib.Crypto.Homomorphic.Scheme.exactLinkAdversary`: uniform-index two-stage key-chain reduction.
-* `Cslib.Crypto.Homomorphic.Scheme.sampleModIndex`: modular residue sampler capped for unary
-  output.
 * `Cslib.Crypto.Homomorphic.Scheme.modLinkAdversary`: strict-PPT `sampleModNat` key-chain reduction.
 * `Cslib.Crypto.Homomorphic.Scheme.linkStateLengthBound`: explicit upper bound on active link-state
   length.
@@ -346,36 +345,6 @@ theorem publicKeyChainHybrid_advantage_exactLinkAdversary (depth capacity : ℕ 
     abs_mul, abs_mul, Nat.abs_cast, Nat.abs_cast]
 
 /-! ### Strict-PPT `sampleModNat` key-chain reduction and statistical-tail bound -/
-
-/-- Sample a modular residue via `ProbComp.sampleModNat width bound`, capped at `bound` so its
-unary encoding is polynomially bounded even when `bound = 0`. When `0 < bound`, every residue modulo
-`bound` is strictly below `bound`, so `sampleModIndex width bound = sampleModNat width bound`. -/
-noncomputable def sampleModIndex (width bound : ℕ) : ProbComp ℕ :=
-  min bound <$> sampleModNat width bound
-
-/-- When `0 < bound`, `sampleModIndex width bound` equals `sampleModNat width bound`. -/
-@[simp] theorem sampleModIndex_eq_sampleModNat (width : ℕ) {bound : ℕ} (hbound : 0 < bound) :
-    sampleModIndex width bound = sampleModNat width bound := by
-  simp only [sampleModIndex, sampleModNat, map_eq_bind_pure_comp, bind_assoc, pure_bind,
-    Function.comp_def]
-  congr 1; funext x
-  rw [Nat.min_eq_right (Nat.mod_lt x hbound).le]
-
-/-- Sampling a modular index with unary bit width and unary modulus is uniformly strict PPT with
-unary output. -/
-@[program_certificate]
-theorem isPPTOn_sampleModIndex {α : Type} {input : α ↪ List Bool}
-    {width bound : α → ℕ}
-    (hwidth : ComputableInPolyTime width input encUnary)
-    (hbound : ComputableInPolyTime bound input encUnary) :
-    IsPPTOn input encUnary (fun a => sampleModIndex (width a) (bound a)) := by
-  have hmod := isPPTOn_sampleModNat hwidth (ComputableInPolyTime.unary_to_binary.comp hbound)
-  have hmin : ComputableInPolyTime (fun p : α × ℕ => min (bound p.1) p.2)
-      (encPair input encNat) encUnary :=
-    ComputableInPolyTime.binary_min_unary'
-      (hbound.comp (ComputableInPolyTime.fst input encNat))
-      (ComputableInPolyTime.snd input encNat)
-  exact hmod.map_with hmin
 
 /-- Strict-PPT two-stage key-chain reduction that samples the reverse link index via
 `sampleModIndex (coins n) (depth n)` and the bit index via
@@ -947,17 +916,17 @@ theorem advantage_scheme_eq_exactLeveledAdversary {E : Scheme}
 /-! ### Strict-PPT `sampleModNat` leveled reduction and statistical-tail bound -/
 
 /-- Strict-PPT unified two-stage base IND-CPA reduction for the leveled construction that samples
-the three-way hop selector via `Scheme.sampleModIndex (coins n) 3`, delegating hops `0` and `1` to
+the three-way hop selector via `ProbComp.sampleModIndex (coins n) 3`, delegating hops `0` and `1` to
 `E.modLinkAdversary` and hop `2` to `zeroLinkAdversary` weighted by
-`Scheme.sampleModIndex (coins n) (depth n)` and `Scheme.sampleModIndex (coins n) (capacity n)` when
-`0 < depth n ∧ 0 < capacity n` (falling back to `zeroLinkAdversary` when `depth n = 0` or
-`capacity n = 0`). -/
+`ProbComp.sampleModIndex (coins n) (depth n)` and
+`ProbComp.sampleModIndex (coins n) (capacity n)` when `0 < depth n ∧ 0 < capacity n` (falling back
+to `zeroLinkAdversary` when `depth n = 0` or `capacity n = 0`). -/
 noncomputable def modLeveledAdversary (E : Scheme) (coins depth capacity : ℕ → ℕ)
     (adversary : Encryption.Adversary) : Encryption.Adversary where
   choose n challengePk :=
     if 0 < depth n ∧ 0 < capacity n then
       do
-        let hop ← Scheme.sampleModIndex (coins n) 3
+        let hop ← ProbComp.sampleModIndex (coins n) 3
         if hop = 0 then
           tagLeveledChoice false false <$>
             (E.modLinkAdversary coins depth capacity (publicKeyGame E adversary false)).choose n
@@ -967,8 +936,8 @@ noncomputable def modLeveledAdversary (E : Scheme) (coins depth capacity : ℕ �
             (E.modLinkAdversary coins depth capacity (publicKeyGame E adversary true)).choose n
               challengePk
         else
-          let reverseIndex ← Scheme.sampleModIndex (coins n) (depth n)
-          let bitIndex ← Scheme.sampleModIndex (coins n) (capacity n)
+          let reverseIndex ← ProbComp.sampleModIndex (coins n) (depth n)
+          let bitIndex ← ProbComp.sampleModIndex (coins n) (capacity n)
           if reverseIndex = 0 then
             if bitIndex = 0 then
               tagLeveledChoice true false <$>
@@ -1005,15 +974,15 @@ theorem isPPT_modLeveledAdversary {E : Scheme}
       (fun p => (modLeveledAdversary E coins depth capacity adversary).choose p.1 p.2)
     dsimp only [modLeveledAdversary]
     apply IsPPTOn.ite (by polytime)
-    · apply (Scheme.isPPTOn_sampleModIndex
+    · apply (Probability.isPPTOn_sampleModIndex
         (hcoins.comp (by fun_prop)) (ComputableInPolyTime.const 3)).bind_with
       apply IsPPTOn.ite (by polytime)
       · exact (hlinkFalse.choose.on.preprocess (by fun_prop)).map (htag false false)
       · apply IsPPTOn.ite (by polytime)
         · exact (hlinkTrue.choose.on.preprocess (by fun_prop)).map ((htag false true).comp hswap)
-        · apply (Scheme.isPPTOn_sampleModIndex
+        · apply (Probability.isPPTOn_sampleModIndex
             (hcoins.comp (by fun_prop)) (hdepth.comp (by fun_prop))).bind_with
-          apply (Scheme.isPPTOn_sampleModIndex
+          apply (Probability.isPPTOn_sampleModIndex
             (hcoins.comp (by fun_prop)) (hcapacity.comp (by fun_prop))).bind_with
           apply IsPPTOn.ite (by polytime)
           · apply IsPPTOn.ite (by polytime)
@@ -1096,9 +1065,9 @@ theorem advantage_exactLeveledAdversary_modLeveledAdversary_le (E : Scheme)
         (ProbComp.eval (sampleModNat (coins n) 3)).bind
           (modLeveledBranch E coins depth capacity adversary bit n) := by
       dsimp only [Encryption.game, Encryption.gameOn, modLeveledAdversary]
-      simp only [hpos, and_self, ↓reduceIte, Scheme.sampleModIndex_eq_sampleModNat (coins n)
-        (by decide : 0 < 3), Scheme.sampleModIndex_eq_sampleModNat (coins n) hpos.1,
-        Scheme.sampleModIndex_eq_sampleModNat (coins n) hpos.2, bind_assoc, ProbComp.eval_bind]
+      simp only [hpos, and_self, ↓reduceIte, ProbComp.sampleModIndex_eq_sampleModNat (coins n)
+        (by decide : 0 < 3), ProbComp.sampleModIndex_eq_sampleModNat (coins n) hpos.1,
+        ProbComp.sampleModIndex_eq_sampleModNat (coins n) hpos.2, bind_assoc, ProbComp.eval_bind]
       peel_binds hop
       dsimp only [modLeveledBranch, leveledZeroAt]
       by_cases h0 : hop = 0

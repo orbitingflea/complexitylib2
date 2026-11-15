@@ -49,6 +49,8 @@ program and its offline running time.
   the declared width.
 * `Cslib.Quantum.Reversible.samplerDist_eq_outputDist`: the measured quantum distribution is
   exactly the Boolean circuit's distribution on uniform inputs.
+* `Cslib.Quantum.Reversible.computableInPolyTime_samplerOutputStart`: the copied-output block
+  position is generated in polynomial time from the seed count and Boolean code.
 * `Cslib.Quantum.Reversible.computableInPolyTime_samplerCodes`: the native gate-code generator is
   polynomial time when the Boolean circuit code is.
 
@@ -101,7 +103,7 @@ copying every declared output to a fresh block. -/
 /-- The measured output distribution of the reversible realization, started with every qubit
 zero. The construction performs one final computational-basis measurement and reads only the
 fresh copied output block. -/
-noncomputable def samplerDist {n m : ℕ} (C : Circuits.Circuit signature n m) :
+@[expose] noncomputable def samplerDist {n m : ℕ} (C : Circuits.Circuit signature n m) :
     PMF (BitString m) :=
   let Q := Circuit.ofCodes (samplerWidth n C.code) (samplerCodes n C.code)
   measureOut (Circuit.run Q (inputState (samplerWidth n C.code) []))
@@ -338,6 +340,16 @@ theorem computableInPolyTime_outputCopyCodes {z base : γ → ℕ} {outputs : γ
   unfold outputCopyCodes outQubit
   fun_prop
 
+/-- The first copied-output position is generated in polynomial time from the unary seed count
+and complete binary-wire circuit code. -/
+theorem computableInPolyTime_samplerOutputStart {n : γ → ℕ}
+    {code : γ → List (Op × List ℕ) × List ℕ}
+    (hn : ComputableInPolyTime n enc encUnary)
+    (hcode : ComputableInPolyTime code enc encCode) :
+    ComputableInPolyTime (fun a => samplerOutputStart (n a) (code a)) enc encUnary := by
+  unfold samplerOutputStart samplerZero
+  fun_prop
+
 theorem computableInPolyTime_samplerWidth {n : γ → ℕ}
     {code : γ → List (Op × List ℕ) × List ℕ}
     (hn : ComputableInPolyTime n enc encUnary)
@@ -358,10 +370,7 @@ theorem computableInPolyTime_samplerCodes {n : γ → ℕ}
   have hzero : ComputableInPolyTime (fun a => samplerZero (n a) (code a)) enc encUnary := by
     unfold samplerZero
     fun_prop
-  have hstart : ComputableInPolyTime (fun a => samplerOutputStart (n a) (code a)) enc
-      encUnary := by
-    unfold samplerOutputStart
-    fun_prop
+  have hstart := computableInPolyTime_samplerOutputStart hn hcode
   have hcompile := computableInPolyTime_codes hn hzero
     (gates := fun a => (code a).1) (by fun_prop)
   have hcopy := computableInPolyTime_outputCopyCodes hzero hstart

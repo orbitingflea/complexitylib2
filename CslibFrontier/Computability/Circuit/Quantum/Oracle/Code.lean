@@ -37,8 +37,8 @@ formalization infrastructure.
 ## Main results
 
 * `Cslib.Quantum.OracleCircuit.toCircuit_append`: interpretation respects sequencing.
-* `Cslib.Quantum.OracleCircuit.toCircuit_map_gate`: oracle-free programs recover
-  `Circuit.ofPhaseCodes`.
+* `Cslib.Quantum.OracleCircuit.toCircuit_map_gate`, `.toCircuit_map_gateCode`: oracle-free
+  programs recover `Circuit.ofPhaseCodes` and `Circuit.ofCodes`.
 * `Cslib.Quantum.OracleCircuit.length_toCircuit`: well-formed instructions are all executed.
 * `Cslib.Quantum.OracleCircuit.gateCount_add_queryCount`: the two costs partition the instructions.
 -/
@@ -118,6 +118,17 @@ theorem toCircuit_map_gate (codes : List PhaseGateCode) :
     toCircuit m H (codes.map OracleGateCode.gate) = Circuit.ofPhaseCodes m codes := by
   rw [toCircuit, List.filterMap_map, Circuit.ofPhaseCodes]
   rfl
+
+/-- Mapping ordinary gate codes to phase-free oracle instructions recovers their ordinary
+finite-circuit interpretation directly. -/
+theorem toCircuit_map_gateCode (codes : List GateCode) :
+    toCircuit m H (codes.map fun g => OracleGateCode.gate (false, g)) =
+      Circuit.ofCodes m codes := by
+  rw [show codes.map (fun g => OracleGateCode.gate (false, g)) =
+      (codes.map fun g => (false, g)).map OracleGateCode.gate by
+    rw [List.map_map]
+    rfl]
+  rw [toCircuit_map_gate, Circuit.ofPhaseCodes_map]
 
 /-- Any even number of coherent XOR queries cancels, on arbitrary states. The total interpreter
 also has this property when a malformed query is skipped. -/

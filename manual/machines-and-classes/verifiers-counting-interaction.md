@@ -262,6 +262,17 @@ hypotheses for both signs of one with moduli `5, 7`, precision `B = 8`, and cuto
 It also checks zero, negative summands, the strict precision boundary, and wraparound at zero.
 Run `LEAN_NUM_THREADS=2 scripts/build.sh CslibFrontierTests.CRTSign --wfail --iofail`.
 
+For the exact manuscript parameters, import `Foundations.NumberTheory.PrimeWindowSign`.
+`PrimeWindowSign.firstCircleFlag_sign_of_coefficients` takes `|X| ≤ 2^m`, `X ≠ 0` and the
+local weighted-coefficient congruences. It proves all positivity, coprimality, prime-product,
+precision and doubling-limit conditions for primes `L < p ≤ Y`, where
+`Y = 2 * max(16,m,L)^4`. Precision is `Y.size + 10` and the limit is `Y * Y.size + 1`.
+`not_flag_zero_of_coefficients` handles zero. The
+[checked client](../../CslibFrontierTests/PrimeWindowSign.lean) uses supplied coefficient
+congruences for both signs of one, an unconditional zero instance and excluded-prime endpoints.
+Computing those
+coefficients and certifying a counting-level sign procedure remain separate obligations.
+
 ## Efficient oracle programs
 
 [IsOraclePPTOn](https://github.com/cslib-community/cslib-frontier/blob/13e6a31951bf1c89a1a6258c44f9444aecbbefd8/Complexity/Computability/Probabilistic/Oracle.lean#L63) realizes an open probabilistic word-query program by one finite native oracle PTM under one polynomial clock. The semantic equality quantifies over every state type, stateful oracle handler and initial oracle state, and preserves the joint output and final oracle state. Checking only the output marginal would permit a program to erase externally visible query effects; the joint contract rules this out.

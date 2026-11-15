@@ -156,7 +156,7 @@ theorem eval_modLinkAdversary_choose_eq_map_coins (E : Scheme)
       ((tape.drop (coins n)).take (coins n)) ((tape.drop (coins n)).drop (coins n))))
   rw [BitString.uniformList_bind_split _ _ (fun first rest =>
     PMF.pure (finish first (rest.take (coins n)) (rest.drop (coins n))))]
-  simp only [pmf_norm, modLinkAdversary, sampleModIndex, ProbComp.sampleModNat,
+  simp only [pmf_norm, modLinkAdversary, ProbComp.sampleModIndex, ProbComp.sampleModNat,
     ProbComp.sampleBinaryNat, BitString.eval_sampleList]
   congr 1 with first : 1
   rw [BitString.uniformList_bind_split _ _ (fun second rest => PMF.pure (finish first second rest))]

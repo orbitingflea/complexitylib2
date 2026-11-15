@@ -236,6 +236,19 @@ theorem run_apply (n : ℕ) (x : List Bool)
   unfold run
   rfl
 
+/-- Running a generated family on a basis quantum input starts from the basis word formed by the
+encoded classical input followed by that quantum input. -/
+theorem run_ket (n : ℕ) (x : List Bool)
+    (H : (Fin (F.description n x.length).queryWidth → Bool) →
+      Fin (F.description n x.length).responseWidth → Bool)
+    (z : Fin (F.description n x.length).quantumInputWidth → Bool) :
+    F.run n x H (ket z) =
+      Circuit.eval (OracleCircuit.toCircuit (F.description n x.length).width H
+        (F.description n x.length).instructions)
+        (ket (inputState (F.description n x.length).width
+          (encPair encUnary encBits (n, x) ++ List.ofFn z))) := by
+  rw [run_apply, initialState_ket]
+
 /-- Terminal computational-basis measurement of the generated output prefix, returned as a bit
 word. The supplied quantum input must be normalized. -/
 noncomputable def output (n : ℕ) (x : List Bool)
@@ -255,6 +268,23 @@ theorem output_eq (n : ℕ) (x : List Bool)
       (fun y => List.ofFn fun i => y (Fin.castLEEmb (F.wellFormed n x.length).output_le i)) := by
   unfold output
   rfl
+
+/-- On a basis quantum input, terminal output is the declared prefix measurement of the circuit
+started from the encoded classical word followed by that basis input. -/
+theorem output_ket (n : ℕ) (x : List Bool)
+    (H : (Fin (F.description n x.length).queryWidth → Bool) →
+      Fin (F.description n x.length).responseWidth → Bool)
+    (z : Fin (F.description n x.length).quantumInputWidth → Bool) :
+    F.output n x H (ket z) (norm_ket z) =
+      measureOut
+        (Circuit.eval (OracleCircuit.toCircuit (F.description n x.length).width H
+          (F.description n x.length).instructions)
+          (ket (inputState (F.description n x.length).width
+            (encPair encUnary encBits (n, x) ++ List.ofFn z))))
+        (by rw [Circuit.norm_eval, norm_ket])
+        (fun y => List.ofFn fun i =>
+          y (Fin.castLEEmb (F.wellFormed n x.length).output_le i)) := by
+  simp only [output_eq, run_ket]
 
 /-- Every supported output word has the declared output length. -/
 theorem length_of_mem_support_output (n : ℕ) (x : List Bool)

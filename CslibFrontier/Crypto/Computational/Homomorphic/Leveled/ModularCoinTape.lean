@@ -293,7 +293,7 @@ theorem eval_modLeveledAdversary_choose_eq_map_coins (E : Scheme)
     dsimp only [Function.comp_def]
     rw [BitString.uniformList_bind_split (coins n) (2 * coins n + zeroCoins)
       (fun first rest => PMF.pure (afterHop first rest))]
-    simp only [pmf_norm, modLeveledAdversary, hpos, and_self, ↓reduceIte, Scheme.sampleModIndex,
+    simp only [pmf_norm, modLeveledAdversary, hpos, and_self, ↓reduceIte, ProbComp.sampleModIndex,
       ProbComp.sampleModNat, ProbComp.sampleBinaryNat, BitString.eval_sampleList]
     congr 1 with first : 1
     by_cases hfirst : index 3 first = 0

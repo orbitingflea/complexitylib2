@@ -115,7 +115,7 @@ theorem computableInPolyTime_circuitCodes {n : γ → ℕ}
       ((code c).2.getD 0 0)) enc encUnary := by
     unfold outQubit
     fun_prop
-  simp only [circuitCodes, swapCodes]
+  simp only [circuitCodes, swapCodes, swapWireCodes]
   fun_prop
 
 end Reversible

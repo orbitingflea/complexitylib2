@@ -292,31 +292,60 @@ theorem exists_toPlacedGate?_eval_apply {g : GateCode} (h₁ : g.1 = false) (h�
     (classicalStep_classicalStep (target_notMem_of_wellFormed h₁ h₂)) hket⟩
 
 
-/-! ### Swapping a qubit into qubit `0` -/
+/-! ### Swapping two qubits -/
 
-/-- For `a ≠ 0`, three CNOT gates swapping qubit `a` into qubit `0`. -/
-def swapCodes (a : ℕ) : List GateCode := [(false, 0, [a]), (false, a, [0]), (false, 0, [a])]
+/-- Three CNOT gates swapping wires `left` and `right`. -/
+def swapWireCodes (left right : ℕ) : List GateCode :=
+  [(false, left, [right]), (false, right, [left]), (false, left, [right])]
+
+@[simp] theorem length_swapWireCodes (left right : ℕ) :
+    (swapWireCodes left right).length = 3 := rfl
+
+/-- Swapping two distinct valid wires is a well-formed classical circuit. -/
+theorem isClassical_swapWireCodes {left right width : ℕ} (hne : left ≠ right)
+    (hleft : left < width) (hright : right < width) :
+    IsClassical width (swapWireCodes left right) := by
+  intro g hg
+  simp only [swapWireCodes, List.mem_cons, List.not_mem_nil, or_false] at hg
+  rcases hg with rfl | rfl | rfl
+  · exact ⟨rfl, by simp [WellFormed, hne, hleft, hright]⟩
+  · exact ⟨rfl, by simp [WellFormed, hne.symm, hleft, hright]⟩
+  · exact ⟨rfl, by simp [WellFormed, hne, hleft, hright]⟩
+
+/-- The left wire after a swap contains the former right-wire bit. -/
+theorem readBit_classicalRun_swapWireCodes {left right width : ℕ} (hne : left ≠ right)
+    (hleft : left < width) (hright : right < width) (x : Fin width → Bool) :
+    readBit (classicalRun (swapWireCodes left right) x) left = readBit x right := by
+  simp only [swapWireCodes, classicalRun_cons, classicalRun_nil, readBit_classicalStep,
+    List.all_cons, List.all_nil, Bool.and_true]
+  simp [hleft, hright, hne, hne.symm]
+
+/-- A wire outside a swapped pair is unchanged. -/
+theorem readBit_classicalRun_swapWireCodes_of_ne {left right q width : ℕ}
+    (hql : q ≠ left) (hqr : q ≠ right) (x : Fin width → Bool) :
+    readBit (classicalRun (swapWireCodes left right) x) q = readBit x q := by
+  apply readBit_classicalRun_of_forall_ne
+  intro g hg
+  simp only [swapWireCodes, List.mem_cons, List.not_mem_nil, or_false] at hg
+  rcases hg with rfl | rfl | rfl
+  · exact fun h => hql h.symm
+  · exact fun h => hqr h.symm
+  · exact fun h => hql h.symm
+
+/-- For `a ≠ 0`, swap qubit `a` into qubit `0`. -/
+def swapCodes (a : ℕ) : List GateCode :=
+  swapWireCodes 0 a
 
 theorem isClassical_swapCodes {N a : ℕ} (ha : 0 < a) (hN : a < N) :
     IsClassical N (swapCodes a) := by
-  have h₀ : WellFormed N ((false, 0, [a]) : GateCode) :=
-    ⟨by simp, by simp; omega, by simp; omega⟩
-  have h₁ : WellFormed N ((false, a, [0]) : GateCode) :=
-    ⟨by simp, by simp; omega, by simp; omega⟩
-  intro g hg
-  simp only [swapCodes, List.mem_cons, List.not_mem_nil, or_false] at hg
-  rcases hg with rfl | rfl | rfl
-  · exact ⟨rfl, h₀⟩
-  · exact ⟨rfl, h₁⟩
-  · exact ⟨rfl, h₀⟩
+  simpa [swapCodes, swapWireCodes] using
+    isClassical_swapWireCodes (left := 0) (right := a) (by omega) (by omega) hN
 
 /-- **The swap moves qubit `a` into qubit `0`.** -/
 theorem readBit_classicalRun_swapCodes {N a : ℕ} (ha : 0 < a) (hN : a < N) (X : Fin N → Bool) :
     readBit (classicalRun (swapCodes a) X) 0 = readBit X a := by
-  simp only [swapCodes, classicalRun_cons, classicalRun_nil, readBit_classicalStep,
-    List.all_cons, List.all_nil, Bool.and_true]
-  have h0 : (0 : ℕ) < N := by omega
-  simp [h0, hN, show a ≠ 0 by omega, show (0 : ℕ) ≠ a by omega]
+  simpa [swapCodes, swapWireCodes] using
+    readBit_classicalRun_swapWireCodes (left := 0) (right := a) (by omega) (by omega) hN X
 
 end GateCode
 

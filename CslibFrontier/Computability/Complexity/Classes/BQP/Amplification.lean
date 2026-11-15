@@ -499,7 +499,7 @@ theorem computableInPolyTime_codes {n w k t : γ → ℕ} {gs : γ → List Gate
   have h₃ := computableInPolyTime_counter hw hk ht
   have h₄ : ComputableInPolyTime (fun c => swapCodes (answer (w c) (k c) (t c))) enc
       (encList encGateCode) := by
-    simp only [swapCodes, answer, Counter.level, base]
+    simp only [swapCodes, swapWireCodes, answer, Counter.level, base]
     fun_prop
   unfold codes
   fun_prop

@@ -63,47 +63,18 @@ namespace Cslib.Crypto.HQC
 open Finset Probability Circuits Circuits.Boolean BitString
 open Quantum GateCode Quantum.Reversible Turing.MultiTapeTM
 
-/-- Test whether corrected word `j` is the `bits`-bit representation of `value`. -/
-@[expose] def supportWordFormula (bits count value : ℕ) (j : Fin count) :
-    Formula signature (count * bits) :=
-  Formula.andList (List.ofFn fun k : Fin bits =>
-    Formula.literal (fun _ => value.testBit k.val) (finProdFinEquiv (j, k)))
-
-/-- Test whether some corrected word equals `value`. Empty arrays give the constant `false`. -/
-@[expose] def supportIndicatorFormula (bits count value : ℕ) :
-    Formula signature (count * bits) :=
-  Formula.orList (List.ofFn (supportWordFormula bits count value))
-
 /-- Convert the corrected word array into the indicator of its values in `range n`. -/
 @[expose] def supportIndicatorCircuit (bits n count : ℕ) :
     Circuit signature (count * bits) n :=
-  Circuit.pi fun i => (supportIndicatorFormula bits count i.val).toCircuit
-
-/-- A word-equality formula agrees with `equivFin` when the requested value fits in the word. -/
-theorem eval_supportWordFormula {bits count value : ℕ} (hvalue : value < 2 ^ bits)
-    (j : Fin count) (x : BitString (count * bits)) :
-    (supportWordFormula bits count value j).eval interpretation x =
-      decide ((equivFin bits (block x j) : ℕ) = value) := by
-  rw [Bool.eq_iff_iff]
-  simp only [supportWordFormula, Formula.eval_andList, List.all_eq_true,
-    List.forall_mem_ofFn_iff, Formula.eval_literal, beq_iff_eq, decide_eq_true_eq]
-  let valueFin : Fin (2 ^ bits) := ⟨value, hvalue⟩
-  constructor
-  · intro h
-    have hx : block x j = (equivFin bits).symm valueFin := by
-      funext k
-      rw [BitString.equivFin_symm_apply]
-      exact h k
-    have := congrArg (equivFin bits) hx
-    simpa only [Equiv.apply_symm_apply, valueFin] using congrArg Fin.val this
-  · intro h
-    have hx : block x j = (equivFin bits).symm valueFin := by
-      apply (equivFin bits).injective
-      rw [Equiv.apply_symm_apply]
-      exact Fin.ext h
-    intro k
-    change block x j k = value.testBit k.val
-    rw [hx, BitString.equivFin_symm_apply]
+  Circuit.pi fun i =>
+    Circuit.balanced (Circuit.oneGate (σ := signature) .or id)
+      (Circuit.oneGate (σ := signature) (.const false) Fin.elim0)
+      (List.ofFn fun j : Fin count =>
+        Circuit.balanced (Circuit.oneGate (σ := signature) .and id)
+          (Circuit.oneGate (σ := signature) (.const true) Fin.elim0)
+          (List.ofFn fun k : Fin bits =>
+            (Formula.literal (fun _ => i.val.testBit k.val)
+              (finProdFinEquiv (j, k))).toCircuit))
 
 /-- The indicator circuit returns the finite set of values represented by the corrected words. -/
 theorem eval_supportIndicatorCircuit {bits n count : ℕ} (hn : n ≤ 2 ^ bits)
@@ -112,20 +83,84 @@ theorem eval_supportIndicatorCircuit {bits n count : ℕ} (hn : n ≤ 2 ^ bits)
       indicatorVector n
         ((List.ofFn fun j => (equivFin bits (block x j) : ℕ)).toFinset) := by
   funext i
+  simp only [supportIndicatorCircuit, Circuit.eval_pi]
+  have foldr_and_eq_all (l : List Bool) : l.foldr (· && ·) true = l.all id := by
+    induction l <;> simp_all
+  have foldr_or_eq_any (l : List Bool) : l.foldr (· || ·) false = l.any id := by
+    induction l <;> simp_all
+  have hword (j : Fin count) :
+      (Circuit.balanced (Circuit.oneGate (σ := signature) .and id)
+        (Circuit.oneGate (σ := signature) (.const true) Fin.elim0)
+        (List.ofFn fun k : Fin bits =>
+          (Formula.literal (fun _ => i.val.testBit k.val)
+            (finProdFinEquiv (j, k))).toCircuit)).eval interpretation x 0 =
+        decide ((equivFin bits (block x j) : ℕ) = i.val) := by
+    rw [Circuit.eval_balanced]
+    rw [List.balancedFold_hom (g := fun y : Fin 1 → Bool => y 0)
+      (op' := (· && ·)) (fun _ _ => rfl)]
+    simp only [Fin.isValue, Circuit.eval_oneGate, Boolean.interpretation]
+    rw [List.balancedFold_eq_foldr, foldr_and_eq_all]
+    have hleaf (k : Fin bits) :
+        ((((fun y : Fin 1 → Bool => y 0) ∘ fun C => C.eval interpretation x) ∘
+          fun k : Fin bits => (Formula.literal (fun _ => i.val.testBit k.val)
+            (finProdFinEquiv (j, k))).toCircuit) k) =
+          (x (finProdFinEquiv (j, k)) == i.val.testBit k.val) := by
+      simp only [Function.comp_apply]
+      rw [Formula.eval_toCircuit, Formula.eval_literal]
+    rw [Bool.eq_iff_iff]
+    simp only [List.map_ofFn, List.all_eq_true, List.forall_mem_ofFn_iff, id_eq,
+      decide_eq_true_eq]
+    let valueFin : Fin (2 ^ bits) := ⟨i, i.isLt.trans_le hn⟩
+    constructor
+    · intro h
+      have hx : block x j = (equivFin bits).symm valueFin := by
+        funext k
+        rw [BitString.equivFin_symm_apply]
+        have hk := h k
+        rw [hleaf] at hk
+        exact beq_iff_eq.mp hk
+      have := congrArg (equivFin bits) hx
+      simpa only [Equiv.apply_symm_apply, valueFin] using congrArg Fin.val this
+    · intro h
+      have hx : block x j = (equivFin bits).symm valueFin := by
+        apply (equivFin bits).injective
+        rw [Equiv.apply_symm_apply]
+        exact Fin.ext h
+      intro k
+      rw [hleaf]
+      change (block x j k == i.val.testBit k.val) = true
+      rw [hx, BitString.equivFin_symm_apply]
+      simp [valueFin]
+  rw [Circuit.eval_balanced]
+  rw [List.balancedFold_hom (g := fun y : Fin 1 → Bool => y 0)
+    (op' := (· || ·)) (fun _ _ => rfl)]
+  simp only [Fin.isValue, Circuit.eval_oneGate, Boolean.interpretation, Nat.reduceAdd,
+    indicatorVector_apply, List.mem_toFinset, List.mem_ofFn]
+  rw [List.balancedFold_eq_foldr, foldr_or_eq_any]
+  have hvalue (j : Fin count) :
+      ((((fun y : Fin 1 → Bool => y 0) ∘ fun C => C.eval interpretation x) ∘
+        fun j : Fin count =>
+          Circuit.balanced (Circuit.oneGate (σ := signature) .and id)
+            (Circuit.oneGate (σ := signature) (.const true) Fin.elim0)
+            (List.ofFn fun k : Fin bits =>
+              (Formula.literal (fun _ => i.val.testBit k.val)
+                (finProdFinEquiv (j, k))).toCircuit)) j) =
+        decide ((equivFin bits (block x j) : ℕ) = i.val) := by
+    simpa only [Function.comp_apply] using hword j
+  have hvalues :
+      List.ofFn ((((fun y : Fin 1 → Bool => y 0) ∘ fun C => C.eval interpretation x) ∘
+        fun j : Fin count =>
+          Circuit.balanced (Circuit.oneGate (σ := signature) .and id)
+            (Circuit.oneGate (σ := signature) (.const true) Fin.elim0)
+            (List.ofFn fun k : Fin bits =>
+              (Formula.literal (fun _ => i.val.testBit k.val)
+                (finProdFinEquiv (j, k))).toCircuit))) =
+        List.ofFn (fun j : Fin count =>
+          decide ((equivFin bits (block x j) : ℕ) = i.val)) := by
+    exact congrArg List.ofFn (funext hvalue)
+  rw [List.map_ofFn, hvalues]
   rw [Bool.eq_iff_iff]
-  simp only [supportIndicatorCircuit, Circuit.eval_pi, Formula.eval_toCircuit,
-    supportIndicatorFormula, Formula.eval_orList, List.any_eq_true, indicatorVector_apply,
-    decide_eq_true_eq, List.mem_toFinset]
-  constructor
-  · rintro ⟨F, hF, hFx⟩
-    obtain ⟨j, rfl⟩ := List.mem_ofFn.mp hF
-    rw [eval_supportWordFormula (i.isLt.trans_le hn), decide_eq_true_eq] at hFx
-    exact List.mem_ofFn.mpr ⟨j, hFx⟩
-  · intro hi
-    obtain ⟨j, hj⟩ := List.mem_ofFn.mp hi
-    refine ⟨supportWordFormula bits count i.val j, List.mem_ofFn.mpr ⟨j, rfl⟩, ?_⟩
-    rw [eval_supportWordFormula (i.isLt.trans_le hn), decide_eq_true_eq]
-    exact hj
+  simp
 
 /-- Compute all multiply-high candidates independently on consecutive fair-word blocks. -/
 @[expose] def supportCandidateCircuit (width bits n count : ℕ) :

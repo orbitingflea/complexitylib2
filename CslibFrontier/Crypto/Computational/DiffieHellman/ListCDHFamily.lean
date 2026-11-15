@@ -10,15 +10,14 @@ module
 public import CslibFrontier.Crypto.Computational.DiffieHellman
 public import CslibFrontier.Crypto.Computational.DiffieHellman.ListCDH
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Encodings.List
-public import CslibFrontier.Probability.UniformNat
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Encodings.List.Size
 import CslibFrontier.Computability.Probabilistic.PPT.Capture
-import CslibFrontier.Computability.Probabilistic.UniformNat
+import CslibFrontier.Computability.Probabilistic.UniformNat.ModIndex
+import CslibFrontier.Crypto.Game.Order
 import CslibFrontier.Crypto.Negligible.Basic
-import CslibFrontier.Languages.Probabilistic.UniformNat
+import CslibFrontier.Probability.PMF.Bind
 import CslibFrontier.Probability.PMF.DensityBounds
-import CslibFrontier.Probability.PMF.UniformIndex
 import CslibFrontier.Tactic.Negligible
 
 /-!
@@ -37,10 +36,12 @@ A list adversary's efficiency is stated on encodings, as for `CDHAdversary.IsPPT
 strict PPT machine reads `encCDHInput` and writes the framed list of the words of its entries.
 
 A machine with fair coins cannot draw an exactly uniform position below every `Q n`, so the
-reduction draws its position with `Cslib.ProbComp.sampleDyadicIndex`, exactly uniform below the
-power of two `dyadicSize (Q n)`, which lies in `(Q n, 2 * (Q n + 1)]`. A position at or beyond
-`Q n` returns an entry that does not count or the generator. The loss factor is therefore
-`dyadicSize (Q n)`, at most `2 * (Q n + 1)`, instead of the book's `Q`; it is still polynomial.
+reduction draws its position with `Cslib.ProbComp.sampleModIndex (width n) (Q n)`: the residue
+modulo `Q n` of a number written with `width n` fair coins, capped at `Q n` (which matters only at
+`Q n = 0`). The coin count `width` is a parameter of the reduction. The position is within
+`Q n / 2 ^ width n` of uniform below `Q n`, so the reduction keeps the book's factor `Q n` and adds
+the term `Q n ^ 2 / 2 ^ width n`. With `width n = n` that term is negligible when `Q` is
+polynomially bounded, which gives the conclusion under the CDH assumption.
 
 ## Main definitions
 
@@ -53,9 +54,11 @@ power of two `dyadicSize (Q n)`, which lies in `(Q n, 2 * (Q n + 1)]`. A positio
 ## Main results
 
 * `Cslib.Crypto.PrimeOrderGroupFamily.isPPT_listCDHToCDHAdversary`: the reduction is PPT when the
-  list adversary is and `Q` is computable in polynomial time in unary.
-* `Cslib.Crypto.PrimeOrderGroupFamily.succProbability_listCDHGame_le`: the loss factor
-  `dyadicSize (Q n)`.
+  list adversary is and `width` and `Q` are computable in polynomial time in unary.
+* `Cslib.Crypto.PrimeOrderGroupFamily.succProbability_listCDHGame_le`: the loss, the factor `Q n`
+  plus the term `Q n ^ 2 / 2 ^ width n`, for every `width` and `Q`.
+* `Cslib.Crypto.PrimeOrderGroupFamily.succProbability_listCDHGame_mono`: the success probability
+  does not decrease when the bound `Q n` grows.
 * `Cslib.Crypto.PrimeOrderGroupFamily.CDH.negligible_listCDHGame`: under the CDH assumption every
   PPT list adversary wins with negligible probability.
 
@@ -96,11 +99,12 @@ framed list of the words of the adversary's entries. -/
     listCDHExperiment (F.order d) (F.generator d) (Q n) (adversary n d)
 
 /-- The guessing reduction of [BonehShoup2023], Section 21.11.4 (p. 908), as a CDH adversary: run
-the list adversary, draw a position with `Cslib.ProbComp.sampleDyadicIndex (Q n)` and return the
-entry there, or the generator past the end of the list (`Cslib.Crypto.listCDHToCDH`). -/
-noncomputable def listCDHToCDHAdversary (Q : ℕ → ℕ) (adversary : F.ListCDHAdversary) :
+the list adversary, draw a position with `Cslib.ProbComp.sampleModIndex (width n) (Q n)` from
+`width n` fair coins, and return the entry there, or the generator past the end of the list
+(`Cslib.Crypto.listCDHToCDH`). -/
+noncomputable def listCDHToCDHAdversary (width Q : ℕ → ℕ) (adversary : F.ListCDHAdversary) :
     F.CDHAdversary :=
-  fun n d => listCDHToCDH (F.generator d) (ProbComp.sampleDyadicIndex (Q n)) (adversary n d)
+  fun n d => listCDHToCDH (F.generator d) (ProbComp.sampleModIndex (width n) (Q n)) (adversary n d)
 
 /-- The word of an entry read with a fallback, as the machine reads it from the framed list of
 words. -/
@@ -110,18 +114,21 @@ private theorem encode_getD (d : F.Desc) (l : List (F.Carrier d)) (i : ℕ) (x :
 
 variable {F} in
 /-- **The guessing reduction is efficient**: it is uniform strict PPT whenever the list adversary
-is and the bound `Q` is computable in polynomial time in unary. -/
-theorem isPPT_listCDHToCDHAdversary {Q : ℕ → ℕ} (hQ : ComputableInPolyTime Q encUnary encUnary)
+is and the coin count `width` and the bound `Q` are computable in polynomial time in unary. -/
+theorem isPPT_listCDHToCDHAdversary {width Q : ℕ → ℕ}
+    (hwidth : ComputableInPolyTime width encUnary encUnary)
+    (hQ : ComputableInPolyTime Q encUnary encUnary)
     {adversary : F.ListCDHAdversary} (hA : adversary.IsPPT) :
-    (F.listCDHToCDHAdversary Q adversary).IsPPT := by
+    (F.listCDHToCDHAdversary width Q adversary).IsPPT := by
   -- the position, drawn from the CDH input and the adversary's words
   let E := encPair F.encCDHInput (encList encBits)
   have hx : ComputableInPolyTime (fun p : F.CDHInput × List (List Bool) => p.1) E
       F.encCDHInput := by
     fun_prop
-  have hsample : IsPPTOn E encUnary
-      (fun p : F.CDHInput × List (List Bool) => ProbComp.sampleDyadicIndex (Q p.1.secParam)) :=
-    isPPTOn_sampleDyadicIndex (hQ.comp (F.encCDHInput_secParam_polyTime hx))
+  have hn := F.encCDHInput_secParam_polyTime hx
+  have hsample : IsPPTOn E encUnary (fun p : F.CDHInput × List (List Bool) =>
+      ProbComp.sampleModIndex (width p.1.secParam) (Q p.1.secParam)) :=
+    isPPTOn_sampleModIndex (hwidth.comp hn) (hQ.comp hn)
   -- the output, read from the words at the position with the generator's word as fallback
   let E' := encPair E encUnary
   have hx' : ComputableInPolyTime
@@ -140,7 +147,7 @@ theorem isPPT_listCDHToCDHAdversary {Q : ℕ → ℕ} (hQ : ComputableInPolyTime
       let words ← List.map (F.encode x.groupParameters) <$>
         adversary x.secParam x.groupParameters x.leftPublic x.rightPublic
       (fun i => (words[i]?).getD (F.encode x.groupParameters (F.generator x.groupParameters))) <$>
-        ProbComp.sampleDyadicIndex (Q x.secParam)) :=
+        ProbComp.sampleModIndex (width x.secParam) (Q x.secParam)) :=
     hA.bind_with (hsample.map_with hout)
   refine hprog.congr fun x => ?_
   simp only [listCDHToCDHAdversary, listCDHToCDH, ProbComp.eval_bind, ProbComp.eval_map,
@@ -149,32 +156,43 @@ theorem isPPT_listCDHToCDHAdversary {Q : ℕ → ℕ} (hQ : ComputableInPolyTime
   rfl
 
 /-- **Loss of the guessing reduction**: the list form of CDH with bound `Q` is won with probability
-at most `dyadicSize (Q n)` times the success probability of the reduction in the CDH game. The
-factor is the size of the power-of-two range of the position, at most `2 * (Q n + 1)`
-(`Cslib.Probability.dyadicSize_le`). It holds for every `Q`, every setup law and every
-adversary. -/
-theorem succProbability_listCDHGame_le (setup : ℕ → PMF F.Desc) (Q : ℕ → ℕ)
+at most `Q n` times the success probability of the reduction in the CDH game, plus
+`Q n ^ 2 / 2 ^ width n`. The factor is the book's `Q` ([BonehShoup2023], Section 21.11.4, p. 908,
+and equation (11.12), p. 448); the additive term, which the book does not have, is the cost of
+drawing the position from `width n` fair coins. It holds for every setup law, every `width`, every
+`Q`, including `Q n = 0`, and every adversary. -/
+theorem succProbability_listCDHGame_le (setup : ℕ → PMF F.Desc) (width Q : ℕ → ℕ)
     (adversary : F.ListCDHAdversary) (n : ℕ) :
     Game.succProbability (F.listCDHGame setup Q adversary n) ≤
-      dyadicSize (Q n) *
-        Game.succProbability (F.cdhGame setup (F.listCDHToCDHAdversary Q adversary) n) := by
+      Q n * Game.succProbability
+          (F.cdhGame setup (F.listCDHToCDHAdversary width Q adversary) n) +
+        Q n ^ 2 / 2 ^ width n := by
   have hle : F.listCDHGame setup Q adversary n true ≤
-      (dyadicSize (Q n) : ℝ≥0∞) *
-        F.cdhGame setup (F.listCDHToCDHAdversary Q adversary) n true := by
-    refine PMF.bind_apply_le_mul_bind_apply _ fun d => ?_
-    refine eval_listCDHExperiment_le_mul (F.order d) (F.generator d) (Q n)
-      (ProbComp.sampleDyadicIndex (Q n)) (fun l x hx => ?_) (adversary n d)
-    rw [ProbComp.eval_sampleDyadicIndex, PMF.map_comp]
-    have hx' : x ∈ l.take (dyadicSize (Q n)) :=
-      List.take_subset_take_left l (lt_dyadicSize (Q n)).le hx
-    calc (1 : ℝ≥0∞) = (dyadicSize (Q n) : ℝ≥0∞) * (dyadicSize (Q n) : ℝ≥0∞)⁻¹ :=
-          (ENNReal.mul_inv_cancel (by simp [(dyadicSize_pos _).ne'])
-            (ENNReal.natCast_ne_top _)).symm
-      _ ≤ _ := mul_le_mul' le_rfl (PMF.inv_le_map_uniformOfFintype_getD (F.generator d) hx')
+      (Q n : ℝ≥0∞) * F.cdhGame setup (F.listCDHToCDHAdversary width Q adversary) n true +
+        (Q n : ℝ≥0∞) ^ 2 / 2 ^ width n :=
+    PMF.bind_apply_le_mul_bind_apply_add _ fun d =>
+      eval_listCDHExperiment_le_mul_add (F.order d) (F.generator d) (width n) (Q n) (adversary n d)
   simp only [Game.succProbability]
-  rw [← ENNReal.toNNReal_natCast, ← ENNReal.toNNReal_mul]
-  exact ENNReal.toNNReal_mono (ENNReal.mul_ne_top (ENNReal.natCast_ne_top _) (PMF.apply_ne_top _ _))
-    hle
+  rw [← ENNReal.coe_le_coe]
+  push_cast [ENNReal.coe_toNNReal (PMF.apply_ne_top _ _),
+    ENNReal.coe_div (pow_ne_zero _ two_ne_zero)]
+  exact hle
+
+/-- **More entries that count cannot hurt the adversary**: if `Q n ≤ Q' n`, the list form of CDH
+with bound `Q'` is won at `n` with probability at least that with bound `Q`, since the first `Q n`
+entries of a list are among its first `Q' n`. -/
+theorem succProbability_listCDHGame_mono (setup : ℕ → PMF F.Desc) {Q Q' : ℕ → ℕ} {n : ℕ}
+    (hle : Q n ≤ Q' n) (adversary : F.ListCDHAdversary) :
+    Game.succProbability (F.listCDHGame setup Q adversary n) ≤
+      Game.succProbability (F.listCDHGame setup Q' adversary n) := by
+  refine Game.succProbability_mono (PMF.bind_apply_mono_on_support _ _ fun d _ => ?_)
+  simp only [listCDHExperiment, ProbComp.eval_bind, ProbComp.eval_pure]
+  refine PMF.bind_apply_mono_on_support _ _ fun a _ => ?_
+  refine PMF.bind_apply_mono_on_support _ _ fun b _ => ?_
+  refine PMF.bind_apply_mono_on_support _ _ fun l _ => ?_
+  by_cases hx : (a * b) • F.generator d ∈ l.take (Q n)
+  · simp [hx, List.take_subset_take_left l hle hx]
+  · simp [hx]
 
 /-- **The list form of CDH is hard under CDH** ([BonehShoup2023], Section 21.11.4, p. 908): under
 the CDH assumption, every PPT list adversary wins the list form of CDH with negligible probability,
@@ -183,7 +201,7 @@ theorem CDH.negligible_listCDHGame {F : PrimeOrderGroupFamily} {setup : ℕ → 
     (h : F.CDH setup) {Q : ℕ → ℕ} (hQ : ComputableInPolyTime Q encUnary encUnary)
     (adversary : F.ListCDHAdversary) (hA : adversary.IsPPT) :
     Negligible fun n => Game.succProbability (F.listCDHGame setup Q adversary n) := by
-  have hcdh := h _ (isPPT_listCDHToCDHAdversary hQ hA)
-  negligible using F.succProbability_listCDHGame_le setup Q adversary
+  have hcdh := h _ (isPPT_listCDHToCDHAdversary (width := fun n => n) .id' hQ hA)
+  negligible using F.succProbability_listCDHGame_le setup (fun n => n) Q adversary
 
 end Cslib.Crypto.PrimeOrderGroupFamily

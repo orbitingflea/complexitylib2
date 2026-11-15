@@ -25,6 +25,7 @@ over arbitrary outcome values `β` (such as `ℝ` or an ordered alphabet `α`).
 
 * `Cslib.Quantum.measureOut_apply`: probability mass of an outcome value `b : β`.
 * `Cslib.Quantum.measureOut_ket`: reading a basis state returns its readout with certainty.
+* `Cslib.Quantum.measureOut_map`: classical postprocessing composes with the readout.
 * `Cslib.Quantum.measureOut_eq_ofReal_measureProb`: point mass at `b` equals the computational-basis
   probability of the readout fiber over `b`.
 * `Cslib.Quantum.measureOut_toOuterMeasure_apply`: event probabilities under `measureOut`.
@@ -46,6 +47,14 @@ open Finset
 @[simp] theorem measureOut_ket {ι β : Type*} [Fintype ι] [DecidableEq ι]
     (x : ι) (out : ι → β) : measureOut (ket x) (norm_ket x) out = PMF.pure (out x) := by
   simp [measureOut, PMF.pure_map]
+
+/-- Applying a deterministic postprocessing map after measurement is the same as composing it
+with the classical readout. -/
+theorem measureOut_map {ι β γ : Type*} [Fintype ι] (ψ : EuclideanSpace ℂ ι)
+    (hψ : ‖ψ‖ = 1) (out : ι → β) (f : β → γ) :
+    (measureOut ψ hψ out).map f = measureOut ψ hψ (f ∘ out) := by
+  unfold measureOut
+  rw [PMF.map_comp]
 
 /-- Probability mass of an outcome value `b` under `measureOut`. -/
 @[simp] theorem measureOut_apply {ι β : Type*} [Fintype ι] (ψ : EuclideanSpace ℂ ι)

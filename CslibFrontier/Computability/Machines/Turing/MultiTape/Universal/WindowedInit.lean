@@ -170,14 +170,6 @@ private lemma ins_replicate (n : ℕ) :
     rw [ih]
     rfl
 
-private lemma frame_replicate_true (n : ℕ) :
-    frame (List.replicate n true) = List.replicate (2 * n) true ++ [false] := by
-  induction n with
-  | zero => rfl
-  | succ n ih =>
-    rw [List.replicate_succ, frame_cons, ih, show 2 * (n + 1) = 2 * n + 1 + 1 by omega]
-    rfl
-
 /-- Four rewrites turn the encoded input into the encoded coded input cells. -/
 private lemma ins_four (x : List ℕ) : ins (ins (ins (ins (encList encUnary x)))) =
     encList eSym (x.map fun a => some (a + 1)) := by
