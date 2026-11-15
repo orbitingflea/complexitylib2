@@ -459,7 +459,20 @@ def DecisionModuleLWEWith (m d n q : ℕ → ℕ) [∀ κ, NeZero (q κ)]
 has negligible advantage between `ModuleLWE.realGame`, with a uniform secret and independent
 errors, and `ModuleLWE.randomGame`. It is `DecisionModuleLWEWith` for these laws
 (`decisionModuleLWE_iff_decisionModuleLWEWith`). This is a hypothesis against uniform classical
-strict PPT distinguishers, not a theorem of hardness or a claim about quantum adversaries. -/
+strict PPT distinguishers, not a theorem of hardness or a claim about quantum adversaries.
+
+*Source.* [DucasEtAl2018], Section 4.1, p. 249, defines the advantage against the decisional
+`MLWE_{m,k,D}` problem over `R_q = ℤ_q[X]/(X^n + 1)` (Section 2.1, p. 242) for a distribution `D`
+on `R_q`: the gap between `(A, t)` with `A ← R_q^{m×k}` and `t ← R_q^m`, and `(A, A s₁ + s₂)` with
+`s₁ ← D^k` and `s₂ ← D^m`. Here `k = d κ` and the errors are drawn from `D = noise κ`. This
+definition differs from the source as follows.
+* The secret is uniform on `R_q^k`, not drawn from `D^k`. This form follows from `MLWE_{m,k,D}`: a
+  distinguisher for it, run on `(A, t + A u)` for an independent uniform `u`, has the same advantage
+  there. ML-KEM and ML-DSA need the short secrets that `DecisionModuleLWEWith` admits.
+* The degree `n κ` and modulus `q κ` are arbitrary, where Ducas et al. fix `n = 256` and the prime
+  `q = 8380417`.
+* Every uniform classical strict PPT distinguisher has negligible advantage over the family, where
+  the source defines a concrete advantage at one parameter set. -/
 def DecisionModuleLWE (m d n q : ℕ → ℕ) [∀ κ, NeZero (q κ)]
     (noise : (κ : ℕ) → PMF (Fin (n κ) → ZMod (q κ))) : Prop :=
   DecisionModuleLWEWith m d n q (fun κ => PMF.uniformOfFintype (Fin (d κ) → Fin (n κ) → ZMod (q κ)))

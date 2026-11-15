@@ -559,6 +559,8 @@ The shared byte and SHA-2 boundary used by the FIPS 205 SHA2 parameter sets is i
 `FixedBytes n` records digest lengths in the type, while Mathlib's `Fin.take` and `Fin.append`
 provide typed truncation and concatenation. `sha256` and `sha512` are total executable functions;
 `ValidSHA256Input` and `ValidSHA512Input` record FIPS 180-4's prescribed input-length domains.
+Equal-length byte lists and their `bytesToBitsBE` serializations have the same lexicographic order
+(`bytesToBitsBE_lt_iff_lt`).
 The implementation follows the standard's byte-aligned padding, message schedule, compression and
 digest conversion, but no independent functional-correctness theorem is claimed. The
 [ordinary-import client](../../CslibFrontierTests/Crypto/SHA2.lean) checks NIST's official
@@ -593,8 +595,25 @@ strict comparison to a sample from the shared fixed 64-fair-bit sampler, and
 `Falcon.eval_berExpThresholdCoin_true` proves acceptance mass exactly `z / 2^64`.
 The [ordinary-import client](../../CslibFrontierTests/Crypto/FalconBerExp.lean) checks the strict
 comparison and the thresholds zero, one, one half and `2^64 - 1`. This denotational interface does
-not model the reference implementation's lazy one-to-eight-byte trace, bound `ApproxExp`'s
-floating-point error, or certify a native runtime, circuit, query or static-program size.
+not itself model the reference implementation's byte-consumption trace.
+
+[`Falcon/BerExpLazy.lean`](../../CslibFrontier/Crypto/Computational/Falcon/BerExpLazy.lean)
+formalizes Algorithm 14, lines 5--10, as the actual sequential lazy comparison. It uses the shared
+`Byte` type and `natToFixedBytesBE` for `z`, draws eight fair bits for each visited byte, stops at
+the first mismatch, and returns the decision, number of bytes read and source ledger. The ledger
+charges one byte draw, source subtraction and loop equality test per consumed byte, exactly
+`8 * bytesRead` fair bits, and no external oracle or handler. Its comparison coordinate excludes
+the one final sign extraction and loop-index tests. The deterministic trace compares byte lists
+lexicographically; `Falcon.berExpLazyTrace64_accepted` connects that comparison to the
+same strict 64-bit threshold predicate, and `Falcon.eval_berExpLazyCoin_accepted` proves equality
+of the complete decision distributions. The trace consumes between one and eight bytes, consumes
+all eight and rejects when every byte agrees, and reads past the first byte with exact probability
+`2^-8`. The [ordinary-import client](../../CslibFrontierTests/Crypto/FalconBerExpLazy.lean) checks
+first- and later-mismatch decisions, the eight-byte boundary, all-equal rejection, the 64-bit
+bridge, exact laws and resource fields. These source operations are not Lean or native steps.
+This layer does not model PRNG-buffer refills, bound `ApproxExp`'s floating-point error, construct
+`BaseSampler` or `SamplerZ`, prove a Gaussian or retry law, or certify native runtime, circuit,
+query or static-program size.
 
 The Falcon frontend deliberately retains a finite XOF-prefix boundary: the concrete SHAKE function
 can supply any requested finite prefix, but the frontend does not choose a universally sufficient

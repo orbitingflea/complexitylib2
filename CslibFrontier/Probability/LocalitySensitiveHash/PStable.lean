@@ -12,6 +12,7 @@ public import CslibFrontier.Foundations.Probability.Gaussian.Multivariate
 public import CslibFrontier.Probability.LocalitySensitiveHash.Measure
 public import Mathlib.MeasureTheory.Measure.Prod
 public import Mathlib.Probability.ConditionalProbability
+import CslibFrontier.Foundations.Probability.Gaussian.Real
 import Mathlib.Analysis.SpecialFunctions.Trigonometric.ArctanDeriv
 import Mathlib.MeasureTheory.Function.Floor
 import Mathlib.MeasureTheory.Integral.IntervalIntegral.FundThmCalculus
@@ -547,13 +548,13 @@ theorem p2StableProb_anti {r : ℝ} (hr : 0 < r) {c₁ c₂ : ℝ} (hc₁ : 0 �
 
 theorem p2StableProb_pos {r c : ℝ} (hr : 0 < r) (hc : 0 ≤ c) : 0 < p2StableProb r c := by
   rw [p2StableProb, gaussianReal_of_var_ne_zero 0 one_ne_zero]
-  exact stableCollisionProb_withDensity_pos (by unfold gaussianPDFReal; fun_prop)
+  exact stableCollisionProb_withDensity_pos (continuous_gaussianPDFReal 0 1)
     (fun z => gaussianPDFReal_pos 0 1 z one_ne_zero) (integrable_gaussianPDFReal 0 1) hr hc
 
 theorem p2StableProb_strictAnti {r c₁ c₂ : ℝ} (hr : 0 < r) (hc₁ : 0 ≤ c₁) (hlt : c₁ < c₂) :
     p2StableProb r c₂ < p2StableProb r c₁ := by
   rw [p2StableProb, p2StableProb, gaussianReal_of_var_ne_zero 0 one_ne_zero]
-  exact stableCollisionProb_withDensity_strictAnti (by unfold gaussianPDFReal; fun_prop)
+  exact stableCollisionProb_withDensity_strictAnti (continuous_gaussianPDFReal 0 1)
     (fun z => gaussianPDFReal_pos 0 1 z one_ne_zero) (integrable_gaussianPDFReal 0 1) hr hc₁ hlt
 
 /-- Shared reduction of `p2StableProb r c` to twice the half-line integral on `0..(r / c)`. -/
@@ -562,7 +563,7 @@ private theorem p2StableProb_eq_two_mul {r c : ℝ} (hr : 0 < r) (hc : 0 < c) :
       2 * ∫ z in (0 : ℝ)..(r / c), (1 - c * z / r) * gaussianPDFReal 0 1 z := by
   have heven : ∀ z, gaussianPDFReal 0 1 (-z) = gaussianPDFReal 0 1 z := fun z => by
     simp [gaussianPDFReal_def]
-  have h2 := stableCollisionProb_withDensity_eq_two_mul (by unfold gaussianPDFReal; fun_prop)
+  have h2 := stableCollisionProb_withDensity_eq_two_mul (continuous_gaussianPDFReal 0 1)
     (fun z => (gaussianPDFReal_pos 0 1 z one_ne_zero).le) (integrable_gaussianPDFReal 0 1)
     heven hr hc
   rw [p2StableProb, gaussianReal_of_var_ne_zero 0 one_ne_zero]
@@ -607,7 +608,7 @@ theorem p2StableProb_eq_sub {r c : ℝ} (hr : 0 < r) (hc : 0 < c) :
     (integrable_gaussianPDFReal 0 1).intervalIntegrable
   have hi2 : IntervalIntegrable (fun z : ℝ => (c * z / r) * gaussianPDFReal 0 1 z) volume 0
       (r / c) :=
-    Continuous.intervalIntegrable (by unfold gaussianPDFReal; fun_prop) _ _
+    Continuous.intervalIntegrable (by fun_prop) _ _
   have hsplit : (fun z : ℝ => (1 - c * z / r) * gaussianPDFReal 0 1 z) =
       fun z => gaussianPDFReal 0 1 z - (c * z / r) * gaussianPDFReal 0 1 z := funext fun z => by
     ring

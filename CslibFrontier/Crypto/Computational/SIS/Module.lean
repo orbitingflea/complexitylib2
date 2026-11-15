@@ -73,6 +73,8 @@ experiment draws a uniform unstructured matrix.
 * [V. Lyubashevsky, *Lattice Signatures without Trapdoors*][Lyubashevsky2012]
 * [L. Ducas et al., *CRYSTALS-Dilithium: A Lattice-Based Digital Signature
   Scheme*][DucasEtAl2018]
+* [A. Langlois and D. Stehlé, *Worst-case to average-case reductions for module
+  lattices*][LangloisStehle2015]
 -/
 
 @[expose] public section
@@ -455,11 +457,33 @@ end ModuleSISParams
 
 /-- The Module-SIS hardness hypothesis for a parameter family `M`: every PPT solver has
 negligible advantage in `moduleSISExperiment` at the parameters `M` assigns to each security
-parameter. This is a hypothesis against classical adversaries, not a theorem of hardness. -/
+parameter. This is a hypothesis against classical adversaries, not a theorem of hardness.
+
+*Source.* This is `M-SIS_{q,m,β}` of [LangloisStehle2015], Definition 3.5, p. 12 (ePrint version
+2012/090): given `a₁, …, a_m ∈ R_q^d` drawn independently and uniformly, here the `k` columns of
+`A`, find `z ∈ R^m` with `∑ aᵢ zᵢ = 0 mod q` and `0 < ‖z‖ ≤ β`. [DucasEtAl2018], Section 4.1,
+p. 249, states it over `R_q = ℤ_q[X]/(X^n + 1)` (Section 2.1, p. 242) with the `ℓ_∞` norm, as
+`MSIS_{m,k,γ}`. This definition differs from these as follows.
+* The bound `β` is on the `ℓ_∞` norm of the coefficients, as in Ducas et al. Langlois and Stehlé
+  work over the ring of integers `R` of a cyclotomic field with the Euclidean norm of the canonical
+  embedding (Section 2.1).
+* The matrix is uniform, as in Langlois and Stehlé; Ducas et al. take it in Hermite normal form
+  `[I | A]` with `A` uniform. The two forms are equivalent up to the probability that a uniform
+  square block over `R_q` is invertible, which is close to 1 for Ducas et al.'s `q` but not for
+  every `q` (for example `q = 2`).
+* The ring is `ℤ_q[X]/(X^n + 1)` for any `n` and `q`, where Ducas et al. fix `n = 256` and
+  `q = 8380417`; for `n` not a power of two, `X^n + 1` is not cyclotomic, so the ring is outside
+  Langlois and Stehlé's setting too. The solvers are uniform classical strict PPT programs, and
+  their success probability must be negligible in `κ`. -/
 def ModuleSIS (M : ModuleSISParams) : Prop :=
   ∀ S : M.Solver, S.IsPPT → Negligible fun κ => moduleSISAdvantage (M.q κ) (M.β κ) (S κ)
 
-/-- The Ring-SIS hardness hypothesis is `ModuleSIS` at module rank `1`. -/
+/-- The Ring-SIS hardness hypothesis is `ModuleSIS` at module rank `1`. This is the ring version of
+`ℓ₂-SIS` that [Lyubashevsky2012], Section 7, pp. 21–22 (ePrint full version 2011/537), uses, with
+uniform `a₁, …, a_γ ∈ ℤ_q[x]/⟨xⁿ + 1⟩` for `n` a power of two, and `R-SIS_{q,m,β}` of
+[LangloisStehle2015], Definition 3.3, p. 12. It differs from them as `ModuleSIS` does: the
+`ℓ_∞` norm of the coefficients in place of the Euclidean norm, any `n` and `q`, and uniform
+classical strict PPT solvers. -/
 abbrev RingSIS (R : RingSISParams) : Prop :=
   ModuleSIS R.toModuleSISParams
 

@@ -255,7 +255,24 @@ end SISParams
 
 /-- The SIS hardness hypothesis for a parameter family `P`: every PPT solver has negligible
 advantage in `sisExperiment` at the parameters `P` assigns to each security parameter. This is a
-hypothesis against classical adversaries, not a theorem of hardness. -/
+hypothesis against classical adversaries, not a theorem of hardness.
+
+*Source.* This is the problem of [Ajtai1996] (ECCC report TR96-007), "The definition of the random
+class", p. 4: given vectors `u₁, …, u_m ∈ ℤⁿ`, here the columns of `A`, find a short vector in the
+lattice `Λ(ν, q)` of integer sequences `h` with `∑ hᵢ uᵢ ≡ 0 (mod q)`. [Lyubashevsky2012],
+Definition 3.1, p. 6 (ePrint full version 2011/537), states it for arbitrary parameters as
+`ℓ₂-SIS_{q,n,m,β}`: given a uniform `A ∈ ℤ_q^{n×m}`, find `v ∈ ℤ^m \ {0}` with `A v = 0` and
+`‖v‖ ≤ β`. This definition differs from these in four ways.
+* The bound `β` is on the `ℓ_∞` norm, where both sources bound the Euclidean norm (Ajtai's
+  Theorem 1, p. 6, by `n`). A vector of Euclidean norm at most `β` meets it, and one that meets it
+  has Euclidean norm at most `β √m`.
+* The matrix is uniform, which is Ajtai's idealized distribution `λ'` (p. 4). His random class `λ`
+  (p. 5) fixes the last column so that a short vector is planted, and he shows that its
+  distribution is exponentially close to uniform.
+* The family `P` is arbitrary, where Ajtai takes `m = ⌊c₁ n log n⌋` and `q = ⌊n^{c₂}⌋`.
+* Solvers are uniform classical strict PPT programs, whose success probability must be negligible
+  in `κ`. Ajtai's Theorem 1 assumes an algorithm polynomial in `n` that succeeds with probability
+  at least `1/2`, or `n^{-c}` (Remark 1, p. 6). -/
 def SIS (P : SISParams) : Prop :=
   ∀ S : P.Solver, S.IsPPT → Negligible fun κ => sisAdvantage (P.q κ) (P.β κ) (S κ)
 

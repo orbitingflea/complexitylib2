@@ -27,7 +27,7 @@ diagonal `Λ_ρ(α) = Λ_ρ(α, α)` of Borell's Isoperimetric Theorem is writte
 `gaussianQuadrant ρ α α`.
 
 We prove the parts of [O'Donnell, Exercise 11.19][ODonnell2014] other than the derivative
-formula (d):
+formula (d), which is in `CslibFrontier.Foundations.Probability.Gaussian.QuadrantDeriv`:
 
 * (a) a halfspace `a ⬝ᵥ z ≤ b` of Gaussian volume `α` has noise stability `Λ_ρ(α)`;
 * (b) the special values: symmetry, `ρ ∈ {0, 1, -1}`, `α` or `β ∈ {0, 1}`, the reflection

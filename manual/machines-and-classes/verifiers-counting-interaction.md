@@ -175,6 +175,37 @@ identities; they assert no computational cost or efficient discrete-logarithm al
 The [checked examples](../../CslibFrontierTests/PrimeFieldProducts.lean) cover a product modulo
 five, the prime two, residue enumeration, signed weights and a zero-width interval.
 
+## Mathematical sign recovery from residues
+
+Import [`Foundations.NumberTheory.CRTSign`](../../CslibFrontier/Foundations/NumberTheory/CRTSign.lean)
+for the mathematical sign step of [the manuscript][OpenAI2026CountingHierarchy], Section 2.
+For positive pairwise coprime integer moduli `m i`, let `Π = ∏ i, m i`.
+[`crt_circle_identity`](../../CslibFrontier/Foundations/NumberTheory/CRTCircle.lean) proves that
+weighted residues satisfying `c i * (Π / m i) ≡ X (mod m i)` have
+`∑ i, c i / m i ≡ X / Π (mod 1)`. Its cofactor is defined as the product omitting `i`,
+so the congruences do not require integer division. `crtCoefficient_modEq` supplies each
+congruence from a modular inverse. The moduli need not be prime.
+
+`crtCircleApprox m B c` rounds the normalized residues down to multiples of `2⁻ᴮ`, sums
+the numerators, and reduces modulo `2ᴮ`. It takes neither `X` nor `Π` as data.
+[`dyadicCircleApprox_close`](../../CslibFrontier/Foundations/NumberTheory/DyadicCircle.lean)
+bounds the circular error by any `ε` with `card ι / 2ᴮ < ε`, including for negative targets.
+
+For the successive weighted residues of `2ᵏX`, `crt_firstCircleFlag_sign` assumes
+`|X| < aΠ`, `aΠ ≤ 2ᴷ`, `0 < t`, `ε < t`, `t + ε ≤ a`, and `2a + ε ≤ 1/2`.
+A nonzero integer then has a first index `k ≤ K` with approximation in `[t, 1-t]`;
+it is positive exactly when that approximation is below `1/2`, and negative exactly when
+it is above `1/2`. `crtCircleApprox_not_flag_zero` excludes every flag for zero.
+The underlying [`DoublingSign`](../../CslibFrontier/Foundations/NumberTheory/DoublingSign.lean)
+lemmas apply directly to any rational target and circle approximations.
+These are mathematical correctness results; computing the weighted residues, obtaining a
+large enough modulus product, and proving counting-hierarchy bounds are separate obligations.
+
+The ordinary-module [checked client](../../CslibFrontierTests/CRTSign.lean) discharges the
+hypotheses for both signs of one with moduli `5, 7`, precision `B = 8`, and cutoff `K = 3`.
+It also checks zero, negative summands, the strict precision boundary, and wraparound at zero.
+Run `LEAN_NUM_THREADS=2 scripts/build.sh CslibFrontierTests.CRTSign --wfail --iofail`.
+
 ## Efficient oracle programs
 
 [IsOraclePPTOn](https://github.com/cslib-community/cslib-frontier/blob/13e6a31951bf1c89a1a6258c44f9444aecbbefd8/Complexity/Computability/Probabilistic/Oracle.lean#L63) realizes an open probabilistic word-query program by one finite native oracle PTM under one polynomial clock. The semantic equality quantifies over every state type, stateful oracle handler and initial oracle state, and preserves the joint output and final oracle state. Checking only the output marginal would permit a program to erase externally visible query effects; the joint contract rules this out.
@@ -319,3 +350,5 @@ Satisfiable unique games are easy, which is why the Unique Games Conjecture asks
 [complexitylib]: ../sources.md#complexitylib
 [radhakrishnan97]: ../sources.md#radhakrishnan97
 [schrijver78]: ../sources.md#schrijver78
+
+[OpenAI2026CountingHierarchy]: ../sources.md#openaich26

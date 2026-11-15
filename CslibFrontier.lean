@@ -4431,6 +4431,7 @@ public import CslibFrontier.Crypto.Computational.Factoring
 public import CslibFrontier.Crypto.Computational.Factoring.PollardRho
 public import CslibFrontier.Crypto.Computational.Factoring.WeakModuli
 public import CslibFrontier.Crypto.Computational.Falcon.BerExp
+public import CslibFrontier.Crypto.Computational.Falcon.BerExpLazy
 public import CslibFrontier.Crypto.Computational.Falcon.Verification
 public import CslibFrontier.Crypto.Computational.Falcon.VerificationFrontend
 public import CslibFrontier.Crypto.Computational.FuzzyExtractor.Basic
@@ -5343,6 +5344,7 @@ public import CslibFrontier.Foundations.Analysis.Asymptotics.Exponential
 public import CslibFrontier.Foundations.Analysis.BernoulliInequality
 public import CslibFrontier.Foundations.Analysis.Brouwer
 public import CslibFrontier.Foundations.Analysis.Brouwer.Simplex
+public import CslibFrontier.Foundations.Analysis.Calculus.FDeriv.Partial
 public import CslibFrontier.Foundations.Analysis.Calculus.LipschitzDeriv
 public import CslibFrontier.Foundations.Analysis.Calculus.LipschitzSmoothing
 public import CslibFrontier.Foundations.Analysis.Calculus.ParametricIntegralExp
@@ -6238,6 +6240,7 @@ public import CslibFrontier.Foundations.LinearAlgebra.Matrix.NonnegMulVec
 public import CslibFrontier.Foundations.LinearAlgebra.Matrix.NonnegRank
 public import CslibFrontier.Foundations.LinearAlgebra.Matrix.PairedPorts
 public import CslibFrontier.Foundations.LinearAlgebra.Matrix.PartialDerivatives
+public import CslibFrontier.Foundations.LinearAlgebra.Matrix.PosDef
 public import CslibFrontier.Foundations.LinearAlgebra.Matrix.PosSemidefTrace
 public import CslibFrontier.Foundations.LinearAlgebra.Matrix.PowPerturbation
 public import CslibFrontier.Foundations.LinearAlgebra.Matrix.Rank
@@ -6284,6 +6287,7 @@ public import CslibFrontier.Foundations.MeasureTheory.Group.ConvolutionDensity
 public import CslibFrontier.Foundations.MeasureTheory.Group.FundamentalDomain
 public import CslibFrontier.Foundations.MeasureTheory.Group.QuotientDensity
 public import CslibFrontier.Foundations.MeasureTheory.Integral.CauchySchwarz
+public import CslibFrontier.Foundations.MeasureTheory.Integral.IntegralEqImproper
 public import CslibFrontier.Foundations.MeasureTheory.Integral.IntervalPrimitive
 public import CslibFrontier.Foundations.MeasureTheory.Integral.Pi
 public import CslibFrontier.Foundations.MeasureTheory.Integral.PiUpdate
@@ -6299,7 +6303,11 @@ public import CslibFrontier.Foundations.NumberTheory.AKS.IntegerVariant
 public import CslibFrontier.Foundations.NumberTheory.AKS.Introspective
 public import CslibFrontier.Foundations.NumberTheory.AKS.PerfectPower
 public import CslibFrontier.Foundations.NumberTheory.AKS.SmallR
+public import CslibFrontier.Foundations.NumberTheory.CRTCircle
+public import CslibFrontier.Foundations.NumberTheory.CRTSign
 public import CslibFrontier.Foundations.NumberTheory.CentralBinomPrimes
+public import CslibFrontier.Foundations.NumberTheory.DoublingSign
+public import CslibFrontier.Foundations.NumberTheory.DyadicCircle
 public import CslibFrontier.Foundations.NumberTheory.FiniteField.Enumeration
 public import CslibFrontier.Foundations.NumberTheory.FiniteField.GeneratorProducts
 public import CslibFrontier.Foundations.NumberTheory.Harmonic
@@ -6363,6 +6371,8 @@ public import CslibFrontier.Foundations.Probability.Gaussian.Poisson
 public import CslibFrontier.Foundations.Probability.Gaussian.PolynomialDense
 public import CslibFrontier.Foundations.Probability.Gaussian.Projection
 public import CslibFrontier.Foundations.Probability.Gaussian.Quadrant
+public import CslibFrontier.Foundations.Probability.Gaussian.QuadrantDeriv
+public import CslibFrontier.Foundations.Probability.Gaussian.Quantile
 public import CslibFrontier.Foundations.Probability.Gaussian.Quotient
 public import CslibFrontier.Foundations.Probability.Gaussian.Real
 public import CslibFrontier.Foundations.Probability.Gaussian.Sheppard

@@ -3163,9 +3163,10 @@ argument. They also apply the book's form, the comparison with independence, the
 bounds and the halfspace formula. Run `scripts/build.sh CslibFrontierTests.GaussianQuadrant`
 from the repository root to check them.
 
-The comparison in (c) is non-strict, and the derivative formula of Exercise 11.19 (d) is not
-proved. Borell's Isoperimetric Theorem, that halfspaces maximize `Stab_ρ` among sets of volume
-`α`, is not part of this module; for its reduction to one dimension, see
+The comparison in (c) is non-strict. The derivative formula of Exercise 11.19 (d) is in
+[Differentiate the Gaussian quadrant probability](#differentiate-the-gaussian-quadrant-probability).
+Borell's Isoperimetric Theorem, that halfspaces maximize `Stab_ρ` among sets of volume `α`, is not
+part of this module; for its reduction to one dimension, see
 [Reduce Borell's Isoperimetric Theorem to one dimension](#reduce-borells-isoperimetric-theorem-to-one-dimension).
 
 ## Reduce Borell's Isoperimetric Theorem to one dimension
@@ -3225,12 +3226,95 @@ bounds at `ρ = 0` and `ρ = 1`; at `ρ = 1`, through `twoSetBorellInequality_if
 `1 / 3 > 1 / 6`. Run
 `scripts/build.sh CslibFrontierTests.GaussianBorell` from the repository root to check them.
 
-The one-dimensional two-function inequality (Exercises 11.28 and 11.29) is not proved, so
-Borell's Isoperimetric Theorem itself remains a conditional result here. The book's
-`[-1, 1]`-valued volume-`1 / 2` form, `Stab_ρ[f] ≤ 1 - 2 / π * arccos ρ` for `E_γ f = 0`, is not
-stated; it follows from `_of_integral_eq_half` applied to `fun z => (1 + f z) / 2`.
-Exercise 11.25 (sets suffice) is not needed, since the two-function route handles
-`[0, 1]`-valued `f` directly.
+The one-dimensional two-function inequality is not proved, so Borell's Isoperimetric Theorem
+itself remains a conditional result here. Of its two ingredients, Exercise 11.28, the
+`ρ`-concavity of the smooth function `Λ_ρ`, is proved in
+[Differentiate the Gaussian quadrant probability](#differentiate-the-gaussian-quadrant-probability);
+the heat-flow argument of Exercise 11.29 is not proved. The book's `[-1, 1]`-valued volume-`1 / 2` form, `Stab_ρ[f] ≤ 1 - 2 / π * arccos ρ` for
+`E_γ f = 0`, is not stated; it follows from `_of_integral_eq_half` applied to
+`fun z => (1 + f z) / 2`. Exercise 11.25 (sets suffice) is not needed, since the two-function
+route handles `[0, 1]`-valued `f` directly.
+
+## Differentiate the Gaussian quadrant probability
+
+Import
+[`CslibFrontier.Foundations.Probability.Gaussian.QuadrantDeriv`](../../CslibFrontier/Foundations/Probability/Gaussian/QuadrantDeriv.lean)
+and open the `ProbabilityTheory` namespace. Write `Φ` for `cdf (gaussianReal 0 1)`, `φ` for
+`gaussianPDFReal 0 1`, `s` for `√(1 - ρ ^ 2)`, `t` for `gaussianQuantile α` and `t'` for
+`gaussianQuantile β`. The results about `Λ_ρ` and the bivariate cdf assume `hρ : |ρ| < 1`, and
+the `α`, `β` forms assume `hα : α ∈ Ioo 0 1` and `hβ : β ∈ Ioo 0 1`; the negativity and
+semidefiniteness results assume `0 < ρ < 1` instead.
+
+- The quantile.
+  [`Gaussian/Quantile.lean`](../../CslibFrontier/Foundations/Probability/Gaussian/Quantile.lean)
+  defines `gaussianQuantile`, the inverse `Φ⁻¹` of `Φ : ℝ → (0, 1)`. Its values outside
+  `(0, 1)` are unspecified. `cdf_gaussianQuantile hα` and `gaussianQuantile_cdf x` are the two
+  inverse laws, and `gaussianQuantile_half` is `gaussianQuantile 2⁻¹ = 0`. On `(0, 1)` it is
+  strictly increasing and continuous (`strictMonoOn_gaussianQuantile`,
+  `continuousAt_gaussianQuantile`, `continuousOn_gaussianQuantile`),
+  `hasDerivAt_gaussianQuantile hα` gives the derivative `(φ t)⁻¹`, and
+  `contDiffOn_gaussianQuantile` says it is `C^∞` there. For a Gaussian `gaussianReal μ v` with
+  `hv : v ≠ 0`, `cdf_gaussianReal_eq_integral μ hv x` writes its cdf as
+  `∫ y in Iic x, gaussianPDFReal μ v y`, `hasDerivAt_cdf_gaussianReal μ hv x` says that the cdf
+  has derivative `gaussianPDFReal μ v x`, and `contDiff_cdf_gaussianReal μ hv` that it is `C^∞`.
+  In [`Gaussian/Real.lean`](../../CslibFrontier/Foundations/Probability/Gaussian/Real.lean),
+  `continuous_gaussianPDFReal μ v` and `contDiff_gaussianPDFReal μ v` say that the density is
+  continuous and smooth; both are `fun_prop` lemmas. The general
+  `MeasureTheory.hasDerivAt_integral_Iic hint hf`, in
+  [`MeasureTheory/Integral/IntegralEqImproper.lean`](../../CslibFrontier/Foundations/MeasureTheory/Integral/IntegralEqImproper.lean),
+  differentiates `y ↦ ∫ t in Iic y, f t` at `x` for integrable `f` continuous at `x`.
+- The book's coordinates. `measureReal_correlatedGaussian_setOf_le_and_le hρ t t'` writes
+  `P[z ≤ t, z' ≤ t']` as `∫ x in Iic t, φ x * Φ ((t' - ρ * x) / s)`.
+  `hasDerivAt_measureReal_correlatedGaussian_setOf_le_and_le_left` and `_right` give its partial
+  derivatives `φ t * Φ ((t' - ρ * t) / s)` and `φ t' * Φ ((t - ρ * t') / s)`.
+- First derivatives (Exercise 11.19 (d)). `hasDerivAt_gaussianQuadrant_left hρ hα hβ` gives
+  `HasDerivAt (fun α => gaussianQuadrant ρ α β) (Φ ((t' - ρ * t) / s)) α`, and
+  `hasDerivAt_gaussianQuadrant_right` gives `Φ ((t - ρ * t') / s)` in `β`. The `deriv_` forms
+  rewrite `deriv`.
+- Second derivatives (Exercise 11.28 (a), (b)). In `hasDerivAt_gaussianQuadrant_X_Y`, `X` names
+  the inner and `Y` the outer variable, with `left` for `α` and `right` for `β`. Thus
+  `_left_left` is `-(ρ / s) * (φ t)⁻¹ * φ ((t' - ρ * t) / s)`, and `_left_right`, the `β`
+  derivative of `∂Λ_ρ / ∂α`, is `s⁻¹ * (φ t')⁻¹ * φ ((t' - ρ * t) / s)`. The mixed derivatives
+  agree by `gaussianPDFReal_mul_gaussianPDFReal_comm hρ t t'`.
+- Joint smoothness. `hasFDerivAt_gaussianQuadrant hρ hα hβ` gives the Fréchet derivative of
+  `Function.uncurry (gaussianQuadrant ρ)` at `(α, β)`, the sum of
+  `Φ ((t' - ρ * t) / s) • ContinuousLinearMap.fst ℝ ℝ ℝ` and
+  `Φ ((t - ρ * t') / s) • ContinuousLinearMap.snd ℝ ℝ ℝ`.
+  `hasFDerivAt_deriv_gaussianQuadrant_left` and `_right` give the Fréchet derivatives of the
+  first partials `fun p : ℝ × ℝ => deriv (fun α => gaussianQuadrant ρ α p.2) p.1` and its `β`
+  analogue, whose components are the second derivatives below.
+  `contDiffOn_gaussianQuadrant hρ` says that `Function.uncurry (gaussianQuadrant ρ)` is `C^∞` on
+  the open square `(0, 1)²`. These rest on `hasStrictFDerivAt_uncurry_of_hasDerivAt`, in
+  [`Analysis/Calculus/FDeriv/Partial.lean`](../../CslibFrontier/Foundations/Analysis/Calculus/FDeriv/Partial.lean):
+  partial derivatives `f₁`, `f₂` of `f : ℝ → ℝ → ℝ` near `u`, continuous at `u`, give the strict
+  derivative `f₁ u.1 u.2 • fst + f₂ u.1 u.2 • snd` of `fun v => f v.1 v.2`.
+- The `ρ`-Hessian (Exercise 11.28 (c), (d)). `rhoHessian ρ F x y` is the Hessian of
+  `F : ℝ → ℝ → ℝ` built from iterated `deriv`s, with off-diagonal entries multiplied by `ρ`;
+  unfold it with `rhoHessian_def`. `rhoHessian_gaussianQuadrant` evaluates all four entries for
+  `Λ_ρ`, and `det_rhoHessian_gaussianQuadrant` shows the determinant is `0`. For `0 < ρ < 1`,
+  `deriv_gaussianQuadrant_left_left_neg` and `_right_right_neg` give negative diagonal entries,
+  `negSemidef_rhoHessian_gaussianQuadrant` proves that `-rhoHessian ρ (gaussianQuadrant ρ) α β`
+  is `PosSemidef`, and `dotProduct_mulVec_rhoHessian_gaussianQuadrant_nonpos` gives
+  `v ⬝ᵥ (rhoHessian ρ (gaussianQuadrant ρ) α β *ᵥ v) ≤ 0`. The `2 × 2` criterion behind the
+  semidefiniteness is `Matrix.posSemidef_fin_two`, in
+  [`LinearAlgebra/Matrix/PosDef.lean`](../../CslibFrontier/Foundations/LinearAlgebra/Matrix/PosDef.lean).
+
+The checked
+[`GaussianQuadrantDeriv.lean` clients](../../CslibFrontierTests/GaussianQuadrantDeriv.lean)
+exercise the quantile (`(Φ⁻¹)' (1 / 2) = √(2π)`, monotonicity and continuity) and the bivariate
+formula at `ρ = 0`. They evaluate `∂Λ_ρ / ∂α = 1 / 2` and the second and mixed derivatives at
+`α = β = 1 / 2`, check the `ρ = 0` formula against the derivative of `Λ_0(α, β) = αβ`, evaluate
+the Fréchet derivative at `(1 / 2, 1 / 2)`, derive `C²` from `contDiffOn_gaussianQuadrant`, and
+apply the density symmetry, a `ρ`-Hessian entry, the determinant and the semidefiniteness at
+`ρ = 1 / 2`. The test file is a `module` that publicly imports the tested API. Run `scripts/build.sh CslibFrontierTests.GaussianQuadrantDeriv` from the repository
+root to check them.
+
+Together these give the book's `ρ`-concavity of `Λ_ρ` on the open square `(0, 1)²`, for
+`0 < ρ < 1`: `Λ_ρ` is `C^∞` there, so its `ρ`-Hessian is that of a `C²` function, and it is
+negative semidefinite at every point. The Mossel–Neeman argument of Exercise 11.29, which turns
+`ρ`-concavity into the one-dimensional two-function Borell inequality, is not proved; that
+inequality stays the hypothesis of
+[Reduce Borell's Isoperimetric Theorem to one dimension](#reduce-borells-isoperimetric-theorem-to-one-dimension).
 
 ## Compare bits with Gaussians by the invariance principle
 

@@ -22,6 +22,7 @@ so `Φ 0 = 1 / 2`.
 
 ## Main results
 
+* `ProbabilityTheory.cdf_gaussianReal_eq_integral`: a Gaussian cdf is the integral of the density.
 * `ProbabilityTheory.continuous_cdf_gaussianReal`, `ProbabilityTheory.strictMono_cdf_gaussianReal`:
   regularity of a Gaussian cdf.
 * `ProbabilityTheory.measureReal_setOf_cdf_gaussianReal_le`: the probability integral transform
@@ -36,6 +37,13 @@ open MeasureTheory Set
 open scoped NNReal
 
 namespace ProbabilityTheory
+
+/-- The cdf of a nondegenerate real Gaussian is the integral of its density over `(-∞, x]`. -/
+theorem cdf_gaussianReal_eq_integral (μ : ℝ) {v : ℝ≥0} (hv : v ≠ 0) (x : ℝ) :
+    cdf (gaussianReal μ v) x = ∫ y in Iic x, gaussianPDFReal μ v y := by
+  rw [cdf_eq_real, measureReal_def, gaussianReal_apply_eq_integral μ hv,
+    ENNReal.toReal_ofReal (setIntegral_nonneg measurableSet_Iic
+      fun y _ => gaussianPDFReal_nonneg μ v y)]
 
 /-- The cdf of a nondegenerate real Gaussian is continuous. -/
 theorem continuous_cdf_gaussianReal (μ : ℝ) {v : ℝ≥0} (hv : v ≠ 0) :
