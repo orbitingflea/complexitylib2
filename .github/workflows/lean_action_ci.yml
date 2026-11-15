@@ -257,6 +257,28 @@ jobs:
         if: github.event_name != 'pull_request'
         continue-on-error: true
         run: python3 -B scripts/check_security_premises.py --report
+      # Named assumptions (AGENTS.md, "Security theorems"; #5578):
+      # scripts/check_hardness_assumptions.py compares the assumptions that Crypto theorems take
+      # with the inventory manual/programs-crypto-and-probability/assumptions.md and the gaps
+      # recorded in scripts/hardness_assumptions_baseline.json. It checks the whole library, so,
+      # like "Result registry references", it is enforced in merge groups as well as on pull
+      # requests: two pull requests that each pass alone but conflict in meaning (both registering
+      # one assumption, or one removing a row the other's theorem uses) fail their merge group, and
+      # the queue ejects the later one instead of landing a break that would fail every open pull
+      # request. Pushes to `main`, which can no longer be ejected, only report. The step runs after
+      # an earlier check failed, so that one check's failure does not hide its output, but needs a
+      # successful build. Its compiled-fixture tests need Lean, so the Python tests at the start
+      # skip them.
+      - name: "Named assumptions (whole library)"
+        if: ${{ !cancelled() && steps.build.outcome == 'success' && github.event_name != 'push' }}
+        run: |
+          set -e
+          python3 -B -m unittest scripts/test_check_hardness_assumptions.py
+          python3 -B scripts/check_hardness_assumptions.py
+      - name: "Named assumptions report"
+        if: github.event_name == 'push'
+        continue-on-error: true
+        run: python3 -B scripts/check_hardness_assumptions.py --report
       - name: "Result registry references"
         run: python3 -B scripts/results_registry.py --compiled
       # Lints for the files a pull request adds or changes: names in module docstrings' "Main …"

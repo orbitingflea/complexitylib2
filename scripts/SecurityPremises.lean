@@ -103,6 +103,20 @@ It prints one JSON line per theorem with a flagged premise or conclusion,
 `{"n": theorem, "m": module, "l": line, "h": [{"b": binder, "k": [kinds], "c": [constructed
 constants]}]}`, and finally `{"theorems": scanned, "modules": read, "missing": [modules without
 build outputs]}`.
+
+**Named assumptions.** With `--assumptions` (`lake env lean --run scripts/SecurityPremises.lean
+<lib-dir> --assumptions`), for `scripts/check_hardness_assumptions.py`, it reports the named
+assumptions instead. A *named assumption* is a Prop-valued definition or `structure` whose
+definition mentions negligibility, an advantage or indistinguishability (a constant whose last
+name component is `Negligible`, names an advantage as above, or contains `Indistinguishable`),
+directly or through other Prop-valued declarations, at most five deep. No declaration is excluded
+by its name: generic notions such as `Game.Indistinguishable` are reported too, and the inventory
+decides which of them are vocabulary. An input line `<dir>\t<module>` reads a *context* module,
+such as one of CSLib's, from another build directory: its declarations are followed and reported,
+but its theorems are not scanned. It prints
+`{"a": assumption, "m": module, "l": line, "doc": docstring}` for each named assumption,
+`{"t": theorem, "m": module, "l": line, "doc": docstring, "u": [assumptions]}` for each scanned
+theorem whose premises' claim atoms are headed by named assumptions, and the same summary line.
 -/
 open Lean
 
@@ -183,11 +197,14 @@ def dropForall : Nat → Expr → Expr
   | k, .mdata _ b => dropForall k b
   | _, e => e
 
-/-- The environment: every constant of the listed modules, with its module. -/
+/-- The environment: every constant of the listed modules, with its module, and their
+docstrings. -/
 structure Env where
   consts : Std.HashMap Name ConstantInfo := {}
   moduleOf : Std.HashMap Name Name := {}
   skip : NameSet := {}
+  docs : Std.HashMap Name String := {}
+  lines : Std.HashMap Name Nat := {}
 
 /-- `type` with type synonyms of the environment at its head unfolded (`fuel` times at most). -/
 partial def unfoldSynonyms (env : Env) (fuel : Nat) (type : Expr) : Expr :=
@@ -440,6 +457,62 @@ def realizations (env : Env) (certified vars : Array FVarId) (premise : Expr) : 
       acc ++ side a.appFn!.appArg! a.appArg! ++ side a.appArg! a.appFn!.appArg!
     else acc
 
+/-! ### Named assumptions, for `scripts/check_hardness_assumptions.py` -/
+
+/-- The constants that a proposition-valued declaration's definition mentions: the body of a
+definition whose type ends in `Prop`, or the fields of an inductive proposition such as a
+`structure … : Prop`. `none` for any other constant. -/
+def propositionConstants? (env : Env) (c : Name) : Option (Array Name) :=
+  match env.consts[c]? with
+  | some (.defnInfo v) =>
+    match stripForall v.type with
+    | .sort .zero => some v.value.getUsedConstants
+    | _ => none
+  | some (.inductInfo v) =>
+    match stripForall v.type with
+    | .sort .zero => some <| v.ctors.foldl (init := #[]) fun acc k =>
+        acc ++ ((env.consts[k]?).map (·.type.getUsedConstants)).getD #[]
+    | _ => none
+  | _ => none
+
+/-- Whether a last name component names a security atom: negligibility, an advantage or
+indistinguishability. This decides only what a definition must reach to be security-shaped. -/
+def securityAtomName (s : String) : Bool :=
+  s == "Negligible" || advantageName s || s.contains "Indistinguishable"
+
+/-- Whether `c` is a proposition-valued declaration that states a security claim: its definition
+mentions a security atom, directly or through proposition-valued declarations of the environment
+at most `fuel` deep. -/
+partial def securityShaped (env : Env) (fuel : Nat) (c : Name) : Bool :=
+  match propositionConstants? env c with
+  | some cs => cs.any fun d =>
+      securityAtomName (last d) || fuel > 0 && d != c && securityShaped env (fuel - 1) d
+  | none => false
+
+/-- Whether `c` is a *named assumption*: a security-shaped proposition-valued declaration that
+Lean does not generate. Its name excludes nothing: a declaration named like a security atom, such
+as `Game.Indistinguishable` or a library-specific `KeysIndistinguishable`, is reported when its
+definition is security-shaped, and the assumptions inventory records which ones are generic
+vocabulary. -/
+def namedAssumption (env : Env) (c : Name) : Bool :=
+  !isGenerated c && !env.skip.contains c && securityShaped env 5 c
+
+/-- The named assumptions that head the claim atoms of a hypothesis type. -/
+def assumptionHeads (env : Env) (ty : Expr) : Array Name :=
+  (atoms ty).foldl (init := #[]) fun acc a =>
+    match a.getAppFn with
+    | .const c _ => if namedAssumption env c && !acc.contains c then acc.push c else acc
+    | _ => acc
+
+unsafe def docEntries (entries : Array (Name × Array EnvExtensionEntry)) :
+    Array (Name × String) := Id.run do
+  let mut out := #[]
+  for (ext, es) in entries do
+    if ext == `Lean.docStringExt then
+      for e in es do
+        out := out.push (unsafeCast e : Name × String)
+  return out
+
 unsafe def declRanges (entries : Array (Name × Array EnvExtensionEntry)) :
     NameMap DeclarationRanges := Id.run do
   let mut ranges : NameMap DeclarationRanges := {}
@@ -465,9 +538,14 @@ unsafe def skipped (entries : Array (Name × Array EnvExtensionEntry)) : NameSet
         if let some n := entry.globalName? then out := out.insert n
   return out
 
-unsafe def run (libDir : System.FilePath) : IO Unit := do
+/-- Read the modules listed on standard input, one per line. A line `<dir>\t<module>` reads a
+*context* module from another build directory, such as CSLib's: its constants are in the
+environment, so definitions can be followed into it, but its theorems are not scanned. Returns
+the environment, the scanned modules, the compacted regions (to keep reachable while their
+expressions are used) and the modules without build outputs. -/
+unsafe def load (libDir : System.FilePath) :
+    IO (Env × Array (Name × ModuleData) × Array CompactedRegion × Array String) := do
   let stdin ← IO.getStdin
-  let stdout ← IO.getStdout
   let mut regions : Array CompactedRegion := #[]
   let mut missing : Array String := #[]
   let mut env : Env := {}
@@ -475,9 +553,12 @@ unsafe def run (libDir : System.FilePath) : IO Unit := do
   repeat
     let line ← stdin.getLine
     if line.isEmpty then break
-    let mod := line.trimAscii.toString
-    if mod.isEmpty then continue
-    let base := (libDir / System.FilePath.mk (mod.replace "." "/")).addExtension "olean"
+    let raw := line.trimAscii.toString
+    if raw.isEmpty then continue
+    let (dir, mod, scan) := match raw.splitOn "\t" with
+      | [dir, mod] => ((dir : System.FilePath), mod, false)
+      | _ => (libDir, raw, true)
+    let base := (dir / System.FilePath.mk (mod.replace "." "/")).addExtension "olean"
     unless ← base.pathExists do
       missing := missing.push mod
       continue
@@ -489,11 +570,21 @@ unsafe def run (libDir : System.FilePath) : IO Unit := do
     let some (data, _) := parts[if split then 2 else 0]? |
       throw <| IO.userError s!"cannot read {base}"
     let m := mod.toName
-    mods := mods.push (m, data)
+    if scan then mods := mods.push (m, data)
     for c in data.constants do
       env := { env with consts := env.consts.insert c.name c,
                         moduleOf := env.moduleOf.insert c.name m }
     env := { env with skip := (skipped data.entries).foldl (·.insert ·) env.skip }
+    for (part, _) in parts do
+      for (n, doc) in docEntries part.entries do
+        env := { env with docs := env.docs.insert n doc }
+    for (n, r) in declRanges data.entries do
+      env := { env with lines := env.lines.insert n r.selectionRange.pos.line }
+  return (env, mods, regions, missing)
+
+unsafe def run (libDir : System.FilePath) : IO Unit := do
+  let stdout ← IO.getStdout
+  let (env, mods, regions, missing) ← load libDir
   let mut scanned := 0
   for (m, data) in mods do
     let ranges := declRanges data.entries
@@ -546,10 +637,50 @@ unsafe def run (libDir : System.FilePath) : IO Unit := do
   -- Keep the regions reachable until every expression has been used.
   if regions.isEmpty then stdout.flush
 
+/-- The `--assumptions` mode (see the module docstring): every named assumption of the
+environment with its module, line and docstring, and every scanned theorem whose premises it
+heads, with the theorem's docstring. -/
+unsafe def runAssumptions (libDir : System.FilePath) : IO Unit := do
+  let stdout ← IO.getStdout
+  let (env, mods, regions, missing) ← load libDir
+  let record (key : String) (c : Name) (extra : List (String × Json)) : String :=
+    Json.compress <| Json.mkObj <| [(key, toJson c.toString),
+      ("m", toJson ((env.moduleOf.get? c).getD .anonymous).toString),
+      ("l", toJson ((env.lines.get? c).getD 0)), ("doc", toJson ((env.docs.get? c).getD ""))] ++
+      extra
+  -- Named assumptions of context modules too: a theorem may assume a notion that CSLib defines.
+  for (c, _) in env.consts.toArray.qsort (fun a b => a.1.lt b.1) do
+    if namedAssumption env c then stdout.putStrLn (record "a" c [])
+  let mut scanned := 0
+  for (m, data) in mods do
+    for c in data.constants do
+      let .thmInfo v := c | continue
+      if isPrivateName c.name || isGenerated c.name || env.skip.contains c.name then continue
+      unless inScope m c.name do continue
+      scanned := scanned + 1
+      let mut heads : Array Name := #[]
+      let mut t := v.type
+      repeat
+        match t with
+        | .mdata _ b => t := b
+        | .forallE _ ty b bi =>
+          unless bi.isInstImplicit do
+            heads := (assumptionHeads env ty).foldl (fun acc h =>
+              if acc.contains h then acc else acc.push h) heads
+          t := b
+        | _ => break
+      unless heads.isEmpty do
+        stdout.putStrLn (record "t" c.name [("u", toJson (heads.map (·.toString)))])
+  stdout.putStrLn <| Json.compress <| Json.mkObj [("theorems", toJson scanned),
+    ("modules", toJson mods.size), ("missing", toJson missing)]
+  if regions.isEmpty then stdout.flush
+
 end CslibFrontierScripts.SecurityPremises
 
 unsafe def main (args : List String) : IO Unit :=
   match args with
   | [] => CslibFrontierScripts.SecurityPremises.run ".lake/build/lib/lean"
   | [libDir] => CslibFrontierScripts.SecurityPremises.run libDir
-  | _ => throw <| IO.userError "usage: SecurityPremises [<lib-dir>] < modules.txt"
+  | [libDir, "--assumptions"] => CslibFrontierScripts.SecurityPremises.runAssumptions libDir
+  | _ => throw <| IO.userError
+      "usage: SecurityPremises [<lib-dir> [--assumptions]] < modules.txt"

@@ -19,7 +19,12 @@ supersedes and removes.
 Computational security theorems follow AGENTS.md#security-theorems: they assume only named
 hardness assumptions, the adversary's class and properties of components the cited result takes as
 given, never anything about a reduction, simulator or extractor that the proof constructs, and
-each reduction has an efficiency witness (`isPPT_…`, `isOraclePPT_…` or a circuit-size bound). -->
+each reduction has an efficiency witness (`isPPT_…`, `isOraclePPT_…` or a circuit-size bound).
+Each named assumption is listed in manual/programs-crypto-and-probability/assumptions.md and cites
+its source definition, or says that it is novel to this library; a theorem that claims a cited
+result rests on the source's assumption, on one that review accepts as the same assumption in a
+different formal setting, or on one that the source's assumption implies. A row drops "locator not
+verified" only when this description records the source check (version or URL, what was read). -->
 
 Authors of new files: <!-- the issue's originator(s) (its "Originated by" field, else its
 author) and the person whose agents did the work, as in AGENTS.md#file-rules. Delete if no file is

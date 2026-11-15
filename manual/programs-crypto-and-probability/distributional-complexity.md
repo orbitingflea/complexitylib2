@@ -68,7 +68,7 @@ The formal statement differs from the source in these modelling choices:
 - **Finite precision.** The source takes the longest common prefix of the binary expansions of two cdf values. `compress` instead takes the common prefix of `⌊a 2^n⌋` and `⌈b 2^n⌉ - 1`, where `a` and `b` are the cdf values below and at `x`. `Nat.lt_commonPrefix_mid_le` shows that the resulting dyadic point lies in `(a, b]`, which gives injectivity.
 - **Domination at every word.** The reduction meets the strengthened condition of `DistReduction` because it is injective.
 
-**Not yet proved:** the Impagliazzo–Levin extension to `SampNP`. It is tracked on the [roadmap](../../ROADMAP.md#average-case-complexity).
+**Not yet proved:** the Impagliazzo–Levin extension to `SampNP`. It is tracked on the [roadmap](../../roadmap/complexity.md#average-case-complexity).
 
 ## Worst-case consequences: `DistNP ⊆ HeurP` implies `E = NE`
 

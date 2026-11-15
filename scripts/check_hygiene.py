@@ -37,8 +37,9 @@ Checks enforced by default (see AGENTS.md):
    Inline and multiline settings and decimal/hexadecimal numerals are checked. With the default
    selection, an entry whose file no longer needs it (no budget above the default, or a cap above the largest
    budget) is reported as stale, so the allowlist only shrinks as budgets are reduced (#1528).
-8. (Default selection only.) `ROADMAP.md` lists directions by scope only (CONTRIBUTING.md,
-   Documentation): it has no link reference definitions (`[label]: https://…`), since every PR
+8. (Default selection only.) `ROADMAP.md` and the per-area files under `roadmap/` list
+   directions by scope only (CONTRIBUTING.md, Documentation): they have no link reference
+   definitions (`[label]: https://…`), since every PR
    appending one to a shared tail block conflicted with the others in the merge queue, so every
    link, including each `[#N]`, is written inline. Each top-level entry has no nested bullets
    and at most `ROADMAP_ENTRY_MAX` characters of Markdown (a link counts as its text), which
@@ -622,6 +623,11 @@ def roadmap_definitions(text: str) -> list[tuple[int, str]]:
     return found
 
 
+def roadmap_files(root: Path = ROOT) -> list[Path]:
+    """`ROADMAP.md`, the index, and the per-area files under `roadmap/`."""
+    return [root / "ROADMAP.md", *sorted((root / "roadmap").glob("*.md"))]
+
+
 def check_roadmap(text: str, rel: str = "ROADMAP.md") -> list[str]:
     """Inline links only, and short top-level entries without nested bullets."""
     errors: list[str] = []
@@ -724,7 +730,9 @@ def main() -> int:
     if not args.paths:
         errors += check_bibliography(bibliography)
         errors += check_heartbeat_allowlist_stale(heartbeat_caps)
-        errors += check_roadmap((ROOT / "ROADMAP.md").read_text(encoding="utf-8"))
+        for roadmap in roadmap_files():
+            errors += check_roadmap(roadmap.read_text(encoding="utf-8"),
+                                    roadmap.relative_to(ROOT).as_posix())
     if errors:
         for err in errors:
             print(f"ERROR: {err}", file=sys.stderr)

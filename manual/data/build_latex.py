@@ -25,7 +25,8 @@ ORDER = [
       'algebraic-and-quantum', 'query-and-communication', 'finite-model-logic', 'sql-semantics',
       'proof-systems', 'learning-and-testing', 'metacomplexity-and-methods']),
     ('programs-crypto-and-probability', ['index', 'programs-and-realization',
-      'security-games-and-primitives', 'interactive-reductions', 'protocols-and-privacy',
+      'security-games-and-primitives', 'assumptions', 'interactive-reductions',
+      'protocols-and-privacy',
       'average-case-hardness', 'distributional-complexity', 'homomorphic-encryption']),
     ('algorithms-and-memory', ['index', 'ram-variants', 'wordram-and-bridges',
       'memory-specifications', 'online-and-streaming', 'strategic-games',
@@ -58,6 +59,9 @@ def tex_escape(text):
     return ''.join(special.get(c, c) for c in text)
 
 
+# Break points inside identifiers: before a capital that follows a lowercase letter or digit, and
+# before the last capital of an acronym followed by lowercase (`LWECCA|Nonvacuity`).
+CAMEL_BREAK = r'(?<=[a-z0-9])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])'
 MATH = {'ℕ': r'\mathbb{N}', 'ℝ': r'\mathbb{R}', 'ℓ': r'\ell', '→': r'\to',
         '←': r'\leftarrow', '↔': r'\leftrightarrow', '↦': r'\mapsto', '↪': r'\hookrightarrow',
         '∀': r'\forall', '∃': r'\exists', '∈': r'\in', '∧': r'\wedge', '∩': r'\cap',
@@ -146,7 +150,7 @@ def transform(node, path, chapter_index=False, references=False):
         text = node['c'][1]
         # Allow breaks at semantic separators and within long opaque hashes.
         escaped = inline_tex(text)
-        escaped = re.sub(r'(?<=[a-z0-9])(?=[A-Z])', lambda _: r'\allowbreak{}', escaped)
+        escaped = re.sub(CAMEL_BREAK, lambda _: r'\allowbreak{}', escaped)
         escaped = escaped.replace(r'\_', r'\_\allowbreak{}').replace('.', r'.\allowbreak{}').replace('/', r'/\allowbreak{}').replace('-', r'-\allowbreak{}')
         escaped = escaped.replace('*', r'*\allowbreak{}').replace('+', r'+\allowbreak{}')
         if re.fullmatch(r'[0-9a-f]{32,}', text):
@@ -154,7 +158,7 @@ def transform(node, path, chapter_index=False, references=False):
         return raw('RawInline', r'{\small\ttfamily ' + escaped + '}')
     if typ == 'Str' and (any(c in MATH for c in node['c']) or '/' in node['c'] or '_' in node['c'] or re.search(r'[a-z][A-Z]', node['c'])):
         escaped = inline_tex(node['c']).replace('/', r'/\allowbreak{}').replace(r'\_', r'\_\allowbreak{}')
-        escaped = re.sub(r'(?<=[a-z0-9])(?=[A-Z])', lambda _: r'\allowbreak{}', escaped)
+        escaped = re.sub(CAMEL_BREAK, lambda _: r'\allowbreak{}', escaped)
         return raw('RawInline', escaped)
     if typ == 'Math':
         return {'t': typ, 'c': [node['c'][0], math_tex(node['c'][1])]}

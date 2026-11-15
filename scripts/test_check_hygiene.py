@@ -654,8 +654,12 @@ class RoadmapTests(unittest.TestCase):
             self.assertEqual(self.errors(text), [], text[:30])
 
     def test_repository_roadmap_passes(self) -> None:
-        text = (check_hygiene.ROOT / "ROADMAP.md").read_text(encoding="utf-8")
-        self.assertEqual(check_hygiene.check_roadmap(text), [])
+        files = check_hygiene.roadmap_files()
+        self.assertGreater(len(files), 1, "expected ROADMAP.md and per-area files under roadmap/")
+        for path in files:
+            rel = path.relative_to(check_hygiene.ROOT).as_posix()
+            text = path.read_text(encoding="utf-8")
+            self.assertEqual(check_hygiene.check_roadmap(text, rel), [], rel)
 
 
 class CitationTests(unittest.TestCase):

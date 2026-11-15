@@ -26,6 +26,7 @@ adds the lemmas for splitting such runs to the basic `List.foldlIdx` API of Batt
 * `List.foldlIdx_map`: folding over a mapped list precomposes the map.
 * `List.foldlIdx_flatten`: folding over a concatenation of blocks of length `n` folds the blocks.
 * `List.foldlIdx_ofFn`: folding over the list of a tuple is `Fin.foldl` with shifted indices.
+* `List.foldl_ofFn`: the corresponding bridge for an ordinary, unindexed fold.
 -/
 
 public section
@@ -74,5 +75,12 @@ theorem foldlIdx_ofFn (f : ℕ → α → β → α) (init : α) {m : ℕ} (x : 
   | succ m ih =>
     rw [Fin.foldl_succ, ofFn_succ, foldlIdx_cons, ih]
     simp only [Fin.val_zero, Nat.add_zero, Fin.val_succ, Nat.add_assoc, Nat.add_comm 1]
+
+/-- Folding over the list of a tuple is the same ordinary fold over its finite positions. -/
+theorem foldl_ofFn (f : α → β → α) (init : α) {m : ℕ} (x : Fin m → β) :
+    (ofFn x).foldl f init = Fin.foldl m (fun a i => f a (x i)) init := by
+  induction m generalizing init with
+  | zero => rfl
+  | succ m ih => rw [Fin.foldl_succ, ofFn_succ, foldl_cons, ih]
 
 end List

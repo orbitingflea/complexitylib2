@@ -564,7 +564,12 @@ compare the name, docstring, PR title and any inventory entry with what the stat
 a theorem that claims a cited result, classify each hypothesis as one of:
 
 - (i) an assumption the cited source names, stated relative to the problem, sampler or component
-  it concerns;
+  it concerns. In cryptography it is listed in the
+  [assumptions inventory](manual/programs-crypto-and-probability/assumptions.md) with that source
+  and a checked locator: when its row says "locator not verified" or "status pending", the
+  reviewer checks the source before classifying the hypothesis as (i). For a parametric
+  assumption or a vocabulary notion, the instance the theorem supplies must be the source's
+  ([Security theorems](#security-theorems));
 - (ii) membership of the adversary or input in the admitted class;
 - (iii) a property of a generic component that the source takes as given;
 - (iv) anything else: a step of the cited proof, a property of an object the proof builds, a
@@ -790,9 +795,12 @@ its presentation claims, so this is the part of a change that review exists to c
    simulator, extractor, hybrid or decoder), or a caller-supplied object whose existence or
    efficiency is what the result proves. It is also a stand-in when it replaces the construction's
    algorithms with idealized ones, proves the claim for a fixed finite instance instead of a
-   family, or weakens the notion, model or adversary class (including parameters chosen after the
-   adversary). A theorem the source itself states conditionally, such as a hardness-magnification
-   implication, is not a stand-in when its hypothesis is the source's.
+   family, weakens the notion, model or adversary class (including parameters chosen after the
+   adversary), or rests on an assumption other than the source's that the source's assumption is
+   not proved in the library or cited to imply, such as a stronger or novel one
+   ([Security theorems](#security-theorems)). A theorem the source itself states conditionally,
+   such as a hardness-magnification implication, is not a stand-in when its hypothesis is the
+   source's.
    A useful, non-vacuous stand-in may land as an intermediate step, never as the headline for the
    cited result: its name states the condition (`…_of_reduction_le`, `…_of_realization`), its
    docstring opens by saying it is a step or helper and not the cited result, it cites the source
@@ -907,6 +915,45 @@ is indistinguishable from an ideal key law) unless the cited result names that a
 And it may not stop at a bound for parameters that an `∃` chooses after the adversary
 (`∃ m₀ m₁, Adv(A) ≤ Adv(B A m₀ m₁)`); a uniform reduction chooses them itself.
 
+Every named assumption, including a security notion assumed of a caller's component, is listed in
+the [assumptions inventory](manual/programs-crypto-and-probability/assumptions.md) as *standard*,
+*novel* or *vocabulary*.
+
+- **Standard.** A cited source states it, up to deviations that do not strengthen it. Its
+  docstring cites the source definition it formalizes, with a locator checked at the source
+  ([New statements and definitions](#new-statements-and-definitions)), and names every material
+  difference from it: for example uniform instead of non-uniform adversaries, a decision instead
+  of a search problem, a restricted modulus, noise law or parameter range, or a setup law that
+  need not be efficiently samplable.
+- **Novel.** No cited source states it. A deviation that strengthens an assumption relative to
+  its source, such as admitting more adversaries, giving them more information or dropping a
+  restriction that the source relies on, makes it novel, unless a cited source states that form
+  or the library proves it from the standard one. Its docstring says that it is novel to this
+  library, how it relates to standard assumptions (it follows from one, implies one, or neither)
+  and why it is plausible. Where an insecure instance is easy to give, a test shows that the
+  assumption fails for it.
+- **Vocabulary.** A generic notion parameterized by the objects whose security it states (games,
+  ensembles, an adversary predicate, a bound), such as `Game.Indistinguishable` or
+  `ComputationallyIndistinguishable`. It becomes an assumption only through the instance that a
+  theorem supplies. A primitive's or problem's own security notion is never vocabulary, even in a
+  concrete form against a caller's adversary class and bound.
+
+A row of any status says "locator not verified" until its locator has been read at the source.
+An author removes the phrase only in a pull request whose body records that check (the source's
+version or URL and what was read there), and only once a reviewer has confirmed it at the source.
+Whether a parametric assumption (with a setup, noise or error law, an adversary class or a bound)
+or a vocabulary notion is the source's depends on the instance that a theorem supplies, so under
+a cited headline review checks that instance against the source: `DecisionLWEWithErrors` with a
+correlated error law is not plain LWE, and `ComputationallyIndistinguishable` of the scheme's keys
+and an ideal key law is a premise about the scheme's own algorithms.
+
+A novel assumption may support a result presented as original, whose name mentions the
+assumption. A theorem that claims a cited result rests on the assumption that the source uses, on
+one that review accepts as the same assumption in a different formal setting and the inventory
+documents as such, or on one that the source's assumption implies, with the implication proved in
+the library or cited. Resting it on any other assumption makes it a stand-in under
+[Faithful headlines](#faithful-headlines) rule 2.
+
 Write each reduction as an explicit program with an efficiency witness proved from the
 adversary's certificate: an `isPPT_…` or `isOraclePPT_…` lemma, or the model's efficiency
 certificate (for example a circuit-size bound). Prove the asymptotic theorem by applying the
@@ -924,7 +971,8 @@ cited source. When a change replaces a misformalized theorem, it deletes the old
 to an honestly named and documented helper, and updates its ROADMAP, manual and
 [results inventory](results/README.md) mentions ([Faithful headlines](#faithful-headlines); #5293).
 `scripts/check_security_premises.py` checks the premise rule after a build against a justified
-baseline ([details](CONTRIBUTING.md#library-quality-standard)).
+baseline, and `scripts/check_hardness_assumptions.py` checks that named assumptions are listed in
+the inventory and documented ([details](CONTRIBUTING.md#library-quality-standard)).
 
 ## Design commitments (do not re-litigate casually)
 

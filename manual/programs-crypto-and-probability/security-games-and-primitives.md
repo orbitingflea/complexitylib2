@@ -32,6 +32,8 @@ A security theorem says that every admitted adversary has negligible advantage, 
 
 A named assumption may concern the scheme's own components when the cited source assumes it. GSW's one-key circular security `Encryption.CircularSecure E.keyGen E.encrypt`, collision resistance of the Cramer–Shoup hash family `F.withKey.cramerShoupHashMod H` keyed by the hash key that key generation draws and publishes, and quadratic residuosity relative to the scheme's modulus sampler (`QuadraticResiduosityHard fun n => ProbComp.eval (gen n)`) are all allowed. What is ruled out is a premise that the scheme's algorithms behave like idealized ones, such as keys indistinguishable from an ideal key law, unless the cited source names that as an assumption.
 
+Each named assumption belongs in the [assumptions inventory](assumptions.md), which also names the assumptions that its check does not yet find. A *standard* assumption's docstring cites the source definition, with a locator checked at the source, and names every deviation from it, such as an arbitrary setup law where Boneh–Shoup's group parameters come from an efficient algorithm. A *novel* assumption's docstring says that it is novel to this library, how it relates to standard assumptions and why it is plausible. A novel assumption may support an original result whose name mentions it, but not a theorem presented as a cited result. Generic notions such as `Game.Indistinguishable` and `ComputationallyIndistinguishable` are *vocabulary*: they become assumptions through the instance a theorem supplies, and under a cited result review checks that instance against the source. `GMW.AdvicePRG`, for example, is novel and follows from a non-uniform PRG; theorems that rest on it may land only as steps, and the GMW theorem `NonuniformOneWay.exists_zkProof_of_mem_NP` rests on `NonuniformOneWay`. `python3 scripts/check_hardness_assumptions.py` checks the inventory after a build, and `--list` prints the theorems that rest on each assumption.
+
 ElGamal bit encryption under DDH in [ElGamal.lean](../../CslibFrontier/Crypto/Computational/ElGamal.lean) is the reference pattern. It has four parts:
 
 1. **The reduction is a program.** [elGamalMsgToDDHDistinguisher](../../CslibFrontier/Crypto/Computational/ElGamal.lean#L380) turns an IND-CPA adversary into a DDH distinguisher, and `elGamalToDDHDistinguisher` specializes it to bit messages.
@@ -58,6 +60,7 @@ A lemma may still take a bound on a constructed reduction as a premise when that
 Before review, check a new security theorem against this list:
 
 - every premise is a named hardness assumption stated relative to the sampler or component it concerns, the adversary's class membership, or a property of a component that the cited result takes as given;
+- each named assumption is in the [assumptions inventory](assumptions.md), cites its source definition or says that it is novel to this library, and, under a cited result, is the source's assumption (or one that it implies) with the source's instance;
 - no premise concerns a reduction, distinguisher, simulator, extractor or hybrid that the proof constructs (from the adversary or not), and the caller does not supply an object whose existence or efficiency is what the theorem proves;
 - each reduction is a definition with an efficiency witness (`isPPT_…`, `isOraclePPT_…` or a circuit-size bound) that the asymptotic theorem uses;
 - the name and docstring state the model (standard, random-oracle, ideal, query-bounded or information-theoretic), the notion (single- or multi-challenge, one-time or many-time, honest-verifier or malicious zero knowledge, semi-honest, static) and any deviation from the cited source;
@@ -1082,6 +1085,18 @@ XOF. Positions use natural numbers, with checked 16-bit representability conditi
 published parameter sets; byte serialization, native runtime, decryption-failure bounds and
 HQC security remain separate obligations under the [post-quantum program](https://github.com/cslib-community/cslib-frontier/issues/4987).
 
+Import [`DuplicatedReedMuller.lean`](../../CslibFrontier/Foundations/Data/Code/DuplicatedReedMuller.lean)
+for HQC v5.1's actual `RM(1, 7)` inner code and deterministic Hadamard decoder. `RMMessage` puts
+the affine constant in byte bit 7 and the seven binary-column coefficients in byte bits 0–6;
+`drmEncode` repeats each 128-bit word with multiplicity 3 for HQC-1 or 5 for HQC-3/HQC-5, giving
+the source's `[384, 8, 192]` and `[640, 8, 320]` codes. `drmDecode_isNearestDecoder` proves that
+the source's strict smallest-peak scan returns a nearest codeword, and
+`drmDecode_add_eq_of_two_mul_weight_lt` recovers every message when twice the error weight is less
+than `64 * μ`. The [checked clients](../../CslibFrontierTests/Code/DuplicatedReedMuller.lean)
+exercise source bit order, both coefficient signs, equal-magnitude ties, exact distances and
+nonzero errors. The shortened Reed–Solomon outer decoder, its composition with this inner code,
+and the numerical decryption-failure calculation remain open.
+
 Import [`HQC/PKE.lean`](../../CslibFrontier/Crypto/Primitives/HQC/PKE.lean) for the ideal
 post-expansion algebra of HQC-PKE (§3.6, pp. 38–40). `PKEParams` records the ring, message and
 retained-codeword lengths, the three fixed weights and the decoder radius. `pkeKeyGen` draws
@@ -1853,6 +1868,24 @@ gives `PseudorandomFunction.exists_weak_not_pseudorandom` and
 `PseudorandomFunction.exists_weak_not_eufCma_prfMAC`. Another answer to Exercise 3.28(b)
 evaluates the function after rounding odd inputs to even ones; the zero patch is simpler and
 separates the same notions. Encryption from a weak pseudorandom function (Exercise 3.28(d)) is not formalized.
+
+For fixed-length coefficient-vector hashing, import
+[`Probability/HashFamily/Polynomial.lean`](../../CslibFrontier/Probability/HashFamily/Polynomial.lean).
+`coeffPolyHash k x` performs the `n` Horner multiply-add rounds for `x : Fin n → F`, and
+`coeffPolyHashLinear` packages its linearity in `x`. The public
+`coeffPolyHash_eq_polynomialHash_rev` bridge identifies it with the existing ascending-coefficient
+`polynomialHash` after `Fin.rev`; `polyHash_ofFn_eq` identifies the existing monic variable-length
+evaluator with `k ^ n + coeffPolyHash k x`. The separate Horner surface retains source coefficient
+order and a one-pass executable fold. If the evaluation point is uniform in a finite seed type `S`
+injected into the field, `isUniversalHash_coeffPolyHash_of_embedding` gives the conservative
+collision bound `n / |S|`; `isUniversalHash_coeffPolyHash` specializes it to the full field. This
+is the restricted-domain polynomial-evaluation fact used in
+[FAEST v3 §4.2](https://faest.info/faest-spec-v3.0.pdf), including its 64-bit ZKHash challenge,
+but it does not construct that embedding or compose VOLEHash/ZKHash. The evaluator records exact
+field-operation counts. Its generic auxiliary state is `b + O(log n)` bits for a `b`-bit field
+accumulator and runtime index, before field-operation scratch; generic static control is independent
+of `n`. An unrolled specialization uses `O(n)` field-operation nodes and can omit the runtime index.
+No polynomial-time claim is made without encoded field operations and a certified sampler.
 
 For polynomial-evaluation hashing of messages shorter than `ℓ` over a finite field, import
 [`Protocols/MAC/PolynomialEvaluation.lean`](../../CslibFrontier/Crypto/Protocols/MAC/PolynomialEvaluation.lean)

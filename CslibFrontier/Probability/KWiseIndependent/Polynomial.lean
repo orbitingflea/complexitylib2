@@ -7,18 +7,18 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
+public import CslibFrontier.Probability.HashFamily.Polynomial
 public import CslibFrontier.Probability.KWiseIndependent
-public import Mathlib.Algebra.Polynomial.Degree.Defs
-public import Mathlib.Algebra.Polynomial.Eval.Defs
 import Mathlib.LinearAlgebra.Lagrange
 
 /-!
 # The polynomial `k`-wise independent hash family
 
 For a finite field `F`, the polynomials of degree less than `k`, evaluated as maps `F → F` and
-indexed by their coefficient vectors `c : Fin k → F` (`Cslib.Probability.polynomialHash`), form a
-`k`-wise independent hash family (`Cslib.Probability.isKWiseIndependentHash_polynomialHash`)
-[Vadhan, Section 3.5.5][Vadhan2012]: by Lagrange interpolation, every
+indexed by their coefficient vectors `c : Fin k → F`, form a `k`-wise independent hash family
+(`Cslib.Probability.isKWiseIndependentHash_polynomialHash`) [Vadhan, Section 3.5.5][Vadhan2012].
+The shared ascending-coefficient evaluator `Cslib.Probability.polynomialHash` is defined in
+`CslibFrontier.Probability.HashFamily.Polynomial`. By Lagrange interpolation, every
 assignment of values to at most `k` points is attained by a polynomial of degree less than `k`,
 and evaluation depends additively on the coefficients, so the surjectivity criterion
 `Cslib.Probability.isKWiseIndependentHash_of_surjective` applies. The seed consists of `k` field
@@ -27,7 +27,7 @@ elements. For `k = 2` these are the affine maps `x ↦ c₀ + c₁ x` of
 
 ## Main definitions
 
-* `Cslib.Probability.polynomialHash`: evaluation of the polynomial with coefficients `c`.
+* `Cslib.Probability.polynomialHash`: shared evaluation of the polynomial with coefficients `c`.
 
 ## Main results
 
@@ -41,35 +41,11 @@ elements. For `k = 2` these are the affine maps `x ↦ c₀ + c₁ x` of
   equality*][WegmanCarter1981]
 -/
 
-@[expose] public section
+public section
 
 namespace Cslib.Probability
 
 open Finset Polynomial
-
-section Def
-
-variable {F : Type*} [Semiring F]
-
-/-- The polynomial hash with coefficient vector `c : Fin k → F`: the value at `x` of the
-polynomial `∑ j < k, c j X ^ j`, of degree less than `k`. -/
-def polynomialHash {k : ℕ} (c : Fin k → F) (x : F) : F :=
-  ∑ j, c j * x ^ (j : ℕ)
-
-/-- The polynomial hash is additive in its coefficient vector. -/
-theorem polynomialHash_add {k : ℕ} (c d : Fin k → F) :
-    polynomialHash (c + d) = polynomialHash c + polynomialHash d := by
-  funext x
-  simp only [polynomialHash, Pi.add_apply, add_mul, sum_add_distrib]
-
-/-- The polynomial hash with coefficients `c` evaluates any polynomial of degree less than `k`
-whose coefficients are `c`. -/
-theorem polynomialHash_eq_eval {k : ℕ} (P : F[X]) (hP : P.natDegree < k) (x : F) :
-    polynomialHash (fun j : Fin k => P.coeff j) x = P.eval x := by
-  rw [eval_eq_sum_range' hP, polynomialHash]
-  exact Fin.sum_univ_eq_sum_range (fun j => P.coeff j * x ^ j) k
-
-end Def
 
 variable {F : Type*} [Field F] [Fintype F] [DecidableEq F]
 

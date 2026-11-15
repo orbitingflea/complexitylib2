@@ -228,6 +228,47 @@ parameters), a bound without an advantage-named constant, a caller-supplied obje
 the theorem should prove, and a realization stated other than as an equation (an inequality, a
 predicate of the library or a bundled program).
 
+**Named assumptions** ([#5578](https://github.com/cslib-community/cslib-frontier/issues/5578)). Each
+named assumption that a Crypto theorem takes belongs in the
+[assumptions inventory](manual/programs-crypto-and-probability/assumptions.md) as *standard* (its
+docstring cites the source definition with a checked locator and names every deviation), *novel*
+(its docstring says "novel to this library" and how it relates to standard assumptions) or
+*vocabulary* (a generic notion parameterized by the objects whose security it states, never a
+primitive's own security notion) ([AGENTS.md](AGENTS.md#security-theorems)). After a build,
+`python3 scripts/check_hardness_assumptions.py` finds every premise of a public Crypto theorem
+headed by a Prop-valued declaration whose definition mentions negligibility, an advantage or
+indistinguishability, whatever the declaration's own name, and checks it against the inventory. It
+fails on an unlisted assumption, a malformed or duplicate row, a standard row without a
+`references.bib` key, and a missing nonvacuity test that a row links. It also fails on a standard
+assumption whose docstring cites none of its row's keys, a novel one whose docstring does not say
+"novel to this library", a row of any status whose locator is "not verified", a theorem resting on a
+novel assumption whose name does not mention it or whose docstring presents a cited result (cites a
+key, or says "theorem" or opens with a bold title in its first sentence) without its first sentence
+saying "step" or "helper", and a results-inventory entry that lists such a theorem. The existing
+gaps of these kinds are recorded, each with a justification, in
+`scripts/hardness_assumptions_baseline.json`, which only shrinks: an entry that no longer matches
+fails as well. The check covers the whole library, so pull requests and merge groups both enforce
+it, and a merge group in which two pull requests conflict only in meaning (say, both register the
+same assumption) ejects the later one instead of landing it; pushes to `main` only report. To
+register a new assumption, add its row, cite its source in its docstring, and link a nonvacuity test
+where one is easy; `--list` prints the theorems that rest on each assumption. A row drops "locator
+not verified" only in a pull request whose body records the source check, confirmed by its reviewer.
+The check does not judge whether a definition matches its source, whether a locator is right, or
+whether a theorem that claims a cited result rests on the source's assumption with the source's
+instance; review does. Nor does it see a cited result named without a bibliography key, the word
+"theorem" or a bold title in the docstring's first sentence, or one claimed only by a theorem's
+name. Conversely, an original result on a novel assumption, which the rule allows, is flagged when
+its docstring cites a key, or says "theorem" or opens with a bold title in its first sentence; it
+then passes only through a justified baseline entry. The inventory is not complete, because the
+reader misses two kinds of assumption: a premise written inline (a hypothesis
+`∀ A, Negligible (advantage A)`), and an assumption whose definition reaches no security atom
+through Prop-valued declarations within five levels, such as a bound on a quantity not named like
+an advantage or an advantage behind a helper that is not Prop-valued. A row for one fails, so these
+are not listed. The known cases are `MildlyHardOnAverage` and `MildlyHardOnAverageENat` (the
+Liu–Pass converse), `Pseudoentropy.SamplablePair.HasGap` and `HasGapWithAdvice`, and
+`Circuits.Boolean.IsAverageCaseHard` (Nisan–Wigderson); the inventory page names them in full
+(#5578 finding 9).
+
 ### Algorithms are programs
 
 Probabilistic algorithms, such as key generation, signing, provers, verifiers, simulators,
@@ -420,7 +461,8 @@ findings without requiring a duplicate local run.
 
 Keep each fact in one maintained location. The README explains the purpose and points to useful
 entry points; module docstrings explain the mathematics and API; checked Lean examples show usage.
-ROADMAP lists accepted directions only, grouped by area.
+ROADMAP lists accepted directions only: `ROADMAP.md` holds the programs and an index, and each area
+has its own file under `roadmap/`, so that changes in different areas do not conflict.
 Each entry states one direction's scope in a few sentences, one sentence per line, with its issue
 linked inline as `[#N](https://github.com/cslib-community/cslib-frontier/issues/N)`.
 Status and progress live on issues and PRs, so a PR edits ROADMAP only when it opens or closes a

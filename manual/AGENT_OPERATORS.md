@@ -124,7 +124,11 @@ A faithful statement matters more than a milestone. Agent reviews have approved 
 assumed something about their own reduction because the PR disclosed it
 ([#5293](https://github.com/cslib-community/cslib-frontier/issues/5293); in `Cslib.Crypto`,
 `scripts/check_security_premises.py` catches common elaborated premise shapes under
-[security theorems](../AGENTS.md#security-theorems), while review owns semantic fidelity). When a
+[security theorems](../AGENTS.md#security-theorems), while review owns semantic fidelity). Ask
+also which assumption a cited result rests on: the
+[assumptions inventory](programs-crypto-and-probability/assumptions.md) records whether each one
+is the source's or novel to this library, and a novel one may not stand in for the source's
+([#5578](https://github.com/cslib-community/cslib-frontier/issues/5578)). When a
 report says a result landed "with limitations", ask whether the theorem is named and documented as
 a step ([faithful headlines](../AGENTS.md#faithful-headlines)) and whether the cited result is
 still open. Before a published theorem enters the [results inventory](../results/README.md), check
