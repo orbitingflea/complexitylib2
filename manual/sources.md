@@ -1404,6 +1404,11 @@ Hiroshi Nagamochi and Toshihide Ibaraki. "Computing Edge-Connectivity in Multigr
 
 Zsigmond Nagy. “A Constructive Estimation of the Ramsey Numbers” (in Hungarian). *Matematikai Lapok* 23, 301–302, 1972 (the volume is dated 1972 but reportedly appeared in 1975). The original was not inspected; the construction and its bound follow Jukna, *Extremal Combinatorics*, 2nd ed., §13.7 and the Chapter 13 exercises, as cited in the Lean documentation.
 
+<a id="naor91"></a>
+## naor91
+
+Moni Naor. “Bit Commitment Using Pseudorandomness.” *Journal of Cryptology* 4(2), 151–158, 1991. https://doi.org/10.1007/BF00196774 . The journal version was not inspected. Read on 2026-11-15 in the author's copy, https://www.wisdom.weizmann.ac.il/~naor/PAPERS/bit.pdf (“Bit Commitment Using Pseudo-Randomness”, 10 pages, dated February 25, 2001; SHA-256 `938b32039291411c682ca457c8c040dba7f0dc264de91182e6cb8cdaaba633b6`), whose section and page numbers the library cites: Section 2 (pp. 3–4), the secrecy and binding conditions of a bit commitment, the remark on auxiliary input, and the conditions for commitments to many bits, in which the receiver selects the two sequences.
+
 <a id="naoryung89"></a>
 ## naoryung89
 

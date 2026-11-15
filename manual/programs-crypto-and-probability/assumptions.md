@@ -42,9 +42,12 @@ Names are relative to `Cslib.Crypto`.
 |---|---|---|---|---|
 | `QuadraticResiduosityHard` | standard | [KatzLindell2020] Section 15.4.3 (locator not verified) | Any law on the primes; the ideal game samples nonresidues with Jacobi symbol `+1`. | — |
 | `DCR` | standard | [KatzLindell2020] Definition 15.10 (locator not verified) | Balanced moduli from any law. | — |
+| `ModulusFactoringHard` | standard | [KatzLindell2020] Section 9.2.3, Definition 9.45 (locator not verified) | Moduli from any law `ℕ → PMF ℕ` in place of `GenModulus`, which need not be efficiently samplable or supported on products of two primes. `FactoringHard` is the case of Blum moduli (`factoringHard_iff_modulusFactoringHard`). | [AssumptionNonvacuity.lean](../../CslibFrontierTests/Crypto/AssumptionNonvacuity.lean) `not_modulusFactoringHard_const` |
 | `FactoringHard` | standard | [KatzLindell2020] Section 9.2.3 (locator not verified) | Blum moduli only, drawn from any law on `BlumDesc` (`BlumGen`), which need not be efficiently samplable. | — |
 | `RabinOneWay` | standard | [KatzLindell2020] Section 15.5.2 (locator not verified) | Blum moduli from any law on `BlumDesc`, which need not be efficiently samplable. The input is a uniform bit string twice as long as `N`, reduced modulo `N`, not a uniform unit. | — |
 | `RSAOneWay` | standard | [BonehShoup2023] Attack Game 10.3 and Definition 10.5, pp. 404–405 | Keys from any law on `RSADesc` (`RSAGen`), which need not be efficiently samplable, in place of Boneh–Shoup's `RSAGen(ℓ, e)`. The challenge is uniform on `Fin N`, as `x ← Z_n` in the source. | [RSALeastSignificantBit.lean](../../CslibFrontierTests/Crypto/RSALeastSignificantBit.lean) `not_rsaOneWay_desc33` |
+| `TotientHard` | novel | — | Equivalent to `ModulusFactoringHard` for the modulus law of `gen` (`totientHard_iff_modulusFactoringHard`), so exactly as plausible as factoring. Katz–Lindell show that computing `φ(N)` is equivalent to factoring but state no separate assumption. Keys from any law on `RSADesc` (`RSAGen`), which need not be efficiently samplable. | [AssumptionNonvacuity.lean](../../CslibFrontierTests/Crypto/AssumptionNonvacuity.lean) `not_totientHard_const` |
+| `RSAKeyRecoveryHard` | novel | — | Follows from `RSAOneWay` (`RSAOneWay.rsaKeyRecoveryHard`) and implies `TotientHard` (`RSAKeyRecoveryHard.totientHard`). Katz–Lindell show that computing `d` from `(N, e)` is as hard as factoring, a direction not formalized here, but state no separate assumption. Keys from any law on `RSADesc` (`RSAGen`), which need not be efficiently samplable. | [AssumptionNonvacuity.lean](../../CslibFrontierTests/Crypto/AssumptionNonvacuity.lean) `not_rsaKeyRecoveryHard_const` |
 
 ## Lattice and code assumptions
 
@@ -168,7 +171,7 @@ Names are relative to `Cslib.Crypto`.
 
 | Assumption | Status | Source definition | Deviations or relation | Nonvacuity |
 |---|---|---|---|---|
-| `StatefulHiding` | standard | [Naor1991] (locator not verified) | A stateful receiver that chooses both bits. | — |
+| `StatefulHiding` | standard | [Naor1991] Section 2, pp. 3–4 of the author's copy | The secrecy condition for commitments to many bits, at one bit: the receiver sends `r` and chooses both bits. A distinguishing advantage in place of the guessing probability; auxiliary input only from families computable in polynomial time, where the source also allows an arbitrary one. | — |
 | `CommitmentScheme.StatisticalHiding` | standard | [BonehShoup2023] Section 8.12: the hiding experiment, p. 344, and unconditional hiding, p. 346 | The source names unconditional hiding in prose (statistically indistinguishable commitments), not in a numbered definition; Definition 8.8 is a secure (hiding and binding) scheme. Read here as the p. 344 experiment against every adversary: an unbounded `Encryption.WordAdversary` that sees the public parameters, drawn from a setup law `keyDist` (the source's scheme has none), and chooses the two messages. | — |
 | `FuzzyExtractor.ComputationallySecureFor` | standard | [FullerMengReyzin2020] Definition 2.2, item 4 (locator not verified) | — | — |
 | `ZKProof.NegligibleSoundness` | standard | [Goldreich2001] Section 4.2 (locator not verified) | A finite soundness error at every parameter. | — |

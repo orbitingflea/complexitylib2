@@ -7,13 +7,17 @@ Authors: Karn Seth
 module
 -- upstream: candidate
 
+public import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.PowMod
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 public import CslibFrontier.Computability.Probabilistic.Parameter
+public import CslibFrontier.Crypto.Computational.Factoring
 public import CslibFrontier.Crypto.Game
 public import CslibFrontier.Foundations.Data.ZMod.CRTUnits
 public import Mathlib.Algebra.Group.Subgroup.Even
 public import Mathlib.Data.ZMod.Units
 public import Mathlib.NumberTheory.LegendreSymbol.JacobiSymbol
+import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
+import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.BinaryDiv
 import CslibFrontier.Crypto.Negligible.Basic
 import CslibFrontier.Probability.PMF
 import CslibFrontier.Tactic.PPT
@@ -36,10 +40,13 @@ computational quadratic residuosity assumption.
   quadratic nonresidues with Jacobi symbol `+1`.
 * `Cslib.Crypto.IsBlumPrime`, `Cslib.Crypto.IsBlumModulus`, `Cslib.Crypto.blumSqrt`: Blum primes,
   Blum moduli, and principal square-root extraction.
-* `Cslib.Crypto.ModulusDesc`, `Cslib.Crypto.encModulusDesc`, `Cslib.Crypto.encQRInput`,
-  `Cslib.Crypto.qrRealGame`, `Cslib.Crypto.qrIdealGame`, `Cslib.Crypto.QuadraticResiduosityHard`:
-  modulus descriptions, their binary encoding as `(p, q)`, the distinguisher input
-  `(1ⁿ, (N, y))`, and the computational quadratic residuosity experiment and assumption.
+* `Cslib.Crypto.ModulusDesc`, `Cslib.Crypto.ModulusDesc.modulus`, `Cslib.Crypto.encModulusDesc`,
+  `Cslib.Crypto.encQRInput`, `Cslib.Crypto.qrRealGame`, `Cslib.Crypto.qrIdealGame`,
+  `Cslib.Crypto.QuadraticResiduosityHard`: modulus descriptions, their composite modulus
+  `N = p * q`, their binary encoding as `(p, q)`, the distinguisher input `(1ⁿ, (N, y))`, and the
+  computational quadratic residuosity experiment and assumption.
+* `Cslib.Crypto.qrEulerTest`, `Cslib.Crypto.factorToQR`: explicit PPT reduction from quadratic
+  residuosity distinguishing to integer factoring via Euler's criterion.
 
 ## Main results
 
@@ -53,6 +60,9 @@ computational quadratic residuosity assumption.
 * `Cslib.Crypto.neg_one_mem_positiveNonresidues`: `-1 ∈ QNR_N^{+1}` for any Blum modulus.
 * `Cslib.Crypto.blumSqrt_sq`, `Cslib.Crypto.sq_bijOn_quadResidueSet`: squaring is a bijection
   on `QR_N` for any Blum modulus, with inverse `blumSqrt p q`.
+* `Cslib.Crypto.advantage_qrGame_factorToQR`,
+  `Cslib.Crypto.QuadraticResiduosityHard.modulusFactoringHard`: quadratic residuosity hardness
+  implies integer factoring hardness.
 
 ## Implementation notes
 
@@ -404,6 +414,9 @@ structure ModulusDesc where
 instance (d : ModulusDesc) : Fact d.p.Prime := ⟨d.prime_p⟩
 instance (d : ModulusDesc) : Fact d.q.Prime := ⟨d.prime_q⟩
 
+/-- The composite modulus `N = p * q` of a `ModulusDesc`. -/
+abbrev ModulusDesc.modulus (d : ModulusDesc) : ℕ := d.p * d.q
+
 /-- Every valid modulus `N = p * q` exceeds `1`. -/
 theorem ModulusDesc.one_lt_mul (d : ModulusDesc) : 1 < d.p * d.q := by
   have := d.two_lt_p; have := d.two_lt_q; nlinarith
@@ -437,7 +450,7 @@ noncomputable instance (d : ModulusDesc) : Nonempty (positiveNonresidues d.p d.q
 unary, then the modulus `N` and the challenge residue `y` in binary. The parameter and `N` are
 framed. -/
 abbrev encQRInput : ℕ × ℕ × ℕ ↪ List Bool :=
-  encPair encUnary (encPair encNat encNat)
+  encModulusChallengeInput
 
 /-- Real quadratic residuosity experiment: sample `N = p * q` and a uniform quadratic residue
 `y ∈ QR_N`, and give `(N, y)` to the distinguisher. -/
@@ -463,6 +476,182 @@ def QuadraticResiduosityHard (setup : ℕ → PMF ModulusDesc) : Prop :=
     (fun adversary n => qrRealGame setup adversary n)
     (fun adversary n => qrIdealGame setup adversary n)
     (fun adversary =>
-      IsPPTOn encQRInput encBool (fun input => adversary input.1 input.2))
+      IsPPTOn encModulusChallengeInput encBool (fun input => adversary input.1 input.2))
+
+/-! ### Quadratic residuosity hardness implies integer factoring hardness -/
+
+/-- Euler-criterion test for quadratic residuosity modulo the factor `a` of `N = a * b`:
+returns `true` when `1 < a`, `1 < b`, `a * b = N`, and `y ^ (a / 2) % a = 1`. -/
+def qrEulerTest (N y a b : ℕ) : Bool :=
+  decide (1 < a ∧ 1 < b ∧ a * b = N ∧
+    y ^ (a / 2) % (if a = 0 then 1 else a) = 1)
+
+/-- Explicit PPT reduction from quadratic residuosity distinguishing to integer factoring
+([KatzLindell2020], Section 15.4): given `(N, y)`, run the factoring algorithm `F n N` to obtain
+`(a, b)` and test Euler's criterion modulo `a`. -/
+def factorToQR (F : ℕ → ℕ → ProbComp (ℕ × ℕ)) (n : ℕ) (Ny : ℕ × ℕ) : ProbComp Bool := do
+  let ab ← F n Ny.1
+  return qrEulerTest Ny.1 Ny.2 ab.1 ab.2
+
+private theorem computableInPolyTime_qrEulerTest {α : Type} {enc : α ↪ List Bool}
+    {N y a b : α → ℕ}
+    (hN : ComputableInPolyTime N enc encNat)
+    (hy : ComputableInPolyTime y enc encNat)
+    (ha : ComputableInPolyTime a enc encNat)
+    (hb : ComputableInPolyTime b enc encNat) :
+    ComputableInPolyTime (fun x => qrEulerTest (N x) (y x) (a x) (b x)) enc encBool := by
+  unfold qrEulerTest
+  have ha_pos : ∀ x, 0 < (if a x = 0 then 1 else a x) := fun x => by
+    split_ifs <;> omega
+  have ha' : ComputableInPolyTime (fun x => if a x = 0 then 1 else a x) enc encNat := by fun_prop
+  have hpow : ComputableInPolyTime
+      (fun x => y x ^ (a x / 2) % (if a x = 0 then 1 else a x)) enc encNat :=
+    ComputableInPolyTime.binary_powMod hy (by fun_prop) ha' ha_pos
+  have hcheck : ∀ {r : α → ℕ}, ComputableInPolyTime r enc encNat →
+      ComputableInPolyTime
+        (fun x => decide (1 < a x ∧ 1 < b x ∧ a x * b x = N x ∧ r x = 1)) enc encBool := by
+    intro r hr
+    fun_prop
+  exact hcheck hpow
+
+/-- `factorToQR F` is uniform PPT whenever `F` is uniform PPT. -/
+theorem isPPTOn_factorToQR {F : ℕ → ℕ → ProbComp (ℕ × ℕ)}
+    (hF : IsPPTOn (encPair encUnary encNat) (encPair encNat encNat)
+      (fun input => F input.1 input.2)) :
+    IsPPTOn encModulusChallengeInput encBool (fun input => factorToQR F input.1 input.2) := by
+  unfold factorToQR
+  have htest := @computableInPolyTime_qrEulerTest
+  refine IsPPTOn.bind_with
+    (IsPPTOn.preprocess hF (prepare := fun input : ℕ × (ℕ × ℕ) => (input.1, input.2.1))
+      (by fun_prop)) ?_
+  ppt
+
+private theorem nat_pow_mod_eq_one_iff_zmod {m y t : ℕ} [Fact (1 < m)] :
+    y ^ t % m = 1 ↔ (y : ZMod m) ^ t = 1 := by
+  rw [← Nat.cast_pow, ← ZMod.natCast_mod]
+  constructor
+  · intro h
+    rw [h, Nat.cast_one]
+  · intro h
+    have hval := congrArg ZMod.val h
+    rwa [ZMod.val_natCast, Nat.mod_mod, ZMod.val_one] at hval
+
+private theorem pow_div_two_mod_eq_one_iff_isSquare {a y : ℕ} (ha : a.Prime) {u : (ZMod a)ˣ}
+    (hy : (y : ZMod a) = (u : ZMod a)) :
+    y ^ (a / 2) % a = 1 ↔ IsSquare u := by
+  have : Fact a.Prime := ⟨ha⟩
+  have : Fact (1 < a) := ⟨ha.one_lt⟩
+  rw [nat_pow_mod_eq_one_iff_zmod, hy, ← Units.val_pow_eq_pow_val, ← Units.val_one,
+    ← Units.ext_iff, ← ZMod.euler_criterion_units a u, isSquare_iff_exists_sq]
+  simp_rw [eq_comm]
+
+private theorem qrEulerTest_of_mem_quadResidueSet (d : ModulusDesc) {x : (ZMod (d.p * d.q))ˣ}
+    (hx : x ∈ quadResidueSet d.p d.q) (a b : ℕ) :
+    qrEulerTest (d.p * d.q) x.val.val a b = decide (1 < a ∧ 1 < b ∧ a * b = d.p * d.q) := by
+  have hcop : Nat.Coprime d.p d.q := (Nat.coprime_primes d.prime_p d.prime_q).mpr d.ne_pq
+  have hsq : IsSquare x := (Finset.mem_filter.mp hx).2
+  obtain ⟨hsq_p, hsq_q⟩ := (ZMod.isSquare_iff_unitsChineseRemainder hcop x).mp hsq
+  unfold qrEulerTest
+  by_cases hfac : 1 < a ∧ 1 < b ∧ a * b = d.p * d.q
+  · rcases hfac with ⟨ha, hb, hab⟩
+    have ha0 : a ≠ 0 := by omega
+    have heuler : x.val.val ^ (a / 2) % a = 1 := by
+      rcases mul_eq_mul_primes_cases d.prime_p d.prime_q ha hb hab with ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩
+      · exact (pow_div_two_mod_eq_one_iff_isSquare d.prime_p
+          (ZMod.natCast_val_eq_unitsChineseRemainder_fst hcop x)).mpr hsq_p
+      · exact (pow_div_two_mod_eq_one_iff_isSquare d.prime_q
+          (ZMod.natCast_val_eq_unitsChineseRemainder_snd hcop x)).mpr hsq_q
+    simp [ha, hb, hab, ha0, heuler]
+  · have hf1 : decide (1 < a ∧ 1 < b ∧ a * b = d.p * d.q ∧
+        x.val.val ^ (a / 2) % (if a = 0 then 1 else a) = 1) = false :=
+      decide_eq_false fun h => hfac ⟨h.1, h.2.1, h.2.2.1⟩
+    have hf2 : decide (1 < a ∧ 1 < b ∧ a * b = d.p * d.q) = false :=
+      decide_eq_false hfac
+    rw [hf1, hf2]
+
+private theorem qrEulerTest_of_mem_positiveNonresidues (d : ModulusDesc) {x : (ZMod (d.p * d.q))ˣ}
+    (hx : x ∈ positiveNonresidues d.p d.q) (a b : ℕ) :
+    qrEulerTest (d.p * d.q) x.val.val a b = false := by
+  have hcop : Nat.Coprime d.p d.q := (Nat.coprime_primes d.prime_p d.prime_q).mpr d.ne_pq
+  obtain ⟨hnsq_p, hnsq_q⟩ :=
+    (mem_positiveNonresidues_iff_unitsChineseRemainder d.p d.q hcop d.two_lt_p d.two_lt_q x).mp hx
+  unfold qrEulerTest
+  rw [decide_eq_false_iff_not]
+  rintro ⟨ha, hb, hab, heuler⟩
+  have ha0 : a ≠ 0 := by omega
+  simp only [ha0, ↓reduceIte] at heuler
+  rcases mul_eq_mul_primes_cases d.prime_p d.prime_q ha hb hab with ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩
+  · exact hnsq_p ((pow_div_two_mod_eq_one_iff_isSquare d.prime_p
+      (ZMod.natCast_val_eq_unitsChineseRemainder_fst hcop x)).mp heuler)
+  · exact hnsq_q ((pow_div_two_mod_eq_one_iff_isSquare d.prime_q
+      (ZMod.natCast_val_eq_unitsChineseRemainder_snd hcop x)).mp heuler)
+
+/-- In `qrRealGame`, `factorToQR F` succeeds with the exact distribution of `modulusFactoringGame`
+on the pushed-forward modulus distribution. -/
+theorem qrRealGame_factorToQR (setup : ℕ → PMF ModulusDesc)
+    (F : ℕ → ℕ → ProbComp (ℕ × ℕ)) (n : ℕ) :
+    qrRealGame setup (factorToQR F) n =
+      modulusFactoringGame (fun k => (setup k).map ModulusDesc.modulus) F n := by
+  unfold qrRealGame modulusFactoringGame factorToQR
+  simp only [ProbComp.eval_bind, ProbComp.eval_pure, PMF.monad_bind_eq_bind,
+    PMF.monad_pure_eq_pure, PMF.bind_map]
+  congr 1
+  funext d
+  have hconst : (fun y : quadResidueSet d.p d.q =>
+      (ProbComp.eval (F n (d.p * d.q))).bind fun ab =>
+        PMF.pure (qrEulerTest (d.p * d.q) y.1.val.val ab.1 ab.2)) =
+      fun _ => (ProbComp.eval (F n (d.p * d.q))).bind fun ab =>
+        PMF.pure (decide (1 < ab.1 ∧ 1 < ab.2 ∧ ab.1 * ab.2 = d.p * d.q)) := by
+    funext y
+    congr 1
+    funext ab
+    rw [qrEulerTest_of_mem_quadResidueSet d y.2 ab.1 ab.2]
+  rw [hconst, PMF.bind_const]
+  rfl
+
+/-- In `qrIdealGame`, `factorToQR F` always outputs `false`. -/
+theorem qrIdealGame_factorToQR (setup : ℕ → PMF ModulusDesc)
+    (F : ℕ → ℕ → ProbComp (ℕ × ℕ)) (n : ℕ) :
+    qrIdealGame setup (factorToQR F) n = PMF.pure false := by
+  unfold qrIdealGame factorToQR
+  simp only [ProbComp.eval_bind, ProbComp.eval_pure, PMF.monad_bind_eq_bind]
+  have hconst : (fun d : ModulusDesc =>
+      (PMF.uniformOfFintype (positiveNonresidues d.p d.q)).bind fun y =>
+        (ProbComp.eval (F n (d.p * d.q))).bind fun ab =>
+          PMF.pure (qrEulerTest (d.p * d.q) y.1.val.val ab.1 ab.2)) =
+      fun _ => PMF.pure false := by
+    funext d
+    have hy : (fun y : positiveNonresidues d.p d.q =>
+        (ProbComp.eval (F n (d.p * d.q))).bind fun ab =>
+          PMF.pure (qrEulerTest (d.p * d.q) y.1.val.val ab.1 ab.2)) =
+        fun _ => PMF.pure false := by
+      funext y
+      have hab : (fun ab : ℕ × ℕ => PMF.pure (qrEulerTest (d.p * d.q) y.1.val.val ab.1 ab.2)) =
+          fun _ => PMF.pure false := by
+        funext ab
+        rw [qrEulerTest_of_mem_positiveNonresidues d y.2 ab.1 ab.2]
+      rw [hab, PMF.bind_const]
+    rw [hy, PMF.bind_const]
+  rw [hconst, PMF.bind_const]
+
+/-- The QR distinguishing advantage of `factorToQR F` equals the factoring success probability of
+`F`. -/
+theorem advantage_qrGame_factorToQR (setup : ℕ → PMF ModulusDesc)
+    (F : ℕ → ℕ → ProbComp (ℕ × ℕ)) (n : ℕ) :
+    Game.advantage (qrRealGame setup (factorToQR F) n) (qrIdealGame setup (factorToQR F) n) =
+      Game.succProbability
+        (modulusFactoringGame (fun k => (setup k).map ModulusDesc.modulus) F n) := by
+  rw [qrRealGame_factorToQR, qrIdealGame_factorToQR]
+  simp [Game.advantage, Game.succProbability]
+
+/-- **Quadratic residuosity hardness implies integer factoring hardness**: if `setup` satisfies
+`QuadraticResiduosityHard`, then factoring `N = d.p * d.q` is hard for `(setup n).map
+ModulusDesc.modulus`. -/
+theorem QuadraticResiduosityHard.modulusFactoringHard {setup : ℕ → PMF ModulusDesc}
+    (h : QuadraticResiduosityHard setup) :
+    ModulusFactoringHard (fun n => (setup n).map ModulusDesc.modulus) := by
+  intro F hF
+  refine (h (factorToQR F) (isPPTOn_factorToQR hF)).congr fun n => ?_
+  exact advantage_qrGame_factorToQR setup F n
 
 end Cslib.Crypto

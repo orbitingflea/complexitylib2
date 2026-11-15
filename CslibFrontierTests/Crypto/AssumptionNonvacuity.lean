@@ -4,9 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Samuel Schlesinger
 -/
 
+import CslibFrontier.Crypto.Computational.CompositeResiduosity
 import CslibFrontier.Crypto.Computational.DiffieHellman
 import CslibFrontier.Crypto.Computational.Encryption.CCA
 import CslibFrontier.Crypto.Computational.PseudorandomFunction
+import CslibFrontier.Crypto.Computational.RabinFactoring
+import CslibFrontier.Crypto.Computational.RSAAttacks
 import CslibFrontier.Probability.PMF.UniformPoint
 import CslibFrontier.Probability.Product
 import CslibFrontier.Crypto.Negligible.Basic
@@ -30,6 +33,12 @@ pseudorandom generators and hard-core predicates are elsewhere.
 * **Pseudorandom functions.** The family answering every query with zeros has answers of the
   declared width but is not a `PseudorandomFunction`: asking for the first answer bit at the zero
   word has advantage `1 / 2` at every positive parameter.
+* **Factoring, Rabin, quadratic residuosity, composite residuosity, and RSA.** For every fixed
+  composite modulus `N = p * q` (`1 < p`, `1 < q`), outputting `(p, q)` solves
+  `modulusFactoringGame` with probability `1`, so `ModulusFactoringHard` fails for
+  `fun _ => PMF.pure (p * q)`. By the factoring-hierarchy reductions, `FactoringHard`,
+  `RabinOneWay`, `QuadraticResiduosityHard`, `DCR`, `TotientHard`, `RSAKeyRecoveryHard`, and
+  `RSAOneWay` all fail for a fixed modulus or key descriptor `fun _ => PMF.pure d`.
 -/
 
 namespace CslibFrontierTests.Crypto.AssumptionNonvacuity
@@ -242,5 +251,71 @@ theorem not_pseudorandomFunction_zeroFamily : ¬ PseudorandomFunction zeroFamily
   refine not_negligible_const ?_ hshift
   norm_num [Game.advantage, Game.succProbability, PMF.uniformOfFintype_apply,
     ENNReal.toNNReal_ofNat]
+
+/-! ### Factoring, Rabin, quadratic residuosity, composite residuosity, and RSA -/
+
+/-- Always return the fixed factor pair `(p, q)`. -/
+def constFactors (p q : ℕ) : ℕ → ℕ → ProbComp (ℕ × ℕ) :=
+  fun _ _ => pure (p, q)
+
+theorem constFactors_isPPT (p q : ℕ) :
+    IsPPTOn (encPair encUnary encNat) (encPair encNat encNat)
+      (fun input => constFactors p q input.1 input.2) :=
+  (ComputableInPolyTime.const (p, q)).isPPTOn
+
+theorem eval_modulusFactoringGame_constFactors {p q : ℕ} (hp : 1 < p) (hq : 1 < q) (n : ℕ) :
+    modulusFactoringGame (fun _ => PMF.pure (p * q)) (constFactors p q) n = PMF.pure true := by
+  simp [modulusFactoringGame, constFactors, hp, hq]
+
+/-- **Integer factoring fails for a fixed composite modulus `p * q`.** -/
+theorem not_modulusFactoringHard_const {p q : ℕ} (hp : 1 < p) (hq : 1 < q) :
+    ¬ ModulusFactoringHard (fun _ => PMF.pure (p * q)) := by
+  intro h
+  have hneg := h (constFactors p q) (constFactors_isPPT p q)
+  simp only [eval_modulusFactoringGame_constFactors hp hq] at hneg
+  exact not_negligible_const (by simp [Game.succProbability]) hneg
+
+/-- **`FactoringHard` fails for a fixed Blum modulus**, since the factors do not grow with `n`. -/
+theorem not_factoringHard_const (desc : BlumDesc) : ¬ FactoringHard (fun _ => PMF.pure desc) := by
+  intro h
+  have hmod := (factoringHard_iff_modulusFactoringHard (fun _ => PMF.pure desc)).mp h
+  simp only [PMF.pure_map] at hmod
+  exact not_modulusFactoringHard_const desc.hp.one_lt desc.hq.one_lt hmod
+
+/-- **`RabinOneWay` fails for a fixed Blum modulus**, since it implies `FactoringHard`. -/
+theorem not_rabinOneWay_const (desc : BlumDesc) : ¬ RabinOneWay (fun _ => PMF.pure desc) :=
+  fun h => not_factoringHard_const desc (factoringHard_of_rabinOneWay h)
+
+/-- **`QuadraticResiduosityHard` fails for a fixed modulus**, since it implies factoring hardness.
+-/
+theorem not_quadraticResiduosityHard_const (d : ModulusDesc) :
+    ¬ QuadraticResiduosityHard (fun _ => PMF.pure d) := by
+  intro h
+  have hmod := h.modulusFactoringHard
+  simp only [PMF.pure_map] at hmod
+  exact not_modulusFactoringHard_const d.prime_p.one_lt d.prime_q.one_lt hmod
+
+/-- **`DCR` fails for a fixed balanced modulus**, since it implies factoring hardness. -/
+theorem not_dcr_const (d : BalancedModulus.Desc) : ¬ DCR (fun _ => PMF.pure d) := by
+  intro h
+  have hmod := h.modulusFactoringHard
+  simp only [PMF.pure_map] at hmod
+  exact not_modulusFactoringHard_const d.2.prime_fst.one_lt d.2.prime_snd.one_lt hmod
+
+/-- **`TotientHard` fails for a fixed RSA descriptor**, since it implies factoring hardness. -/
+theorem not_totientHard_const (desc : RSADesc) : ¬ TotientHard (fun _ => PMF.pure desc) := by
+  intro h
+  have hmod := h.modulusFactoringHard
+  simp only [PMF.pure_map] at hmod
+  exact not_modulusFactoringHard_const desc.hp.one_lt desc.hq.one_lt hmod
+
+/-- **`RSAKeyRecoveryHard` fails for a fixed RSA descriptor**, since it implies `TotientHard`. -/
+theorem not_rsaKeyRecoveryHard_const (desc : RSADesc) :
+    ¬ RSAKeyRecoveryHard (fun _ => PMF.pure desc) :=
+  fun h => not_totientHard_const desc h.totientHard
+
+/-- **`RSAOneWay` fails for a fixed RSA descriptor**, since it implies `RSAKeyRecoveryHard`. -/
+theorem not_rsaOneWay_const (desc : RSADesc) : ¬ RSAOneWay (fun _ => PMF.pure desc) :=
+  fun h => not_rsaKeyRecoveryHard_const desc h.rsaKeyRecoveryHard
 
 end CslibFrontierTests.Crypto.AssumptionNonvacuity

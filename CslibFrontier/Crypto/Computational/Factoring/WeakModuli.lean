@@ -57,9 +57,11 @@ problem, after [BonehShoup2023], Section 16.4.2, pp. 698–699.
 
 `⌈√n⌉` is written as `if n = 0 then 0 else (n - 1).sqrt + 1`, the function on naturals that
 `Turing.MultiTapeTM.ComputableInPolyTime.binary_ceilSqrt` certifies in polynomial time.
-`computableInPolyTime_fermatFactor` certifies the whole of `fermatFactor`, with `factorOfTotient`
-unfolded, from the polynomial-time certificates for arithmetic, the test `n = 0` and `Nat.sqrt` on
-binary naturals; it does not need a separate certificate for `factorOfTotient`.
+`computableInPolyTime_fermatFactor` reuses the certificate `computableInPolyTime_factorOfTotient`
+from `RSAAttacks.lean` and certifies only its arguments `n` and `n + 1 - 2 * ⌈√n⌉`, from the
+polynomial-time certificates for arithmetic, the test `n = 0` and `Nat.sqrt` on binary naturals.
+Unfolding `factorOfTotient` as well and running `fun_prop` on the whole term can exceed the default
+heartbeat limit.
 
 The book assumes that `p` and `q` are odd primes. The statements on naturals need only that
 `p + q` is even: positivity of `p` and `q` follows from the closeness bound, and primality is not
@@ -224,11 +226,13 @@ theorem RSADesc.fermatFactor_eq (desc : RSADesc) (hp : desc.p ≠ 2) (hq : desc.
 open Turing.MultiTapeTM in
 /-- The single Fermat step `fermatFactor` is computable in polynomial time on binary naturals.
 Together with `fermatFactor_mul_eq`, a modulus with close factors is factored by a polynomial-time
-function. The proof unfolds `fermatFactor` and `factorOfTotient`, and `fun_prop` composes the
-certificates for arithmetic, the test `n = 0` and `Nat.sqrt` on binary naturals. -/
+function. The proof unfolds only `fermatFactor` and applies the compositional certificate
+`computableInPolyTime_factorOfTotient`, with `fun_prop` certifying its two arguments `n` and
+`n + 1 - 2 * ⌈√n⌉`. -/
 theorem computableInPolyTime_fermatFactor :
     ComputableInPolyTime fermatFactor encNat (encPair encNat encNat) := by
-  unfold fermatFactor factorOfTotient
-  fun_prop
+  unfold fermatFactor
+  exact computableInPolyTime_factorOfTotient (N := fun n => n)
+    (φ := fun n => n + 1 - 2 * (if n = 0 then 0 else (n - 1).sqrt + 1)) (by fun_prop) (by fun_prop)
 
 end Cslib.Crypto

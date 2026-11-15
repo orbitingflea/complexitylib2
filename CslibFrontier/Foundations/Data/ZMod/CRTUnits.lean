@@ -66,6 +66,26 @@ theorem coe_unitsChineseRemainder_snd {p q : ℕ} (h : p.Coprime q) (u : (ZMod (
     ((unitsChineseRemainder h u).2 : ZMod q) = (chineseRemainder h (u : ZMod (p * q))).2 :=
   rfl
 
+/-- Casting the canonical natural-number representative `u.val.val` to `ZMod p` gives the first
+component of `unitsChineseRemainder h u`. -/
+theorem natCast_val_eq_unitsChineseRemainder_fst {p q : ℕ} [Fact p.Prime] [Fact q.Prime]
+    (h : p.Coprime q) (u : (ZMod (p * q))ˣ) :
+    ((u.val.val : ℕ) : ZMod p) = ((unitsChineseRemainder h u).1 : ZMod p) := by
+  change ((u.val.val : ℕ) : ZMod p) = (chineseRemainder h u.val).1
+  have hcast := congrArg Prod.fst (map_natCast (chineseRemainder h) u.val.val)
+  rw [ZMod.natCast_zmod_val, Prod.fst_natCast] at hcast
+  exact hcast.symm
+
+/-- Casting the canonical natural-number representative `u.val.val` to `ZMod q` gives the second
+component of `unitsChineseRemainder h u`. -/
+theorem natCast_val_eq_unitsChineseRemainder_snd {p q : ℕ} [Fact p.Prime] [Fact q.Prime]
+    (h : p.Coprime q) (u : (ZMod (p * q))ˣ) :
+    ((u.val.val : ℕ) : ZMod q) = ((unitsChineseRemainder h u).2 : ZMod q) := by
+  change ((u.val.val : ℕ) : ZMod q) = (chineseRemainder h u.val).2
+  have hcast := congrArg Prod.snd (map_natCast (chineseRemainder h) u.val.val)
+  rw [ZMod.natCast_zmod_val, Prod.snd_natCast] at hcast
+  exact hcast.symm
+
 /-- A unit modulo `p * q` is a square iff both of its Chinese remainder components are. -/
 theorem isSquare_iff_unitsChineseRemainder {p q : ℕ} (h : p.Coprime q) (u : (ZMod (p * q))ˣ) :
     IsSquare u ↔

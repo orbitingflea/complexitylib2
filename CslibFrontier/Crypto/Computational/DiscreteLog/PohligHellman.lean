@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import CslibFrontier.Crypto.Computational.DiscreteLog
+public import CslibFrontier.Foundations.Data.Nat.ChineseRemainder
 public import Mathlib.Data.Nat.ChineseRemainder
 public import Mathlib.Data.Nat.Factorization.Basic
 public import Mathlib.Data.Nat.ModEq
@@ -60,7 +61,9 @@ Schnorr transcripts in a composite-order group.
    transcripts $(r_1, s_1), (r_2, s_2)$ without a collision modulo any prime factor $p > T$ of $q$,
    the challenge difference is coprime to the $(T + 1)$-rough cofactor $L$
    (`coprime_challenge_diff`), so `extractModRough` recovers $x \bmod L$ and `crtCombine`
-   reconstructs the full discrete logarithm $x < q$.
+   reconstructs the full discrete logarithm $x < q$. `crtCombine` and its correctness
+   `crtCombine_eq` are in `CslibFrontier/Foundations/Data/Nat/ChineseRemainder.lean`, which this
+   module imports publicly.
 
 ## Main definitions
 
@@ -69,8 +72,6 @@ Schnorr transcripts in a composite-order group.
   modulo any prime factor `p > T` of `q`.
 * `Cslib.Crypto.extractModRough`: recovers `x % L` from a linear transcript relation modulo `q`
   using an inverse of the challenge difference modulo `L`.
-* `Cslib.Crypto.crtCombine`: Chinese Remainder Theorem reconstruction of `x < D * L` from
-  `a = x % D` and `xL = x % L`.
 
 ## Main results
 
@@ -83,8 +84,8 @@ Schnorr transcripts in a composite-order group.
   `Cslib.Crypto.prime_gt_of_dvd_div_smoothDivisorSeq`: correctness, $(T + 1)$-smoothness, cofactor
   roughness, and coprimality of the trial-division schedule (original).
 * `Cslib.Crypto.coprime_challenge_diff`, `Cslib.Crypto.extractModRough_eq_mod`,
-  `Cslib.Crypto.crtCombine_eq`, `Cslib.Crypto.crtCombine_extractModRough_eq`: Chinese Remainder
-  Theorem combination and composite-order discrete-logarithm extraction (original).
+  `Cslib.Crypto.crtCombine_extractModRough_eq`: Chinese Remainder Theorem combination and
+  composite-order discrete-logarithm extraction (original).
 * `Cslib.Crypto.schnorr_transcript_relation`, `Cslib.Crypto.schnorr_nsmul_transcript_relation`:
   two accepting Schnorr transcripts with the same commitment satisfy
   `s₁ - s₂ = x * (r₁ - r₂)` in `ZMod q` for `g` of arbitrary order `q` (original).
@@ -369,51 +370,18 @@ theorem extractModRough_eq_mod {q L x r₁ s₁ r₂ s₂ : ℕ} (hL : L ∣ q) 
   rw [ZMod.natCast_mod, Nat.cast_add, Nat.cast_sub hs₂, hq0, add_sub, add_zero, hrelL, mul_assoc,
     mul_comm _ (inv : ZMod L), hinv, mul_one]
 
-/-- Chinese Remainder Theorem combination of `a = x % D` and `xL = x % L` using an inverse `inv` of
-`D` modulo `L`; the summand `L - a % L` represents `-a` modulo `L` without ℕ-subtraction
-underflow. -/
-def crtCombine (D L a xL inv : ℕ) : ℕ :=
-  a + D * ((xL + (L - a % L)) * inv % L)
-
-/-- **Chinese Remainder Theorem reconstruction** (the two-modulus case of the CRT used in
-[KatzLindell2020], Section 10.2.1, p. 374): for coprime `D` and `L` with `x < D * L`,
-`a = x % D`, `xL = x % L`, and `inv * D ≡ 1 (mod L)`, `crtCombine D L a xL inv = x`. -/
-theorem crtCombine_eq {D L x a xL : ℕ} (hD : 0 < D) (hL : 0 < L) (hcop : Nat.Coprime D L)
-    (hx : x < D * L) (ha : a = x % D) (hxL : xL = x % L) (inv : ℕ)
-    (hinv : (inv : ZMod L) * D = 1) :
-    crtCombine D L a xL inv = x := by
-  unfold crtCombine
-  set u := (xL + (L - a % L)) * inv % L with hu
-  have hult : u < L := Nat.mod_lt _ hL
-  have halt : a < D := by rw [ha]; exact Nat.mod_lt _ hD
-  have hmD : a + D * u ≡ x [MOD D] := by
-    change (a + D * u) % D = x % D
-    rw [Nat.add_mul_mod_self_left, ha, Nat.mod_mod]
-  have hmL : a + D * u ≡ x [MOD L] := by
-    rw [← ZMod.natCast_eq_natCast_iff]
-    have hxL' : (xL : ZMod L) = x := by rw [hxL, ZMod.natCast_mod]
-    have haL : ((L - a % L : ℕ) : ZMod L) = -a := by
-      rw [Nat.cast_sub (Nat.mod_lt a hL).le, ZMod.natCast_self, ZMod.natCast_mod, zero_sub]
-    rw [Nat.cast_add, Nat.cast_mul, hu, ZMod.natCast_mod, Nat.cast_mul, Nat.cast_add, haL, hxL']
-    linear_combination (↑x - ↑a) * hinv
-  have hlt : a + D * u < D * L := by nlinarith
-  have := (Nat.modEq_and_modEq_iff_modEq_mul hcop).1 ⟨hmD, hmL⟩
-  unfold Nat.ModEq at this
-  rwa [Nat.mod_eq_of_lt hlt, Nat.mod_eq_of_lt hx] at this
-
 /-- **Composite-order discrete-logarithm recovery** (original): combining a residue
-`a = x % D` on the smooth divisor `D` with `extractModRough` on the coprime cofactor `L` (where
-`D * L = q`) recovers the exact discrete logarithm `x < q`. -/
+`a = x % D` on the smooth divisor `D` with `extractModRough` on the cofactor `L` (where
+`D * L = q`) recovers the exact discrete logarithm `x < q`, given an inverse of `D` modulo `L`. -/
 theorem crtCombine_extractModRough_eq {q D L x r₁ s₁ r₂ s₂ invDiff invD : ℕ}
-    (hD : 0 < D) (hL : 0 < L) (hq : D * L = q) (hcop : Nat.Coprime D L)
-    (hx : x < q) (hr₂ : r₂ ≤ q) (hs₂ : s₂ ≤ q)
+    (hq : D * L = q) (hx : x < q) (hr₂ : r₂ ≤ q) (hs₂ : s₂ ≤ q)
     (hrel : ((s₁ : ZMod q) - s₂) = (x : ZMod q) * ((r₁ : ZMod q) - r₂))
     (hinvDiff : (invDiff : ZMod L) * (((r₁ + (q - r₂)) % L : ℕ) : ZMod L) = 1)
     (hinvD : (invD : ZMod L) * D = 1) :
     crtCombine D L (x % D) (extractModRough q L s₁ s₂ invDiff) invD = x := by
   have hL_dvd : L ∣ q := ⟨D, by rw [← hq, mul_comm]⟩
   have hxL := extractModRough_eq_mod hL_dvd hr₂ hs₂ hrel invDiff hinvDiff
-  exact crtCombine_eq hD hL hcop (hq.symm ▸ hx) rfl hxL invD hinvD
+  exact crtCombine_eq (hq.symm ▸ hx) rfl hxL invD hinvD
 
 /-- **Schnorr transcript congruence in a cyclic group** (original): if `g` has order `q` and two
 transcripts `(r₁, s₁)` and `(r₂, s₂)` share the same commitment

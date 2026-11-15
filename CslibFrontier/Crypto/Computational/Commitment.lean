@@ -300,7 +300,15 @@ theorem isPPTOn_commitmentHidingGame_aux {commit : List Bool → Bool → List B
 /-- Computational hiding against a randomized stateful PPT receiver: for every polynomial-time
 auxiliary family `aux : ℕ → List Bool`, no strict PPT `CommitmentReceiver` can distinguish
 commitments to its first chosen bit (`bit = false`) from commitments to its second chosen bit
-(`bit = true`) with non-negligible advantage. -/
+(`bit = true`) with non-negligible advantage.
+
+This is the secrecy condition of [Naor1991], Section 2, pp. 3–4, for a commitment whose commit
+stage is the receiver's string `r` followed by `commit r b seed` on a uniform `n`-bit seed, in the
+form the source states for commitments to many bits, with one bit: the receiver chooses both
+values, and after the commit stage it cannot tell which was committed. A distinguishing advantage
+replaces the source's guessing probability `1/2 + 1/p(n)`; the two differ by a factor of two. The
+auxiliary input ranges over families computable from `1^n` in deterministic polynomial time,
+which a uniform receiver could compute itself, while the source also allows an arbitrary one. -/
 def StatefulHiding (commit : List Bool → Bool → List Bool → List Bool) : Prop :=
   ∀ (aux : ℕ → List Bool),
     ComputableInPolyTime aux encUnary encBits →

@@ -18,6 +18,7 @@ set_option linter.privateModule false
 namespace CslibFrontierTests.Crypto.RSAAttacks
 
 open Cslib Cslib.Crypto
+open Turing.MultiTapeTM
 
 /-- Toy RSA instance `N = 3 * 11 = 33`, `e = 3`, `d = 7` (`3 * 7 ≡ 1 [MOD 20]`). -/
 def rsa33 : RSADesc :=
@@ -96,5 +97,48 @@ example : 1 < Nat.gcd (19 - 1) 45 ∧ Nat.gcd (19 - 1) 45 < 45 ∧
    (gcd_add_one_proper_of_sq_modEq_one (by decide) (by decide) (by decide)).2⟩
 
 example : Nat.gcd (10 - 1) 33 = 3 := by decide
+
+/-! ### Binary modular inverse and the RSA-to-factoring hierarchy -/
+
+/-- `BinaryGcd.modInv 3 20 = 7` since `3 * 7 = 21 ≡ 1 [MOD 20]`. -/
+example : BinaryGcd.modInv 3 20 = 7 := by
+  unfold BinaryGcd.modInv
+  decide
+
+example : 3 * BinaryGcd.modInv 3 20 ≡ 1 [MOD 20] :=
+  BinaryGcd.mul_modInv_modEq_one (by decide) (by decide)
+
+example : BinaryGcd.modInv 3 20 = ((3 : ZMod 20)⁻¹).val :=
+  BinaryGcd.modInv_eq_zmod_inv_val (by decide) (by decide)
+
+example (gen : RSAGen) :
+    TotientHard gen ↔ ModulusFactoringHard (fun n => (gen n).map RSADesc.modulus) :=
+  totientHard_iff_modulusFactoringHard gen
+
+example (gen : RSAGen) (h : RSAOneWay gen) : RSAKeyRecoveryHard gen :=
+  h.rsaKeyRecoveryHard
+
+example (gen : RSAGen) (h : RSAOneWay gen) : TotientHard gen :=
+  h.totientHard
+
+example (gen : RSAGen) (h : RSAOneWay gen) :
+    ModulusFactoringHard (fun n => (gen n).map RSADesc.modulus) :=
+  h.modulusFactoringHard
+
+/-- info: 'Cslib.Crypto.totientHard_iff_modulusFactoringHard' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Cslib.Crypto.totientHard_iff_modulusFactoringHard
+
+/-- info: 'Cslib.Crypto.RSAOneWay.rsaKeyRecoveryHard' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Cslib.Crypto.RSAOneWay.rsaKeyRecoveryHard
+
+/-- info: 'Cslib.Crypto.RSAOneWay.totientHard' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Cslib.Crypto.RSAOneWay.totientHard
+
+/-- info: 'Cslib.Crypto.RSAOneWay.modulusFactoringHard' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Cslib.Crypto.RSAOneWay.modulusFactoringHard
 
 end CslibFrontierTests.Crypto.RSAAttacks

@@ -165,8 +165,7 @@ example :
     crtCombine 4 3 (7 % 4) (extractModRough 12 3 1 9 1) 1 = 7 :=
   crtCombine_extractModRough_eq (q := 12) (D := 4) (L := 3) (x := 7)
     (r₁ := 5) (s₁ := 1) (r₂ := 1) (s₂ := 9) (invDiff := 1) (invD := 1)
-    (by decide) (by decide) rfl (by decide) (by decide) (by decide) (by decide)
-    (by decide) rfl rfl
+    rfl (by decide) (by decide) (by decide) (by decide) rfl rfl
 
 /-! ### 3. Pollard's rho factoring -/
 
