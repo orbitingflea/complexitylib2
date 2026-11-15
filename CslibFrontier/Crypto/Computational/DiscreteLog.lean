@@ -171,7 +171,16 @@ noncomputable def discreteLogGame (setup : ℕ → PMF F.Desc)
 
 /-- The discrete-logarithm assumption for a family and a setup law: every uniform strict PPT
 adversary, given the unary security parameter, public group parameters and the encoded instance,
-finds the discrete logarithm with negligible probability. This is a hypothesis, not a theorem. -/
+finds the discrete logarithm with negligible probability. This is a hypothesis, not a theorem.
+
+It is [BonehShoup2023], Attack Game 10.4 and Definition 10.6 (p. 409), read asymptotically as in
+Section 10.5.2 (pp. 413–414), with these differences. The group parameters are drawn from
+`setup`, which need not be efficiently samplable, whereas the source draws them with an efficient
+system parameterization algorithm (Definition 10.9, p. 413); the assumption is the source's only
+for setup laws that an efficient algorithm samples. The adversary's running time is polynomial in
+the length of its whole input, including the encoded group parameters, which such a setup keeps
+polynomial in `n`. The adversary writes the exponent as a binary number, read modulo `q`, where the
+source's adversary outputs an element of `ℤ_q`. -/
 def DiscreteLog (setup : ℕ → PMF F.Desc) : Prop :=
   ∀ adversary : ℕ → F.Desc × List Bool → ProbComp (List Bool),
     IsPPTOn (encPair encUnary (encPair F.encDesc encBits)) encBits

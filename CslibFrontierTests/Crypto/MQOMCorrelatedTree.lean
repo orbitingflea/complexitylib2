@@ -26,6 +26,13 @@ open Cslib.Crypto.MQOM
 -- With `N = 8`, leaf five is node 13 and has bottom-up siblings 12, 7 and 2.
 example : leafNode (⟨5, by decide⟩ : LeafIndex 3) = 13 := by decide
 example : siblingPathNodes (⟨5, by decide⟩ : LeafIndex 3) = [12, 7, 2] := by decide
+example : List.ofFn (hiddenNode (⟨5, by decide⟩ : LeafIndex 3)) = [13, 6, 3, 1] := by decide
+
+-- A revealed sibling is distinct from a hidden node at a different level, not only its peer.
+example :
+    siblingNode (⟨5, by decide⟩ : LeafIndex 3) (0 : Fin 3) ≠
+      hiddenNode (⟨5, by decide⟩ : LeafIndex 3) (1 : Fin 4) :=
+  siblingNode_ne_hiddenNode _ _ _
 
 -- A different leaf checks that the sibling path is not accidentally root-first.
 example : siblingPathNodes (⟨0, by decide⟩ : LeafIndex 3) = [9, 5, 3] := by decide

@@ -198,6 +198,18 @@ theorem uniformOfFintype_bind_bind_fst_equiv (e : α × β ≃ γ × δ) (f : γ
   simp only [PMF.bind_bind, PMF.bind_map]
   rfl
 
+/-- Two independent uniform draws pushed through an equivalence `e : α × β ≃ γ` are one uniform
+draw from `γ`. -/
+theorem uniformOfFintype_bind_bind_equiv (e : α × β ≃ γ) (f : γ → PMF ε) :
+    ((uniformOfFintype α).bind fun a => (uniformOfFintype β).bind fun b => f (e (a, b))) =
+      (uniformOfFintype γ).bind f :=
+  uniformOfFintype_bind_bind_fst_equiv (e.trans (Equiv.prodPUnit γ : γ × Unit ≃ γ).symm) f
+
+/-- The uniform distribution on `Unit` is the point mass at `()`. -/
+theorem uniformOfFintype_unit : uniformOfFintype Unit = PMF.pure () := by
+  ext u
+  simp
+
 /-- **Adaptive resampling**: a uniform function whose value at a point `p f`, chosen from the
 function itself, is replaced by a fresh uniform value is uniform, provided that replacing that
 value does not move the point. `(f, v) ↦ (Function.update f (p f) v, f (p f))` is an involution. -/

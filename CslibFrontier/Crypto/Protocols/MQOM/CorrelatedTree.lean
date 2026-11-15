@@ -17,6 +17,9 @@ The correlated-tree variant of MQOM v3 uses a perfect binary tree with `N = 2 ^ 
 and the one-based heap convention of Algorithms 21--23 in [MQOM2026, Section 2.5.4, pp. 32--33].
 Leaf `i` is node `N + i`. Its opening lists one sibling per level, starting at the leaf: replace
 the current node by `node ^^^ 1`, then move the hidden node to `node / 2`.
+The revealed sibling nodes are disjoint from the entire hidden path, including the challenged
+leaf and the root. The generic Merkle API instead uses zero-based positions local to each level;
+these declarations keep the source's global heap indices rather than identify the representations.
 
 The PGOW-MQ validation oracle in [MQOM2026, Definition 2, pp. 69--70] returns true exactly when a
 candidate is the designated secret prefix. `validationTranscript` records chronological calls
@@ -40,11 +43,8 @@ particular, it states no runtime, success-probability, hardness or unforgeabilit
 * `Cslib.Crypto.MQOM.siblingNode_parent_eq_hiddenNode_succ`: a path entry's parent is the next
   hidden ancestor.
 * `Cslib.Crypto.MQOM.siblingNode_pos`, `.siblingNode_lt`: path entries lie in the tree array.
-* `Cslib.Crypto.MQOM.siblingNode_ne_leafNode`: no path entry reveals the challenged leaf.
-* `Cslib.Crypto.MQOM.length_siblingPathNodes`: an opening contains exactly `height` nodes.
-* `Cslib.Crypto.MQOM.transcriptConsistent_validationTranscript`: every recorded reply is exact.
-* `Cslib.Crypto.MQOM.ValidationRun.queryCount_eq_length_transcript`: failed and repeated calls
-  are counted exactly once.
+* `Cslib.Crypto.MQOM.siblingNode_ne_hiddenNode`: no path entry is the challenged leaf or any of
+  its hidden ancestors.
 
 ## References
 
@@ -61,12 +61,9 @@ namespace Cslib.Crypto.MQOM
 /-- The `N = 2 ^ height` leaf positions of an MQOM correlated tree. -/
 abbrev LeafIndex (height : Nat) := Fin (2 ^ height)
 
-/-- The number `N = 2 ^ height` of leaves in a perfect correlated tree. -/
-@[expose] def leafCount (height : Nat) : Nat := 2 ^ height
-
 /-- One-based heap index `N + i` of leaf `i`, as in Algorithms 22--23. -/
 @[expose] def leafNode {height : Nat} (leaf : LeafIndex height) : Nat :=
-  leafCount height + leaf
+  2 ^ height + leaf
 
 /-- Move a one-based heap node towards the root by repeated parent steps. -/
 @[expose] def ancestorNode (node : Nat) : Nat → Nat
@@ -106,6 +103,10 @@ theorem ancestorNode_eq_div_pow (node level : Nat) :
   | succ level ih =>
     rw [ancestorNode, ih, Nat.div_div_eq_div_mul, Nat.pow_succ]
 
+private theorem ancestorNode_add (node first second : Nat) :
+    ancestorNode node (first + second) = ancestorNode (ancestorNode node first) second := by
+  simp only [ancestorNode_eq_div_pow, pow_add, Nat.div_div_eq_div_mul]
+
 private theorem ancestorNode_le_div_two (node level : Nat) (hlevel : 0 < level) :
     ancestorNode node level ≤ node / 2 := by
   cases level with
@@ -114,15 +115,15 @@ private theorem ancestorNode_le_div_two (node level : Nat) (hlevel : 0 < level) 
     rw [ancestorNode]
     exact Nat.div_le_div_right (ancestorNode_le node level)
 
-theorem leafCount_le_leafNode {height : Nat} (leaf : LeafIndex height) :
-    leafCount height ≤ leafNode leaf := by
+private theorem two_pow_height_le_leafNode {height : Nat} (leaf : LeafIndex height) :
+    2 ^ height ≤ leafNode leaf := by
   simp only [leafNode]
   omega
 
 theorem leafNode_lt {height : Nat} (leaf : LeafIndex height) :
-    leafNode leaf < 2 * leafCount height := by
+    leafNode leaf < 2 * 2 ^ height := by
   have hleaf := leaf.isLt
-  simp only [leafNode, leafCount] at *
+  simp only [leafNode] at *
   omega
 
 @[simp] theorem hiddenNode_zero {height : Nat} (leaf : LeafIndex height) :
@@ -133,18 +134,21 @@ theorem hiddenNode_succ {height : Nat} (leaf : LeafIndex height) (level : Fin he
     hiddenNode leaf level.succ = hiddenNode leaf (Fin.castSucc level) / 2 := rfl
 
 theorem hiddenNode_lt {height : Nat} (leaf : LeafIndex height)
-    (level : Fin (height + 1)) : hiddenNode leaf level < 2 * leafCount height := by
+    (level : Fin (height + 1)) : hiddenNode leaf level < 2 * 2 ^ height := by
   exact (ancestorNode_le (leafNode leaf) level).trans_lt (leafNode_lt leaf)
+
+private theorem hiddenNode_two_le {height : Nat} (leaf : LeafIndex height) (level : Fin height) :
+    2 ≤ hiddenNode leaf (Fin.castSucc level) := by
+  simp only [hiddenNode, ancestorNode_eq_div_pow]
+  apply (Nat.le_div_iff_mul_le (Nat.two_pow_pos level)).2
+  rw [← Nat.pow_succ']
+  exact (Nat.pow_le_pow_right (by decide) (Nat.succ_le_iff.mpr level.isLt)).trans
+    (two_pow_height_le_leafNode leaf)
 
 /-- A sibling-path index is nonzero, as required by the source tree array. -/
 theorem siblingNode_pos {height : Nat} (leaf : LeafIndex height) (level : Fin height) :
     0 < siblingNode leaf level := by
-  have hnode : 2 ≤ hiddenNode leaf (Fin.castSucc level) := by
-    simp only [hiddenNode, ancestorNode_eq_div_pow]
-    apply (Nat.le_div_iff_mul_le (Nat.two_pow_pos level)).2
-    rw [← Nat.pow_succ']
-    exact (Nat.pow_le_pow_right (by decide) (Nat.succ_le_iff.mpr level.isLt)).trans
-      (leafCount_le_leafNode leaf)
+  have hnode := hiddenNode_two_le leaf level
   simp only [siblingNode]
   generalize hiddenNode leaf (Fin.castSucc level) = node at hnode ⊢
   rcases Nat.even_or_odd node with he | ho
@@ -155,7 +159,7 @@ theorem siblingNode_pos {height : Nat} (leaf : LeafIndex height) (level : Fin he
 
 /-- A sibling-path index is at most the final source tree-array index `2N - 1`. -/
 theorem siblingNode_lt {height : Nat} (leaf : LeafIndex height) (level : Fin height) :
-    siblingNode leaf level < 2 * leafCount height := by
+    siblingNode leaf level < 2 * 2 ^ height := by
   have hnode := hiddenNode_lt leaf (Fin.castSucc level)
   simp only [siblingNode]
   generalize hiddenNode leaf (Fin.castSucc level) = node at hnode ⊢
@@ -184,8 +188,7 @@ theorem siblingNode_parent_eq_hiddenNode_succ {height : Nat} (leaf : LeafIndex h
     (level : Fin height) : siblingNode leaf level / 2 = hiddenNode leaf level.succ := by
   rw [siblingNode_parent, hiddenNode_succ]
 
-/-- An opening never reveals the hidden node at the same level. -/
-theorem siblingNode_ne_hiddenNode {height : Nat} (leaf : LeafIndex height)
+private theorem siblingNode_ne_hiddenNode_sameLevel {height : Nat} (leaf : LeafIndex height)
     (level : Fin height) : siblingNode leaf level ≠ hiddenNode leaf (Fin.castSucc level) := by
   simp only [siblingNode]
   generalize hiddenNode leaf (Fin.castSucc level) = node
@@ -197,41 +200,59 @@ theorem siblingNode_ne_hiddenNode {height : Nat} (leaf : LeafIndex height)
     obtain ⟨k, rfl⟩ := ho
     omega
 
-/-- No entry in an opening is the challenged leaf node. -/
-theorem siblingNode_ne_leafNode {height : Nat} (leaf : LeafIndex height)
-    (level : Fin height) : siblingNode leaf level ≠ leafNode leaf := by
-  by_cases hlevel : (level : Nat) = 0
-  · intro heq
-    have hcast : (Fin.castSucc level : Nat) = 0 := by
-      simpa only [Fin.val_castSucc] using hlevel
-    have hhidden : hiddenNode leaf (Fin.castSucc level) = leafNode leaf := by
-      change ancestorNode (leafNode leaf) (Fin.castSucc level : Nat) = leafNode leaf
-      rw [hcast, ancestorNode_zero]
-    exact siblingNode_ne_hiddenNode leaf level (heq.trans hhidden.symm)
-  · apply Nat.ne_of_lt
-    have hhidden : hiddenNode leaf (Fin.castSucc level) ≤ leafNode leaf / 2 := by
-      simp only [hiddenNode]
-      exact ancestorNode_le_div_two _ _ (Nat.pos_of_ne_zero hlevel)
-    have hsibling :
-        siblingNode leaf level ≤ hiddenNode leaf (Fin.castSucc level) + 1 := by
-      simp only [siblingNode]
-      generalize hiddenNode leaf (Fin.castSucc level) = node
-      rcases Nat.even_or_odd node with he | ho
-      · rw [Nat.xor_one_of_even he]
-      · rw [Nat.xor_one_of_odd ho]
-        omega
-    have hleaf : 4 ≤ leafNode leaf := by
-      apply (show 4 ≤ leafCount height by
-        simp only [leafCount]
-        change 2 ^ 2 ≤ 2 ^ height
-        exact Nat.pow_le_pow_right (by decide) (by omega)).trans
-      exact leafCount_le_leafNode leaf
+private theorem hiddenNode_le_div_two_of_lt {height : Nat} (leaf : LeafIndex height)
+    {lower higher : Fin (height + 1)} (hlevel : lower < higher) :
+    hiddenNode leaf higher ≤ hiddenNode leaf lower / 2 := by
+  change ancestorNode (leafNode leaf) higher ≤ ancestorNode (leafNode leaf) lower / 2
+  obtain ⟨difference, hdifference⟩ := Nat.exists_eq_add_of_lt hlevel
+  rw [hdifference,
+    show (lower : Nat) + difference + 1 = lower + (difference + 1) by omega,
+    ancestorNode_add]
+  exact ancestorNode_le_div_two _ _ (by omega)
+
+private theorem hiddenNode_div_two_lt_siblingNode {height : Nat} (leaf : LeafIndex height)
+    (level : Fin height) :
+    hiddenNode leaf (Fin.castSucc level) / 2 < siblingNode leaf level := by
+  have hnode := hiddenNode_two_le leaf level
+  simp only [siblingNode]
+  generalize hiddenNode leaf (Fin.castSucc level) = node at hnode ⊢
+  rcases Nat.even_or_odd node with he | ho
+  · rw [Nat.xor_one_of_even he]
+    obtain ⟨k, rfl⟩ := he
+    omega
+  · rw [Nat.xor_one_of_odd ho]
+    obtain ⟨k, rfl⟩ := ho
     omega
 
-/-- A correlated-tree opening contains exactly one sibling for each tree level. -/
-theorem length_siblingPathNodes {height : Nat} (leaf : LeafIndex height) :
-    (siblingPathNodes leaf).length = height := by
-  exact List.length_ofFn
+private theorem siblingNode_le_hiddenNode_add_one {height : Nat} (leaf : LeafIndex height)
+    (level : Fin height) :
+    siblingNode leaf level ≤ hiddenNode leaf (Fin.castSucc level) + 1 := by
+  simp only [siblingNode]
+  generalize hiddenNode leaf (Fin.castSucc level) = node
+  rcases Nat.even_or_odd node with he | ho
+  · rw [Nat.xor_one_of_even he]
+  · rw [Nat.xor_one_of_odd ho]
+    omega
+
+/-- No sibling-path entry is the challenged leaf or any node on its hidden path. -/
+theorem siblingNode_ne_hiddenNode {height : Nat} (leaf : LeafIndex height)
+    (level : Fin height) (hiddenLevel : Fin (height + 1)) :
+    siblingNode leaf level ≠ hiddenNode leaf hiddenLevel := by
+  rcases lt_trichotomy (Fin.castSucc level) hiddenLevel with hlt | heq | hgt
+  · apply Nat.ne_of_gt
+    exact (hiddenNode_le_div_two_of_lt leaf hlt).trans_lt
+      (hiddenNode_div_two_lt_siblingNode leaf level)
+  · subst hiddenLevel
+    exact siblingNode_ne_hiddenNode_sameLevel leaf level
+  · apply Nat.ne_of_lt
+    have hhidden := hiddenNode_le_div_two_of_lt leaf hgt
+    have hdouble :
+        2 * hiddenNode leaf (Fin.castSucc level) ≤ hiddenNode leaf hiddenLevel := by
+      have := (Nat.le_div_iff_mul_le (by decide : 0 < 2)).1 hhidden
+      omega
+    have hnode := hiddenNode_two_le leaf level
+    have hsibling := siblingNode_le_hiddenNode_add_one leaf level
+    omega
 
 /-! ### Validation-oracle transcripts -/
 
@@ -266,12 +287,6 @@ Wrong and repeated candidates remain present and therefore remain charged querie
     OracleComp.Transcript (ValidationResponse Coordinate width) :=
   queries.reverse.map fun candidate => ⟨candidate, validationReply secret candidate⟩
 
-/-- Every entry agrees with the exact-equality validation oracle. -/
-@[expose] def TranscriptConsistent {Coordinate : Type} [DecidableEq Coordinate] {width : Nat}
-    (secret : ValidationPrefix Coordinate width)
-    (transcript : OracleComp.Transcript (ValidationResponse Coordinate width)) : Prop :=
-  ∀ entry ∈ transcript, entry.2 = validationReply secret entry.1
-
 /-- Earlier chronological calls form the suffix of the stored transcript. -/
 theorem validationTranscript_append {Coordinate : Type} [DecidableEq Coordinate] {width : Nat}
     (secret : ValidationPrefix Coordinate width)
@@ -290,27 +305,12 @@ theorem validationTranscript_append_singleton {Coordinate : Type} [DecidableEq C
   rw [validationTranscript_append]
   rfl
 
-theorem length_validationTranscript {Coordinate : Type} [DecidableEq Coordinate] {width : Nat}
-    (secret : ValidationPrefix Coordinate width)
-    (queries : List (ValidationPrefix Coordinate width)) :
-    (validationTranscript secret queries).length = queries.length := by
-  simp only [validationTranscript, List.length_map, List.length_reverse]
-
 /-- Forgetting replies recovers the calls in the reverse-chronological storage order. -/
 theorem queries_validationTranscript {Coordinate : Type} [DecidableEq Coordinate] {width : Nat}
     (secret : ValidationPrefix Coordinate width)
     (queries : List (ValidationPrefix Coordinate width)) :
     (validationTranscript secret queries).map (fun entry => entry.1) = queries.reverse := by
   simp only [validationTranscript, List.map_map, Function.comp_def, List.map_id_fun', id_eq]
-
-theorem transcriptConsistent_validationTranscript {Coordinate : Type} [DecidableEq Coordinate]
-    {width : Nat} (secret : ValidationPrefix Coordinate width)
-    (queries : List (ValidationPrefix Coordinate width)) :
-    TranscriptConsistent secret (validationTranscript secret queries) := by
-  intro entry hentry
-  simp only [validationTranscript, List.mem_map] at hentry
-  obtain ⟨candidate, _, rfl⟩ := hentry
-  rfl
 
 /-- The observable part of a PGOW validation run. `queries` are chronological adversary calls;
 `output` is checked by the challenger after those calls. -/
@@ -337,11 +337,6 @@ variable {Coordinate : Type} [DecidableEq Coordinate] {width : Nat}
 @[expose] def accepted (run : ValidationRun Coordinate width)
     (secret : ValidationPrefix Coordinate width) : Bool :=
   validationReply secret run.output
-
-theorem queryCount_eq_length_transcript (run : ValidationRun Coordinate width)
-    (secret : ValidationPrefix Coordinate width) :
-    run.queryCount = (run.transcript secret).length := by
-  simp only [queryCount, transcript, length_validationTranscript]
 
 theorem accepted_eq_true_iff (run : ValidationRun Coordinate width)
     (secret : ValidationPrefix Coordinate width) :

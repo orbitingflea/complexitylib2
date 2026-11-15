@@ -14,6 +14,11 @@ Scott Aaronson. *The Busy Beaver Frontier*. ACM SIGACT News 51(3), 32–54, 2020
 
 Faisal N. Abu-Khzam, Michael R. Fellows, Michael A. Langston and W. Henry Suters. "Crown Structures for Vertex Cover Kernelization." *Theory of Computing Systems* 41(3), 411–430, 2007. https://doi.org/10.1007/s00224-007-1328-0 . Bibliographic data and the abstract (crown structures; a crown-based kernelization compared with the LP-based one) were checked against secondary search summaries on 2026-11-08 UTC. The full text was not inspected, and the crown definition used in [Crown](../CslibFrontier/Foundations/Combinatorics/SimpleGraph/Crown.lean) is not attributed to a numbered statement there. Chor, Fellows and Juedes, "Linear Kernels in Linear Time, or How to Save k Colors in O(n²) Steps", WG 2004, LNCS 3353, 257–269, https://doi.org/10.1007/978-3-540-30559-0_22, is cited in the module docstring on the same basis.
 
+<a id="acek17"></a>
+## acek17
+
+Daniel Apon, Chongwon Cho, Karim Eldefrawy and Jonathan Katz. "Efficient, Reusable Fuzzy Extractors from LWE." *Cyber Security Cryptography and Machine Learning (CSCML 2017)*, LNCS 10332, 1–18, Springer, 2017. https://doi.org/10.1007/978-3-319-60080-2_1 ; IACR Cryptology ePrint Archive Report 2017/755, https://eprint.iacr.org/2017/755 . Checked against the ePrint 2017/755 PDF on 2026-11-14: Definitions 2 and 3 (weak and strong reusability, Section 2.2, p. 6; the public-parameters model is described in Section 2.1, p. 4), the common-matrix FMR construction, Theorem 1 and the 1-query strong-reusability attack (Section 3.3, pp. 9–10), and the encryption-based strongly reusable fuzzy extractor from LWE without random oracles (Section 5, pp. 11–12).
+
 <a id="achlioptas03"></a>
 ## achlioptas03
 

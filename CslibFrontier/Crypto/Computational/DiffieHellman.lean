@@ -236,7 +236,12 @@ noncomputable def cdhGame (setup : ℕ → PMF F.Desc) (adversary : F.CDHAdversa
   Game.withSetup (setup n) fun d => cdhExperiment (F.order d) (F.generator d) (adversary n d)
 
 /-- The Computational Diffie–Hellman assumption for a family and a setup law: every PPT CDH
-adversary wins `cdhGame` with negligible probability. -/
+adversary wins `cdhGame` with negligible probability. It is [BonehShoup2023], Attack Game 10.5 and
+Definition 10.7 (pp. 409–410), read asymptotically as in Section 10.5.2 (pp. 413–414). The group
+parameters are drawn from `setup`, which need not be efficiently samplable, whereas the source
+draws them with an efficient system parameterization algorithm (Definition 10.9, p. 413); the
+assumption is the source's only for setup laws that an efficient algorithm samples, as for
+`DiscreteLog`. -/
 def CDH (setup : ℕ → PMF F.Desc) : Prop :=
   ∀ adversary : F.CDHAdversary, adversary.IsPPT →
     Negligible fun n => Game.succProbability (F.cdhGame setup adversary n)
@@ -328,7 +333,12 @@ noncomputable def ddhRandomGame (setup : ℕ → PMF F.Desc) (distinguisher : F.
     ddhRandomExperiment (F.order d) (F.generator d) (distinguisher n d)
 
 /-- The Decisional Diffie–Hellman assumption for a family and a setup law: every PPT DDH
-distinguisher has negligible advantage between `ddhRealGame` and `ddhRandomGame`. -/
+distinguisher has negligible advantage between `ddhRealGame` and `ddhRandomGame`. It is
+[BonehShoup2023], Attack Game 10.6 and Definition 10.8 (pp. 410–411), read asymptotically as in
+Section 10.5.2 (pp. 413–414). The group parameters are drawn from `setup`, which need not be
+efficiently samplable, whereas the source draws them with an efficient system parameterization
+algorithm (Definition 10.9, p. 413); the assumption is the source's only for setup laws that an
+efficient algorithm samples, as for `DiscreteLog`. -/
 def DDH (setup : ℕ → PMF F.Desc) : Prop :=
   Game.Indistinguishable (F.ddhRealGame setup) (F.ddhRandomGame setup)
     DDHDistinguisher.IsPPT
