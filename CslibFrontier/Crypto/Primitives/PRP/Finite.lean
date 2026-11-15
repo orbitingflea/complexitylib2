@@ -22,12 +22,14 @@ adversary with private coins queries either `E key` for one uniform key or one u
 permutation `π` of `D`. In the chosen-ciphertext game (strong PRP, Section 4.1.3) it may also
 query the inverse, through the bidirectional interface `RandomPermutation.PermOracleSpec D`.
 
-The PRP/PRF switching lemma ([BonehShoup2023], Theorem 4.4) bounds the advantage of a `Q`-query
-adversary between a uniform permutation and a uniform function of `D` by `Q.choose 2 / |D|`
-(`advantage_idealExperiment_prfIdealExperiment_le`). Hence PRP security implies PRF security up
-to that term (`prfAdvantage_le_advantage_add`, Corollary 4.5). A forward adversary runs unchanged
-against the bidirectional interface (`StrongAdversary.ofForward`), so strong PRP security implies
-PRP security (`strongAdvantage_ofForward`).
+The ideal-experiment switching lemma ([BonehShoup2023], Attack Game 4.3 and Theorem 4.6) bounds
+the advantage of a `Q`-query adversary between a uniform permutation and a uniform function of `D`
+by `Q.choose 2 / |D|` (`advantage_idealExperiment_prfIdealExperiment_le`). Hence PRP and PRF
+advantages differ by at most `Q.choose 2 / |D|` (`abs_advantage_sub_prfAdvantage_le`, Theorem 4.4),
+and in particular PRP security implies PRF security up to that term
+(`prfAdvantage_le_advantage_add`). A forward adversary runs unchanged against the bidirectional
+interface (`StrongAdversary.ofForward`), so strong PRP security implies PRP security
+(`strongAdvantage_ofForward`).
 
 The word-level asymptotic notions `Cslib.Crypto.BlockCipher.PRP` and
 `Cslib.Crypto.BlockCipher.StrongPRP` derive their switching lemma from this one.
@@ -44,14 +46,17 @@ The word-level asymptotic notions `Cslib.Crypto.BlockCipher.PRP` and
 
 ## Main results
 
-* `Cslib.Crypto.PRP.advantage_idealExperiment_prfIdealExperiment_le`: the PRP/PRF switching lemma.
+* `Cslib.Crypto.PRP.advantage_idealExperiment_prfIdealExperiment_le`: the ideal-experiment
+  PRP/PRF switching lemma.
+* `Cslib.Crypto.PRP.abs_advantage_sub_prfAdvantage_le`: the two-sided PRF switching lemma.
 * `Cslib.Crypto.PRP.prfAdvantage_le_advantage_add`: a PRP is a PRF up to `Q.choose 2 / |D|`.
 * `Cslib.Crypto.PRP.strongAdvantage_ofForward`: strong PRP security implies PRP security.
 
 ## References
 
 * [D. Boneh, V. Shoup, *A Graduate Course in Applied Cryptography*][BonehShoup2023], Section 4.1.2,
-  Attack Game 4.1, Section 4.1.3, and Section 4.4.3, Theorem 4.4 and Corollary 4.5.
+  Attack Game 4.1, Section 4.1.3, and Section 4.4.3, Attack Game 4.3, Theorem 4.4 and
+  Theorem 4.6.
 -/
 
 @[expose] public section
@@ -98,9 +103,9 @@ theorem eval_idealExperiment (A : PRF.Adversary D D) :
 
 variable [Nonempty D]
 
-/-- **PRP/PRF switching lemma** ([BonehShoup2023], Theorem 4.4): an adversary making at most `Q`
-queries distinguishes a uniform permutation of `D` from a uniform function `D → D` with advantage
-at most `Q.choose 2 / |D|`. -/
+/-- **Ideal-experiment PRP/PRF switching lemma** ([BonehShoup2023], Attack Game 4.3 and
+Theorem 4.6): an adversary making at most `Q` queries distinguishes a uniform permutation of `D`
+from a uniform function `D → D` with advantage at most `Q.choose 2 / |D|`. -/
 theorem advantage_idealExperiment_prfIdealExperiment_le {A : PRF.Adversary D D} {Q : ℕ}
     (hQ : A.IsQueryBounded Q) :
     (Game.advantage (ProbComp.eval (idealExperiment A))
@@ -116,21 +121,35 @@ theorem advantage_idealExperiment_prfIdealExperiment_le {A : PRF.Adversary D D} 
     Probability.PMF.monad_bind_eq_bind, PMF.bind_pure] using abs_sub_uniformPerm_uniformFunc_le
       (ProbOracleComp.isQueryBounded_fixCoins hQ ω) PMF.pure true
 
-/-- **A PRP is a PRF** ([BonehShoup2023], Corollary 4.5): against an adversary making at most `Q`
-queries, the PRF advantage of a block cipher is at most its PRP advantage plus
+/-- **PRF switching lemma** ([BonehShoup2023], Theorem 4.4): for any keyed permutation `E` and any
+adversary `A` making at most `Q` queries, the block-cipher (PRP) and PRF distinguishing advantages
+differ by at most `Q.choose 2 / |D|`. -/
+theorem abs_advantage_sub_prfAdvantage_le [Fintype Key] [Nonempty Key]
+    (E : Key → Equiv.Perm D) {A : PRF.Adversary D D} {Q : ℕ} (hQ : A.IsQueryBounded Q) :
+    |(advantage E A : ℝ) - PRF.advantage (fun key => ⇑(E key)) A| ≤
+      Q.choose 2 / Fintype.card D := by
+  have h :
+      |(advantage E A : ℝ) - PRF.advantage (fun key => ⇑(E key)) A| ≤
+        Game.advantage (ProbComp.eval (idealExperiment A))
+          (ProbComp.eval (PRF.idealExperiment A)) := by
+    simp only [advantage, realExperiment, PRF.advantage, Game.advantage, coe_nndist]
+    rw [dist_comm
+        (Game.succProbability (ProbComp.eval (PRF.realExperiment (fun key => ⇑(E key)) A)))
+        (Game.succProbability (ProbComp.eval (idealExperiment A))),
+      dist_comm
+        (Game.succProbability (ProbComp.eval (PRF.realExperiment (fun key => ⇑(E key)) A)))
+        (Game.succProbability (ProbComp.eval (PRF.idealExperiment A)))]
+    exact abs_dist_sub_le _ _ _
+  exact h.trans (advantage_idealExperiment_prfIdealExperiment_le hQ)
+
+/-- **A PRP is a PRF** ([BonehShoup2023], half of Theorem 4.4): against an adversary making at
+most `Q` queries, the PRF advantage of a block cipher is at most its PRP advantage plus
 `Q.choose 2 / |D|`. -/
 theorem prfAdvantage_le_advantage_add [Fintype Key] [Nonempty Key] (E : Key → Equiv.Perm D)
     {A : PRF.Adversary D D} {Q : ℕ} (hQ : A.IsQueryBounded Q) :
     (PRF.advantage (fun key => ⇑(E key)) A : ℝ) ≤
-      advantage E A + Q.choose 2 / Fintype.card D := by
-  have h := Game.advantage_triangle (ProbComp.eval (realExperiment E A))
-    (ProbComp.eval (idealExperiment A)) (ProbComp.eval (PRF.idealExperiment A))
-  have hswitch := advantage_idealExperiment_prfIdealExperiment_le hQ
-  have h' : (PRF.advantage (fun key => ⇑(E key)) A : ℝ) ≤
-      advantage E A + Game.advantage (ProbComp.eval (idealExperiment A))
-        (ProbComp.eval (PRF.idealExperiment A)) := by
-    exact_mod_cast h
-  linarith
+      advantage E A + Q.choose 2 / Fintype.card D :=
+  sub_le_iff_le_add'.mp (abs_sub_le_iff.mp (abs_advantage_sub_prfAdvantage_le E hQ)).2
 
 end Ideal
 

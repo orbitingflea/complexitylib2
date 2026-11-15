@@ -7,10 +7,11 @@ Authors: Samuel Schlesinger
 module
 
 public import CslibFrontier.Crypto.Computational.SIS.MLKEM.Asymptotic
+public import CslibFrontier.Crypto.Computational.SIS.MLKEM.PRFSecurity
 import CslibFrontier.Probability.PMF
 
 /-!
-# The hypotheses of K-PKE IND-CPA with ideal coin expansion hold together
+# The hypotheses of the K-PKE IND-CPA theorems hold together
 
 `indCPA_kpkeIdealCoins_of_decisionModuleLWEWith` assumes a parameter family computable in
 polynomial time and two instances of `DecisionModuleLWEWith`. At modulus `1` there is only one
@@ -19,6 +20,11 @@ Module-LWE sample, so both instances hold for every shape and every pair of laws
 hypothesis at once, and the theorem applies to it. This checks that the hypotheses are jointly
 satisfiable; it says nothing about hardness at meaningful parameters, where
 `DecisionModuleLWEWith` is an assumption.
+
+`indCPA_kpkePRF_of_decisionModuleLWEWith` assumes the same, together with
+`PseudorandomFunctionOver` for the scheme's keyed function. Its Module-LWE hypotheses hold at
+modulus `1` in the same way, so it applies to `trivialParams` with any such function: the
+pseudorandomness of `F` is the only hypothesis left, and it does not conflict with the others.
 -/
 
 public section
@@ -50,6 +56,15 @@ theorem decisionModuleLWEWith_one (m d n : ℕ → ℕ)
 /-- The theorem applies to the constant family with modulus `1`. -/
 example : (kpke fun _ => trivialParams).INDCPA :=
   indCPA_kpkeIdealCoins_of_decisionModuleLWEWith (ComputableInPolyTime.const trivialParams)
+    (decisionModuleLWEWith_one _ _ _ _ _) (decisionModuleLWEWith_one _ _ _ _ _)
+
+/-- The theorem with seed expansion applies to the constant family with modulus `1`, for any
+pseudorandom function over its counter words and output length. -/
+example {F : List Bool → List Bool → List Bool}
+    (hF : PseudorandomFunctionOver (fun _ => nonceLen trivialParams) (fun _ => prfLen trivialParams)
+      F) :
+    (kpkePRF (fun _ => trivialParams) F).INDCPA :=
+  indCPA_kpkePRF_of_decisionModuleLWEWith (ComputableInPolyTime.const trivialParams) hF
     (decisionModuleLWEWith_one _ _ _ _ _) (decisionModuleLWEWith_one _ _ _ _ _)
 
 end CslibFrontierTests.Crypto.MLKEMAsymptotic

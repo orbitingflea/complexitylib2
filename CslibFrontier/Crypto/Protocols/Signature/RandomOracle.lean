@@ -204,6 +204,22 @@ variable (Digest) in
 noncomputable def oracle (q : Query) : StateT (List (Query × Digest)) PMF Digest :=
   memoize (fun _ => PMF.uniformOfFintype Digest) q
 
+/-- A query at a point absent from the cache draws a uniform digest and records it. -/
+theorem run_oracle_of_lookup_eq_none {q : Query} {cache : List (Query × Digest)}
+    (h : cache.lookup q = none) :
+    (oracle Digest q).run cache =
+      (PMF.uniformOfFintype Digest).bind fun c => PMF.pure (c, (q, c) :: cache) := by
+  change memoize (fun _ => PMF.uniformOfFintype Digest) q cache = _
+  rw [memoize_of_none _ _ _ h]
+  rfl
+
+/-- A query at a cached point returns the cached digest and leaves the cache unchanged. -/
+theorem run_oracle_of_lookup_eq_some {q : Query} {cache : List (Query × Digest)} {c : Digest}
+    (h : cache.lookup q = some c) : (oracle Digest q).run cache = PMF.pure (c, cache) := by
+  change memoize (fun _ => PMF.uniformOfFintype Digest) q cache = _
+  rw [memoize_of_some _ _ _ _ h]
+  rfl
+
 /-- A table entry produced by a call of `oracle` is found at its queried point. -/
 theorem lookup_of_mem_support_oracle {q : Query} {cache : List (Query × Digest)}
     {result : Digest × List (Query × Digest)} (h : result ∈ (oracle Digest q cache).support) :

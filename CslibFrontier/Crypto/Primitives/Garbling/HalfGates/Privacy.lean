@@ -28,23 +28,22 @@ Security rests on *circular correlation robustness* of the hash `H` [ZahurRosule
 a uniform offset `Δ = (R, true)`, the oracle `(a, t, b) ↦ H(a + Δ, t) + bΔ` must be
 indistinguishable from a random function by adversaries that never query both `(a, t, 0)` and
 `(a, t, 1)`. This is `Cslib.Crypto.Garbling.CCR` with a hash that reads the whole label and both
-offsets `offset R`: the oracle is `CCR.keyed H offset offset R` and the advantage is
-`CCR.advantage H offset offset`.
+offsets `CCR.offset R`: the oracle is `CCR.keyed H CCR.offset CCR.offset R` and the advantage is
+`CCR.advantage H CCR.offset CCR.offset`.
 
-The main theorem `advantage_realGame_simGame` states that the advantage of every distinguisher
-`D` between the real and the simulated view, for a circuit `C` and an input `x`, *equals* the
-advantage `CCR.advantage H offset offset` of an explicit reduction `reduction C H tw x D`,
-provided the
-tweaks of distinct slots are distinct. The reduction knows `x`, so it knows the bit `v_w` every
-wire carries; it samples the input labels the evaluator holds and builds the table gate by gate
-in wire order. For an AND gate whose arguments carry labels `A_a`, `A_b` it queries
-`(A_a, t, p_b)` for the generator half, where `p_b = col(A_b) + v_b` is the colour of the zero
-label of `b`, and `(A_b, t', v_a)` for the evaluator half, and adds the parts of the two
-ciphertexts the evaluator can compute itself (`slotKnown`). With the CCR oracle this is the real
-table, by the half-gates identity; with a random function every query has a distinct tweak, so
-the table is uniform. Each slot is queried once (`isQueryBounded_reduction`), at its own tweak, so
-when distinct slots have distinct tweaks the reduction never queries both `(a, t, 0)` and
-`(a, t, 1)` (`isTweakUnique_reduction`).
+The main theorem `advantage_realGame_simGame` states that the advantage of every distinguisher `D`
+between the real and the simulated view, for a circuit `C` and an input `x`, *equals* the advantage
+`CCR.advantage H CCR.offset CCR.offset` of an explicit reduction `reduction C H tw x D`, provided
+the tweaks of distinct slots are distinct. The reduction knows `x`, so it knows the bit `v_w` every
+wire carries; it samples the input labels the evaluator holds and builds the table gate by gate in
+wire order. For an AND gate whose arguments carry labels `A_a`, `A_b` it queries `(A_a, t, p_b)` for
+the generator half, where `p_b = col(A_b) + v_b` is the colour of the zero label of `b`, and
+`(A_b, t', v_a)` for the evaluator half, and adds the parts of the two ciphertexts the evaluator
+can compute itself (`slotKnown`). With the CCR oracle this is the real table, by the half-gates
+identity; with a random function every query has a distinct tweak, so the table is uniform. Each
+slot is queried once (`isQueryBounded_reduction`), at its own tweak, so when distinct slots have
+distinct tweaks the reduction never queries both `(a, t, 0)` and `(a, t, 1)`
+(`isTweakUnique_reduction`).
 
 This is the single-instance form of simulation privacy: the circuit, the input and the
 distinguisher are fixed, and the simulator receives the whole circuit `C`, the side information
@@ -247,10 +246,9 @@ include hK
 the real half-gates ciphertext. -/
 theorem entry_keyed_activeLabel (H : K × Bool → T → K × Bool) (tw : Slot C → T)
     (x : Fin n → Bool) (R : K) (W : Wire n C.size → K × Bool) (s : Slot C) :
-    entry C H tw x (CCR.keyed H offset offset R) (activeLabel C W (offset R) x) s =
-      garbleTable C H tw (offset R) W s := by
+    entry C H tw x (CCR.keyed H CCR.offset CCR.offset R) (activeLabel C W (CCR.offset R) x) s =
+      garbleTable C H tw (CCR.offset R) W s := by
   have hc := add_add_cancel_label hK
-  have hz := add_self_label hK
   have hb : ∀ c d : Bool, c + d + d = c := by decide
   obtain ⟨⟨g, h⟩, b⟩ := s
   simp only [entry, slotKnown, slotQuery, garbleTable, activeLabel, Slot.gate]
@@ -260,24 +258,25 @@ theorem entry_keyed_activeLabel (H : K × Bool → T → K × Bool) (tw : Slot C
     simp only [Bool.false_eq_true, ↓reduceIte, CCR.keyed, CCR.oracle_apply, genCt, evCt,
       snd_add_bitOffset_offset, hb] <;>
     cases vl <;> cases vr <;> simp only [bitOffset_false, bitOffset_true, add_zero] <;>
-    simp only [add_assoc, add_comm, add_left_comm, hc, hz, zero_add]
+    simp only [add_assoc, add_comm, add_left_comm, hc]
 
 /-- With the CCR oracle for offset key `R`, the reduction's table on the labels `Z + x Δ` the
 evaluator holds is the real garbled table for input zero labels `Z`. -/
 theorem oracleTable_keyed (H : K × Bool → T → K × Bool) (tw : Slot C → T) (x : Fin n → Bool)
     (R : K) (Z : Fin n → K × Bool) :
-    oracleTable C H tw x (CCR.keyed H offset offset R) (fun i => Z i + bitOffset (offset R) (x i)) =
-      garbleTable C H tw (offset R) (zeroLabels C H tw (offset R) Z) := by
-  have hent : entry C H tw x (CCR.keyed H offset offset R)
-      (activeLabel C (zeroLabels C H tw (offset R) Z) (offset R) x) =
-      garbleTable C H tw (offset R) (zeroLabels C H tw (offset R) Z) :=
+    oracleTable C H tw x (CCR.keyed H CCR.offset CCR.offset R)
+        (fun i => Z i + bitOffset (CCR.offset R) (x i)) =
+      garbleTable C H tw (CCR.offset R) (zeroLabels C H tw (CCR.offset R) Z) := by
+  have hent : entry C H tw x (CCR.keyed H CCR.offset CCR.offset R)
+      (activeLabel C (zeroLabels C H tw (CCR.offset R) Z) (CCR.offset R) x) =
+      garbleTable C H tw (CCR.offset R) (zeroLabels C H tw (CCR.offset R) Z) :=
     funext (entry_keyed_activeLabel C hK H tw x R _)
-  have hL : oracleLabels C H tw x (CCR.keyed H offset offset R)
-      (fun i => Z i + bitOffset (offset R) (x i)) =
-      activeLabel C (zeroLabels C H tw (offset R) Z) (offset R) x :=
+  have hL : oracleLabels C H tw x (CCR.keyed H CCR.offset CCR.offset R)
+      (fun i => Z i + bitOffset (CCR.offset R) (x i)) =
+      activeLabel C (zeroLabels C H tw (CCR.offset R) Z) (CCR.offset R) x :=
     (isLocal_entry C H tw x _ _).iterate_eq_of_isFixed 0 (by
       rw [hent]
-      exact evalStep_activeLabel C hK H tw R Z x _ (zeroLabels_isFixed C H tw (offset R) Z))
+      exact evalStep_activeLabel C hK H tw R Z x _ (zeroLabels_isFixed C H tw (CCR.offset R) Z))
   rw [oracleTable, hL, hent]
 
 /-- The real view is the simulated view built from the evaluator's input labels and the
@@ -285,11 +284,11 @@ reduction's table with the CCR oracle. -/
 theorem view_garbleWith (H : K × Bool → T → K × Bool) (tw : Slot C → T) (x : Fin n → Bool)
     (R : K) (Z : Fin n → K × Bool) :
     (garbleWith C H tw R Z).view x = simulateWith C H tw (C.eval interpretation x)
-      (fun i => Z i + bitOffset (offset R) (x i))
-      (oracleTable C H tw x (CCR.keyed H offset offset R)
-        (fun i => Z i + bitOffset (offset R) (x i))) := by
+      (fun i => Z i + bitOffset (CCR.offset R) (x i))
+      (oracleTable C H tw x (CCR.keyed H CCR.offset CCR.offset R)
+        (fun i => Z i + bitOffset (CCR.offset R) (x i))) := by
   have hA := (isLocal_evalStep_const C H tw _ _).iterate_eq_of_isFixed 0
-    (evalStep_activeLabel C hK H tw R Z x _ (zeroLabels_isFixed C H tw (offset R) Z))
+    (evalStep_activeLabel C hK H tw R Z x _ (zeroLabels_isFixed C H tw (CCR.offset R) Z))
   rw [oracleTable_keyed C hK]
   refine View.ext rfl rfl (funext fun o => ?_)
   simp only [Garbled.view, garbleWith, simulateWith, evaluate, evalLabels, hA, activeLabel,
@@ -521,7 +520,7 @@ theorem eval_run_reduction (D : View C K → ProbComp Bool)
 
 /-- The real experiment is the CCR game with the reduction and the keyed oracle. -/
 theorem realGame_reduction (hK : ∀ k : K, k + k = 0) (D : View C K → ProbComp Bool) :
-    ProbComp.eval (PRF.realExperiment (CCR.keyed H offset offset) (reduction C H tw x D)) =
+    ProbComp.eval (PRF.realExperiment (CCR.keyed H CCR.offset CCR.offset) (reduction C H tw x D)) =
       realGame C H tw x D := by
   simp only [PRF.realExperiment, realGame, garble, ProbComp.eval_bind, ProbComp.eval_uniform,
     eval_run_reduction, ProbComp.eval_pure, PMF.bind_bind, PMF.pure_bind]
@@ -533,7 +532,7 @@ theorem realGame_reduction (hK : ∀ k : K, k + k = 0) (D : View C K → ProbCom
     rfl
   congr 1
   funext R
-  refine (hshift (fun i => bitOffset (offset R) (x i)) _).symm.trans ?_
+  refine (hshift (fun i => bitOffset (CCR.offset R) (x i)) _).symm.trans ?_
   congr 1
   funext Z
   exact congrArg (fun V => ProbComp.eval (D V)) (view_garbleWith C hK H tw x R Z).symm
@@ -571,12 +570,12 @@ theorem simGame_reduction (htw : Function.Injective tw) (D : View C K → ProbCo
 /-- **Simulation privacy of half-gates garbling.** For every circuit `C`, input `x` and
 distinguisher `D`, if distinct slots have distinct tweaks and every element of `K` is its own
 negative, the advantage of `D` between the real and the simulated view equals the circular
-correlation robustness advantage `CCR.advantage H offset offset` of the reduction. The
+correlation robustness advantage `CCR.advantage H CCR.offset CCR.offset` of the reduction. The
 identity tweak map, with `T = Slot C`, has distinct tweaks. -/
 theorem advantage_realGame_simGame (hK : ∀ k : K, k + k = 0) (htw : Function.Injective tw)
     (D : View C K → ProbComp Bool) :
     Game.advantage (realGame C H tw x D) (simGame C H tw x D) =
-      CCR.advantage H offset offset (reduction C H tw x D) := by
+      CCR.advantage H CCR.offset CCR.offset (reduction C H tw x D) := by
   rw [CCR.advantage, PRF.advantage, realGame_reduction C H tw x hK,
     simGame_reduction C H tw x htw]
 

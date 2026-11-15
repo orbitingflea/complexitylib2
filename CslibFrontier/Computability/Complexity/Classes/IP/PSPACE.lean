@@ -14,7 +14,7 @@ import CslibFrontier.Computability.Complexity.Classes.Inclusions
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
-import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Binary
+import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.BinaryOrder
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Option
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Encodings.NatPower
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolySpace.Plain
@@ -384,19 +384,7 @@ open _root_.Turing _root_.Turing.MultiTapeTM ComputableInPolyTime
 
 variable {γ : Type} {input : γ ↪ List Bool}
 
-@[local fun_prop] private theorem max_pt {left right : γ → ℕ}
-    (hl : ComputableInPolyTime left input encNat)
-    (hr : ComputableInPolyTime right input encNat) :
-    ComputableInPolyTime (fun x => max (left x) (right x)) input encNat := by
-  simp only [max_def]
-  exact ite_decide (binary_le' hl hr) hr hl
-
-@[local fun_prop] private theorem min_pt {left right : γ → ℕ}
-    (hl : ComputableInPolyTime left input encNat)
-    (hr : ComputableInPolyTime right input encNat) :
-    ComputableInPolyTime (fun x => min (left x) (right x)) input encNat := by
-  simp only [min_def]
-  exact ite_decide (binary_le' hl hr) hl hr
+attribute [local fun_prop] binary_max' binary_min'
 
 @[local fun_prop] private theorem firstCode_pt {count : γ → ℕ}
     (h : ComputableInPolyTime count input encUnary) :

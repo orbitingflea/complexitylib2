@@ -11,6 +11,10 @@ public import CslibFrontier.Crypto.Computational.FuzzyExtractor.DecodeThenExtrac
 public import CslibFrontier.Crypto.Computational.FuzzyExtractor.DecodeThenExtract.Security
 public import CslibFrontier.Crypto.Computational.FuzzyExtractor.Reusable
 public import CslibFrontier.Crypto.Computational.FuzzyExtractor.Reusable.Encrypt
+public import CslibFrontier.Crypto.Computational.FuzzyExtractor.Reusable.Security
+import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
+import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
+import CslibFrontier.Computability.Probabilistic.Oracle.Composition
 import CslibFrontier.Probability.PMF.Uniform
 import CslibFrontier.Probability.PMF.UniformPoint
 import Mathlib.Algebra.Field.ZMod
@@ -35,7 +39,9 @@ greater than `1`). They check the reduction bounds of the common-matrix scheme a
 scheme, the advantage lower bound of the Section 3.3 attack (end to end with `unitDecoder`, giving
 advantage at least `3 / 5`), that the setup-averaged correctness theorems apply with `δ = 1 / 5`,
 and that both reduction bounds are attained (advantage `0`) for a uniform source (and uniform
-encryption errors).
+encryption errors). A word adversary that sends an encoded shift is uniform strict oracle PPT, so
+the admitted class of `weaklyReusable_commonMatrixFuzzyExtractor` is inhabited, and the theorem
+gives it negligible advantage under the FMR security hypothesis.
 -/
 
 public section
@@ -420,5 +426,60 @@ example
   rw [ProbComp.eval_uniform, encryptLWEErrorLaw_uniform, LWE.advantage_uniform_error_eq_zero,
     LWE.advantage_uniform_error_eq_zero, add_zero] at h
   exact le_antisymm h zero_le
+
+/-! ### A client of weak reusability -/
+
+/-- A word reusability adversary that sends one shift request, the word of `κ` ones, keeps the
+first `κ` bits of the reply as its state, and guesses the first bit of that state. At `κ` samples
+and modulus `2 ^ 1`, the request is the word of the all-ones shift, of Hamming weight `κ`, and the
+reply is the `κ`-bit word of a helper. -/
+def oneShiftReuseAdversary : WordReuseAdversary where
+  query κ _ := List.take κ <$> ProbOracleComp.query ((), List.replicate κ true)
+  guess _ state _ := pure (state.headD false)
+
+/-- At `κ` samples and modulus `2 ^ 1`, `shiftCodec` decodes the request of
+`oneShiftReuseAdversary` to the all-ones shift. -/
+example (κ : ℕ) :
+    (shiftCodec κ 1 (LWEFamily.encVector κ 1)).decodeQuery ((), List.replicate κ true) =
+      some fun _ => 1 := by
+  rw [OracleCodec.decodeQuery_eq_some_iff]
+  have hone : (1 : ZMod (2 ^ 1)).val = 1 := rfl
+  simp [shiftCodec, LWEFamily.keyWord, Cslib.Matrix.toBinary_eq, hone]
+
+open Turing.MultiTapeTM in
+/-- The admitted class of `weaklyReusable_commonMatrixFuzzyExtractor` is inhabited:
+`oneShiftReuseAdversary` is uniform strict oracle PPT. -/
+theorem isPPT_oneShiftReuseAdversary : oneShiftReuseAdversary.IsPPT where
+  query := by
+    have hreq : ComputableInPolyTime (fun p : ℕ × List Bool => List.replicate p.1 true)
+        (encPair encUnary encBits) encBits := by fun_prop
+    have hlim : ComputableInPolyTime (fun p : ℕ × List Bool => p.1)
+        (encPair encUnary encBits) encUnary := by fun_prop
+    exact (IsOraclePPTOn.query_take' () hreq hlim).isOraclePPT
+  guess := by
+    have hguess : ComputableInPolyTime (fun p : ℕ × List Bool × List Bool => p.2.1.headD false)
+        (encPair encUnary (encPair encBits encBits)) encBool := by fun_prop
+    exact hguess.isPPTOn
+
+open Turing.MultiTapeTM in
+/-- A client of `weaklyReusable_commonMatrixFuzzyExtractor` at `κ` samples, key length `κ`, `κ`
+further secret coordinates, modulus `2 ^ 1` and shift bound `κ`: if the FMR family is secure on
+`sources`, then `oneShiftReuseAdversary` has negligible weak-reusability advantage on each of
+them. -/
+example (decode : (κ : ℕ) → Matrix (Fin κ) (Fin (κ + κ)) (ZMod (2 ^ 1)) →
+      (Fin κ → ZMod (2 ^ 1)) → ProbComp (Option (Fin (κ + κ) → ZMod (2 ^ 1))))
+    {sources : Set ((κ : ℕ) → PMF (Fin κ → ZMod (2 ^ 1)))}
+    (hFMR : ComputationallySecure (fun κ => lweFuzzyExtractor κ κ κ (2 ^ 1) (decode κ)) sources
+      (LWEFamily.Distinguisher.IsPPT (m := id) (k := id) (l := id) (w := fun _ => 1)))
+    {source : (κ : ℕ) → PMF (Fin κ → ZMod (2 ^ 1))} (hsource : source ∈ sources) :
+    Negligible fun κ => weakReuseAdvantage
+      (ProbComp.uniform (Matrix (Fin κ) (Fin (κ + κ)) (ZMod (2 ^ 1))))
+      (commonMatrixFuzzyExtractor κ κ κ (2 ^ 1) (decode κ)) (source κ) κ
+      (oneShiftReuseAdversary.toReuseAdversary κ 1 (LWEFamily.encView κ (κ + κ) 1)
+        (LWEFamily.encVector κ 1) (LWEFamily.encVector κ 1) κ) :=
+  weaklyReusable_commonMatrixFuzzyExtractor (m := id) (k := id) (l := id) (w := fun _ => 1)
+    ComputableInPolyTime.id' ComputableInPolyTime.id' ComputableInPolyTime.id'
+    (ComputableInPolyTime.const 1) ComputableInPolyTime.id' decode hFMR source hsource
+    oneShiftReuseAdversary isPPT_oneShiftReuseAdversary
 
 end CslibFrontierTests.Crypto.Computational.FuzzyExtractorTest

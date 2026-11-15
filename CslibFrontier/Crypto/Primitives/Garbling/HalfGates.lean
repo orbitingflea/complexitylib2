@@ -9,7 +9,7 @@ module
 
 public import CslibFrontier.Computability.Circuit.Local
 public import CslibFrontier.Computability.Circuit.Topology
-public import CslibFrontier.Crypto.Primitives.Garbling.OneHot
+public import CslibFrontier.Crypto.Primitives.Garbling.CircularCorrelationRobust
 public import CslibFrontier.Languages.Probabilistic.Basic
 public import Mathlib.Algebra.Ring.BooleanRing
 import CslibFrontier.Computability.Circuit.Program
@@ -145,9 +145,6 @@ theorem card_slot :
 
 variable {K T : Type} [AddCommGroup K]
 
-/-- The global offset `Δ = (R, true)`, of colour `true`. -/
-def offset (R : K) : K × Bool := (R, true)
-
 /-- The evaluator's AND gate: from argument labels `a`, `b` and ciphertexts `TG`, `TE`, the label
 `(H(a, t) + s_a TG) + (H(b, t') + s_b (TE + a))`, where `s_a`, `s_b` are the colours of `a`, `b`. -/
 def andEval (H : K × Bool → T → K × Bool) (t t' : T) (TG TE a b : K × Bool) : K × Bool :=
@@ -237,9 +234,9 @@ structure Garbled (K : Type) where
 /-- Garble with offset key `R` and input zero labels `Z`. -/
 def garbleWith (H : K × Bool → T → K × Bool) (tw : Slot C → T) (R : K)
     (Z : Fin n → K × Bool) : Garbled C K where
-  table := garbleTable C H tw (offset R) (zeroLabels C H tw (offset R) Z)
-  encoding i b := Z i + bitOffset (offset R) b
-  decoding o := (zeroLabels C H tw (offset R) Z (C.outputs o)).2
+  table := garbleTable C H tw (CCR.offset R) (zeroLabels C H tw (CCR.offset R) Z)
+  encoding i b := Z i + bitOffset (CCR.offset R) b
+  decoding o := (zeroLabels C H tw (CCR.offset R) Z (C.outputs o)).2
 
 /-- Garble with a uniform offset key and uniform input zero labels. -/
 noncomputable def garble [Fintype K] [Nonempty K] (H : K × Bool → T → K × Bool)
@@ -281,13 +278,13 @@ theorem add_add_cancel_label (a b : K × Bool) : a + (a + b) = b := by
   rw [← add_assoc, add_self_label hK, zero_add]
 
 omit hK in
-theorem snd_add_offset (a : K × Bool) (R : K) : (a + offset R).2 = !a.2 := by
+theorem snd_add_offset (a : K × Bool) (R : K) : (a + CCR.offset R).2 = !a.2 := by
   obtain ⟨k, c⟩ := a
   cases c <;> rfl
 
 omit hK in
 theorem snd_add_bitOffset_offset (a : K × Bool) (b : Bool) (R : K) :
-    (a + bitOffset (offset R) b).2 = a.2 + b := by
+    (a + bitOffset (CCR.offset R) b).2 = a.2 + b := by
   obtain ⟨k, c⟩ := a
   cases b <;> cases c <;> rfl
 
@@ -297,10 +294,10 @@ theorem snd_add_bitOffset_offset (a : K × Bool) (b : Bool) (R : K) :
 `v_a (v_b + p_b) Δ`. -/
 theorem andEval_active (H : K × Bool → T → K × Bool) (R : K) (t t' : T) (a b : K × Bool)
     (va vb : Bool) :
-    andEval H t t' (genCt H (offset R) t a b) (evCt H (offset R) t' a b)
-        (a + bitOffset (offset R) va) (b + bitOffset (offset R) vb) =
-      andEval H t t' (genCt H (offset R) t a b) (evCt H (offset R) t' a b) a b +
-        bitOffset (offset R) (va * vb) := by
+    andEval H t t' (genCt H (CCR.offset R) t a b) (evCt H (CCR.offset R) t' a b)
+        (a + bitOffset (CCR.offset R) va) (b + bitOffset (CCR.offset R) vb) =
+      andEval H t t' (genCt H (CCR.offset R) t a b) (evCt H (CCR.offset R) t' a b) a b +
+        bitOffset (CCR.offset R) (va * vb) := by
   have hc := add_add_cancel_label hK
   have hz := add_self_label hK
   have hmt : (true : Bool) * true = true := rfl
@@ -321,9 +318,10 @@ def activeLabel (W : Wire n C.size → K × Bool) (Δ : K × Bool) (x : Fin n �
 carries, gives them back, for zero labels `W` fixed by one garbling round. -/
 theorem evalStep_activeLabel (H : K × Bool → T → K × Bool) (tw : Slot C → T) (R : K)
     (Z : Fin n → K × Bool) (x : Fin n → Bool) (W : Wire n C.size → K × Bool)
-    (hW : evalStep C H tw (garbleTable C H tw (offset R) W) Z W = W) :
-    evalStep C H tw (garbleTable C H tw (offset R) W) (fun i => Z i + bitOffset (offset R) (x i))
-        (activeLabel C W (offset R) x) = activeLabel C W (offset R) x := by
+    (hW : evalStep C H tw (garbleTable C H tw (CCR.offset R) W) Z W = W) :
+    evalStep C H tw (garbleTable C H tw (CCR.offset R) W)
+        (fun i => Z i + bitOffset (CCR.offset R) (x i)) (activeLabel C W (CCR.offset R) x) =
+      activeLabel C W (CCR.offset R) x := by
   funext w
   cases w with
   | input i =>
@@ -345,7 +343,7 @@ theorem Garbled.run_garbleWith (H : K × Bool → T → K × Bool) (tw : Slot C 
     (Z : Fin n → K × Bool) (x : Fin n → Bool) :
     (garbleWith C H tw R Z).run H tw x = C.eval interpretation x := by
   have h := (isLocal_evalStep_const C H tw _ _).iterate_eq_of_isFixed 0
-    (evalStep_activeLabel C hK H tw R Z x _ (zeroLabels_isFixed C H tw (offset R) Z))
+    (evalStep_activeLabel C hK H tw R Z x _ (zeroLabels_isFixed C H tw (CCR.offset R) Z))
   funext o
   simp only [Garbled.run, garbleWith, evaluate, evalLabels, h, activeLabel, Circuit.eval,
     Function.comp_apply, snd_add_bitOffset_offset]

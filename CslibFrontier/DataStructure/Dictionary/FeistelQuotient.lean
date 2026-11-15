@@ -16,7 +16,7 @@ public import Mathlib.Data.Nat.Factorial.Basic
 public import Mathlib.Data.Nat.Log
 import CslibFrontier.Foundations.Data.Finset.Expect
 import CslibFrontier.Foundations.Data.Nat.Choose
-import CslibFrontier.Foundations.Data.Nat.Log
+import CslibFrontier.Foundations.Data.Nat.ChooseLog
 import Mathlib.Algebra.BigOperators.Field
 import Mathlib.Algebra.Order.BigOperators.Expect
 import Mathlib.Data.Rat.Cast.Lemmas
@@ -278,8 +278,6 @@ vanishes and `quotientBits U n ≤ 3 * Dynamic.logLogFactor n + 1`. -/
 theorem quotient_bits_le_choose {U n : ℕ} :
     n * quotientBits U n ≤
       Nat.clog 2 (U.choose n) + 5 * n * Dynamic.logLogFactor n := by
-  rcases Nat.eq_zero_or_pos n with rfl | hn
-  · simp
   rcases lt_or_ge U n with hUn | hnU
   · have hll : 1 ≤ Dynamic.logLogFactor n := Dynamic.one_le_logLogFactor n
     have hkey : keyBits U ≤ Nat.log 2 n + 1 := Nat.clog_le_of_le_pow
@@ -289,35 +287,10 @@ theorem quotient_bits_le_choose {U n : ℕ} :
       omega
     rw [Nat.choose_eq_zero_of_lt hUn, Nat.clog_zero_right, Nat.zero_add]
     nlinarith [Nat.mul_le_mul_left n hq]
-  · have hU : 1 ≤ U := hn.trans_le hnU
-    have hpow_key : 2 ^ keyBits U ≤ 2 * U := Nat.pow_clog_le_mul Nat.one_lt_two (by omega)
-    have hpow_n : n ≤ 2 ^ (bucketBits n + 3 * Dynamic.logLogFactor n + 1) :=
-      le_two_pow_bucketBits_add n
-    have hchoose : U.choose n ≤ 2 ^ Nat.clog 2 (U.choose n) :=
-      Nat.le_pow_clog (by decide) (U.choose n)
-    have hmain :
-        2 ^ (n * keyBits U) ≤
-          2 ^ (n + n * (bucketBits n + 3 * Dynamic.logLogFactor n + 1) +
-            Nat.clog 2 (U.choose n)) := by
-      calc 2 ^ (n * keyBits U)
-          = (2 ^ keyBits U) ^ n := by rw [Nat.mul_comm, Nat.pow_mul]
-        _ ≤ (2 * U) ^ n := Nat.pow_le_pow_left hpow_key n
-        _ = 2 ^ n * U ^ n := Nat.mul_pow 2 U n
-        _ ≤ 2 ^ n * (n ^ n * U.choose n) :=
-            Nat.mul_le_mul_left (2 ^ n) (pow_le_pow_mul_choose hnU)
-        _ ≤ 2 ^ n * ((2 ^ (bucketBits n + 3 * Dynamic.logLogFactor n + 1)) ^ n *
-              2 ^ Nat.clog 2 (U.choose n)) :=
-            Nat.mul_le_mul_left (2 ^ n)
-              (Nat.mul_le_mul (Nat.pow_le_pow_left hpow_n n) hchoose)
-        _ = 2 ^ (n + n * (bucketBits n + 3 * Dynamic.logLogFactor n + 1) +
-              Nat.clog 2 (U.choose n)) := by
-            rw [← Nat.pow_mul, Nat.mul_comm (bucketBits n + 3 * Dynamic.logLogFactor n + 1) n,
-              ← Nat.pow_add, ← Nat.pow_add, ← Nat.add_assoc]
-    have hexp :
-        n * keyBits U ≤
-          n + n * (bucketBits n + 3 * Dynamic.logLogFactor n + 1) +
-            Nat.clog 2 (U.choose n) :=
-      (Nat.pow_le_pow_iff_right (by decide : 1 < 2)).mp hmain
+  · have hexp : n * keyBits U ≤
+        n + n * (bucketBits n + 3 * Dynamic.logLogFactor n + 1) +
+          Nat.clog 2 (U.choose n) :=
+      Nat.mul_clog_le_add_clog_choose Nat.one_lt_two hnU (le_two_pow_bucketBits_add n)
     have hsplit : keyBits U = quotientBits U n + bucketBits n :=
       (quotientBits_add_bucketBits hnU).symm
     have hll : 1 ≤ Dynamic.logLogFactor n := Dynamic.one_le_logLogFactor n

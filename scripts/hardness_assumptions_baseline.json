@@ -10,7 +10,6 @@
   "Cslib.Crypto.CondEPPRG": "#5578: LiuPass2020 is not checked at the source.",
   "Cslib.Crypto.DCR": "#5578: Katz–Lindell locators are not checked at the source (manual/sources.md says the same).",
   "Cslib.Crypto.FactoringHard": "#5578: Katz–Lindell locators are not checked at the source (manual/sources.md says the same).",
-  "Cslib.Crypto.FuzzyExtractor.ComputationallySecureFor": "#5578: FullerMengReyzin2020 is not checked at the source.",
   "Cslib.Crypto.MACScheme.BlockwiseEUFCMA": "#5578: Katz–Lindell locators are not checked at the source (manual/sources.md says the same).",
   "Cslib.Crypto.ModulusFactoringHard": "#5593: Katz–Lindell section titles were checked against the 3rd-edition table of contents, but the numbered locator is not checked at the source (manual/sources.md says the same).",
   "Cslib.Crypto.PRG.IsExponentiallySecure": "#5578: RazborovRudich1997 is not checked at the source.",

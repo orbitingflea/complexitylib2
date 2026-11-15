@@ -80,7 +80,8 @@ example (x : Fin 2 → Bool) (D : View andXor (ZMod 2) → ProbComp Bool) :
 -- reduction.
 example (x : Fin 2 → Bool) (D : View andXor (ZMod 2) → ProbComp Bool) :
     Game.advantage (realGame andXor toyH id x D) (simGame andXor toyH id x D) =
-      Garbling.CCR.advantage toyH offset offset (reduction andXor toyH id x D) :=
+      Garbling.CCR.advantage toyH Garbling.CCR.offset Garbling.CCR.offset
+        (reduction andXor toyH id x D) :=
   advantage_realGame_simGame andXor toyH id x add_self_zmod2 Function.injective_id D
 
 end CslibFrontierTests.HalfGates

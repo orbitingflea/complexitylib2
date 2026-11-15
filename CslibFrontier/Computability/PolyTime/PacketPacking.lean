@@ -11,7 +11,7 @@ public import CslibFrontier.Foundations.Combinatorics.PacketPacking
 import CslibFrontier.Computability.PolyTime.GreedyLabelSchedule
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
-import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Binary
+import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.BinaryOrder
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Option
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Encodings.Length
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.BinaryDiv
@@ -761,22 +761,6 @@ in binary. -/
 @[expose] def encPlacements : ℕ × List (ℕ × ℕ) ↪ List Bool :=
   encPair encNat (encList (encPair encNat encNat))
 
-private theorem binary_max' {α : Type} {input : α ↪ List Bool} {f g : α → ℕ}
-    (hf : ComputableInPolyTime f input encNat) (hg : ComputableInPolyTime g input encNat) :
-    ComputableInPolyTime (fun x => max (f x) (g x)) input encNat :=
-  ((ComputableInPolyTime.binary_lt' hf hg).ite' hg hf).of_enc_eq fun x => by
-    by_cases h : f x < g x
-    · simp [h, max_eq_right h.le]
-    · simp [h, max_eq_left (not_lt.mp h)]
-
-private theorem binary_min' {α : Type} {input : α ↪ List Bool} {f g : α → ℕ}
-    (hf : ComputableInPolyTime f input encNat) (hg : ComputableInPolyTime g input encNat) :
-    ComputableInPolyTime (fun x => min (f x) (g x)) input encNat :=
-  ((ComputableInPolyTime.binary_lt' hf hg).ite' hf hg).of_enc_eq fun x => by
-    by_cases h : f x < g x
-    · simp [h, min_eq_left h.le]
-    · simp [h, min_eq_right (not_lt.mp h)]
-
 /-- The inputs `((a, r), (ρ, κ), c)` of `slotOf` and `packetOf`, with `c` in unary. -/
 private abbrev encEdgeIn : ((ℕ × ℕ) × (List ℕ × List ℕ)) × ℕ ↪ List Bool :=
   encPair (encPair (encPair encUnary encNat) (encPair (encList encNat) (encList encNat))) encUnary
@@ -825,8 +809,8 @@ private theorem computableInPolyTime_packetOf :
       p.1.1.2.2.getD p.2 0) encI encNat := by fun_prop
   have hr' : ComputableInPolyTime (fun p : (((ℕ × ℕ) × (List ℕ × List ℕ)) × ℕ) × ℕ => p.1.1.1.2)
       encI encNat := by fun_prop
-  have hmin := binary_min' hx hy
-  have hmax := binary_max' hx hy
+  have hmin := ComputableInPolyTime.binary_min' hx hy
+  have hmax := ComputableInPolyTime.binary_max' hx hy
   have hi : ComputableInPolyTime (fun p : (((ℕ × ℕ) × (List ℕ × List ℕ)) × ℕ) × ℕ => p.2)
       encI encUnary := by fun_prop
   have hc' : ComputableInPolyTime (fun p : (((ℕ × ℕ) × (List ℕ × List ℕ)) × ℕ) × ℕ => p.1.2)
@@ -985,7 +969,8 @@ theorem computableInPolyTime_packetSymbols {γ : Type} {encIn : γ ↪ List Bool
       (ComputableInPolyTime.binary_pow' hrr hi)).prod hrr)
   have hq := ComputableInPolyTime.binary_div' hd hr
   have hm := ComputableInPolyTime.binary_mod.comp (hd.prod hr)
-  have h := (binary_min' hq hm).prod (binary_max' hq hm)
+  have h := (ComputableInPolyTime.binary_min' hq hm).prod
+    (ComputableInPolyTime.binary_max' hq hm)
   exact h
 
 end Cslib.PacketPacking

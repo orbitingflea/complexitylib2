@@ -32,7 +32,7 @@ PRF game `Cslib.Crypto.PRF.advantage`. Three Boolean garbling schemes of this li
 * Free-XOR (`Cslib.Crypto.Garbling.FreeXOR`): the hash reads only a key `x : K`, labels are
   `K × Bool`, and the offsets are `δ` and `(δ, true)`.
 * half gates (`Cslib.Crypto.Garbling.HalfGates`): the hash reads the whole label, colour bit
-  included, and both offsets are `(δ, true)`.
+  included, and both offsets are `CCR.offset δ = (δ, true)`.
 * one-hot garbling (`Cslib.Crypto.Garbling.BinaryToOneHot`): labels form a `ZMod 2`-module, both
   offsets are `δ k` for a key map `δ`, which can fix the colour bit of the offset.
 
@@ -51,6 +51,7 @@ Definition 1, has its own dependent query type and lives in
 ## Main definitions
 
 * `Cslib.Crypto.Garbling.CCR.Query`: a query of a label, a tweak and a bit.
+* `Cslib.Crypto.Garbling.CCR.offset`: the half-gates offset `(R, true)`.
 * `Cslib.Crypto.Garbling.CCR.oracle`: the circular oracle under an input and an output offset.
 * `Cslib.Crypto.Garbling.CCR.advantage`: the circular correlation robustness advantage.
 * `Cslib.Crypto.Garbling.CCR.IsTweakUnique`: tweak uniqueness for Boolean CCR adversaries (at most
@@ -102,6 +103,11 @@ structure Query (L T : Type) where
 /-- Adversaries against circular correlation robustness: oracle algorithms with private coins
 that ask queries of a label, a tweak and a bit, get answers in `M`, and output a guess. -/
 abbrev Adversary (L T M : Type) : Type := PRF.Adversary (Query L T) M
+
+/-- The global offset `Δ = (R, true)` of the half-gates instance, of colour `true`: the colour
+plays the role of the least significant bit, which [ZahurRosulekEvans2015] fixes to `1`
+(`R ∈ {0, 1}^(k - 1) 1` in Definition 1). -/
+@[expose] def offset {K : Type} (R : K) : K × Bool := (R, true)
 
 variable {L T M Key : Type} [AddCommGroup L] [AddCommGroup M]
 

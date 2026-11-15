@@ -10,6 +10,7 @@ module
 public import CslibFrontier.Init
 public import CslibFrontier.DataStructure.Dictionary.FeistelQuotient
 public import CslibFrontier.DataStructure.Dictionary.KickTree.RoundSeed
+import CslibFrontier.Foundations.Data.Nat.ChooseLog
 import CslibFrontier.Foundations.Data.Nat.Log
 import CslibFrontier.Foundations.Data.Nat.Power
 import CslibFrontier.Probability.KWiseIndependent.Coupling
@@ -171,7 +172,7 @@ theorem embedKey_injective (U : ℕ) : Function.Injective (@embedKey U) :=
 `⌈log₂ C(U, n)⌉ + 2 * n` bits. -/
 theorem mul_fullQuotBits_le_clog_choose (U n : ℕ) :
     n * fullQuotBits U n ≤ Nat.clog 2 (U.choose n) + 2 * n := by
-  rcases Nat.eq_zero_or_pos n with rfl | hn
+  rcases Nat.eq_zero_or_pos n with rfl | _
   · simp
   rcases lt_or_ge U n with hUn | hnU
   · have hkey : FeistelQuotient.keyBits U ≤ bucketIndexBits n + 1 :=
@@ -179,27 +180,11 @@ theorem mul_fullQuotBits_le_clog_choose (U n : ℕ) :
     have hq : fullQuotBits U n ≤ 1 := by unfold fullQuotBits; omega
     rw [Nat.choose_eq_zero_of_lt hUn, Nat.clog_zero_right, Nat.zero_add]
     nlinarith [Nat.mul_le_mul_left n hq]
-  · have hU : 1 ≤ U := hn.trans_le hnU
-    have hpow_key : 2 ^ FeistelQuotient.keyBits U ≤ 2 * U :=
-      Nat.pow_clog_le_mul Nat.one_lt_two (by omega)
-    have hpow_n : n ≤ 2 ^ (bucketIndexBits n + 1) :=
+  · have hpow_n : n ≤ 2 ^ (bucketIndexBits n + 1) :=
       (Nat.lt_pow_succ_log_self (by decide) n).le
-    have hchoose : U.choose n ≤ 2 ^ Nat.clog 2 (U.choose n) :=
-      Nat.le_pow_clog (by decide) (U.choose n)
-    have hmain : 2 ^ (n * FeistelQuotient.keyBits U) ≤
-        2 ^ (n + n * (bucketIndexBits n + 1) + Nat.clog 2 (U.choose n)) := by
-      calc 2 ^ (n * FeistelQuotient.keyBits U)
-          = (2 ^ FeistelQuotient.keyBits U) ^ n := by rw [Nat.mul_comm, Nat.pow_mul]
-        _ ≤ (2 * U) ^ n := Nat.pow_le_pow_left hpow_key n
-        _ = 2 ^ n * U ^ n := Nat.mul_pow 2 U n
-        _ ≤ 2 ^ n * (n ^ n * U.choose n) :=
-            Nat.mul_le_mul_left (2 ^ n) (FeistelQuotient.pow_le_pow_mul_choose hnU)
-        _ ≤ 2 ^ n * ((2 ^ (bucketIndexBits n + 1)) ^ n * 2 ^ Nat.clog 2 (U.choose n)) :=
-            Nat.mul_le_mul_left (2 ^ n) (Nat.mul_le_mul (Nat.pow_le_pow_left hpow_n n) hchoose)
-        _ = 2 ^ (n + n * (bucketIndexBits n + 1) + Nat.clog 2 (U.choose n)) := by
-            rw [← Nat.pow_mul, Nat.mul_comm (bucketIndexBits n + 1) n, ← Nat.pow_add,
-              ← Nat.pow_add, ← Nat.add_assoc]
-    have hexp := (Nat.pow_le_pow_iff_right (by decide : 1 < 2)).mp hmain
+    have hexp : n * FeistelQuotient.keyBits U ≤
+        n + n * (bucketIndexBits n + 1) + Nat.clog 2 (U.choose n) :=
+      Nat.mul_clog_le_add_clog_choose Nat.one_lt_two hnU hpow_n
     rw [← bucketIndexBits_add_fullQuotBits hnU, Nat.mul_add] at hexp
     linarith
 

@@ -150,9 +150,9 @@ the width of every `k ≤ Y * Y.size + 1` by `8 * Z.size + 8`, and the precision
 [ordinary-import client](../../CslibFrontierTests/PrimeWindowBounds.lean) combines the bounds
 at `Z = max 16 (max m L)` and checks open/closed and empty-window endpoints.
 
-The [development issue](https://github.com/cslib-community/cslib-frontier/issues/5619) retains
-the remaining CRT sign-recovery objectives. The product step is certified below;
-the downstream real-feasibility theorem is outside these components.
+The [development issue](https://github.com/cslib-community/cslib-frontier/issues/5619) tracks
+these arithmetic layers and their integration. The downstream real-feasibility theorem is
+outside these components.
 
 For binary interval endpoints, import `CountingHierarchy.Range`: `CountingFunction.sum_range`
 and `sum_range_int` sum over `0 ≤ i < r(w)` in one level. The endpoint is computed in binary;
@@ -297,8 +297,40 @@ precision and doubling-limit conditions for primes `L < p ≤ Y`, where
 `not_flag_zero_of_coefficients` handles zero. The
 [checked client](../../CslibFrontierTests/PrimeWindowSign.lean) uses supplied coefficient
 congruences for both signs of one, an unconditional zero instance and excluded-prime endpoints.
-Computing those
-coefficients and certifying a counting-level sign procedure remain separate obligations.
+The computational layer below constructs those coefficients and certifies sign recovery.
+
+## Computing signs from residue access
+
+Import `CslibFrontier.Computability.Complexity.Classes.CountingHierarchy.ResidueSign`.
+`residueWindowNumerator` computes a dyadic numerator from the shared prime-window selector
+and weighted coefficients; `residueWindowSign` classifies its first flag. These operations
+accept general window, precision and doubling-limit parameters. Their certificate gives
+F_(max(a,5)+3) from an F_a residue evaluator, polynomial-time binary cutoffs/limit and unary
+precision, independently of the mathematical correctness conditions.
+
+For `R : IntegerResidueAccess X` and a polynomial-time **binary** excluded-prime bound `L`,
+`R.primeWindowSign L` chooses the manuscript parameters. `primeWindowSign_eq_sign` proves
+that its result is `Int.sign (X w)` whenever every prime in the chosen window is admissible.
+`IntegerResidueAccess.sign_mem_CountingFunction` therefore recovers Proposition 2.6:
+the sign belongs to F_(max(a,5)+3). The magnitude exponent and `L` have polynomial binary
+length but may have exponential values. `SignParameters` certifies cutoff, precision and
+doubling-limit preparation explicitly; `PrimeWindowBounds` gives their numerical width bounds.
+The algorithm constructs neither `X`, `2^m`, the full prime product nor an unreduced doubling
+power. Nonprime arithmetic inputs use the component defaults, while the selector excludes
+small and out-of-window primes. Zero and both signs use the same total uniform program.
+
+The [ordinary-module client](../../CslibFrontierTests/ResidueSign.lean) covers zero, negative
+integers, an exponentially large excluded bound, and the implicit family `2^(2^n)` on unary
+input. That family's residues are polynomial-time even though its binary expansion is
+exponentially long. Checked compositions illustrate conservative levels 8 → 13 → 21 and
+derive signs at 24, existential choice at 25 and language membership at 26 from an F_21
+residue component. They assert no characteristic-coefficient computation or ETR theorem.
+Run `LEAN_NUM_THREADS=2 scripts/build.sh CslibFrontierTests.ResidueSign --wfail --iofail`.
+
+Parameter preparation reuses the binary minimum/maximum certificates in
+`PolyTime.Nat.BinaryOrder`, shared by the existing IP/PSPACE and PacketPacking callers. The
+IP/PSPACE caller retains its local automation registration; PacketPacking invokes the rules
+explicitly without repeating the binary case and encoding-conversion proofs.
 
 ## Efficient oracle programs
 

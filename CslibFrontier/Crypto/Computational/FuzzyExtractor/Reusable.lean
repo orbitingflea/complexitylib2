@@ -40,8 +40,9 @@ experiments in the public-parameters model over the Hamming space `Fin m → ZMo
   `Game.advantage realGame idealGame = |Pr[real] - Pr[ideal]|`, which is equivalent up to a factor
   of `2` to the paper's `1/2 + ε` guessing-game formulation.
 
-This file defines the experiments and advantages only. It does not define a security predicate
-"`fe` is reusable": such a predicate needs a class of efficient adversaries, which is future work.
+This file defines the experiments and advantages at fixed parameters. The asymptotic notion
+`WeaklyReusable`, against efficient adversaries, and Theorem 1 in that form are in
+`FuzzyExtractor.Reusable.Security`.
 
 In Section 3.3 ([AponChoEldefrawyKatz2017], Theorem 1), Apon et al. modify the Fuller–Meng–Reyzin
 construction (`lweFuzzyExtractor`) by placing the random matrix `A ∈ Z_q^{m × (k + l)}` into the
@@ -53,7 +54,8 @@ adversary `adv`, the weak-reuse advantage equals the single-enrollment `security
 shift `δ` with `c* + A s' + clampShift t δ` for a fresh uniform secret `s'`. Combining this
 identity with `securityAdvantage_lweFuzzyExtractor_le` bounds the weak-reuse advantage of each
 adversary by two decisional LWE advantages of explicit reductions. These are concrete reduction
-lemmas, not the security theorem itself.
+lemmas; Theorem 1 against efficient adversaries is `weaklyReusable_commonMatrixFuzzyExtractor` in
+`FuzzyExtractor.Reusable.Security`.
 
 Correctness is stated averaged over the public parameters (`SetupCorrectHammingWithError`), and is
 derived from the average-case decoder hypothesis `DecoderCorrectWithError` over a uniform matrix.
@@ -97,18 +99,16 @@ strong-reuse advantage is at least `1 - δ - 1 / q ^ k`.
   `δ`-error reproduction correctness of `commonMatrixFuzzyExtractor` over a uniform matrix.
 * `Cslib.Crypto.FuzzyExtractor.weakReuseAdvantage_commonMatrixFuzzyExtractor_eq`: the reduction
   step of Theorem 1 as an exact advantage identity.
-* `Cslib.Crypto.FuzzyExtractor.weakReuseAdvantage_commonMatrixFuzzyExtractor_le`: the
-  weak-reuse advantage of each adversary is at most two decisional LWE advantages of explicit
+* `Cslib.Crypto.FuzzyExtractor.weakReuseAdvantage_commonMatrixFuzzyExtractor_le`: a step bounding
+  the weak-reuse advantage of each adversary by two decisional LWE advantages of explicit
   reductions.
 * `Cslib.Crypto.FuzzyExtractor.strongReuseAdvantage_commonMatrixStrongAttack_ge`: the Section 3.3
   attack has strong-reuse advantage at least `1 - δ - 1 / q ^ k`.
 
 ## What is not proved
 
-* A reusability security theorem. Here the adversary is any `ReuseAdversary`, with no efficiency
-  bound. Concluding reusability needs an adversary class in the reuse experiments and efficiency
-  certificates for `commonMatrixSimulator` and the reductions; this is concrete-only for now, and
-  the certificates and asymptotic theorems are tracked in
+* Strong reusability of the Section 5 scheme against efficient adversaries: `Reusable.Encrypt` is
+  concrete-only, and the certificates for its reductions are tracked in
   [#5293](https://github.com/cslib-community/cslib-frontier/issues/5293#issuecomment-6891722215).
 * The Section 3.2 attack on independent-matrix FMR (`lweFuzzyExtractor` with fresh `A_i` per
   enrollment), which relies on the concrete `Decode_t` algorithm analysis.
@@ -425,7 +425,7 @@ distinguisher against `lweFuzzyExtractor m k l q decode`: given key candidate `r
 `p = ⟨A, c*, ()⟩`, it runs the query stage of `adv` on `(A, c*)`, answering each shift query `δ`
 by sampling a fresh uniform `s' : Fin (k + l) → ZMod q` and returning `c* + A s' + clampShift t δ`,
 and passes `r` to `adv.guess`. The simulator never sees the secret `s` or reading `w*`. -/
-noncomputable def commonMatrixSimulator {σ : Type} (t : ℕ)
+@[expose] noncomputable def commonMatrixSimulator {σ : Type} (t : ℕ)
     (adv : WeakReuseAdversary (Matrix (Fin m) (Fin (k + l)) (ZMod q)) m q
       (Fin k → ZMod q) (Fin m → ZMod q) σ)
     (r : Fin k → ZMod q) (p : DecodeHelper m (k + l) q Unit) : Experiment := do
@@ -527,7 +527,8 @@ exact identity: for every source `W`, distance threshold `t` and weak-reusabilit
 `adv`, the weak-reusability advantage against `commonMatrixFuzzyExtractor` (under a uniform common
 matrix `A`) equals the single-enrollment `securityAdvantage` of `lweFuzzyExtractor` against
 `commonMatrixSimulator t adv`. This is a reduction lemma, not the security theorem: `adv` is
-unrestricted, and no efficiency certificate for `commonMatrixSimulator` is given. -/
+unrestricted. `weaklyReusable_commonMatrixFuzzyExtractor` applies it with the efficiency
+certificate `LWEFamily.isPPT_commonMatrixSimulator`. -/
 theorem weakReuseAdvantage_commonMatrixFuzzyExtractor_eq {σ : Type}
     (decode : Matrix (Fin m) (Fin (k + l)) (ZMod q) → (Fin m → ZMod q) →
       ProbComp (Option (Fin (k + l) → ZMod q)))
@@ -540,14 +541,13 @@ theorem weakReuseAdvantage_commonMatrixFuzzyExtractor_eq {σ : Type}
   simp [weakReuseAdvantage, FuzzyExtractor.securityAdvantage,
     weakReuseRealGame_commonMatrixFuzzyExtractor, weakReuseIdealGame_commonMatrixFuzzyExtractor]
 
-/-- Concrete reduction inequality for [AponChoEldefrawyKatz2017], Theorem 1, combining
-`weakReuseAdvantage_commonMatrixFuzzyExtractor_eq` with `securityAdvantage_lweFuzzyExtractor_le`:
+/-- A step of [AponChoEldefrawyKatz2017], Theorem 1, not the theorem: combining
+`weakReuseAdvantage_commonMatrixFuzzyExtractor_eq` with `securityAdvantage_lweFuzzyExtractor_le`,
 for every source `W`, distance threshold `t` and weak-reusability adversary `adv`, the
 weak-reusability advantage against `commonMatrixFuzzyExtractor` is at most the sum of the
 decisional LWE advantages (secret dimension `l`, error law `W`) of two explicit reductions built
-from `adv`. This is not the security theorem: concluding weak reusability from
-`DecisionLWEWithErrors` additionally needs an adversary class and efficiency certificates for
-the reductions, which are future work. -/
+from `adv`. Theorem 1 itself, against efficient adversaries, is
+`weaklyReusable_commonMatrixFuzzyExtractor` in `FuzzyExtractor.Reusable.Security`. -/
 theorem weakReuseAdvantage_commonMatrixFuzzyExtractor_le {σ : Type}
     (decode : Matrix (Fin m) (Fin (k + l)) (ZMod q) → (Fin m → ZMod q) →
       ProbComp (Option (Fin (k + l) → ZMod q)))

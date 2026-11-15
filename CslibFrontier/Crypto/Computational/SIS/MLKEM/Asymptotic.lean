@@ -30,7 +30,9 @@ fair coins, where Kyber v3.02 and FIPS 203 expand a seed with `PRF`. The public 
 sampled matrix in place of the seed `ρ` from which Kyber's encryption re-derives it with `XOF`, and
 the adversary has no `XOF` or `G` oracle. It is a step towards Kyber v3.02 ([AvanziEtAl2021],
 §4.3.1, Theorem 1, p. 20), not that theorem, which assumes that `XOF` and `G` are random oracles
-and whose bound has an `Adv^prf` term. The `PRF` hop and the random-oracle lift are open under
+and whose bound has an `Adv^prf` term. The `PRF` hop is `indCPA_kpkePRF_of_decisionModuleLWEWith`
+(`CslibFrontier.Crypto.Computational.SIS.MLKEM.PRFSecurity`), whose last step is this one and which
+keeps the matrix in the public key; the random-oracle lift is open under
 [#5293](https://github.com/cslib-community/cslib-frontier/issues/5293#issuecomment-6893099765).
 
 For a K-PKE parameter family `P` computable in polynomial time from the unary security parameter,
@@ -68,8 +70,8 @@ Two differences make this a step and not Theorem 1:
 
 * Key generation and encryption decode fair bits with `SamplePolyCBD`, where Kyber expands a
   32-byte seed with `PRF` (`σ` in key generation, the coins `r` in encryption). This idealizes the
-  scheme's own coin expansion, so the bound has no `Adv^prf` term. Removing it needs a `PRF` hop
-  under a named pseudorandomness assumption, which is open under #5293.
+  scheme's own coin expansion, so the bound has no `Adv^prf` term. The `PRF` hops, under
+  `PseudorandomFunctionOver`, are in `indCPA_kpkePRF_of_decisionModuleLWEWith`.
 * The public key carries the matrix `A`, which key generation draws coefficientwise by the bounded
   modular sampler within `k * k * n / 2 ^ κ` of uniform. In Kyber the public key is
   `Encode(t̂) ‖ ρ` with `(ρ, σ) := G(d)`, and encryption re-derives `A` as `XOF(ρ)` (Algorithms 4
@@ -637,7 +639,9 @@ theorem eval_sampleVecCBD (k n q η : ℕ) [NeZero q] :
 /-- **IND-CPA of K-PKE with ideal coin expansion and the matrix in the public key** (fair coins in
 place of `PRF`; no `XOF` or `G` oracles), a step towards Kyber v3.02 Theorem 1 ([AvanziEtAl2021],
 §4.3.1, p. 20) and not that theorem, which assumes that `XOF` and `G` are random oracles and whose
-bound has an `Adv^prf` term. The `PRF` hop and the random-oracle lift are open under
+bound has an `Adv^prf` term. The `PRF` hop is `indCPA_kpkePRF_of_decisionModuleLWEWith`, which
+applies this one to its last game and keeps the matrix in the public key; the random-oracle lift is
+open under
 [#5293](https://github.com/cslib-community/cslib-frontier/issues/5293#issuecomment-6893099765).
 
 Let `P` be a K-PKE parameter family computable in polynomial time from the unary security

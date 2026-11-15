@@ -232,16 +232,11 @@ private def helperWordOf (m k l w : ℕ) (lweWord : List Bool) (a : List (List �
       (List.range l).flatMap fun j =>
         BitString.lowBits w (Cslib.Matrix.binaryEntry (l + 1) w lweWord i (j + 1))
 
-private theorem lowBits_eq_ofFn_val (w x : ℕ) :
-    BitString.lowBits w x =
-      List.ofFn fun t : Fin w => (x : ZMod (2 ^ w)).val.testBit t.val := by
-  rw [← BitString.lowBits_val_natCast, BitString.lowBits_eq_ofFn]
-
 private theorem keyWord_coinVector (k w : ℕ) (keyCoins : List ℕ) :
     keyWord (coinVector k w keyCoins) = keyWordOf k w keyCoins := by
   simp only [keyWord, keyWordOf, Cslib.Matrix.toBinary_eq, _root_.Matrix.of_apply,
     List.ofFn_succ, List.ofFn_zero, List.flatten_cons, List.flatten_nil, List.append_nil,
-    List.flatMap_def, List.map_range_eq_ofFn, coinVector, lowBits_eq_ofFn_val]
+    List.flatMap_def, List.map_range_eq_ofFn, coinVector, BitString.lowBits_eq_ofFn_val]
 
 private theorem helperWord_reductionInput (x : LWE.Input l m w) (a : List (List ℕ))
     (b keyCoins : List ℕ) :
@@ -266,7 +261,7 @@ private theorem helperWord_reductionInput (x : LWE.Input l m w) (a : List (List 
   funext i
   rw [List.ofFn_succ, List.ofFn_add, List.flatten_cons, List.flatten_append, List.append_assoc]
   simp only [LWE.augmentedMatrix, Fin.cons_zero, Fin.cons_succ, joinCols, _root_.Matrix.of_apply,
-    Fin.append_left', Fin.append_right, lowBits_eq_ofFn_val, Pi.add_apply,
+    Fin.append_left', Fin.append_right, BitString.lowBits_eq_ofFn_val, Pi.add_apply,
     _root_.Matrix.mulVec, dotProduct, coinMatrix, coinVector, Nat.cast_add, List.sum_ofFn,
     Nat.cast_sum, Nat.cast_mul, hc, hA]
 

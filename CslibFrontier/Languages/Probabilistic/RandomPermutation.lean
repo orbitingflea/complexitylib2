@@ -46,8 +46,9 @@ with polymorphic bidirectional query deduplication over arbitrary `[DecidableEq 
    (`abs_sub_uniformPerm_forgetful_le`). On forward-only programs (`liftForward`),
    `forgetfulAnswer` coincides with `memoize (fun _ => PMF.uniformOfFintype α)` and therefore with
    a uniformly random function `f ← PMF.uniformOfFintype (α → α)`, yielding the classical
-   **PRP/PRF switching lemma** (`abs_sub_uniformPerm_uniformFunc_le`, [BonehShoup2023],
-   Section 4.4, Theorem 4.4).
+   **ideal-experiment PRP/PRF switching lemma**
+   (`abs_sub_uniformPerm_uniformFunc_le`, [BonehShoup2023], Section 4.4.3, Attack Game 4.3 and
+   Theorem 4.6).
 3. **Bidirectional query deduplication (`RandomPermutation.bidirDedupStep`,
    `RandomPermutation.bidirDedup`)**: for any `[DecidableEq α]`, wrap a bidirectional oracle
    program so that forward hits in `dom(cache)` and inverse hits in `ran(cache)` are answered from
@@ -93,13 +94,14 @@ with polymorphic bidirectional query deduplication over arbitrary `[DecidableEq 
   `Cslib.RandomPermutation.toOuterMeasure_forgetfulAnswer_le_pairwise_and_length_le_add`,
   `Cslib.RandomPermutation.abs_sub_uniformPerm_forgetful_le`: bidirectional random-permutation
   switching bounds (`Q.choose 2 / |α|`).
-* `Cslib.RandomPermutation.abs_sub_uniformPerm_uniformFunc_le`: the PRP/PRF switching lemma
-  ([BonehShoup2023], Section 4.4, Theorem 4.4).
+* `Cslib.RandomPermutation.abs_sub_uniformPerm_uniformFunc_le`: the ideal-experiment PRP/PRF
+  switching lemma ([BonehShoup2023], Section 4.4.3, Attack Game 4.3 and Theorem 4.6).
 
 ## References
 
 * [D. Boneh, V. Shoup, *A Graduate Course in Applied Cryptography*,
-  Version 0.6][BonehShoup2023], Sections 4.4 and 4.7 (Theorems 4.4 and 4.7).
+  Version 0.6][BonehShoup2023], Section 4.4.3 (Attack Game 4.3, Theorem 4.6, and Theorem 4.7,
+  printed pp. 135–136) and Section 4.7.
 -/
 
 @[expose] public section
@@ -1562,10 +1564,10 @@ theorem abs_sub_uniformPerm_forgetful_le {β γ : Type}
   simpa only [ENNReal.toReal_mul, ENNReal.toReal_natCast, ENNReal.toReal_inv] using
     ENNReal.toReal_mono htop hbad
 
-/-- **The PRP/PRF switching lemma (`ℝ`, two-sided, [BonehShoup2023], Section 4.4, Theorem 4.4)**:
-for any `Q`-query forward-only adaptive program `program : OracleComp (fun _ : α => α) β`, the
-acceptance probabilities under a uniformly random permutation
-`π ← PMF.uniformOfFintype (Equiv.Perm α)` and under a uniformly random function
+/-- **The ideal-experiment PRP/PRF switching lemma (`ℝ`, two-sided, [BonehShoup2023], Section 4.4.3,
+Attack Game 4.3 and Theorem 4.6)**: for any `Q`-query forward-only adaptive program
+`program : OracleComp (fun _ : α => α) β`, the acceptance probabilities under a uniformly random
+permutation `π ← PMF.uniformOfFintype (Equiv.Perm α)` and under a uniformly random function
 `f ← PMF.uniformOfFintype (α → α)` differ by at most `Q.choose 2 / |α|`. -/
 theorem abs_sub_uniformPerm_uniformFunc_le {β γ : Type}
     {program : OracleComp (fun _ : α => α) β} {Q : ℕ}
