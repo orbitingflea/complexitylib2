@@ -40,7 +40,9 @@ recover `s`, and derives the key from `s`.
   (key = the first `k` coordinates of the secret, no seed).
 * `Cslib.Crypto.FuzzyExtractor.decodeCheck`, `Cslib.Crypto.FuzzyExtractor.decodeGame`,
   `Cslib.Crypto.FuzzyExtractor.DecoderCorrectWithError`: `(1 - δ)` average-case decoding
-  correctness over uniform `A` up to Hamming weight `t`.
+  correctness over uniform `A` up to Hamming weight `t`. Correctness is stated only on average
+  over `A`: for `A = 0` the decoder's input `A s + e = e` does not depend on `s`, so no decoder
+  recovers `s` for every matrix unless `Fin n → ZMod q` has one element.
 * `Cslib.Crypto.FuzzyExtractor.joinCols`, `Cslib.Crypto.FuzzyExtractor.hardcoreKeyReduction`,
   `Cslib.Crypto.FuzzyExtractor.hardcoreUniformReduction`: the secret-splitting reductions behind
   Lemma 4.7, as LWE distinguishers `Matrix (Fin m) (Fin l) (ZMod q) → (Fin m → ZMod q) →

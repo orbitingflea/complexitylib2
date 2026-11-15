@@ -10,6 +10,8 @@ public import CslibFrontier.Crypto.Computational.FuzzyExtractor.Basic
 public import CslibFrontier.Crypto.Computational.FuzzyExtractor.DecodeThenExtract
 public import CslibFrontier.Crypto.Computational.FuzzyExtractor.DecodeThenExtract.Security
 import CslibFrontier.Probability.PMF.Uniform
+import CslibFrontier.Probability.PMF.UniformPoint
+import Mathlib.Algebra.Field.ZMod
 
 /-!
 # Computational fuzzy extractor tests
@@ -17,7 +19,8 @@ import CslibFrontier.Probability.PMF.Uniform
 Exercise the fuzzy-extractor definitions, the sketch-and-extract construction (Lemma 2.5), and the
 LWE decode-then-extract construction (Construction 4.1) on concrete finite-field parameters.
 Distinguishers are `Experiment` programs. Includes positive instances (zero-error
-sketch-and-extract, the additive extractor on a uniform source, the LWE security bound for
+sketch-and-extract, a decoder over `ZMod 5` that satisfies `DecoderCorrectWithError` with failure
+probability `1 / 5`, the additive extractor on a uniform source, the LWE security bound for
 Construction 4.1 at concrete dimensions against `LWE.advantage`, a concrete Hamming distance) and a
 separating negative fixture
 (`revealingFuzzyExtractor`) that is perfectly reproducible for every distance threshold `t` yet
@@ -68,6 +71,51 @@ example (w : Fin 3 → ZMod 2) :
   have h := correctHamming_trivialSketchAndExtract.correctWithError_zero w w
     (by simp [hammingDist_self])
   exact le_antisymm h zero_le
+
+/-! ### Average-case decoder correctness is satisfiable -/
+
+/-- A decoder for one error-free LWE sample over `ZMod 5`: it returns `(A 0 0)⁻¹ * c 0` when
+`A 0 0 ≠ 0` and gives up on the zero matrix, where `c = A s` does not depend on `s`. -/
+def unitDecoder (A : Matrix (Fin 1) (Fin 1) (ZMod 5)) (c : Fin 1 → ZMod 5) :
+    ProbComp (Option (Fin 1 → ZMod 5)) :=
+  return if A 0 0 = 0 then none else some fun _ => (A 0 0)⁻¹ * c 0
+
+/-- `unitDecoder` fails only on the zero matrix, which a uniform `1 × 1` matrix over `ZMod 5`
+hits with probability `1 / 5`. So `DecoderCorrectWithError` holds with `δ = 1 / 5 < 1` at
+`n = 1`, `q = 5`, parameters where no decoder is correct for every matrix. -/
+theorem decoderCorrectWithError_unitDecoder : DecoderCorrectWithError unitDecoder 0 (1 / 5) := by
+  intro s e he
+  obtain rfl : e = 0 := hammingNorm_eq_zero.mp (Nat.le_zero.mp he)
+  rw [← ENNReal.coe_le_coe, Game.failProbability, ENNReal.coe_toNNReal (PMF.apply_ne_top _ _)]
+  simp only [decodeGame, decodeCheck, unitDecoder, ProbComp.eval_bind, ProbComp.eval_pure,
+    ProbComp.eval_uniform, PMF.pure_bind]
+  -- The failure probability is the probability that the negated success test accepts.
+  have hflip (E : Matrix (Fin 1) (Fin 1) (ZMod 5) → Bool) :
+      ((PMF.uniformOfFintype _).bind fun A => PMF.pure (E A)) false =
+        ((PMF.uniformOfFintype _).bind fun A => PMF.pure (!E A)) true := by
+    simp only [PMF.bind_apply, PMF.pure_apply]
+    congr 1 with A
+    cases E A <;> simp
+  rw [hflip]
+  refine (Cslib.Probability.PMF.uniformOfFintype_bind_pure_apply_true_le ?_).trans ?_
+  · -- Decoding fails only on the zero matrix.
+    refine (Set.subsingleton_singleton (a := (0 : Matrix (Fin 1) (Fin 1) (ZMod 5)))).anti
+      fun A hA => ?_
+    rw [Set.mem_singleton_iff]
+    ext i j
+    obtain rfl := Subsingleton.elim i 0
+    obtain rfl := Subsingleton.elim j 0
+    by_contra h0
+    rw [Matrix.zero_apply] at h0
+    have : Fact (Nat.Prime 5) := ⟨by decide⟩
+    have hs : (fun _ : Fin 1 => (A 0 0)⁻¹ * A.mulVec s 0) = s := by
+      funext i
+      obtain rfl := Subsingleton.elim i 0
+      rw [Matrix.mulVec, dotProduct, Fin.sum_univ_one]
+      exact inv_mul_cancel_left₀ h0 _
+    simp [h0, hs] at hA
+  · have hcard : Fintype.card (Matrix (Fin 1) (Fin 1) (ZMod 5)) = 5 := rfl
+    rw [hcard, Nat.cast_ofNat, one_div, ENNReal.coe_inv (by norm_num), ENNReal.coe_ofNat]
 
 /-! ### Concrete decode-then-extract security (Construction 4.1) -/
 
