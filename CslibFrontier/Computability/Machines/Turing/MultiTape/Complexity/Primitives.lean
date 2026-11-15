@@ -102,8 +102,7 @@ public lemma length_encIntUnary_sub_one_le (z : ℤ) :
 namespace EncIntUnary
 
 /-- Adds one to a unary encoded integer. -/
-@[simps q₀ step final]
-def succT : Transducer Bool (Fin 3) where
+public def succT : Transducer Bool (Fin 3) where
   q₀ := 0
   step q b := match q, b with
     | 0, false => (2, [false, true])
@@ -115,8 +114,7 @@ def succT : Transducer Bool (Fin 3) where
   length_final_le q := by split_ifs <;> simp
 
 /-- Subtracts one from a unary encoded integer. -/
-@[simps q₀ step final]
-def predT : Transducer Bool (Fin 3) where
+public def predT : Transducer Bool (Fin 3) where
   q₀ := 0
   step q b := match q, b with
     | 0, false => (1, [])
@@ -127,28 +125,52 @@ def predT : Transducer Bool (Fin 3) where
   length_step_le q b := by fin_cases q <;> cases b <;> simp
   length_final_le q := by split_ifs <;> simp
 
+/-- The signed-unary successor transducer, started in its designated initial state, computes
+integer successor. -/
+public theorem run_succT (z : ℤ) :
+    encIntUnary (z + 1) = succT.run succT.q₀ (encIntUnary z) := by
+  have copy := Transducer.run_eq_self succT 2 (fun bit => by cases bit <;> rfl) rfl
+  have hq : succT.q₀ = 0 := rfl
+  have h0f : succT.step 0 false = (2, [false, true]) := rfl
+  have h0t : succT.step 0 true = (1, []) := rfl
+  have h1t : succT.step 1 true = (2, [true]) := rfl
+  have hf1 : succT.final 1 = [false] := rfl
+  rw [hq]
+  rcases z with n | _ | n
+  · simp [h0f, copy]
+  · change [false] = succT.run 0 [true]
+    simp [h0t, hf1]
+  · change encIntUnary (Int.negSucc n) = _
+    simp [h0t, h1t, copy, List.replicate_succ]
+
+/-- The signed-unary predecessor transducer, started in its designated initial state, computes
+integer predecessor. -/
+public theorem run_predT (z : ℤ) :
+    encIntUnary (z - 1) = predT.run predT.q₀ (encIntUnary z) := by
+  have copy := Transducer.run_eq_self predT 2 (fun bit => by cases bit <;> rfl) rfl
+  have hq : predT.q₀ = 0 := rfl
+  have h0f : predT.step 0 false = (1, []) := rfl
+  have h0t : predT.step 0 true = (2, [true, true]) := rfl
+  have h1t : predT.step 1 true = (2, [false]) := rfl
+  have hf1 : predT.final 1 = [true] := rfl
+  rw [hq]
+  rcases z with (_ | n) | n
+  · change [true] = predT.run 0 [false]
+    simp [h0f, hf1]
+  · simp [h0f, h1t, copy]
+  · simp [h0t, copy, List.replicate_succ]
+
 end EncIntUnary
 
 namespace ComputableTidilyInDegree
 
 open EncIntUnary in
 public theorem int_succ : ComputableTidilyInDegree (· + 1) encIntUnary encIntUnary 1 1 := by
-  refine .of_linear (succT.computableTidilyInLinearTimeAndSpace fun z => ?_)
-  have hc := Transducer.run_eq_self succT 2 (fun b => by cases b <;> rfl) rfl
-  rcases z with n | _ | n
-  · simp [hc]
-  · rfl
-  · change encIntUnary (Int.negSucc n) = _
-    simp [hc, List.replicate_succ]
+  exact .of_linear (succT.computableTidilyInLinearTimeAndSpace run_succT)
 
 open EncIntUnary in
 public theorem int_pred : ComputableTidilyInDegree (· - 1) encIntUnary encIntUnary 1 1 := by
-  refine .of_linear (predT.computableTidilyInLinearTimeAndSpace fun z => ?_)
-  have hc := Transducer.run_eq_self predT 2 (fun b => by cases b <;> rfl) rfl
-  rcases z with (_ | n) | n
-  · rfl
-  · simp [hc]
-  · simp [hc, List.replicate_succ]
+  exact .of_linear (predT.computableTidilyInLinearTimeAndSpace run_predT)
 
 end ComputableTidilyInDegree
 

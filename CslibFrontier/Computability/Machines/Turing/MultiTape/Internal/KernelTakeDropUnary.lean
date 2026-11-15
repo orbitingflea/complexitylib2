@@ -52,6 +52,8 @@ namespace Turing.MultiTapeTM
 
 namespace TakeDropUnary
 
+universe u
+
 /-! ### The streaming semantics -/
 
 /-- Whether inner symbols are emitted when the remaining count is `c`: while `c` is positive when
@@ -447,7 +449,7 @@ public theorem computesInTimeAndSpace_toTM (keep : Bool) (u : List Bool) (n : �
 
 /-! ### Encoded lists -/
 
-variable {α : Type}
+variable {α : Type u}
 
 /-- **Streaming an encoded list** emits the encoded prefix (`keep = true`) or suffix
 (`keep = false`) at the count. -/

@@ -25,9 +25,9 @@ followed by its second component. It has the capabilities of `Turing.MultiTapeTM
 
 namespace Turing.MultiTapeTM
 
-universe u
+universe u v
 
-variable {α β : Type u}
+variable {α : Type u} {β : Type v}
 
 /-- `enc` with every encoded value framed. -/
 @[expose] public def encFramed (enc : α ↪ List Bool) : α ↪ List Bool :=

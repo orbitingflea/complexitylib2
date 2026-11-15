@@ -9,6 +9,7 @@ module
 
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Encodings.Decoder.Basic
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Encodings.Decoder.Nat
+public import CslibFrontier.Computability.Machines.Turing.MultiTape.Encodings.Decoder.Sum
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Internal.PolyTimeListPrimitives
 
 /-!
@@ -32,9 +33,9 @@ elements.
 * `Turing.MultiTapeTM.frames`: the framed words one after another in a word.
 * `Turing.MultiTapeTM.ofBits`: binary digits, least significant first, read as a number.
 * `Turing.MultiTapeTM.Decoder`: total decoders with plain certificates of independent fixed degrees.
-* `Turing.MultiTapeTM.Decoder.bits`, `.unary`, `.nat`, `.bool`, `.option`, `.pair`, `.list`, `.map`:
-  decoders of bit strings, unary and binary numbers, Booleans, options, pairs and lists, and
-  transport along an equivalence of encodings.
+* `Turing.MultiTapeTM.Decoder.bits`, `.unary`, `.nat`, `.bool`, `.option`, `.pair`, `.sum`, `.list`,
+  `.map`: decoders of bit strings, unary and binary numbers, Booleans, options, pairs, sums and
+  lists, and transport along an equivalence of encodings.
 
 ## Main results
 

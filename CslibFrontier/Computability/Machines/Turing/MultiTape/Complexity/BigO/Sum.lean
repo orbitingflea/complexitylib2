@@ -7,7 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import CslibFrontier.Computability.Machines.Turing.MultiTape.Encodings.Sum
+public import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.Degree.Sum
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.BigO.FunProp
 
 /-!
@@ -25,7 +25,7 @@ encoded input length, without any finite-domain or inhabitance assumption on eit
 
 ## References
 
-Uses Christian Reitwiessner's native degree/resource calculus (`ComputableInO.append`).
+Uses Christian Reitwiessner's native degree/resource calculus (`ComputableInDegree.append`).
 -/
 
 public section
@@ -38,23 +38,15 @@ variable {α β : Type}
 @[fun_prop]
 theorem inl (left : α ↪ List Bool) (right : β ↪ List Bool) :
     ComputableInO (Sum.inl (α := α) (β := β)) left (encSum left right)
-      (fun a => (left a).length) (fun a => (left a).length) := by
-  have hid : ComputableInO (fun a : α => a) left left
       (fun a => (left a).length) (fun a => (left a).length) :=
-    ComputableInDegree.id'.inO_one
-  exact ((ComputableInO.const (encMid := encBool) false).append hid
-    (fun _ => rfl)).mono 2 (fun _ => by omega) (fun _ => by omega)
+  (ComputableInDegree.inl left right).inO_one
 
 /-- A right sum tag has a direct native linear implementation. -/
 @[fun_prop]
 theorem inr (left : α ↪ List Bool) (right : β ↪ List Bool) :
     ComputableInO (Sum.inr (α := α) (β := β)) right (encSum left right)
-      (fun a => (right a).length) (fun a => (right a).length) := by
-  have hid : ComputableInO (fun a : β => a) right right
       (fun a => (right a).length) (fun a => (right a).length) :=
-    ComputableInDegree.id'.inO_one
-  exact ((ComputableInO.const (encMid := encBool) true).append hid
-    (fun _ => rfl)).mono 2 (fun _ => by omega) (fun _ => by omega)
+  (ComputableInDegree.inr left right).inO_one
 
 /-- Testing for a left sum tag takes linear time and constant output size. -/
 @[fun_prop]

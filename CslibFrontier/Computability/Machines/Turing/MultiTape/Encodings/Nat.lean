@@ -5,7 +5,7 @@ Authors: Christian Reitwiessner
 -/
 
 module
--- upstream: vendored crei:crei/tidy-universal @7f7c0696 (unsubmitted)
+-- upstream: candidate
 
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Encodings.Nat.Bits
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Encodings.List
@@ -29,6 +29,12 @@ once and uses no work tape:
   back until a further digit shows that it is not the leading digit, and then copies the rest;
 * the zero test emits whether the input was empty.
 
+## Main definitions
+
+* `Turing.MultiTapeTM.NatSucc.succTransducer`: the retained binary-successor transducer.
+* `Turing.MultiTapeTM.NatPred.predTransducer`: the retained binary-predecessor transducer.
+* `Turing.MultiTapeTM.NatPred.isZeroTransducer`: the retained binary-zero-test transducer.
+
 ## Main results
 
 * `Turing.MultiTapeTM.computableInTimeAndSpace_succ`, `computableInTimeAndSpace_pred`,
@@ -45,20 +51,27 @@ public abbrev encNat3 : ℕ × ℕ × ℕ ↪ List Bool := encPair encNat (encPa
 namespace NatSucc
 
 /-- The successor as a transducer: the state is the carry, initially set. -/
-private def succTransducer : Transducer Bool Bool where
+public def succTransducer : Transducer Bool Bool where
   q₀ := true
   step c b := (c && b, [c ^^ b])
   final c := if c then [true] else []
   length_step_le _ _ := by simp
   length_final_le c := by cases c <;> simp
 
-private lemma run_succTransducer (c : Bool) (l : List Bool) :
+public lemma run_succTransducer (c : Bool) (l : List Bool) :
     succTransducer.run c l = incr c l := by
   induction l generalizing c with
   | nil => cases c <;> rfl
   | cons b l ih =>
     rw [Transducer.run_cons, ih]
     cases c <;> cases b <;> simp [succTransducer, incr]
+
+/-- The successor transducer, started in its designated initial state, computes binary
+successor. -/
+public lemma run_succTransducer_q₀ (n : ℕ) :
+    succTransducer.run succTransducer.q₀ n.bits = (n + 1).bits := by
+  change succTransducer.run true n.bits = (n + 1).bits
+  rw [NatSucc.bits_succ, ← run_succTransducer]
 
 end NatSucc
 
@@ -67,7 +80,7 @@ namespace NatPred
 /-- The predecessor as a transducer. In the borrow state `none` each `0` becomes `1`; the first
 `1` becomes a pending `0` (state `some false`), emitted only once a further digit shows it is not
 the leading digit; from then on (state `some true`) the digits are copied. -/
-private def predTransducer : Transducer Bool (Option Bool) where
+public def predTransducer : Transducer Bool (Option Bool) where
   q₀ := none
   step
     | none, false => (none, [true])
@@ -87,7 +100,7 @@ private lemma run_predTransducer_pending (l : List Bool) :
     rw [Transducer.run_eq_self predTransducer (some true) (fun _ => rfl) rfl]
     rfl
 
-private lemma run_predTransducer (n : ℕ) : predTransducer.run none n.bits = (n - 1).bits := by
+public lemma run_predTransducer (n : ℕ) : predTransducer.run none n.bits = (n - 1).bits := by
   induction n using Nat.strong_induction_on with
   | _ n ih =>
     rcases Nat.even_or_odd' n with ⟨m, rfl | rfl⟩
@@ -104,21 +117,38 @@ private lemma run_predTransducer (n : ℕ) : predTransducer.run none n.bits = (n
       · rw [Nat.bit0_bits m hm.ne']
         simp [Nat.bits_eq_nil_iff, hm.ne']
 
+/-- The predecessor transducer, started in its designated initial state, computes saturating
+binary predecessor. -/
+public lemma run_predTransducer_q₀ (n : ℕ) :
+    predTransducer.run predTransducer.q₀ n.bits = (n - 1).bits := by
+  change predTransducer.run none n.bits = (n - 1).bits
+  exact run_predTransducer n
+
 /-- The zero test as a transducer: the state records that no digit has been read yet. -/
-private def isZeroTransducer : Transducer Bool Bool where
+public def isZeroTransducer : Transducer Bool Bool where
   q₀ := true
   step _ _ := (false, [])
   final b := [b]
   length_step_le _ _ := by simp
   length_final_le _ := by simp
 
-private lemma run_isZeroTransducer (q : Bool) (l : List Bool) :
+public lemma run_isZeroTransducer (q : Bool) (l : List Bool) :
     isZeroTransducer.run q l = [q && l.isEmpty] := by
   induction l generalizing q with
   | nil => simp [isZeroTransducer]
   | cons b l ih =>
     change [] ++ isZeroTransducer.run false l = _
     simp [ih]
+
+/-- The zero-test transducer, started in its designated initial state, emits the Boolean zero
+test. -/
+public lemma run_isZeroTransducer_q₀ (n : ℕ) :
+    isZeroTransducer.run isZeroTransducer.q₀ n.bits = [decide (n = 0)] := by
+  change isZeroTransducer.run true n.bits = [decide (n = 0)]
+  rw [run_isZeroTransducer]
+  congr 1
+  rw [Bool.true_and, Bool.eq_iff_iff, List.isEmpty_iff, Nat.bits_eq_nil_iff,
+    decide_eq_true_iff]
 
 end NatPred
 

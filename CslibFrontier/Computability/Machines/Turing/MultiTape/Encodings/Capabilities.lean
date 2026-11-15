@@ -18,13 +18,13 @@ Pairing retains independent time and workspace bounds and explicitly charges the
 
 namespace Turing.MultiTapeTM
 
-universe u
+universe u v
 
 /-! ### Encodings of pairs, options and lists -/
 
 section Classes
 
-variable {α β : Type u}
+variable {α : Type u} {β : Type v}
 
 /-- `enc` encodes pairs compatibly with `enc₁` and `enc₂`. -/
 public class PairEncoding (enc₁ : α ↪ List Bool) (enc₂ : β ↪ List Bool)
@@ -33,7 +33,7 @@ public class PairEncoding (enc₁ : α ↪ List Bool) (enc₂ : β ↪ List Bool
   common bounds combine into `fun x => (f x, g x)`, within a constant factor of those bounds, plus
   space for the encoded pair. Different bounds are covered by
   `Turing.MultiTapeTM.PairEncoding.pair_mono`. -/
-  pair {γ : Type u} {encIn : γ ↪ List Bool} {f : γ → α} {g : γ → β} {t s : γ → ℕ} :
+  pair {γ : Type (max u v)} {encIn : γ ↪ List Bool} {f : γ → α} {g : γ → β} {t s : γ → ℕ} :
     ComputableInTimeAndSpace f encIn enc₁ t s →
     ComputableInTimeAndSpace g encIn enc₂ t s →
     ∃ c, ComputableInTimeAndSpace (fun x => (f x, g x)) encIn enc
@@ -63,14 +63,17 @@ public class ListEncoding (enc₁ : α ↪ List Bool) (enc : List α ↪ List Bo
 
 /-- Pairing functions computable within different bounds. -/
 public theorem PairEncoding.pair_mono {enc₁ : α ↪ List Bool} {enc₂ : β ↪ List Bool}
-    {enc : α × β ↪ List Bool} [h : PairEncoding enc₁ enc₂ enc] {γ : Type u}
+    {enc : α × β ↪ List Bool} [h : PairEncoding enc₁ enc₂ enc]
+    {γ : Type (max u v)}
     {encIn : γ ↪ List Bool} {f : γ → α} {g : γ → β} {t₁ s₁ t₂ s₂ : γ → ℕ}
     (hf : ComputableInTimeAndSpace f encIn enc₁ t₁ s₁)
     (hg : ComputableInTimeAndSpace g encIn enc₂ t₂ s₂) :
     ∃ c, ComputableInTimeAndSpace (fun x => (f x, g x)) encIn enc
       (fun x => c * (t₁ x + t₂ x + 1))
       (fun x => c * (s₁ x + s₂ x + (enc (f x, g x)).length + 1)) :=
-  h.pair (hf.mono (fun _ => Nat.le_add_right _ _) (fun _ => Nat.le_add_right _ _))
+  h.pair (γ := γ) (encIn := encIn) (f := f) (g := g)
+    (t := fun x => t₁ x + t₂ x) (s := fun x => s₁ x + s₂ x)
+    (hf.mono (fun _ => Nat.le_add_right _ _) (fun _ => Nat.le_add_right _ _))
     (hg.mono (fun _ => Nat.le_add_left _ _) (fun _ => Nat.le_add_left _ _))
 
 end Classes

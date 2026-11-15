@@ -1,11 +1,11 @@
 /-
-Copyright (c) 2026 Christian Reitwiessner. All rights reserved.
+Copyright (c) 2026 Christian Reitwiessner, Samuel Schlesinger. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Christian Reitwiessner
+Authors: Christian Reitwiessner, Samuel Schlesinger
 -/
 
 module
--- upstream: vendored crei:crei/tidy-universal @7f7c0696 (unsubmitted)
+-- upstream: candidate
 
 public import Mathlib.Data.Fintype.Pi
 public import Mathlib.Data.Fintype.Option
@@ -36,6 +36,8 @@ renaming, simulating the description yields the renamed output of the machine.
 * `Turing.MultiTapeTM.Universal.simulate_of_holds`: any description whose table holds every
   renamed transition simulates the machine.
 * `Turing.MultiTapeTM.Universal.simulate_desc`: the simulation agrees with the machine.
+* `Turing.MultiTapeTM.Universal.Tape.cellAt_write`, `.cellAt_move`,
+  `Turing.MultiTapeTM.Universal.applyTapes_ofFn`: reusable tape-action equations.
 -/
 
 namespace Turing.MultiTapeTM.Universal
@@ -80,7 +82,7 @@ public lemma read_eq (t : Tape) : t.read = t.cellAt t.head := by
   simp only [read, cellAt, le_refl, ↓reduceIte, sub_self, Int.toNat_zero]
   cases t.right <;> rfl
 
-lemma cellAt_write (t : Tape) (o : Option ℕ) (z : ℤ) :
+public lemma cellAt_write (t : Tape) (o : Option ℕ) (z : ℤ) :
     (t.write o).cellAt z = if z = t.head then o else t.cellAt z := by
   unfold cellAt write
   split_ifs with h₁ h₂ <;> simp only at *
@@ -90,7 +92,8 @@ lemma cellAt_write (t : Tape) (o : Option ℕ) (z : ℤ) :
     rcases t.right with _ | ⟨a, r⟩ <;> simp
   · omega
 
-lemma cellAt_move (t : Tape) (m : SignType) (z : ℤ) : (t.move m).cellAt z = t.cellAt z := by
+public lemma cellAt_move (t : Tape) (m : SignType) (z : ℤ) :
+    (t.move m).cellAt z = t.cellAt z := by
   unfold cellAt move
   rcases m with _ | _ | _ <;> simp only <;> split_ifs <;> try omega
   · obtain ⟨n, hn⟩ : ∃ n, (z - (t.head - 1)).toNat = n + 1 := ⟨(z - t.head).toNat, by omega⟩
@@ -137,7 +140,7 @@ public structure SCfg.WellShaped (k : ℕ) (x : List ℕ) (s : SCfg) : Prop wher
   length_workTapes : s.workTapes.length = k
   inputPos_le : s.inputPos ≤ x.length + 1
 
-lemma moveInput_val (p : Fin (x.length + 2)) (m : SignType) :
+public lemma moveInput_val (p : Fin (x.length + 2)) (m : SignType) :
     moveInput p.val (inputSymbol x p.val) m = (moveInputPos p m).val := by
   have := val_moveInputPos_eq p m
   have hs := isSome_inputSymbol x p.val
@@ -155,13 +158,15 @@ lemma moveInput_val (p : Fin (x.length + 2)) (m : SignType) :
         · exact absurd hc h
       · omega
 
-lemma applyTapes_ofFn (ts : Fin k → Tape) (as : Fin k → Option (Option ℕ) × SignType) :
+public lemma applyTapes_ofFn (ts : Fin k → Tape)
+    (as : Fin k → Option (Option ℕ) × SignType) :
     applyTapes (List.ofFn ts) (List.ofFn as) = List.ofFn fun i => (ts i).apply (as i) := by
   induction k with
   | zero => rfl
   | succ k ih => simp [List.ofFn_succ, applyTapes, ih]
 
-lemma inputSymbol_val (c : Cfg k ℕ ℕ x) : inputSymbol x c.inputPos.val = c.inputSymbol := by
+public lemma inputSymbol_val {State : Type*} (c : Cfg k ℕ State x) :
+    inputSymbol x c.inputPos.val = c.inputSymbol := by
   unfold inputSymbol Cfg.inputSymbol
   have := c.inputPos.isLt
   split_ifs <;> grind [List.head?_drop, Fin.ext_iff]
@@ -218,7 +223,8 @@ public theorem toCfg_step {tm : MultiTapeTM k ℕ ℕ} {d : Desc} {s : SCfg} {ou
         Tape.cellAt_move, Action.apply_workTapes]
       cases (a.workTapes i).1 <;>
         simp [Tape.cellAt_write, Function.update_apply, c, SCfg.toCfg]
-    · simp [SCfg.toCfg, Act.apply, Act.ofAction, applyTapes_ofFn, Tape.apply, Tape.head_move, c]
+    · simp only [SCfg.toCfg, Act.apply, Act.ofAction, applyTapes_ofFn, List.getD_ofFn,
+        Tape.apply, Tape.head_move, c]
       cases (a.workTapes i).1 <;> simp [Tape.write]
     · simp [SCfg.toCfg, Act.ofAction, c]
 

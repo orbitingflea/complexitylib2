@@ -29,9 +29,9 @@ public section
 
 namespace Turing.MultiTapeTM
 
-universe u
+universe u v
 
-variable {α β : Type u}
+variable {α : Type u} {β : Type v}
 
 /-- `unframe` recovers the first component of an `encPair` word. -/
 theorem unframe_encPair (enc₁ : α ↪ List Bool) (enc₂ : β ↪ List Bool) (a : α) (b : β) :
@@ -44,12 +44,12 @@ theorem dropFrame_encPair (enc₁ : α ↪ List Bool) (enc₂ : β ↪ List Bool
   dropFrame_frame_append (enc₁ a) (enc₂ b)
 
 /-- `unframe_encPair` for a raw bit-string first component. -/
-theorem unframe_encPair_encBits {γ : Type} (enc : γ ↪ List Bool) (a : List Bool) (b : γ) :
+theorem unframe_encPair_encBits {γ : Type*} (enc : γ ↪ List Bool) (a : List Bool) (b : γ) :
     unframe (encPair encBits enc (a, b)) = a :=
   unframe_encPair encBits enc a b
 
 /-- `dropFrame_encPair` for a raw bit-string second component. -/
-theorem dropFrame_encPair_encBits {γ : Type} (enc : γ ↪ List Bool) (a : γ) (b : List Bool) :
+theorem dropFrame_encPair_encBits {γ : Type*} (enc : γ ↪ List Bool) (a : γ) (b : List Bool) :
     dropFrame (encPair enc encBits (a, b)) = b :=
   dropFrame_encPair enc encBits a b
 

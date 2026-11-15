@@ -58,8 +58,9 @@ write programs over `ℕ → ℕ`.
   `(idx % w) * k < 2 ^ w` for all `w ≥ 1` and `k ≤ w`.
 * `wordOffset_eq_mul_div`, `bitOffset_eq_mul_mod`: equivalence of the overflow-free formula with
   `(idx * k) / w` and `(idx * k) % w`.
-* `readPacked_writePacked_self`, `readPacked_writePacked_of_ne`, `writePacked_outside`,
-  `readPacked_zero`: exact array laws for `readPacked` and `writePacked`.
+* `readPacked_writePacked_self`, `readPacked_writePacked_of_ne`,
+  `readPacked_writePacked_bounded`, `writePacked_outside`, `readPacked_zero`: exact array laws
+  for `readPacked` and `writePacked`.
 * `readPackedCode_execWithin`, `writePackedCode_execWithin`: `O(1)`-step execution certificates for
   `readPackedCode` and `writePackedCode`.
 -/
@@ -578,6 +579,17 @@ theorem readPacked_writePacked_of_ne {base k w : ℕ} (hw : 0 < w) (mem : ℕ �
   have hid0' : wordOffset k w idx' * w + bitOffset k w idx' = idx' * k :=
     wordOffset_mul_add_bitOffset
   omega
+
+/-- A packed write updates the bounded logical array and preserves its zero padding. -/
+theorem readPacked_writePacked_bounded {base N k w idx val : ℕ}
+    (hw : 0 < w) (hidx : idx < N) (hval : val < 2 ^ k) (mem : ℕ → ℕ) :
+    (fun j => if j < N then readPacked base k w (writePacked base k w mem idx val) j else 0) =
+      Function.update (fun j => if j < N then readPacked base k w mem j else 0) idx val := by
+  refine Function.eq_update_iff.mpr ⟨?_, fun j hj => ?_⟩
+  · simpa only [hidx, ↓reduceIte] using readPacked_writePacked_self base k w mem idx hval
+  · split_ifs
+    · exact readPacked_writePacked_of_ne hw mem hj val
+    · rfl
 
 /-- Writing at `idx < N` leaves all memory addresses outside `[base, base + packedWords N k w)`
 unchanged. -/

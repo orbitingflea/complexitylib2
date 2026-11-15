@@ -55,7 +55,7 @@ input prefix, and the uniform-round corollary reuses the complete single-pass co
 
 namespace Turing.MultiTapeTM
 
-universe u
+universe u v
 
 variable {α σ : Type*}
 
@@ -132,7 +132,8 @@ public theorem read_rawFrameReader (w rest : List Bool) :
 
 -- upstream: candidate
 /-- A typed streaming phase starting after an input prefix `pre`. -/
-public theorem transformsTapesAt_streamLoop_encoded_after {α σ : Type u} {Q SE SN : Type*} {K : ℕ}
+public theorem transformsTapesAt_streamLoop_encoded_after {α : Type u} {σ : Type v}
+    {Q SE SN : Type*} {K : ℕ}
     {encA : α ↪ List Bool} {encS : σ ↪ List Bool}
     {E : MultiTapeTM K Bool SE} {Nm : MultiTapeTM K Bool SN} {V N F : Fin K}
     (r : InputReader Bool Q) (tok : α → List Bool) (htok : ∀ a, tok a ≠ [])
@@ -230,7 +231,8 @@ public theorem transformsTapesAt_streamLoop_encoded_after {α σ : Type u} {Q SE
 and the callbacks receive the ordinary pair encoding. `roundCost` charges callback time and
 copying of the current state, next state and decoded element. The phase leaves its final state
 on tape `V` and the input cursor just past the last token, so another phase can consume them. -/
-public theorem transformsTapesAt_streamLoop_encoded {α σ : Type u} {Q SE SN : Type*} {K : ℕ}
+public theorem transformsTapesAt_streamLoop_encoded {α : Type u} {σ : Type v}
+    {Q SE SN : Type*} {K : ℕ}
     {encA : α ↪ List Bool} {encS : σ ↪ List Bool}
     {E : MultiTapeTM K Bool SE} {Nm : MultiTapeTM K Bool SN} {V N F : Fin K}
     (r : InputReader Bool Q) (tok : α → List Bool) (htok : ∀ a, tok a ≠ [])
@@ -279,7 +281,8 @@ initialization, the actual round costs `roundCost` (each round's computation, cu
 states, decoded element storage and control), finalization, input scanning and cleanup. Workspace
 adds the initialization's to the peak callback workspace `sMax` and the stored-word bound `lMax`;
 output is emitted directly and does not count as workspace. -/
-public theorem ComputableTidilyInTimeAndSpace.streamFold_sum_after {α σ : Type u} {γ ε φ ω : Type*}
+public theorem ComputableTidilyInTimeAndSpace.streamFold_sum_after {α : Type u} {σ : Type v}
+    {γ ε φ ω : Type*}
     {encA : α ↪ List Bool} {encS : σ ↪ List Bool} {encE : ε ↪ List Bool} {encF : φ ↪ List Bool}
     {encIn : γ ↪ List Bool} {encOut : ω ↪ List Bool} {Q : Type} [Finite Q]
     (r : InputReader Bool Q) (tok : α → List Bool) (htok : ∀ a, tok a ≠ [])
@@ -465,7 +468,8 @@ is tidily computable. The time bound sums `roundCost`, including each round's co
 and next states, decoded element storage and control. Initialization, finalization, input scanning
 and cleanup are charged separately. `sMax` and `lMax` bound peak callback workspace and stored
 words; output is emitted directly and does not count as workspace. -/
-public theorem ComputableTidilyInTimeAndSpace.streamFold_sum {α σ : Type u} {γ ε φ ω : Type*}
+public theorem ComputableTidilyInTimeAndSpace.streamFold_sum {α : Type u} {σ : Type v}
+    {γ ε φ ω : Type*}
     {encA : α ↪ List Bool} {encS : σ ↪ List Bool} {encE : ε ↪ List Bool} {encF : φ ↪ List Bool}
     {encIn : γ ↪ List Bool} {encOut : ω ↪ List Bool} {Q : Type} [Finite Q]
     (r : InputReader Bool Q) (tok : α → List Bool) (htok : ∀ a, tok a ≠ [])
@@ -537,7 +541,8 @@ by the words emitted by the fold over `elems x` followed by `finish` of its fina
 is tidily computable. Its time is linear in the input plus the rounds. Workspace uses peak bounds
 on states, elements and callbacks. The bounds `tMax`, `sMax` and `lMax` bound the time and space
 of a round and the lengths of the states and elements. -/
-public theorem ComputableTidilyInTimeAndSpace.streamFold {α σ : Type u} {γ ε φ ω : Type*}
+public theorem ComputableTidilyInTimeAndSpace.streamFold {α : Type u} {σ : Type v}
+    {γ ε φ ω : Type*}
     {encA : α ↪ List Bool} {encS : σ ↪ List Bool} {encE : ε ↪ List Bool} {encF : φ ↪ List Bool}
     {encIn : γ ↪ List Bool} {encOut : ω ↪ List Bool} {Q : Type} [Finite Q]
     (r : InputReader Bool Q) (tok : α → List Bool) (htok : ∀ a, tok a ≠ [])
@@ -590,7 +595,8 @@ initial state `frame (encS (init x))` followed directly by the concatenated toke
 copies the framed initial state onto tape `V` and leaves the input cursor at the start of the
 token stream, so the tokens are streamed directly from the input tape without copying the remainder
 of the input onto work tapes. -/
-public theorem ComputableTidilyInTimeAndSpace.streamFold_pair_sum {α σ : Type u} {γ ε φ ω : Type*}
+public theorem ComputableTidilyInTimeAndSpace.streamFold_pair_sum {α : Type u} {σ : Type v}
+    {γ ε φ ω : Type*}
     {encA : α ↪ List Bool} {encS : σ ↪ List Bool} {encE : ε ↪ List Bool} {encF : φ ↪ List Bool}
     {encIn : γ ↪ List Bool} {encOut : ω ↪ List Bool} {Q : Type} [Finite Q]
     (r : InputReader Bool Q) (tok : α → List Bool) (htok : ∀ a, tok a ≠ [])

@@ -42,8 +42,10 @@ and cost lemmas and uniform parameter-free `Realizes .exact` certificates (`real
 * `Cslib.DataStructure.Dictionary.WordRAM.BitPackedArray.clientResult_writePackedProg`,
   `Cslib.DataStructure.Dictionary.WordRAM.BitPackedArray.clientState_writePackedProg`,
   `Cslib.DataStructure.Dictionary.WordRAM.BitPackedArray.memoryCost_writePackedProg`,
-  `Cslib.DataStructure.Dictionary.WordRAM.BitPackedArray.validHistory_writePackedProg`:
-  `Memory.spec` characterization and admissibility of `writePackedProg`.
+  `Cslib.DataStructure.Dictionary.WordRAM.BitPackedArray.validHistory_writePackedProg`,
+  `Cslib.DataStructure.Dictionary.WordRAM.BitPackedArray.wellFormed_clientState_writePackedProg`:
+  `Memory.spec` characterization, admissibility, and well-formedness preservation of
+  `writePackedProg`.
 * `Cslib.DataStructure.Dictionary.WordRAM.BitPackedArray.readPackedCode_not_readsWidth`,
   `Cslib.DataStructure.Dictionary.WordRAM.BitPackedArray.writePackedCode_not_readsWidth`:
   width-opcode freedom (`¬ReadsWidth`) of `readPackedCode` and `writePackedCode`.
@@ -179,6 +181,15 @@ theorem validHistory_writePackedProg {w base offset N k idx val : ℕ} {s : Memo
     (base + offset + wOff + 1 < s.frontier ∧
       Fits w (mem₁ (base + offset + wOff + 1) ^^^ ((old₁ ^^^ val₁) <<< 0))) ∧ True)
   exact ⟨by omega, ⟨by omega, hw0⟩, by omega, ⟨by omega, hw1⟩, trivial⟩
+
+/-- `writePackedProg` preserves `Memory.WellFormed w` at every interpreter width `w'` whenever
+`0 < w` and `k ≤ w`. -/
+theorem wellFormed_clientState_writePackedProg {w w' base offset k idx val : ℕ}
+    {s : Memory.State} (hw : 0 < w) (hkw : k ≤ w) (hwf : Memory.WellFormed w s) :
+    Memory.WellFormed w
+      ((Memory.spec w').clientState s (writePackedProg base offset k w idx val)) := by
+  rw [clientState_width, clientState_writePackedProg]
+  exact ⟨hwf.1, writePacked_lt_two_pow hw hkw hwf.2 idx val⟩
 
 /-- `readPackedCode` does not invoke `Op.width`. -/
 theorem readPackedCode_not_readsWidth :
