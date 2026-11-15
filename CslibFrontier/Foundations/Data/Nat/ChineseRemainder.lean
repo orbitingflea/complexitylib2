@@ -10,6 +10,7 @@ module
 public import CslibFrontier.Init
 public import Mathlib.Data.Nat.ModEq
 public import Mathlib.Data.ZMod.Basic
+import CslibFrontier.Foundations.Data.ZMod.NatCast
 import Mathlib.Tactic.LinearCombination
 import Mathlib.Tactic.Linarith
 
@@ -61,10 +62,9 @@ theorem crtCombine_modEq_left (D L a xL inv : ℕ) : crtCombine D L a xL inv ≡
 every `a` and `xL`. -/
 theorem crtCombine_modEq_right {D L inv : ℕ} (hL : 0 < L) (hinv : (inv : ZMod L) * D = 1)
     (a xL : ℕ) : crtCombine D L a xL inv ≡ xL [MOD L] := by
-  have hneg : ((L - a % L : ℕ) : ZMod L) = -a := by
-    rw [Nat.cast_sub (Nat.mod_lt a hL).le, ZMod.natCast_self, ZMod.natCast_mod, zero_sub]
+  have : NeZero L := ⟨hL.ne'⟩
   rw [← ZMod.natCast_eq_natCast_iff, crtCombine, Nat.cast_add, Nat.cast_mul, ZMod.natCast_mod,
-    Nat.cast_mul, Nat.cast_add, hneg]
+    Nat.cast_mul, Nat.cast_add, ZMod.natCast_sub_mod_eq_neg]
   linear_combination ((xL : ZMod L) - a) * hinv
 
 /-- **Chinese Remainder Theorem reconstruction** (the two-modulus case of the CRT used in

@@ -17,6 +17,7 @@ import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.BinaryDiv
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 import CslibFrontier.Crypto.Negligible.Basic
+import CslibFrontier.Foundations.Data.ZMod.NatCast
 import CslibFrontier.Probability.PMF
 import CslibFrontier.Tactic.PPT
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Encodings.Nat.WordsRoundTrip
@@ -300,8 +301,7 @@ theorem eval_schnorrSimulateWord (i : ℕ × F.Desc) (u : F.Carrier i.2) (c : ZM
         (Prod.map (F.schnorrEncoding.commitment i) (F.schnorrEncoding.response i)) := by
   obtain ⟨n, d⟩ := i
   have hneg : ((F.order d - c.val % F.order d : ℕ) : ZMod (F.order d)) = -c := by
-    rw [Nat.mod_eq_of_lt (ZMod.val_lt c), Nat.cast_sub (ZMod.val_lt c).le, ZMod.natCast_self,
-      ZMod.natCast_zmod_val, zero_sub]
+    rw [ZMod.natCast_sub_mod_eq_neg, ZMod.natCast_zmod_val]
   rw [show (F.schnorrEncoding.statement (n, d)) u = F.encode d u from rfl,
     show (F.schnorrEncoding.challenge (n, d)) c = encNat c.val from rfl,
     schnorrSimulateWord, ProbComp.eval_bind, schnorrSimulator, ProbComp.eval_map,
@@ -606,12 +606,8 @@ of `z • g - roOut • u`. -/
     F.schnorrRecoverCommitBits (d, F.encode d u, roOut, z) =
       F.encode d ((ofBits z : ZMod (F.order d)) • F.generator d -
         (ofBits roOut : ZMod (F.order d)) • u) := by
-  have hneg : ((F.order d - ofBits roOut % F.order d : ℕ) : ZMod (F.order d)) =
-      -(ofBits roOut : ZMod (F.order d)) := by
-    rw [Nat.cast_sub (Nat.mod_lt _ (F.prime_order d).pos).le, ZMod.natCast_self,
-      ZMod.natCast_mod, zero_sub]
-  simp only [schnorrRecoverCommitBits, F.smul_encode, F.add_encode, hneg, neg_smul,
-    ← sub_eq_add_neg]
+  simp only [schnorrRecoverCommitBits, F.smul_encode, F.add_encode, ZMod.natCast_sub_mod_eq_neg,
+    neg_smul, ← sub_eq_add_neg]
 
 /-- Polynomial-time Schnorr verification on an encoded public key `pk`, commitment word `t`,
 challenge word `c`, and response word `z`: compares `t` with the canonical commitment recovery

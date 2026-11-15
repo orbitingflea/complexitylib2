@@ -61,21 +61,6 @@ theorem coins_repeatedEdgeVerifier (width repeats : ℕ) (decode : (Fin width �
     (repeatedEdgeVerifier width repeats decode eval).coins g =
       repeats * Nat.clog 2 g.edges.length := rfl
 
-private theorem listRow_flatten_ofFn {count : ℕ} (width : ℕ)
-    (rows : Fin count → List Bool) (hlen : ∀ i, (rows i).length = width) (i : Fin count) :
-    BitString.listRow width i.val (List.ofFn rows).flatten = rows i := by
-  let bits := fun i => BitString.ofList width (rows i)
-  have hrows : (fun i => List.ofFn (bits i)) = rows := by
-    funext i
-    exact BitString.ofFn_ofList (hlen i)
-  have hpack : (List.ofFn rows).flatten =
-      List.ofFn (BitString.blocksEquiv.symm bits) := by
-    rw [BitString.ofFn_blocksEquiv_symm, hrows]
-  rw [hpack, BitString.listRow_eq_ofFn, BitString.ofList_ofFn]
-  change List.ofFn (BitString.blocksEquiv (BitString.blocksEquiv.symm bits) i) = rows i
-  rw [Equiv.apply_symm_apply]
-  exact BitString.ofFn_ofList (hlen i)
-
 private theorem listRow_flatMap_range {count : ℕ} (width : ℕ)
     (rows : ℕ → List Bool) (hlen : ∀ i < count, (rows i).length = width) (i : Fin count) :
     BitString.listRow width i.val ((List.range count).flatMap rows) = rows i := by
@@ -84,7 +69,7 @@ private theorem listRow_flatMap_range {count : ℕ} (width : ℕ)
   have hflat : ((List.range count).map rows).flatten = (List.range count).flatMap rows := by
     simp [List.flatten_eq_flatMap, List.flatMap_map]
   rw [← hflat, hmap]
-  exact listRow_flatten_ofFn width _ (fun i => hlen i i.isLt) i
+  exact BitString.listRow_flatten_ofFn _ (fun i => hlen i i.isLt) i
 
 /-- Repeated checks retain a fixed answer block even when a selected edge is padding. -/
 @[simp]

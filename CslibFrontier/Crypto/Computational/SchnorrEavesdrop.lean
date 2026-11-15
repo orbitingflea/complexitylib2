@@ -17,6 +17,7 @@ import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Encodings.Nat.WordsRoundTrip
 import CslibFrontier.Computability.Probabilistic.Repeat
 import CslibFrontier.Crypto.Game.Order
+import CslibFrontier.Foundations.Data.ZMod.NatCast
 import CslibFrontier.Languages.Probabilistic.Norm
 import CslibFrontier.Probability.PMF
 import CslibFrontier.Probability.Uniform.Translate
@@ -248,12 +249,9 @@ private theorem eval_schnorrSimulateWord_bits (n : ℕ) (d : F.Desc) (u : F.Carr
       ((ProbComp.eval (F.sampleExp n d)).map (Nat.cast : ℕ → ZMod (F.order d))).map
         fun z => (F.encode d (z • F.generator d - (ofBits c : ZMod (F.order d)) • u),
           z.val.bits) := by
-  have hneg : ((F.order d - ofBits c % F.order d : ℕ) : ZMod (F.order d)) =
-      -(ofBits c : ZMod (F.order d)) := by
-    rw [Nat.cast_sub (Nat.mod_lt _ (F.prime_order d).pos).le, ZMod.natCast_self,
-      ZMod.natCast_mod, zero_sub]
   rw [schnorrSimulateWord, ProbComp.eval_bind, PMF.map_comp]
-  simp only [ProbComp.eval_pure, F.smul_encode, F.add_encode, hneg, neg_smul, ← sub_eq_add_neg]
+  simp only [ProbComp.eval_pure, F.smul_encode, F.add_encode, ZMod.natCast_sub_mod_eq_neg,
+    neg_smul, ← sub_eq_add_neg]
   rw [← PMF.bind_pure_comp]
   congr 1 with a : 1
   simp only [Function.comp_apply, ZMod.val_natCast]

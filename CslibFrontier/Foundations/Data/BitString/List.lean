@@ -188,6 +188,13 @@ theorem listRow_flatten {width : ℕ} {words : List (List Bool)}
   simpa [List.getD_eq_getElem?_getD, List.getElem?_eq_getElem hi] using
     listRow_flatMap_append id words hwords [] i hi
 
+/-- Row `i` of the flattened list of `count` words of width `width` is word `i`. -/
+theorem listRow_flatten_ofFn {count width : ℕ} (rows : Fin count → List Bool)
+    (hrows : ∀ i, (rows i).length = width) (i : Fin count) :
+    listRow width i (List.ofFn rows).flatten = rows i := by
+  rw [listRow_flatten (by simpa [List.mem_ofFn] using fun _ => hrows _) (by simp)]
+  simp [List.getD_eq_getElem?_getD]
+
 /-- List slicing agrees with the finite block representation, even on short input lists. -/
 theorem listRow_eq_ofFn {count : ℕ} (width : ℕ) (row : Fin count) (word : List Bool) :
     listRow width row.val word = List.ofFn (block (ofList (count * width) word) row) := by

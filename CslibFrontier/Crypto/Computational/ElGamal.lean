@@ -16,6 +16,7 @@ import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime
 import CslibFrontier.Computability.Probabilistic.PPT.Capture
 import CslibFrontier.Computability.Probabilistic.PPT.Extension
 import CslibFrontier.Crypto.Negligible.Basic
+import CslibFrontier.Foundations.Data.ZMod.NatCast
 import CslibFrontier.Probability.PMF
 import CslibFrontier.Tactic.GameHop
 import CslibFrontier.Tactic.Negligible
@@ -308,11 +309,8 @@ def decodeElGamal (input : F.Desc × ℕ × List Bool × List Bool) : List Bool 
 theorem decodeElGamal_encode (d : F.Desc) (a : ℕ) (v e : F.Carrier d) :
     F.decodeElGamal (d, a, F.encode d v, F.encode d e) =
       F.encode d (F.elGamalDecrypt d (a : ZMod (F.order d)) (v, e)) := by
-  have hneg : ((F.order d - a % F.order d : ℕ) : ZMod (F.order d)) = -(a : ZMod (F.order d)) := by
-    rw [Nat.cast_sub (Nat.le_of_lt (Nat.mod_lt _ (F.prime_order d).pos)), ZMod.natCast_self,
-      ZMod.natCast_mod, zero_sub]
-  simp only [decodeElGamal, F.smul_encode, hneg, neg_smul, F.add_encode, elGamalDecrypt,
-    sub_eq_add_neg]
+  simp only [decodeElGamal, F.smul_encode, ZMod.natCast_sub_mod_eq_neg, neg_smul, F.add_encode,
+    elGamalDecrypt, sub_eq_add_neg]
 
 /-- Encoded ElGamal decryption of an honest encryption recovers the encoded message. -/
 @[simp] theorem decodeElGamal_elGamalEncrypt (d : F.Desc) (a : ℕ) (β : ZMod (F.order d))
