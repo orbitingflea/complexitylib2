@@ -138,6 +138,18 @@ the maximum count and width-zero indices. The ordinary-module
 [checked clients](../../CslibFrontierTests/CountingHierarchy.lean) exercise those cases,
 binary interval restrictions, signed cancellation and the decision conversion.
 
+For the numerical prime-product estimates used by sign recovery, import
+[`PrimeWindowBounds`](../../CslibFrontier/Foundations/NumberTheory/PrimeWindowBounds.lean).
+The window is `Nat.primesLE Y \ Nat.primesLE L`, so it excludes `L` and includes `Y`.
+For `16 ≤ Z` and `L ≤ Z`, the cutoff `Y = 2 * Z ^ 4` leaves at least `3 * Z` primes;
+their product lies between `2 ^ (3 * Z)` and `2 ^ (Y * Y.size)` and exceeds
+`6 * 2 ^ m` whenever `m ≤ Z`. These are mathematical bounds, without a computational
+certificate for the prime product. The same module bounds `Y.size` by `4 * Z.size + 3`,
+the width of every `k ≤ Y * Y.size + 1` by `8 * Z.size + 8`, and the precision exponent
+`Y.size + 10` by `4 * Z.size + 13`. The
+[ordinary-import client](../../CslibFrontierTests/PrimeWindowBounds.lean) combines the bounds
+at `Z = max 16 (max m L)` and checks open/closed and empty-window endpoints.
+
 The [development issue](https://github.com/cslib-community/cslib-frontier/issues/5619) retains
 the remaining finite-field product and CRT sign-recovery objectives. This foundation alone does
 not certify those bounds or the downstream real-feasibility theorem.

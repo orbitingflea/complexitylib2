@@ -14,6 +14,7 @@ public import CslibFrontier.Crypto.Computational.Factoring
 public import CslibFrontier.Crypto.Computational.RSATrapdoor
 public import Mathlib.Data.Nat.ChineseRemainder
 import CslibFrontier.Crypto.Negligible.Basic
+import CslibFrontier.Foundations.Algebra.Group.ZPowCoprime
 import CslibFrontier.Probability.PMF
 import CslibFrontier.Tactic.PPT
 import Mathlib.Data.Nat.Sqrt
@@ -174,7 +175,7 @@ theorem commonModulusAttack_rsaEval {N e₁ e₂ m : ℕ} (he : Nat.Coprime e₁
   have hbezout : (e₁ : ℤ) * Nat.gcdA e₁ e₂ + e₂ * Nat.gcdB e₁ e₂ = 1 := by
     rw [← Nat.gcd_eq_gcd_ab, he.gcd_eq_one, Nat.cast_one]
   rw [commonModulusAttack, hcast, hcast, ← zpow_natCast, ← zpow_natCast, zmodIntPow_units,
-    zmodIntPow_units, ← Units.val_mul, ← zpow_mul, ← zpow_mul, ← zpow_add, hbezout, zpow_one,
+    zmodIntPow_units, ← Units.val_mul, ← eq_zpow_mul_zpow_of_zpow_eq (c := u) hbezout rfl rfl,
     ZMod.coe_unitOfCoprime]
 
 /-! ### Small messages and the broadcast attack -/

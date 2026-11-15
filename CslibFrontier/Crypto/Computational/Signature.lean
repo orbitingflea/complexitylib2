@@ -316,7 +316,10 @@ theorem isPPT_eufCmaGame (S : SignatureScheme) {adversary : Forger}
   ((S.isPPTOn_eufCmaGame hadversary).preprocess (ComputableInPolyTime.fst _ _)).isPPT
 
 /-- Existential unforgeability under adaptive chosen-message attack (EUF-CMA) against uniform
-strict oracle-PPT adversaries. -/
+strict oracle-PPT adversaries: [BonehShoup2023], Attack Game 13.1 and Definition 13.2
+(pp. 529–530), for the message space of `n`-bit words. The signing oracle signs words of any
+length, while a forgery counts only on an `n`-bit message; in the source, signing queries lie in
+the message space. -/
 def EUFCMA (S : SignatureScheme) : Prop :=
   Game.Indistinguishable
     (fun adversary n => ProbComp.eval (S.eufCmaGame adversary n))
@@ -453,7 +456,11 @@ theorem isPPT_eufOneTimeGame (S : SignatureScheme) {adversary : Forger}
   ((S.isPPTOn_eufOneTimeGame hadversary).preprocess (ComputableInPolyTime.fst _ _)).isPPT
 
 /-- Existential unforgeability under one-time adaptive chosen-message attack against uniform strict
-oracle-PPT adversaries. -/
+oracle-PPT adversaries: a secure one-time signature in the sense of [BonehShoup2023],
+Definition 14.1 (p. 583), that is, Attack Game 13.1 (pp. 529–530) with at most one signing query,
+for the message space of `n`-bit words. The oracle answers only the first query. It signs a word of
+any length, while a forgery counts only on an `n`-bit message; in the source, signing queries lie
+in the message space. -/
 def OneTimeEUFCMA (S : SignatureScheme) : Prop :=
   Game.Indistinguishable
     (fun adversary n => ProbComp.eval (S.eufOneTimeGame adversary n))

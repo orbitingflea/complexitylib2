@@ -22,6 +22,7 @@ qualified names without depending on a machine calculus. The bounds `Nat.size_ad
 also serve the logarithmic terms of Kolmogorov complexity. `Nat.size_eq_log_two_add_one`,
 `Nat.size_le_log_two_add_one` and `Nat.log2_eq_size_sub_one` relate the binary length to
 `⌊log₂ n⌋`, and `Nat.log2_le_size` compares the floor binary logarithm with the binary length.
+`Nat.size_mul_size_add_one_le` bounds the width of indices up to `Y * Y.size + 1`.
 -/
 
 public section
@@ -92,5 +93,15 @@ theorem log2_le_size (n : ℕ) : Nat.log2 n ≤ n.size := by
   by_cases hz : n = 0
   · subst n; decide
   · exact ((Nat.log2_lt hz).mpr (Nat.lt_size_self n)).le
+
+/-- The binary width of a number at most `Y * Y.size + 1` is at most `2 * Y.size + 2`. -/
+theorem size_mul_size_add_one_le {Y k : ℕ} (hk : k ≤ Y * Y.size + 1) :
+    k.size ≤ 2 * Y.size + 2 := by
+  have hk' := Nat.size_le_size hk
+  have hadd := Nat.size_add_le (Y * Y.size) 1
+  have hmul := Nat.size_mul_le Y Y.size
+  have hself := Nat.size_le_self Y.size
+  have hone : Nat.size 1 = 1 := by decide
+  omega
 
 end Nat

@@ -254,7 +254,10 @@ def TargetCollisionResistantOn
     (fun _ _ => PMF.pure false)
     TargetCollisionFinder.IsPPT
 
-/-- Unrestricted target collision resistance on all bit strings `List Bool`. -/
+/-- Unrestricted target collision resistance on all bit strings `List Bool`:
+`TargetCollisionResistantOn` with every word valid. This is [BonehShoup2023], Attack Game 8.5 and
+Definition 8.7 (pp. 337–338) for the keyed hash `H n` with uniform `keyLen n`-bit keys, against
+uniform strict PPT two-stage adversaries. -/
 abbrev TargetCollisionResistant
     (keyLen : ℕ → ℕ) (H : ℕ → List Bool → List Bool → List Bool) : Prop :=
   TargetCollisionResistantOn keyLen H (fun _ _ => true)
@@ -400,7 +403,9 @@ theorem computableInPolyTime_validInput (C : KeyedCompressionFamily) :
     fun _ => rfl
 
 /-- Target collision resistance (UOWHF compression security) of `C` on `2 * C.blockLen n`-bit
-inputs. -/
+inputs: [BonehShoup2023], Attack Game 8.5 and Definition 8.7 (pp. 337–338) for `C.eval n` with
+uniform `C.keyLen n`-bit keys and message space the `2 * C.blockLen n`-bit words, against uniform
+strict PPT two-stage adversaries. -/
 @[expose]
 def TargetCollisionResistant (C : KeyedCompressionFamily) : Prop :=
   TargetCollisionResistantOn C.keyLen C.eval C.validInput
@@ -433,7 +438,10 @@ namespace KeyedHashFamily
 
 attribute [program_certificate] keyLen_polyTime digestLen_polyTime polyTime
 
-/-- Unrestricted target collision resistance (universal one-wayness) of `H` on all `List Bool`. -/
+/-- Unrestricted target collision resistance (universal one-wayness) of `H` on all `List Bool`:
+[BonehShoup2023], Attack Game 8.5 and Definition 8.7 (pp. 337–338) for `H.eval n` with uniform
+`H.keyLen n`-bit keys and every word a message, against uniform strict PPT two-stage
+adversaries. -/
 @[expose]
 def TargetCollisionResistant (H : KeyedHashFamily) : Prop :=
   Cslib.Crypto.TargetCollisionResistant H.keyLen H.eval

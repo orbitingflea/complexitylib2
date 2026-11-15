@@ -209,7 +209,11 @@ theorem isPPT_eufCmaGame (S : WordSignatureScheme) {adversary : Forger}
   ((S.isPPTOn_eufCmaGame hadversary).preprocess (ComputableInPolyTime.fst _ _)).isPPT
 
 /-- Existential unforgeability under adaptive chosen-message attack (`EUFCMA`) on arbitrary
-`List Bool` messages against uniform strict oracle-PPT adversaries. -/
+`List Bool` messages against uniform strict oracle-PPT adversaries: [BonehShoup2023], Attack
+Game 13.1 and Definition 13.2 (pp. 529–530), with every bit string a message. The source's message
+space is a finite set of words of polynomially bounded length; a strict PPT forger queries and
+outputs only words of polynomially bounded length, so this is security on every such message space
+at once. -/
 def EUFCMA (S : WordSignatureScheme) : Prop :=
   Game.Indistinguishable
     (fun adversary n => ProbComp.eval (S.eufCmaGame adversary n))

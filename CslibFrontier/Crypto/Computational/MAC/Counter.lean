@@ -137,8 +137,12 @@ nonce-based verifier accepts. -/
     !issued.contains ((msg, nonce), tag) && M.verify sk msg nonce tag
 
 /-- Strong existential unforgeability of the counter-stateful use of a nonce-based MAC under
-adaptive chosen-message attack ([BonehShoup2023], Section 7.5, with a counter as the nonce)
-against uniform strict oracle-PPT forgers. -/
+adaptive chosen-message attack, against uniform strict oracle-PPT forgers. It is
+[BonehShoup2023], Attack Game 7.4 (p. 274) with the nonces chosen by the signer as a counter, the
+implementation of nonces by a stateful signer that Section 7.5 suggests (p. 273). The forger does
+not choose the nonces, so `NonceMACScheme.SUFCMA` implies this notion (`SUFCMA.counterSufCma`).
+The oracle tags messages of any length, while a forgery counts only with a `msgLen n`-bit
+message. -/
 @[expose] def CounterSUFCMA : Prop :=
   Game.Indistinguishable
     (fun adversary n => ProbComp.eval (M.counterSufCmaGame adversary n))

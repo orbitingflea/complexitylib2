@@ -1090,6 +1090,43 @@ For two-party key exchange secure against passive eavesdroppers ([katzlindell20]
 
 For the RSA least-significant-bit experiment and algebraic attacks on plain RSA, import [`RSALeastSignificantBit.lean`](../../CslibFrontier/Crypto/Computational/RSALeastSignificantBit.lean) and [`RSAAttacks.lean`](../../CslibFrontier/Crypto/Computational/RSAAttacks.lean) ([katzlindell20][katzlindell20], §9.2.5, pp. 334–336, §12.5.1, pp. 436–440, and §12.5.3, pp. 443–445; checked instances are in [`CslibFrontierTests/Crypto/RSALeastSignificantBit.lean`](../../CslibFrontierTests/Crypto/RSALeastSignificantBit.lean) and [`CslibFrontierTests/Crypto/RSAAttacks.lean`](../../CslibFrontierTests/Crypto/RSAAttacks.lean)). `rsaLSBGame` samples `desc ← gen n` and a uniform residue `x ← Fin desc.modulus` (matching `rsaInversionGame` rather than `(ZMod N)ˣ`) and asks an `RSAPredictor` (with `RSAPredictor.IsPPT`, reading `encRSAInput` and writing a bit) for `x.testBit 0` given `pk.eval x`. The library does not state the hard-core property of this bit as an assumption, since the literature proves it from the RSA assumption ([#5578](https://github.com/cslib-community/cslib-frontier/issues/5578)). For odd `N`, `two_pow_mul_mod_mod_two` equates the parity of `2 ^ k * x % N` (`k ≠ 0`) with that of `⌊2 ^ k * x / N⌋`, `lsbRecover_lsbQueries` recovers `x` from the parities of the preimages of the `m` doubling queries `2 ^ (k * e) * y % N` once `N ≤ 2 ^ m`, and `lsbInverter` wins `rsaInversionGame` with probability `1` given a predictor that is always correct on the modulus (`eval_lsbInverter`, `succProbability_rsaInversionGame_lsbInverter`). `computableInPolyTime_lsbQueries`, `computableInPolyTime_lsbRecover`, and `isPPT_lsbInverter` certify uniform strict-PPT efficiency for `lsbInverter` whenever the predictor is PPT, yielding `RSAOneWay.not_frequently_alwaysCorrect_lsbPredictor` on eventually odd moduli; the noisy reconstruction of Theorem 12.31 for predictors with small noticeable bias, and with it the hard-core theorem, remains open. `RSAAttacks.lean` proves plain-RSA multiplicative malleability (`rsaEval_mul`, `rsaInvert_rsaEval_mul`), common-modulus recovery of units under coprime exponents via `zmodIntPow` (`commonModulusAttack_rsaEval`), unreduced short-message and pairwise-coprime CRT broadcast `e`-th root recovery (`rsaEval_eq_pow_of_pow_lt`, `eq_of_pow_eq_rsaEval`, `chineseRemainderOfList_rsaEval_eq_pow`, `eq_of_pow_eq_chineseRemainderOfList_rsaEval`), factoring `N` from `(N, φ(N))` (`factorOfTotient_eq`, `RSADesc.factorOfTotient_eq`, `computableInPolyTime_factorOfTotient`), the polynomial-time equivalence `totientHard_iff_modulusFactoringHard` (`TotientHard.modulusFactoringHard`, `ModulusFactoringHard.totientHard`, after Theorem 9.49) between `TotientHard` (`totientGame`) and `ModulusFactoringHard` via `factorToTotient` and `totientToFactor`, the certified PPT hierarchy `RSAOneWay` $\Rightarrow$ `RSAKeyRecoveryHard` (`rsaKeyRecoveryGame`) $\Rightarrow$ `TotientHard` $\Leftrightarrow$ `ModulusFactoringHard` (`RSAOneWay.rsaKeyRecoveryHard`, `RSAOneWay.totientHard`, `RSAOneWay.modulusFactoringHard`, `RSAKeyRecoveryHard.totientHard`, `RSAKeyRecoveryHard.modulusFactoringHard`) via `totientToKeyRecovery`, `keyRecoveryToRSA`, and `factorToRSA` (using the polynomial-time binary modular inverse `BinaryGcd.modInv`, `BinaryGcd.modInv_eq_zmod_inv_val`, and `ComputableInPolyTime.binary_modInv` in [`PolyTime/Nat/Gcd.lean`](../../CslibFrontier/Computability/Machines/Turing/MultiTape/Complexity/PolyTime/Nat/Gcd.lean)), the general nontrivial-square-root factoring lemmas `gcd_sub_one_proper_of_sq_modEq_one` and `gcd_add_one_proper_of_sq_modEq_one` for any `N` and `y`, and the deterministic steps `RSADesc.pow_mul_sub_one_modEq_one`, `RSADesc.gcd_sub_one_proper`, and `RSADesc.gcd_add_one_proper` of Corollary 9.51; the reverse randomized reduction from factoring to `RSAKeyRecoveryHard` (Theorem 9.50 / Corollary 9.51) is not yet formalized.
 
+For Shamir's trick ([bs23][bs23], §10.6.2, Theorem 10.6, p. 416), import
+[`RSACommonRoot.lean`](../../CslibFrontier/Crypto/Computational/RSACommonRoot.lean); the group
+identity behind it is in
+[`Foundations/Algebra/Group/ZPowCoprime.lean`](../../CslibFrontier/Foundations/Algebra/Group/ZPowCoprime.lean).
+In any group, if `a` and `b` commute, `a ^ m = b ^ n` and `m * s + n * t = 1` for integers, then
+`b ^ s * a ^ t` is an `m`-th root of `b` and an `n`-th root of `a`
+(`Commute.zpow_mul_zpow_zpow_eq_right`, `Commute.zpow_mul_zpow_zpow_eq_left`). By
+`eq_zpow_mul_zpow_of_zpow_eq`, still with `m * s + n * t = 1`, any `c` with `c ^ m = b` and
+`c ^ n = a` equals `b ^ s * a ^ t`, even when `a` and `b` do not commute. For commuting `a` and
+`b` and `IsCoprime m n`, `a ^ m = b ^ n` holds exactly when `a = c ^ n` and `b = c ^ m` for some `c`
+(`Commute.zpow_eq_zpow_iff_of_isCoprime`; `zpow_eq_zpow_iff_of_isCoprime` is the form for
+commutative groups). No group order is assumed. `commonRoot n e f w y` is the book's algorithm on
+natural numbers: it returns `y ^ s * (w⁻¹) ^ t mod n` with `s = BinaryGcd.modInv e f`,
+`t = (e * s - 1) / f` and `w⁻¹ = BinaryGcd.modInv w n`, and it returns `y mod n` for `f = 0` and
+`w mod n` for `f = 1`. For `0 < n`, `Nat.Coprime e f`, `Nat.Coprime w n` and
+`w ^ e ≡ y ^ f [MOD n]`, its output `x` satisfies `x ^ e ≡ y [MOD n]`
+(`commonRoot_pow_modEq_right`) and `x ^ f ≡ w [MOD n]` (`commonRoot_pow_modEq_left`); under these
+hypotheses together with `Nat.Coprime y n`, `x` is coprime to `n`, the book's `x ∈ ℤₙ*`
+(`commonRoot_coprime`, which uses `Nat.Coprime y n` only when `f = 0`); for `0 < n` it is below
+`n` (`commonRoot_lt`). `computableInPolyTime_commonRoot` shows that it is computable in polynomial
+time whenever `n`, `e`, `f`, `w` and `y` are, as natural numbers on `encNat`, with no condition on
+their values. The statement differs from the book's in three ways. The exponents are natural
+numbers, whereas the book allows negative ones and applies the theorem with `f = b' - b`
+([bs23][bs23], proof of Theorem 10.7, p. 417). The book states only `x ^ e ≡ y`; the second
+congruence is the one §10.9 uses to recover each proof from an aggregate ([bs23][bs23], §10.9,
+p. 422). The book takes units `w` and `y` modulo `n`, whereas here `w` and `y` are natural numbers,
+not necessarily below `n`, and the two congruences assume only `Nat.Coprime w n`: for `f ≠ 0` it
+makes `y` coprime to `n`, and for `f = 0` they do not need it. Theorems 10.5 and 10.7 and the
+accumulator of §10.9 are not formalized. `commonModulusAttack` in `RSAAttacks.lean` is the same
+algorithm, computed with `Nat.gcdA` and `Nat.gcdB` in `ZMod N` and without a polynomial-time
+certificate; its correctness proof `commonModulusAttack_rsaEval` uses
+`eq_zpow_mul_zpow_of_zpow_eq`. The checked examples for the
+[identity](../../CslibFrontierTests/Foundations/Algebra/ZPowCoprime.lean) and the
+[algorithm](../../CslibFrontierTests/Crypto/RSACommonRoot.lean) include the book's warm-up
+`e = 3`, `f = 2`, the case `f = 1`, and instances showing that coprime exponents, a unit `w` and
+commutativity are needed.
+
 For weak RSA moduli ([bs23][bs23], §16.4.2, pp. 698–699), import
 [`Factoring/WeakModuli.lean`](../../CslibFrontier/Crypto/Computational/Factoring/WeakModuli.lean).
 Moduli sharing a prime are factored by their gcd (`gcd_mul_mul_of_prime_ne`,

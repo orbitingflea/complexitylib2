@@ -201,7 +201,12 @@ def CollisionResistantForOn {Param : Type} {Digest : Param → Type}
       IsPPTOn (encPair encUnary encParam) (encPair encBits encBits)
         (fun p => adversary p.1 p.2))
 
-/-- Unrestricted collision resistance of a setup-parameterized hash family `H`. -/
+/-- Unrestricted collision resistance of a setup-parameterized hash family `H`:
+`CollisionResistantForOn` with every input valid. This is collision resistance as in
+[BonehShoup2023], Attack Game 8.1 and Definitions 8.1–8.2 (pp. 290–291), with the system parameter
+drawn from `setup`, against uniform strict PPT collision finders. The setup law need not be
+efficiently samplable, whereas the source's system parameterization is an efficient algorithm
+(Definition 2.9, p. 30). -/
 abbrev CollisionResistantFor {Param : Type} {Digest : Param → Type}
     [∀ d, DecidableEq (Digest d)]
     (encParam : Param ↪ List Bool) (setup : ℕ → PMF Param)
@@ -424,13 +429,21 @@ theorem isPPT_collisionGame {H : List Bool → List Bool → List Bool}
 
 /-- Collision resistance of a keyed hash family `H` on the valid input domain `valid`:
 specialization of `CollisionResistantForOn` to `Param = List Bool`, `Digest _ = List Bool`,
-`encParam = encBits`, and `setup n = ProbComp.eval (BitString.sampleList n)`. -/
+`encParam = encBits`, and `setup n = ProbComp.eval (BitString.sampleList n)`. This is
+[BonehShoup2023], Attack Game 8.1 and Definitions 8.1–8.2 (pp. 290–291), with a uniform `n`-bit
+key given to the finder as the system parameter, the keyed form that footnote 1 on p. 290 says is
+the same as the source's, and with messages the words that `valid n` accepts. Finders are uniform
+strict PPT. -/
 abbrev CollisionResistantOn (H : List Bool → List Bool → List Bool)
     (valid : ℕ → List Bool → Bool) : Prop :=
   CollisionResistantForOn (Param := List Bool) (Digest := fun _ => List Bool) encBits
     (fun n => ProbComp.eval (BitString.sampleList n)) H (fun n _ => valid n)
 
-/-- Unrestricted collision resistance on all bit strings `List Bool`. -/
+/-- Unrestricted collision resistance on all bit strings `List Bool`: `CollisionResistantOn` with
+every word valid, that is, [BonehShoup2023], Attack Game 8.1 and Definitions 8.1–8.2
+(pp. 290–291), keyed by a uniform `n`-bit key. The source's message spaces are finite sets of
+words of polynomially bounded length; since a strict PPT finder outputs words of polynomially
+bounded length, this is collision resistance on every such message space at once. -/
 abbrev CollisionResistant (H : List Bool → List Bool → List Bool) : Prop :=
   CollisionResistantOn H (fun _ _ => true)
 
@@ -594,9 +607,12 @@ theorem computableInPolyTime_validCompressionInput :
       (encPair encUnary encBits) encBool :=
   .of_tidy computableTidilyInPolyTime_validCompressionInput
 
-/-- A keyed `2n → n` collision-resistant compression family ([BonehShoup2023], Section 8.2):
-computable in deterministic polynomial time, mapping `2n`-bit inputs under an `n`-bit key to
-`n`-bit outputs, and collision-resistant on `2n`-bit inputs. -/
+/-- A keyed `2n → n` collision-resistant compression family: computable in deterministic
+polynomial time, mapping `2n`-bit inputs under an `n`-bit key to `n`-bit outputs, and
+collision-resistant on `2n`-bit inputs (`CollisionResistantOn`). In [BonehShoup2023], Section 8.4
+(pp. 295–296), a compression function is a hash function `h` over `(X × Y, X)` that is collision
+resistant in the sense of Attack Game 8.1 and Definitions 8.1–8.2 (pp. 290–291); here the chaining
+value and the block are one `2n`-bit word, keyed by a uniform `n`-bit key. -/
 structure CompressionFamily (h : List Bool → List Bool → List Bool) : Prop where
   /-- Deterministic polynomial-time evaluation of `(k, x) ↦ h k x`. -/
   polyTime : ComputableInPolyTime (fun p : List Bool × List Bool => h p.1 p.2)
@@ -608,7 +624,10 @@ structure CompressionFamily (h : List Bool → List Bool → List Bool) : Prop w
   collisionResistant : CollisionResistantOn h validCompressionInput
 
 /-- A keyed collision-resistant hash family on arbitrary-length bit strings (`List Bool`), mapping
-every message under an `n`-bit key to an `n`-bit digest. -/
+every message under an `n`-bit key to an `n`-bit digest: a hash function in the sense of
+[BonehShoup2023], Definition 8.2 (pp. 290–291), with a uniform `n`-bit key as its system
+parameter, that is `CollisionResistant` (Attack Game 8.1 and Definition 8.1, p. 290). Digests of
+exactly `n` bits are a restriction of this interface; the source does not require them. -/
 structure HashFamily (H : List Bool → List Bool → List Bool) : Prop where
   /-- Deterministic polynomial-time evaluation of `(k, msg) ↦ H k msg`. -/
   polyTime : ComputableInPolyTime (fun p : List Bool × List Bool => H p.1 p.2)

@@ -144,7 +144,13 @@ noncomputable def wordEufCmaGame {SK : Type} [Fintype Digest] [Nonempty Digest]
 /-- **Existential unforgeability under adaptive chosen-message attack in the random-oracle
 model** (EUF-CMA) of a family of word-interface schemes: every uniform oracle-PPT word forger, run
 on the unary security parameter and the public key, wins `wordEufCmaGame` with negligible
-probability. The digest type, its encoding and the scheme may depend on the security parameter. -/
+probability. The digest type, its encoding and the scheme may depend on the security parameter.
+This is the random oracle version of [BonehShoup2023], Attack Game 13.1 and Definition 13.2
+(pp. 529–530), formed as in Section 8.10.2 (p. 328) and used for full domain hash in Section 13.3
+(p. 535): the challenger and the forger share one random function from words to `Digest n`,
+sampled lazily, and every word is a message. Neither `ROMSignature.Scheme` nor `digestEncoding`
+carries an efficiency or correctness requirement, where Definition 13.1 (pp. 528–529) asks for
+efficient algorithms whose signatures verify. -/
 def EUFCMA {Digest : ℕ → Type} [∀ n, Fintype (Digest n)] [∀ n, Nonempty (Digest n)] {SK : Type}
     (digestEncoding : (n : ℕ) → Digest n ↪ List Bool)
     (scheme : (n : ℕ) → Scheme (List Bool) SK (List Bool) (List Bool) (List Bool) (Digest n)) :
