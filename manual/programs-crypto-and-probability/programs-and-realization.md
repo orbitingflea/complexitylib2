@@ -96,14 +96,16 @@ user-state count, unary operation count, unary initial-state tag, then the trans
 `encList`. The first four fields are framed in turn; the final `encList` tail has one frame per entry.
 Each entry frames its key before the branch-pair tail. Keys put ordinary state/input/work-head
 fields before answer heads, and branches are ordered `false`, then `true`. Consequently `descLen`
-is a rigorous unary model-code length, not an implementation byte size. Invalid initial, successor
-or operation tags halt locally, and an
+is a rigorous unary model-code length, not an implementation byte size; the public component
+bounds put the declared tape, state and operation counts, the initial-state tag and the table
+length below it. Invalid initial, successor or operation tags halt locally, and an
 invalid operation tag makes no external call. `Desc.toMachine` leaves operation dispatch inside a
-finite machine (`Fin operations`), while `Desc.runWith_toMachine` identifies the full output and
-shared-state law for every stateful handler. The supplied fuel remains an external clock and the
-handler's own computation remains outside it. This layer provides syntax and denotation only: it
-does not yet provide a fixed universal interpreter, its controller/copying/marshalling resource
-map, or a PPT/QROM certificate. The complete
+finite machine (`Fin operations`), and `Desc.runOracle` is definitionally the common open-machine
+interpreter applied to that denotation. Its behavior under an arbitrary handler therefore follows
+by unfolding; the supplied fuel remains an external clock and the handler's own computation
+remains outside it. This layer provides syntax and denotation only: it does not yet provide a
+fixed universal interpreter, its controller/copying/marshalling resource map, or a PPT/QROM
+certificate. The complete
 [`OracleDescription.lean` client](../../CslibFrontierTests/OracleDescription.lean) separately runs
 one fixed logging handler and checks adaptive queries, zero clock and malformed-tag boundaries.
 

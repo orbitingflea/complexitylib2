@@ -19,10 +19,11 @@ operations have exactly the modular semantics required by Sections 4 and 6. Inpu
 big-endian, padding uses the 64-bit or 128-bit big-endian message-length field from Section 5.1,
 and the output types record the 32-byte or 64-byte digest length.
 
-The public input predicates enforce the source domains `ℓ < 2^64` for SHA-256 and `ℓ < 2^128`
-for SHA-512, specialized to byte-aligned messages. This is a checked executable specification,
-not a constant-time or machine-costed implementation, a security proof, or a claim of NIST
-validation.
+The public input predicates record the source domains `ℓ < 2^64` for SHA-256 and `ℓ < 2^128`
+for SHA-512, specialized to byte-aligned messages. The hash functions are total executable
+extensions; callers that specify standard-domain inputs can use those predicates separately.
+This module does not prove functional correctness against an independent FIPS model and is not a
+constant-time or machine-costed implementation, a security proof, or a claim of NIST validation.
 
 ## Main definitions
 
@@ -30,6 +31,11 @@ validation.
 * `Cslib.Crypto.SHA2.sha256Pad`, `sha512Pad`: byte-aligned Section 5.1 padding.
 * `Cslib.Crypto.SHA2.sha256Compress`, `sha512Compress`: one-block compression functions.
 * `Cslib.Crypto.SHA2.sha256`, `sha512`: typed 32-byte and 64-byte digests.
+
+## Main results
+
+* `Cslib.Crypto.SHA2.sha256Pad_length_mod`, `sha512Pad_length_mod`: padding produces a whole
+  number of compression blocks.
 
 ## References
 
@@ -229,6 +235,20 @@ def sha512Pad (input : List Byte) : List Byte :=
   input ++ [0x80] ++ List.replicate zeroBytes 0 ++
     (natToFixedBytesBE 16 (8 * input.length)).toList
 
+/-- SHA-256 padding produces a whole number of 64-byte blocks. -/
+@[simp] theorem sha256Pad_length_mod (input : List Byte) :
+    (sha256Pad input).length % 64 = 0 := by
+  simp only [sha256Pad, List.length_append, List.length_cons, List.length_nil,
+    List.length_replicate, FixedBytes.length_toList]
+  omega
+
+/-- SHA-512 padding produces a whole number of 128-byte blocks. -/
+@[simp] theorem sha512Pad_length_mod (input : List Byte) :
+    (sha512Pad input).length % 128 = 0 := by
+  simp only [sha512Pad, List.length_append, List.length_cons, List.length_nil,
+    List.length_replicate, FixedBytes.length_toList]
+  omega
+
 private def blockFromList (blockBytes : ℕ) (input : List Byte) (block : ℕ) :
     FixedBytes blockBytes := fun i => input.getD (block * blockBytes + i.val) 0
 
@@ -250,12 +270,14 @@ private def sha512StateBytes (state : SHA512State) : FixedBytes 64 := fun i =>
   ⟨(state.get ⟨i.val / 8, by omega⟩).toNat / 2 ^ (8 * (7 - i.val % 8)) % 256,
     Nat.mod_lt _ (by decide)⟩
 
-/-- SHA-256 on a byte-aligned message in the FIPS 180-4 input domain. -/
-def sha256 (input : List Byte) (_h : ValidSHA256Input input) : FixedBytes 32 :=
+/-- SHA-256 digest computation on a byte-aligned message. `ValidSHA256Input` records the standard
+input domain separately. -/
+def sha256 (input : List Byte) : FixedBytes 32 :=
   sha256StateBytes (sha256State input)
 
-/-- SHA-512 on a byte-aligned message in the FIPS 180-4 input domain. -/
-def sha512 (input : List Byte) (_h : ValidSHA512Input input) : FixedBytes 64 :=
+/-- SHA-512 digest computation on a byte-aligned message. `ValidSHA512Input` records the standard
+input domain separately. -/
+def sha512 (input : List Byte) : FixedBytes 64 :=
   sha512StateBytes (sha512State input)
 
 end Cslib.Crypto.SHA2

@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import CslibFrontier.DataStructure.FusionTree.Sketch
+public import CslibFrontier.Foundations.Data.Fin.Decode
 public import Mathlib.Order.Interval.Finset.Fin
 
 /-!
@@ -387,8 +388,7 @@ def sketchPredecessor {n : ℕ} (w : ℕ) (keys : Fin n → ℕ) (q : ℕ) : Opt
 
 /-- The successor of the inclusive sketch cut, when present. -/
 def sketchSuccessor {n : ℕ} (w : ℕ) (keys : Fin n → ℕ) (q : ℕ) : Option (Fin n) :=
-  let t := sketchRank w keys q
-  if h : t < n then some ⟨t, h⟩ else none
+  Fin.ofNat? n (sketchRank w keys q)
 
 /-- The predecessor is precisely index `t-1`, using the inclusive convention. -/
 theorem sketchPredecessor_eq_some_iff {n w q : ℕ} {keys : Fin n → ℕ} (i : Fin n) :
@@ -415,11 +415,11 @@ theorem sketchPredecessor_eq_some_iff {n w q : ℕ} {keys : Fin n → ℕ} (i : 
 theorem sketchSuccessor_eq_some_iff {n w q : ℕ} {keys : Fin n → ℕ} (i : Fin n) :
     sketchSuccessor w keys q = some i ↔ i.val = sketchRank w keys q := by
   unfold sketchSuccessor
-  dsimp only
-  split
-  · simp only [Option.some.injEq, Fin.ext_iff]
+  by_cases h : sketchRank w keys q < n
+  · rw [Fin.ofNat?_eq_some_of_lt _ _ h]
+    simp only [Option.some.injEq, Fin.ext_iff]
     exact eq_comm
-  · rename_i h
+  · rw [Fin.ofNat?_eq_none_of_not_lt _ _ h]
     simp only [reduceCtorEq, false_iff]
     intro hi
     exact h (hi ▸ i.isLt)

@@ -56,12 +56,7 @@ abbrev Seed32 := FixedBytes 32
 The arguments are named in matrix order, while the two-byte suffix is deliberately column first,
 as required by FIPS 203 Algorithm 13, line 5. -/
 def matrixXofInput (rho : Seed32) (row column : Byte) : FixedBytes 34 :=
-  FixedBytes.append rho fun index : Fin 2 => if index.val = 0 then column else row
-
-/-- The matrix XOF input contains exactly 34 bytes. -/
-theorem length_matrixXofInput (rho : Seed32) (row column : Byte) :
-    (matrixXofInput rho row column).toList.length = 34 := by
-  simp
+  Fin.append rho fun index : Fin 2 => if index.val = 0 then column else row
 
 /-- A finite prefix of the SHAKE128 stream for matrix entry `(row,column)`. -/
 def matrixXofBytes (rho : Seed32) (row column : Byte) (outputBytes : ℕ) : List Byte :=
@@ -96,12 +91,7 @@ def eta3 : NoiseWidth := ⟨3, Or.inr rfl⟩
 The width `eta` is deliberately absent because FIPS 203 Equation (4.3) uses it only to choose the
 SHAKE256 output length, not for domain separation. -/
 def prfInput (seed : Seed32) (counter : Byte) : FixedBytes 33 :=
-  FixedBytes.append seed fun _ : Fin 1 => counter
-
-/-- The PRF input contains exactly 33 bytes. -/
-theorem length_prfInput (seed : Seed32) (counter : Byte) :
-    (prfInput seed counter).toList.length = 33 := by
-  simp
+  Fin.append seed fun _ : Fin 1 => counter
 
 /-- FIPS 203 Equation (4.3), returning `64 * eta` SHAKE256 bytes. -/
 def prf (eta : NoiseWidth) (seed : Seed32) (counter : Byte) : List Byte :=

@@ -47,8 +47,11 @@ private def sha512ABC : List Byte :=
     0x45, 0x4d, 0x44, 0x23, 0x64, 0x3c, 0xe8, 0x0e,
     0x2a, 0x9a, 0xc9, 0x4f, 0xa5, 0x4c, 0xa4, 0x9f]
 
-#guard (sha256 abc (by simp [abc, ValidSHA256Input])).toList == sha256ABC
-#guard (sha512 abc (by simp [abc, ValidSHA512Input])).toList == sha512ABC
+example : ValidSHA256Input abc := by simp [abc, ValidSHA256Input]
+example : ValidSHA512Input abc := by simp [abc, ValidSHA512Input]
+
+#guard (sha256 abc).toList == sha256ABC
+#guard (sha512 abc).toList == sha512ABC
 
 private def sha256TwoBlockMessage : List Byte :=
   [0x61, 0x62, 0x63, 0x64, 0x62, 0x63, 0x64, 0x65,
@@ -91,31 +94,26 @@ private def sha512TwoBlockDigest : List Byte :=
     0xc7, 0xd3, 0x29, 0xee, 0xb6, 0xdd, 0x26, 0x54,
     0x5e, 0x96, 0xe5, 0x5b, 0x87, 0x4b, 0xe9, 0x09]
 
-#guard (sha256 sha256TwoBlockMessage
-  (by simp [sha256TwoBlockMessage, ValidSHA256Input])).toList == sha256TwoBlockDigest
-#guard (sha512 sha512TwoBlockMessage
-  (by simp [sha512TwoBlockMessage, ValidSHA512Input])).toList == sha512TwoBlockDigest
+example : ValidSHA256Input sha256TwoBlockMessage := by
+  simp [sha256TwoBlockMessage, ValidSHA256Input]
 
-example (input : List Byte) (h : ValidSHA256Input input) :
-    (sha256 input h).toList.length = 32 := by simp
+example : ValidSHA512Input sha512TwoBlockMessage := by
+  simp [sha512TwoBlockMessage, ValidSHA512Input]
 
-example (input : List Byte) (h : ValidSHA512Input input) :
-    (sha512 input h).toList.length = 64 := by simp
+#guard (sha256 sha256TwoBlockMessage).toList == sha256TwoBlockDigest
+#guard (sha512 sha512TwoBlockMessage).toList == sha512TwoBlockDigest
+
+example (input : List Byte) : (sha256Pad input).length % 64 = 0 :=
+  sha256Pad_length_mod input
+
+example (input : List Byte) : (sha512Pad input).length % 128 = 0 :=
+  sha512Pad_length_mod input
 
 example (byte : Byte) : byteOfBitsBE (byteBitsBE byte) = byte :=
   byteOfBitsBE_byteBitsBE byte
 
-example {m n : ℕ} (X : FixedBytes m) (Y : FixedBytes n) (i : Fin m) :
-    FixedBytes.append X Y (Fin.castAdd n i) = X i :=
-  FixedBytes.append_left X Y i
-
-example {m n : ℕ} (X : FixedBytes m) (Y : FixedBytes n) (i : Fin n) :
-    FixedBytes.append X Y (Fin.natAdd m i) = Y i :=
-  FixedBytes.append_right X Y i
-
 -- Typed truncation exposes the leftmost `n` digest bytes required by the FIPS 205 SHA2 variants.
-#guard ((sha512 abc (by simp [abc, ValidSHA512Input])).take 24
-  (by decide)).toList == sha512ABC.take 24
+#guard List.ofFn (Fin.take 24 (by decide) (sha512 abc)) == sha512ABC.take 24
 
 -- Section 5.1 padding reaches exact block boundaries on both one- and two-block examples.
 #guard (sha256Pad abc).length == 64

@@ -435,12 +435,18 @@ time is not attack time unless the produced reduction executes that compiler.
 The bounded compressed signer follows Algorithm 7's two rejection stages, including
 `||c t₀||∞ < γ₂` and the hint-weight bound, and uses the explicit counter schedule
 `κ + i ℓ`. Exhaustion returns one `none` result; this is executable functional semantics, not a
-model of the standard's physical destruction of intermediate state or side-channel behavior. A
-separate IID-mask convenience model proves that `K`-attempt failure has mass equal to the
-one-attempt failure mass raised to `K`; it is not identified with seeded `ExpandMask`. Published
-FIPS 204 Appendix C, Table 3 gives `814` as the minimum bounded-signing limit under the standard's
-stated distribution assumptions. The numeral alone proves no failure bound in the semantic model,
-and this module formalizes no replacement limit.
+model of the standard's physical destruction of intermediate state or side-channel behavior.
+`signAttempt_eq_some_of_compressedSignAttempt_eq_some` connects every accepted compressed attempt
+to the existing uncompressed signer. Under `Params.Valid`, `4 * γ₂ < q`, a hash whose outputs lie
+in `B_τ`, and the secret-key bound `||s₂||∞ ≤ η`,
+`compressedVerify_compressedSignAttempt` proves that every accepted attempt passes the compressed
+verifier; `compressedVerify_compressedSignBounded` lifts this to the bounded loop. The proof uses
+`compressedVerifierCommitment_eq_verifierCommitment_add_lowPart` to identify the verifier's
+commitment with the uncompressed commitment plus `c t₀`, then applies the `MakeHint`/`UseHint`
+recovery theorem. The explicit mask schedule is not identified with seeded `ExpandMask`.
+Published FIPS 204 Appendix C, Table 3 gives `814` as the minimum bounded-signing limit under the
+standard's stated distribution assumptions. The numeral alone proves no failure bound in the
+semantic model, and this module formalizes no replacement limit.
 
 The [checked examples](../../CslibFrontierTests/Crypto/MLDSA.lean) cover the
 Power2Round tie and high-end boundaries, the Decompose wrap-around case, and a toy instance that
@@ -452,7 +458,8 @@ ML-DSA-44 coefficient dimensions, exercises set and clear hints and a nonzero `P
 part, checks the exact self-target identity, and rejects after changing the hash-checked hint.
 The [bounded-signing client](../../CslibFrontierTests/Crypto/MLDSASigning.lean) separates
 first-stage, product-norm and hint-weight rejection, checks counter-stepped first-success and
-exhaustion, and applies the exact IID failure law.
+exhaustion, and checks both the compressed/uncompressed attempt bridge and compressed-verification
+correctness on a nonvacuous valid one-coefficient instance.
 
 The SLH-DSA address-domain layer from FIPS 205 ([fips205][fips205]) is in
 [`SLHDSA/Address.lean`](../../CslibFrontier/Crypto/Primitives/SLHDSA/Address.lean), with checked
@@ -488,9 +495,11 @@ or FIPS validations.
 The shared byte and SHA-2 boundary used by the FIPS 205 SHA2 parameter sets is in
 [`ByteString.lean`](../../CslibFrontier/Crypto/Primitives/ByteString.lean) and
 [`SHA2.lean`](../../CslibFrontier/Crypto/Primitives/Hash/SHA2.lean) [fips1804][fips1804].
-`FixedBytes n` records digest and truncation lengths in the type, while `sha256` and `sha512`
-implement FIPS 180-4's byte-aligned padding, message schedule, compression and digest conversion
-under the standard's input-length domains. The
+`FixedBytes n` records digest lengths in the type, while Mathlib's `Fin.take` and `Fin.append`
+provide typed truncation and concatenation. `sha256` and `sha512` are total executable functions;
+`ValidSHA256Input` and `ValidSHA512Input` record FIPS 180-4's prescribed input-length domains.
+The implementation follows the standard's byte-aligned padding, message schedule, compression and
+digest conversion, but no independent functional-correctness theorem is claimed. The
 [ordinary-import client](../../CslibFrontierTests/Crypto/SHA2.lean) checks NIST's official
 one- and two-block SHA-256 and SHA-512 examples and both padding boundaries. This is reusable
 executable infrastructure: it does not yet package FIPS 205's `F`, `H`, `T_l`, `PRF`, `PRF_msg` or

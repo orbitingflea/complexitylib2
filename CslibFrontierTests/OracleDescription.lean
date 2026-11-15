@@ -21,10 +21,10 @@ The example also checks zero clock, an empty table, out-of-range operation and s
 and an invalid initial state tag. These are semantic boundary checks, not resource or security
 claims.
 
-The library's `Desc.runWith_toMachine` theorem gives denotational equality for an arbitrary shared
-stateful handler. This client separately chooses one fixed logging handler and checks its complete
-output/log law, plus zero-clock, empty-table and malformed-tag boundaries; that concrete trace is
-not a claim about every handler.
+`Desc.runOracle` is definitionally the common machine interpreter applied to `Desc.toMachine`.
+This client chooses one fixed logging handler and checks its complete output/log law, plus
+zero-clock, empty-table and malformed-tag boundaries; that concrete trace is not a claim about
+every handler.
 
 ## References
 
@@ -260,6 +260,12 @@ def emptyDescription : Desc where
   table := []
 
 theorem empty_description_length : descLen emptyDescription = 4 := rfl
+
+example : description.operations ≤ descLen description :=
+  description.operations_le_descLen
+
+example : description.table.length ≤ descLen description :=
+  description.table_length_le_descLen
 
 /-- An empty table selects the local halting action. -/
 theorem empty_action (coin : Bool) :

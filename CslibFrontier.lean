@@ -5786,6 +5786,7 @@ public import CslibFrontier.Foundations.Data.BitString.Support.Weight
 public import CslibFrontier.Foundations.Data.BitString.Threshold
 public import CslibFrontier.Foundations.Data.BitString.Weight
 public import CslibFrontier.Foundations.Data.BitString.WeightInterval
+public import CslibFrontier.Foundations.Data.BitString.WeightedEnumeration
 public import CslibFrontier.Foundations.Data.BitString.WordCount
 public import CslibFrontier.Foundations.Data.BitString.ZModTwo
 public import CslibFrontier.Foundations.Data.Bracketing
@@ -6276,6 +6277,8 @@ public import CslibFrontier.Foundations.NumberTheory.AKS.Introspective
 public import CslibFrontier.Foundations.NumberTheory.AKS.PerfectPower
 public import CslibFrontier.Foundations.NumberTheory.AKS.SmallR
 public import CslibFrontier.Foundations.NumberTheory.CentralBinomPrimes
+public import CslibFrontier.Foundations.NumberTheory.FiniteField.Enumeration
+public import CslibFrontier.Foundations.NumberTheory.FiniteField.GeneratorProducts
 public import CslibFrontier.Foundations.NumberTheory.Harmonic
 public import CslibFrontier.Foundations.NumberTheory.ModularWeights
 public import CslibFrontier.Foundations.NumberTheory.Padics.AdjoinRootDigitLift

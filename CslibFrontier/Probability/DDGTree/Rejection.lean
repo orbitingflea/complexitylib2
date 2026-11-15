@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Cslib.Probability.StatisticalDistance
+public import CslibFrontier.Foundations.Data.Fin.Decode
 public import CslibFrontier.Init
 public import CslibFrontier.Probability.DDGTree
 public import CslibFrontier.Probability.UniformNat
@@ -510,8 +511,7 @@ end BlockRejectionSpec
 strictly below `n`. -/
 @[expose] def finCutoffSpec (n k : ℕ) : BlockRejectionSpec (Fin n) where
   width := k
-  attempt w :=
-    if h : BitString.binaryValue w < n then some ⟨BitString.binaryValue w, h⟩ else none
+  attempt w := Fin.ofNat? n (BitString.binaryValue w)
 
 /-- Exact block-rejection specification for `Fin n` reading `Nat.clog 2 n` bits per trial. -/
 @[expose] def uniformFinRejectionSpec (n : ℕ) : BlockRejectionSpec (Fin n) :=
@@ -524,7 +524,7 @@ strictly below `n`. -/
 
 private theorem singleLaw_finCutoffSpec_some {n k : ℕ} (hnk : n ≤ 2 ^ k) (i : Fin n) :
     (finCutoffSpec n k).singleLaw (some i) = ((2 ^ k : ℕ) : ℝ≥0∞)⁻¹ := by
-  let f : ℕ → Option (Fin n) := fun v => if h : v < n then some ⟨v, h⟩ else none
+  let f : ℕ → Option (Fin n) := Fin.ofNat? n
   have hmap : (finCutoffSpec n k).singleLaw =
       ((PMF.uniformOfFintype (Fin (2 ^ k))).map Fin.val).map f := by
     calc
@@ -539,7 +539,7 @@ private theorem singleLaw_finCutoffSpec_some {n k : ℕ} (hnk : n ≤ 2 ^ k) (i 
   rw [Finset.sum_eq_single ⟨i.val, hi⟩]
   · simp [f, i.isLt, PMF.uniformOfFintype_apply]
   · intro j _ hj
-    simp only [Function.comp_apply, f]
+    simp only [Function.comp_apply, f, Fin.ofNat?]
     by_cases hlt : j.val < n
     · simp only [hlt, ↓reduceDIte]
       split_ifs with heq

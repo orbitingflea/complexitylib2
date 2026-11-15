@@ -142,6 +142,24 @@ The [development issue](https://github.com/cslib-community/cslib-frontier/issues
 the remaining finite-field product and CRT sign-recovery objectives. This foundation alone does
 not certify those bounds or the downstream real-feasibility theorem.
 
+## Finite-field product identities
+
+Import `CslibFrontier.Foundations.NumberTheory.FiniteField.GeneratorProducts` for the algebraic
+identity `ZMod.prod_eq_generator_average`. For a prime modulus, it writes a finite product as
+the average of its logarithm formula over all multiplicative generators. The generator count
+is positive and smaller than the prime, so its image in the field is invertible, including
+at the prime two. An explicit zero test handles zero factors; empty products are covered too.
+The matching-exponent sum `ZMod.generatorLogSum` is total even for nongenerators, but its
+bounded-logarithm specification requires a primitive root and a nonzero target.
+
+`FiniteField.Enumeration` translates sums over canonical natural representatives into sums
+over residues or a finite subset. `BitString.WeightedEnumeration` translates sums over wider
+bitstrings, restricted by their binary value, into ordinary interval sums. The existing
+word-count theorem uses the weighted rule with constant weight one. These are mathematical
+identities; they assert no computational cost or efficient discrete-logarithm algorithm.
+The [checked examples](../../CslibFrontierTests/PrimeFieldProducts.lean) cover a product modulo
+five, the prime two, residue enumeration, signed weights and a zero-width interval.
+
 ## Efficient oracle programs
 
 [IsOraclePPTOn](https://github.com/cslib-community/cslib-frontier/blob/13e6a31951bf1c89a1a6258c44f9444aecbbefd8/Complexity/Computability/Probabilistic/Oracle.lean#L63) realizes an open probabilistic word-query program by one finite native oracle PTM under one polynomial clock. The semantic equality quantifies over every state type, stateful oracle handler and initial oracle state, and preserves the joint output and final oracle state. Checking only the output marginal would permit a program to erase externally visible query effects; the joint contract rules this out.

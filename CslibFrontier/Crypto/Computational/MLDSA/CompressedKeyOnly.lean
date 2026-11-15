@@ -45,6 +45,8 @@ unforgeability, and classical/QROM Fiat--Shamir transformations are not represen
 
 ## Main results
 
+* `Cslib.Crypto.MLDSA.compressedVerifierCommitment_eq_verifierCommitment_add_lowPart`: the
+  compressed commitment is the uncompressed commitment plus `c t₀`.
 * `Cslib.Crypto.MLDSA.isSelfTargetSolution_of_compressedVerify`: every compressed-verification
   forgery solves self-target Module-SIS at
   `max (γ₁ - β) (2γ₂ + 1 + τ 2^(d-1))`.
@@ -104,6 +106,24 @@ variable (P)
     (z : Fin P.ℓ → Fin P.n → ZMod P.q) (c : Fin P.n → ZMod P.q) :
     Fin P.k → Fin P.n → ZMod P.q :=
   moduleSISMap pk.A z - fun i => negacyclicMul c (publicKeyHighTerm P d pk i)
+
+variable {P}
+
+/-- The compressed commitment is the uncompressed commitment plus `c t₀`. This is an
+algebraic bridge derived from `Power2Round`, not a separate statement of FIPS 204. -/
+theorem compressedVerifierCommitment_eq_verifierCommitment_add_lowPart [NeZero P.q]
+    (d : ℕ) (pk : PublicKey P) (z : Fin P.ℓ → Fin P.n → ZMod P.q)
+    (c : Fin P.n → ZMod P.q) :
+    compressedVerifierCommitment P d pk z c =
+      verifierCommitment P pk z c + fun i => negacyclicMul c (publicKeyLowPart P d pk i) := by
+  funext i
+  have ht := congrFun (publicKeyHighTerm_add_lowPart d pk) i
+  simp only [Pi.add_apply] at ht
+  simp only [compressedVerifierCommitment, verifierCommitment, Pi.add_apply, Pi.sub_apply]
+  rw [← ht, negacyclicMul_add]
+  ring
+
+variable (P)
 
 /-- Compressed verification in the simplified proof model. It checks the response and challenge,
 then hashes `UseHint(h, A z - c t₁ 2ᵈ, 2γ₂)`. The final FIPS hint-weight and byte-codec checks are

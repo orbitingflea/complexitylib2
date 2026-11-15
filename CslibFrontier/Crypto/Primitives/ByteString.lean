@@ -9,7 +9,7 @@ module
 
 public import CslibFrontier.Foundations.Data.BitString.List.Binary
 public import CslibFrontier.Init
-public import Mathlib.Data.Fin.Tuple.Basic
+public import Mathlib.Data.Fin.Tuple.Take
 import Mathlib.Data.List.OfFn
 
 /-!
@@ -29,8 +29,6 @@ with a different within-byte convention, such as FIPS 202's Keccak, keep that co
 
 ## Main results
 
-* `Cslib.Crypto.FixedBytes.append_left`, `Cslib.Crypto.FixedBytes.append_right`: concatenation
-  agrees with its left and right inputs.
 * `Cslib.Crypto.length_bytesToBitsBE`: byte serialization has eight bits per byte.
 * `Cslib.Crypto.byteOfBitsBE_byteBitsBE`, `Cslib.Crypto.byteBitsBE_byteOfBitsBE`: converting one
   byte to bits and back is exact in either direction.
@@ -58,24 +56,6 @@ def toList {n : ℕ} (X : FixedBytes n) : List Byte := List.ofFn X
 /-- The list view has the byte length recorded in the type. -/
 @[simp] theorem length_toList {n : ℕ} (X : FixedBytes n) : X.toList.length = n := by
   simp [toList]
-
-/-- The first `m` bytes of a fixed byte string, with the bound checked at the type boundary. -/
-def take {n : ℕ} (m : ℕ) (h : m ≤ n) (X : FixedBytes n) : FixedBytes m := fun i =>
-  X ⟨i.val, Nat.lt_of_lt_of_le i.isLt h⟩
-
-/-- Concatenate two fixed-length byte strings. -/
-def append {m n : ℕ} (X : FixedBytes m) (Y : FixedBytes n) : FixedBytes (m + n) :=
-  Fin.append X Y
-
-/-- Concatenation agrees with its left input on left indices. -/
-@[simp] theorem append_left {m n : ℕ} (X : FixedBytes m) (Y : FixedBytes n) (i : Fin m) :
-    append X Y (Fin.castAdd n i) = X i :=
-  Fin.append_left X Y i
-
-/-- Concatenation agrees with its right input on right indices. -/
-@[simp] theorem append_right {m n : ℕ} (X : FixedBytes m) (Y : FixedBytes n) (i : Fin n) :
-    append X Y (Fin.natAdd m i) = Y i :=
-  Fin.append_right X Y i
 
 end FixedBytes
 
