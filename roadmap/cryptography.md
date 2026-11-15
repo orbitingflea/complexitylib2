@@ -76,6 +76,7 @@ Information-theoretic private information retrieval, following Chor–Goldreich�
   The covering-code schemes of CGKS Section 3.3 include radius-`2` codes, the other dimensions of Figure 1, the asymptotic lower estimate and server time, and take variable-length answers so that unbalanced covers meet CGKS Theorem 1 exactly.
   Also `t`-private schemes against coalitions, block retrieval and the converse from schemes to smooth codes (Katz–Trevisan).
 - **PIR lower bounds** ([#3426](https://github.com/cslib-community/cslib-frontier/issues/3426)): the single-server bound with and without interaction, the two-server linear-summation bound with its tight even-set scheme (CGKS Section 5), and lower bounds for general two-server schemes.
+- **Plinko privacy and bounds** ([#5736](https://github.com/cslib-community/cslib-frontier/issues/5736)): Prove privacy of the full `plinkoScheme` (the hint-refresh argument and a reduction to forward iPRF security), the security half of Theorem 4.4 with pseudorandom multinomial samplers, and the Theorem 5.3 bounds, including the hint-load and failure-probability estimates.
 
 ### Concurrent and quantum security
 

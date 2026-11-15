@@ -13,6 +13,21 @@ Classic B-trees are pure Lean data structures with `TimeM` node-visit and `FreeM
 
 The [examples](../../CslibFrontierTests/BTreeInsert.lean) include a root split at `t = 2`, bulk loading at `t = 2` and `t = 3`, and a client that builds a well-formed map by repeated insertion. The [query](../../CslibFrontierTests/BTreeQuery.lean), [erasure](../../CslibFrontierTests/BTreeErase.lean), [cost](../../CslibFrontierTests/BTreeCost.lean) and [comparison](../../CslibFrontierTests/BTreeComparisons.lean) examples check the other operations and exact visit/comparison counts; the [binary-search](../../CslibFrontierTests/BTreeBinarySearch.lean) examples show a node where bisection attains its bound and an unsorted node where it disagrees with the linear scan. Erasure comparison bounds, search comparison lower bounds, a node-access oracle model and B+-trees are not formalized.
 
+## Binomial concentration
+
+Import `CslibFrontier.Foundations.Combinatorics.BinomialTail`
+([source](../../CslibFrontier/Foundations/Combinatorics/BinomialTail.lean)) for finite sums of
+binomial weights. For `0 ≤ p ≤ 1` and `0 ≤ t`,
+`Cslib.sum_filter_le_sub_choose_mul_pow_le` bounds the upper tail by
+`Real.exp (-2 * t ^ 2 / Q)`; `sum_filter_le_mul_sub_choose_mul_pow_le` gives the lower tail,
+and `sum_filter_le_abs_sub_choose_mul_pow_le` gives both tails with factor `2`.
+These statements include `Q = 0`, with Lean's division-by-zero convention giving `exp 0 = 1`.
+The Bernoulli MGF estimate specializes Mathlib's `hasSubgaussianMGF_of_mem_Icc`.
+The tail proof uses the finite-PMF concentration API and the existing replicated
+Poisson-binomial law to express event probabilities as binomial-coefficient sums.
+For a caller using the binomial normalization identity, see
+[`BinaryKL.lean`](../../CslibFrontier/Probability/BinaryKL.lean).
+
 ## Prime modulus collisions
 
 Import `CslibFrontier.Foundations.NumberTheory.PrimeCollisionWindow` for
