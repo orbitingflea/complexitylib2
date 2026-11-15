@@ -799,6 +799,15 @@ theorem modifies_footprint_of_table {U V w n_max base : ℕ} {mem₁ mem₂ : �
 
 /-! ## Section 6: `loadParamsCode` and common prefix execution helpers -/
 
+/-- Package well-formed layout parameters and their memory envelope for generic subroutines. -/
+private theorem dictEnvGen_mk {U V w n_max h_space base : ℕ}
+    (hwf : DictParamsWf U V w n_max)
+    (hfit : Fits w (base + totalSpace U V w n_max h_space)) :
+    DictEnvGen w (mkDictParams U V w n_max h_space) base := by
+  refine ⟨⟨U, V, w, n_max, h_space, hwf.1, hwf.2.1, hwf.2.2.1, hwf.2.2.2, rfl⟩, ?_⟩
+  simpa only [p_U_mk, p_V_mk, p_w_mk, p_nMax_mk, p_hSpace_mk] using
+    (show DictEnv U V w n_max h_space w base from ⟨rfl, hfit⟩)
+
 /-- Every entry of `mkDictParams U V w n_max (hashSpace U w n_max)` fits in a `w`-bit word under
 `DictParamsWf U V w n_max`, `Fits w V`, and `Fits w (base + space U V w n_max)`. -/
 theorem fits_mkDictParams {U V w n_max base : ℕ}
@@ -810,7 +819,7 @@ theorem fits_mkDictParams {U V w n_max base : ℕ}
   rcases hwf with ⟨hw, hnU, hU, hV⟩
   let h_space := hashSpace U w n_max
   have henv : DictEnvGen w (mkDictParams U V w n_max h_space) base :=
-    ⟨⟨U, V, w, n_max, h_space, hw, hnU, hU, hV, rfl⟩, rfl, hfit⟩
+    dictEnvGen_mk ⟨hw, hnU, hU, hV⟩ hfit
   have hspace : Fits w (totalSpace U V w n_max h_space) := hfit.of_le (Nat.le_add_left _ _)
   have hw_fit : Fits w w := Nat.lt_two_pow_self
   have hmax_fit : Fits w (max n_max 1) := max_n_one_lt_two_pow_w hw hnU hU
@@ -1136,7 +1145,7 @@ private theorem exec_opPrefix {U V w n_max base : ℕ}
         x₃.regs (paramReg j) = mkDictParams U V w n_max (hashSpace U w n_max) j) := by
   rcases hrep with ⟨hx_bdd, hbase, hfr, htab, hseed, _⟩
   have henv : DictEnvGen w (mkDictParams U V w n_max (hashSpace U w n_max)) base :=
-    ⟨⟨U, V, w, n_max, hashSpace U w n_max, hwf.1, hwf.2.1, hwf.2.2.1, hwf.2.2.2, rfl⟩, rfl, hfit⟩
+    dictEnvGen_mk hwf hfit
   obtain ⟨x₀, hex_lp, hx₀_bdd, hmem₀, hparam₀, hlow₀⟩ :=
     exec_loadParamsCode hwf hV_fit hfit hx_bdd
   have hfr₀ : x₀.regs frontierReg = base + space U V w n_max :=
@@ -1194,6 +1203,11 @@ private theorem exec_opPrefix {U V w n_max base : ℕ}
 
 /-! ## Section 7: Per-operation deterministic execution of `opCode` -/
 
+section
+
+-- Register wiring uses the named parameter projections, not the packed layout body.
+attribute [local irreducible] mkDictParams
+
 private theorem exec_opCode_query {U V w n_max base : ℕ}
     (hwf : DictParamsWf U V w n_max)
     (hV_fit : Fits w V)
@@ -1217,8 +1231,7 @@ private theorem exec_opCode_query {U V w n_max base : ℕ}
     exec_opPrefix hwf hV_fit hfit θ u hrep hu_reg
   rcases hrep with ⟨hx_bdd, _, hfr, htab, hseed, hdict⟩
   let dp := mkDictParams U V w n_max (hashSpace U w n_max)
-  have henv : DictEnvGen w dp base :=
-    ⟨⟨U, V, w, n_max, hashSpace U w n_max, hwf.1, hwf.2.1, hwf.2.2.1, hwf.2.2.2, rfl⟩, rfl, hfit⟩
+  have henv : DictEnvGen w dp base := dictEnvGen_mk hwf hfit
   have hcond_pos : (Cond.eq tagReg zeroReg).Holds x₃ := by
     change x₃.regs tagReg = x₃.regs zeroReg
     rw [htag₃, htag, hzero₃]
@@ -1247,7 +1260,8 @@ private theorem exec_opCode_query {U V w n_max base : ℕ}
       frontierReg srcQry tmpQry
       tmpQry_injective srcQry_ne_tmpQry
       tmpQry_ne_frontier srcQry_ne_frontier).2
-      w (dp, d_qry) x₃ hx₃_bdd hin_qry hpre_qry hv_qry
+      w (dp, d_qry) x₃ hx₃_bdd hin_qry
+        ((queryWithHashGenPre_mk U V w n_max w d_qry _).2 hpre_qry) hv_qry
   change ExecWithin w qryCode x₃ y _ at hex_qry
   rw [clientState_width, queryWithHashGenProg_mk, hst_qry] at hm_qry
   rw [clientResult_width, queryWithHashGenProg_mk, hres_qry] at hout_qry
@@ -1331,16 +1345,13 @@ private theorem exec_opCode_insert {U V w n_max base : ℕ}
     exec_opPrefix hwf hV_fit hfit θ u hrep hu_reg
   rcases hrep with ⟨hx_bdd, _, hfr, htab, hseed, hdict⟩
   let dp := mkDictParams U V w n_max (hashSpace U w n_max)
-  have henv : DictEnvGen w dp base :=
-    ⟨⟨U, V, w, n_max, hashSpace U w n_max, hwf.1, hwf.2.1, hwf.2.2.1, hwf.2.2.2, rfl⟩, rfl, hfit⟩
+  have henv : DictEnvGen w dp base := dictEnvGen_mk hwf hfit
   have hcond_neg0 : ¬(Cond.eq tagReg zeroReg).Holds x₃ := by
     change x₃.regs tagReg ≠ x₃.regs zeroReg
     rw [htag₃, htag, hzero₃]
     exact one_ne_zero
   let x₄ := x₃.set oneReg 1
-  have hfit1 : Fits w 1 :=
-    Nat.lt_of_le_of_lt Nat.one_le_two_pow (Nat.pow_lt_pow_right one_lt_two
-      (lt_of_lt_of_le one_lt_two (two_le_w_of_fits_space hfit)))
+  have hfit1 : Fits w 1 := fits_one (Nat.ne_of_gt hwf.1)
   have hex_o : ExecWithin (B := .exact) w (.op (.const oneReg 1)) x₃ x₄ 1 :=
     ExecWithin.const hfit1
   have hx₄_bdd : x₄.Bounded w := hex_o.bounded hx₃_bdd
@@ -1391,7 +1402,8 @@ private theorem exec_opCode_insert {U V w n_max base : ℕ}
       frontierReg srcIns tmpIns
       tmpIns_injective srcIns_ne_tmpIns
       tmpIns_ne_frontier srcIns_ne_frontier).2
-      w (dp, d_ins) x₄ hx₄_bdd hin_ins hpre_ins hv_ins
+      w (dp, d_ins) x₄ hx₄_bdd hin_ins
+        ((insertWithHashGenPre_mk U V w n_max w d_ins _).2 hpre_ins) hv_ins
   change ExecWithin w insCode x₄ y _ at hex_ins
   rw [clientState_width, insertWithHashGenProg_mk] at hm_ins
   have hyfr : y.regs frontierReg = base + space U V w n_max :=
@@ -1534,16 +1546,13 @@ private theorem exec_opCode_delete {U V w n_max base : ℕ}
     exec_opPrefix hwf hV_fit hfit θ u hrep hu_reg
   rcases hrep with ⟨hx_bdd, _, hfr, htab, hseed, hdict⟩
   let dp := mkDictParams U V w n_max (hashSpace U w n_max)
-  have henv : DictEnvGen w dp base :=
-    ⟨⟨U, V, w, n_max, hashSpace U w n_max, hwf.1, hwf.2.1, hwf.2.2.1, hwf.2.2.2, rfl⟩, rfl, hfit⟩
+  have henv : DictEnvGen w dp base := dictEnvGen_mk hwf hfit
   have hcond_neg0 : ¬(Cond.eq tagReg zeroReg).Holds x₃ := by
     change x₃.regs tagReg ≠ x₃.regs zeroReg
     rw [htag₃, htag, hzero₃]
     exact OfNat.ofNat_ne_zero 2
   let x₄ := x₃.set oneReg 1
-  have hfit1 : Fits w 1 :=
-    Nat.lt_of_le_of_lt Nat.one_le_two_pow (Nat.pow_lt_pow_right one_lt_two
-      (lt_of_lt_of_le one_lt_two (two_le_w_of_fits_space hfit)))
+  have hfit1 : Fits w 1 := fits_one (Nat.ne_of_gt hwf.1)
   have hex_o : ExecWithin (B := .exact) w (.op (.const oneReg 1)) x₃ x₄ 1 :=
     ExecWithin.const hfit1
   have hx₄_bdd : x₄.Bounded w := hex_o.bounded hx₃_bdd
@@ -1608,7 +1617,8 @@ private theorem exec_opCode_delete {U V w n_max base : ℕ}
       frontierReg srcDelPrep tmpDelPrep
       tmpDelPrep_injective srcDelPrep_ne_tmpDelPrep
       tmpDelPrep_ne_frontier srcDelPrep_ne_frontier).2
-      w (dp, d_prep) x₅ hx₅_bdd hin_prep hpre_prep hv_prep
+      w (dp, d_prep) x₅ hx₅_bdd hin_prep
+        ((queryWithHashGenPre_mk U V w n_max w d_prep _).2 hpre_prep) hv_prep
   change ExecWithin w delPrepCode x₅ x₆ _ at hex_prep
   rw [clientState_width, deletePrepWithHashGenProg_mk, hst_prep] at hm_prep
   rw [clientResult_width, deletePrepWithHashGenProg_mk, hprep_eq] at hout_prep
@@ -1844,5 +1854,7 @@ theorem exec_opCode {U V w n_max base : ℕ}
   | query u => exact exec_opCode_query hwf hV_fit hfit θ s_abs u hrep harg
   | insert u v => exact exec_opCode_insert hwf hV_fit hfit θ s_abs u v hval hrep harg
   | delete u => exact exec_opCode_delete hwf hV_fit hfit θ s_abs u hrep harg
+
+end
 
 end Cslib.DataStructure.Dictionary.WordRAM.Succinct

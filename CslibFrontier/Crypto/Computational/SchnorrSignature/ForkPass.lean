@@ -374,10 +374,9 @@ theorem isPPTOn_schnorrForkRun {k : ℕ} {Control : Type} [Finite Control]
         (encPair encSchnorrForkBanks (encPair (encPair encBool encBits) encSchnorrForkState)) := by
       fun_prop
     exact (hstep.comp hprep).isPPTOn
-  have hprepare : ComputableTidilyInPolyTime
+  have hprepare : ComputableInPolyTime
       (fun caller : SchnorrForkPassInput => (caller.secParam, caller.publicKey, caller.tape))
       encSchnorrForkPassInput encReplayInput := by
-    apply ComputableInPolyTime.tidy
     fun_prop
   have hrun := (isOraclePPTOn_savedWordReplay machine c e keyC keyD).run_interpret_preprocess
     (input := encSchnorrForkPassInput) (operationEncoding := encBool)
@@ -388,7 +387,7 @@ theorem isPPTOn_schnorrForkRun {k : ℕ} {Control : Type} [Finite Control]
     (initial := fun _ => (⟨[], [], 0, 0⟩ : SchnorrForkState))
     (resources := fun caller word =>
       40 * ((encSchnorrForkPassInput caller).length + word.length + 1))
-    hprepare hhandler (ComputableTidilyInPolyTime.const _)
+    hprepare hhandler (ComputableInPolyTime.const _)
     (fun caller state => ForkInvariant caller.banks state) (fun _ _ => by simp)
     (by fun_prop) ?_
   · exact hrun

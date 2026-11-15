@@ -58,7 +58,7 @@ theorem ComputableInPolyTimeWithOracle.of_polyTimeReducible {A B : Set (List Boo
     List.take 1 <$> OracleComp.query ((), g q.2)
   refine ⟨fun a => OracleComp.interpret G (program a), ?_, fun a => ?_⟩
   · -- substitute the handler answering requests to `A` through `B`
-    exact hcert.interpret_bitQueries hg.tidy
+    exact hcert.interpret_bitQueries hg
   · rw [OracleComp.interpret_interpret, ← hprogram a]
     congr 1 with q : 1
     simp only [G, OracleComp.interpret_map, OracleComp.interpret_query, languageOracle_apply]

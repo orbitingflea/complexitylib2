@@ -519,16 +519,16 @@ theorem isPPTOn_runTwoRound {α β Caller : Type} {enc : α ↪ List Bool} {encB
     (handler := fun c q s =>
       pure (twoRoundStep (fun x => reply1 (c, x)) (fun x => reply2 (c, x)) q.2 s))
     (prepare := prepare) (initial := fun _ => .init)
-    (resources := fun c _ => bound c + 9) hprep.tidy
+    (resources := fun c _ => bound c + 9) hprep
     (((hround.beq (.const 0)).ite'
       ((hr1.comp (hc.prod hq)).prod
         (encTwoRoundState_mk_polyTime (.const 1) (encTwoRoundState_challenge_polyTime hs)))
       ((hround.beq (.const 1)).ite'
         ((hr2.comp (hc.prod hrow)).prod (encTwoRoundState_mk_polyTime (.const 2) hrow))
         ((ComputableInPolyTime.const []).prod hs))).isPPTOn)
-    (ComputableInPolyTime.const TwoRoundState.init).tidy
+    (ComputableInPolyTime.const TwoRoundState.init)
     (fun _ s => s.round ≤ 2 ∧ s.challenge.length = 3) (fun _ => ⟨Nat.zero_le _, rfl⟩)
-    ((hbound.comp (.fst input encBits)).unary_add' (.const 9)).tidy
+    ((hbound.comp (.fst input encBits)).unary_add' (.const 9))
     (fun c request state hstate result hresult => ?_)
   simp only [ProbComp.eval_pure, PMF.support_pure, Set.mem_singleton_iff] at hresult
   subst hresult; dsimp only [twoRoundStep]

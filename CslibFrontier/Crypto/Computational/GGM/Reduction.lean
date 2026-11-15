@@ -95,10 +95,6 @@ theorem isPPTOn_sampleGame {Caller : Type} {input : Caller ↪ List Bool}
     {adversary : OracleDistinguisher} (hadversary : IsOraclePPT encBool adversary) :
     IsPPTOn input encBool
       (fun a => sampleGame generator adversary (width a) (depth a) (values a)) := by
-  have hgenerator := hgenerator.tidy
-  have hwidth := hwidth.tidy
-  have hdepth := hdepth.tidy
-  have hvalues := hvalues.tidy
   have hrun : IsPPTOn input
       (encPair encBool (encPair cacheEncoding (encList encBits))) (fun a =>
         (OracleComp.interpret

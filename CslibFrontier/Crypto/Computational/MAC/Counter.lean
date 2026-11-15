@@ -393,7 +393,7 @@ theorem isOraclePPT_counterForger {bound : ℕ → ℕ → ℕ}
     {adversary : NonceMACForger} (hadversary : IsOraclePPT encNonceTaggedMessage adversary) :
     IsOraclePPT encNonceTaggedMessage (M.counterForger bound adversary) := by
   have hnonce := M.nonceLen_polyTime
-  refine ((hadversary.run_interpret_preprocess_open' (prepare := fun c => c)
+  refine ((hadversary.run_interpret_preprocess_open (prepare := fun c => c)
       (initial := fun _ => (0 : ℕ))
       (resources := fun c w => bound c.1 w.length + 2 * M.nonceLen c.1 + 2)
       ComputableInPolyTime.id' (isOraclePPTOn_counterHandler hboundPoly)

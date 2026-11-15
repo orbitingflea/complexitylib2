@@ -329,7 +329,7 @@ private theorem isPPTOn_keyedOracleGame {Operation : Type} [DecidableEq Operatio
   have hcall := hfst.fst'.prod (hfst.snd'.prod hsnd.fst')
   have hreply := ((horacle.comp hcall).bitsTakeWithInput (hbound.comp hfst.fst')).prod
     (ComputableInPolyTime.const (encOut := encFinEnum Unit) ())
-  have hrun := hadversary.run_interpret_preprocess' (State := Unit) (input := caller)
+  have hrun := hadversary.run_interpret_preprocess (State := Unit) (input := caller)
     (operationEncoding := encFinEnum Operation) (stateEncoding := encFinEnum Unit)
     (handler := fun caller request (_ : Unit) =>
       pure ((oracle caller.1 caller.2 request).take (bound caller.1), ()))
@@ -447,7 +447,7 @@ theorem isOraclePPT_liftForwardDistinguisher {blockLen : ℕ → ℕ}
   have hhandler :=
     (IsOraclePPTOn.query_take' false hsnd.fst'.snd' (hfst.fst'.trans hblockLen)).map'
       (ComputableInPolyTime.id'.prod (ComputableInPolyTime.const (encOut := encFinEnum Unit) ()))
-  have hrun := hadversary.run_interpret_preprocess_open' (External := Bool) (State := Unit)
+  have hrun := hadversary.run_interpret_preprocess_open (External := Bool) (State := Unit)
     (input := caller) (operationEncoding := encFinEnum Unit) (stateEncoding := encFinEnum Unit)
     (handler := fun caller (request : Unit × List Bool) (_ : Unit) =>
       (fun reply => (reply, ())) <$> (List.take (blockLen caller.1) <$>

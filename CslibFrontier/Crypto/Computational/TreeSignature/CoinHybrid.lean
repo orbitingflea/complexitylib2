@@ -901,7 +901,7 @@ private theorem isOraclePPTOn_simulateTreeGame_aux {adversary : Forger}
       ((ComputableInPolyTime.const 2).unary_mul' hlen)).unary_add' (.const 2))).of_enc_eq
       fun _ => rfl
   have hc := ComputableInPolyTime.id' (encIn := encCaller)
-  have hrun := hA.run_interpret_preprocess_open' (External := Unit)
+  have hrun := hA.run_interpret_preprocess_open (External := Unit)
     (handler := fun c : ℕ × (List Bool × List Bool) => signHandler S T depth c.1)
     (prepare := fun c : ℕ × (List Bool × List Bool) =>
       (c.1, encPair encUnary encBits (c.1, c.2.1)))

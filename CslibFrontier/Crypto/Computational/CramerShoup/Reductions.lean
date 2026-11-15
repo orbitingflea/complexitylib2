@@ -407,7 +407,7 @@ private theorem isPPTOn_run_cramerShoupPhase1Oracle
     (encPair (encPair (encFinEnum Unit) encBits) (encFinEnum Unit))
   have hreplyIn := F.computableInPolyTime_cramerShoupPhase1Reply hasAD hH hisElem
     (hd.comp hE1) (hsk.comp hE1) hE2.fst'.snd'
-  exact hA.choose.run_interpret_preprocess'
+  exact hA.choose.run_interpret_preprocess
     (prepare := fun a : γ => (n a, pk a)) (initial := fun _ => ())
     (resources := fun a req => (F.cramerShoupPhase1Reply hasAD H isElem (d a) (sk a) req).length)
     (hn.prod hpk) (hreplyIn.prod hE2.snd').isPPTOn (.const ()) (fun _ _ => True)
@@ -454,9 +454,9 @@ private theorem isPPTOn_run_cramerShoupPhase2Oracle
     (prepare := fun a : γ => (n a, state a, ct a)) (initial := fun _ => ())
     (resources := fun a req =>
       (F.cramerShoupPhase2Reply hasAD H isElem (d a) (sk a) (ct a) (ad a) req).length)
-    (hn.prod (hstate.prod hct)).tidy (hreplyIn.prod hE2.snd').isPPTOn
-    (ComputableInPolyTime.const ()).tidy (fun _ _ => True)
-    (fun _ => trivial) (ComputableInPolyTime.length_bits.comp hreply).tidy
+    (hn.prod (hstate.prod hct)) (hreplyIn.prod hE2.snd').isPPTOn
+    (ComputableInPolyTime.const ()) (fun _ _ => True)
+    (fun _ => trivial) (ComputableInPolyTime.length_bits.comp hreply)
     (fun a request st _ result hresult => by
       have hresEq : result =
           (F.cramerShoupPhase2Reply hasAD H isElem (d a) (sk a) (ct a) (ad a) request.2, st) := by
@@ -513,9 +513,9 @@ private theorem isPPTOn_run_cramerShoupCollisionPhase2Oracle
       let q := splitCramerShoupQuery hasAD req
       (F.cramerShoupCollisionPhase2Reply hasAD H isElem (d a) (sk a) (ct a) (ad a) req).length +
       (encOption encBits (some (extractCramerShoupTuple q.1 q.2))).length)
-    (hn.prod (hstate.prod hct)).tidy (hreplyIn.prod hnextState).isPPTOn
-    (ComputableInPolyTime.const (none : Option (List Bool))).tidy (fun _ _ => True)
-    (fun _ => trivial) hres.tidy
+    (hn.prod (hstate.prod hct)) (hreplyIn.prod hnextState).isPPTOn
+    (ComputableInPolyTime.const (none : Option (List Bool))) (fun _ _ => True)
+    (fun _ => trivial) hres
     (fun a request st _ result hresult => by
       let q := splitCramerShoupQuery hasAD request.2
       have hresEq : result =

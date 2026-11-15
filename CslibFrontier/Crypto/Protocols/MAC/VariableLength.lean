@@ -1310,7 +1310,7 @@ theorem isPPTOn_blockwiseGame (hE : IsPolyTimeEncoder E) {F : BlockwiseMACForger
         (OracleComp.interpret
           (OracleComp.sumHandler (fun k => StateT.lift (ProbComp.unifFin k))
             (M.blockwiseWordSigningOracle E c.1 c.2)) (F c.1 [])).run []) := by
-    refine hF.run_interpret_preprocess'
+    refine hF.run_interpret_preprocess
       (input := encPair encUnary encBits)
       (prepare := fun c : ℕ × List Bool => (c.1, ([] : List Bool)))
       (initial := fun _ : ℕ × List Bool => ([] : List (List Bool × Tag)))
@@ -1538,7 +1538,7 @@ theorem isOraclePPT_blockwiseBoundedReduction (hE : IsPolyTimeEncoder E)
     funext n aux
     simp only [blockwiseBoundedReduction, bind_pure_comp]
   rw [heq]
-  refine ((hF.run_interpret_preprocess_open'
+  refine ((hF.run_interpret_preprocess_open
       (input := encPair encUnary encBits)
       (prepare := fun c : ℕ × List Bool => (c.1, ([] : List Bool)))
       (initial := fun _ : ℕ × List Bool => ([] : List (List Bool × Tag)))

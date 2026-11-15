@@ -944,7 +944,7 @@ theorem isOraclePPT_oneTimeForger {bound : ℕ → ℕ}
         (computableInPolyTime_publicKey hH hlen))
   have hres := computableInPolyTime_handlerBound cs ds (hfst.fst'.fst'.trans hboundPoly)
   have hrun :=
-    hadversary.run_interpret_preprocess_open'
+    hadversary.run_interpret_preprocess_open
       (prepare := fun c => (c.1.1.1, publicKey H c.2.1 c.2.2))
       (initial := fun _ => ([] : List (ℕ × List Bool)))
       (resources := fun c w => handlerBound cs ds bound c w)

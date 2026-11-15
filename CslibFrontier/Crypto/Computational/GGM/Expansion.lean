@@ -145,9 +145,6 @@ theorem isPPTOn_expansionGame {Caller : Type} {input : Caller ↪ List Bool}
     {adversary : OracleDistinguisher} (hadversary : IsOraclePPT encBool adversary) :
     IsPPTOn input encBool
       (fun a => expansionGame generator (sample a) adversary (width a) (depth a)) := by
-  have hgenerator := hgenerator.tidy
-  have hwidth := hwidth.tidy
-  have hdepth := hdepth.tidy
   have hrun : IsPPTOn input (encPair encBool cacheEncoding) (fun a =>
       (OracleComp.interpret
         (OracleComp.sumHandler (fun k => StateT.lift (ProbComp.unifFin k))

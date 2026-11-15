@@ -79,6 +79,29 @@ These modules formalize the foundation layer for the SOSA 2024 with-high-probabi
 - **Variance-aware $2m$-th moment concentration (`VarianceTail`):** Refines $k$-wise independent central moment bounds when centered `[-1, 1]` terms satisfy heterogeneous per-coordinate variance bounds $\mathbb{E}[Z_x^2] \le v_x$ (`expect_sum_pow_le_of_sq_le`, `dens_filter_le_abs_sum_sub_expect_of_Icc`), replacing `#S` with $\max(\sum v_x, 1)$ to give tail density $m (m^2 \max(\sum v_x, 1) / a^2)^m$ and polynomial $n^{-c}$ error bounds under $O(c \log n)$-wise independence whenever $a^2 \ge \Omega(m^2 \max(\sum v_x, 1))$ (for `[0, 1]` variables under $2m \le 3\mu$, [Concentration.lean](../../CslibFrontier/Probability/KWiseIndependent/Concentration.lean) retains the $1/r!$ symmetry factor to give $2 (3 m \mu / a^2)^m$). Includes multi-salt collision-freedom (`dens_forall_salt_exists_collision_le`) and greedy independent-witness batch collision tail bounds (`dens_card_salt_colliding_ge_le`).
 - **Bit-packed double tabulation (`BitPackedDoubleTabulation`):** Implements universe-reduced salted general-$q$ double tabulation [thorup13][thorup13] on Word RAM. Stage 1 applies universe reduction via `multiplyShiftReduced` (`oddMulModWord`) without $2w_0 \le w$ overflow. Stage 2 evaluates salted $(c_{\mathrm{tab}} + 1, d, b_{\mathrm{char}}, M_{\mathrm{out}})$ double tabulation with $T_1$ and $T_2$ tables stored in bit-packed arrays (`BitPackedArray` / `BitPackedArrayProg`), realized in Word-RAM instructions via `realizes_evalGen`, `evalProg_spec`, `validHistory_evalProg`, and `memoryCost_evalProg` with explicit register and instruction bounds.
 
+The curried slab, tail, chain, bucket and hash-dispatch programs specialize their packed
+`GenProg` implementations at `mkDictParams`. When changing an operation, edit that packed
+implementation; the corresponding `_mk` equation connects it to the curried interface.
+Effect and admissibility proofs can simplify with the packed definition and its parameter
+projection equations and the called operations’ `_mk` equations before applying the existing
+operation specifications. For micro-chain loops, use `boundedWhile_microStepGenProg_mk` to
+transport the loop guard and step together. For slab-directory conditionals, replace the whole
+`if` using the private `ite_dirSlabs_mk` equality before simplifying parameter projections, as in
+`SuccinctSlabPool` and its admissibility clients in `SuccinctValidHistory`. This also specializes
+the hidden decision instance; simplifying only the proposition can leave an instance that
+`rw` or `split_ifs` cannot type-check at their transparency level. The bucket guards in
+`SuccinctSlabOps` and its admissibility clients use `ite_bucketBits_mk` for the same reason.
+For composite slab effects, keep intermediate states abstract with explicit execution and
+readback equations, as in `pushBackSlotProg_execution` and `popBackSlotProg_execution`.
+The invariant helpers also take an abstract final state and its execution equation, so equality
+checking does not repeatedly evaluate the packed writes. Compose the execution and cost
+equations before generalizing the intermediate `clientState`: at that point the helper's state
+equation is reflexive, so no comparison against a reconstructed execution is needed.
+Generalize only the primitive semantic facts and the composed equations, leaving the final
+execution equation intact. Then compose that final equation with the abstract execution result
+using equality transitivity. A `let` name alone still lets equality checking unfold the entire
+execution body.
+
 ### FKS two-level perfect hashing (static, abstract cost model)
 
 Import `CslibFrontier.DataStructure.Dictionary.PerfectHashing.Construction` ([Construction.lean](../../CslibFrontier/DataStructure/Dictionary/PerfectHashing/Construction.lean)), which re-exports the table layer. [CslibFrontierTests/PerfectHashing.lean](../../CslibFrontierTests/PerfectHashing.lean) is a complete checked client: it instantiates a family, builds and checks a concrete table, and applies the construction theorems.

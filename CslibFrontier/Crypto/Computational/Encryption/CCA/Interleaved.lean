@@ -1095,7 +1095,7 @@ private theorem isOraclePPTOn_run_multiPhase2FilterHandler {Caller β : Type}
             (fun m => StateT.lift (ProbOracleComp.sample (ProbComp.unifFin m)))
             (multiPhase2FilterHandler (decBound (nOf a)) (ctsOf a)))
           (prog a)).run ()) := by
-    apply hprog.run_interpret_preprocess_open'
+    apply hprog.run_interpret_preprocess_open
       (prepare := id)
       (initial := fun _ => ())
       (resources := fun a req => decBound (nOf a) req)

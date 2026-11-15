@@ -54,14 +54,14 @@ theorem IsOraclePPTOn.run_interpret_preprocess {Operation α β Caller State : T
     {handler : Caller → Operation × List Bool → State → ProbComp (List Bool × State)}
     {prepare : Caller → α} {initial : Caller → State} {resources : Caller → List Bool → ℕ}
     (hprogram : IsOraclePPTOn source output program)
-    (hprepare : ComputableTidilyInPolyTime prepare input source)
+    (hprepare : ComputableInPolyTime prepare input source)
     (hhandler : IsPPTOn
       (encPair input (encPair (encPair operationEncoding encBits) stateEncoding))
       (encPair encBits stateEncoding)
       (fun ⟨caller, request, state⟩ => handler caller request state))
-    (hinitial : ComputableTidilyInPolyTime initial input stateEncoding)
+    (hinitial : ComputableInPolyTime initial input stateEncoding)
     (invariant : Caller → State → Prop) (hinit : ∀ a, invariant a (initial a))
-    (hresources : ComputableTidilyInPolyTime (fun pair => resources pair.1 pair.2)
+    (hresources : ComputableInPolyTime (fun pair => resources pair.1 pair.2)
       (encPair input encBits) encUnary)
     (hpreserve : ∀ a request state, invariant a state →
       ∀ result ∈ (ProbComp.eval (handler a request state)).support,

@@ -286,8 +286,8 @@ theorem isPPTOn_runSeq_honest {α Caller : Type} {enc : α ↪ List Bool}
     (prepare := fun c => (n c, a c, z c)) (initial := fun c => (false, coinsList c))
     (resources := fun c _ => (encList encProverCoins (coinsList c)).length * m c +
       (encList encProverCoins (coinsList c)).length * (s c + 1))
-    (hn.prod (ha.prod hz)).tidy hstep.isPPTOn ((ComputableInPolyTime.const false).prod hcoins).tidy
-    (fun c st => List.Sublist st.2 (coinsList c)) (fun _ => List.Sublist.refl _) hbound.tidy
+    (hn.prod (ha.prod hz)) hstep.isPPTOn ((ComputableInPolyTime.const false).prod hcoins)
+    (fun c st => List.Sublist st.2 (coinsList c)) (fun _ => List.Sublist.refl _) hbound
     (fun c request state hstate result hresult => ?_)
   simp only [ProbComp.eval_pure, PMF.support_pure, Set.mem_singleton_iff] at hresult
   subst hresult
@@ -869,9 +869,9 @@ theorem isPPTOn_runEmptyOracle {α β : Type} {input : α ↪ List Bool} {output
   have hsub := h.run_interpret_preprocess (Caller := α) (State := Unit)
     (operationEncoding := encFinEnum Unit) (stateEncoding := encFinEnum Unit)
     (handler := fun _ _ _ => pure ([], ())) (prepare := id) (initial := fun _ => ())
-    (resources := fun _ _ => 0) ComputableTidilyInPolyTime.id'
-    (ComputableInPolyTime.const ([], ())).isPPTOn (ComputableTidilyInPolyTime.const ())
-    (fun _ _ => True) (fun _ => trivial) (ComputableTidilyInPolyTime.const 0)
+    (resources := fun _ _ => 0) ComputableInPolyTime.id'
+    (ComputableInPolyTime.const ([], ())).isPPTOn (ComputableInPolyTime.const ())
+    (fun _ _ => True) (fun _ => trivial) (ComputableInPolyTime.const 0)
     (fun _ _ _ _ result hres => by
       simp only [ProbComp.eval_pure, PMF.support_pure, Set.mem_singleton_iff] at hres
       subst hres; exact ⟨trivial, by simp, by simp⟩)

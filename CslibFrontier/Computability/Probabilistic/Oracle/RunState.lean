@@ -17,7 +17,7 @@ import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime
 An oracle-PPT word program run against an efficient stateful oracle is PPT, with the final oracle
 state returned. The statements use `ProbOracleComp.runState`: the run is
 `(program.runState (oracle caller)).run (initial caller)`. They are
-`IsOraclePPTOn.run_interpret_preprocess` and `IsOraclePPT.run_interpret_preprocess'` stated on
+`IsOraclePPTOn.run_interpret_preprocess` and `IsOraclePPT.run_interpret_preprocess` stated on
 `runState`, with the same resource allowance: a local invariant of the oracle state bounds each
 reply and the encoded state added by each call. Each is derived from the corresponding theorem,
 whose conclusion is definitionally the same run. State a run as `(P.runState O).run s` and certify
@@ -65,8 +65,8 @@ theorem IsOraclePPTOn.isPPTOn_runState {program : α → WordOracleComp Operatio
         (stateEncoding result.2).length ≤ (stateEncoding state).length + resources a request.2) :
     IsPPTOn input (encPair output stateEncoding)
       (fun a => ((program (prepare a)).runState (oracle a)).run (initial a)) :=
-  hprogram.run_interpret_preprocess (handler := fun a request => oracle a request) hprepare.tidy
-    horacle hinitial.tidy invariant hinit hresources.tidy hpreserve
+  hprogram.run_interpret_preprocess (handler := fun a request => oracle a request) hprepare
+    horacle hinitial invariant hinit hresources hpreserve
 
 /-- Running a parameterized oracle-PPT program against an efficient stateful oracle is PPT in the
 caller, with the final oracle state returned. `prepare` computes the security parameter and word
@@ -90,7 +90,7 @@ theorem IsOraclePPT.isPPTOn_runState {program : ℕ → List Bool → WordOracle
         (stateEncoding result.2).length ≤ (stateEncoding state).length + resources a request.2) :
     IsPPTOn input (encPair output stateEncoding)
       (fun a => ((program (prepare a).1 (prepare a).2).runState (oracle a)).run (initial a)) :=
-  hprogram.run_interpret_preprocess' (handler := fun a request => oracle a request) hprepare
+  hprogram.run_interpret_preprocess (handler := fun a request => oracle a request) hprepare
     horacle hinitial invariant hinit hresources hpreserve
 
 end Cslib.Probability

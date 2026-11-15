@@ -485,7 +485,7 @@ private theorem isPPTOn_run_cca2Phase1Oracle_of_choose {Choice Out : Type}
           (pair.1.1, pair.1.2.2, pair.2))
         (encPair ECaller encBits) (encPair encUnary (encPair encBits encBits)) := by fun_prop
     exact ComputableInPolyTime.length_bits.comp (hdec.comp harg).encoding_comp
-  exact hchoose.run_interpret_preprocess'
+  exact hchoose.run_interpret_preprocess
     (prepare := fun caller : ℕ × List Bool × List Bool => (caller.1, caller.2.1))
     (initial := fun _ => ())
     (resources := fun caller req => (encOption encOut (decrypt caller.1 caller.2.2 req)).length)
@@ -593,12 +593,12 @@ private theorem isPPTOn_run_cca2Phase2Oracle_of_guess {Challenge Out : Type}
       (caller.1, caller.2.2.1, caller.2.2.2))
     (initial := fun _ => ())
     (resources := fun caller req => (encOption encOut (decrypt caller.1 caller.2.1 req)).length)
-    hprep.tidy
+    hprep
     hhandler
-    (ComputableInPolyTime.const ()).tidy
+    (ComputableInPolyTime.const ())
     (fun _ _ => True)
     (fun _ => trivial)
-    hres.tidy
+    hres
     (fun caller request state _ result hresult => by
       split_ifs at hresult with hct
       · have hresEq : result = ([], state) := by simpa using hresult
@@ -2164,7 +2164,7 @@ theorem isOraclePPTOn_cca2MultiToSingleAt_guess {Msg : Type} [Inhabited Msg]
           (adversary.guess p.1 (multiCCA2StateDecoder.decode p.2.1).stateA
             ((multiCCA2StateDecoder.decode p.2.1).ctsFront ++
               p.2.2 :: (multiCCA2StateDecoder.decode p.2.1).ctsBack))).run ()) := by
-    apply hA.guess.run_interpret_preprocess_open'
+    apply hA.guess.run_interpret_preprocess_open
       (prepare := fun p : ℕ × List Bool × List Bool =>
         (p.1, (multiCCA2StateDecoder.decode p.2.1).stateA,
           (multiCCA2StateDecoder.decode p.2.1).ctsFront ++

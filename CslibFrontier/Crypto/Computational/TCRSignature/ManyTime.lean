@@ -269,7 +269,7 @@ private theorem isOraclePPTOn_run_manyTimeHandler (H : KeyedHashFamily) {sigBoun
       (ComputableInPolyTime.fst _ _).fst'
     have htwoK := (ComputableInPolyTime.const 2).unary_mul' (hn.trans H.keyLen_polyTime)
     exact (htwoK.unary_add' (hn.trans hsigBound)).unary_add' (.const 2)
-  apply hadversary.run_interpret_preprocess_open'
+  apply hadversary.run_interpret_preprocess_open
     (handler := fun (caller : Caller) request state =>
       manyTimeHandler H sigBound caller.1 request state)
     (prepare := fun caller : Caller =>

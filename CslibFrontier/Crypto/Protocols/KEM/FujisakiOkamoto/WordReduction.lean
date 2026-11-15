@@ -59,7 +59,7 @@ runs `A` against the simulator from empty caches (`WordPKE.simFilterWordHit`) an
 **The certificate.** `WordPKE.IsEfficient.isPPT_romFilterCpaReductionWord` derives
 `Encryption.AdversaryOf.IsPPT` of the reduction from `IsOraclePPT encBool A`, the efficiency of
 the PKE family (`WordPKE.IsEfficient`), a polynomial-time key length and a polynomial-time filter.
-The simulator is substituted into `A` with `IsOraclePPT.run_interpret_preprocess'`. Each call is
+The simulator is substituted into `A` with `IsOraclePPT.run_interpret_preprocess`. Each call is
 strict PPT in the full state (`WordPKE.IsEfficient.isPPTOn_simFilterWordHandler`), keeps every
 cached value at most `coinLen n + keyLen n` bits long, and adds at most a polynomial in the
 request length and `n` to the encoded state.
@@ -723,7 +723,7 @@ theorem IsEfficient.isPPT_romFilterCpaReductionWord {P : WordPKE} (hP : P.IsEffi
           ((hstate.fst'.comp (ComputableInPolyTime.fst _ _)).prod
             (hcs.comp (ComputableInPolyTime.fst _ _)))).prod
           (ComputableInPolyTime.snd _ _))
-    have hrun := hA.run_interpret_preprocess' (operationEncoding := encFinEnum CCAOp)
+    have hrun := hA.run_interpret_preprocess (operationEncoding := encFinEnum CCAOp)
       (stateEncoding := encSimState)
       (handler := fun (c : (ℕ × List Bool × List Bool) × List Bool) request st =>
         P.simFilterWordHandler keyLen d c.1.1 (D.decode c.1.2.1).1 c.1.2.2 request st)

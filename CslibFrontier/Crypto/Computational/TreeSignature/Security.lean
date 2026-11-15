@@ -1137,7 +1137,7 @@ theorem isOraclePPT_indexedForger (S : IndexedSignatureScheme) {depth slotBound 
       (fun c : ForgerCaller =>
         (c.1.1.1, encPair encUnary encBits (c.1.1.1, (c.2.getD 0 ([], [])).1)))
       encCaller (encPair encUnary encBits) := by fun_prop
-  have hrun := hA.run_interpret_preprocess_open' (External := Unit)
+  have hrun := hA.run_interpret_preprocess_open (External := Unit)
     (handler := fun c : ForgerCaller =>
       plantedTreeHandler S depth c.2 c.1.2 (sigCap c.1.1.1) c.1.1.1)
     (prepare := fun c : ForgerCaller =>

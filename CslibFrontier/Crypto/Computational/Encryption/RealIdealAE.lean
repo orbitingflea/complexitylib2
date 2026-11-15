@@ -217,7 +217,7 @@ private theorem isOraclePPTOn_run_unitHandler {Operation β : Type} [DecidableEq
             (fun m => StateT.lift (ProbOracleComp.sample (ProbComp.unifFin m)))
             (handler caller.1))
           (program caller.1 [])).run ()) := by
-  apply hprogram.run_interpret_preprocess_open'
+  apply hprogram.run_interpret_preprocess_open
     (prepare := fun caller : ℕ × List Bool => (caller.1, ([] : List Bool)))
     (initial := fun _ => ()) (resources := fun caller word => bound caller.1 word)
     (by fun_prop) hhandler (ComputableInPolyTime.const ()) (fun _ _ => True) (fun _ => trivial)

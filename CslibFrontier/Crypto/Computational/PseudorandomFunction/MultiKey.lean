@@ -208,7 +208,7 @@ theorem isOraclePPT_prfMultiReduction (hfamily : PseudorandomFunction family) (t
   let hres := (((ComputableInPolyTime.const (8 * t)).unary_add'
     (ComputableInPolyTime.unary_mul' (.const 4) hq.length_bits_comp)).unary_add'
     (ComputableInPolyTime.unary_mul' (.const 2) hcaller.fst'.fst')).unary_add' (.const 8)
-  have hrun := hadversary.run_interpret_preprocess_open' (External := Unit)
+  have hrun := hadversary.run_interpret_preprocess_open (External := Unit)
     (State := MultiKeyCache t) (input := encPair (encPair encUnary encBits) encBits)
     (operationEncoding := encFinEnum (Fin t)) (stateEncoding := cacheEncoding t)
     (handler := fun (caller : (ℕ × List Bool) × List Bool) request cache =>

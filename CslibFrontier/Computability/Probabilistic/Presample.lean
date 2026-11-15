@@ -51,16 +51,16 @@ theorem IsOraclePPTOn.run_interpret_withSampleList
     {oracle : Caller → Value → Operation × List Bool → State → ProbComp (List Bool × State)}
     {prepare : Caller → α} {initial : Caller → State} {values : Caller → List Value}
     {resources : Caller → List Bool → ℕ} (hprogram : IsOraclePPTOn source output program)
-    (fallback : Value) (hprepare : ComputableTidilyInPolyTime prepare input source)
+    (fallback : Value) (hprepare : ComputableInPolyTime prepare input source)
     (horacle : IsPPTOn
       (encPair (encPair input valueEncoding)
         (encPair (encPair operationEncoding encBits) stateEncoding))
       (encPair encBits stateEncoding)
       (fun ⟨⟨caller, value⟩, ⟨request, state⟩⟩ => oracle caller value request state))
-    (hinitial : ComputableTidilyInPolyTime initial input stateEncoding)
-    (hvalues : ComputableTidilyInPolyTime values input (encList valueEncoding))
+    (hinitial : ComputableInPolyTime initial input stateEncoding)
+    (hvalues : ComputableInPolyTime values input (encList valueEncoding))
     (invariant : Caller → State → Prop) (hinit : ∀ a, invariant a (initial a))
-    (hresources : ComputableTidilyInPolyTime (fun pair => resources pair.1 pair.2)
+    (hresources : ComputableInPolyTime (fun pair => resources pair.1 pair.2)
       (encPair input encBits) encUnary)
     (hpreserve : ∀ a value request state, invariant a state →
       ∀ result ∈ (ProbComp.eval (oracle a value request state)).support,
@@ -112,16 +112,16 @@ theorem IsOraclePPT.run_interpret_withSampleList
     {prepare : Caller → ℕ × List Bool} {initial : Caller → State} {values : Caller → List Value}
     {resources : Caller → List Bool → ℕ} (hprogram : IsOraclePPT output program)
     (fallback : Value)
-    (hprepare : ComputableTidilyInPolyTime prepare input (encPair encUnary encBits))
+    (hprepare : ComputableInPolyTime prepare input (encPair encUnary encBits))
     (horacle : IsPPTOn
       (encPair (encPair input valueEncoding)
         (encPair (encPair operationEncoding encBits) stateEncoding))
       (encPair encBits stateEncoding)
       (fun ⟨⟨caller, value⟩, ⟨request, state⟩⟩ => oracle caller value request state))
-    (hinitial : ComputableTidilyInPolyTime initial input stateEncoding)
-    (hvalues : ComputableTidilyInPolyTime values input (encList valueEncoding))
+    (hinitial : ComputableInPolyTime initial input stateEncoding)
+    (hvalues : ComputableInPolyTime values input (encList valueEncoding))
     (invariant : Caller → State → Prop) (hinit : ∀ a, invariant a (initial a))
-    (hresources : ComputableTidilyInPolyTime (fun pair => resources pair.1 pair.2)
+    (hresources : ComputableInPolyTime (fun pair => resources pair.1 pair.2)
       (encPair input encBits) encUnary)
     (hpreserve : ∀ a value request state, invariant a state →
       ∀ result ∈ (ProbComp.eval (oracle a value request state)).support,

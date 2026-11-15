@@ -370,17 +370,16 @@ theorem isOraclePPT_baseForger
       (fun p : ℕ × List Bool => ProbOracleComp.sample (BitString.sampleList p.1)) :=
     (ComputableInPolyTime.sampleList (ComputableInPolyTime.fst encUnary encBits)).isOraclePPTOn
   let ECaller := encPair (encPair encUnary encBits) encBits
-  have hcfst := ComputableTidilyInPolyTime.fst (encPair encUnary encBits) encBits
-  have hcsnd := ComputableTidilyInPolyTime.snd (encPair encUnary encBits) encBits
-  have hprep : ComputableTidilyInPolyTime
+  have hcfst := ComputableInPolyTime.fst (encPair encUnary encBits) encBits
+  have hcsnd := ComputableInPolyTime.snd (encPair encUnary encBits) encBits
+  have hprep : ComputableInPolyTime
       (fun c : (ℕ × List Bool) × List Bool => (c.1.1, encPair encBits encBits (c.1.2, c.2)))
       ECaller (encPair encUnary encBits) :=
-    hcfst.fst'.prod ((ComputableTidilyInPolyTime.encode (encPair encBits encBits)).comp
-      (hcfst.snd'.prod hcsnd))
-  have hres : ComputableTidilyInPolyTime
+    hcfst.fst'.prod (hcfst.snd'.prod hcsnd).encoding_comp
+  have hres : ComputableInPolyTime
       (fun pair : ((ℕ × List Bool) × List Bool) × List Bool => bound pair.1.1.1)
       (encPair ECaller encBits) encUnary :=
-    ((ComputableTidilyInPolyTime.fst ECaller encBits).trans hcfst.fst').trans hboundPoly.tidy
+    ((ComputableInPolyTime.fst ECaller encBits).trans hcfst.fst').trans hboundPoly
   have hrun := hadversary.run_interpret_preprocess_open
     (prepare := fun c : (ℕ × List Bool) × List Bool =>
       (c.1.1, encPair encBits encBits (c.1.2, c.2)))
@@ -398,13 +397,13 @@ theorem isOraclePPT_baseForger
       obtain ⟨raw, -, rfl⟩ := OracleComp.mem_supportWith_map_iff.mp hsig
       exact ⟨trivial, List.length_take_le _ _, Nat.le_add_right _ _⟩)
   let EOut := encPair (encPair encBits encBits) (encFinEnum Unit)
-  have hrfst := ComputableTidilyInPolyTime.fst ECaller EOut
-  have hrsnd := ComputableTidilyInPolyTime.snd ECaller EOut
-  have hfinal : ComputableTidilyInPolyTime
+  have hrfst := ComputableInPolyTime.fst ECaller EOut
+  have hrsnd := ComputableInPolyTime.snd ECaller EOut
+  have hfinal : ComputableInPolyTime
       (fun r : ((ℕ × List Bool) × List Bool) × ((List Bool × List Bool) × Unit) =>
         (H r.1.2 r.2.1.1, r.2.1.2))
       (encPair ECaller EOut) (encPair encBits encBits) :=
-    (hH.tidy.comp (hrfst.snd'.prod hrsnd.fst'.fst')).prod hrsnd.fst'.snd'
+    (hH.comp (hrfst.snd'.prod hrsnd.fst'.fst')).prod hrsnd.fst'.snd'
   unfold baseForger
   exact hs.bind_with (hrun.bind_with (hfinal.isOraclePPTOn (Operation := Unit)))
 

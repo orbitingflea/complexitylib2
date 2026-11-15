@@ -551,7 +551,7 @@ private theorem isPPT_prfTapeDistinguisher (F : PrimeOrderGroupFamily)
     ComputableInPolyTime.unary_add.comp
       (((ComputableInPolyTime.fst encUnary encBits).comp
         (ComputableInPolyTime.fst ECaller encBits)).prod (.const 1))
-  have hrun := hadversary.run_interpret_preprocess' (State := Unit)
+  have hrun := hadversary.run_interpret_preprocess (State := Unit)
     (stateEncoding := encFinEnum Unit)
     (handler := fun (p : ℕ × List Bool) (request : Unit × List Bool) (_ : Unit) =>
       pure (if request.2.length = p.1 then

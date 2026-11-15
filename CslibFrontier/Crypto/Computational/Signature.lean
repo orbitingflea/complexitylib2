@@ -261,7 +261,7 @@ theorem isPPTOn_run_signingOracleOf {sign : List Bool → List Bool → ProbComp
   have hstate := ComputableTidilyInPolyTime.snd
     (encPair encUnary (encPair encBits encBits))
     (encPair (encPair (encFinEnum Unit) encBits) (encList encBits))
-  apply hadversary.run_interpret_preprocess' (operationEncoding := encFinEnum Unit)
+  apply hadversary.run_interpret_preprocess (operationEncoding := encFinEnum Unit)
     (handler := fun caller : ℕ × (List Bool × List Bool) => signingOracleOf sign caller.2.2)
     (prepare := fun caller : ℕ × (List Bool × List Bool) => (caller.1, caller.2.1))
     (initial := fun _ => ([] : List (List Bool)))
@@ -388,7 +388,7 @@ theorem isPPTOn_run_oneTimeSigningOracleOf {sign : List Bool → List Bool → P
   have hstate := ComputableTidilyInPolyTime.snd
     (encPair encUnary (encPair encBits encBits))
     (encPair (encPair (encFinEnum Unit) encBits) (encList encBits))
-  apply hadversary.run_interpret_preprocess' (operationEncoding := encFinEnum Unit)
+  apply hadversary.run_interpret_preprocess (operationEncoding := encFinEnum Unit)
     (handler := fun caller : ℕ × (List Bool × List Bool) => oneTimeSigningOracleOf sign caller.2.2)
     (prepare := fun caller : ℕ × (List Bool × List Bool) => (caller.1, caller.2.1))
     (initial := fun _ => ([] : List (List Bool)))
@@ -609,7 +609,7 @@ theorem isOraclePPT_limitToOneQuery {bound : ℕ → ℕ → ℕ}
             (fun k => StateT.lift (ProbOracleComp.sample (ProbComp.unifFin k)))
             (oneTimeFilterHandler bound caller))
           (adversary caller.1 caller.2)).run false) := by
-    apply hadversary.run_interpret_preprocess_open' (operationEncoding := encFinEnum Unit)
+    apply hadversary.run_interpret_preprocess_open (operationEncoding := encFinEnum Unit)
       (handler := oneTimeFilterHandler bound)
       (prepare := id)
       (initial := fun _ => false)

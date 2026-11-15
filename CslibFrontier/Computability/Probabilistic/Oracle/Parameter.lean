@@ -28,13 +28,10 @@ for cryptographic random-function experiments.
 ## Main results
 
 * `Cslib.Probability.IsOraclePPT.query_bounds`: polynomial external call and request budgets.
-* `Cslib.Probability.IsOraclePPT.run_interpret_preprocess`: efficient closed stateful substitution.
-* `Cslib.Probability.IsOraclePPT.run_interpret_preprocess'`: the same with plain
-  `ComputableInPolyTime` side conditions.
+* `Cslib.Probability.IsOraclePPT.run_interpret_preprocess`: closed stateful substitution with
+  plain numerical certificates.
 * `Cslib.Probability.IsOraclePPT.run_interpret_preprocess_open`: efficient open stateful
-  substitution, whose handler may call an external oracle.
-* `Cslib.Probability.IsOraclePPT.run_interpret_preprocess_open'`: the same with plain
-  `ComputableInPolyTime` side conditions.
+  substitution with plain numerical certificates, whose handler may call an external oracle.
 * `Cslib.Probability.IsOraclePPT.run_interpret_preprocess_open_of_polyBounded`: the same with an
   allowance that is only polynomially bounded, not computed.
 
@@ -101,34 +98,6 @@ theorem IsOraclePPT.run_interpret_preprocess {Caller State : Type}
     {handler : Caller → Operation × List Bool → State → ProbComp (List Bool × State)}
     {prepare : Caller → ℕ × List Bool} {initial : Caller → State}
     {resources : Caller → List Bool → ℕ} (hprogram : IsOraclePPT output program)
-    (hprepare : ComputableTidilyInPolyTime prepare input (encPair encUnary encBits))
-    (hhandler : IsPPTOn (encHandlerCall input operationEncoding stateEncoding)
-      (encPair encBits stateEncoding)
-      (fun ⟨caller, request, state⟩ => handler caller request state))
-    (hinitial : ComputableTidilyInPolyTime initial input stateEncoding)
-    (invariant : Caller → State → Prop) (hinit : ∀ a, invariant a (initial a))
-    (hresources : ComputableTidilyInPolyTime (fun pair => resources pair.1 pair.2)
-      (encPair input encBits) encUnary)
-    (hpreserve : ∀ a request state, invariant a state →
-      ∀ result ∈ (ProbComp.eval (handler a request state)).support,
-        invariant a result.2 ∧ result.1.length ≤ resources a request.2 ∧
-        (stateEncoding result.2).length ≤ (stateEncoding state).length + resources a request.2) :
-    IsPPTOn input (encPair output stateEncoding) (fun a =>
-      (OracleComp.interpret
-        (OracleComp.sumHandler (fun n => StateT.lift (ProbComp.unifFin n)) (handler a))
-          (program (prepare a).1 (prepare a).2)).run (initial a)) :=
-  hprogram.on.run_interpret_preprocess hprepare hhandler hinitial invariant hinit
-    hresources hpreserve
-
-/-- `Cslib.Probability.IsOraclePPT.run_interpret_preprocess` with plain polynomial-time
-preparation, initial state and resource allowance. -/
-theorem IsOraclePPT.run_interpret_preprocess' {Caller State : Type}
-    {input : Caller ↪ List Bool}
-    {operationEncoding : Operation ↪ List Bool}
-    {stateEncoding : State ↪ List Bool}
-    {handler : Caller → Operation × List Bool → State → ProbComp (List Bool × State)}
-    {prepare : Caller → ℕ × List Bool} {initial : Caller → State}
-    {resources : Caller → List Bool → ℕ} (hprogram : IsOraclePPT output program)
     (hprepare : ComputableInPolyTime prepare input (encPair encUnary encBits))
     (hhandler : IsPPTOn (encHandlerCall input operationEncoding stateEncoding)
       (encPair encBits stateEncoding)
@@ -145,8 +114,8 @@ theorem IsOraclePPT.run_interpret_preprocess' {Caller State : Type}
       (OracleComp.interpret
         (OracleComp.sumHandler (fun n => StateT.lift (ProbComp.unifFin n)) (handler a))
           (program (prepare a).1 (prepare a).2)).run (initial a)) :=
-  hprogram.run_interpret_preprocess hprepare.tidy hhandler hinitial.tidy invariant hinit
-    hresources.tidy hpreserve
+  hprogram.on.run_interpret_preprocess hprepare hhandler hinitial invariant hinit
+    hresources hpreserve
 
 /-- Supply a stateful handler with its own external calls to a parameterized oracle program. The
 result retains the handler's final state and every external oracle's state, and a local
@@ -159,13 +128,13 @@ theorem IsOraclePPT.run_interpret_preprocess_open {External Caller State : Type}
       WordOracleComp External (List Bool × State)}
     {prepare : Caller → ℕ × List Bool} {initial : Caller → State}
     {resources : Caller → List Bool → ℕ} (hprogram : IsOraclePPT output program)
-    (hprepare : ComputableTidilyInPolyTime prepare input (encPair encUnary encBits))
+    (hprepare : ComputableInPolyTime prepare input (encPair encUnary encBits))
     (hhandler : IsOraclePPTOn (encHandlerCall input operationEncoding stateEncoding)
       (encPair encBits stateEncoding)
       (fun ⟨caller, request, state⟩ => handler caller request state))
-    (hinitial : ComputableTidilyInPolyTime initial input stateEncoding)
+    (hinitial : ComputableInPolyTime initial input stateEncoding)
     (invariant : Caller → State → Prop) (hinit : ∀ a, invariant a (initial a))
-    (hresources : ComputableTidilyInPolyTime (fun pair => resources pair.1 pair.2)
+    (hresources : ComputableInPolyTime (fun pair => resources pair.1 pair.2)
       (encPair input encBits) encUnary)
     (hpreserve : ∀ a request state, invariant a state →
       ∀ result ∈ OracleComp.support (handler a request state),
@@ -179,37 +148,7 @@ theorem IsOraclePPT.run_interpret_preprocess_open {External Caller State : Type}
   hprogram.on.run_interpret_preprocess_open hprepare hhandler hinitial invariant hinit
     hresources hpreserve
 
-/-- `Cslib.Probability.IsOraclePPT.run_interpret_preprocess_open` with plain polynomial-time
-preparation, initial state and resource allowance. -/
-theorem IsOraclePPT.run_interpret_preprocess_open' {External Caller State : Type}
-    [DecidableEq External] {input : Caller ↪ List Bool}
-    {operationEncoding : Operation ↪ List Bool}
-    {stateEncoding : State ↪ List Bool}
-    {handler : Caller → Operation × List Bool → State →
-      WordOracleComp External (List Bool × State)}
-    {prepare : Caller → ℕ × List Bool} {initial : Caller → State}
-    {resources : Caller → List Bool → ℕ} (hprogram : IsOraclePPT output program)
-    (hprepare : ComputableInPolyTime prepare input (encPair encUnary encBits))
-    (hhandler : IsOraclePPTOn (encHandlerCall input operationEncoding stateEncoding)
-      (encPair encBits stateEncoding)
-      (fun ⟨caller, request, state⟩ => handler caller request state))
-    (hinitial : ComputableInPolyTime initial input stateEncoding)
-    (invariant : Caller → State → Prop) (hinit : ∀ a, invariant a (initial a))
-    (hresources : ComputableInPolyTime (fun pair => resources pair.1 pair.2)
-      (encPair input encBits) encUnary)
-    (hpreserve : ∀ a request state, invariant a state →
-      ∀ result ∈ OracleComp.support (handler a request state),
-        invariant a result.2 ∧ result.1.length ≤ resources a request.2 ∧
-        (stateEncoding result.2).length ≤ (stateEncoding state).length + resources a request.2) :
-    IsOraclePPTOn input (encPair output stateEncoding) (fun a =>
-      (OracleComp.interpret
-        (OracleComp.sumHandler
-          (fun n => StateT.lift (ProbOracleComp.sample (ProbComp.unifFin n))) (handler a))
-          (program (prepare a).1 (prepare a).2)).run (initial a)) :=
-  hprogram.on.run_interpret_preprocess_open' hprepare hhandler hinitial invariant hinit
-    hresources hpreserve
-
-/-- `Cslib.Probability.IsOraclePPT.run_interpret_preprocess_open'` with an allowance that is only
+/-- `Cslib.Probability.IsOraclePPT.run_interpret_preprocess_open` with an allowance that is only
 polynomially bounded in the encoded caller and request, not computed. -/
 theorem IsOraclePPT.run_interpret_preprocess_open_of_polyBounded {External Caller State : Type}
     [DecidableEq External] {input : Caller ↪ List Bool}

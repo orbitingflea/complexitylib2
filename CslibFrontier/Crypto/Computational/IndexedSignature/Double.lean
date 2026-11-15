@@ -687,7 +687,7 @@ theorem isOraclePPT_doubleForger (S : IndexedSignatureScheme) {bound : ℕ → �
             (fun k => StateT.lift (ProbOracleComp.sample (ProbComp.unifFin k)))
             (S.doubleHandler caller.1.2 caller.2.2 bound caller.1.1))
           (adversary caller.1.1 caller.2.1)).run []) := by
-    refine hadversary.run_interpret_preprocess_open'
+    refine hadversary.run_interpret_preprocess_open
       (prepare := fun caller : DoubleCaller => (caller.1.1, caller.2.1))
       (initial := fun _ => ([] : List (ℕ × List Bool)))
       (resources := resources)

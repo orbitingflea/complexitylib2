@@ -2168,7 +2168,7 @@ private theorem isOraclePPTOn_hashedAdvGroup (F : PrimeOrderGroupFamily) {inLen 
       (encPair ECaller encBits) encUnary :=
     (by fun_prop : ComputableInPolyTime (fun n => n + 1) encUnary encUnary).comp
       (houtLen.comp (by dsimp only [ECaller]; fun_prop))
-  have hsub := hadversary.on.run_interpret_preprocess_open' (State := Unit)
+  have hsub := hadversary.on.run_interpret_preprocess_open (State := Unit)
     (operationEncoding := encFinEnum Unit) (stateEncoding := encFinEnum Unit)
     (handler := handler)
     (prepare := fun p : ℕ × F.withSeed.Desc => (p.1, F.withSeed.encDesc p.2))

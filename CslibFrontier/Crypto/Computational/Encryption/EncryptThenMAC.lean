@@ -429,7 +429,7 @@ theorem isOraclePPT_etmToMACForger (E : SymmetricCipher) (M : MACScheme) {tagBou
             (fun m => StateT.lift (ProbOracleComp.sample (ProbComp.unifFin m)))
             (etmToMACHandler E caller.1.1 (tagBound caller.1.1) caller.2))
           (adversary caller.1.1 [])).run ()) := by
-    apply hadversary.run_interpret_preprocess_open'
+    apply hadversary.run_interpret_preprocess_open
       (input := ECaller)
       (handler := fun caller : (ℕ × List Bool) × List Bool =>
         etmToMACHandler E caller.1.1 (tagBound caller.1.1) caller.2)
@@ -706,7 +706,7 @@ theorem isOraclePPT_etmToOneTimeMACForger (E : SymmetricCipher) (M : MACScheme)
             (fun m => StateT.lift (ProbOracleComp.sample (ProbComp.unifFin m)))
             (etmToOneTimeMACHandler E caller.1.1 (tagBound caller.1.1) caller.2))
           (adversary caller.1.1 [])).run false) := by
-    apply hadversary.run_interpret_preprocess_open'
+    apply hadversary.run_interpret_preprocess_open
       (input := ECaller)
       (handler := fun caller : (ℕ × List Bool) × List Bool =>
         etmToOneTimeMACHandler E caller.1.1 (tagBound caller.1.1) caller.2)
@@ -975,7 +975,7 @@ theorem isOraclePPT_etmToCPAAdversary (M : MACScheme) {adversary : OracleDisting
             (fun m => StateT.lift (ProbOracleComp.sample (ProbComp.unifFin m)))
             (etmToCPAHandler M caller.1.1 caller.2))
           (adversary caller.1.1 [])).run ()) := by
-    apply hadversary.run_interpret_preprocess_open'
+    apply hadversary.run_interpret_preprocess_open
       (input := ECaller)
       (handler := fun caller : (ℕ × List Bool) × List Bool =>
         etmToCPAHandler M caller.1.1 caller.2)
@@ -1189,7 +1189,7 @@ theorem isOraclePPT_etmToOneTimeCPAAdversary (M : MACScheme) {adversary : Oracle
             (fun m => StateT.lift (ProbOracleComp.sample (ProbComp.unifFin m)))
             (etmToOneTimeCPAHandler M caller.1.1 caller.2))
           (adversary caller.1.1 [])).run false) := by
-    apply hadversary.run_interpret_preprocess_open'
+    apply hadversary.run_interpret_preprocess_open
       (input := ECaller)
       (handler := fun caller : (ℕ × List Bool) × List Bool =>
         etmToOneTimeCPAHandler M caller.1.1 caller.2)
@@ -1686,7 +1686,7 @@ theorem isOraclePPT_cpaToPrfDistinguisher {adversary : OracleDistinguisher}
             (fun m => StateT.lift (ProbOracleComp.sample (ProbComp.unifFin m)))
             (cpaToPrfHandler caller.1 bit))
           (adversary caller.1 [])).run ()) := by
-    apply hadversary.run_interpret_preprocess_open'
+    apply hadversary.run_interpret_preprocess_open
       (input := ECaller)
       (handler := fun caller : ℕ × List Bool => cpaToPrfHandler caller.1 bit)
       (prepare := fun caller : ℕ × List Bool => (caller.1, ([] : List Bool)))

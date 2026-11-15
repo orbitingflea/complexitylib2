@@ -37,7 +37,7 @@ and structure-field oracle routine calls prepare tuple arguments with `IsOracleP
 `pure`, `ProbOracleComp.sample` and `query_take'` bridge to deterministic `PolyTime`, closed `PPT`
 and plain request/limit bounds; sequencing, captured maps, plain conditionals and bounded-growth
 `OracleComp.iterate` loops search jointly. Handler substitution and general adaptive loop
-invariants keep their explicit theorems (`IsOraclePPT.run_interpret_preprocess'`,
+invariants keep their explicit theorems (`IsOraclePPT.run_interpret_preprocess`,
 `IsOraclePPTOn.iterate_spec'`, `IsOraclePPTOn.iterateWith_spec'`).
 
 Before searching, `ppt [f, g]` unfolds the hinted definitions in the goal and inlines the `let`s
