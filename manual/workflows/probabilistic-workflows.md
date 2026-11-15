@@ -160,7 +160,13 @@ box `{u | ∀ i, u i ∈ E i}`. For `Fin k`-indexed tuples with different factor
 probability that `k` samples of `iid μ k` contain two equal values, for any law `μ` on a set of size
 `n`: at least `1 - exp (-k (k - 1) / (2 n))` (`one_sub_exp_neg_le_iid_not_injective`) and at least
 `min (k (k - 1) / (4 n)) 0.63` (`min_le_iid_not_injective`), as in
-[bs23][bs23], Theorem B.1 and Corollary B.2. The union-bound upper bounds are
+[bs23][bs23], Theorem B.1 and Corollary B.2. For uniform samples from a finite nonempty type `M`
+and a function `f : M → β` whose values lie in a finite set `D`,
+[IID/FunctionCollision.lean](../../CslibFrontier/Probability/IID/FunctionCollision.lean) bounds
+from below the probability that `s` samples contain two different points with one value of `f`:
+at least `1 - exp (-s (s - 1) / (2 |D|)) - C(s, 2) / |M|`
+(`one_sub_exp_neg_sub_choose_le_iid_uniformOfFintype_exists_collision`), the probabilistic part of
+[bs23][bs23], Lemma 8.2. The union-bound upper bounds are
 in [IID/Distinct.lean](../../CslibFrontier/Probability/IID/Distinct.lean). To move a finite
 statistic of i.i.d. samples from a measure into this setting, import
 [Product/MapMeasure.lean](../../CslibFrontier/Probability/Product/MapMeasure.lean):
@@ -234,7 +240,12 @@ and `PMF.tsum_coe` by hand. Its real forms are `PMF.toReal_true_add_toReal_false
 indicator of `E`), and `PMF.map_not_true` for complements. A two-stage experiment
 `p.bind fun a => PMF.pure (E a)` is `p.map E` by definition, so these lemmas apply to it directly.
 To compose an event bound through `PMF.bind`, use the `PMF.toOuterMeasure_bind_*` lemmas in
-[PMF/EventBind.lean](../../CslibFrontier/Probability/PMF/EventBind.lean). The
+[PMF/EventBind.lean](../../CslibFrontier/Probability/PMF/EventBind.lean). When the bound on the
+continuation depends on whether the first stage landed in a set `pre`, at most `a₁` from supported
+outcomes in `pre` and at most `a₂` from the others,
+[PMF/TotalProbability.lean](../../CslibFrontier/Probability/PMF/TotalProbability.lean) bounds the
+bind by `P(pre) * a₁ + P(preᶜ) * a₂` (`PMF.toOuterMeasure_bind_le_mul_add_mul`, and
+`PMF.toOuterMeasure_bind_toReal_le_mul_add_mul` in `ℝ` for nonnegative `a₁` and `a₂`). The
 [checked examples](../../CslibFrontierTests/PMFBool.lean) recover the mass of `false` from the mass of
 `true` and apply the finite union bound; run `scripts/build.sh CslibFrontierTests.PMFBool`.
 
@@ -1918,6 +1929,23 @@ When two stateful oracle handlers agree until an internal collision or guessing 
 - **Random-oracle min-entropy programming and birthday collisions.** Import [RandomOracle/Programming.lean](../../CslibFrontier/Languages/Probabilistic/RandomOracle/Programming.lean) (and [CloseTo/RandomOracle.lean](../../CslibFrontier/Crypto/Game/CloseTo/RandomOracle.lean) for `Game.advantage` wrappers):
   - `RandomOracle.toOuterMeasure_exists_mem_fst_eq_le` bounds `μ.toOuterMeasure {a | ∃ e ∈ cache, e.1 = f a}` by `cache.length * δ` whenever `∀ q, (μ.map f) q ≤ δ`, and `RandomOracle.map_comp_apply_le_of_injective` transports that guessing bound through an injective key embedding.
   - `RandomOracle.lazyProgramHandler` and `RandomOracle.overwriteProgramHandler` (with flagged counterparts `flaggedLazyProgramHandler` and `flaggedOverwriteProgramHandler` used in [FiatShamir.lean](../../CslibFrontier/Crypto/Protocols/SigmaProtocol/FiatShamir.lean) and [FiatShamirNIZK.lean](../../CslibFrontier/Crypto/Protocols/SigmaProtocol/FiatShamirNIZK.lean)) model a two-channel experiment (`Req ⊕ Query`) whose active `.inl req` calls sample `ts ← samplePre req` with guessing bound `δ` at `point req ts` and either query `memoize (fun _ => dist)` lazily or overwrite `(point req ts, c)` with a fresh `c ← dist`. `closeTo_run_lazyProgramHandler_overwriteProgramHandler_choose_two` and `closeTo_runWith_lazyProgramHandler_overwriteProgramHandler_choose_two` (plus `advantage_runWith_lazyProgramHandler_overwriteProgramHandler_choose_two_le`) bound the programming-collision error by `(q_S * cache.length + q_S * q_H + q_S.choose 2) * δ`, with rectangular corollaries `q_S * (cache.length + q_S + q_H) * δ`.
+  - For native word execution, import
+    [Computability/Probabilistic/RandomOracle/Programming.lean](../../CslibFrontier/Computability/Probabilistic/RandomOracle/Programming.lean).
+    `lazyProgramWordHandler` and `overwriteProgramWordHandler` use one encoded `ProgrammingState`
+    containing the memoized table and caller log. `eval_lazyProgramWordHandler`,
+    `eval_overwriteProgramWordHandler`, `runWith_lazyProgramWordHandler` and
+    `runWith_overwriteProgramWordHandler` identify the complete reply/cache/log law with the
+    semantic handlers above; `isPPTOn_lazyProgramWordHandler` and
+    `isPPTOn_overwriteProgramWordHandler` certify individual calls. The whole-run
+    `isPPTOn_run_lazyProgramWordHandler` and `isPPTOn_run_overwriteProgramWordHandler`
+    additionally require an additive `programmingResources` contract: `ProgrammingInvariant`
+    bounds cached digests and caller logs, `lazyProgramWordHandler_support` preserves it and
+    bounds reply and encoded-state growth, and `computableInPolyTime_programmingResources`
+    certifies the shared unary allowance. The
+    [ordinary-module client](../../CslibFrontierTests/ProgrammableRandomOraclePPT.lean) checks both
+    worlds and an answer-dependent follow-up query. These certificates charge runtime caller data
+    and final state, but not a parameter-dependent installed program or machine description; such
+    a family still needs an `OracleTM`-level description-size argument.
   - `RandomOracle.toOuterMeasure_collision_memoize_uniform_le` and `RandomOracle.toOuterMeasure_hasOutputCollision_memoize_uniform_le` (with `runWith` variants for `ProbOracleComp`) prove the `q`-query random-oracle output-collision birthday bound `q.choose 2 / Fintype.card Digest` starting from `[]`.
 - **Two independent random oracles as two lists.** When a protocol calls two random oracles, such as a Merkle hash and a Fiat–Shamir challenge oracle, import [RandomOracle/Sum.lean](../../CslibFrontier/Languages/Probabilistic/RandomOracle/Sum.lean) and run it under `RandomOracle.memoizeSum dist₁ dist₂`, which keeps one association list per oracle. `RandomOracle.run_interpret_memoizeSum` shows that the two lists implement the lazy random oracle `RandomOracle.answer (sumHandler dist₁ dist₂)` on their joined cache `Cache.sum (ofList tr₁) (ofList tr₂)`, and `map_fst_run_interpret_memoizeSum_nil` gives the output distribution from empty lists. One call unfolds with `memoizeSum_inl`/`_inr` and inverts with `mem_support_memoizeSum_inl`/`_inr`; `run_interpret_memoizeSum_liftLeft`/`_liftRight` reduce a one-sided subprogram to ordinary `memoize`, and `mem_support_run_interpret_memoizeSum` carries per-list invariants (for example `mem_support_memoize_nodup`). Per-oracle query budgets of embedded subprograms come from `IsCostBounded.liftLeft`/`liftRight` and `liftLeft_of_cost_inl_eq_zero`/`liftRight_of_cost_inr_eq_zero` in [QueryCount/Sum.lean](../../CslibFrontier/Languages/Probabilistic/QueryCount/Sum.lean). `micaliMemoize` and `bcsMemoize` are the two instances.
 

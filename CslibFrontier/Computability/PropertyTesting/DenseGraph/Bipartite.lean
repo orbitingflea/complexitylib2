@@ -12,6 +12,7 @@ public import CslibFrontier.Computability.PropertyTesting.DenseGraph.Basic
 public import Mathlib.Combinatorics.SimpleGraph.Bipartite
 import CslibFrontier.Foundations.Combinatorics.SimpleGraph.SymmDiff
 import CslibFrontier.Languages.Probabilistic.Oracle.Norm
+import CslibFrontier.Languages.Probabilistic.Oracle.Vector
 import CslibFrontier.Languages.Probabilistic.Vector
 import CslibFrontier.Probability.PMF
 import CslibFrontier.Probability.Product
@@ -591,18 +592,6 @@ end Combinatorics
 
 /-! ### The tester -/
 
-/-- Budgets add along `OracleComp.pi`. -/
-private theorem isCostBounded_pi {ι : Type} {spec : ι → Type} {cost : ι → ℕ} {m : ℕ}
-    {β : Fin m → Type} {programs : (i : Fin m) → OracleComp spec (β i)} {c : ℕ}
-    (h : ∀ i, OracleComp.IsCostBounded cost (programs i) c) :
-    OracleComp.IsCostBounded cost (OracleComp.pi programs) (m * c) := by
-  induction m with
-  | zero => exact .pure _ _
-  | succ m ih =>
-    rw [OracleComp.pi_succ]
-    exact ((h 0).bind fun _ => (OracleComp.isCostBounded_map_iff _ _ _).mpr
-      (ih fun i => h i.succ)).mono (by rw [Nat.succ_mul, Nat.add_comm])
-
 /-- Deterministic coordinates evaluate to a point mass. -/
 private theorem evalWith_pi_pure {ι : Type} {spec : ι → Type} (oracle : (q : ι) → PMF (spec q))
     {m : ℕ} {β : Fin m → Type} {programs : (i : Fin m) → OracleComp spec (β i)}
@@ -649,11 +638,11 @@ theorem isQueryBounded_bipartiteRun (n' s m : ℕ) :
       (spec := pairSpec (Fin (n' + 1))) (OracleComp.replicateFin m (ProbComp.unifFin n'))).bind
     fun x => (ProbOracleComp.IsQueryBounded.sample
       (spec := pairSpec (Fin (n' + 1))) (OracleComp.replicateFin m (ProbComp.unifFin n'))).bind
-    fun y => (isCostBounded_pi fun k => isCostBounded_pi fun i =>
+    fun y => (OracleComp.isCostBounded_pi fun k => OracleComp.isCostBounded_pi fun i =>
       isQueryBounded_queryAdj (x k) (u i)).bind
-    fun a => (isCostBounded_pi fun k => isCostBounded_pi fun i =>
+    fun a => (OracleComp.isCostBounded_pi fun k => OracleComp.isCostBounded_pi fun i =>
       isQueryBounded_queryAdj (y k) (u i)).bind
-    fun b => (isCostBounded_pi fun k => isQueryBounded_queryAdj (x k) (y k)).bind
+    fun b => (OracleComp.isCostBounded_pi fun k => isQueryBounded_queryAdj (x k) (y k)).bind
     fun c => OracleComp.IsCostBounded.pure (bipAccept a b c) 0
   refine OracleComp.IsCostBounded.mono h ?_
   ring_nf

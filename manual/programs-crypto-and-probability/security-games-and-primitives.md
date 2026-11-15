@@ -320,6 +320,35 @@ efficient identity test, and shows that constant composite, Blum, and RSA moduli
 scripts/build.sh --wfail --iofail CslibFrontierTests.Crypto.DiffieHellman CslibFrontierTests.Crypto.MultiDDH CslibFrontierTests.Crypto.AssumptionNonvacuity
 ```
 
+In a group of even order, the parity test of [bs23][bs23], Section 16.1.3, distinguishes
+Diffie–Hellman triples from random ones. Import
+[`DiffieHellman/EvenOrder.lean`](../../CslibFrontier/Crypto/Computational/DiffieHellman/EvenOrder.lean).
+For `G` a `ZMod q`-module with `q` nonzero and even (`[NeZero q]`, `Even q`) and `c ↦ c • g`
+injective, `div_two_nsmul_smul_eq_zero_iff` (Lemma 16.1) and `even_val_mul_iff` (Lemma 16.2) read
+the parity of `a.val` and `(a * b).val` from `(q / 2) • _`, and, with `[DecidableEq G]`,
+`ddhAdvantage_ddhParityDistinguisher` proves that the parity test `ddhParityDistinguisher q` has
+fixed-group advantage exactly `1 / 2`. `ddhAdvantage_units_ddhParityDistinguisher` instantiates
+this for `(ZMod p)ˣ` with `p` an odd prime (`[Fact p.Prime]`, `p ≠ 2`) and any generator `g`
+(`hg : ∀ x, x ∈ Subgroup.zpowers g`), under the local instances `zmodUnitsModule p` and
+`neZero_sub_one_of_prime p`. The fixed-group advantage does not bound the distinguisher.
+Efficiency is stated over group families whose order need not be prime:
+[`DiscreteLog/CyclicGroupFamily.lean`](../../CslibFrontier/Crypto/Computational/DiscreteLog/CyclicGroupFamily.lean)
+defines `CyclicGroupFamily` (a `PrimeOrderGroupFamily` with `order_ne_zero` and
+`smul_generator_injective` in place of `prime_order` and `generator_ne_zero`) and
+`PrimeOrderGroupFamily.toCyclicGroupFamily`, and
+[`DiffieHellman/CyclicGroupFamily.lean`](../../CslibFrontier/Crypto/Computational/DiffieHellman/CyclicGroupFamily.lean)
+states its DDH assumption `CyclicGroupFamily.DDH`, which on a prime-order family is
+`PrimeOrderGroupFamily.DDH` (`ddh_toCyclicGroupFamily_iff`). There the certificate
+`CyclicGroupFamily.isPPT_ddhParityDistinguisher` shows that the parity test is computed by one
+uniform strict PPT machine on `encDDHInput`, so Exercise 10.24's distinguisher is efficient, and
+`CyclicGroupFamily.not_ddh_of_even_order` proves that DDH does not hold when every group the setup
+law can produce has even order. No family of the groups `(ZMod p)ˣ` is constructed, so the book's
+conclusion that DDH does not hold in `Z_p^*` is proved only in the fixed-group form. The
+[even-order client](../../CslibFrontierTests/Crypto/DiffieHellmanEvenOrder.lean) checks `ZMod 6`,
+`(ZMod 7)ˣ` and the odd-order failure of Lemma 16.1 in `ZMod 5`, applies
+`not_ddh_of_even_order` to the residue groups `ZMod (2 (n + 1))`, and derives that a prime-order
+family fails `PrimeOrderGroupFamily.DDH` for any setup law that only produces groups of order `2`.
+
 Inversion and prediction are each stated once, for a fixed function and input distribution, in
 [`Crypto/Game/Inversion.lean`](../../CslibFrontier/Crypto/Game/Inversion.lean):
 `inversionExperiment sample f A` draws `x`, gives `A` the image `f x` and accepts any preimage,
@@ -1845,8 +1874,16 @@ four `ModuleLWE.advantage` terms: the public-key hop `mlweKeyReduction A b` and 
 `mlweReduction A b` for each challenge bit `b`, with centered-binomial secret and error laws. Both
 reductions are explicit programs that run the adversary's first stage themselves, as in the hops of
 Kyber v3.02 ([kyber302][kyber302], §4.4, eq. (6)), with a uniform matrix instead of `XOF` and a
-ciphertext hop on the uncompressed sample. The bound is concrete and charges no running time; `DecisionModuleLWE`
-fixes a uniform secret, so it does not bound these terms. `MLKEMTransform.decapsWith` is the FIPS 203 implicit-rejection wrapper over any
+ciphertext hop on the uncompressed sample. The bound is concrete and charges no running time.
+[`MLKEM/Native.lean`](../../CslibFrontier/Crypto/Computational/SIS/MLKEM/Native.lean) gives K-PKE
+on residue lists, with `SamplePolyCBD` from fair bits (`uniformList_map_cbdResidues`) and native
+encryption and decryption proved to compute `encrypt` and `decrypt`, and
+[`MLKEM/Family.lean`](../../CslibFrontier/Crypto/Computational/SIS/MLKEM/Family.lean) packages them
+as the word-level family `kpke P : WordPKE` for a parameter family `P`, efficient when `P` is
+computable in polynomial time (`kpke_isEfficient`) and with ciphertexts that fit
+(`kpke_ciphertextFits`). Its key generation draws the matrix coefficientwise at precision `κ`,
+within `k * k * n / 2 ^ κ` of uniform (`closeTo_keyGenWord`).
+`MLKEMTransform.decapsWith` is the FIPS 203 implicit-rejection wrapper over any
 `ExplicitCoinPKE`, defined through `FujisakiOkamoto.decT` and proved equal to the standard's
 decapsulation algorithm (`decapsWith_eq`). [`CslibFrontierTests/Crypto/MLKEM.lean`](../../CslibFrontierTests/Crypto/MLKEM.lean)
 checks the three parameter sets, sharpness of the compression and decoding bounds at `q = 3329`,
@@ -2206,6 +2243,38 @@ probability at most `(1 / 2) ^ n`. Composed with `OneWay.exists_eufCMA` and
 one-bit-per-block instance `merkleDamgard`, not the length-strengthened one),
 `CompressionFamily.exists_oneWay` and `CompressionFamily.exists_wordEUFCMA` give the same
 conclusions for `2 n → n` compression families. No converse is claimed.
+
+Merkle–Damgård chains have many messages with one digest at little more than the cost of one
+collision (Joux's attack, [bs23][bs23], §8.4.1, pp. 298–299). Import
+[`MerkleDamgard/Multicollision.lean`](../../CslibFrontier/Crypto/Computational/MerkleDamgard/Multicollision.lean).
+Its finders reach the compression function only as an oracle. Their certificates
+(`ProbOracleComp.IsQueryBounded`) bound the number of compression calls on every path, the cost
+measure of §8.3; they are not running times, since sampling and the search for a colliding pair
+are not counted, and they are worst-case counts, not expected costs. Let `h k` map `n + ℓ`-bit
+inputs to `n`-bit outputs (`hlen`), let `iv` have `n` bits (`hiv`), let `n + 7 ≤ ℓ`, and let
+`s = ⌈2 √(2 ^ n)⌉₊ + 1`. Then `merkleDamgardJouxFinder ℓ s (3 * b) b iv` makes at most
+`3 * b * s` calls (`isQueryBounded_merkleDamgardJouxFinder`), and with probability at least `1/2`
+it returns `b` pairs of blocks such that, for every common list of blocks `tail`, their `2 ^ b`
+selections, each followed by `tail`, have one `merkleDamgardChain` value from `iv`
+(`merkleDamgardJouxFinder_success_half`; `mem_multicollisionOutputs` unfolds the event);
+`merkleDamgardJouxFinder_success` gives the bound for any `s` and budget. For the library's
+one-bit-per-block `merkleDamgard`, let `h k` map `2 * k.length`-bit inputs to `k.length`-bit
+outputs, let groups have `g` bits with `k.length + 7 ≤ g`, and let `s = ⌈2 √(2 ^ k.length)⌉₊ + 1`.
+Then `merkleDamgardBitJouxFinder k.length g s (3 * b) b` makes at most `1 + 3 * b * (s * g)` calls
+and with probability at least `1/2` returns `b` pairs of groups whose `2 ^ b` selections are a
+`2 ^ b`-collision of `merkleDamgard h k` (`merkleDamgardBitJouxFinder_success_half`;
+`mem_bitMulticollisionOutputs` unfolds the event). One call per message bit puts a factor `g` in this
+count that the book's count does not have. Each attempt runs the birthday finder of
+[`CollisionResistant/Birthday.lean`](../../CslibFrontier/Crypto/Computational/CollisionResistant/Birthday.lean).
+Let `M` be a finite nonempty type, let `M` and `T` have decidable equality, let `O` be a
+deterministic oracle, let every value of `f : M → T` lie in a finite set `D` (`hf`), let `digest m`
+return `f m` when run against `O` (`hdigest`), and let `100 * D.card ≤ Fintype.card M`. Then
+`⌈2 √|D|⌉₊ + 1` uniform messages give two different messages with one value of `f` with
+probability at least `1/2` (`birthdayFinder_success_book`; [bs23][bs23], §8.3, Lemma 8.2,
+p. 294). The collision for `H₁ ‖ H₂` at the end of §8.4.1 is not stated. The checks in
+[`CslibFrontierTests/Crypto/MerkleDamgardMulticollision.lean`](../../CslibFrontierTests/Crypto/MerkleDamgardMulticollision.lean)
+show that 45 calls give an 8-collision with probability at least `3/4` for every compression
+function with one-bit chaining values and eight-bit blocks.
 
 ## Commitments and ideal distributions
 

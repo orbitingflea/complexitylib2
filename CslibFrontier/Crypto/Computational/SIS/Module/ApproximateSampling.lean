@@ -12,6 +12,7 @@ public import CslibFrontier.Crypto.Game.CloseTo.UniformNat
 public import CslibFrontier.Probability.Product
 import CslibFrontier.Computability.Interactive.Security.Repeat
 import CslibFrontier.Computability.Probabilistic.Repeat
+public import CslibFrontier.Languages.Probabilistic.Repeat
 import CslibFrontier.Computability.Probabilistic.PPT.Capture
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Binary
 import CslibFrontier.Languages.Probabilistic.Vector
@@ -27,6 +28,9 @@ All implementation helpers are private; the sampled law uses the existing module
 
 ## Main results
 
+* `eval_sampleModNat_coefficients`: the law of the coefficient lists drawn by the sampler.
+* `closeTo_uniform_pi_sampleModNat`, `closeTo_uniform_pi_sampleModNat_precision`: the
+  coefficientwise law is close to a uniform module matrix.
 * `exists_isPPTOn_approximateEncodedModuleMatrix`: exact actual law and uniform approximation.
 * `exists_isPPTOn_sampleEncodedModuleMatrixWithPrecision`: binary-modulus precision schedule.
 
@@ -81,7 +85,10 @@ private theorem eval_modNat_residue (width q : ℕ) :
   congr 1 with i : 1
   simp only [Function.comp_apply, ZMod.val_natCast, Nat.mod_mod]
 
-private theorem eval_coefficients (d k n width q : ℕ) [NeZero q] :
+/-- Drawing every coefficient of a `d × k` module matrix with the bounded modular sampler gives
+the canonical residues of a matrix whose coefficients are independent sampler outputs read in
+`ZMod q`. -/
+theorem eval_sampleModNat_coefficients (d k n width q : ℕ) [NeZero q] :
     eval (OracleComp.replicate d (OracleComp.replicate k
       (OracleComp.replicate n (sampleModNat width q)))) =
       (PMF.pi fun _ : Fin d => PMF.pi fun _ : Fin k => PMF.pi fun _ : Fin n =>
@@ -90,6 +97,38 @@ private theorem eval_coefficients (d k n width q : ℕ) [NeZero q] :
   have h := eval_replicateFin_map
     (eval_replicateFin_map (eval_replicateFin_map (eval_modNat_residue width q) n) k) d
   simpa only [eval_replicateFin, eval_map] using h
+
+/-- The coefficientwise sampler law is within `d * k * n * q / 2 ^ width` of a uniform `d × k`
+module matrix. -/
+theorem closeTo_uniform_pi_sampleModNat (d k n width q : ℕ) [NeZero q] :
+    CloseTo (PMF.uniformOfFintype (Matrix (Fin d) (Fin k) (Fin n → ZMod q)))
+      (PMF.pi fun _ : Fin d => PMF.pi fun _ : Fin k => PMF.pi fun _ : Fin n =>
+        (eval (sampleModNat width q)).map (Nat.cast : ℕ → ZMod q))
+      ((d : ℝ≥0∞) * k * n * q / 2 ^ width) := by
+  have h := (((closeTo_uniform_sampleModNat width q).iid n).iid k).iid d
+  simp only [PMF.iid_eq_pi, PMF.pi_uniformOfFintype] at h
+  rw [show (d : ℝ≥0∞) * k * n * q / 2 ^ width = d * (k * (n * (q / 2 ^ width))) by
+    simp only [mul_div_assoc, mul_assoc]]
+  exact h
+
+/-- At `q.size + precision` fair bits per coefficient, the coefficientwise sampler law is within
+`d * k * n / 2 ^ precision` of a uniform `d × k` module matrix. -/
+theorem closeTo_uniform_pi_sampleModNat_precision (d k n precision q : ℕ) [NeZero q] :
+    CloseTo (PMF.uniformOfFintype (Matrix (Fin d) (Fin k) (Fin n → ZMod q)))
+      (PMF.pi fun _ : Fin d => PMF.pi fun _ : Fin k => PMF.pi fun _ : Fin n =>
+        (eval (sampleModNat (q.size + precision) q)).map (Nat.cast : ℕ → ZMod q))
+      ((d : ℝ≥0∞) * k * n / 2 ^ precision) := by
+  refine (closeTo_uniform_pi_sampleModNat d k n (q.size + precision) q).mono ?_
+  have hqle : (q : ℝ≥0∞) ≤ 2 ^ q.size := by
+    exact_mod_cast (Nat.lt_size_self q).le
+  calc
+    (d : ℝ≥0∞) * k * n * q / 2 ^ (q.size + precision) ≤
+        d * k * n * (2 ^ q.size) / 2 ^ (q.size + precision) :=
+      by gcongr
+    _ = d * k * n / 2 ^ precision := by
+      rw [pow_add, mul_comm (2 ^ q.size), ENNReal.mul_div_mul_right]
+      · positivity
+      · finiteness
 
 /-- One uniform native sampler for binary moduli. Its exact law draws the existing bounded
 modular sampler independently for every polynomial coefficient, then applies the existing
@@ -119,15 +158,12 @@ theorem exists_isPPTOn_approximateEncodedModuleMatrix :
       (PMF.pi fun _ : Fin d => PMF.pi fun _ : Fin k => PMF.pi fun _ : Fin n =>
         (eval (sampleModNat width q)).map (Nat.cast : ℕ → ZMod q)).map
           ModuleSIS.encodeMatrix := by
-    rw [sampledWord, eval_map, eval_coefficients, PMF.map_comp]
+    rw [sampledWord, eval_map, eval_sampleModNat_coefficients, PMF.map_comp]
     congr 1 with A : 1
     exact hexpand d k n q hq A
   refine ⟨hlaw, ?_⟩
   rw [hlaw]
-  have h := (((closeTo_uniform_sampleModNat width q).iid n).iid k).iid d
-  simp only [PMF.iid_eq_pi, PMF.pi_uniformOfFintype] at h
-  convert h.map ModuleSIS.encodeMatrix using 1 <;>
-    first | rfl | simp only [mul_div_assoc, mul_assoc]
+  exact (closeTo_uniform_pi_sampleModNat d k n width q).map ModuleSIS.encodeMatrix
 
 /-- Setting the fair-bit width to `q.size + precision` gives error at most
 `d*k*n/2^precision`. The modulus remains binary and the precision unary; computing its bit
@@ -152,17 +188,11 @@ theorem exists_isPPTOn_sampleEncodedModuleMatrixWithPrecision :
   refine ⟨fun a => sample (a.1, a.2.2.size + a.2.1, a.2.2), hppt.preprocess ?_, ?_⟩
   · fun_prop
   · intro d k n precision q hq
-    obtain ⟨heq, hclose⟩ := hlaw d k n (q.size + precision) q hq
-    refine ⟨heq, hclose.mono ?_⟩
-    have hqle : (q : ℝ≥0∞) ≤ 2 ^ q.size := by
-      exact_mod_cast (Nat.lt_size_self q).le
-    calc
-      (d : ℝ≥0∞) * k * n * q / 2 ^ (q.size + precision) ≤
-          d * k * n * (2 ^ q.size) / 2 ^ (q.size + precision) :=
-        by gcongr
-      _ = d * k * n / 2 ^ precision := by
-        rw [pow_add, mul_comm (2 ^ q.size), ENNReal.mul_div_mul_right]
-        · positivity
-        · finiteness
+    let : NeZero q := ⟨hq.ne'⟩
+    obtain ⟨heq, -⟩ := hlaw d k n (q.size + precision) q hq
+    refine ⟨heq, ?_⟩
+    rw [heq]
+    exact (closeTo_uniform_pi_sampleModNat_precision d k n precision q).map
+      ModuleSIS.encodeMatrix
 
 end Cslib.Crypto

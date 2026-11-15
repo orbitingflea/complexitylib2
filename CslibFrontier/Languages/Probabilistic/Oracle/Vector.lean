@@ -20,6 +20,7 @@ and independent repetitions (`OracleComp.replicate`) of probabilistic oracle com
 
 ## Main results
 
+* `Cslib.OracleComp.isCostBounded_pi`: cost budgets add along `OracleComp.pi`.
 * `Cslib.ProbOracleComp.run_pi`, `Cslib.ProbOracleComp.run_pi_query`: running `OracleComp.pi`
   against a probabilistic or deterministic oracle.
 * `Cslib.ProbOracleComp.isQueryBounded_pi_query`,
@@ -33,6 +34,23 @@ and independent repetitions (`OracleComp.replicate`) of probabilistic oracle com
 -/
 
 public section
+
+namespace Cslib.OracleComp
+
+/-- Budgets add along `OracleComp.pi`: if each of `m` coordinate programs costs at most `c`, the
+tuple costs at most `m * c`. -/
+theorem isCostBounded_pi {ι : Type} {spec : ι → Type} {cost : ι → ℕ} {m : ℕ}
+    {β : Fin m → Type} {programs : (i : Fin m) → OracleComp spec (β i)} {c : ℕ}
+    (h : ∀ i, OracleComp.IsCostBounded cost (programs i) c) :
+    OracleComp.IsCostBounded cost (OracleComp.pi programs) (m * c) := by
+  induction m with
+  | zero => exact .pure _ _
+  | succ m ih =>
+    rw [OracleComp.pi_succ]
+    exact ((h 0).bind fun _ => (OracleComp.isCostBounded_map_iff _ _ _).mpr
+      (ih fun i => h i.succ)).mono (by rw [Nat.succ_mul, Nat.add_comm])
+
+end Cslib.OracleComp
 
 namespace Cslib.ProbOracleComp
 
@@ -73,13 +91,7 @@ theorem run_pi_query {m : ℕ} (q : Fin m → Query) (O : (x : Query) → spec x
 theorem isQueryBounded_pi_query {m : ℕ} (q : Fin m → Query) :
     ProbOracleComp.IsQueryBounded
       (OracleComp.pi (fun i : Fin m => ProbOracleComp.query (spec := spec) (q i))) m := by
-  induction m with
-  | zero => exact OracleComp.IsCostBounded.pure _ 0
-  | succ m ih =>
-    rw [OracleComp.pi_succ]
-    refine OracleComp.IsCostBounded.mono (n := 1 + m) ?_ (by omega)
-    refine (ProbOracleComp.IsQueryBounded.query (q 0)).bind fun _ => ?_
-    exact (OracleComp.isCostBounded_map_iff _ _ _).mpr (ih (fun i => q i.succ))
+  simpa using OracleComp.isCostBounded_pi (c := 1) fun i => IsQueryBounded.query (q i)
 
 /-- Every supported stateful execution of a tuple of `m` external queries logs a transcript of
 exact length `m`. -/
