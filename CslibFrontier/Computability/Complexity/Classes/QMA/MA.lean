@@ -52,6 +52,8 @@ The containment is stated for decision problems only, since the library has no p
 * `Cslib.Quantum.UniformVerifierFamily.acceptProb_ofMA`: its acceptance probability.
 * `Cslib.Quantum.UniformVerifierFamily.acceptProb_ofMA_ket`: on a basis proof, the classical
   acceptance probability.
+* `Cslib.Quantum.UniformVerifierFamily.acceptProb_ofMA_zeroWitness`: with no proof, the uniform
+  average over Arthur's coins.
 * `Cslib.Quantum.UniformVerifierFamily.acceptProb_ofMA_le`: soundness against every witness state.
 * `Cslib.Complexity.MA_subset_QMA`: `MA ⊆ QMA`.
 * `Cslib.Complexity.BPP_subset_BQP`: `BPP ⊆ BQP`.
@@ -218,6 +220,24 @@ theorem acceptProb_ofMA_ket (F : UniformCircuitFamily) (q p : Polynomial ℕ) (x
   rw [sum_eq_single y (fun y' _ hy' => by simp [hy']) (by simp)]
   simp
 
+/-- **Acceptance with no Merlin proof.** When `F` decides `f` exactly on the words
+`frame x ++ r`, the zero-witness Merlin--Arthur circuit accepts with probability
+`#{r | f r} / 2^{p(|x|)}`. -/
+theorem acceptProb_ofMA_zeroWitness (F : UniformCircuitFamily) (p : Polynomial ℕ)
+    (x : List Bool) (f : List Bool → Bool)
+    (hF : ∀ r : List Bool, r.length = p.eval x.length →
+      F.acceptProb (frame x ++ r) = if f r then 1 else 0) :
+    (ofMA F 0 p).toUniformCircuitFamily.acceptProb x =
+      (univ.filter fun r : Fin (p.eval x.length) → Bool => f (List.ofFn r)).card /
+        2 ^ p.eval x.length := by
+  have hzero := (ofMA F 0 p).acceptProb_ket_of_witnessLength_eq_zero x
+    Polynomial.eval_zero default
+  have hseed := acceptProb_ofMA_ket F 0 p x f (by simpa using hF) default
+  rw [List.eq_nil_of_length_eq_zero (by simp : (List.ofFn
+    (default : Fin ((0 : Polynomial ℕ).eval x.length) → Bool)).length = 0)] at hseed
+  simp only [List.nil_append] at hseed
+  exact hzero.symm.trans hseed
+
 /-- **Soundness of the Merlin–Arthur verifier**: if every basis proof is accepted with probability
 at most `t`, then so is every unit witness state. -/
 theorem acceptProb_ofMA_le (F : UniformCircuitFamily) (q p : Polynomial ℕ) (x : List Bool)
@@ -283,15 +303,9 @@ theorem BPP_subset_BQP : BPP enc ⊆ BQP enc := by
   obtain ⟨F, hF⟩ := exists_uniformCircuitFamily hV
   have hacc (a : α) : (UniformVerifierFamily.ofMA F 0 p).toUniformCircuitFamily.acceptProb (enc a) =
       (univ.filter fun r : Fin (p.eval (enc a).length) → Bool => V (a, List.ofFn r)).card /
-        2 ^ p.eval (enc a).length := by
-    have h₁ := (UniformVerifierFamily.ofMA F 0 p).acceptProb_ket_of_witnessLength_eq_zero (enc a)
-      (Polynomial.eval_zero) default
-    have h₂ := UniformVerifierFamily.acceptProb_ofMA_ket F 0 p (enc a) (fun w => V (a, w))
-      (fun w _ => hF (a, w)) default
-    rw [List.eq_nil_of_length_eq_zero (by simp : (List.ofFn
-      (default : Fin ((0 : Polynomial ℕ).eval (enc a).length) → Bool)).length = 0)] at h₂
-    simp only [List.nil_append] at h₂
-    exact h₁.symm.trans h₂
+        2 ^ p.eval (enc a).length :=
+    UniformVerifierFamily.acceptProb_ofMA_zeroWitness F p (enc a) (fun w => V (a, w))
+      (fun w _ => hF (a, w))
   refine ⟨(UniformVerifierFamily.ofMA F 0 p).toUniformCircuitFamily, fun a => ⟨fun ha => ?_,
     fun ha => ?_⟩⟩
   · rw [hacc]

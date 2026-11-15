@@ -151,8 +151,8 @@ the width of every `k ≤ Y * Y.size + 1` by `8 * Z.size + 8`, and the precision
 at `Z = max 16 (max m L)` and checks open/closed and empty-window endpoints.
 
 The [development issue](https://github.com/cslib-community/cslib-frontier/issues/5619) retains
-the remaining finite-field product and CRT sign-recovery objectives. This foundation alone does
-not certify those bounds or the downstream real-feasibility theorem.
+the remaining CRT sign-recovery objectives. The product step is certified below;
+the downstream real-feasibility theorem is outside these components.
 
 For binary interval endpoints, import `CountingHierarchy.Range`: `CountingFunction.sum_range`
 and `sum_range_int` sum over `0 ≤ i < r(w)` in one level. The endpoint is computed in binary;
@@ -167,7 +167,30 @@ bounded-divisor evaluator, its polynomial-time certificate and its primality cha
 exponents below `p - 1` in F_1. Its logarithm specification requires a primitive base and a
 nonzero target; its total behavior is defined on every binary triple. The
 [checked clients](../../CslibFrontierTests/CountingNumberTheory.lean) cover these domain limits,
-binary interval sums and modular powering. These certificates do not yet certify field products.
+binary interval sums and modular powering.
+
+Import [`CountingHierarchy.Products`](../../CslibFrontier/Computability/Complexity/Classes/CountingHierarchy/Products.lean)
+for `CountingFunction.prod_primeField_bits`: a uniform F_a factor evaluator, a polynomial-time
+binary modulus, and a polynomial-time **unary** width give the total product in F_(a+4).
+`primeFieldProduct_spec` identifies its prime-modulus output with the product in `ZMod p`,
+and `primeFieldProduct_eq_val` gives the canonical natural representative. Every nonprime
+modulus, including zero and one, returns zero. `prod_primeField_bits_restrict` replaces
+excluded factors by one, including an empty allowed domain. No factor need already be a
+canonical residue. A `Decoder enc` supports arbitrary primary input encodings; a modulus
+supplied as an extra input is covered by the same rule.
+
+The evaluator averages modular logarithm formulas over all generators, using the existing
+finite-field product identity. It uses no generator selection: generator counting costs F_2,
+logarithm summation over the factor indices F_(a+2), and the generator-masked outer sum
+F_(a+3). Modular inverse, remainder and the F_(a+1) zero-factor flag fit F_(a+3), the stronger
+bound exposed by `CountingFunction.primeFieldProduct_mem`. Every operation is composed through
+strict certificates charging queries, replies, intermediate values and encoded output; no full
+integer product or unreduced power is passed as program data. The ordinary-module
+[checked client](../../CslibFrontierTests/CountingFieldProducts.lean) covers variable binary
+moduli and unary widths, polynomial output length, prime two, zero factors, noncanonical
+factors, restrictions and nonprime defaults. Its one certified variable-input product takes
+different values at the words representing five and two, including a nonzero prime-field value. Run
+`LEAN_NUM_THREADS=2 scripts/build.sh CslibFrontierTests.CountingFieldProducts --wfail --iofail`.
 
 ## Finite-field product identities
 

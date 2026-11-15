@@ -13,9 +13,10 @@ public import CslibFrontier.Probability.PMF
 # Boolean distributions and Boolean predicates
 
 The masses of `true` and `false` under a Boolean distribution sum to one
-(`apply_true_add_apply_false`, and `toReal_true_add_toReal_false` in real-valued units). Pushing
-a distribution forward along Boolean predicates (`PMF.map`), the `true`-mass is monotone under
-pointwise implication on the support (`map_true_mono`), satisfies union bounds
+(`apply_true_add_apply_false`, and `toReal_true_add_toReal_false` in real-valued units), so its
+`true`-mass determines the law (`ext_bool`). Pushing a distribution forward along Boolean
+predicates (`PMF.map`), the `true`-mass is monotone under pointwise implication on the support
+(`map_true_mono`), satisfies union bounds
 (`map_true_le_add`, and `map_true_le_sum` over a finite index set with its `List.range` instance
 `map_any_range_true_le_sum`), is the expectation of the predicate's indicator (`map_apply_true`),
 and is complemented by negation (`map_not_true`).
@@ -26,6 +27,7 @@ and is complemented by negation (`map_not_true`).
   `Cslib.Probability.PMF.toReal_true_add_toReal_false`,
   `Cslib.Probability.PMF.toReal_false_eq_one_sub`,
   `Cslib.Probability.PMF.toReal_true_eq_one_sub`: Boolean outcome masses.
+* `Cslib.Probability.PMF.ext_bool`: a Boolean law is determined by its `true`-mass.
 * `Cslib.Probability.PMF.map_true_mono`, `Cslib.Probability.PMF.map_true_le_add`,
   `Cslib.Probability.PMF.map_true_le_sum`, `Cslib.Probability.PMF.map_any_range_true_le_sum`,
   `Cslib.Probability.PMF.map_apply_true`, `Cslib.Probability.PMF.map_not_true`: monotonicity,
@@ -61,6 +63,15 @@ probability of `false`. -/
 theorem toReal_true_eq_one_sub (p : PMF Bool) :
     (p true).toReal = 1 - (p false).toReal :=
   eq_sub_of_add_eq (toReal_true_add_toReal_false p)
+
+/-- A Boolean probability mass function is determined by its mass at `true`. -/
+theorem ext_bool {p q : PMF Bool} (h : p true = q true) : p = q := by
+  apply PMF.ext
+  intro b
+  cases b
+  · apply (ENNReal.toReal_eq_toReal_iff' (PMF.apply_ne_top _ _) (PMF.apply_ne_top _ _)).mp
+    rw [toReal_false_eq_one_sub, toReal_false_eq_one_sub, h]
+  · exact h
 
 /-- Pointwise implication on the support makes the mapped `true`-mass monotone. -/
 theorem map_true_mono (p : PMF α) {E F : α → Bool}

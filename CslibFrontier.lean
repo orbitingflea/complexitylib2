@@ -1710,6 +1710,7 @@ public import CslibFrontier.Computability.Circuit.Quantum.Oracle.Controller.Refe
 public import CslibFrontier.Computability.Circuit.Quantum.Oracle.Controller.Request
 public import CslibFrontier.Computability.Circuit.Quantum.Oracle.Controller.Resources
 public import CslibFrontier.Computability.Circuit.Quantum.Oracle.Density
+public import CslibFrontier.Computability.Circuit.Quantum.Oracle.FromPPT
 public import CslibFrontier.Computability.Circuit.Quantum.Oracle.Generator
 public import CslibFrontier.Computability.Circuit.Quantum.Oracle.Interaction
 public import CslibFrontier.Computability.Circuit.Quantum.Oracle.InteractionResources
@@ -1967,6 +1968,7 @@ public import CslibFrontier.Computability.Complexity.Classes.CountingHierarchy.A
 public import CslibFrontier.Computability.Complexity.Classes.CountingHierarchy.DiscreteLog
 public import CslibFrontier.Computability.Complexity.Classes.CountingHierarchy.Generator
 public import CslibFrontier.Computability.Complexity.Classes.CountingHierarchy.Primality
+public import CslibFrontier.Computability.Complexity.Classes.CountingHierarchy.Products
 public import CslibFrontier.Computability.Complexity.Classes.CountingHierarchy.Range
 public import CslibFrontier.Computability.Complexity.Classes.CountingSimulation.Accumulate
 public import CslibFrontier.Computability.Complexity.Classes.CountingSimulation.Admissible
