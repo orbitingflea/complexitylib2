@@ -97,7 +97,10 @@ noncomputable def weakPrfIdealGame (adversary : OracleDistinguisher) (n : ℕ) :
   (adversary n []).run fun _ => weakSample n (randomFunctionOracle n table)
 
 /-- A keyed family evaluated in plain polynomial time whose answers at uniformly random points are
-indistinguishable from those of a random function ([KatzLindell2020], Exercise 3.28). -/
+indistinguishable from those of a random function ([KatzLindell2020]): a weakly
+secure PRF, [BonehShoup2023], Definition 4.3 (p. 133), with `n`-bit keys, inputs and outputs,
+against uniform strict oracle-PPT adversaries. Each call returns a uniform point followed by the
+function's value there, as the source's challenger sends both. -/
 structure WeakPseudorandomFunction (family : List Bool → List Bool → List Bool) : Prop where
   /-- One deterministic machine evaluates the family from the encoded key and query. -/
   polyTime : ComputableInPolyTime (fun pair => family pair.1 pair.2)

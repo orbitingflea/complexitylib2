@@ -94,7 +94,7 @@ Names are relative to `Cslib.Crypto`.
 | `PRG.Generator.Secure` | standard | [BonehShoup2023] Attack Game 3.1 and Definition 3.1, pp. 46–47 | CSLib's concrete form for one generator on finite seed and output types: advantage at most `ε` for every adversary in a class `Admissible` that the caller supplies, where Definition 3.1 asks for negligible advantage against every efficient adversary. Neither efficiency nor expansion of the generator is part of the notion. Under a cited headline, review checks the class and bound that a theorem supplies. | — |
 | `PRG.Generator.Unpredictable` | standard | [BonehShoup2023] Attack Game 3.2 and Definition 3.3, p. 64 | Concrete, against a predictor class and bound that the caller supplies, as for `PRG.Generator.Secure`. Each predictor has a fixed position, where the adversary of Attack Game 3.2 chooses it; a bound at every position also bounds a predictor that chooses its position at random. | — |
 | `PseudorandomFunction` | standard | [BonehShoup2023] Attack Game 4.2 and Definition 4.2, pp. 132–133 | Adaptive uniform oracle tests; length-preserving families. | [AssumptionNonvacuity.lean](../../CslibFrontierTests/Crypto/AssumptionNonvacuity.lean) `not_pseudorandomFunction_zeroFamily` |
-| `WeakPseudorandomFunction` | standard | [KatzLindell2020] Exercise 3.28 (locator not verified) | — | — |
+| `WeakPseudorandomFunction` | standard | [BonehShoup2023] Definition 4.3, p. 133 | `n`-bit keys, inputs and outputs; deterministic polynomial-time evaluation is part of the notion. | — |
 | `BlockCipher.PRP` | standard | [BonehShoup2023] Definition 4.1, p. 98 | Read asymptotically, as in Section 4.1.5. | — |
 | `BlockCipher.StrongPRP` | standard | [BonehShoup2023] Section 4.1.3, pp. 101–102, and Exercise 4.9, p. 169 | — | — |
 
@@ -119,8 +119,8 @@ Names are relative to `Cslib.Crypto`.
 | Assumption | Status | Source definition | Deviations or relation | Nonvacuity |
 |---|---|---|---|---|
 | `Encryption.INDCPA` | standard | [BonehShoup2023] Attack Game 11.1 and Definition 11.2, pp. 436–437 | One challenge; bit messages. | [AssumptionNonvacuity.lean](../../CslibFrontierTests/Crypto/AssumptionNonvacuity.lean) `not_indcpa_plaintext` |
-| `Encryption.INDCPAOf` | standard | [BonehShoup2023] Attack Game 11.1 and Definition 11.2, pp. 436–437 | One challenge; every challenge pair admissible. | — |
-| `Encryption.INDCPAOn` | standard | [BonehShoup2023] Attack Game 11.1 and Definition 11.2, pp. 436–437 | One challenge; an admissibility predicate. | — |
+| `Encryption.INDCPAOf` | standard | [BonehShoup2023] Attack Game 11.1 and Definition 11.2, pp. 436–437 | One challenge; every challenge pair admissible, in place of the equal-length rule. Generic in the message type: exactly the source's notion when all messages of the type have one length, as for `Bool`. At `List Bool` it is strictly stronger, so it is not the source's notion (`Encryption.WordINDCPA` is). | — |
+| `Encryption.INDCPAOn` | standard | [BonehShoup2023] Attack Game 11.1 and Definition 11.2, pp. 436–437 | One challenge; an admissibility predicate in place of the equal-length rule. It is the source's notion when the predicate is the equal-length rule (`Encryption.WordINDCPA`). | — |
 | `Encryption.WordINDCPA` | standard | [BonehShoup2023] Attack Game 11.1 and Definition 11.2, pp. 436–437 | One challenge; equal-length messages. | — |
 | `Encryption.INDCCA2` | standard | [BonehShoup2023] Attack Game 12.1 and Definition 12.2, pp. 467–468 | 1CCA; bit messages. | [AssumptionNonvacuity.lean](../../CslibFrontierTests/Crypto/AssumptionNonvacuity.lean) `not_indcca2_plaintext` |
 | `Encryption.INDCCA2Of` | standard | [BonehShoup2023] Attack Game 12.1 and Definition 12.2, pp. 467–468 | 1CCA; every challenge pair admissible. | — |
@@ -131,12 +131,12 @@ Names are relative to `Cslib.Crypto`.
 | `Encryption.INDCCA2MultiOn` | standard | [BonehShoup2023] Attack Game 12.1 and Definition 12.1, pp. 467–468 | Challenges in one batch, not adaptively. | — |
 | `Encryption.WordINDCCA2Multi` | standard | [BonehShoup2023] Attack Game 12.1 and Definition 12.1, pp. 467–468 | Challenges in one batch, not adaptively; equal-length messages. | — |
 | `Encryption.INDCCA2InterleavedOn` | standard | [BonehShoup2023] Attack Game 12.1 and Definition 12.1, pp. 467–468 | Fully adaptive, round-structured adversaries. | — |
-| `Encryption.KEMINDCPA` | standard | [BonehShoup2023] Exercise 11.9 (locator not verified) | Uniform bit-word keys; no correctness or efficient sampling bundled. | — |
+| `Encryption.KEMINDCPA` | standard | [BonehShoup2023] Exercise 11.9, pp. 460–461 | Uniform bit-word keys; no correctness or efficient sampling bundled. The distinguisher also gets `pk`, which the exercise's challenger does not list but the reduction of its part (b) needs. | — |
 | `Encryption.DEMOneTimeKeyINDCPAOn` | standard | [BonehShoup2023] Attack Game 2.1 and Definition 2.2, p. 16 | Key length `keyLen n`; an admissibility predicate. | — |
-| `Encryption.DEMOneTimeKeyINDCPAOf` | standard | [BonehShoup2023] Attack Game 2.1 and Definition 2.2, p. 16 | Every challenge pair admissible. | — |
+| `Encryption.DEMOneTimeKeyINDCPAOf` | standard | [BonehShoup2023] Attack Game 2.1 and Definition 2.2, p. 16 | Every challenge pair admissible, in place of the equal-length rule. Generic in the message type: exactly the source's notion when all messages of the type have one length. At `List Bool` it is strictly stronger, so it is not the source's notion (`Encryption.DEMOneTimeKeyWordINDCPA` is). | — |
 | `Encryption.DEMOneTimeKeyWordINDCPA` | standard | [BonehShoup2023] Attack Game 2.1 and Definition 2.2, p. 16 | Equal-length messages. | — |
 | `Encryption.DEMOneTimeINDCPAOn` | standard | [BonehShoup2023] Attack Game 2.1 and Definition 2.2, p. 16 | `n`-bit keys; an admissibility predicate. | — |
-| `Encryption.DEMOneTimeINDCPAOf` | standard | [BonehShoup2023] Attack Game 2.1 and Definition 2.2, p. 16 | `n`-bit keys; every challenge pair admissible. | — |
+| `Encryption.DEMOneTimeINDCPAOf` | standard | [BonehShoup2023] Attack Game 2.1 and Definition 2.2, p. 16 | `n`-bit keys; every challenge pair admissible, in place of the equal-length rule. Generic in the message type: exactly the source's notion when all messages of the type have one length. At `List Bool` it is strictly stronger, so it is not the source's notion (`Encryption.DEMOneTimeWordINDCPA` is). | — |
 | `SymmetricCipher.INDCPA` | standard | [BonehShoup2023] Attack Game 5.2 and Definition 5.2, pp. 181–182 | Both messages of a query have exactly `n` bits; the oracle answers other queries with `[]`. | — |
 | `SymmetricCipher.OneTimeINDCPA` | standard | [BonehShoup2023] Definition 2.2, p. 16, and Definition 9.4, p. 360 | — | — |
 | `SymmetricCipher.CiphertextIntegrity` | standard | [BonehShoup2023] Attack Game 9.1 and Definition 9.1, pp. 358–359 | — | — |
@@ -145,9 +145,9 @@ Names are relative to `Cslib.Crypto`.
 | `SymmetricCipher.OneTimeAuthenticatedEncryption` | standard | [BonehShoup2023] Definition 9.4, p. 360 | — | — |
 | `SymmetricCipher.INDCCA` | standard | [BonehShoup2023] Attack Game 9.2 and Definition 9.5, p. 362 | — | — |
 | `SymmetricCipher.OneTimeINDCCA` | standard | [BonehShoup2023] Definition 9.6, p. 363 | — | — |
-| `SymmetricCipher.EncForge` | standard | [KatzLindell2020] Definition 5.2 (locator not verified) | — | — |
+| `SymmetricCipher.EncForge` | standard | [BonehShoup2023] Exercise 9.15, p. 395 (plaintext integrity: Attack Game 9.1, pp. 358–359, won by a ciphertext that decrypts to a message never queried) | Encryption queries other than `n`-bit messages are answered with `[]`. | — |
 | `SymmetricCipher.RealIdealAE` | standard | [KatzLindell2020] Definition 5.4 (locator not verified) | — | — |
-| `Protocols.FujisakiOkamoto.WordPKE.INDCPA` | standard | [HofheinzHoevelmannsKiltz2017] Definition 2.2 (locator not verified) | Challenge messages in the scheme's message space. | — |
+| `Protocols.FujisakiOkamoto.WordPKE.INDCPA` | standard | [HofheinzHoevelmannsKiltz2017] Definition 2.2 and Figure 4, pp. 9–10 (ePrint 2017/604, version of 2 November 2021) | Challenge messages in the scheme's message space. Asymptotic, against uniform strict PPT adversaries, where the source defines the concrete advantage `|Pr[b' = b] - 1/2|`, half the two-experiment advantage used here. | — |
 
 ## Authentication and signatures
 

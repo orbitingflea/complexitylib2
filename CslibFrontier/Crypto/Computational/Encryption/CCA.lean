@@ -434,14 +434,19 @@ abbrev INDCCA2Of {Msg Out : Type} (encMsg : Msg ↪ List Bool) (encOut : Out ↪
     (decrypt : ℕ → List Bool → List Bool → Option Out) : Prop :=
   INDCCA2On (fun _ _ _ _ => true) encMsg encOut keyGen encrypt decrypt
 
-/-- Single-challenge 1CCA security for bit encryption (`Msg = Bool`, `Out = Bool`). -/
+/-- Single-challenge 1CCA security for bit encryption (`Msg = Bool`, `Out = Bool`):
+[BonehShoup2023], Definition 12.2 (p. 468), that is, Attack Game 12.1 (pp. 467–468) with one
+encryption query, for the message space of single bits. A Phase 2 decryption query on the
+challenge ciphertext is answered with rejection, where the source forbids it. -/
 abbrev INDCCA2 (keyGen : ℕ → ProbComp (List Bool × List Bool))
     (encrypt : ℕ → List Bool → Bool → ProbComp (List Bool))
     (decrypt : ℕ → List Bool → List Bool → Option Bool) : Prop :=
   INDCCA2Of encBool encBool keyGen encrypt decrypt
 
 /-- Single-challenge 1CCA security for bit-string encryption (`Msg = List Bool`, `Out = List Bool`)
-under Attack Game 12.1's equal-length challenge rule `m₀.length == m₁.length`. -/
+under Attack Game 12.1's equal-length challenge rule `m₀.length == m₁.length`: [BonehShoup2023],
+Definition 12.2 (p. 468), with every bit string a message. A Phase 2 decryption query on the
+challenge ciphertext is answered with rejection, where the source forbids it. -/
 abbrev WordINDCCA2 (keyGen : ℕ → ProbComp (List Bool × List Bool))
     (encrypt : ℕ → List Bool → List Bool → ProbComp (List Bool))
     (decrypt : ℕ → List Bool → List Bool → Option (List Bool)) : Prop :=
@@ -1172,7 +1177,12 @@ abbrev INDCCA2MultiOf {Msg Out : Type} (encMsg : Msg ↪ List Bool) (encOut : Ou
     (decrypt : ℕ → List Bool → List Bool → Option Out) : Prop :=
   INDCCA2MultiOn (fun _ _ _ _ => true) encMsg encOut keyGen encrypt decrypt
 
-/-- Batch-challenge multi-challenge CCA security for bit encryption (`Msg = Bool`, `Out = Bool`). -/
+/-- Batch-challenge multi-challenge CCA security for bit encryption (`Msg = Bool`, `Out = Bool`).
+It restricts the adversaries of [BonehShoup2023], Attack Game 12.1 and Definition 12.1
+(pp. 467–468): all encryption queries come in one batch between the two phases of decryption
+queries, instead of being interleaved with them. For efficient algorithms it is equivalent to
+`INDCCA2` (`indcca2Multi_iff_indcca2`), as CCA security is to 1CCA security by Theorem 12.1
+(p. 468). -/
 abbrev INDCCA2Multi (keyGen : ℕ → ProbComp (List Bool × List Bool))
     (encrypt : ℕ → List Bool → Bool → ProbComp (List Bool))
     (decrypt : ℕ → List Bool → List Bool → Option Bool) : Prop :=
@@ -1180,7 +1190,9 @@ abbrev INDCCA2Multi (keyGen : ℕ → ProbComp (List Bool × List Bool))
 
 /-- Batch-challenge multi-challenge CCA security for bit-string encryption (`Msg = List Bool`,
 `Out = List Bool`) under Attack Game 12.1's equal-length challenge rule
-`m₀.length == m₁.length`. -/
+`m₀.length == m₁.length`. It restricts the adversaries of [BonehShoup2023], Attack Game 12.1 and
+Definition 12.1 (pp. 467–468): all encryption queries come in one batch between the two phases of
+decryption queries, instead of being interleaved with them. -/
 abbrev WordINDCCA2Multi (keyGen : ℕ → ProbComp (List Bool × List Bool))
     (encrypt : ℕ → List Bool → List Bool → ProbComp (List Bool))
     (decrypt : ℕ → List Bool → List Bool → Option (List Bool)) : Prop :=

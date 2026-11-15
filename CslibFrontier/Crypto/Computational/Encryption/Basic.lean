@@ -195,7 +195,12 @@ noncomputable abbrev advantage (experiment : Bool → ℕ → ProbComp Bool) (n 
 
 /-- Single-challenge IND-CPA for encryption over message encoding `encMsg` with challenge-pair
 admissibility predicate `valid`, against every uniform strict PPT adversary. The negligible bound
-may depend on the adversary, which is fixed before the parameter. -/
+may depend on the adversary, which is fixed before the parameter. This is semantic security,
+[BonehShoup2023], Attack Game 11.1 and Definition 11.2 (pp. 436–437), with the source's rule that
+the two messages have the same length replaced by `valid`: a pair that `valid` rejects makes both
+experiments output `false`. With the equal-length rule it is the source's notion (`WordINDCPA`).
+Efficiency and correctness of `keyGen` and `encrypt`, which the source's scheme has, are separate
+properties. -/
 def INDCPAOn {Msg : Type} (valid : ℕ → List Bool → Msg → Msg → Bool) (encMsg : Msg ↪ List Bool)
     (keyGen : ℕ → ProbComp (List Bool × List Bool))
     (encrypt : ℕ → List Bool → Msg → ProbComp (List Bool)) : Prop :=
@@ -204,15 +209,20 @@ def INDCPAOn {Msg : Type} (valid : ℕ → List Bool → Msg → Msg → Bool) (
     (fun adversary n => ProbComp.eval (gameOn valid keyGen encrypt adversary true n))
     (AdversaryOf.IsPPT encMsg)
 
-/-- Single-challenge IND-CPA with every challenge pair admissible. For message types whose
-messages all have one length, such as `Bool`, this is the textbook notion; for `List Bool` it is
-stronger than the textbook notion, which `WordINDCPA` states. -/
+/-- Single-challenge IND-CPA with every challenge pair admissible: [BonehShoup2023], Attack
+Game 11.1 and Definition 11.2 (pp. 436–437), with every pair of messages admitted as a challenge in
+place of the source's rule that the two messages have the same length. The notion is generic in the
+message type `Msg`. It is exactly the source's notion when all messages of `Msg` have one length,
+as for `Bool`. At `List Bool` it is strictly stronger, so it is not the source's notion there;
+`WordINDCPA` is. -/
 abbrev INDCPAOf {Msg : Type} (encMsg : Msg ↪ List Bool)
     (keyGen : ℕ → ProbComp (List Bool × List Bool))
     (encrypt : ℕ → List Bool → Msg → ProbComp (List Bool)) : Prop :=
   INDCPAOn (fun _ _ _ _ => true) encMsg keyGen encrypt
 
-/-- Single-challenge IND-CPA for bit encryption against every uniform strict PPT adversary. -/
+/-- Single-challenge IND-CPA for bit encryption against every uniform strict PPT adversary:
+semantic security, [BonehShoup2023], Attack Game 11.1 and Definition 11.2 (pp. 436–437), for the
+message space of single bits. -/
 abbrev INDCPA (keyGen : ℕ → ProbComp (List Bool × List Bool))
     (encrypt : ℕ → List Bool → Bool → ProbComp (List Bool)) : Prop :=
   INDCPAOf encBool keyGen encrypt

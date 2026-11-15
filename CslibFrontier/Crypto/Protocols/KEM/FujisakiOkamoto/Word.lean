@@ -179,9 +179,12 @@ def IsMessagePair (n : ℕ) (_pk m₀ m₁ : List Bool) : Bool :=
   m₀.length == P.msgLen n && m₁.length == P.msgLen n
 
 /-- **IND-CPA security of `P`** ([HofheinzHoevelmannsKiltz2017], ePrint 2017/604 (2 Nov 2021),
-§2.1, Def. 2.2): every uniform strict PPT chosen-message adversary has negligible advantage in
-the single-challenge game of randomized encryption `encrypt`, with challenge messages in the
-message space of `P`. -/
+§2.1, Def. 2.2 and Figure 4, pp. 9–10): every uniform strict PPT chosen-message adversary has
+negligible advantage in the single-challenge game of randomized encryption `encrypt`, with
+challenge messages in the message space of `P`. The source defines only the concrete advantage
+`|Pr[b' = b] - 1/2|`; here the advantage between the two experiments, which is twice that, is
+negligible. The source's second stage also receives `pk`; here the first stage passes on what it
+needs in its saved state. -/
 def INDCPA : Prop :=
   Encryption.INDCPAOn P.IsMessagePair encBits P.keyGen P.encrypt
 

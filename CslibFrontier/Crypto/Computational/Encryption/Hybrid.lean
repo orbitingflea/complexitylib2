@@ -268,9 +268,11 @@ theorem isPPTOn_kemIdealGame {keyLen : ℕ → ℕ}
               (hr2.prod (hq2.snd'.comp' hr1))).encoding_comp)))))
 
 /-- IND-CPA / semantic security for a Key Encapsulation Mechanism ([BonehShoup2023],
-Exercise 11.9): every uniform strict PPT distinguisher has negligible advantage between
+Exercise 11.9, pp. 460–461): every uniform strict PPT distinguisher has negligible advantage between
 `kemRealGame` and `kemIdealGame keyLen`. The key space is the uniform bit-word space of length
-`keyLen n`; security does not bundle correctness or efficient honest sampling. -/
+`keyLen n`; security does not bundle correctness or efficient honest sampling. The distinguisher
+also receives the public key `pk`, which the exercise does not list in the challenger's message;
+the reduction of its part (b) needs `pk` to run the encryption adversary. -/
 def KEMINDCPA (keyLen : ℕ → ℕ) (keyGen : ℕ → ProbComp (List Bool × List Bool))
     (encaps : ℕ → List Bool → ProbComp (List Bool × List Bool)) : Prop :=
   Game.Indistinguishable
@@ -463,7 +465,11 @@ def DEMOneTimeKeyINDCPAOn {Msg : Type} (valid : ℕ → List Bool → Msg → Ms
     (AdversaryOf.IsPPT encMsg)
 
 /-- One-time symmetric IND-CPA at key-length function `keyLen` with every challenge pair
-admissible. -/
+admissible: semantic security, [BonehShoup2023], Attack Game 2.1 and Definition 2.2 (p. 16), with
+a uniform `keyLen n`-bit key and every pair of messages admitted as a challenge in place of the
+source's rule that the two messages have the same length. The notion is generic in the message type
+`Msg`. It is exactly the source's notion when all messages of `Msg` have one length. At `List Bool`
+it is strictly stronger, so it is not the source's notion there; `DEMOneTimeKeyWordINDCPA` is. -/
 abbrev DEMOneTimeKeyINDCPAOf {Msg : Type} (encMsg : Msg ↪ List Bool) (keyLen : ℕ → ℕ)
     (encryptSym : ℕ → List Bool → Msg → ProbComp (List Bool)) : Prop :=
   DEMOneTimeKeyINDCPAOn (fun _ _ _ _ => true) encMsg keyLen encryptSym
@@ -501,9 +507,12 @@ abbrev DEMOneTimeINDCPAOn {Msg : Type} (valid : ℕ → List Bool → Msg → Ms
     (encMsg : Msg ↪ List Bool) (encryptSym : ℕ → List Bool → Msg → ProbComp (List Bool)) : Prop :=
   DEMOneTimeKeyINDCPAOn valid encMsg (fun n => n) encryptSym
 
-/-- Normalized (`n`-bit key) one-time symmetric IND-CPA with every challenge pair admissible. For
-`List Bool` messages this is stronger than the textbook notion, which `DEMOneTimeWordINDCPA`
-states. -/
+/-- Normalized (`n`-bit key) one-time symmetric IND-CPA with every challenge pair admissible:
+semantic security, [BonehShoup2023], Attack Game 2.1 and Definition 2.2 (p. 16), with a uniform
+`n`-bit key and every pair of messages admitted as a challenge in place of the source's rule that
+the two messages have the same length. The notion is generic in the message type `Msg`. It is
+exactly the source's notion when all messages of `Msg` have one length. At `List Bool` it is
+strictly stronger, so it is not the source's notion there; `DEMOneTimeWordINDCPA` is. -/
 abbrev DEMOneTimeINDCPAOf {Msg : Type} (encMsg : Msg ↪ List Bool)
     (encryptSym : ℕ → List Bool → Msg → ProbComp (List Bool)) : Prop :=
   DEMOneTimeINDCPAOn (fun _ _ _ _ => true) encMsg encryptSym
