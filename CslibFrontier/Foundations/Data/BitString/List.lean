@@ -38,7 +38,8 @@ row extraction is ordinary dropping, padding and taking, including on short or e
 * `Cslib.BitString.listRow_replaceRow`: reading rows after replacing one row.
 * `Cslib.BitString.listRows_eq_ofFn`, `Cslib.BitString.listRows_ofFn`: agreement with the finite
   block representation.
-* `Cslib.BitString.listRows_succ_append`: the rows of a word whose first row is given.
+* `Cslib.BitString.listRows_succ_append`, `Cslib.BitString.listRows_flatten`: the rows of a word
+  whose first row is given, and of a concatenation of words of the row width.
 
 Packing fixed-width rows is list concatenation by `Cslib.BitString.ofFn_blocksEquiv_symm`, in
 `CslibFrontier.Foundations.Data.BitString.Block`.
@@ -244,6 +245,17 @@ theorem listRows_succ_append (count width : ℕ) {u : List Bool} (hu : u.length 
   · refine List.map_congr_left fun row _ => ?_
     simp only [Function.comp_apply, listRow, Nat.succ_mul, ← List.drop_drop, Nat.add_comm _ width]
     rw [← hu, List.drop_left]
+
+/-- The rows of a concatenation of words of one width are those words. -/
+theorem listRows_flatten {width : ℕ} (words : List (List Bool))
+    (hwords : ∀ w ∈ words, w.length = width) :
+    listRows words.length width words.flatten = words := by
+  induction words with
+  | nil => simp [listRows]
+  | cons word rest ih =>
+    rw [List.length_cons, List.flatten_cons,
+      listRows_succ_append _ _ (hwords word List.mem_cons_self),
+      ih fun w hw => hwords w (List.mem_cons_of_mem _ hw)]
 
 /-- Replace row `j` of a `count × width` bit string `word` with `x`. -/
 def replaceRow (width count j : ℕ) (x word : List Bool) : List Bool :=

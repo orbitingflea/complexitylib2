@@ -53,7 +53,10 @@ ciphertexts fit the ciphertext space `ctLength` (`kpke_ciphertextFits`).
 
 This is the family of `indCPA_kpkeIdealCoins_of_decisionModuleLWEWith`
 (`CslibFrontier.Crypto.Computational.SIS.MLKEM.Asymptotic`), IND-CPA of K-PKE with ideal coin
-expansion. This module makes no security claim.
+expansion. K-PKE itself expands its noise from seeds with a `PRF`; that family is `kpkePRF`
+(`CslibFrontier.Crypto.Computational.SIS.MLKEM.PRFExpansion`), which shares the matrix sampler
+`sampleMatrixResidues` and the key words `keyWords` with `keyGenWord`. This module makes no
+security claim.
 
 ## Model differences from FIPS 203
 
@@ -70,7 +73,8 @@ expansion. This module makes no security claim.
 * `Cslib.Crypto.MLKEM.coinLength`, `Cslib.Crypto.MLKEM.ctLength`: the coin length and the
   ciphertext length bound.
 * `Cslib.Crypto.MLKEM.encDetWord`, `Cslib.Crypto.MLKEM.decWord`, `Cslib.Crypto.MLKEM.keyGenWord`:
-  the word algorithms.
+  the word algorithms, with `Cslib.Crypto.MLKEM.sampleMatrixResidues` and
+  `Cslib.Crypto.MLKEM.keyWords` the matrix sampler and the key words of key generation.
 * `Cslib.Crypto.MLKEM.kpke`: the word-level K-PKE family.
 
 ## Main results
@@ -146,17 +150,31 @@ def decWord (P : Params) (sk ct : List Bool) : Option (List Bool) :=
   let c := ciphertextDecoder.decode ct
   some (decryptResidues P ((Decoder.list (Decoder.list Decoder.nat)).decode sk) c.1 c.2)
 
-/-- K-PKE key generation on words with a uniform matrix drawn coefficientwise by the bounded
-modular sampler at `q.size + precision` fair bits, and `s, e ← CBD_{η₁}^k` by `SamplePolyCBD` from
-fair bits. It returns the public-key and secret-key words. -/
-noncomputable def keyGenWord (P : Params) (precision : ℕ) : ProbComp (List Bool × List Bool) := do
-  let A ← OracleComp.replicate P.k (OracleComp.replicate P.k
+/-- The residue rows of a `k × k` matrix whose coefficients are drawn independently by the
+bounded modular sampler at `q.size + precision` fair bits. -/
+noncomputable def sampleMatrixResidues (P : Params) (precision : ℕ) :
+    ProbComp (List (List (List ℕ))) :=
+  OracleComp.replicate P.k (OracleComp.replicate P.k
     (OracleComp.replicate P.n (ProbComp.sampleModNat (P.q.size + precision) P.q)))
-  let sBits ← BitString.sampleList (P.k * (P.n * (2 * P.η₁)))
-  let eBits ← BitString.sampleList (P.k * (P.n * (2 * P.η₁)))
-  return (encPublicKeyResidues (A, publicKeyResidues P A (cbdVecResidues P.k P.n P.q P.η₁ sBits)
+
+/-- The public-key and secret-key words of K-PKE key generation from the residue rows of the
+matrix `A` and the bits `sBits`, `eBits` from which `SamplePolyCBD` decodes `s, e ← CBD_{η₁}^k`:
+the words of `(A, A s + e)` and of `s`. -/
+def keyWords (P : Params) (A : List (List (List ℕ))) (sBits eBits : List Bool) :
+    List Bool × List Bool :=
+  (encPublicKeyResidues (A, publicKeyResidues P A (cbdVecResidues P.k P.n P.q P.η₁ sBits)
       (cbdVecResidues P.k P.n P.q P.η₁ eBits)),
     encPolyVecResidues (cbdVecResidues P.k P.n P.q P.η₁ sBits))
+
+/-- K-PKE key generation on words with a uniform matrix drawn coefficientwise by the bounded
+modular sampler at `q.size + precision` fair bits (`sampleMatrixResidues`), and
+`s, e ← CBD_{η₁}^k` by `SamplePolyCBD` from fair bits. It returns the public-key and secret-key
+words (`keyWords`). -/
+noncomputable def keyGenWord (P : Params) (precision : ℕ) : ProbComp (List Bool × List Bool) := do
+  let A ← sampleMatrixResidues P precision
+  let sBits ← BitString.sampleList (P.k * (P.n * (2 * P.η₁)))
+  let eBits ← BitString.sampleList (P.k * (P.n * (2 * P.η₁)))
+  return keyWords P A sBits eBits
 
 /-! ### Polynomial-time certificates -/
 
@@ -203,57 +221,66 @@ theorem _root_.Turing.MultiTapeTM.ComputableInPolyTime.decWord {P : α → Param
   exact (ComputableInPolyTime.optionSome encBits).comp
     (ComputableInPolyTime.decryptResidues hP hs hc.fst' hc.snd')
 
+/-- The matrix sampler is uniform strict PPT in the parameters and the unary precision. -/
+theorem isPPTOn_sampleMatrixResidues :
+    IsPPTOn (encPair encParams encUnary) encMatrixResidues
+      (fun x => sampleMatrixResidues x.1 x.2) := by
+  unfold sampleMatrixResidues
+  let E := encPair encParams encUnary
+  have hn : ComputableInPolyTime (fun x : Params × ℕ => x.1.n) E encUnary := by fun_prop
+  have hq : ComputableInPolyTime (fun x : Params × ℕ => x.1.q) E encNat := by fun_prop
+  have hk : ComputableInPolyTime (fun x : Params × ℕ => x.1.k) E encUnary := by fun_prop
+  have hw : ComputableInPolyTime (fun x : Params × ℕ => x.1.q.size + x.2) E encUnary := by
+    fun_prop
+  exact ((isPPTOn_sampleModNat hw hq).replicate hn |>.replicate hk).replicate hk
+
+/-- The key words, with computed parameters, matrix rows and bits. -/
+theorem _root_.Turing.MultiTapeTM.ComputableInPolyTime.keyWords {P : α → Params}
+    {A : α → List (List (List ℕ))} {sBits eBits : α → List Bool}
+    (hP : ComputableInPolyTime P input encParams)
+    (hA : ComputableInPolyTime A input encMatrixResidues)
+    (hs : ComputableInPolyTime sBits input encBits)
+    (he : ComputableInPolyTime eBits input encBits) :
+    ComputableInPolyTime (fun x => keyWords (P x) (A x) (sBits x) (eBits x)) input
+      (encPair encBits encBits) := by
+  unfold Cslib.Crypto.MLKEM.keyWords
+  have hn : ComputableInPolyTime (fun x => (P x).n) input encUnary := by fun_prop
+  have hq : ComputableInPolyTime (fun x => (P x).q) input encNat := by fun_prop
+  have hk : ComputableInPolyTime (fun x => (P x).k) input encUnary := by fun_prop
+  have hη₁ : ComputableInPolyTime (fun x => (P x).η₁) input encUnary := by fun_prop
+  have hsv := ComputableInPolyTime.cbdVecResidues hk hn hq hη₁ hs
+  have hev := ComputableInPolyTime.cbdVecResidues hk hn hq hη₁ he
+  exact ((hA.prod (ComputableInPolyTime.publicKeyResidues hP hA hsv hev)).encoding_comp
+    (output := encPublicKeyResidues)).prod (hsv.encoding_comp (output := encPolyVecResidues))
+
 /-- Word key generation is uniform strict PPT in the parameters and the unary precision. -/
 theorem isPPTOn_keyGenWord :
     IsPPTOn (encPair encParams encUnary) (encPair encBits encBits)
       (fun x => keyGenWord x.1 x.2) := by
   unfold keyGenWord
   let E := encPair encParams encUnary
-  have hn : ComputableInPolyTime (fun x : Params × ℕ => x.1.n) E encUnary := by fun_prop
-  have hq : ComputableInPolyTime (fun x : Params × ℕ => x.1.q) E encNat := by fun_prop
-  have hk : ComputableInPolyTime (fun x : Params × ℕ => x.1.k) E encUnary := by fun_prop
-  have hη₁ : ComputableInPolyTime (fun x : Params × ℕ => x.1.η₁) E encUnary := by fun_prop
-  have hw : ComputableInPolyTime (fun x : Params × ℕ => x.1.q.size + x.2) E encUnary := by
-    fun_prop
   have hL : ComputableInPolyTime (fun x : Params × ℕ => x.1.k * (x.1.n * (2 * x.1.η₁))) E
       encUnary := by fun_prop
-  have hA := ((isPPTOn_sampleModNat hw hq).replicate hn |>.replicate hk).replicate hk
   have hs := isPPTOn_sampleList.preprocess
     (hL.comp (ComputableInPolyTime.fst E encMatrixResidues))
   have he := isPPTOn_sampleList.preprocess
     ((hL.comp (ComputableInPolyTime.fst E encMatrixResidues)).comp
       (ComputableInPolyTime.fst (encPair E encMatrixResidues) encBits))
-  refine hA.bind_with (hs.bind_with (he.bind_with ?_))
+  refine isPPTOn_sampleMatrixResidues.bind_with (hs.bind_with (he.bind_with ?_))
   let F := encPair (encPair (encPair E encMatrixResidues) encBits) encBits
-  have hP : ComputableInPolyTime
+  exact (ComputableInPolyTime.keyWords
+    (by fun_prop : ComputableInPolyTime
       (fun y : (((Params × ℕ) × List (List (List ℕ))) × List Bool) × List Bool => y.1.1.1.1) F
-      encParams := by fun_prop
-  have hA' : ComputableInPolyTime
+      encParams)
+    (by fun_prop : ComputableInPolyTime
       (fun y : (((Params × ℕ) × List (List (List ℕ))) × List Bool) × List Bool => y.1.1.2) F
-      encMatrixResidues := by fun_prop
-  have hs' : ComputableInPolyTime
+      encMatrixResidues)
+    (by fun_prop : ComputableInPolyTime
       (fun y : (((Params × ℕ) × List (List (List ℕ))) × List Bool) × List Bool => y.1.2) F
-      encBits := by fun_prop
-  have he' : ComputableInPolyTime
+      encBits)
+    (by fun_prop : ComputableInPolyTime
       (fun y : (((Params × ℕ) × List (List (List ℕ))) × List Bool) × List Bool => y.2) F
-      encBits := by fun_prop
-  have hn' : ComputableInPolyTime
-      (fun y : (((Params × ℕ) × List (List (List ℕ))) × List Bool) × List Bool => y.1.1.1.1.n) F
-      encUnary := by fun_prop
-  have hq' : ComputableInPolyTime
-      (fun y : (((Params × ℕ) × List (List (List ℕ))) × List Bool) × List Bool => y.1.1.1.1.q) F
-      encNat := by fun_prop
-  have hk' : ComputableInPolyTime
-      (fun y : (((Params × ℕ) × List (List (List ℕ))) × List Bool) × List Bool => y.1.1.1.1.k) F
-      encUnary := by fun_prop
-  have hη' : ComputableInPolyTime
-      (fun y : (((Params × ℕ) × List (List (List ℕ))) × List Bool) × List Bool => y.1.1.1.1.η₁) F
-      encUnary := by fun_prop
-  have hsv := ComputableInPolyTime.cbdVecResidues hk' hn' hq' hη' hs'
-  have hev := ComputableInPolyTime.cbdVecResidues hk' hn' hq' hη' he'
-  exact (((hA'.prod (ComputableInPolyTime.publicKeyResidues hP hA' hsv hev)).encoding_comp
-    (output := encPublicKeyResidues)).prod
-      (hsv.encoding_comp (output := encPolyVecResidues))).isPPTOn
+      encBits)).isPPTOn
 
 end PolyTime
 
@@ -348,8 +375,8 @@ theorem eval_keyGenWord (precision : ℕ) :
                 (cbdVecResidues P.k P.n P.q P.η₁)).bind fun e =>
                   PMF.pure (encPublicKeyResidues (A, publicKeyResidues P A s e),
                     encPolyVecResidues s) := by
-        simp only [keyGenWord, ProbComp.eval_bind, ProbComp.eval_pure, BitString.eval_sampleList,
-          PMF.bind_map, Function.comp_def]
+        simp only [keyGenWord, sampleMatrixResidues, keyWords, ProbComp.eval_bind,
+          ProbComp.eval_pure, BitString.eval_sampleList, PMF.bind_map, Function.comp_def]
     _ = _ := by
         rw [hA, hs]
         simp only [PMF.bind_map, Function.comp_def, PMF.monad_bind_eq_bind, PMF.monad_pure_eq_pure]
