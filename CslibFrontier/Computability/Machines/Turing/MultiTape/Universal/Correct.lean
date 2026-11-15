@@ -33,6 +33,8 @@ renaming, simulating the description yields the renamed output of the machine.
 
 ## Main results
 
+* `Turing.MultiTapeTM.Universal.simulate_of_holds`: any description whose table holds every
+  renamed transition simulates the machine.
 * `Turing.MultiTapeTM.Universal.simulate_desc`: the simulation agrees with the machine.
 -/
 
@@ -52,6 +54,16 @@ variable {k : ℕ}
 public def Desc.Holds (d : Desc) (tm : MultiTapeTM k ℕ ℕ) (q : ℕ) (inp : Option ℕ)
     (work : Fin k → Option ℕ) : Prop :=
   (d.table.find? (·.1 = key q inp work)).map Prod.snd = some (.ofAction (tm.tr q inp work))
+
+-- vendored: added for construction-defined descriptions (`Quantum/Oracle/Generator.lean`)
+/-- A description holds a transition exactly when its table lookup returns that transition's
+action. This exposes the lookup equation for clients that certify literal finite tables. -/
+public theorem Desc.holds_iff (d : Desc) (tm : MultiTapeTM k ℕ ℕ) (q : ℕ) (inp : Option ℕ)
+    (work : Fin k → Option ℕ) :
+    d.Holds tm q inp work ↔
+      (d.table.find? (·.1 = key q inp work)).map Prod.snd =
+        some (.ofAction (tm.tr q inp work)) :=
+  Iff.rfl
 
 /-! ### Configurations of the simulation as configurations -/
 
@@ -233,6 +245,53 @@ public theorem toCfg_init {d : Desc} (hk : d.tapes = k) :
     by simp [init], by simp [init]⟩ <;>
     simp [SCfg.toCfg, init, List.getD_eq_getElem?_getD, Tape.cellAt, Tape.blank]
 
+section LiteralDescriptions
+
+variable {Symbol State : Type} (eS : State ↪ ℕ) (eY : Symbol ↪ ℕ)
+
+-- vendored: added for construction-defined descriptions (`Quantum/Oracle/Generator.lean`)
+/-- The run of any description holding every renamed transition, read as configurations, is the
+renamed run of the machine. -/
+public theorem toCfg_iterate_of_holds (tm : MultiTapeTM k Symbol State) (d : Desc)
+    (htapes : d.tapes = k) (hq₀ : d.q₀ = eS tm.q₀)
+    (holds : ∀ (q : State) (inp : Option Symbol) (work : Fin k → Option Symbol),
+      d.Holds (tm.map eS eY) (eS q) (inp.map eY) (Option.map eY ∘ work))
+    (x : List Symbol) (t : ℕ) :
+    (tm.runFrom (tm.initCfg x) t).map eS eY =
+        ((stepOut d (x.map eY))^[t] (init d, [])).1.toCfg k (x.map eY)
+          ((stepOut d (x.map eY))^[t] (init d, [])).2 ∧
+      ((stepOut d (x.map eY))^[t] (init d, [])).1.WellShaped k (x.map eY) := by
+  induction t with
+  | zero =>
+    simp only [runFrom, Function.iterate_zero_apply, MultiTapeNTM.initCfg]
+    have h := toCfg_init (k := k) (d := d) (x := x.map eY) htapes
+    exact ⟨by rw [h.1, Cfg.map_init, hq₀], h.2⟩
+  | succ t ih =>
+    rw [runFrom_succ, ← step_map, Function.iterate_succ_apply', ih.1]
+    refine (toCfg_step ih.2 fun q hq => ?_).imp_left Eq.symm
+    rw [← ih.1] at hq ⊢
+    obtain ⟨q, -, rfl⟩ := Option.map_eq_some_iff.mp hq
+    rw [Cfg.inputSymbol_map]
+    exact holds q _ _
+
+/-- **A description satisfying `Desc.Holds` simulates its machine**: after any number of steps,
+it yields the renamed machine output and the same halting status. -/
+public theorem simulate_of_holds (tm : MultiTapeTM k Symbol State) (d : Desc)
+    (htapes : d.tapes = k) (hq₀ : d.q₀ = eS tm.q₀)
+    (holds : ∀ (q : State) (inp : Option Symbol) (work : Fin k → Option Symbol),
+      d.Holds (tm.map eS eY) (eS q) (inp.map eY) (Option.map eY ∘ work))
+    (x : List Symbol) (t : ℕ) :
+    simulate d (x.map eY) t =
+      ((tm.runFrom (tm.initCfg x) t).output.map eY,
+        (tm.runFrom (tm.initCfg x) t).state.isNone) := by
+  have hcfg := toCfg_iterate_of_holds eS eY tm d htapes hq₀ holds x t
+  have hs := congrArg Cfg.state hcfg.1
+  have ho := congrArg Cfg.output hcfg.1
+  simp only [Cfg.map_state, Cfg.map_output, SCfg.toCfg] at hs ho
+  simp only [simulate, ← hs, ← ho, Option.isNone_map]
+
+end LiteralDescriptions
+
 /-! ### Descriptions of machines -/
 
 variable {Symbol State : Type} [Fintype State] [Fintype Symbol]
@@ -280,29 +339,15 @@ public theorem toCfg_iterate (tm : MultiTapeTM k Symbol State) (x : List Symbol)
         ((stepOut (desc eS eY tm) (x.map eY))^[t] (init (desc eS eY tm), [])).1.toCfg k
           (x.map eY) ((stepOut (desc eS eY tm) (x.map eY))^[t] (init (desc eS eY tm), [])).2 ∧
       ((stepOut (desc eS eY tm) (x.map eY))^[t] (init (desc eS eY tm), [])).1.WellShaped k
-        (x.map eY) := by
-  induction t with
-  | zero =>
-    simp only [runFrom, Function.iterate_zero_apply, MultiTapeNTM.initCfg]
-    have h := toCfg_init (k := k) (d := desc eS eY tm) (x := x.map eY) rfl
-    exact ⟨by rw [h.1, Cfg.map_init]; rfl, h.2⟩
-  | succ t ih =>
-    rw [runFrom_succ, ← step_map, Function.iterate_succ_apply', ih.1]
-    refine (toCfg_step ih.2 fun q hq => ?_).imp_left Eq.symm
-    rw [← ih.1] at hq ⊢
-    obtain ⟨q, -, rfl⟩ := Option.map_eq_some_iff.mp hq
-    rw [Cfg.inputSymbol_map]
-    exact holds_desc eS eY tm q _ (tm.runFrom (tm.initCfg x) t).workTapeSymbols
+        (x.map eY) :=
+  toCfg_iterate_of_holds eS eY tm (desc eS eY tm) rfl rfl (holds_desc eS eY tm) x t
 
 /-- **The simulation is correct**: simulating the description of `tm` on the renamed input for
 `t` steps yields the renamed output of `tm` after `t` steps, and whether `tm` has halted. -/
 public theorem simulate_desc (tm : MultiTapeTM k Symbol State) (x : List Symbol) (t : ℕ) :
     simulate (desc eS eY tm) (x.map eY) t =
       ((tm.runFrom (tm.initCfg x) t).output.map eY,
-        (tm.runFrom (tm.initCfg x) t).state.isNone) := by
-  have hs := congrArg Cfg.state (toCfg_iterate eS eY tm x t).1
-  have ho := congrArg Cfg.output (toCfg_iterate eS eY tm x t).1
-  simp only [Cfg.map_state, Cfg.map_output, SCfg.toCfg] at hs ho
-  simp only [simulate, ← hs, ← ho, Option.isNone_map]
+        (tm.runFrom (tm.initCfg x) t).state.isNone) :=
+  simulate_of_holds eS eY tm (desc eS eY tm) rfl rfl (holds_desc eS eY tm) x t
 
 end Turing.MultiTapeTM.Universal

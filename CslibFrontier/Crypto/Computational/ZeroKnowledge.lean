@@ -144,7 +144,25 @@ there exists a single uniform strict PPT witness-free simulator `S` (chosen befo
 charged for `(1^n, (a, z))`) whose output ensemble is computationally indistinguishable from the
 real interaction output across all deterministic polynomial-time-generable families of instances
 `a : ℕ → α`, valid witnesses `w : ℕ → List Bool` (`∀ n, isWitness (a n) (w n) = true`), and
-auxiliary inputs `z : ℕ → List Bool` (`ComputableInPolyTime · encUnary _`). -/
+auxiliary inputs `z : ℕ → List Bool` (`ComputableInPolyTime · encUnary _`).
+
+This notion is novel to this library, and incomparable with [Goldreich1998Fragments],
+Definition 4.3.8, pp. 151–152. It is weaker in ranging only over families generated from `1^n` in
+deterministic polynomial time, where the source quantifies over all instances, witnesses and
+auxiliary inputs; the distinguisher receives only `n` and a sample, from which it can compute those
+families itself. It is stronger in decoupling the security parameter from the instance, as
+`AuxiliaryInputZeroKnowledge` does: every party runs in time polynomial in `n` and the gap is
+negligible in `n`, so on generable instances much shorter than `n` the prover must withstand
+verifiers and distinguishers that run in time superpolynomial in the instance length.
+
+*Relation to standard assumptions.* It follows from `AuxiliaryInputZeroKnowledge`
+(`AuxiliaryInputZeroKnowledge.generableZeroKnowledge`). Unlike that notion, it is not shown to
+imply the library's instance-indexed form of Definition 4.3.8,
+`InstanceAuxiliaryInputZeroKnowledge`, since it covers only generable families.
+
+*Why it is plausible.* Every `ZKProof` carries it, and the library's Goldreich–Micali–Wigderson
+theorem `OneWay.exists_zkProof_of_mem_NP` builds such a proof system for every language in NP from
+any one-way function. -/
 def GenerableZeroKnowledge {α : Type} (enc : α ↪ List Bool)
     (prover : ℕ → α → List Bool → Prover Unit)
     (isWitness : α → List Bool → Bool) : Prop :=
@@ -171,7 +189,38 @@ arbitrary polynomially bounded families of instances `a : ℕ → α`, valid wit
 `z : ℕ → List Bool`, and distinguisher auxiliary inputs `z' : ℕ → List Bool`, and for every
 uniform strict PPT distinguisher `adversary` (charged for its complete encoded input
 `((1^n, (a, z')), view)`), the distinguishing advantage between the real interaction view and the
-simulated view is negligible. -/
+simulated view is negligible.
+
+This notion is novel to this library. It strengthens [Goldreich1998Fragments], Definition 4.3.8,
+pp. 151–152, which compares, as here, the malicious verifier's output with the simulator's, in two
+ways.
+* The distinguisher's auxiliary input `z'` is chosen independently of the verifier's `z`, while the
+  verifier is clocked in, and may read, all of `z`. The source gives the distinguisher the
+  verifier's `z` (p. 152), the case `z' = z` here. It obtains independent advice for the
+  distinguisher only by hiding it in a padding of `z` that the verifier and simulator, clocked in
+  `|x|`, cannot reach (pp. 152–153), and that fails for a verifier that reads all of `z`.
+* The security parameter is decoupled from the instance. The source indexes its ensembles by the
+  instance `x`, admits auxiliary inputs of every length, clocks the verifier, simulator and
+  distinguisher in `|x|` alone and measures the gap in `|x|`. Here every party also receives `n` in
+  unary, the instances, witnesses and auxiliary inputs are polynomially bounded families indexed
+  by `n` and clocked as part of the input, and the gap is negligible in `n`. So on instances much
+  shorter than `n`, the prover must withstand verifiers and distinguishers that run in time
+  superpolynomial in `|x|`.
+
+The prover's private input ranges over valid witnesses (`isWitness`), where the source's ranges
+over every string with which the prover meets the completeness condition. That weakens the notion
+but does not offset the two strengthenings.
+
+*Relation to standard assumptions.* It implies the library's instance-indexed form,
+`InstanceAuxiliaryInputZeroKnowledge`, which follows the source's indexing, clocks and
+distinguisher input, with the prover's security parameter set to `|x|`
+(`AuxiliaryInputZeroKnowledge.instanceAuxiliaryInputZeroKnowledge`). It also implies
+`UnboundedAuxiliaryInputZeroKnowledge` and `GenerableZeroKnowledge`.
+
+*Why it is plausible.* From any nonuniformly one-way function, the library's
+Goldreich–Micali–Wigderson theorem `NonuniformOneWay.exists_zkProof_of_mem_NP` builds a proof
+system with this property for every language in NP. Its commitments use generator seeds of length
+`n + 7`, set by the security parameter rather than by the instance. -/
 def AuxiliaryInputZeroKnowledge {α : Type} (enc : α ↪ List Bool)
     (prover : ℕ → α → List Bool → Prover Unit)
     (isWitness : α → List Bool → Bool) : Prop :=
@@ -191,7 +240,7 @@ def AuxiliaryInputZeroKnowledge {α : Type} (enc : α ↪ List Bool)
               (adversary n (a n) (z' n)))
             (distinguishingGame (ProbComp.eval (S n (a n) (z n))) (adversary n (a n) (z' n))))
 
-/-- **General auxiliary-input zero-knowledge implies poly-time-generable zero-knowledge.**
+/-- General auxiliary-input zero-knowledge implies poly-time-generable zero-knowledge.
 Every deterministic polynomial-time-generable family has polynomially bounded encoded output length,
 and every unary-indexed `ComputationallyIndistinguishable` distinguisher lifts to a full-input
 distinguisher by ignoring the extra `(a, z)` component. -/
@@ -332,7 +381,17 @@ theorem generableZeroKnowledge (zk : ZKProof enc A soundness) :
   zk.zero_knowledge
 
 /-- General auxiliary-input computational zero-knowledge for a bundled `ZKProof` system, ranging
-over arbitrary polynomially bounded instance, valid-witness, and auxiliary-input families. -/
+over arbitrary polynomially bounded instance, valid-witness, and auxiliary-input families:
+`Cslib.Crypto.AuxiliaryInputZeroKnowledge` for the bundled prover and witness predicate.
+
+Like that notion, this one is novel to this library: it strengthens [Goldreich1998Fragments],
+Definition 4.3.8, pp. 151–152, by giving the distinguisher an auxiliary input independent of the
+verifier's and by decoupling the security parameter from the instance. It implies the bundled
+instance-indexed form `ZKProof.InstanceAuxiliaryInputZeroKnowledge`, which follows the source's
+indexing (`ZKProof.AuxiliaryInputZeroKnowledge.instanceAuxiliaryInputZeroKnowledge`). It is
+plausible because the library's Goldreich–Micali–Wigderson theorem
+`NonuniformOneWay.exists_zkProof_of_mem_NP` builds systems with this property for every language in
+NP from any nonuniformly one-way function. -/
 def AuxiliaryInputZeroKnowledge (zk : ZKProof enc A soundness) : Prop :=
   Cslib.Crypto.AuxiliaryInputZeroKnowledge enc zk.prover zk.isWitness
 

@@ -206,7 +206,7 @@ Section 16.1.1, run in the generic group of Section 16.3). There is no primality
 book says that `q` may or may not be prime. -/
 theorem evalPure_babyStepGiantStep [NeZero q] [DecidableEq S] {L : ZMod q → S}
     (hL : Function.Injective L) {m n : ℕ} (hmn : q ≤ m * n) (α : ZMod q) :
-    (babyStepGiantStep m n (L 1) (L α)).evalPure (answer q S L) = α :=
+    (babyStepGiantStep m n (L 1) (L α)).evalPure (answer L) = α :=
   evalPure_babyStepGiantStep_of_op hL
     (fun β₁ β₂ => by rw [answer_op_label hL, one_mul, one_mul]) hmn α
 
@@ -270,13 +270,14 @@ theorem isQueryBounded_babyStepGiantStep [DecidableEq S] (m n : ℕ) (g u : S) :
 
 /-- **The book's parameter.** With `r = Nat.sqrt (q - 1)`, the table sizes `m = n = r + 1` are the
 book's `m = ⌈q^(1/2)⌉` ([BonehShoup2023], Section 16.1.1, p. 683). For `q ≠ 0` and an injective
-labeling, baby-step/giant-step outputs the discrete logarithm and makes at most `2 * r` calls, all
-of them products. Since `(2 * r)^2 ≤ 4 * (q - 1) < 4 * q`, this is fewer than `2 * q^(1/2)`
-products, the book's "about `2 q^(1/2)` group operations in the worse case". -/
+labeling, baby-step/giant-step outputs the discrete logarithm and makes at most `2 * r` calls;
+every call is a product by `queriesSatisfy_babyStepGiantStep`. Since
+`(2 * r)^2 ≤ 4 * (q - 1) < 4 * q`, this is fewer than `2 * q^(1/2)` products, the book's "about
+`2 q^(1/2)` group operations in the worse case". -/
 theorem babyStepGiantStep_sqrt [NeZero q] [DecidableEq S] {L : ZMod q → S}
     (hL : Function.Injective L) (α : ZMod q) :
     (babyStepGiantStep (Nat.sqrt (q - 1) + 1) (Nat.sqrt (q - 1) + 1) (L 1) (L α)).evalPure
-        (answer q S L) = α ∧
+        (answer L) = α ∧
       OracleComp.IsQueryBounded
         (babyStepGiantStep (q := q) (Nat.sqrt (q - 1) + 1) (Nat.sqrt (q - 1) + 1) (L 1) (L α))
         (2 * Nat.sqrt (q - 1)) := by

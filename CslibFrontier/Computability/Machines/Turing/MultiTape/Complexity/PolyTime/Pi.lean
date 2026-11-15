@@ -53,7 +53,7 @@ theorem ofFn {count : ℕ} {values : α → Fin count → Value}
 theorem pi [Fintype Index] {values : α → Index → Value}
     (hvalues : ∀ i, ComputableTidilyInPolyTime (fun a => values a i) input enc) :
     ComputableTidilyInPolyTime values input (encPi enc) :=
-  (ofFn (fun i => hvalues ((Fintype.equivFin Index).symm i))).of_enc_eq (fun _ => rfl)
+  (ComputableInPolyTime.pi fun i => (hvalues i).computableInPolyTime).tidy
 
 /-- Read a fixed entry, charging for the stored prefix without requiring a default value. -/
 @[fun_prop]

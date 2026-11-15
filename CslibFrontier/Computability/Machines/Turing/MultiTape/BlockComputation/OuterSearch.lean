@@ -9,6 +9,7 @@ module
 
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.BlockComputation.ScheduleSearch
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.BlockComputation.OuterSearchParameters
+import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.Quantitative
 
 /-!
 # Increasing time guesses on the original input

@@ -8,16 +8,17 @@ module
 
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Internal.PolyTimeListPrimitives
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Encodings.Pi
-import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Finite
-import CslibFrontier.Foundations.Data.List.Fold
-import Mathlib.Data.List.GetD
+import CslibFrontier.Computability.Machines.Turing.MultiTape.Internal.PolyTimeFinitePrimitives
+import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.BigO.Pi
+import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Bounds
 
 /-!
 # Direct finite-table construction, lookup and update
 
-The fixed index order and framed-list representation are unchanged. Lookup composes the existing
-head and tail codec machines; finite runtime dispatch retains the full captured input in each
-branch. The direct proofs introduce no default inhabitant requirement on the value or index type.
+The fixed index order and framed-list representation are unchanged. Construction, lookup and
+update reuse the parameterized resource certificates in `Complexity.BigO.Pi`; finite runtime
+dispatch retains the full captured input in each branch. The direct proofs introduce no default
+inhabitant requirement on the value or index type.
 -/
 
 public section
@@ -30,11 +31,13 @@ variable {α Index Value : Type} {input : α ↪ List Bool} {enc : Value ↪ Lis
 theorem ofFn {count : ℕ} {values : α → Fin count → Value}
     (hvalues : ∀ i, ComputableInPolyTime (fun a => values a i) input enc) :
     ComputableInPolyTime (fun a => List.ofFn (values a)) input (encList enc) := by
-  induction count with
-  | zero => simpa using (const (encIn := input) (encOut := encList enc) [])
-  | succ count ih =>
-    simpa only [List.ofFn_succ] using (hvalues 0).cons'
-      (ih (values := fun a i => values a i.succ) (fun i => hvalues i.succ))
+  classical
+  choose d e hd using fun i => (hvalues i).exists_degree
+  have hbound : PolyBounded (fun a => (input a).length)
+      (fun a => (input a).length + ∑ i, ((input a).length + 1) ^ d i) :=
+    PolyBounded.self.add (.sum Finset.univ fun i _ =>
+      (PolyBounded.self.add (.const 1)).pow (d i))
+  exact (ComputableInO.ofFn fun i => (hd i).inO).computableInPolyTime hbound hbound
 
 /-- Construct a table by computing each entry, retaining the original input in each computation. -/
 @[fun_prop]
@@ -43,38 +46,11 @@ theorem pi [Fintype Index] {values : α → Index → Value}
     ComputableInPolyTime values input (encPi enc) :=
   (ofFn (fun i => hvalues ((Fintype.equivFin Index).symm i))).of_enc_eq (fun _ => rfl)
 
-private theorem listTail :
-    ComputableInPolyTime (List.tail : List Value → List Value) (encList enc) (encList enc) := by
-  exact (ListEncoding.tail (enc₁ := enc) (enc := encList enc)).computableInPolyTime
-
-private theorem listHeadD (fallback : Value) :
-    ComputableInPolyTime (fun l : List Value => l.headD fallback) (encList enc) enc := by
-  exact (ListEncoding.headD
-    (enc₁ := enc) (enc := encList enc) fallback).computableInPolyTime
-
-private theorem fixedDrop (count : ℕ) :
-    ComputableInPolyTime (fun l : List Value => l.drop count) (encList enc) (encList enc) := by
-  induction count with
-  | zero => simpa only [List.drop_zero] using (id' (encIn := encList enc))
-  | succ count ih =>
-    simpa only [Function.comp_def, List.tail_drop] using listTail.comp ih
-
 /-- Read a fixed entry, charging for the stored prefix without requiring a default value. -/
 @[fun_prop]
 theorem pi_apply [Fintype Index] (enc : Value ↪ List Bool) (i : Index) :
-    ComputableInPolyTime (fun values : Index → Value => values i) (encPi enc) enc := by
-  classical
-  cases isEmpty_or_nonempty Value with
-  | inl hempty =>
-    let : IsEmpty (Index → Value) := ⟨fun values => isEmptyElim (values i)⟩
-    exact of_finite _
-  | inr hnonempty =>
-    have hlist : ComputableInPolyTime (fun values : Index → Value =>
-        List.ofFn (fun j => values ((Fintype.equivFin Index).symm j)))
-        (encPi enc) (encList enc) := of_eq (fun _ => rfl)
-    have hlookup := (listHeadD (enc := enc) (Classical.choice hnonempty)).comp
-      ((fixedDrop (enc := enc) (Fintype.equivFin Index i).val).comp hlist)
-    simpa [Function.comp_def, List.headD_eq_getD, List.getD_eq_getElem?_getD] using hlookup
+    ComputableInPolyTime (fun values : Index → Value => values i) (encPi enc) enc :=
+  (ComputableInO.pi_apply enc i).computableInPolyTime .self .self
 
 /-- Update a fixed table entry while charging for all preserved entries. -/
 @[fun_prop]
@@ -83,13 +59,9 @@ theorem pi_update [Fintype Index] [DecidableEq Index]
     (hvalues : ComputableInPolyTime values input (encPi enc))
     (hvalue : ComputableInPolyTime value input enc) (i : Index) :
     ComputableInPolyTime (fun a => Function.update (values a) i (value a))
-      input (encPi enc) := by
-  apply pi
-  intro j
-  by_cases h : j = i
-  · subst j
-    simpa using hvalue
-  · simpa [Function.update_of_ne h, Function.comp_def] using (pi_apply enc j).comp hvalues
+      input (encPi enc) :=
+  ((ComputableInO.pi_update enc i).computableInPolyTime .self .self).comp
+    (hvalues.prod hvalue)
 
 /-- Read a computed index of a fixed finite table, charging the index and all stored entries. -/
 theorem pi_apply' [Fintype Index] {indexEncoding : Index ↪ List Bool}

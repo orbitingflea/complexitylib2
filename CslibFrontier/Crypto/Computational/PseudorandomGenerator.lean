@@ -168,7 +168,15 @@ theorem isPPTOn_prgIdealGame {length : ℕ → ℕ} {adversary : Distinguisher}
   unfold prgIdealGame
   ppt
 
-/-- A plain polynomial-time stretching generator, secure in the existing finite-family API. -/
+/-- A plain polynomial-time stretching generator, secure in the existing finite-family API.
+
+This is [Goldreich1998Fragments], Definition 3.3.2, p. 85: a deterministic polynomial-time
+generator with output length `length n > n` on seeds of length `n`, whose output on a uniform seed
+is indistinguishable from a uniform word of length `length n` by every probabilistic
+polynomial-time test that also receives `n` in unary (Definition 3.2.2, p. 78). It is also
+[BonehShoup2023], Attack Game 3.1 and Definition 3.1, pp. 46–47, read asymptotically with seeds
+of length `n` and outputs of length `length n`; the source does not make expansion part of the
+notion. -/
 structure PseudorandomGenerator (generator : List Bool → List Bool) (length : ℕ → ℕ) : Prop where
   /-- One deterministic polynomial-time machine evaluates the generator. -/
   polyTime : ComputableInPolyTime generator encBits encBits

@@ -22,6 +22,37 @@ Adapt the client's contract to your types. A failed bridge usually means a missi
 
 Record the input and output types; their encodings; the measured input size; the time, workspace, gate or query bound; and what is fixed before the input varies. Model domain objects, problem instances, certificates, configurations, and multi-field algorithm states or contexts as documented `structure`s with named fields rather than tuple `abbrev`s or bare product sets (`Set (A × B × C)`), keeping plain `Prod` (`×`) for generic binary combinators and uncurried multi-argument inputs such as `Instance × List Bool → Bool`. For native computation, an encoding has type `α ↪ List Bool`: injectivity is part of the data. Reuse `encBits`, `encBool`, binary `encNat`, unary `encUnary`, `encPair` and `encList` before defining another representation. A new embedding needs an injectivity proof and size lemmas suitable for the intended bound. [Encoding length lemmas](../../CslibFrontier/Computability/Machines/Turing/MultiTape/Encodings/Length.lean) and [pair lengths](../../CslibFrontier/Computability/Machines/Turing/MultiTape/Encodings/Pair.lean) show where framing overhead enters. To read a component back out of an `encPair` word in a proof, rewrite with `unframe_encPair` and `dropFrame_encPair`, or with their `encBits` forms `unframe_encPair_encBits` and `dropFrame_encPair_encBits` ([pair projections](../../CslibFrontier/Computability/Machines/Turing/MultiTape/Encodings/Pair/Projections.lean)), rather than proving the step inline.
 
+For fixed finite tables, the plain `ComputableInPolyTime.ofFn`, `.pi`, `.pi_apply` and
+`.pi_update` certificates reuse the independent resource rules in
+[BigO/Pi.lean](../../CslibFrontier/Computability/Machines/Turing/MultiTape/Complexity/BigO/Pi.lean).
+The index type is fixed independently of the input; the value type need not be inhabited.
+Construction sums the component bounds, using `PolyBounded.sum` for finite sums in a common
+size measure. Computed-index access and update retain the captured original input; see the
+[finite-table regression](../../CslibFrontierTests/Machines/Turing/MultiTape/Internal/PolyTimePiPrimitives.lean)
+for empty index/value types and the required callback certificates. Import
+`CslibFrontier.Computability.Machines.Turing.MultiTape.Internal.PolyTimePiPrimitives`
+for this plain API. Its computed-index rules use the captured-input dispatch theorem in
+[PolyTimeFinitePrimitives.lean](../../CslibFrontier/Computability/Machines/Turing/MultiTape/Internal/PolyTimeFinitePrimitives.lean).
+The regression rejects imports of the higher tidy calculus; the tidy-facing
+`Complexity.PolyTime.Finite` module re-exports the same plain dispatch theorem and adds its tidy
+specialization. The plain `Complexity.Degree.Primitives` entry point registers
+`ComputableInDegree` for `fun_prop`; extracted list rules do not require `Quantitative`
+to enable automation.
+
+
+For independent time and charged-space bounds, import
+`CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.BigO.FunProp`.
+It exposes the plain `ComputableInO` composition rules and the plain option degree provider,
+including the registered `ComputableInDegree.optionGetD` rule, without importing `Quantitative`
+or the higher tidy calculus. With inferred bounds, `fun_prop` assembles the resource expression;
+use `ComputableInO.mono` once to compare it with the desired bound. The
+[ordinary-import automation regression](../../CslibFrontierTests/ComputableInOFunProp.lean)
+checks projections, option defaults, conditional branches and nonlinear composition. The
+[tuple and option client](../../CslibFrontierTests/NativeProducts.lean) checks captured inputs
+and independent callback bounds. Both reject higher tidy predicates while permitting the
+machine-level normalization kernel.
+
+
 To encode a structure as the tuple of its fields, import `CslibFrontier.Computability.Machines.Turing.MultiTape.Encodings.Structure` and, inside a namespace, write `enc_structure eS : S where f₁ : e₁, …, fₙ : eₙ`. List every field of `S` once, in declaration order, and parenthesize compound encodings such as `(encList encUnary)`. List a parent structure either as the single field `toParent`, as in `S`'s constructor, encoded as one word, or as its own fields in place of `toParent`, which flattens them into the tuple; listing both is an error. To make a flattened parent projection available to automation, declare its encoding before `where`: `enc_structure eChild : Child flattened toParent : eParent where …`. The command checks that `toParent` is a parent field and is actually flattened. The generated proof also requires `eParent` to have exactly the selected word layout, so the annotation cannot silently change the encoding. `S` must be a structure, not a class. The command checks the list before declaring anything: an unknown, repeated or misplaced field, or any missing ones, is an error that names them and lists the fields of `S` in declaration order. That order fixes the encoded words: the simp lemma `eS_apply` unfolds `eS a` to `eSFields (a.f₁, …, a.fₙ)`, where `eSFields` is the right-nested `encPair e₁ (encPair e₂ … eₙ)`, so every field but the last is framed.
 
 Generated field and flattened-parent polynomial-time rules lift their degree certificate with `ComputableInDegree.computableInPolyTime`, then compose with the caller’s certificate. They share the degree proof rather than deriving the projection again in the polynomial-time calculus.

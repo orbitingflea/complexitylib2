@@ -10,6 +10,7 @@ module
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.BigO
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Combinators.Transducer
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.Streaming
+import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.Quantitative
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Internal.OCountedIteration
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Combinators.IterateWhile
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Universal.Bound

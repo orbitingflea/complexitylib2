@@ -84,13 +84,20 @@ example (b : Bool) (n : ℕ) :
   · exact advantage_true_false n
 
 -- The same first-bit circuit has three gates and no oracle queries, and fits the common cap.
-example (n : ℕ) : Game.WithinOracleCircuits (fun _ => 1) n ⟨2 * n + 3, 3, 0⟩
+example (n : ℕ) : Game.WithinOracleCircuits (fun _ => 1) n
+    ⟨2 * n + 3, 3, 0,
+      max (encOracleCircuitDescription ((bitFamily 0).description n 0)).length
+        (encOracleCircuitDescription ((bitFamily 0).description n 1)).length⟩
     (bitFamily 0) := by
   intro ℓ hℓ
   change ℓ ≤ 1 at hℓ
-  refine ⟨by dsimp [bitFamily, bitDescription]; omega, ?_, ?_⟩ <;>
-    simp [GateCode.swapCodes, OracleCircuit.gateCount,
-      OracleCircuit.queryCount, OracleGateCode.isQuery]
+  rcases Nat.le_one_iff_eq_zero_or_eq_one.mp hℓ with rfl | rfl
+  · refine ⟨by dsimp [bitFamily, bitDescription]; omega, ?_, ?_, le_max_left _ _⟩ <;>
+      simp [GateCode.swapCodes, OracleCircuit.gateCount,
+        OracleCircuit.queryCount, OracleGateCode.isQuery]
+  · refine ⟨by dsimp [bitFamily, bitDescription]; omega, ?_, ?_, le_max_right _ _⟩ <;>
+      simp [GateCode.swapCodes, OracleCircuit.gateCount,
+        OracleCircuit.queryCount, OracleGateCode.isQuery]
 
 example : SupportsLength
     (fun n => (PMF.uniformOfFintype Bool).bind (fun b => bitEnsemble b n)) (fun _ => 1) :=

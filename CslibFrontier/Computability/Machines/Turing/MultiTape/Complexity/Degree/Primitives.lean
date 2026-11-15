@@ -8,9 +8,10 @@ module
 -- upstream: candidate
 
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.Degree.Bounds
+public import Mathlib.Tactic.FunProp
 import Cslib.Computability.Machines.Turing.MultiTape.Combinators.AlmostConstant
 import Cslib.Computability.Machines.Turing.MultiTape.Combinators.Id
-import Mathlib.Data.Fintype.Lattice
+import Mathlib.Tactic.TypeStar
 
 /-!
 # Direct primitives for plain degree bounds
@@ -18,7 +19,8 @@ import Mathlib.Data.Fintype.Lattice
 These rules retain independent cost and encoded-output degrees. Constants have cost degree one
 and output degree zero; encoded equality uses the upstream copy machine. Output and input
 encoding transports reuse the same realizing machine and preserve both degrees, including zero.
-No higher computability calculus is used in their proofs.
+No higher computability calculus is used in their proofs. This plain entry point registers
+`ComputableInDegree` as a function property before downstream primitive rules are registered.
 
 ## Main results
 
@@ -35,6 +37,8 @@ Uses cslib's constant and copy machines and the independent degree bounds of thi
 public section
 
 namespace Turing.MultiTapeTM.ComputableInDegree
+
+attribute [fun_prop] ComputableInDegree
 
 variable {α β γ : Type*} {encIn : α ↪ List Bool} {encMid : β ↪ List Bool}
   {encOut : γ ↪ List Bool} {d e : ℕ}

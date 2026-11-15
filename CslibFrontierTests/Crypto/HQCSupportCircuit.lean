@@ -206,8 +206,12 @@ example :
       ((Reversible.samplerCodes 2 nonDyadicSupportCircuit.code).map
         fun g => OracleGateCode.gate (false, g))
       (2 + nonDyadicSupportCircuit.size + 1 + 3)
+      (encOracleCircuitDescription
+        (Reversible.samplerDescription 2 nonDyadicSupportCircuit.code)).length
       ⟨2 + nonDyadicSupportCircuit.size + 1 + 3,
-        2 + 3 * nonDyadicSupportCircuit.size + 3, 0⟩ := by
+        2 + 3 * nonDyadicSupportCircuit.size + 3, 0,
+        (encOracleCircuitDescription
+          (Reversible.samplerDescription 2 nonDyadicSupportCircuit.code)).length⟩ := by
   simpa only [nonDyadicSupportCircuit] using within_supportSamplerCodes 1 2 3 2
 
 example :

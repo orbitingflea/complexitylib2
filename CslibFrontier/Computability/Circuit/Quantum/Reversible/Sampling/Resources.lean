@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import CslibFrontier.Computability.Circuit.Quantum.EncodingSize
-public import CslibFrontier.Computability.Circuit.Quantum.Oracle.Resources
+public import CslibFrontier.Computability.Circuit.Quantum.Oracle.Uniform
 public import CslibFrontier.Computability.Circuit.Quantum.Reversible.Sampling
 import CslibFrontier.Computability.Circuit.Quantum.Reversible.Resources
 
@@ -20,16 +20,25 @@ three reversible gates per Boolean gate, and one CNOT per copied output. Its act
 all `n` seeds and `G` Boolean gate values, one compiler zero qubit, and `m` copied outputs. The
 description has no coherent oracle query and `samplerDist` performs one final measurement.
 
-The encoded-length bound charges the generated instruction list, including its unary wire numbers
-and framing. It does not bound the static generator program or its offline running time. Those are
-separate from the online gate and qubit costs recorded here.
+The finite sampler description records the exact active width, measures the full register before
+the deterministic suffix readout, and has no quantum input or oracle registers. Its encoded length
+therefore charges all register metadata and the mapped instruction list. The separate
+instruction-list bound includes unary wire numbers and framing, but does not bound the static
+generator program or its offline running time. Those are separate from the online gate and qubit
+costs recorded here.
+
+## Main definitions
+
+* `Cslib.Quantum.Reversible.samplerDescription`: the complete finite circuit description used for
+  resource accounting.
 
 ## Main results
 
 * `Cslib.Quantum.Reversible.samplerWidth_circuit`: exact active width for a typed circuit.
 * `Cslib.Quantum.Reversible.length_samplerCodes_le`: at most `n + 3 * G + m` gates.
 * `Cslib.Quantum.Reversible.length_encoding_samplerCodes_le`: encoded instruction length.
-* `Cslib.Quantum.Reversible.within_samplerCodes`: separate qubit, gate, and zero-query budgets.
+* `Cslib.Quantum.Reversible.within_samplerCodes`: separate qubit, gate, zero-query, and exact
+  encoded-description budgets.
 -/
 
 public section
@@ -37,6 +46,17 @@ public section
 namespace Cslib.Quantum.Reversible
 
 open Circuits Circuits.Boolean GateCode Turing.MultiTapeTM
+
+/-- The finite oracle-circuit view of the sampler. It starts with every qubit zero, performs no
+oracle query, and measures the full register before `samplerReadout` selects the copied suffix. -/
+def samplerDescription (n : ℕ)
+    (code : List (Op × List ℕ) × List ℕ) : OracleCircuitDescription where
+  width := samplerWidth n code
+  queryWidth := 0
+  responseWidth := 0
+  quantumInputWidth := 0
+  outputWidth := samplerWidth n code
+  instructions := (samplerCodes n code).map fun g => OracleGateCode.gate (false, g)
 
 /-- A typed circuit sampler retains every input and gate value, one fixed-zero qubit, and one
 fresh qubit for every output. -/
@@ -63,12 +83,14 @@ theorem length_encoding_samplerCodes_le (n : ℕ)
   (length_encGateCodes_le (wellFormed_samplerCodes n code)).trans
     (Nat.mul_le_mul_right _ (length_samplerCodes_le n code))
 
-/-- Reading the sampler's elementary gates as oracle instructions uses the exact active width,
-the construction-derived gate budget, and no coherent oracle queries. -/
+/-- The finite sampler description uses the exact active width, construction-derived gate budget,
+no coherent oracle queries, and its full encoded length. -/
 theorem within_samplerCodes (n : ℕ) (code : List (Op × List ℕ) × List ℕ) :
     OracleCircuit.Within ((samplerCodes n code).map fun g => OracleGateCode.gate (false, g))
       (samplerWidth n code)
-      ⟨samplerWidth n code, n + 3 * code.1.length + code.2.length, 0⟩ := by
+      (encOracleCircuitDescription (samplerDescription n code)).length
+      ⟨samplerWidth n code, n + 3 * code.1.length + code.2.length, 0,
+        (encOracleCircuitDescription (samplerDescription n code)).length⟩ := by
   have hcounts :
       OracleCircuit.gateCount
           ((samplerCodes n code).map fun g => OracleGateCode.gate (false, g)) =
@@ -78,6 +100,6 @@ theorem within_samplerCodes (n : ℕ) (code : List (Op × List ℕ) × List ℕ)
     simp [OracleCircuit.gateCount, OracleCircuit.queryCount, OracleGateCode.isQuery,
       List.countP_map, Function.comp_def]
   rw [OracleCircuit.Within, hcounts.1, hcounts.2]
-  exact ⟨le_rfl, length_samplerCodes_le n code, le_rfl⟩
+  exact ⟨le_rfl, length_samplerCodes_le n code, le_rfl, le_rfl⟩
 
 end Cslib.Quantum.Reversible

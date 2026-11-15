@@ -84,7 +84,11 @@ theorem isPPT_inversionGame {f : List Bool → List Bool} {adversary : Inverter}
     IsPPT encBool (fun n _ => inversionGame f adversary n) := by ppt
 
 /-- One plain polynomial-time algorithm evaluates the function. Every uniform strict PPT inverter
-has negligible success over the uniform input and its own independent random coins. -/
+has negligible success over the uniform input and its own independent random coins.
+
+This is strong one-wayness, [Goldreich1998Fragments], Definition 2.2.1, p. 29: the inverter
+receives `f x` for a uniform `n`-bit `x` together with `n` in unary, and succeeds when it outputs
+any preimage of `f x`, of any length. -/
 structure OneWay (f : List Bool → List Bool) : Prop where
   /-- A deterministic polynomial-time algorithm evaluates the function. -/
   polyTime : ComputableInPolyTime f encBits encBits
@@ -107,7 +111,10 @@ theorem OneWay.of_inversion_negligible {f : List Bool → List Bool}
   refine ⟨hf, fun adversary hPPT => ?_⟩
   simpa only [Game.advantage_pure_false] using h adversary hPPT
 
-/-- A length-preserving permutation that is one-way against every uniform PPT inverter. -/
+/-- A length-preserving permutation that is one-way against every uniform PPT inverter: a
+length-preserving one-to-one function that is `OneWay`, which is how [Goldreich1998Fragments],
+Section 3.4.1, p. 91, describes one-way permutations. Being one-to-one and length-preserving, such
+a function permutes the words of each length, so `bijective` adds nothing to injectivity. -/
 structure OneWayPermutation (f : List Bool → List Bool) : Prop where
   /-- Evaluation is polynomial time, and inversion has negligible success. -/
   oneWay : OneWay f

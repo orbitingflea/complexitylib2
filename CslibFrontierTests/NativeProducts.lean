@@ -9,6 +9,8 @@ module
 
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.BigO.Pi
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.BigO.Option
+public import CslibFrontier.Computability.Machines.Turing.MultiTape.Encodings.Pair
+public import CslibFrontier.Computability.Machines.Turing.MultiTape.Encodings.Unary
 
 /-!
 # Native tuple and retained-input option clients
@@ -16,6 +18,12 @@ public import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.B
 Tests include empty dimensions and payload types, repeated gathering indices, stored updates,
 arbitrary component bounds, and a concrete option client using both input and payload.
 -/
+
+-- Only the higher calculus is excluded; machine-level tidy normalization remains available.
+run_elab do
+  for name in #[`Turing.MultiTapeTM.ComputableTidilyInPolyTime,
+      `Turing.MultiTapeTM.ComputableTidilyInDegree, `Turing.MultiTapeTM.ComputableTidilyInO] do
+    if (← Lean.getEnv).contains name then throwError "unexpected higher tidy calculus: {name}"
 
 @[expose] public section
 
@@ -82,8 +90,9 @@ theorem retained_inO : ComputableInO retained inputEncoding (encPair encUnary en
   have hbody : ComputableInDegree
       (fun p : (ℕ × Option ℕ) × ℕ => (p.1.1, p.2))
       (encPair inputEncoding encUnary) (encPair encUnary encUnary) 1 1 := by
-    unfold inputEncoding
-    fun_prop (disch := first | apply le_refl | omega)
+    exact ((ComputableInDegree.fst encUnary (encOption encUnary)).comp
+      (ComputableInDegree.fst inputEncoding encUnary)).prod
+      (ComputableInDegree.snd inputEncoding encUnary)
   have h := ComputableInO.optionElimWithInput
     (body := fun q n => (q.1, n)) hvalue (hfst.prod hfst) hbody.inO_one
   convert h using 1 <;> first | rfl |

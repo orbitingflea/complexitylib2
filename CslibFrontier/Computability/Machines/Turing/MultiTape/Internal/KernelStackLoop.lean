@@ -619,10 +619,6 @@ section Stack
 
 variable {γ : Type*} {encG : γ ↪ List Bool}
 
-private lemma encList_append' (l₁ l₂ : List γ) :
-    encList encG (l₁ ++ l₂) = encList encG l₁ ++ encList encG l₂ :=
-  List.flatMap_append ..
-
 /-- Popping a stack kept as its framed frames, ending just before cell `0`. -/
 private lemma runs_pop_stack (ea : List Bool) (stk : List γ) :
     RunsBetween (popM (kk := kk))
@@ -738,7 +734,9 @@ theorem runs_stackLoop
             (encList encG (round (zIn s i)).1 ++ encList encG (s i).2.tail) 0
             (-((encList encG (s i).2.tail).length : ℤ) -
               (encList encG (round (zIn s i)).1).length) 0 0 [] := by
-        rw [cfgL, hs i, encList_append']
+        rw [cfgL, hs i]
+        dsimp only
+        rw [encList_append]
         congr 1
         simp only [List.length_append, Nat.cast_add]
         ring

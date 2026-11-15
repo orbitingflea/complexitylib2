@@ -45,10 +45,14 @@ private theorem surjective_smul_one : Function.Surjective fun β : ZMod 11 => β
 private theorem injective_smul_one : Function.Injective fun β : ZMod 11 => β • (1 : ZMod 11) :=
   fun β₁ β₂ h => by simpa using h
 
-example : groupAnswer 11 (1 : ZMod 11) = answer 11 (ZMod 11) fun β => β • 1 :=
+example : groupAnswer 11 (1 : ZMod 11) = answer fun β : ZMod 11 => β • (1 : ZMod 11) :=
   groupAnswer_eq_answer surjective_smul_one
 
-example : answer 11 (ZMod 11) id (.op 3 5 2 4) = some 4 := by
+example : answer (fun β : ZMod 11 => 2 * β) (.label 3) = 6 := by
+  rw [answer_label]
+  decide
+
+example : answer (id : ZMod 11 → ZMod 11) (.op 3 5 2 4) = some 4 := by
   rw [show (3 : ZMod 11) = id 3 from rfl, show (5 : ZMod 11) = id 5 from rfl,
     answer_op_label Function.injective_id]
   decide
@@ -60,7 +64,7 @@ example : (babyStepGiantStep 4 4 (1 : ZMod 11) 7).evalPure (groupAnswer 11 1) = 
     (by norm_num) 7
 
 example (α : ZMod 11) :
-    (babyStepGiantStep 4 4 (id 1) (id α)).evalPure (answer 11 (ZMod 11) id) = α ∧
+    (babyStepGiantStep 4 4 (id 1) (id α)).evalPure (answer (id : ZMod 11 → ZMod 11)) = α ∧
       OracleComp.IsQueryBounded (babyStepGiantStep (q := 11) 4 4 (id 1) (id α)) 6 := by
   have h : Nat.sqrt 10 = 3 := Nat.sqrt_add_eq (a := 1) 3 (by norm_num)
   simpa only [h] using babyStepGiantStep_sqrt Function.injective_id α

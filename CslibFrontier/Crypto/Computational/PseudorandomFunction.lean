@@ -137,7 +137,10 @@ theorem prfIdealGame_eq_lazy (adversary : OracleDistinguisher) (n : ℕ) :
     lazyRandomFunctionOracle, PMF.monad_bind_eq_bind] using h
 
 /-- A keyed family evaluated in plain polynomial time, secure against every uniform adaptive
-oracle test. -/
+oracle test: [BonehShoup2023], Attack Game 4.2 and Definition 4.2, pp. 132–133, read
+asymptotically, with keys, queries and answers of `n` bits. A query of another length is answered
+by the empty word in both games, and deterministic polynomial-time evaluation is part of the
+notion. -/
 structure PseudorandomFunction (family : List Bool → List Bool → List Bool) : Prop where
   /-- One deterministic machine evaluates the family from the encoded key and query. -/
   polyTime : ComputableInPolyTime (fun pair => family pair.1 pair.2)

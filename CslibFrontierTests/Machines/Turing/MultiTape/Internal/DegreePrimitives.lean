@@ -7,7 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: local-only (test driver)
 
-public import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.Degree.Primitives
+public import CslibFrontier.Computability.Machines.Turing.MultiTape.Internal.DegreePrimitives
 import Cslib.Computability.Machines.Turing.MultiTape.Combinators.AlmostConstant
 import Lean.Elab.Command
 
@@ -62,5 +62,12 @@ example (n : ℕ) {α β γ : Type*} {input : α ↪ List Bool} {middle : β ↪
   ⟨.const [], .of_eq fun _ => rfl, by simp [word], .of_finite Bool.not, .of_finite Empty.elim,
     zeroDegree.of_enc_eq fun _ => rfl, zeroDegree.of_encIn_eq ULift.down fun _ => rfl,
     hf.of_enc_eq h⟩
+
+-- Extracted list rules must register and synthesize without importing Quantitative.
+example {α : Type*} (enc : α ↪ List Bool) :
+    ComputableInDegree List.tail (encList enc) (encList enc) 1 1 := by fun_prop
+
+example {α : Type*} (enc : α ↪ List Bool) (fallback : α) :
+    ComputableInDegree (fun l => l.headD fallback) (encList enc) enc 1 1 := by fun_prop
 
 end CslibFrontierTests.Internal.DegreePrimitives

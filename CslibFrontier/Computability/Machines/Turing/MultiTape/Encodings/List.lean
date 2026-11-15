@@ -48,6 +48,12 @@ public lemma encList_nil : encList enc [] = [] := rfl
 public lemma encList_cons (a : α) (l : List α) :
     encList enc (a :: l) = frame (enc a) ++ encList enc l := rfl
 
+/-- Concatenation of lists is concatenation of their framed encodings. -/
+@[simp]
+public lemma encList_append {α : Type*} (enc : α ↪ List Bool) (l₁ l₂ : List α) :
+    encList enc (l₁ ++ l₂) = encList enc l₁ ++ encList enc l₂ := by
+  induction l₁ <;> simp [*]
+
 public instance : ListEncoding enc (encList enc) where
   headD d := .of_isEmpty_ite d (fun l hl => by cases l <;> simp_all)
     (.of_unframe fun ⟨l, hl⟩ => by cases l <;> simp at hl ⊢)

@@ -59,7 +59,7 @@ operation on `1`, which is not a multiple of `2` in `ZMod 4`. -/
 example : groupAnswer 4 (2 : ZMod 4) (.op 1 1 1 1) = some 2 := by decide
 
 /-- The generic group oracle of `β ↦ β • 2` rejects the same query. -/
-example : answer 4 (ZMod 4) (fun β => β • (2 : ZMod 4)) (.op 1 1 1 1) = none := by
+example : answer (fun β : ZMod 4 => β • (2 : ZMod 4)) (.op 1 1 1 1) = none := by
   have h : Function.partialInv (fun β : ZMod 4 => β • (2 : ZMod 4)) 1 = none :=
     dite_eq_right (by decide)
   change (Function.partialInv _ 1).bind _ = none

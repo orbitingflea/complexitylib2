@@ -28,8 +28,10 @@ whose measured output law is exactly `sampleSupport2` mapped through
 The finite-width law retains the source algorithm's non-dyadic bias. There is no abort branch:
 under `count ≤ n` and `n < 2 ^ bits`, every output has weight `count`, while the statistical
 discrepancy from the ideal fixed-weight law is bounded by
-`1 - (supportLowerDensity width n 0 count).toReal`. The online qubit, gate, query, and encoded-code
-bounds below do not charge the offline generator program or replace the separate XOF analysis.
+`1 - (supportLowerDensity width n 0 count).toReal`. The online qubit, gate, query, and full encoded
+description coordinates below do not charge the offline generator program or replace the separate
+XOF analysis. The instruction-list encoding bound remains a separate construction-derived upper
+bound.
 
 ## Main definitions
 
@@ -233,15 +235,21 @@ theorem length_supportSamplerCodes_le (width bits n count : ℕ) :
   rw [Circuit.length_code_fst] at h
   simpa only [Circuit.code, List.length_ofFn] using h
 
-/-- The native sampler has the exact active width, the construction-derived gate budget, and no
-coherent oracle queries. -/
+/-- The native sampler has the exact active width, the construction-derived gate budget, no
+coherent oracle queries, and the full encoded description of the measured circuit. -/
 theorem within_supportSamplerCodes (width bits n count : ℕ) :
     OracleCircuit.Within
       ((samplerCodes (count * width) (supportSamplerCircuit width bits n count).code).map
         fun g => OracleGateCode.gate (false, g))
       (count * width + (supportSamplerCircuit width bits n count).size + 1 + n)
+      (encOracleCircuitDescription
+        (samplerDescription (count * width)
+          (supportSamplerCircuit width bits n count).code)).length
       ⟨count * width + (supportSamplerCircuit width bits n count).size + 1 + n,
-        count * width + 3 * (supportSamplerCircuit width bits n count).size + n, 0⟩ := by
+        count * width + 3 * (supportSamplerCircuit width bits n count).size + n, 0,
+        (encOracleCircuitDescription
+          (samplerDescription (count * width)
+            (supportSamplerCircuit width bits n count).code)).length⟩ := by
   have h := within_samplerCodes (count * width)
     (supportSamplerCircuit width bits n count).code
   rw [samplerWidth_circuit, Circuit.length_code_fst] at h

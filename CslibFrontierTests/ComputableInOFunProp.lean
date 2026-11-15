@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.BigO.FunProp
+public import CslibFrontier.Computability.Machines.Turing.MultiTape.Encodings.Pair
 
 /-!
 # `fun_prop` for bounds up to constants
@@ -17,6 +18,12 @@ projections of nested pairs, a case distinction on `Option.isSome`, and `Option.
 step then compares the assembled bounds with the intended ones.
 -/
 
+-- Only the higher calculus is excluded; machine-level tidy normalization remains available.
+run_elab do
+  for name in #[`Turing.MultiTapeTM.ComputableTidilyInPolyTime,
+      `Turing.MultiTapeTM.ComputableTidilyInDegree, `Turing.MultiTapeTM.ComputableTidilyInO] do
+    if (← Lean.getEnv).contains name then throwError "unexpected higher tidy calculus: {name}"
+
 @[expose] public section
 
 open Turing.MultiTapeTM
@@ -24,6 +31,11 @@ open Turing.MultiTapeTM
 namespace CslibFrontierTests.ComputableInOFunProp
 
 variable {enc : ℕ ↪ List Bool}
+
+-- Ordinary imports expose the canonical plain option provider and its registered wrapper.
+example (enc : ℕ ↪ List Bool) (d : ℕ) :
+    ComputableInDegree (fun o => o.getD d) (encOption enc) enc 1 1 := by
+  fun_prop
 
 /-- The encoding of the test inputs. -/
 abbrev eIn : (ℕ × Option ℕ) × ℕ ↪ List Bool := encPair (encPair enc (encOption enc)) enc

@@ -9,7 +9,9 @@ module
 
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.Streaming
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Internal.EqualityPrimitives
+public import CslibFrontier.Computability.Machines.Turing.MultiTape.Internal.DegreeOptionPrimitives
 public import Mathlib.Tactic.FunProp
+public import CslibFrontier.Computability.Machines.Turing.MultiTape.Internal.DegreePrimitives
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Combinators.Transducer.Copy
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Internal.OLoops
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Internal.BinaryAddition
@@ -68,40 +70,6 @@ namespace Turing.MultiTapeTM
 universe u
 
 namespace ComputableInDegree
-
-/-- The first component of a pair computed with given degrees.
-The input universe is independent of the pair's universe. -/
-theorem fst' {α : Type*} {β₁ β₂ : Type u} {encIn : α ↪ List Bool}
-    {enc₁ : β₁ ↪ List Bool} {enc₂ : β₂ ↪ List Bool} {d e : ℕ}
-    {f : α → β₁ × β₂} (h : ComputableInDegree f encIn (encPair enc₁ enc₂) d e) :
-    ComputableInDegree (fun x => (f x).1) encIn enc₁ (max d e) e :=
-  ((fst enc₁ enc₂).comp h).mono
-
-/-- The second component of a pair computed with given degrees.
-The input universe is independent of the pair's universe. -/
-theorem snd' {α : Type*} {β₁ β₂ : Type u} {encIn : α ↪ List Bool}
-    {enc₁ : β₁ ↪ List Bool} {enc₂ : β₂ ↪ List Bool} {d e : ℕ}
-    {f : α → β₁ × β₂} (h : ComputableInDegree f encIn (encPair enc₁ enc₂) d e) :
-    ComputableInDegree (fun x => (f x).2) encIn enc₂ (max d e) e :=
-  ((snd enc₁ enc₂).comp h).mono
-
-/-- `List.headD` on any list encoding. -/
-theorem headD {β : Type*} {enc₁ : β ↪ List Bool} {enc : List β ↪ List Bool}
-    [ListEncoding enc₁ enc] (d : β) :
-    ComputableInDegree (fun l => l.headD d) enc enc₁ 1 1 :=
-  ListEncoding.headD d
-
-/-- `List.tail` on any list encoding. -/
-theorem tail {β : Type*} {enc₁ : β ↪ List Bool} {enc : List β ↪ List Bool}
-    [ListEncoding enc₁ enc] :
-    ComputableInDegree List.tail enc enc 1 1 :=
-  ListEncoding.tail (enc₁ := enc₁)
-
-/-- `List.isEmpty` on any list encoding. -/
-theorem isEmpty {β : Type*} {enc₁ : β ↪ List Bool} {enc : List β ↪ List Bool}
-    [ListEncoding enc₁ enc] :
-    ComputableInDegree List.isEmpty enc encBool 1 1 :=
-  ListEncoding.isEmpty (enc₁ := enc₁)
 
 /-- **Left folds with bounds of given degrees**, compiled directly from plain degree
 certificates. -/
@@ -211,27 +179,6 @@ theorem foldlWith {γ α β π : Type} {encIn : γ ↪ List Bool}
     le_max_of_le_right (le_add_left ((le_max_left _ eL).trans
       (Nat.le_mul_of_pos_left _ (lt_of_lt_of_le Nat.one_pos (le_max_left _ _)))))
   exact ⟨(h.mono (max_le le_rfl hY) le_rfl).1, hB.mono fun x => by simpa using hstates x _ le_rfl⟩
-
-/-- Adding an element in front of a framed list: the identity on encoded words. -/
-theorem cons {α : Type} (enc : α ↪ List Bool) :
-    ComputableInDegree (fun p : α × List α => p.1 :: p.2) (encPair enc (encList enc))
-      (encList enc) 1 1 :=
-  of_eq fun _ => rfl
-
-/-- Adding an element at the end of a framed list. -/
-theorem snoc {α : Type} (enc : α ↪ List Bool) :
-    ComputableInDegree (fun p : List α × α => p.1 ++ [p.2]) (encPair (encList enc) enc)
-      (encList enc) 1 1 :=
-  ((fst (encList enc) enc).append ((ComputableInDegree.of_frame (f := id) (encIn := enc)
-      (encMid := encFramed enc) fun _ => rfl).comp (snd (encList enc) enc))
-    (enc₂ := encFramed enc) fun _ => by simp).mono
-
-/-- Concatenating two framed lists. -/
-theorem listAppend {α : Type} (enc : α ↪ List Bool) :
-    ComputableInDegree (fun p : List α × List α => p.1 ++ p.2)
-      (encPair (encList enc) (encList enc)) (encList enc) 1 1 :=
-  ((fst (encList enc) (encList enc)).append (snd (encList enc) (encList enc))
-    fun _ => by simp).mono
 
 /-- Truncated subtraction of unary numbers. -/
 theorem unary_sub :
@@ -369,7 +316,6 @@ theorem computableInDegree_mul :
     ComputableInDegree (fun p : ℕ × ℕ => p.1 * p.2) (encPair encNat encNat) encNat 3 1 :=
   ComputableInO.natMul.computableInDegree ⟨1, fun _ => by simp⟩ ⟨1, fun _ => by simp⟩ (by decide)
 
-attribute [fun_prop] ComputableInDegree
 attribute [fun_prop] ComputableInDegree.const ComputableInDegree.fst
   ComputableInDegree.snd ComputableInDegree.comp ComputableInDegree.prod
   ComputableInDegree.fst' ComputableInDegree.snd'
@@ -381,35 +327,11 @@ attribute [fun_prop] ComputableInDegree.const ComputableInDegree.fst
 
 namespace ComputableInDegree
 
-/-- The result encoding fixes the element encoding, without reversing `ListEncoding` inference. -/
-@[fun_prop]
-theorem listTail {α : Type*} (enc : α ↪ List Bool) :
-    ComputableInDegree List.tail (encList enc) (encList enc) 1 1 :=
-  tail (enc₁ := enc)
-
-/-- The framed input list determines the encoding of its head, including a fixed fallback. -/
-@[fun_prop]
-theorem listHeadD {α : Type*} (enc : α ↪ List Bool) (fallback : α) :
-    ComputableInDegree (fun l => l.headD fallback) (encList enc) enc 1 1 :=
-  headD (enc₁ := enc) fallback
-
 /-- Testing a framed list for emptiness. -/
 @[fun_prop]
 theorem listIsEmpty {α : Type*} (enc : α ↪ List Bool) :
     ComputableInDegree List.isEmpty (encList enc) encBool 1 1 :=
   isEmpty (enc₁ := enc)
-
-/-- The option encoding determines the encoding used for the payload and fallback. -/
-@[fun_prop]
-theorem optionGetD {α : Type*} (enc : α ↪ List Bool) (fallback : α) :
-    ComputableInDegree (fun o => o.getD fallback) (encOption enc) enc 1 1 :=
-  getD (enc₁ := enc) fallback
-
-/-- Copy an encoded value. This identity rule also lets `fun_prop` retain a shared let binding. -/
-@[fun_prop]
-theorem id' {α : Type*} {enc : α ↪ List Bool} :
-    ComputableInDegree (fun x : α => x) enc enc 1 1 :=
-  of_eq fun _ => rfl
 
 /-- Reverse a raw bit list in linear time and linear output size. -/
 @[fun_prop]

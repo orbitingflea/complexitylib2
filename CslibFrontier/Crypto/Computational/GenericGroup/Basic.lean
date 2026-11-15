@@ -76,6 +76,8 @@ abbrev GroupOracleSpec : OracleSpec (GroupQuery q S)
   | .label _ => S
   | .op .. => Option S
 
+variable {q S}
+
 /-- The group oracle determined by the labeling `L`. A labeling query `β` gets `L β`. A group
 operation `(ℓ₁, ℓ₂, κ₁, κ₂)` gets `L (κ₁ * β₁ + κ₂ * β₂)` for preimages `L β₁ = ℓ₁` and
 `L β₂ = ℓ₂`, which are unique when `L` is injective, and `none` when `ℓ₁` or `ℓ₂` is not a label.
@@ -88,14 +90,13 @@ noncomputable def answer (L : ZMod q → S) : (query : GroupQuery q S) → Group
 
 variable {G : Type} [AddCommGroup G] [Module (ZMod q) G]
 
+variable (q) in
 /-- The group oracle of a `ZMod q`-module `G` with base point `g`, whose labels are the elements
 of `G`. A labeling query `β` gets `β • g`, the book's `g^β`, and a group operation
 `(ℓ₁, ℓ₂, κ₁, κ₂)` gets `κ₁ • ℓ₁ + κ₂ • ℓ₂`; it never rejects. -/
 @[expose] def groupAnswer (g : G) : (query : GroupQuery q G) → GroupOracleSpec q G query
   | .label β => β • g
   | .op ℓ₁ ℓ₂ κ₁ κ₂ => some (κ₁ • ℓ₁ + κ₂ • ℓ₂)
-
-variable {q S}
 
 /-- The query is a group operation with `κ₁ = κ₂ = 1`: it asks for the product of two labelled
 elements, one multiplication in the group. -/
@@ -104,14 +105,21 @@ elements, one multiplication in the group. -/
   | .label _ => False
 
 /-- A labeling query gets the label. -/
-@[simp] theorem answer_label (L : ZMod q → S) (β : ZMod q) : answer q S L (.label β) = L β := by
+@[simp] theorem answer_label (L : ZMod q → S) (β : ZMod q) : answer L (.label β) = L β := by
+  dsimp only [answer]
+
+/-- A group operation gets the label of `κ₁ * β₁ + κ₂ * β₂` for preimages `L β₁ = ℓ₁` and
+`L β₂ = ℓ₂`, and `none` when there is none. -/
+theorem answer_op (L : ZMod q → S) (ℓ₁ ℓ₂ : S) (κ₁ κ₂ : ZMod q) :
+    answer L (.op ℓ₁ ℓ₂ κ₁ κ₂) = (Function.partialInv L ℓ₁).bind fun β₁ =>
+      (Function.partialInv L ℓ₂).map fun β₂ => L (κ₁ * β₁ + κ₂ * β₂) := by
   dsimp only [answer]
 
 /-- The accepting clause of the group operation ([BonehShoup2023], Section 16.3, p. 693): for an
 injective labeling `L`, a group operation on the labels of `β₁` and `β₂` gets the label of
 `κ₁ * β₁ + κ₂ * β₂`. -/
 theorem answer_op_label {L : ZMod q → S} (hL : Function.Injective L) (β₁ β₂ κ₁ κ₂ : ZMod q) :
-    answer q S L (.op (L β₁) (L β₂) κ₁ κ₂) = some (L (κ₁ * β₁ + κ₂ * β₂)) := by
+    answer L (.op (L β₁) (L β₂) κ₁ κ₂) = some (L (κ₁ * β₁ + κ₂ * β₂)) := by
   dsimp only [answer]
   rw [Function.partialInv_left hL, Function.partialInv_left hL]
   rfl
@@ -120,7 +128,7 @@ theorem answer_op_label {L : ZMod q → S} (hL : Function.Injective L) (β₁ β
 `g` ([BonehShoup2023], Section 16.1.1), the oracle of `G` is the generic group oracle of the
 labeling `β ↦ β • g`. The labeling need not be injective. -/
 theorem groupAnswer_eq_answer {g : G} (hg : Function.Surjective fun β : ZMod q => β • g) :
-    groupAnswer q g = answer q G fun β => β • g := by
+    groupAnswer q g = answer fun β : ZMod q => β • g := by
   funext query
   cases query with
   | label β => rfl

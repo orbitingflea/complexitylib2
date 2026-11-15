@@ -10,6 +10,7 @@ module
 -- rules.
 
 public import CslibFrontier.Foundations.Data.Nat.PolynomialBound.Closure
+public import Mathlib.Algebra.BigOperators.Group.Finset.Basic
 
 /-! Polynomial growth relative to an arbitrary input-size function, without machine predicates. -/
 
@@ -77,6 +78,18 @@ public theorem pow (hu : PolyBounded size u) (d : ℕ) :
     PolyBounded size fun a => u a ^ d :=
   let ⟨_, hp, hu⟩ := hu
   ⟨_, hp.pow d, fun a => Nat.pow_le_pow_left (hu a) d⟩
+
+/-- A fixed finite sum of polynomial bounds is polynomial in the same input size. -/
+public theorem sum {ι : Type*} (s : Finset ι) {u : ι → α → ℕ}
+    (hu : ∀ i ∈ s, PolyBounded size (u i)) :
+    PolyBounded size (fun a => ∑ i ∈ s, u i a) := by
+  classical
+  induction s using Finset.induction_on with
+  | empty => simpa using (const (size := size) 0)
+  | @insert i s hi ih =>
+    simpa only [Finset.sum_insert hi] using
+      (hu i (Finset.mem_insert_self i s)).add
+        (ih fun j hj => hu j (Finset.mem_insert_of_mem hj))
 
 /-- Substitution: if `v` is bounded by a polynomial in `size'` and `size' ∘ g` by a polynomial in
 `size`, then `v ∘ g` is bounded by a polynomial in `size`. -/

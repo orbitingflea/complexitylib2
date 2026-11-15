@@ -239,9 +239,11 @@ theorem not_nativeQuantumTwoDQCSDP_fullWeight :
 /-- The concrete form fails too, for every bound that is negligible along polynomial resource
 schedules (the bounds `NativeQuantumTwoDQCSDP.of_within` accepts). -/
 theorem not_nativeQuantumTwoDQCSDPWithin_fullWeight {ε : ℕ → OracleCircuit.Resources → ℝ≥0}
-    (hε : ∀ qubits gates queries : ℕ → ℕ,
+    (hε : ∀ qubits gates queries descriptionBits : ℕ → ℕ,
       PolynomiallyBounded qubits → PolynomiallyBounded gates → PolynomiallyBounded queries →
-      Negligible (fun κ => ε κ ⟨qubits κ, gates κ, queries κ⟩)) :
+      PolynomiallyBounded descriptionBits →
+      Negligible (fun κ => ε κ
+        ⟨qubits κ, gates κ, queries κ, descriptionBits κ⟩)) :
     ¬ NativeQuantumTwoDQCSDPWithin fullWeightParameters (fun _ => false) ε := fun h =>
   not_nativeQuantumTwoDQCSDP_fullWeight <| NativeQuantumTwoDQCSDP.of_within h
     (by change PolynomiallyBounded fun _ => 2; fun_prop) hε
@@ -287,9 +289,11 @@ theorem not_nativeQuantumThreeDQCSDPT_fullWeight :
 schedules (the bounds `NativeQuantumThreeDQCSDPT.of_within` accepts). -/
 theorem not_nativeQuantumThreeDQCSDPTWithin_fullWeight
     {ε : ℕ → OracleCircuit.Resources → ℝ≥0}
-    (hε : ∀ qubits gates queries : ℕ → ℕ,
+    (hε : ∀ qubits gates queries descriptionBits : ℕ → ℕ,
       PolynomiallyBounded qubits → PolynomiallyBounded gates → PolynomiallyBounded queries →
-      Negligible (fun κ => ε κ ⟨qubits κ, gates κ, queries κ⟩)) :
+      PolynomiallyBounded descriptionBits →
+      Negligible (fun κ => ε κ
+        ⟨qubits κ, gates κ, queries κ, descriptionBits κ⟩)) :
     ¬ NativeQuantumThreeDQCSDPTWithin fullWeightTruncatedParameters (fun _ => false)
       (fun _ => false) ε := fun h =>
   not_nativeQuantumThreeDQCSDPT_fullWeight <| NativeQuantumThreeDQCSDPT.of_within h

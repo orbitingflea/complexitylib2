@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.BigO.FunProp
+public import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.Quantitative
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Combinators.TakeDropUnary
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Internal.BinaryPrimitives
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.Degree.Bounds

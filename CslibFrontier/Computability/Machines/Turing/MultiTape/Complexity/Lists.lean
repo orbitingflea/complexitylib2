@@ -7,6 +7,7 @@ Authors: Christian Reitwiessner
 module
 -- upstream: vendored crei:crei/tidy-universal @7f7c0696 (unsubmitted)
 -- vendored: derive encoded prefix/filter bounds from Mathlib's `List.Sublist.flatMap`.
+-- vendored: the append identity lives in `Encodings.List` for plain encoding clients.
 
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.Primitives
 import Mathlib.Tactic.Linarith
@@ -30,11 +31,6 @@ test, one degree above the test. The tests may depend on a parameter.
 namespace Turing.MultiTapeTM
 
 variable {α : Type}
-
-@[simp]
-public lemma encList_append (enc : α ↪ List Bool) (l₁ l₂ : List α) :
-    encList enc (l₁ ++ l₂) = encList enc l₁ ++ encList enc l₂ := by
-  induction l₁ <;> simp [*]
 
 /-- A prefix is no longer than the list. -/
 public lemma length_encList_take_le (enc : α ↪ List Bool) (l : List α) (i : ℕ) :

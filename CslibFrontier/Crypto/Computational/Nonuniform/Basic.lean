@@ -227,7 +227,11 @@ theorem not_nonuniformlyIndistinguishable_pure_uniformList (target : ℕ → Lis
 reading the parameter `n`, the advice word `advice n` and the image of a uniform `n`-bit input has
 negligible probability of finding any preimage. The advice family is not bounded here; its length
 is charged to the inverter's clock. With empty advice this is the security condition of `OneWay`
-(`oneWay_iff_inversionHardWithAdvice_nil`). -/
+(`oneWay_iff_inversionHardWithAdvice_nil`), that is, of [Goldreich1998Fragments],
+Definition 2.2.1, p. 29; required of every polynomially bounded family, it is the security
+condition of `NonuniformOneWay` (Definition 2.2.6, p. 36). One fixed family is not a notion of
+the source, and a family whose length grows faster than every polynomial also extends the
+inverter's clock beyond the source's polynomial bounds. -/
 def InversionHardWithAdvice (f : List Bool → List Bool) (advice : ℕ → List Bool) : Prop :=
   Game.Indistinguishable
     (fun (adversary : (ℕ × List Bool) × List Bool → ProbComp (List Bool)) n =>
@@ -284,7 +288,15 @@ theorem oneWay_iff_inversionHardWithAdvice_nil {f : List Bool → List Bool} :
       h.inversion_negligible (fun input => adversary input.1.1 input.2) hPPT.dropAdvice
 
 /-- A function is **nonuniformly one-way** when one deterministic polynomial-time algorithm
-evaluates it and inversion is hard with every polynomially bounded advice family. -/
+evaluates it and inversion is hard with every polynomially bounded advice family.
+
+This is [Goldreich1998Fragments], Definition 2.2.6, p. 36, with uniform strict PPT inverters that
+read a polynomially bounded advice word, charged to their clock, in place of the source's
+families of polynomial-size circuits. The two give the same notion: fixing an advised inverter's
+coins to a best choice and writing out its run gives a polynomial-size circuit at each length, as
+the source's remark after the definition does for uniform inverters, and a circuit's description
+is polynomially bounded advice for a uniform circuit evaluator. Section 1.3.3, pp. 18–20, of the
+source describes this correspondence between machines with advice and circuit families. -/
 structure NonuniformOneWay (f : List Bool → List Bool) : Prop where
   /-- A deterministic polynomial-time algorithm evaluates the function. -/
   polyTime : ComputableInPolyTime f encBits encBits
@@ -322,7 +334,14 @@ theorem NonuniformOneWay.toOneWay {f : List Bool → List Bool} (h : NonuniformO
 
 /-- A **nonuniform pseudorandom generator**: a plain polynomial-time generator with exact output
 length `length`, strictly expanding every seed length, whose output on a uniform seed is
-nonuniformly indistinguishable from a uniform word of the output length. -/
+nonuniformly indistinguishable from a uniform word of the output length.
+
+This is [Goldreich1998Fragments], Definition 3.3.2, p. 85, with pseudorandomness against
+polynomial-size circuits, the indistinguishability that Exercise 8 of Chapter 3, p. 121, defines,
+in place of probabilistic polynomial-time tests. As for `NonuniformOneWay`, the circuits are
+replaced by uniform strict PPT tests reading a polynomially bounded advice word, which give the
+same notion; fixing a probabilistic test's coins loses no distinguishing gap (Exercise 7 of
+Chapter 3, p. 121). -/
 structure NonuniformPRG (generator : List Bool → List Bool) (length : ℕ → ℕ) : Prop where
   /-- One deterministic polynomial-time machine evaluates the generator. -/
   polyTime : ComputableInPolyTime generator encBits encBits
