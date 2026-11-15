@@ -4714,6 +4714,7 @@ public import CslibFrontier.Crypto.Computational.ZeroKnowledge.Soundness
 public import CslibFrontier.Crypto.Computational.ZeroKnowledge.View
 public import CslibFrontier.Crypto.Encoding
 public import CslibFrontier.Crypto.Game
+public import CslibFrontier.Crypto.Game.AttackResources
 public import CslibFrontier.Crypto.Game.CloseTo
 public import CslibFrontier.Crypto.Game.CloseTo.IntBox
 public import CslibFrontier.Crypto.Game.CloseTo.RandomOracle

@@ -118,7 +118,7 @@ contribution before approval. Deferral requires the exceptional disposition desc
 
 Write the PR for a contributor who has not followed the task. Introduce the setting, central
 idea and what the change enables, using the
-[PR-writing guidance and example](../../AGENTS.md#writing-in-issues-and-prs). Explain important
+[PR-writing guidance](../../AGENTS.md#writing-in-issues-and-prs). Explain important
 limitations and put validation after the explanation, linking detailed evidence.
 
 Link its task issue and source references, preserve contributor credit, and disclose AI tools and their role under the applicable policy. Obtain independent correctness/API review of the current revision. Reviewers read new and changed proofs against the rest of the file and nearby modules, because a diff does not show the existing proof that a new block repeats; a new copy of an argument the library already makes is a [review finding](../../AGENTS.md#review-cycle) when a shared lemma would pay under the [library quality standard](../../CONTRIBUTING.md#library-quality-standard). A reviewer who helped design or implement the change cannot supply that independence; agent review is not human approval.

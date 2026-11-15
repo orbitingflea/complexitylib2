@@ -7,496 +7,239 @@ unchanged apart from rewriting `CslibFrontier.` → `Cslib.`. General mathematic
 and local project scaffolding are documented exceptions, recorded in each module's `-- upstream:`
 marker.
 
-Read the pinned cslib `AGENTS.md`, `CONTRIBUTING.md` and `CODESTYLE.md` in
-`.lake/packages/cslib` (or a checkout at the same revision). Follow its mathematical, API and
-style conventions. This repository's workflow, validation and test layout are defined here and
-in `CONTRIBUTING.md`; when submitting upstream, follow that repository's current process.
-`ROADMAP.md` records outstanding directions; `CONTRIBUTING.md` (Upstreaming) lists live upstream
-coordination threads.
-
-At the start of work and when resuming, read the full applicable instructions. Coordinators
-also check the instruction revisions on current `main` before assigning reviews, reviewing or
-integrating work. Fetch in an authorized checkout and keep your own clean `main` current with
-fast-forward updates; preserve occupied checkouts, other contributors' work and approved PR heads.
-When local Git operations are restricted, read the files remotely at a pinned current-main commit.
-A feature worktree or automatically supplied instruction snapshot can remain stale.
-
-Compare with the revisions recorded in your private handoff. Read changed `AGENTS.md`,
-`CONTRIBUTING.md`, applicable upstream guidance and relevant manual sections, and pass material
-changes to retained workers and reviewers before affected work continues. Record the checked
-main commit and instruction revisions in that handoff; a fetched branch or an old conversation
-summary alone does not establish that the guidance was read. Apply any additional instructions
-for the files being changed. Explicit user directions still control; surface material conflicts.
-Keep policy changes focused on recurring problems, and update linked guidance and templates
-together instead of adding another exception for each incident.
-
-## Writing in issues and PRs
-
-Write for human collaborators. Start with the point; use short paragraphs or a small flat list.
-Use headings, tables and checklists only when they make the content easier to read. Give technical
-detail where it explains a finding or decision; omit routine inspection narratives and boilerplate.
-
-Small PRs usually need one or two paragraphs plus validation/review links and a brief AI
-disclosure. State what changed, why, and important limitations. Keep evidence in one place;
-link to it instead of copying full reports, hashes or logs across threads.
-
-Write for a contributor who has not followed the task. Introduce the problem or mathematical
-setting, explain the central idea, and say what the change enables. Introduce specialized terms
-and notation before relying on them. For substantial developments, give a short roadmap
-explaining how the main steps connect and why consequential choices are needed. Use an example,
-equation, or before/after comparison when helpful. Scale the explanation to what the reader
-needs to understand, and put validation, manual impact and AI disclosure after it.
-
-For a substantial mathematical example, see the setting, statement and proof-strategy sections
-of [shmcg's lifting PR #4908](https://github.com/cslib-community/cslib-frontier/pull/4908).
-
-Comments should add a finding, answer, decision, blocker or useful handoff. Keep CI polling and
-internal agent discussion out of public threads. Reply directly to questions and fixes; a short
-"Fixed in <commit>" is enough when the change is clear. Be courteous, welcome disagreement, and
-do not imply that an agent review is human review.
-
-## Agent roles and task ownership
-
-Each agent works as either a **coordinator** or a **worker**. Follow the role assigned by the
-human or coordinating agent; otherwise default to worker. State your role when starting work.
-Changing roles does not make an author eligible to approve their own changes.
-
-Use parallel agents where their work can proceed independently. Give each a role, clear scope
-and distinct ownership, branches and mutable build outputs. The delegating agent tracks the
-work and brings it to completion. When review or integration is the bottleneck, prioritize
-requested fixes, reviews and landing existing work before starting more PRs.
-
-Use issues for substantial tasks, dependencies and remaining objectives; a small fix may use its
-PR as the durable task record. Search existing issues and PRs before creating a duplicate.
-Record smaller delegated subtasks in the parent task. Split work into independently useful,
-reviewable changes; batch closely related mechanical fixes when they share a contract and
-validation. Do not create a separate issue or PR for each incidental cleanup.
-
-### Completion and scope
-
-Code quality is part of the acceptance criteria. Authors must resolve avoidable duplication,
-unnecessary proof plumbing, misplaced shared infrastructure and incomplete migration cleanup
-affecting their changes and clients before requesting approval. Passing CI or preserving theorem
-statements does not discharge this work. Deferral is exceptional under
-[Improving library ergonomics](#improving-library-ergonomics).
-
-Optimize for trustworthy, reusable results, not the number of closed issues or merged PRs.
-Correct statements that are faithful to their sources take priority over forward progress. When
-the two conflict, fix the statement or the name, even if the milestone slips; do not land a weaker
-result under the name of the stronger one
-([Faithful headlines](#faithful-headlines)).
-When narrowing a task, preserve its original objective and record the bounded deliverable and
-remaining gap prominently. A restricted model, conditional result, or partial theorem does not
-complete a broader objective. Do not silently retitle an ambitious issue into an easier completed
-task.
-
-Distinguish these dispositions in the issue:
-
-- **Completed:** the agreed acceptance criteria are satisfied.
-- **Milestone completed:** a bounded deliverable is finished; link the remaining objective.
-- **Not planned (dropped):** work is intentionally stopped; preserve its results, explain what
-  remains unproved, and remove the direction from `ROADMAP.md`, which has no deferred tier.
-
-Close a milestone issue as completed when its own criteria are met. Keep the broader objective
-open, or, when authorized to drop it, close it as not planned and link the completed milestone.
-PR descriptions must distinguish mathematical progress from infrastructure, refactoring, and
-documentation progress.
-
-### Durable records
-
-When there is an issue, it owns scope, ownership and remaining work; the PR owns the final
-change, validation and review. For small fixes without an issue, the PR holds both. Link between
-records instead of mirroring reports. Record tested and reviewed revisions once,
-in GitHub review/CI metadata or a concise PR record; link reusable evidence rather than reproducing
-it. Without a PR, record evidence in the commit description and link it from the issue.
-A local path alone is insufficient for a handoff.
-
-At integration, briefly state what landed and any remaining gap. Keep the full objective visible
-when a milestone completes only part of it.
-
-### Workers
-
-1. Before substantial implementation, claim the existing issue or create one with concrete scope
-   and completion criteria. Identify your agent/session and branch in the task record; assign
-   the issue when possible. For a small fix, record this in the PR instead. A shared GitHub
-   account does not identify the active agent.
-2. Update the task when scope changes, a blocker needs help, work is handed off, or you stop.
-   Give the state and next step, linking code or evidence. Keep unchanged polling and internal
-   agent discussion out of public threads. Do not promise unattended updates after stopping.
-3. Before taking over, inspect the issue, linked PR, recent commits and available activity
-   evidence; contact the owner or coordinating agent. Silence or elapsed time alone does not
-   release ownership. Explicitly released work is available immediately; a coordinator may
-   reassign stale work after checking activity and notifying the owner. Preserve work and credit,
-   resolve overlapping claims before editing, and check ownership when returning.
-4. Implement, self-review and validate. Assess both manuals for every change and update affected
-   instructions, reference sections and checked examples in the same change, following
-   [the manual requirements](CONTRIBUTING.md#maintaining-the-manuals).
-5. Open a PR with validation and limitations; link its issue when there is one and request
-   coordinator review. Record the handoff once. Awaiting review is not abandoned work. Keep
-   linked issues open until integration or an explicit disposition.
-6. Address requested changes on open PRs before starting more work. Request review of the delta
-   after fixes; release work explicitly if unavailable. Do not approve or merge your own PR.
-
-Plain comments such as `active`, `blocked`, `available`, `awaiting review` and `changes requested`
-are sufficient; no custom labels or recurring heartbeat comments are required.
-
-### Coordinators
-
-Reviewing submitted PRs is the highest priority. Keep reviews moving alongside other work.
-
-When choosing work, give simplification and usability real priority alongside new mathematics:
-replacing repeated proof plumbing with a small lemma, finishing a migration and removing what it
-superseded, removing unused scaffolding, fixing recurring build or search problems, and making
-results easy to find, import and apply. Choose these from the friction met during ongoing work,
-and carry each improvement through to the clients that benefit. In review, ask what the next
-person will no longer have to figure out; the answer should be visible in the code, examples or
-tooling.
-
-- Read the PR and existing reviews. Arrange review of uncovered questions under the review cycle
-  below; do not commission a fresh review merely because a new coordinator arrived.
-- Give a clear verdict and a useful next step. Link requested changes from the task issue when
-  needed for handoff; resolve unavailable ownership using the worker rules above.
-- Resolve ownership and dependency conflicts, and help stale tasks reach a useful next step.
-- Require review of both the Operator's Manual and the Agent Operator's Manual, including any
-  reason that no edit is needed. Make this part of reviewing and integrating each change.
-  Check affected `ROADMAP.md`, the [results inventory](results/README.md), upstream markers, the
-  coordination threads in `CONTRIBUTING.md` and other documentation.
-  Preserve source credit and the distinction between a completed milestone and its open objective.
-- Merge only with required validation and independent review of the current revision. Reviewers
-  queue the heads they approve ([Approve and queue](#approve-and-queue)); coordinators queue any
-  approved head still waiting and keep the queue moving: do not treat a PR as done when it is
-  merely queued. Monitor queued batches until they land on `main`, merge `main` into or re-queue
-  PRs ejected by conflicts or transient failures, sequence broad tree-wide refactors so they do
-  not stall smaller PRs behind cold cache rebuilds, and diagnose and fix merge-queue or CI
-  bottlenecks when the queue jams. The queue squash-merges: a stacked PR that edits lines a lower
-  PR introduces conflicts with that PR's squashed commit and is ejected, so queue it once the
-  lower PRs land (GitHub then retargets it to `main`) and it has merged `main`. Close completed
-  issues and link any remaining work once the change lands.
-- For your own implementation, follow the worker rules and obtain non-author review under
-  [Review cycle](#review-cycle). Changing roles does not make self-review independent.
-
-If a shared GitHub account prevents formal approval, use one brief PR comment naming the reviewer
-agent/session, revision and verdict. This is agent review, not platform or human approval.
-
-## Working on changes
-
-Use ordinary Git branches or isolated worktrees for substantial changes. Preserve other
-contributors' work and keep mutable build outputs separate between worktrees. Agree substantial
-scope through Issues or pull requests, and split large developments into independently useful,
-reviewable milestones. Record unfinished work in `ROADMAP.md` without claiming it complete.
-
-Contributors self-review and validate their changes. Maintainers arrange independent API and
-correctness reviews of the exact revision before integration; reviewers report findings, and
-fixes receive review of the affected delta under the review cycle below. Preserve source credit
-and record contributors and review results in the pull request or commit description.
-
-### Repository isolation
-
-Treat the user's checkout and shared Git object database as protected infrastructure. Ordinary
-worktrees share their Git object database. Never import reconstructed Git objects, install shallow
-boundaries, or experiment with history repair in that shared database. Use an independent
-repository with its own Git object database for such operations.
-
-Before Git recovery or nonstandard object manipulation, verify the actual Git common directory,
-object alternates, and storage sharing. The experimental repository must not use the shared
-database through a gitfile, alternate object directory, or hard-linked object files. Never delete
-objects, refs, worktree registrations, or metadata belonging to another session. Worktrees also
-share one stash stack, so `git stash pop` can apply and drop another session's entry: never push,
-pop, apply or drop stash entries in a shared checkout or its worktrees. Keep work in progress as a
-commit on your own branch or as a patch file in your scratch directory
-([procedure and recovery](manual/workflows/agent-operations.md#isolate-work-and-build-outputs)).
-
-Keep mutable build outputs separate. Integration experiments must be contained so their failure
-cannot damage the user's checkout or another worker's repository.
-
-Machines are shared between agents. Stop only processes and tasks you started, by PID or task
-ID; never use pattern-based kills such as `pkill -f`, which also hit other agents' builds. Keep
-scratch files under a directory or name unique to your agent. Concurrent Lean builds can
-exhaust the host's file handles before its processors; agree on a limit on concurrent builds
-(see [the troubleshooting chapter](manual/workflows/troubleshooting.md#diagnose-too-many-open-files-in-system)).
-
-### Placement and reuse
-
-Place reusable definitions and general lemmas in the lowest suitable mathematical module.
-Specialized theorem modules should import their prerequisites. During review, look for general
-APIs buried in a particular application or proof. Extract them to their natural shared home and
-update the affected clients in the same PR, applying the migration policy below. A second
-application importing the first for general infrastructure is a concrete signal to do this.
-Keep unrelated architectural redesign out of scope; use the exceptional deferral rule below when
-a technical dependency prevents completing the extraction.
-
-Do not prove a lemma that the library, CSLib, Mathlib or core already has, even privately or by
-re-deriving it inline inside another proof: use it, or make a private original public. After a
-build, `python3 scripts/parallel_defs.py --theorems` lists the theorems a change adds or modifies
-whose statement already exists; CI posts the same notice. It cannot see a fact re-derived inside a
-proof, so search for an existing lemma first. When a proof you add or change needs a substantial
-argument that another proof makes, derive it once; the
-[library quality standard](CONTRIBUTING.md#library-quality-standard) says when a shared lemma pays.
-
-"Lowest suitable" does not mean the most widely imported file. Adding a public declaration changes
-a module's public interface and can invalidate downstream build artifacts, even for clients that do
-not use the new declaration. Prefer a small topic module imported by its consumers over appending
-to a hub such as `Foundations/Data/List/Basic.lean` or `Probability/PMF.lean`; #569 records the
-measured fan-out. Exposed definition bodies (`@[expose]`) belong to the interface too, so expose
-only what downstream proofs must unfold.
-
-### Improving library ergonomics
-
-When work exposes library friction, improve the relevant API, lemma, proof strategy, documentation
-or automation in the original PR and carry the improvement through to its affected clients. Search
-existing APIs in this repository, Mathlib and CSLib before adding or re-proving anything, including
-private helpers. Making a duplicate private does not resolve duplication.
-
-Reviewers must consider whether a different statement, representation, invariant, decomposition or
-proof strategy would make the mathematics more natural to state, prove and apply. Look beyond
-local tactic edits: applying an existing theorem, choosing a better induction argument or adding a
-small shared lemma can remove whole blocks of encoding, case or state-update bookkeeping. Assess
-the resulting client proofs and required imports as well as the new API. Preserve the mathematical
-claim, models, encodings, quantifiers and independent resource bounds when simplifying.
-
-Require a concrete benefit from a proposed alternative: representative checked usage or a focused
-proof comparison explaining what becomes clearer or easier. Prefer the smallest generally useful
-change that fits the mathematical API and upstream design. Challenge speculative abstractions and
-arbitrary conventions; proof length alone is not a finding, and a personal preference does not
-justify rewriting an otherwise clear argument.
-
-Defer cleanup only when a specific technical dependency or independently substantial redesign
-prevents completing it with the PR. The reviewing coordinator must explicitly accept the reason,
-and a linked issue must name the remaining declarations, affected clients, proposed approach and
-responsible owner. A separate prerequisite PR may keep review focused, but the dependent PR waits
-for it. Creating a follow-up issue or citing scheduling pressure does not discharge cleanup that
-can be completed with the change.
-
-Keep the evidence proportional. A small improvement needs a short explanation and a checked
-client; broader API changes need representative affected clients and an in-repository migration
-plan. Investigate elaboration time and other performance costs when material, without requiring
-a benchmark campaign or separate design study for every small improvement.
-
-### Check the API through its callers
-
-Before handing off a changed API or reuse refactor, inspect a representative caller and the
-nearby implementations of the same idea. Reviewers repeat this check against the final change:
-
-- **Named access and semantic facts.** Use record fields or existing accessors in public
-  statements. When callers decode a Boolean matcher, unfold an embedding's coordinate arithmetic,
-  or rebuild field-projection certificates, provide the reusable characterization, range fact or
-  generated certificate they need and use it in the caller. Preserve the encoding layout and
-  resource bounds when migrating records; check a caller of the generated `enc_structure` rules.
-- **One implementation of shared behavior.** A game or algorithm should call its named handler
-  instead of repeating the same dispatch or transition code in its definition and proofs.
-  Different representations may need distinct implementations; keep their differences explicit
-  and connect them with the appropriate simulation or conversion lemma.
-- **Shared mathematics across representations.** Before repeating an argument in a sibling
-  module, look for a general statement and an existing bridge, such as PMF integration against
-  its induced measure. Derive the specialization when the bridge preserves the hypotheses and
-  intended dependencies. Put shared facts in a small topic module and migrate the existing
-  consumers together; do not create an abstraction whose callers must reconstruct the proof.
-- **Public API by purpose.** Keep expected properties of public objects available, including
-  matcher characterizations and embedding range facts. Keep one-proof wrappers around casts,
-  cache layouts or intermediate states private. Inspect references and automation before changing
-  visibility, but do not use a zero reference count alone to remove useful mathematical API.
-
-The handoff should identify the representative caller and the reasoning or representation work
-it no longer repeats, or explain why separate implementations remain necessary. A concise
-before/after example or source reference is enough; no separate audit report is required.
-
-## Lean development: use the Lean MCP server first
-
-Bootstrap a cold checkout with `scripts/cache/ensure.sh` before Lean elaboration or building.
-Retry when needed artifacts are missing or toolchain/dependency changes require new ones;
-a new commit or branch switch alone does not require a manual bootstrap if outputs are warm.
-MCP's `lean_build(fetch_cache=true)` fetches Mathlib's cache, not cslib-frontier's. Cache misses
-or download failures leave Lean to compile missing outputs. The helper's actual retry behavior
-and opt-out for warm local builds are documented in [the cache guide](scripts/cache/README.md).
-
-Use MCP goal inspection, diagnostics and theorem search while iterating. When a build is needed,
-use `scripts/build.sh <affected modules and representative clients> --wfail --iofail`;
-reserve `scripts/check.sh --quick --no-full-fallback` for local validation checkpoints.
-`scripts/build.sh [Lake build arguments]`, `scripts/check.sh` and `scripts/worktree.sh create`
-run the same bootstrap automatically. Bare `lake` and MCP commands do
-not invoke it. If MCP tools are unavailable, say so and use the smallest shell check.
-
-Use `scripts/worktree.sh` for isolated worktrees; follow its
-[cache and isolation guidance](scripts/cache/README.md). Exported API changes can rebuild
-dependents; proof edits can too when axiom dependencies change or a client uses `import all`.
-See [the module-system guidance](CONTRIBUTING.md#public-surface-under-the-module-system).
-
-## Validation sequence
-
-```bash
-lake build --wfail --iofail
-lake exe mk_all --check
-lake test --wfail --iofail
-lake lint
-lake exe lint-style
-lake exe checkInitImports
-```
-
-`scripts/check.sh` first runs the live manual checker and its tooling tests, then restores
-optional caches and runs every locally reproducible step from CI's parallel `source-checks` and
-`lean-checks` jobs, whose results feed the required `ci-checks` aggregator, with CI's commands
-(`scripts/full_check.py`): these six Lean gates, the Python tooling tests, source hygiene, the
-encoding readability and projection chain ratchets, documentation pins, and the post-build tidy
-statement and security premise ratchets, result registry and changed-file lints. Changed-file
-checks compare with the merge base of `origin/main`, or of `--base REF`. `scripts/full_check.py`
-records why each remaining step stays CI-only (advisory notices, cache plumbing, steps that need
-GitHub context), and its test fails when either execution job gains a step that is neither
-mirrored nor recorded there, when a mirrored step runs a line or sets an option that the local
-run does not repeat, or when the required aggregator stops requiring both jobs to succeed and
-forwarding the Lean job's publication output.
-The split overlaps work rather than removing it: it adds another checkout and runner plus the
-aggregator's scheduling time, and saves only source-check time that would otherwise extend the
-slower Lean path. Treat observed wall-time improvements as run-specific, not a fixed reduction.
-After the Lean gates, full mode also re-elaborates built root-package sources whose individual
-artifacts Lake restored without diagnostic logs. This recovers warnings and informational output;
-it is not part of an ordinary targeted build. Quick mode checks the affected sources, including
-unchanged importing clients, built import aggregates and executable
-helpers
-([troubleshooting](manual/workflows/troubleshooting.md#diagnose-warnings-that-only-ci-reports)).
-Both full and quick modes require the manual checks; these stdlib-only checks need no PDF tools or
-generated research data. They catch source/link drift and malformed visual markup; they do not
-replace the required review of both manuals' meaning and usability.
-For Lean, dependency or build changes, all of these must pass on the final source revision before
-integration. A successful hosted run covering that revision supplies full validation; do not
-repeat it locally merely to satisfy a second reporting requirement. Run local full validation
-(`scripts/check.sh`) only when explicitly requested or hosted coverage is unavailable; changes
-to validation machinery also need direct checks of the changed behavior. Required CI and
-merge-group checks still apply.
-
-During development, check affected modules and representative clients before requesting review;
-a PR may use CI for the full run. For documentation-only changes, check consistency, links and
-any Lean examples introduced; a local whole-library rebuild is unnecessary.
-
-At local validation checkpoints, `scripts/check.sh --quick --no-full-fallback [--base REF]`
-builds changed Lean modules and their transitive importing clients, then checks import aggregates.
-The comparison uses the merge base
-with local `origin/main` by default, including committed, staged, unstaged and untracked changes;
-it does not fetch. It also runs source hygiene and the source-only changed-file lints
-(`scripts/check_changed_files.py --source-only`) on the changed library and test files and,
-when a library module changed, the encoding readability and projection chain ratchets: all read
-only sources and take seconds. Run the same changed-file lints when building targets directly
-instead. Quick mode lints only the affected library modules, skips the global
-test/style/init-import gates and the post-build audits, which need whole-library outputs, and is
-not full validation. Without `--no-full-fallback`, non-Lean changes, deletions/renames, aggregate
-edits other than the import lines `lake exe mk_all` adds for new modules, unsupported layouts and
-ambiguous change/import
-analysis fall back to the full check. The exceptions are the ratchet baselines
-`scripts/encoding_readability_baseline.json` and `scripts/projection_chains_baseline.json`,
-which no Lean gate reads: a change to one runs its ratchet instead. With `--no-full-fallback`,
-an unsupported change exits with status 3: run focused checks for the changed files and
-representative clients, and leave the full run to hosted CI. Do not respond to status 3 by
-starting a full local check unless the full-validation condition above applies. Quick success
-alone does not satisfy the full validation requirement above; documentation-only checks need not invoke
-quick mode.
-
-`lake exe mk_all` regenerates `CslibFrontier.lean` after adding a file. New test files go in
-`CslibFrontierTests/`; the test library is built from a Lake glob, so there is no aggregator to update.
-
-## File rules
-
-1. **Path and namespace mirror cslib.** `CslibFrontier/Foundations/Data/Encoding.lean` is destined
-   for `Cslib/Foundations/Data/Encoding.lean`; multi-tape machine files use the upstream root
-   namespace `Turing`, everything else `Cslib.*` as upstream does.
-2. **File template:** use the Apache header below, `module`, an `-- upstream:` marker,
-   `public import` for API dependencies and plain `import` for proof-only dependencies. Add a
-   module docstring describing the actual API, with applicable `## Main definitions`,
-   `## Main results` and `## References` sections; omit empty sections. Use `public section`
-   with `private` helpers, or per-declaration `public`. Add `@[expose]` only to definitions
-   whose bodies downstream clients need to unfold; do not default to blanket exposure.
-   ```lean
-   /-
-   Copyright (c) <year> <authors>. All rights reserved.
-   Released under Apache 2.0 license as described in the file LICENSE.
-   Authors: <authors>
-   -/
-
-   module
-   -- upstream: candidate
-
-   public import CslibFrontier.Init
-
-   /-!
-   # <Module topic>
-
-   <Purpose, public API and mathematical sources.>
-   -/
-
-   public section
-   ```
-   In a new file, `<authors>` names (a) the originator(s) of the issue or proposal the file
-   implements: the person named in the issue's "Originated by" field when someone wrote the issue
-   on their behalf, and otherwise the issue's author; and (b) the person whose agents did the
-   implementation (the human, not a fleet or bot account). The rule applies going forward, not
-   retroactively: existing headers stay unless someone asks for a correction. A port still keeps
-   the original authors (rule 3).
-3. **Upstream marker** values: `candidate`, `submitted #N @SHA` (a copy of an open cslib pull
-   request at its head `SHA`), `vendored <owner>:<branch> @SHA (unsubmitted)` (a copy of a branch
-   of a contributor's cslib fork that has no pull request yet), `merged @SHA` (a deprecated shim
-   for a module that cslib provides from its commit `SHA`; see below), `local-only (reason)`.
-   Nothing is `local-only` without a reason; valid reasons are project scaffolding and tests of
-   local-only files.
-   When the pin adopts a module, whether it was upstreamed from here or copied from upstream
-   work, the commit that bumps the pin replaces the file with a deprecated shim instead of
-   deleting it, so that downstream `import CslibFrontier.X` keeps working with a warning. The shim
-   keeps the file's copyright header and otherwise contains only the following, where `Cslib.X`
-   is the upstream module and the date is that of the pin bump:
-   ```lean
-   module -- shake: keep-all
-   -- upstream: merged @SHA
-
-   public import Cslib.X
-
-   deprecated_module "upstreamed to cslib" (since := "YYYY-MM-DD")
-   ```
-   `deprecated_module` is Lean's core command, and Mathlib writes its stubs the same way:
-   importing the shim warns and names `Cslib.X` as the replacement. Because `--wfail` builds fail
-   on that warning, the same commit points every in-repository import at `Cslib.X`; only the
-   generated `CslibFrontier.lean` imports the shim, under its `-- deprecated_module: ignore`
-   pragma. Shims are the one exception to the rule against compatibility wrappers under
-   [Proof hygiene](#proof-hygiene). Delete a shim once its `since` date is six months old,
-   Mathlib's window for removing deprecations; a pin bump that moves or removes `Cslib.X`
-   repoints or deletes the shim itself.
-   A port keeps the authors of the files it is ported from: v1's PCP internals, Sipser–Lautemann
-   and containment internals are by Bolton Bailey, so their ports carry
-   `Copyright (c) 2026 Bolton Bailey, Samuel Schlesinger` and `Authors: Bolton Bailey, Samuel
-   Schlesinger`; ports of Christian Reitwiessner's work carry his name likewise. Check the v1
-   file's `Authors:` line before porting.
-4. **Every module publicly imports `Cslib.Init`** (through `CslibFrontier.Init`); the test driver
-   runs `checkInitImports`.
-5. **Reuse upstream first.** Before defining anything, search cslib (`.lake/packages/cslib/Cslib`,
-   or the local `../cslib/Cslib` checkout) and the in-flight PRs recorded in source markers, and
-   consult the coordination threads in `CONTRIBUTING.md` (Upstreaming). A thin local copy of an
-   unmerged upstream PR (or an unsubmitted branch of an upstream contributor) is allowed at the
-   mirrored path, keeping the
-   original authors and declaration names, marked `-- upstream: submitted #N @SHA` (or
-   `vendored …`). A copy holds only what the pinned cslib lacks: when a PR modifies an existing
-   cslib file, the copy contains just its additions. When the pin adopts the merged work, the
-   copy becomes a deprecated shim (rule 3).
-6. **Bit strings.** Declarations about bit strings and the cube `ι → Bool` (operations, sampling,
-   Fourier analysis, sensitivity, influence, codes) live in `Cslib.BitString`; only the named
-   Boolean functions `parityOn`, `parity`, `threshold`, `majority`, `strictMajority` sit in `Cslib`
-   beside cslib's `BooleanFunction`. Bit strings add with `+` (Mathlib's `BooleanRing Bool`),
-   single bits with `^^`.
-7. **Citations.** Cite textbook sources in docstrings via `references.bib` keys
-   (`[AroraBarak09]`, `[Papadimitriou94]`, `[Sipser2013]`, `[Jukna2012]`, …). Add new entries in cslib's
-   format at their place in key order (`scripts/check_hygiene.py` checks the order and that every
-   cited key has an entry), keeping bibliography and project-documentation changes in focused
-   commits.
-
-## Staying current with upstream
-
-Keep the cslib pin on an upstream `main` SHA. Coordinate updates in focused dependency PRs,
-fixing breakage in the same change; update it within another task when that task needs new
-upstream code or turns a merged module into its shim. Merely inspecting upstream does not
-require a pin bump.
-
-Run `scripts/upstream_sync.py` during synchronization work. Inspect changed, merged or closed
-upstream PRs against source markers, `-- vendored:` comments and module docstrings; preserve
-documented local adaptations and contributor work rather than blindly replacing copies. When
-adopting merged work, advance the pin past it and, in the same commit, replace the superseded
-local file with its deprecated shim ([file rule 3](#file-rules)). Record unresolved decisions in
-the module's marker or docstring, the coordination threads in `CONTRIBUTING.md`, or a linked issue
-instead of expanding an unrelated PR.
+Follow the mathematical, API and style conventions of the pinned cslib (`AGENTS.md`,
+`CONTRIBUTING.md` and `CODESTYLE.md` in `.lake/packages/cslib`). This repository's workflow,
+validation and test layout are defined here, in `policy/` and in `CONTRIBUTING.md`. `ROADMAP.md`
+and the per-area files under `roadmap/` record outstanding directions.
+
+## How to read these instructions
+
+This file is kept under 32 KB because some agent clients load only that much of it. It states
+every rule in brief, most important first. The full text of each rule lives in `policy/`, and is
+binding: read the file for a task before doing that task.
+
+| Before you… | Read in full |
+|---|---|
+| state or change a theorem, definition or encoding | [policy/statements.md](policy/statements.md) |
+| add a public declaration, or review one | [policy/taste.md](policy/taste.md) |
+| review, approve, queue or restack a PR | [policy/review.md](policy/review.md) |
+| claim, hand off, coordinate or open work | [policy/workflow.md](policy/workflow.md) |
+| build, validate, add a file or bump the pin | [policy/build-and-files.md](policy/build-and-files.md) |
+
+At the start of work and when resuming, read this file and the policy files for your task from
+current `main`, not from a feature worktree or an automatically supplied snapshot, which can be
+stale. Coordinators recheck the revisions of `AGENTS.md`, `policy/*.md`, `CONTRIBUTING.md` and the
+relevant manual sections on current `main` before assigning reviews, reviewing or integrating,
+pass material changes to retained workers and reviewers, and record the checked commit in their
+private handoff ([details](policy/workflow.md#staying-current-with-these-instructions)). Explicit
+user directions still control; surface material conflicts. Keep policy changes focused on
+recurring problems, update linked guidance and templates together, and prefer shortening a rule
+to adding an exception.
+
+## What matters most
+
+1. **Faithful statements come before progress.** Lean checks proofs, not whether a statement says
+   what its name, docstring and PR title claim. Do not land a weaker result under the name of a
+   stronger one, and do not assume the hard part as a hypothesis
+   ([Faithful headlines](#faithful-headlines)).
+2. **The library is better smaller.** Every public declaration, definition and file must earn its
+   place. Do not add restatements, unused scaffolding, parallel notions or lemmas that Mathlib,
+   CSLib or this library already has ([Placement and reuse](#placement-and-reuse);
+   [policy/taste.md](policy/taste.md) shows the patterns to avoid).
+3. **Review judges what Lean cannot:** the statement, the design and what should not exist. A
+   review that only confirms the build, placement and process is incomplete
+   ([Review cycle](#review-cycle)).
+4. **Code quality is part of acceptance.** Passing CI or preserving statements does not discharge
+   avoidable duplication, proof plumbing or unfinished migration
+   ([Completion and scope](#completion-and-scope)).
+5. **Merges to `main` go through the merge queue**, never a direct merge call
+   ([Approve and queue](#approve-and-queue)).
+6. **Shared machines and checkouts are protected.** Never use the shared stash, pattern-based
+   kills, or history repair in a shared Git database ([Repository isolation](#repository-isolation)).
+7. **Records are honest.** Say what was proved, what was only assumed, what was not checked, and
+   that agent review is not human review.
+
+## New statements and definitions
+
+Full text: [policy/statements.md](policy/statements.md).
+
+When a declaration claims to formalize a cited result, give the precise source version and
+locator and map the source claim to Lean: quantifiers, hypotheses, models, encodings and resource
+conventions. Verify locators and quotations against the source itself; invented or misattributed
+ones block approval. New mathematics needs no source; label it original. Search for an existing
+notion before adding a public definition, and explain any parallel one. Reviewers may ask for a
+checked instance where a definition holds and one where it fails.
+
+### Faithful headlines
+
+A *headline* is a theorem presented as a cited result or as the property its name advertises
+("security", "soundness", "hardness", "is PPT"), whether by its name, docstring, module
+documentation, manual page, PR title or [results inventory](results/README.md) entry.
+
+1. **A headline states the result it names.** Its quantifiers, hypotheses, model, admitted
+   adversaries or inputs, resource conventions and conclusion match the source, apart from
+   deviations the docstring names and review accepts as the same theorem in another formal setting.
+2. **Disclosure does not license a weaker headline.** A result is a *stand-in* when it assumes a
+   step of the cited proof, something about an object its own proof builds (a reduction,
+   simulator, extractor, hybrid, decoder), or a caller-supplied object whose existence or
+   efficiency is what the result proves; when it idealizes the construction's algorithms; when it
+   proves a fixed finite instance instead of a family; when it weakens the notion, model or
+   adversary class; or when it rests on an assumption other than the source's that the source's
+   is not proved or cited to imply, such as a stronger or novel one. A useful stand-in may land only as a named step (`…_of_reduction_le`,
+   `…_of_realization`) whose docstring opens by saying it is not the cited result, with the cited
+   objective left open. Listing the gap under "Limitations" does not meet this rule.
+3. **No vacuous headlines.** Hypotheses that cannot hold together, or a conclusion that follows
+   trivially, are a misformalization even when documented. Check a satisfying instance.
+4. **The faithful statement supersedes its stand-ins.** The change that proves it deletes or
+   demotes them, with their docstrings, manual text, `ROADMAP.md` lines and inventory entries.
+
+Stand-ins already on `main` are defects to fix, not precedents (#5293 for cryptography).
+
+### Structures for domain objects and records
+
+Define domain objects, problem instances, certificates, configurations and multi-field records as
+documented `structure`s with named fields, not tuple synonyms or bare products in problem sets;
+no `.1.2` projection chains (#1764). Keep plain `×` for generic combinators, mathematical products
+and uncurried inputs such as a verifier's `Instance × List Bool`. Migration is tracked in #4385.
+
+### Encodings in statements
+
+An encoding is part of what a statement claims, so statements show every encoding without making
+the reader parse the same nested one repeatedly. For new and changed statements:
+
+1. **Name repeated compound encodings.** A nested application of `encPair`, `encList`,
+   `encOption`, `encSum`, `encFramed`, `encPi` or `encDPi` that occurs in the types of three or
+   more public declarations of a module gets a named `abbrev`, used everywhere.
+2. **Document the layout** in the `abbrev`'s docstring: order of parts, framing, tag bits.
+3. **Keep it reducible:** `abbrev`, not `def`, and never a `local notation`.
+4. **Name domain encodings:** a formula, graph, circuit or instance is encoded by a named,
+   documented definition.
+5. **Declare structure encodings with `enc_structure`.** A migration keeps the encoded words,
+   adds a checked equality with the former tuple encoding to the tests, and says "encoded words
+   unchanged" in the PR. Changing a layout needs a coordinator's scope decision.
+6. **Show meaning-bearing choices** (unary or binary, graph and matrix representation, framing
+   that changes a length bound) in the name or the first docstring line.
+7. **No hidden defaults:** no elaborator or typeclass chooses an encoding (`enc%`, #1830, is parked).
+
+### Security theorems
+
+A security theorem may assume only (a) named hardness assumptions, stated relative to the setup
+sampler or component they concern; (b) that the adversary is in the admitted class; and (c)
+properties of components that the cited result itself takes as given.
+
+It must not assume anything about an object its proof constructs (a reduction, distinguisher,
+simulator, extractor or hybrid): not its advantage, its class membership or its efficiency. It
+must not take from the caller an object whose existence or efficiency is the cited result, assume
+the scheme's own algorithms are ideal, or stop at a bound for parameters an `∃` chooses after the
+adversary. Write each reduction as an explicit program with an efficiency witness proved from the
+adversary's certificate, and prove the asymptotic theorem by applying the assumption through that
+witness. Asymptotic statements come first; a concrete bound `Adv(A) ≤ f(Adv(B_A))` is a lemma.
+Names and docstrings state the model, the notion and any deviation from the source.
+
+Every named assumption is listed in the
+[assumptions inventory](manual/programs-crypto-and-probability/assumptions.md) as *standard* (a
+cited source states it; the docstring cites the definition with a checked locator and names every
+material difference), *novel* (no source states it, or it strengthens its source; the docstring
+says so, relates it to standard assumptions and says why it is plausible) or *vocabulary* (a
+generic notion that becomes an assumption only through the instance a theorem supplies). A row
+says "locator not verified" until a reviewer has confirmed the locator at the source. A theorem
+claiming a cited result rests on the source's assumption, on one review accepts as the same in
+another formal setting, or on one the source's implies; otherwise it is a stand-in. A novel
+assumption may support a result presented as original and named for it.
+`scripts/check_security_premises.py` and `scripts/check_hardness_assumptions.py` supplement these
+rules; they do not replace semantic review.
+
+## Review cycle
+
+Full text: [policy/review.md](policy/review.md). Independent review covers correctness and API
+quality. One non-authoring reviewer may cover both; add a reviewer for an uncovered question, not
+to reach a count. A review does the following, in this order.
+
+1. **Check every new or changed headline first.** Quote its statement (abridged) and compare the
+   name, docstring, PR title and inventory entry with what it proves. For a cited result, classify
+   each hypothesis: (i) an assumption the source names (in cryptography, listed in the
+   [assumptions inventory](manual/programs-crypto-and-probability/assumptions.md) with a checked
+   locator, and for a parametric or vocabulary notion the instance supplied is the source's); (ii) membership of the adversary or input
+   in the admitted class; (iii) a property of a generic component the source takes as given; (iv)
+   anything else. Any vacuous hypothesis blocks approval. For a statement presented as the cited
+   endpoint, or one advertising a headline property that its premises assume rather than
+   establish, any (iv) hypothesis, undisclosed deviation, overclaiming name or weaker stand-in
+   blocks approval; it is not a nit, is not deferred to a follow-up, and is not resolved by
+   "document it as a milestone". Fix the statement or rename it as a step, and check that the
+   change removes or demotes any stand-in it supersedes.
+2. **Ask what should not exist.** For each new public declaration, definition, file and test, ask
+   whether the library is better with it ([policy/taste.md](policy/taste.md)). Is it used by a
+   caller in this PR, by a stated next step or by a reader applying the cited result? Is it a
+   one-line restatement of another declaration, or a specialization a caller gets for free? Does
+   it parallel a neighbouring API? Name what you asked the author to delete, merge or make
+   private, or say that you looked and found nothing to remove. A review without an answer to
+   this question is incomplete. A zero reference count alone does not justify removing expected
+   mathematical API.
+3. **Name the first real property.** For each new definition, construction or transcribed
+   algorithm, say what its first non-trivial property is (signatures verify, the padding is
+   block-aligned, the simulator's output is close) and whether this PR proves it. Unfoldings,
+   `rfl` equalities and restated library lemmas are not results; do not let them be listed as
+   main results. If the property is missing, request it or have the PR and module documentation
+   say plainly that only definitions are provided.
+4. **Read the mathematics.** Read the actual definitions, statements and proof arguments and a
+   representative client. For substantive mathematics, say briefly what is proved, its limiting
+   hypotheses, model and resource conventions, and a checked instance or edge case. Consider
+   whether a different statement, representation or proof strategy would be more natural to
+   state, prove and apply ([Improving library ergonomics](#improving-library-ergonomics)).
+5. **Check reuse.** Read new proofs against the rest of their file and nearby modules, and read
+   the Parallel-definition, Duplicate-statement and Repeated-proof-block notices in CI for the
+   reviewed revision. Record each relevant candidate's resolution. An empty report is not
+   evidence of uniqueness.
+6. **Check the documentation the change affects**, including both manuals
+   ([Maintaining the manuals](CONTRIBUTING.md#maintaining-the-manuals)).
+7. **Give a clear verdict** for an identified revision: a short approval or a specific request
+   for changes, with the limits of the review. A clean review needs no checklist of everything
+   inspected. Lean acceptance does not establish that a definition matches its intended
+   mathematics.
+
+After fixes, review the delta and the reasoning it affects; do not repeat a full review of
+unchanged code. An approval carries across a mechanical delta only when a coordinator verifies
+that meaning, exports, attributes, imports and automation are preserved; changed reasoning, API,
+source claims or security claims need fresh non-author review.
+
+A non-authoring agent may review work from the same coordinator or account, in a separate
+review context, reaching its own verdict. Anyone who took part in the implementation or its
+design cannot supply that review. If a shared GitHub account prevents formal approval, use one
+brief PR comment naming the reviewer agent or session, revision and verdict. Agent review is
+never presented as human review. Before a published theorem enters the
+[results inventory](results/README.md), a human maintainer checks the statement against the
+source and records that in a comment the human writes.
+
+### Approve and queue
+
+Approving a PR's exact current head and queueing it are one step. The non-authoring reviewer
+queues the approved head with `scripts/queue_pr.py`, run from a trusted checkout of current
+`main` ([command](manual/workflows/agent-operations.md#queue-approved-work-and-keep-its-approval)).
+Authors do not queue their own PRs. Approve without queueing, and say why, when human review has
+been requested or the approval names a hold (an unlanded lower PR, a migration, or pending
+source, advisory-notice or rendered-manual review). A passing check does not release a review
+hold; do not start `queue_pr.py --wait` while running CI will still produce notices or rendered
+pages that need review.
+
+**Every merge to `main` goes through the merge queue.** Never call a direct merge endpoint: the
+REST merge API, a GitHub connector's `merge_pull_request` tool, or `gh pr merge --admin`. With
+admin rights such a call skips the queue, lands a combination that was never built, and restarts
+every queued build. The only exception is a human maintainer's explicit request for that PR,
+recorded in the PR.
+
+A queued PR is not done. Coordinators watch queued batches until they land, requeue ejected PRs,
+and sequence tree-wide refactors so they do not stall smaller PRs behind cold rebuilds.
+
+### Restacks
+
+Merge `main` into a PR only when it conflicts with `main`, needs a change on `main` to pass CI,
+or a lower stacked PR has landed; refreshing an approved PR only replaces the approved head.
+Dequeue a queued PR before pushing to it. A restack keeps its approval when
+`python3 scripts/check_restack.py <approved head> <new head>` passes, run from a checkout of
+current `origin/main`, and CI passes at the new head; the non-author who queues reruns the
+command. `scripts/restack_mechanical.py` performs aggregate-only and bibliography-only restacks.
+Never trust a `merge=union` result for the import aggregates; regenerate them with
+`lake exe mk_all`.
 
 ## Proof hygiene
 
@@ -512,467 +255,190 @@ purpose, not its letter.
   shrinking; prefer reducing the proof's cost.
 - Never put `[simp]` on machine step functions or transition tables (goals explode).
 - Non-terminal `simp` only as `simp only`, so that later steps do not depend on the shape of a
-  `simp` normal form, which changes as simp sets grow. A `simp` whose result is closed by a
-  finishing tactic that does not depend on that shape (`omega`, `linarith`, `nlinarith`,
-  `norm_num`, `ring`, `grind`, `tauto`), as in `simp [h]; omega`, counts as terminal, as in
-  Mathlib's flexible-tactic linter.
+  `simp` normal form. A `simp` whose result is closed by a finishing tactic that does not depend
+  on that shape (`omega`, `linarith`, `nlinarith`, `norm_num`, `ring`, `grind`, `tauto`), as in
+  `simp [h]; omega`, counts as terminal, as in Mathlib's flexible-tactic linter.
 - Definitions as terms, not `by` blocks, where possible.
 - Prefer `do` notation for sequential monadic computations, including probabilistic experiments
   in theorem statements. Keep explicit `bind` in laws about bind and proof steps that use those
-  laws directly, and for operations such as `PMF.bind` between different universes that the standard
-  monad interface cannot express. Retain concise point-free composition and maps when naming an
-  intermediate value would not improve readability. Check affected proofs when changing notation.
+  laws directly, and for operations such as `PMF.bind` between different universes. Retain
+  concise point-free composition where naming an intermediate value would not help.
 - Before the first supported release, do not add deprecated aliases or compatibility wrappers
   for renamed, moved, removed or privatized declarations. Update all in-repository clients
-  (library, tests, results inventory and guide) and remove the superseded interface in the same change.
-  Remove obsolete aliases as part of the relevant migration, not unrelated cleanup. Revisit
-  compatibility guarantees before supporting external consumers.
-- `CslibFrontierTests/Axioms.lean` audits all declarations stored in imported `CslibFrontier` modules
-  for dependencies beyond `propext`, `Classical.choice` and `Quot.sound`. Because that audit
-  already covers the standard set, add a named `#print axioms` guard only when a result is meant
-  to depend on fewer axioms than these three, for example a choice-free result; place it in the
-  epic's own test module.
+  (library, tests, results inventory and guide) and remove the superseded interface in the same
+  change. Upstream shims ([File rules](#file-rules)) are the one exception.
+- `CslibFrontierTests/Axioms.lean` audits all declarations for dependencies beyond `propext`,
+  `Classical.choice` and `Quot.sound`. Add a named `#print axioms` guard only when a result is
+  meant to depend on fewer axioms than these three.
 - Watch for vacuous hypotheses: when a structure bundles bounds, provide at least one instance in
   the test suite.
 
-## Review cycle
+## Agent roles and task ownership
 
-Maintainers arrange independent review of correctness and API quality (naming, reuse, placement,
-documentation and source credit). One non-authoring reviewer may cover both. Add a reviewer for a
-specific uncovered question or needed expertise, not to reach an approval count. Contributors do
-not need a particular agent installation.
+Full text: [policy/workflow.md](policy/workflow.md). Each agent works as a **coordinator** or a
+**worker**; follow the assigned role, default to worker, and state your role when starting.
+Changing roles does not make an author eligible to approve their own changes. Give parallel
+agents distinct scope, branches and build outputs; the delegating agent brings their work to
+completion. When review or integration is the bottleneck, do requested fixes, reviews and landing
+before starting more PRs. Use issues for substantial tasks and search for existing ones first; do
+not open an issue or PR for each incidental cleanup.
 
-Read the actual definitions, statements and proof arguments, and inspect representative clients.
-For substantive mathematics, explain briefly what is proved, its limiting hypotheses/model/resource
-conventions, and a checked instance or edge case.
-For a refactor, check declaration preservation, imports and a client using the intended API.
-For changed APIs and reuse refactors, follow [Check the API through its callers](#check-the-api-through-its-callers):
-inspect the actual caller and relevant sibling implementation, including generated certificates
-and any representation bridge. Compilation alone does not check placement or duplicated behavior.
-Check new and changed statements against
-[Structures for domain objects and records](#structures-for-domain-objects-and-records) and
-[Encodings in statements](#encodings-in-statements).
-Read new and changed proofs against the rest of their file and nearby modules, not only the diff:
-a new copy of an argument the library already makes is a finding when the
-[library quality standard](CONTRIBUTING.md#library-quality-standard) says a shared lemma pays.
-Lean acceptance under audited axioms does not establish that a definition matches its intended
-mathematics; state material limits of the review.
+### Completion and scope
 
-**Check every new or changed headline before anything else**
-([Faithful headlines](#faithful-headlines)). In the review, quote its statement (abridged) and
-compare the name, docstring, PR title and any inventory entry with what the statement proves. For
-a theorem that claims a cited result, classify each hypothesis as one of:
+Authors resolve avoidable duplication, unnecessary proof plumbing, misplaced shared
+infrastructure and incomplete migration cleanup affecting their changes and clients before
+requesting approval. Optimize for trustworthy, reusable results, not the number of closed issues
+or merged PRs. When narrowing a task, keep its original objective visible and record the bounded
+deliverable and the remaining gap; a restricted model, conditional result or partial theorem does
+not complete a broader objective. Distinguish **completed**, **milestone completed** (link what
+remains) and **not planned** (remove it from the roadmap, which has no deferred tier).
 
-- (i) an assumption the cited source names, stated relative to the problem, sampler or component
-  it concerns. In cryptography it is listed in the
-  [assumptions inventory](manual/programs-crypto-and-probability/assumptions.md) with that source
-  and a checked locator: when its row says "locator not verified" or "status pending", the
-  reviewer checks the source before classifying the hypothesis as (i). For a parametric
-  assumption or a vocabulary notion, the instance the theorem supplies must be the source's
-  ([Security theorems](#security-theorems));
-- (ii) membership of the adversary or input in the admitted class;
-- (iii) a property of a generic component that the source takes as given;
-- (iv) anything else: a step of the cited proof, a property of an object the proof builds, a
-  caller-supplied object whose existence or efficiency is what the result proves, or unassumed
-  idealized behaviour of the construction's own algorithms.
+### Durable records
 
-For original mathematics or internal library infrastructure
-([New statements and definitions](#new-statements-and-definitions)), an absent cited source is not
-a defect: check instead that its name, docstring and PR title accurately match its actual
-hypotheses and scope, that it is non-vacuous and genuinely reusable, and that it does not imply a
-cited endpoint was proved.
+The issue owns scope, ownership and remaining work; the PR owns the change, validation and
+review. Link between records instead of mirroring them, and record tested and reviewed revisions
+once. A local path alone is not a handoff. At integration, say briefly what landed and what
+remains.
 
-Any vacuous hypothesis blocks approval. When a statement is presented as the cited endpoint, or
-advertises a headline property that its premises assume rather than establish, any (iv)
-hypothesis, undisclosed deviation, overclaiming name/title or weaker stand-in blocks approval.
-Such a finding is not a nit, and it is not deferred to a follow-up under
-[Improving library ergonomics](#improving-library-ergonomics); a reviewer does not offer "document
-it as a milestone" in place of fixing it. Resolve it either by proving the faithful statement,
-or—when the conditional statement is a useful, non-vacuous intermediate step—by renaming
-(`…_of_reduction_le`, `…_of_realization`) and documenting it as a helper under rule 2 of
-[Faithful headlines](#faithful-headlines): such a helper is permitted provided the published
-theorem stays open and the helper never occupies its name, PR title or
-[results inventory](results/README.md) entry. Also check that the change removes or demotes any
-stand-in it supersedes (rule 4). In `Cslib.Crypto`, `scripts/check_security_premises.py`
-supplements this gate on elaborated premise shapes ([Security theorems](#security-theorems)),
-without replacing semantic review.
+### Workers
 
-Before a published theorem enters the [results inventory](results/README.md), a human maintainer
-checks the statement against the source and records that check in a comment written by the human,
-not by an agent posting from their account. Agent review alone does not admit an entry.
+1. Claim the issue or create one with concrete scope and completion criteria, naming your agent
+   or session and branch. A shared GitHub account does not identify the active agent.
+2. Update the task when scope changes, a blocker needs help, work is handed off, or you stop.
+3. Before taking over work, inspect the issue, PR, recent commits and activity, and notify the
+   owner in the task record. Explicitly released work is available immediately. A claim with no
+   open PR and no activity by its owner for 24 hours after that notice is released: record the
+   takeover and proceed. A PR that needs author action (changes requested, a conflict or failing
+   CI) may be reassigned by a coordinator after the same notice and 24 hours; a PR awaiting
+   review is never released by silence. Preserve the earlier work and its credit.
+4. Implement, self-review and validate. Assess both manuals and update affected instructions,
+   reference sections and checked examples in the same change.
+5. Open a PR with validation and limitations and request coordinator review.
+6. Address requested changes before starting more work. Do not approve or merge your own PR.
 
-Before approving library changes, read the **Parallel-definition**, **Duplicate-statement** and
-**Repeated-proof-block** notices in the CI job summary or step logs for the reviewed revision. Inspect both
-declarations or proof blocks for each relevant candidate. Record its resolution by reuse or
-generalization, or the concrete mathematical or API difference that justifies keeping both; link
-an existing author explanation rather than duplicating it. Locally, after a build, use
-`python3 -B scripts/parallel_defs.py --base REF` and the same command with `--theorems`;
-`python3 -B scripts/proof_copies.py --base REF` compares source proof blocks. `--limit N` expands
-truncated reports. Resolve skipped or incomplete scans, or record their coverage limits and
-perform targeted source checks. A successful exit, an empty report or a private declaration is
-not evidence of uniqueness; the tools supplement source search and semantic review.
+### Coordinators
 
-Review of both manuals is mandatory for every change. Follow
-[Maintaining the manuals](CONTRIBUTING.md#maintaining-the-manuals): check the impact assessment
-against the final revision. Check affected codebase procedures and examples from the Operator's
-Manual's documented starting point; a human should be able to perform the task by hand, and an
-agent should be able to reuse the account without reconstructing it from conversations. Check
-human direction, roles and handoffs in the Agent Operator's Manual when the workflow changes.
-A passing link or excerpt check does not replace this review.
+Reviewing submitted PRs is the highest priority. Give simplification and usability real priority
+alongside new mathematics: replacing repeated proof plumbing with a small lemma, finishing a
+migration and removing what it superseded, deleting unused scaffolding, and making results easy
+to find, import and apply. Give a clear verdict and a useful next step; resolve ownership and
+dependency conflicts; help stale tasks reach a next step. Merge only with required validation and
+independent review of the current revision, through the queue
+([Approve and queue](#approve-and-queue)). For your own implementation, follow the worker rules
+and obtain non-author review.
 
-Review API and proof quality for private helpers as well as public declarations, following
-[Improving library ergonomics](#improving-library-ergonomics). Request changes for concrete,
-avoidable complexity or duplication affecting the PR; reserve nits for optional preferences.
-Use inline comments for local findings, explain the problem and a concrete change or question,
-and group related points. Authors may disagree: discuss the technical reason and settle the point.
+## Working on changes
 
-After fixes, review the delta and affected reasoning. Revisit more of the code when a change
-invalidates earlier conclusions. Reuse existing reviews after verifying their scope and source
-identity; do not repeat a full review of unchanged code. Before merging, confirm that the current
-revision is covered and required validation passes.
+Full text: [policy/workflow.md](policy/workflow.md). Use ordinary branches or isolated worktrees,
+and split large developments into independently useful, reviewable milestones. Preserve other
+contributors' work and source credit.
 
-A coordinator may fix conflicts and review findings directly when authorized to edit the branch.
-Check its head and coordinate ownership first; add commits on top, or announce a necessary rebase.
-Preserve author credit and record the delta and validation. Fixing a PR does not make self-review
-independent.
+### Repository isolation
 
-Existing independent approval can carry across a mechanical delta when the coordinator verifies
-that it preserves meaning, exported availability, attributes, imports and automation behavior,
-and checks affected clients. Record that limited carry-forward decision. A typo fix may qualify,
-and [Restacks](#restacks) gives a mechanical check for merging `main` or rebasing; a proof repair,
-privatization, changed test coverage or a conflict resolution that changes the PR's own lines is
-not automatically mechanical. Changed reasoning, API, source claims or security claims, and
-uncertain cases, need fresh non-author review of the affected delta.
+Treat the user's checkout and the shared Git object database as protected infrastructure.
 
-A non-authoring agent may independently review work from the same coordinator or account. It must
-inspect the source and evidence in a separate review context and reach its own verdict; an
-implementation agent's self-check or a coordinator's summary is not independent review. Reviewers
-who participated in the implementation or its design cannot supply that review. The coordinator
-may integrate after this review and required validation, but must not present it as self-approval
-or human review. Add expertise for uncovered questions, not an approval count or agent affiliation.
+- Never import reconstructed Git objects, install shallow boundaries or experiment with history
+  repair in a shared database; use an independent repository.
+- Never delete objects, refs, worktree registrations or metadata belonging to another session.
+- Worktrees share one stash stack: never push, pop, apply or drop stash entries. Keep work in
+  progress as a commit on your own branch or a patch file in your scratch directory.
+- Stop only processes you started, by PID or task ID; never `pkill -f` or similar.
+- Keep build outputs and scratch files separate per agent, and agree a limit on concurrent Lean
+  builds ([troubleshooting](manual/workflows/troubleshooting.md#diagnose-too-many-open-files-in-system)).
 
-Finish with a short approval or a clear request for changes. A substantive concern may need a
-long explanation; a clean review does not need a checklist of everything inspected. Record the
-reviewed revision, meaningful findings and resolutions once in the PR, following
-[CONTRIBUTING.md](CONTRIBUTING.md#ai-assistance-and-review).
+### Placement and reuse
 
-CSLib examples: [focused fixes and replies](https://github.com/leanprover/cslib/pull/1145),
-[an architectural suggestion kept separate from approval](https://github.com/leanprover/cslib/pull/1120),
-and [API review with explicit nonblocking nits](https://github.com/leanprover/cslib/pull/923#pullrequestreview-5560941186).
+Place reusable definitions and general lemmas in the lowest suitable mathematical module, and
+extract general APIs buried in an application, updating the affected clients in the same PR.
+"Lowest suitable" does not mean the most widely imported file: prefer a small topic module to
+appending to a hub, and `@[expose]` only what downstream proofs must unfold.
 
-### Approve and queue
+Do not prove a lemma that this library, CSLib, Mathlib or core already has, even privately or
+inline: use it, or make a private original public. Search before proving;
+`python3 scripts/parallel_defs.py --theorems` and the CI notices help but cannot see a fact
+re-derived inside a proof.
 
-Approving a PR's exact current head and queueing it are one step. A non-authoring reviewer with
-write access who approves uses `scripts/queue_pr.py` from a trusted checkout of current `main`,
-or an isolated copy obtained from a pinned revision of current `main`. Do not use the PR branch's
-helper or an old copy. Invoke the trusted script by its path; from private scratch, pass `--repo OWNER/NAME`
-explicitly ([queue command](manual/workflows/agent-operations.md#queue-approved-work-and-keep-its-approval)).
-Keep the approved PR head; do not refresh its branch just to obtain the tool. The helper queues
-exactly that head once its required check passes; `--wait 30` waits up to 30 minutes for a running
-check. Write access is sufficient authority to queue a head approved under this cycle. Approve
-without queueing, and say why in the approval, when:
+### Improving library ergonomics
 
-- human review has been requested in the PR, its comments or a linked issue; queueing is then left
-  to that human or to whomever they name;
-- the approval names a hold, such as an unlanded lower PR, a migration or an upstream dependency;
-  queue once the hold clears.
+When work exposes library friction, improve the API, lemma, proof strategy, documentation or
+automation in the original PR and carry it through to affected clients. Require a concrete
+benefit: checked usage or a focused comparison showing what becomes clearer or easier. Proof
+length alone is not a finding, and a personal preference does not justify a rewrite. Defer
+cleanup only for a specific technical dependency or an independently substantial redesign,
+accepted by the reviewing coordinator and recorded in an issue naming the declarations, clients,
+approach and owner. A follow-up issue does not discharge cleanup that fits in the change.
 
-Pending source, advisory-notice or rendered-manual review is also a hold. `--wait` queues
-automatically when the check passes; do not start it while completing CI will produce material
-that still needs review. Inspect that material first, then record the hold's resolution and link
-the existing proof/API/caller assessment before queueing. A successful check does not release a
-review hold, and the helper does not judge whether that review is complete. Updating `main` does
-not upgrade a running copy; an old waiter's owner stops it before replacing it after holds clear.
+### Check the API through its callers
 
-When the helper actually waits, including its automatic mergeability retries, it snapshots the
-PR body, comments, submitted reviews and inline discussion before the first sleep and rereads
-them before enqueueing. Any change stops that enqueue: reread the discussion and holds, then
-rerun for the still-approved head when appropriate. It does not recheck linked issues or make
-the discussion read atomic with enqueue, so the reviewer's final hold check remains necessary.
-Instant-ready invocations and reports of already-queued entries are unchanged.
+Before handing off a changed API or reuse refactor, inspect a representative caller and the
+nearby implementations of the same idea; reviewers repeat the check on the final change. Use
+named fields and semantic facts rather than making callers decode representations; keep one
+implementation of shared behavior; derive specializations from a general statement and an
+existing bridge; keep expected properties of public objects public and one-proof wrappers
+private. The handoff names the caller and what it no longer has to repeat.
 
-The script refuses a head other than the approved one, a draft, a PR not based on `main`, a
-conflicting PR and failed checks. When the reviewer cannot queue, any other non-author agent with
-write access may run the same command for the approved head; coordinators sweep for approved heads
-still waiting. Authors do not queue their own PRs.
+## Writing in issues and PRs
 
-### Restacks
+Full text: [policy/workflow.md](policy/workflow.md#writing-in-issues-and-prs). Write for a human
+who has not followed the task. Start with the point: the problem or mathematical setting, the
+central idea, and what the change enables, then validation, manual impact and AI disclosure.
+Small PRs need a paragraph or two. Keep evidence in one place and link to it. Comments add a
+finding, answer, decision, blocker or handoff; keep CI polling and internal agent discussion out
+of public threads. Do not imply that an agent review is human review.
 
-Merge `main` into a PR only when it conflicts with `main`, needs a change on `main` to pass CI, or a
-lower stacked PR has landed. The merge queue tests every PR on top of the current `main`, and `main`
-does not require branches to be up to date, so refreshing an approved PR only replaces the approved
-head. After the merge, regenerate the import aggregates with `lake exe mk_all`, or let the opt-in
-[`leanagg` driver](CONTRIBUTING.md#proposing-and-contributing-work) merge them and then check them
-with `lake exe mk_all --check`, since the driver sees only the aggregates and not the merged tree;
-never trust a `merge=union` result, which keeps deleted imports and can misorder added ones.
+## Lean development: use the Lean MCP server first
 
-GitHub declines every push to the branch of a PR that is in the merge queue ("protected branch
-hook declined"), even when its entry is `UNMERGEABLE`. Whoever restacks a queued PR, by hand or
-with `--push` below, first removes it with **Remove from queue** on the PR page or:
+Full text: [policy/build-and-files.md](policy/build-and-files.md). Bootstrap a cold checkout with
+`scripts/cache/ensure.sh` before elaborating or building. Use MCP goal inspection, diagnostics
+and theorem search while iterating. When a build is needed, use
+`scripts/build.sh <affected modules and representative clients> --wfail --iofail`, and
+`scripts/worktree.sh` for isolated worktrees. Bare `lake` and MCP commands do not bootstrap the
+cache.
+
+## Validation sequence
 
 ```bash
-gh api graphql -f id="$(gh pr view <PR> --json id --jq .id)" -f query='
-  mutation($id: ID!) { dequeuePullRequest(input: {id: $id}) { mergeQueueEntry { state } } }'
+lake build --wfail --iofail
+lake exe mk_all --check
+lake test --wfail --iofail
+lake lint
+lake exe lint-style
+lake exe checkInitImports
 ```
 
-Dequeueing merges nothing, so the author may do it; the new head is queued again only by a
-non-author, once the `check_restack.py` check below passes or the delta is reviewed.
+For Lean, dependency or build changes, all of these and the other CI checks must pass on the
+final revision before integration. A successful hosted run for that revision supplies full
+validation; run `scripts/check.sh` locally only when asked or when hosted coverage is
+unavailable. During development, check affected modules and representative clients;
+`scripts/check.sh --quick --no-full-fallback [--base REF]` is the local checkpoint, and exit
+status 3 means "run focused checks and leave the full run to CI". Documentation-only changes need
+consistency and link checks, not a rebuild. `lake exe mk_all` regenerates `CslibFrontier.lean`
+after adding a file; new tests go in `CslibFrontierTests/`. Details and what each mode covers:
+[policy/build-and-files.md](policy/build-and-files.md#validation-sequence).
 
-When the only conflicts with `main` are in the aggregates or `references.bib`,
-`python3 scripts/restack_mechanical.py <PR> --approved-head <approved head>` does the whole restack
-without running the PR's code. It requires the `check_restack.py` check below to pass for the
-current head, merges `origin/main` with both drivers, writes the aggregates as `lake exe mk_all`
-would for the merged tree, and runs the check on the result, both times from a checkout of
-`origin/main`. It refuses any other conflict and is a dry run unless given `--push`, which pushes
-the merge only when the check passes and the PR's branch still points at the head it merged. It
-never queues and never comments: post its result line, and queue the new head under the rules
-below once CI passes.
+## File rules
 
-A branch that forked before the module root was renamed from Complexity to CslibFrontier is
-restacked with `python3 scripts/rename_module_root.py --restack` (from a checkout of current
-`main`; `--onto` names the restacked head of a lower stacked branch). It merges the rename and
-converts the branch's own module names and paths; `--verify-carry` compares the result with
-the approved head. See the script's documentation.
+Full text, including the file template: [policy/build-and-files.md](policy/build-and-files.md#file-rules).
 
-A restack keeps its approval when `python3 scripts/check_restack.py <approved head> <new head>`
-passes and CI passes at the new head. The script replays the approved change onto the `main` that
-the new head is based on, which is what the merge queue would have built from the approved head,
-and passes only when the new head's tree is exactly that replay. The one exception is the
-`mk_all` import aggregates, which must instead be exactly what `lake exe mk_all` writes for the new
-head's tree. A conflict in the replay elsewhere, and any other difference, fails it. The replay
-merges `references.bib` entry by entry, as `scripts/resolve_bib_conflict.py` does, so a
-bibliography merge written by that script, with nothing else changed, passes. After
-`git fetch origin`, run the script from a checkout of current `origin/main`, not of the PR's
-branch, which could change it.
-An approval given while a PR is based on another branch also names that branch's head, and the
-check then needs `--approved-base <that head>`. Without it, the lower branch's changes, which this
-review did not cover, would carry the approval if the lower PR never landed. Pass that head even
-when the approved head had also merged a newer `main`: the script then replays from the merge of
-the lower head and that `main`, and names it in the result. Anyone, including
-the author, may post the script's result line, which names both heads and the exact command. The
-non-author who queues the new head runs that command again rather than relying on the posted line.
-When the script reports differences, review the paths and diffs it prints as a delta, under the
-carry-forward rule above.
+1. **Path and namespace mirror cslib.** Multi-tape machine files use the upstream root namespace
+   `Turing`, everything else `Cslib.*`.
+2. **File template:** Apache header, `module`, an `-- upstream:` marker, `public import` for API
+   dependencies and plain `import` for proof-only ones, and a module docstring describing the
+   actual API and its sources. `@[expose]` only what clients must unfold. `Authors:` names the
+   originator of the issue and the human whose agents implemented it.
+3. **Upstream marker:** `candidate`, `submitted #N @SHA`, `vendored <owner>:<branch> @SHA
+   (unsubmitted)`, `merged @SHA` (a deprecated shim), or `local-only (reason)`. A port keeps the
+   original authors.
+4. **Every module publicly imports `Cslib.Init`** (through `CslibFrontier.Init`).
+5. **Reuse upstream first:** search cslib and in-flight upstream PRs before defining anything.
+6. **Bit strings** live in `Cslib.BitString`; they add with `+`, single bits with `^^`.
+7. **Citations** use `references.bib` keys, added in key order.
 
-## New statements and definitions
+## Staying current with upstream
 
-When a declaration claims to formalize a cited result, give its precise source version and locator
-and map the source claim to Lean: quantifiers, hypotheses, models, encodings and resource
-conventions. An accurate paraphrase is sufficient; identify material differences or weaker scope.
-Reviewers check the primary source and mapping. If quoting, verify the exact words and locator
-against that source; invented or misattributed quotations block approval. New mathematics and
-new proof ideas need no source; label them as original without implying a cited endpoint was proved.
-
-Whether a new definition needs checked examples on both sides (an instance where it holds and one
-where it fails) is for the author and reviewers to judge; reviewers may ask for them when a
-definition could be vacuous or trivially satisfied.
-
-Search for existing notions before adding public definitions. Reuse or extend them when they
-express the intended mathematics; explain a non-obvious decision to introduce a parallel notion.
-Syntactic similarity is a prompt to inspect reuse, not proof that models should be identified.
-Generalization should improve concrete clients without obscuring semantics or making inference
-and usage harder.
-
-### Faithful headlines
-
-A *headline* is a theorem presented as a cited result or as the property its name advertises
-("security", "soundness", "hardness", "proof of knowledge", "is PPT"), whether by its name, its
-docstring, its module documentation, a manual page, a PR title or a
-[results inventory](results/README.md) entry. Lean checks proofs, not whether a statement says what
-its presentation claims, so this is the part of a change that review exists to check.
-
-1. **A headline states the result it names.** For a cited result, its quantifiers, hypotheses,
-   model, admitted adversaries or inputs, resource conventions and conclusion match the source,
-   apart from deviations that the docstring names as part of the result's scope and that review
-   accepts as the same theorem in a different formal setting (for example, the library's two-world
-   advantage in place of the source's `|Pr[b' = b] - 1/2|`, with the factor of two carried
-   through). Original mathematics and internal library infrastructure need no cited source
-   ([New statements and definitions](#new-statements-and-definitions)); their names, docstrings and
-   PR titles state their actual hypotheses and scope, they are genuinely reusable, and they do not
-   imply that a cited endpoint was proved.
-2. **Disclosure does not license a weaker headline.** A result is a *stand-in* when it assumes a
-   step of the cited proof, something about an object that its own proof builds (a reduction,
-   simulator, extractor, hybrid or decoder), or a caller-supplied object whose existence or
-   efficiency is what the result proves. It is also a stand-in when it replaces the construction's
-   algorithms with idealized ones, proves the claim for a fixed finite instance instead of a
-   family, weakens the notion, model or adversary class (including parameters chosen after the
-   adversary), or rests on an assumption other than the source's that the source's assumption is
-   not proved in the library or cited to imply, such as a stronger or novel one
-   ([Security theorems](#security-theorems)). A theorem the source itself states conditionally,
-   such as a hardness-magnification implication, is not a stand-in when its hypothesis is the
-   source's.
-   A useful, non-vacuous stand-in may land as an intermediate step, never as the headline for the
-   cited result: its name states the condition (`…_of_reduction_le`, `…_of_realization`), its
-   docstring opens by saying it is a step or helper and not the cited result, it cites the source
-   as "a step of" or "after" rather than as its endpoint, the cited objective stays open, and
-   neither the PR title nor the results inventory presents it as the cited result. Listing the gap
-   under "Limitations", in the PR body, at the end of a docstring or in an inventory scope note
-   does not meet this rule.
-3. **No vacuous headlines.** A headline—or a step landed under rule 2—whose hypotheses cannot hold
-   together, or whose conclusion follows trivially (an extractor that ignores the transcript), is a
-   misformalization even when it is documented. When a hypothesis might be unsatisfiable, check a
-   satisfying instance.
-4. **The faithful statement supersedes its stand-ins.** A change that proves the faithful
-   statement deletes or demotes every stand-in it supersedes, together with their docstrings,
-   manual text, `ROADMAP.md` lines and inventory entries. Search for them by conclusion, by
-   `_of_…` names and in the milestone's issue, not only by name.
-
-Stand-ins already on `main` are misformalizations to fix under these rules, not precedents to copy.
-Record them in an issue (#5293 for cryptography). Domain contracts, such as
-[Security theorems](#security-theorems) for cryptography, refine what counts as a named assumption
-and a generic component in their area.
-
-### Structures for domain objects and records
-
-Define domain objects, problem instances, certificates, configurations, and multi-field algorithm
-contexts, states or records as documented `structure`s with named, documented fields—not as tuple
-type synonyms (`abbrev HittingSetInstance := (List ℕ × List (List ℕ)) × ℕ`) or bare product types
-in problem sets (`Set (List (ℕ × ℕ) × ℕ × ℕ)`, `Set (Graph × ℕ)`). A `structure` gives every
-component a name and docstring in editor hover and `doc-gen4`, supports dot-notation, prevents
-swapping homogeneous components, and avoids the `.1.2` positional projection chains banned by
-[#1764](https://github.com/cslib-community/cslib-frontier/issues/1764). Encode field-tuple
-structures with `enc_structure` under [Encodings in statements](#encodings-in-statements) below.
-
-Keep plain `Prod` (`×`) where the pair is not a domain record: generic binary combinators,
-mathematical Cartesian products, and uncurried multi-argument function inputs that merely pair an
-instance with a witness or second operand (such as an NP verifier `Instance × List Bool → Bool` or
-a binary operation `α × β → γ`). Existing tuple abbreviations and bare-product problem sets are
-migrated under [#4385](https://github.com/cslib-community/cslib-frontier/issues/4385).
-
-### Encodings in statements
-
-An encoding is part of what a statement claims, so statements show every encoding; but a reader
-should not have to parse the same nested encoding again and again. New declarations, and
-declarations whose statements change, follow these rules. Existing code is brought into line by
-a tracked sweep ([#1656](https://github.com/cslib-community/cslib-frontier/issues/1656)), and the
-encoding-readability lint checks rule 1 against a per-module baseline that may only fall.
-
-1. **Name repeated compound encodings.** A *compound encoding* is a term of type
-   `α ↪ List Bool` in which one of the generic combinators `encPair`, `encList`, `encOption`,
-   `encSum`, `encFramed`, `encPi` or `encDPi` is applied to another application of one of them,
-   such as `encPair encS (encOption encBool)`. When the same compound encoding, up to the names of
-   local variables, occurs in the types of three or more public declarations of a module, give it
-   a named `abbrev` and write the name in those statements. Occurrences inside larger terms count,
-   including bounds that restate an input encoding, such as
-   `fun p => (encPair encS (encOption encBool) p).length`. The varying encodings become the
-   `abbrev`'s parameters. Define it in that module, or in the lowest module its users share, and
-   once a name exists, use it instead of restating its body.
-2. **Document the layout.** The `abbrev`'s docstring says what is encoded and how: the order of
-   the parts, which parts are framed, and any tag bits. For example, `QueryMachine.encStateRead`
-   is "a state paired with the bit read; the state is framed".
-3. **Keep it reducible.** Use `abbrev`, not `def`. The statement is definitionally identical to
-   the spelled-out one: `enc_len`, `fun_prop`, instance search and `simp` with the combinators'
-   lemmas such as `length_encPair` see through the name, and so does `rw`, except where the name
-   heads the rewritten term. Syntactic tools may not: `omega` takes `(encX e p).length` and its
-   spelled-out form as different atoms, so the facts it combines must use one form, which can
-   need small proof edits. Do not abbreviate an encoding with a `local notation`: the lint reads
-   it as an atom, so it hides a compound encoding, and the documentation shows its expansion.
-   When you touch a module that abbreviates a compound encoding with one, replace it with a
-   documented `abbrev`.
-4. **Name domain encodings.** Encode a mathematical object (a formula, graph, circuit or problem
-   instance) by a named, documented definition, not by a compound spelled out inside a larger
-   encoding, even where it occurs only once.
-5. **Declare structure encodings with `enc_structure`.** When a structure is encoded as the
-   tuple of its fields in declaration order, declare the encoding with `enc_structure`, which
-   generates the embedding, its `_apply` equation and its `fun_prop` certificates (for degree,
-   `ComputableInO`, workspace budgets and `ComputableInPolyTime`), rather than writing a `.trans`
-   embedding and proving the certificates by hand. The
-   [Operator's Manual](manual/workflows/choosing-models.md#write-the-contract-before-the-proof)
-   shows the declaration and what it generates. Migrating a tuple to a record keeps its encoded
-   words, which `IsPPTOn` and the other machine predicates read. `enc_structure` frames every
-   field but the last and adds no nested grouping, so it reproduces a right-nested tuple such as
-   `encPair a (encPair b c)` but not a left-grouped one such as
-   `encPair (encPair a b) (encPair c d)`. For a left-grouped tuple, nest sub-records whose
-   generated layout matches, or define the encoding as `encOfEquiv` into the former tuple encoding
-   and keep the named projection and constructor certificates. Every migration, including a
-   right-nested one, adds a checked equality `encX r = <former tuple encoding> (…)` to the tests
-   (usually `rfl`) and states "encoded words unchanged" in the PR. Changing the layout needs a
-   coordinator's scope decision and a checked transport of efficiency and security in both
-   directions; a claim that the re-association is polynomial-time equivalent is not enough.
-6. **Show meaning-bearing choices.** Unary versus binary numbers, the representation of graphs
-   and matrices, and framing that changes a length bound stay visible: the name or the first line
-   of its docstring states the choice (`encUnaryPair`, not `encArgs`). A name must not hide one.
-7. **No hidden defaults.** Do not let an elaborator or typeclass choose an encoding for a type;
-   the `enc%` proposal (#1830) is parked.
-
-### Security theorems
-
-A security theorem may assume only (a) named hardness assumptions, that is, Prop-valued
-definitions documented as assumptions (`F.DDH setup`, `DecisionLWE …`, `OneWay f`,
-`QuadraticResiduosityHard setup`, or a named collision-resistance or circular-security assumption
-on a component the scheme uses), stated relative to the setup sampler or component they concern;
-(b) that the adversary is in the admitted class (`A.IsPPT`, `IsOraclePPT …`, or the model's
-circuit bound); and (c) properties of components that the cited result itself takes as given,
-supplied by the caller.
-
-It must not assume anything about an object that its proof constructs, whether from the adversary
-or not (a reduction, distinguisher, simulator, extractor or hybrid): not its advantage or success,
-its membership in an adversary class, or its efficiency. Nor may it take from the caller an object
-whose existence or efficiency is the content of the cited result, such as the knowledge extractor
-of a proof of knowledge or the simulator of a zero-knowledge proof. It must not assume that the
-scheme's own algorithms behave like idealized ones (for example, that the key generator's output
-is indistinguishable from an ideal key law) unless the cited result names that as an assumption.
-And it may not stop at a bound for parameters that an `∃` chooses after the adversary
-(`∃ m₀ m₁, Adv(A) ≤ Adv(B A m₀ m₁)`); a uniform reduction chooses them itself.
-
-Every named assumption, including a security notion assumed of a caller's component, is listed in
-the [assumptions inventory](manual/programs-crypto-and-probability/assumptions.md) as *standard*,
-*novel* or *vocabulary*.
-
-- **Standard.** A cited source states it, up to deviations that do not strengthen it. Its
-  docstring cites the source definition it formalizes, with a locator checked at the source
-  ([New statements and definitions](#new-statements-and-definitions)), and names every material
-  difference from it: for example uniform instead of non-uniform adversaries, a decision instead
-  of a search problem, a restricted modulus, noise law or parameter range, or a setup law that
-  need not be efficiently samplable.
-- **Novel.** No cited source states it. A deviation that strengthens an assumption relative to
-  its source, such as admitting more adversaries, giving them more information or dropping a
-  restriction that the source relies on, makes it novel, unless a cited source states that form
-  or the library proves it from the standard one. Its docstring says that it is novel to this
-  library, how it relates to standard assumptions (it follows from one, implies one, or neither)
-  and why it is plausible. Where an insecure instance is easy to give, a test shows that the
-  assumption fails for it.
-- **Vocabulary.** A generic notion parameterized by the objects whose security it states (games,
-  ensembles, an adversary predicate, a bound), such as `Game.Indistinguishable` or
-  `ComputationallyIndistinguishable`. It becomes an assumption only through the instance that a
-  theorem supplies. A primitive's or problem's own security notion is never vocabulary, even in a
-  concrete form against a caller's adversary class and bound.
-
-A row of any status says "locator not verified" until its locator has been read at the source.
-An author removes the phrase only in a pull request whose body records that check (the source's
-version or URL and what was read there), and only once a reviewer has confirmed it at the source.
-Whether a parametric assumption (with a setup, noise or error law, an adversary class or a bound)
-or a vocabulary notion is the source's depends on the instance that a theorem supplies, so under
-a cited headline review checks that instance against the source: `DecisionLWEWithErrors` with a
-correlated error law is not plain LWE, and `ComputationallyIndistinguishable` of the scheme's keys
-and an ideal key law is a premise about the scheme's own algorithms.
-
-A novel assumption may support a result presented as original, whose name mentions the
-assumption. A theorem that claims a cited result rests on the assumption that the source uses, on
-one that review accepts as the same assumption in a different formal setting and the inventory
-documents as such, or on one that the source's assumption implies, with the implication proved in
-the library or cited. Resting it on any other assumption makes it a stand-in under
-[Faithful headlines](#faithful-headlines) rule 2.
-
-Write each reduction as an explicit program with an efficiency witness proved from the
-adversary's certificate: an `isPPT_…` or `isOraclePPT_…` lemma, or the model's efficiency
-certificate (for example a circuit-size bound). Prove the asymptotic theorem by applying the
-assumption to the reduction through that witness, as `DDH.elGamalINDCPA` does
-([pattern](manual/programs-crypto-and-probability/security-games-and-primitives.md#security-theorems-and-efficiency-witnesses)).
-Asymptotic statements come first; concrete runtime maps are secondary (#4088). A concrete bound
-`Adv(A) ≤ f(Adv(B_A))` is a lemma, not a security theorem. A lemma that takes a bound on `B_A`'s
-advantage, or `B_A ∈ 𝒟`, as a premise is an algebraic helper: its name (`…_of_reduction_le`) and
-docstring say so, and no headline or asymptotic theorem stops at it.
-
-Names and docstrings state the model (standard, random-oracle, ideal, query-bounded or
-information-theoretic), the notion (single- or multi-challenge, one-time or many-time,
-honest-verifier or malicious zero knowledge, semi-honest, static), and any deviation from the
-cited source. When a change replaces a misformalized theorem, it deletes the old one, or demotes it
-to an honestly named and documented helper, and updates its ROADMAP, manual and
-[results inventory](results/README.md) mentions ([Faithful headlines](#faithful-headlines); #5293).
-`scripts/check_security_premises.py` checks the premise rule after a build against a justified
-baseline, and `scripts/check_hardness_assumptions.py` checks that named assumptions are listed in
-the inventory and documented ([details](CONTRIBUTING.md#library-quality-standard)).
+Keep the cslib pin on an upstream `main` SHA and coordinate bumps in focused dependency PRs.
+When the pin adopts merged work, the same commit replaces the superseded local file with its
+deprecated shim ([details](policy/build-and-files.md#staying-current-with-upstream)).
 
 ## Design commitments (do not re-litigate casually)
 

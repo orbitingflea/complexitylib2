@@ -17,7 +17,7 @@ distinguish agents. Resolve an unclear contract with the task owner before exten
 
 A task brief might request a named problem's membership in `NP` under a specified encoding, with a verifier and certificate-length bound. Say whether a reduction or completeness theorem is also required. That keeps a membership proof from silently becoming a report that completeness is done.
 
-Choose parallel tasks with separate mutable files and build outputs. Prioritize fixes and landing existing work when review or integration is the bottleneck. Before taking over work, inspect its issue, PR and activity and contact its owner or coordinator. Silence alone does not release ownership. Follow the [role and ownership rules](../../AGENTS.md#agent-roles-and-task-ownership).
+Choose parallel tasks with separate mutable files and build outputs. Prioritize fixes and landing existing work when review or integration is the bottleneck. Before taking over work, inspect its issue, PR and activity and notify its owner in the task record. A claim with no open PR and no activity is released 24 hours after that notice; a PR awaiting review is never released by silence. Follow the [role and ownership rules](../../AGENTS.md#agent-roles-and-task-ownership).
 
 ## Isolate work and build outputs
 
