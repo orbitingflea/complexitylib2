@@ -1169,6 +1169,42 @@ its security theorem. The
 `e = 3` and `y = 2` with its root `8`, a word that decodes to a valid pair but is not valid, and, at
 `e = 9`, which is coprime to `(3 - 1) * (5 - 1) = 8`, a collision that gives no ninth root of `2`.
 
+For the strong RSA assumption ([bs23][bs23], §10.9, pp. 420–421), import
+[`StrongRSA.lean`](../../CslibFrontier/Crypto/Computational/StrongRSA.lean). `GUOParams` holds the
+public parameters `(N, g)` of the group `(ZMod N)ˣ`, encoded by `encGUOParams`. In
+`strongRSAGame setup A n` the adversary receives `(N, g)` drawn from `setup n` and wins with a pair
+`(x, e)` when `isStrongRSASolution (N, g) (x, e)`: `x ^ e` and `g` agree modulo `N`, and `e ≠ 1`
+(`isStrongRSASolution_eq_true_iff` for `0 < N`). `StrongRSA setup` says that every PPT adversary
+(`StrongRSAAdversary.IsPPT`) wins with negligible probability; the
+[assumptions inventory](assumptions.md) lists it as standard. `rsaGUOSetup gen` is the book's
+`GGen`: an RSA modulus from the key law `gen` and a uniform unit `g`; every `(N, g)` it draws has
+`g` coprime to `N` (`exists_of_mem_support_rsaGUOSetup`). The statement differs from the book's in
+two ways. The setup is any law on `GUOParams`, which need not be efficiently samplable or give a
+unit `g`, in place of a group of unknown order from an efficient `GGen`; class groups (p. 423) are
+not covered. The adversary outputs natural numbers `x` and `e ≠ 1` in place of `x ∈ G` and an
+integer `e ≠ ±1`. For a unit `g`, every winning output gives one for the book's game, so for a
+setup that gives a unit `g` the book's assumption implies `StrongRSA`; that implication is not
+formalized. The book's remark that strong RSA is a stronger assumption than standard RSA (p. 420)
+is not formalized either: no implication between `StrongRSA (rsaGUOSetup gen)` and `RSAOneWay gen`
+or `RSAUnitOneWay gen` is proved. `not_strongRSA_of_orderMultiple` is the observation of p. 421
+that the assumption is false when a multiple `u` of the order of `g` is known. If a
+polynomial-time function `u` of the security parameter and `(N, g)` gives `0 < u` and
+`g ^ u ≡ 1 [MOD N]` on the support of every `setup n`, then `orderMultipleAdversary u` wins with
+probability `1` (`strongRSAGame_orderMultipleAdversary`), and `isPPT_orderMultipleAdversary` shows
+that it is PPT. It is `knownOrderAdversary u v` with `v = u + 1`, which outputs
+`(knownOrderRoot N u v g, v)`, where `knownOrderRoot N u v g` is `g ^ (v⁻¹ mod u)` modulo `N`.
+`powMod_knownOrderRoot` says that this is a `v`-th root of `g` modulo `N` when `0 < u`,
+`g ^ u ≡ 1 [MOD N]` and `v` is coprime to `u`, for every `N`. The general form
+`not_strongRSA_of_knownOrder` takes any polynomial-time `v ≠ 1` coprime to `u`
+(`strongRSAGame_knownOrderAdversary`, `isPPT_knownOrderAdversary`); the book takes `v > 1`. The
+[checked examples](../../CslibFrontierTests/Crypto/StrongRSA.lean) cover `N = 15` and `g = 2`,
+where `orderMultipleAdversary` with `u = 4` wins, instances showing that `0 < u` is needed in
+`powMod_knownOrderRoot` and in `not_strongRSA_of_orderMultiple`, and the failure of the assumption
+for `rsaGUOSetup` with a fixed key (`not_strongRSA_rsaGUOSetup_const`).
+[`AssumptionNonvacuity.lean`](../../CslibFrontierTests/Crypto/AssumptionNonvacuity.lean) shows
+that `StrongRSA` fails for a fixed modulus and unit base (`not_strongRSA_const`), and the checked
+examples show that the unit condition is needed there (`strongRSA_const_four_two`).
+
 For Shamir's trick ([bs23][bs23], §10.6.2, Theorem 10.6, p. 416), import
 [`RSACommonRoot.lean`](../../CslibFrontier/Crypto/Computational/RSACommonRoot.lean); the group
 identity behind it is in
@@ -1893,6 +1929,8 @@ bits of a key-leaking scheme, with and without the oracle, and rewrite `gameOn` 
 `cpaOracleGameOn` into the typed experiments; run
 `scripts/build.sh CslibFrontierTests.Crypto.PKEScheme`. The PPT transfer is checked in
 [`CslibFrontierTests/Crypto/Experiment.lean`](../../CslibFrontierTests/Crypto/Experiment.lean).
+
+For functional encryption at one fixed scheme (Boneh–Shoup v0.6, Section 15.7, Definitions 15.13 and 15.15, Attack Game 15.9, Example 15.1 and Remark 15.13, pp. 658–661 [bs23][bs23]), import [`Encryption/Functional.lean`](../../CslibFrontier/Crypto/Computational/Encryption/Functional.lean). `FE MPK MSK Fn SK M C Y` packages `setup`, `keyGen`, `encrypt` and deterministic `decrypt`, and `FE.Functionality Fn M Y` bundles `eval : Fn → M → Option Y` with the null identifier `null : Fn` (`ε`); `FE.Correct` and `FE.Robust` state correctness and ciphertext robustness. Both `eval` and `decrypt` return `Option Y`, using `none` for `⊥` in `eval` and for both `⊥` and rejection in `decrypt`, so the book's robustness implies `FE.Robust` while the converse can fail for a scheme that outputs `⊥` where the functionality has a value. In `E.ssExperiment F A b`, the challenger generates `(mpk, msk)` and `skNull ← E.keyGen msk F.null`, runs the two stages of `A : FE.Adversary MPK Fn SK M C σ` against the logged key-generation oracle `E.keyGen msk` (`ProbOracleComp.runLog`, with `ProbOracleComp.runLog_sample` in [`Oracle/RunState.lean`](../../CslibFrontier/Languages/Probabilistic/Oracle/RunState.lean)) around a single challenge encryption, and enforces the query restriction at the end by returning `guess && F.admissible ((log₁ ++ log₂).map Prod.fst) pair`, so any run in which `F.null` or a pre- or post-challenge key query distinguishes the challenge messages outputs `false` in both experiments. When `F.eval F.null` is injective, `FE.eval_ssExperiment_eq_of_injective_null` and `FE.advantage_ssExperiment_eq_zero_of_injective_null` (specialized to `FE.Functionality.pke` in `FE.advantage_ssExperiment_pke_eq_zero`) show that every scheme—including the cleartext scheme `FE.cleartext F` (`FE.cleartext_correct`, `FE.cleartext_robust`)—has semantic-security advantage `0` against every adversary (Remark 15.13). For a public-key scheme `E : PKE PK SK M C`, `E.toFE leak` implements Example 15.1 over `FE.Functionality.pke len`, with correctness characterized by `PKE.toFE_correct_iff`, and `PKE.eval_ssExperiment_toFE_ofTwoStage` shows that against `FE.Adversary.ofTwoStage A` (which makes no key queries; this compares the two experiments and is not a reduction or efficiency claim) the game coincides with `E.cpaExperiment` with admissibility rule `len m₀ = len m₁`. Asymptotic security over scheme families and efficient typed oracle adversaries (Definition 15.14), identity-based encryption (Example 15.2), and Exercises 15.21–15.22 are not formalized here. The [checked examples](../../CslibFrontierTests/Crypto/FunctionalEncryption.lean) exercise `FE.cleartext`, `FE.Robust`, pre- and post-challenge key queries, Remark 15.13 and `PKE.toFE`; run `scripts/build.sh CslibFrontierTests.Crypto.FunctionalEncryption`.
 
 To replace the honest public-key distribution by another law, such as lossy or uniform keys, import
 [`Encryption/PublicKeyReplacement.lean`](../../CslibFrontier/Crypto/Computational/Encryption/PublicKeyReplacement.lean).

@@ -241,6 +241,13 @@ hold; its name alone implies no integer-sign correctness. The
 [ordinary-module client](../../CslibFrontierTests/DyadicFirstEvent.lean) checks these defaults,
 masking, precision zero, empty ranges, ordering and priority.
 
+`CountingHierarchy.DyadicFirstFlag` specializes those tests to dyadic flag windows, with a
+binary margin denominator `d`, unary precision and binary exclusive endpoint. The first flagged
+value below one half gives `1`, above one half gives `-1`, and an exact half gives `0`.
+Its F_(a+2) certificate is uniform in all parameters; the semantic bridge to `FirstCircleFlag`
+requires `0 < d`. The [checked client](../../CslibFrontierTests/DyadicFirstFlag.lean) covers both
+sides, later flags, zero margin denominator, zero precision, exact half and empty ranges.
+
 `CountingHierarchy.PrimeCofactor` supplies the weighted coefficients. Its shared
 `primeWindowTest` is in F_1. `primeCofactor Y L p` takes the product of the other primes
 `L < q ≤ Y` modulo `p` in F_5; on every prime modulus that residue is nonzero. The

@@ -1971,6 +1971,7 @@ public import CslibFrontier.Computability.Complexity.Classes.CountingHierarchy.A
 public import CslibFrontier.Computability.Complexity.Classes.CountingHierarchy.Arithmetic
 public import CslibFrontier.Computability.Complexity.Classes.CountingHierarchy.BoundedSearch
 public import CslibFrontier.Computability.Complexity.Classes.CountingHierarchy.DiscreteLog
+public import CslibFrontier.Computability.Complexity.Classes.CountingHierarchy.DyadicFirstFlag
 public import CslibFrontier.Computability.Complexity.Classes.CountingHierarchy.DyadicSummation
 public import CslibFrontier.Computability.Complexity.Classes.CountingHierarchy.FirstEventSign
 public import CslibFrontier.Computability.Complexity.Classes.CountingHierarchy.Generator
@@ -4443,6 +4444,7 @@ public import CslibFrontier.Crypto.Computational.Encryption.CompositionCounterex
 public import CslibFrontier.Crypto.Computational.Encryption.DecryptionBound
 public import CslibFrontier.Crypto.Computational.Encryption.EncForge
 public import CslibFrontier.Crypto.Computational.Encryption.EncryptThenMAC
+public import CslibFrontier.Crypto.Computational.Encryption.Functional
 public import CslibFrontier.Crypto.Computational.Encryption.HalfBlockPRP
 public import CslibFrontier.Crypto.Computational.Encryption.Hybrid
 public import CslibFrontier.Crypto.Computational.Encryption.Hybrid.CCA
@@ -4779,6 +4781,7 @@ public import CslibFrontier.Crypto.Computational.Signature.WordRandomOracle
 public import CslibFrontier.Crypto.Computational.Stretch
 public import CslibFrontier.Crypto.Computational.Stretch.Prefix
 public import CslibFrontier.Crypto.Computational.Stretch.Quantitative
+public import CslibFrontier.Crypto.Computational.StrongRSA
 public import CslibFrontier.Crypto.Computational.TCRSignature
 public import CslibFrontier.Crypto.Computational.TCRSignature.ManyTime
 public import CslibFrontier.Crypto.Computational.TargetCollisionResistant
