@@ -43,10 +43,10 @@ centered-binomial widths and compression widths are unary and the modulus is bin
   public vector `A s + e` of `moduleLWEKeyGen` (`encryptResidues_eq`, `decryptResidues_eq`,
   `publicKeyResidues_eq`).
 
-These are the natives for the certified asymptotic IND-CPA theorem for K-PKE
-([#5293](https://github.com/cslib-community/cslib-frontier/issues/5293#issuecomment-6888265804)):
-the word-level K-PKE family and the efficiency certificates of the theorem's reductions are built
-from them. They make no security claim.
+These are the natives of the word-level K-PKE family `kpke`
+(`CslibFrontier.Crypto.Computational.SIS.MLKEM.Family`) and of the efficiency certificates of the
+reductions of `indCPA_kpkeIdealCoins_of_decisionModuleLWEWith`
+(`CslibFrontier.Crypto.Computational.SIS.MLKEM.Asymptotic`). They make no security claim.
 
 ## Main definitions
 

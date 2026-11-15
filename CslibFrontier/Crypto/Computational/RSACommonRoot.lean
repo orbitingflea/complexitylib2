@@ -62,7 +62,8 @@ The statement differs from the book's in three ways.
   this only when `f = 0`.
 
 The certificate covers the computation on encoded numbers. Nothing here concerns an adversary or
-a security game; Theorems 10.5 and 10.7 and the accumulator of §10.9 are not formalized.
+a security game. Theorem 10.5 is in `RSAUnitInversion.lean`; Theorem 10.7 and the accumulator of
+§10.9 are not formalized.
 
 The common-modulus attack on plain RSA is this program on two ciphertexts:
 `Cslib.Crypto.commonRoot_rsaEval` in `RSAAttacks.lean` proves that for coprime `e₁`, `e₂` and `m`

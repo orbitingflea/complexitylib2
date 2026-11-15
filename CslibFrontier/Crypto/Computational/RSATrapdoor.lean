@@ -189,6 +189,12 @@ theorem totient_gt_one (desc : RSADesc) : 1 < desc.totient := by
     have hb : 0 < b := by omega
     nlinarith
 
+/-- The public exponent is positive, since `0` is not coprime to `φ(N) > 1`. -/
+theorem e_pos (desc : RSADesc) : 0 < desc.e := by
+  refine Nat.pos_of_ne_zero fun h => desc.totient_gt_one.ne' ?_
+  have := desc.he
+  rwa [h, Nat.coprime_zero_left] at this
+
 /-- The public key `(N, e)`. -/
 abbrev publicKey (desc : RSADesc) : RSAPublicKey :=
   ⟨desc.modulus, desc.e⟩

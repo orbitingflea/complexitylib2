@@ -1090,6 +1090,33 @@ For two-party key exchange secure against passive eavesdroppers ([katzlindell20]
 
 For the RSA least-significant-bit experiment and algebraic attacks on plain RSA, import [`RSALeastSignificantBit.lean`](../../CslibFrontier/Crypto/Computational/RSALeastSignificantBit.lean) and [`RSAAttacks.lean`](../../CslibFrontier/Crypto/Computational/RSAAttacks.lean) ([katzlindell20][katzlindell20], §9.2.5, pp. 334–336, §12.5.1, pp. 436–440, and §12.5.3, pp. 443–445; checked instances are in [`CslibFrontierTests/Crypto/RSALeastSignificantBit.lean`](../../CslibFrontierTests/Crypto/RSALeastSignificantBit.lean) and [`CslibFrontierTests/Crypto/RSAAttacks.lean`](../../CslibFrontierTests/Crypto/RSAAttacks.lean)). `rsaLSBGame` samples `desc ← gen n` and a uniform residue `x ← Fin desc.modulus` (matching `rsaInversionGame` rather than `(ZMod N)ˣ`) and asks an `RSAPredictor` (with `RSAPredictor.IsPPT`, reading `encRSAInput` and writing a bit) for `x.testBit 0` given `pk.eval x`. The library does not state the hard-core property of this bit as an assumption, since the literature proves it from the RSA assumption ([#5578](https://github.com/cslib-community/cslib-frontier/issues/5578)). For odd `N`, `two_pow_mul_mod_mod_two` equates the parity of `2 ^ k * x % N` (`k ≠ 0`) with that of `⌊2 ^ k * x / N⌋`, `lsbRecover_lsbQueries` recovers `x` from the parities of the preimages of the `m` doubling queries `2 ^ (k * e) * y % N` once `N ≤ 2 ^ m`, and `lsbInverter` wins `rsaInversionGame` with probability `1` given a predictor that is always correct on the modulus (`eval_lsbInverter`, `succProbability_rsaInversionGame_lsbInverter`). `computableInPolyTime_lsbQueries`, `computableInPolyTime_lsbRecover`, and `isPPT_lsbInverter` certify uniform strict-PPT efficiency for `lsbInverter` whenever the predictor is PPT, yielding `RSAOneWay.not_frequently_alwaysCorrect_lsbPredictor` on eventually odd moduli; the noisy reconstruction of Theorem 12.31 for predictors with small noticeable bias, and with it the hard-core theorem, remains open. `RSAAttacks.lean` proves plain-RSA multiplicative malleability (`rsaEval_mul`, `rsaInvert_rsaEval_mul`), common-modulus recovery of every message `m` coprime to `N` from its encryptions under coprime exponents `e₁`, `e₂` by Shamir's trick (`commonRoot_rsaEval`: `commonRoot N e₂ e₁ (rsaEval N e₁ m) (rsaEval N e₂ m) = m % N`), unreduced short-message and pairwise-coprime CRT broadcast `e`-th root recovery (`rsaEval_eq_pow_of_pow_lt`, `eq_of_pow_eq_rsaEval`, `chineseRemainderOfList_rsaEval_eq_pow`, `eq_of_pow_eq_chineseRemainderOfList_rsaEval`), factoring `N` from `(N, φ(N))` (`factorOfTotient_eq`, `RSADesc.factorOfTotient_eq`, `computableInPolyTime_factorOfTotient`), the polynomial-time equivalence `totientHard_iff_modulusFactoringHard` (`TotientHard.modulusFactoringHard`, `ModulusFactoringHard.totientHard`, after Theorem 9.49) between `TotientHard` (`totientGame`) and `ModulusFactoringHard` via `factorToTotient` and `totientToFactor`, the certified PPT hierarchy `RSAOneWay` $\Rightarrow$ `RSAKeyRecoveryHard` (`rsaKeyRecoveryGame`) $\Rightarrow$ `TotientHard` $\Leftrightarrow$ `ModulusFactoringHard` (`RSAOneWay.rsaKeyRecoveryHard`, `RSAOneWay.totientHard`, `RSAOneWay.modulusFactoringHard`, `RSAKeyRecoveryHard.totientHard`, `RSAKeyRecoveryHard.modulusFactoringHard`) via `totientToKeyRecovery`, `keyRecoveryToRSA`, and `factorToRSA` (using the polynomial-time binary modular inverse `BinaryGcd.modInv`, `BinaryGcd.modInv_eq_zmod_inv_val`, and `ComputableInPolyTime.binary_modInv` in [`PolyTime/Nat/Gcd.lean`](../../CslibFrontier/Computability/Machines/Turing/MultiTape/Complexity/PolyTime/Nat/Gcd.lean)), the general nontrivial-square-root factoring lemmas `gcd_sub_one_proper_of_sq_modEq_one` and `gcd_add_one_proper_of_sq_modEq_one` for any `N` and `y`, and the deterministic steps `RSADesc.pow_mul_sub_one_modEq_one`, `RSADesc.gcd_sub_one_proper`, and `RSADesc.gcd_add_one_proper` of Corollary 9.51; the reverse randomized reduction from factoring to `RSAKeyRecoveryHard` (Theorem 9.50 / Corollary 9.51) is not yet formalized.
 
+For RSA with a uniform unit preimage ([bs23][bs23], §10.6.2, Theorem 10.5, p. 416), import
+[`RSAUnitInversion.lean`](../../CslibFrontier/Crypto/Computational/RSAUnitInversion.lean).
+`rsaUnitInversionGame gen A n`, the book's game for `uRSAadv`, is `rsaInversionGame` with the
+preimage `x` drawn uniformly from `(ZMod N)ˣ` instead of `Fin N`; the inverter still receives and
+returns residues in `Fin N` (`RSADesc.unitResidue`). `RSAUnitOneWay gen` says that every PPT
+inverter wins it with negligible probability. `unitRSAToRSA A`, the book's wrapper `B`, runs `A`
+on a challenge `y` coprime to `N` and otherwise returns `rsaNonUnitRoot N e y`, computed from `N`
+and `e` alone: `0` for `y = 0`, and otherwise `y ^ d' % N` with `g = gcd(y, N)` and
+`d' = BinaryGcd.modInv e ((g - 1) * (N / g - 1))`. For every `desc : RSADesc` with modulus `N`
+and exponent `e`, `coprime_rsaEval_iff` says that `rsaEval N e x` is coprime to `N` exactly when
+`x` is, and `rsaNonUnitRoot_rsaEval` says that `rsaNonUnitRoot N e (rsaEval N e x) = x` whenever
+`x < N` and `x` is not coprime to `N`. `computableInPolyTime_rsaNonUnitRoot` shows that
+`rsaNonUnitRoot` is computable in polynomial time whenever `N`, `e` and `y` are, as natural
+numbers on `encNat`, and `N` is positive; `isPPT_unitRSAToRSA` shows that `unitRSAToRSA A` is PPT
+whenever `A` is. `succProbability_rsaUnitInversionGame_le` is Theorem 10.5: at every security
+parameter and for every key law `gen`, the success probability of `A` in `rsaUnitInversionGame`
+is at most that of `unitRSAToRSA A` in `rsaInversionGame`. Hence `RSAOneWay gen` implies
+`RSAUnitOneWay gen` (`RSAOneWay.rsaUnitOneWay`). The book states the theorem for `ℓ > 2` and odd
+`e > 2`, the inputs of its key generator `RSAGen(ℓ, e)`. Here keys come from any law on
+`RSADesc` with no hypothesis on it: the proof uses only that `N = p * q` for distinct primes `p`
+and `q` and that `e * d ≡ 1` modulo `(p - 1) * (q - 1)`, so `p = 2` and `e = 1` are allowed.
+Exercise 10.26 (p. 431), the converse with a loss of `2 ^ -(ℓ - 2)`, is not formalized. The
+[checked examples](../../CslibFrontierTests/Crypto/RSAUnitInversion.lean) cover `N = 33`, the
+cases `p = 2` and `e = 1`, and an instance showing that the branch for `y = 0` is needed, and
+[`AssumptionNonvacuity.lean`](../../CslibFrontierTests/Crypto/AssumptionNonvacuity.lean) shows
+that `RSAUnitOneWay` fails for a fixed key (`not_rsaUnitOneWay_const`).
+
 For Shamir's trick ([bs23][bs23], §10.6.2, Theorem 10.6, p. 416), import
 [`RSACommonRoot.lean`](../../CslibFrontier/Crypto/Computational/RSACommonRoot.lean); the group
 identity behind it is in
@@ -1117,8 +1144,8 @@ numbers, whereas the book allows negative ones and applies the theorem with `f =
 congruence is the one §10.9 uses to recover each proof from an aggregate ([bs23][bs23], §10.9,
 p. 422). The book takes units `w` and `y` modulo `n`, whereas here `w` and `y` are natural numbers,
 not necessarily below `n`, and the two congruences assume only `Nat.Coprime w n`: for `f ≠ 0` it
-makes `y` coprime to `n`, and for `f = 0` they do not need it. Theorems 10.5 and 10.7 and the
-accumulator of §10.9 are not formalized. In `RSAAttacks.lean`, `commonRoot_rsaEval` applies the
+makes `y` coprime to `n`, and for `f = 0` they do not need it. Theorem 10.7 and the accumulator
+of §10.9 are not formalized. In `RSAAttacks.lean`, `commonRoot_rsaEval` applies the
 algorithm to the common-modulus attack on plain RSA: for `Nat.Coprime e₁ e₂` and
 `Nat.Coprime m N`, `commonRoot N e₂ e₁ (rsaEval N e₁ m) (rsaEval N e₂ m) = m % N`, so
 `computableInPolyTime_commonRoot` is also the attack's certificate. The checked examples for the
@@ -2051,8 +2078,9 @@ feeds the scheme to the FO layer. `cpaAdvantage_le` bounds its two-stage IND-CPA
 four `ModuleLWE.advantage` terms: the public-key hop `mlweKeyReduction A b` and the ciphertext hop
 `mlweReduction A b` for each challenge bit `b`, with centered-binomial secret and error laws. Both
 reductions are explicit programs that run the adversary's first stage themselves, as in the hops of
-Kyber v3.02 ([kyber302][kyber302], §4.4, eq. (6)), with a uniform matrix instead of `XOF` and a
-ciphertext hop on the uncompressed sample. The bound is concrete and charges no running time.
+Kyber v3.02 ([kyber302][kyber302], §4.4, eq. (6)), with a uniform matrix in the public key in
+place of the seed `ρ` and `XOF`, no random oracles, and a ciphertext hop on the uncompressed sample.
+The bound is concrete and charges no running time.
 [`MLKEM/Native.lean`](../../CslibFrontier/Crypto/Computational/SIS/MLKEM/Native.lean) gives K-PKE
 on residue lists, with `SamplePolyCBD` from fair bits (`uniformList_map_cbdResidues`) and native
 encryption and decryption proved to compute `encrypt` and `decrypt`, and
@@ -2061,6 +2089,24 @@ as the word-level family `kpke P : WordPKE` for a parameter family `P`, efficien
 computable in polynomial time (`kpke_isEfficient`) and with ciphertexts that fit
 (`kpke_ciphertextFits`). Its key generation draws the matrix coefficientwise at precision `κ`,
 within `k * k * n / 2 ^ κ` of uniform (`closeTo_keyGenWord`).
+[`MLKEM/Asymptotic.lean`](../../CslibFrontier/Crypto/Computational/SIS/MLKEM/Asymptotic.lean)
+proves `indCPA_kpkeIdealCoins_of_decisionModuleLWEWith`, IND-CPA of K-PKE with ideal coin
+expansion and the matrix in the public key. It is a step towards Kyber v3.02 Theorem 1
+([kyber302][kyber302], §4.3.1), not that theorem, for two reasons. Key generation and encryption
+draw their centered-binomial noise from fair coins, where Kyber v3.02 and FIPS 203 expand a seed
+with `PRF`, so the bound has no `Adv^prf` term. And the public key carries the sampled matrix in
+place of the seed `ρ` from which Kyber's encryption re-derives it with `XOF`, while the adversary
+has no `XOF` or `G` oracle: Theorem 1 assumes that both are random oracles, and the step that
+answers the adversary's `XOF` queries at `ρ` with the Module-LWE matrix is not formalized. The
+`PRF` hop and this random-oracle lift are open under
+[#5293](https://github.com/cslib-community/cslib-frontier/issues/5293#issuecomment-6893099765).
+The theorem shows that `kpke P` is IND-CPA secure under `DecisionModuleLWEWith` with the
+centered-binomial laws `cbdLaw`: width `η₁` for both laws at the `k × k` key shape, and `η₁`
+secrets with `η₂` errors at the `(k + 1) × k` ciphertext shape. It applies the assumption to the
+hops as families `keyReduction` and `ciphertextReduction` through `isPPT_keyReduction` and
+`isPPT_ciphertextReduction`, proved from the adversary's certificate, and bounds the rest with
+`cpaAdvantage_le` and the matrix sampler's distance. Its other deviation is the uncompressed
+ciphertext hop of `cpaAdvantage_le` above, and it is not a statement about ML-KEM.
 `MLKEMTransform.decapsWith` is the FIPS 203 implicit-rejection wrapper over any
 `ExplicitCoinPKE`, defined through `FujisakiOkamoto.decT` and proved equal to the standard's
 decapsulation algorithm (`decapsWith_eq`). [`CslibFrontierTests/Crypto/MLKEM.lean`](../../CslibFrontierTests/Crypto/MLKEM.lean)

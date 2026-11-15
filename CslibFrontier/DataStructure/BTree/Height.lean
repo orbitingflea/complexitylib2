@@ -27,8 +27,10 @@ the shape of a tree; they carry no cost content.
 * `IsWF.height_le_log`: the height is at most `Nat.log t ((size + 1) / 2) + 1`, the bound of
   [CLRS2009], Theorem 18.1, with heights counted in nodes rather than edges.
 * `Balanced.height_le_log`: the same bound from the shape alone, without key order.
-* `le_mul_height_of_scan`: a count on trees that spends at most one more than a node's key count
-  at each node along a descent is at most `2 * t * height`.
+* `le_mul_height_of_node_le`: a count on trees that spends at most `c` at each node along a
+  descent is at most `c * height`.
+* `le_mul_height_of_scan`: its instance for a count that spends at most one more than a node's
+  key count at each node, which is at most `2 * t * height`.
 
 ## References
 
@@ -167,6 +169,29 @@ theorem Balanced.height_le_log (ht : 2 ≤ t) (hb : Balanced tr) (hk : tr ≠ .l
 
 /-! ### Counts along a descent -/
 
+/-- A count on trees that spends at most `c` at a node with at most `2 * t - 1` keys beyond what
+it spends in one of the node's children, and nothing on the empty tree, is at most `c * height`
+on a tree whose root holds at most `2 * t - 1` keys and whose children are occupied. -/
+theorem le_mul_height_of_node_le {c : ℕ} {f : BTree α β → ℕ} (hleaf : f .leaf = 0)
+    (hnode : ∀ (first : BTree α β) (rest : List (Triple α β)) (B : ℕ), rest.length ≤ 2 * t - 1 →
+      (∀ ch ∈ (node first rest).children, f ch ≤ B) → f (node first rest) ≤ c + B)
+    {tr : BTree α β} (hk : tr.rootKeys ≤ 2 * t - 1) (hc : ∀ ch ∈ tr.children, Occupied t ch) :
+    f tr ≤ c * tr.height := by
+  induction h : tr.height using Nat.strong_induction_on generalizing tr with
+  | _ n ih =>
+    rcases tr with _ | ⟨first, rest⟩
+    · simp [hleaf]
+    · have hpos := height_succ_le_of_mem_children (tr := node first rest) List.mem_cons_self
+      have hB : ∀ ch ∈ (node first rest).children, f ch ≤ c * (n - 1) := fun ch hc' => by
+        have hlt := height_succ_le_of_mem_children hc'
+        have ho := hc ch hc'
+        exact (ih ch.height (by omega) ho.rootKeys_le (fun d hd => ho.of_mem_children hd)
+          rfl).trans (Nat.mul_le_mul_left _ (by omega))
+      have hn : c * (n - 1) + c = c * n := by
+        rw [← Nat.mul_succ]; congr 1; omega
+      have := hnode first rest _ hk hB
+      omega
+
 /-- A count on trees that spends at most `rest.length + 1` at a node `.node first rest` beyond
 what it spends in one of the node's children, and nothing on the empty tree, is at most
 `2 * t * height`, for positive `t`, on a tree whose root holds at most `2 * t - 1` keys and whose
@@ -175,22 +200,9 @@ theorem le_mul_height_of_scan (ht : 0 < t) {f : BTree α β → ℕ} (hleaf : f 
     (hnode : ∀ (first : BTree α β) (rest : List (Triple α β)) (B : ℕ),
       (∀ c ∈ (node first rest).children, f c ≤ B) → f (node first rest) ≤ rest.length + 1 + B)
     {tr : BTree α β} (hk : tr.rootKeys ≤ 2 * t - 1) (hc : ∀ c ∈ tr.children, Occupied t c) :
-    f tr ≤ 2 * t * tr.height := by
-  induction h : tr.height using Nat.strong_induction_on generalizing tr with
-  | _ n ih =>
-    rcases tr with _ | ⟨first, rest⟩
-    · simp [hleaf]
-    · have hpos := height_succ_le_of_mem_children (tr := node first rest) List.mem_cons_self
-      have hB : ∀ c ∈ (node first rest).children, f c ≤ 2 * t * (n - 1) := fun c hc' => by
-        have hlt := height_succ_le_of_mem_children hc'
-        have ho := hc c hc'
-        exact (ih c.height (by omega) ho.rootKeys_le (fun d hd => ho.of_mem_children hd)
-          rfl).trans (Nat.mul_le_mul_left _ (by omega))
-      have hn : 2 * t * (n - 1) + 2 * t = 2 * t * n := by
-        rw [← Nat.mul_succ]; congr 1; omega
-      have := hnode first rest _ hB
-      rw [rootKeys_node] at hk
-      omega
+    f tr ≤ 2 * t * tr.height :=
+  le_mul_height_of_node_le hleaf
+    (fun first rest B hl hB => (hnode first rest B hB).trans (by omega)) hk hc
 
 variable [LinearOrder α]
 

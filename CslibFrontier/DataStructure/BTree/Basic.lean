@@ -348,6 +348,18 @@ variable {tr : BTree α β}
 
 /-! ### Induction -/
 
+/-- A child of a node is smaller than the node: the measure for recursion into a child. -/
+theorem sizeOf_lt_of_mem_children {first c : BTree α β} {rest : List (Triple α β)}
+    (hc : c ∈ (node first rest).children) : sizeOf c < sizeOf (node first rest) := by
+  simp only [children_node, List.mem_cons, List.mem_map] at hc
+  rcases hc with rfl | ⟨⟨a, b, c⟩, he, rfl⟩
+  · simp only [node.sizeOf_spec]
+    omega
+  · have := List.sizeOf_lt_of_mem he
+    simp only [Prod.mk.sizeOf_spec] at this
+    simp only [node.sizeOf_spec, Triple.child_mk]
+    omega
+
 /-- Induction on B-trees, with a hypothesis for the first child and for every child among the
 triples. This replaces the raw nested recursor in proofs. -/
 theorem induction {motive : BTree α β → Prop} (leaf : motive .leaf)
@@ -359,13 +371,8 @@ theorem induction {motive : BTree α β → Prop} (leaf : motive .leaf)
     node first rest (induction leaf node first) fun e _ => induction leaf node e.child
 termination_by tr => sizeOf tr
 decreasing_by
-  · simp_wf
-    omega
-  · have := List.sizeOf_lt_of_mem ‹e ∈ rest›
-    obtain ⟨a, b, c⟩ := e
-    simp only [Prod.mk.sizeOf_spec] at this
-    simp_wf
-    omega
+  · exact sizeOf_lt_of_mem_children List.mem_cons_self
+  · exact sizeOf_lt_of_mem_children (List.mem_cons_of_mem _ (List.mem_map_of_mem ‹e ∈ rest›))
 
 attribute [induction_eliminator] induction
 

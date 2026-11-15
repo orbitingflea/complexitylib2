@@ -4590,6 +4590,7 @@ public import CslibFrontier.Crypto.Computational.LWE.DualRegev
 public import CslibFrontier.Crypto.Computational.LWE.DualRegev.Security
 public import CslibFrontier.Crypto.Computational.LWE.KeyGen
 public import CslibFrontier.Crypto.Computational.LWE.Module
+public import CslibFrontier.Crypto.Computational.LWE.Module.Native
 public import CslibFrontier.Crypto.Computational.LWE.Regev
 public import CslibFrontier.Crypto.Computational.LWE.Regev.Security
 public import CslibFrontier.Crypto.Computational.LWE.Trapdoor
@@ -4703,10 +4704,12 @@ public import CslibFrontier.Crypto.Computational.RSACRT
 public import CslibFrontier.Crypto.Computational.RSACommonRoot
 public import CslibFrontier.Crypto.Computational.RSALeastSignificantBit
 public import CslibFrontier.Crypto.Computational.RSATrapdoor
+public import CslibFrontier.Crypto.Computational.RSAUnitInversion
 public import CslibFrontier.Crypto.Computational.RabinFactoring
 public import CslibFrontier.Crypto.Computational.Rompel
 public import CslibFrontier.Crypto.Computational.SIS.Ajtai
 public import CslibFrontier.Crypto.Computational.SIS.Basic
+public import CslibFrontier.Crypto.Computational.SIS.MLKEM.Asymptotic
 public import CslibFrontier.Crypto.Computational.SIS.MLKEM.Compress
 public import CslibFrontier.Crypto.Computational.SIS.MLKEM.Encoding
 public import CslibFrontier.Crypto.Computational.SIS.MLKEM.Family
@@ -5044,6 +5047,8 @@ public import CslibFrontier.DataStructure.ApproximateMembership.WordRAM.Quotient
 public import CslibFrontier.DataStructure.ApproximateMembership.WordRAM.QuotientFilter.Cluster
 public import CslibFrontier.DataStructure.ApproximateMembership.WordRAM.QuotientFilter.SlotArray
 public import CslibFrontier.DataStructure.BTree.Basic
+public import CslibFrontier.DataStructure.BTree.BinarySearch
+public import CslibFrontier.DataStructure.BTree.Comparisons.BinarySearch
 public import CslibFrontier.DataStructure.BTree.Comparisons.Insert
 public import CslibFrontier.DataStructure.BTree.Comparisons.Query
 public import CslibFrontier.DataStructure.BTree.Comparisons.Range

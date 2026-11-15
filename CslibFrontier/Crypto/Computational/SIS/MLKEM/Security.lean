@@ -45,8 +45,11 @@ the form of §4.4, eq. (6), p. 22, which uses a `k × k` Module-LWE term with `�
 `(k + 1) × k` term with secret width `η₁` and error width `η₂` for the ciphertext. It is a concrete
 bound for one parameter set in this library's model, which differs from the source as follows.
 
-* The matrix `A` is uniform rather than expanded from a seed by `XOF`, and the coins are sampled
-  rather than derived by `PRF`, so no random oracle is involved and there is no `PRF` term.
+* The public key carries a uniform matrix `A`, where Kyber's public key carries a seed `ρ` and
+  encryption re-derives `A` as `XOF(ρ)`; the coins are sampled rather than derived by `PRF`. The
+  adversary has no `XOF` or `G` oracle, where Theorem 1 assumes that both are random oracles, so
+  the step that answers the adversary's `XOF` queries at `ρ` with the Module-LWE matrix is not
+  formalized, and there is no `PRF` term.
 * The ciphertext hop is decision Module-LWE on the uncompressed sample, with secret width `η₁` and
   error width `η₂`: the Module-LWER problem of eq. (6) without compression (footnote 3,
   pp. 21–22). The reduction adds the message and compresses the ciphertext itself.
@@ -55,6 +58,15 @@ bound for one parameter set in this library's model, which differs from the sour
   bit, with its own reductions.
 * No running time is charged. The bound holds for every adversary, efficient or not; it is not an
   asymptotic security theorem.
+
+Its asymptotic form is `indCPA_kpkeIdealCoins_of_decisionModuleLWEWith`
+(`CslibFrontier.Crypto.Computational.SIS.MLKEM.Asymptotic`), IND-CPA of K-PKE with ideal coin
+expansion: for a parameter family computable in polynomial time, the word-level family `kpke`,
+with fair coins in place of `PRF`, is IND-CPA secure under `DecisionModuleLWEWith` with these laws.
+It applies this bound to the reductions as families of distinguishers whose efficiency it proves
+from the adversary's certificate. It is a step towards Kyber v3.02 Theorem 1, not that theorem:
+the `PRF` hop and the random-oracle lift (`ρ` in the public key, with `XOF` and `G` oracles) are
+open under #5293.
 
 ## Main definitions
 
@@ -204,8 +216,11 @@ Module-LWE advantages of `mlweKeyReduction A b` (`k × k`, `CBD_{η₁}` secret 
 `mlweReduction A b` (`(k + 1) × k`, `CBD_{η₁}` secret, `CBD_{η₂}` errors). This is the two-hop
 argument behind Kyber v3.02 ([AvanziEtAl2021], §4.3.1, Theorem 1, p. 20), with the hops of §4.4,
 eq. (6), p. 22, in the model and with the deviations listed in the module documentation: a uniform
-matrix and sampled coins instead of `XOF` and `PRF`, an uncompressed ciphertext hop, and no running
-time. It is a concrete lemma for one parameter set, not an asymptotic security theorem. -/
+matrix in the public key in place of `ρ` and `XOF`, with no random oracles, sampled coins in place
+of `PRF`, an uncompressed ciphertext hop, and no running time. It is a concrete lemma for one
+parameter set, not an asymptotic security theorem. Its asymptotic form, a step towards Theorem 1
+with ideal coin expansion and the matrix in the public key, is
+`indCPA_kpkeIdealCoins_of_decisionModuleLWEWith`. -/
 theorem cpaAdvantage_le [NeZero P.q] (A : CpaAdversary P σ) :
     (toExplicitCoinPKE P).cpaAdvantage A ≤
       (ModuleLWE.advantage (ProbComp.eval (sampleVecCBD P.k P.n P.q P.η₁))
