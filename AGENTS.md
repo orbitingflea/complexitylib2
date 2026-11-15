@@ -146,8 +146,8 @@ says "locator not verified" until a reviewer has confirmed the locator at the so
 claiming a cited result rests on the source's assumption, on one review accepts as the same in
 another formal setting, or on one the source's implies; otherwise it is a stand-in. A novel
 assumption may support a result presented as original and named for it.
-`scripts/check_security_premises.py` and `scripts/check_hardness_assumptions.py` supplement these
-rules; they do not replace semantic review.
+`scripts/check_security_premises.py`, `scripts/check_reduction_witnesses.py` and
+`scripts/check_hardness_assumptions.py` supplement these rules; they do not replace semantic review.
 
 ## Review cycle
 

@@ -4361,6 +4361,8 @@ public import CslibFrontier.Crypto.Computational.CramerShoup.ProjectiveHash
 public import CslibFrontier.Crypto.Computational.CramerShoup.Reductions
 public import CslibFrontier.Crypto.Computational.CramerShoup.Scheme
 public import CslibFrontier.Crypto.Computational.DiffieHellman
+public import CslibFrontier.Crypto.Computational.DiffieHellman.Blinded
+public import CslibFrontier.Crypto.Computational.DiffieHellman.BlindedFamily
 public import CslibFrontier.Crypto.Computational.DiffieHellman.EncodingBounds
 public import CslibFrontier.Crypto.Computational.DiffieHellman.Finite
 public import CslibFrontier.Crypto.Computational.DiffieHellman.GapCDH
@@ -5374,6 +5376,7 @@ public import CslibFrontier.Foundations.Analysis.SignedDigitStream.Elementary
 public import CslibFrontier.Foundations.Analysis.SignedDigitStream.Multiplication
 public import CslibFrontier.Foundations.Analysis.SignedDigitStream.Reciprocal
 public import CslibFrontier.Foundations.Analysis.SpecialFunctions.Arccos
+public import CslibFrontier.Foundations.Analysis.SpecialFunctions.DescFactorialExp
 public import CslibFrontier.Foundations.Analysis.SpecialFunctions.ExpBounds
 public import CslibFrontier.Foundations.Analysis.SpecialFunctions.ExpExpect
 public import CslibFrontier.Foundations.Analysis.SpecialFunctions.ExpLogQuadratic
@@ -7196,6 +7199,7 @@ public import CslibFrontier.Probability.HypothesisSelection.LeCamBirge
 public import CslibFrontier.Probability.HypothesisSelection.Likelihood
 public import CslibFrontier.Probability.HypothesisSelection.Tournament
 public import CslibFrontier.Probability.IID
+public import CslibFrontier.Probability.IID.Birthday
 public import CslibFrontier.Probability.IID.CollisionCount
 public import CslibFrontier.Probability.IID.CrossCollisionCount
 public import CslibFrontier.Probability.IID.Distinct

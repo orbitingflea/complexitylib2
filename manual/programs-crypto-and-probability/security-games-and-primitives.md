@@ -72,6 +72,8 @@ CI checks the premise rule on pull requests. After `lake build`, run `python3 sc
 
 The check supplements review; a clean run is not evidence that a security theorem is right. It does not judge vacuous or misdefined notions, games and assumptions; a wrong or nonstandard assumption, such as an MLWE variant without the short secrets that ML-KEM's security needs; anything outside `Cslib.Crypto`; or names and docstrings that overclaim. Its rules are syntactic, so it also misses a premise whose own definition builds the constructed object, a distribution applied only to numbers or functions (such as a key law at fixed parameters), a bound without an advantage-named constant, a caller-supplied object that the theorem ought to construct, such as the Σ-protocol extractor above, and a realization stated other than as an equation (an inequality, a predicate of the library or a bundled program). Review covers all of these.
 
+CI also checks the witness rule on pull requests. After `lake build`, `python3 scripts/check_reduction_witnesses.py --list CslibFrontier/Crypto/…` lists each reduction of an area with its certificate: a definition that yields a program and that a public theorem uses on the bounding side of an advantage bound, applied to a program variable of the bounded side, such as `B` in `Adv(scheme, A) ≤ Adv(problem, B A)`. A reduction is certified by a theorem that concludes an efficiency certificate mentioning it (`isPPT_elGamalMsgToDDHDistinguisher` for `elGamalMsgToDDHDistinguisher`), as an `abbrev` of certified reductions, or through a certified definition that applies it, such as its word-level program; a query bound is not a certificate. A pull request fails when a changed module has an uncertified reduction that [the baseline](../../scripts/reduction_witnesses_baseline.json) does not record, or a baseline entry that no longer matches. Prove the witness, or, when the bound is information-theoretic or the definition is not a reduction, add an `exempt` entry with its justification. The check does not see a reduction written inline in a bound, a bound without an advantage-named constant, a simulator or extractor on the bounded side, or an attack, and it does not judge whether the witness is the one the asymptotic theorem uses; review covers these.
+
 ## Hardness and pseudorandomness
 
 | Schema | Principal source | Formal parameters and main use |
@@ -1381,6 +1383,37 @@ constructed program's description size and embedded parameters/advice; offline c
 construction is a separate resource. Algorithm 6, the full GGM/BAVC tree, `CommitSeed`, the
 protocol and transcript, abort and rejection analysis, Fiat–Shamir/QROM, SD/RSD hardness, and both
 asymptotic and finite concrete endpoints remain open.
+
+### Blinded Diffie–Hellman problems
+
+Boneh–Shoup Lemmas 21.7 and 21.8 ([bs23][bs23], Section 21.11.5, pp. 910–911) show that two
+problems, which the book uses in its informal argument for protocol PAKE2, are hard under CDH: each
+proof turns an adversary for the problem into a CDH adversary. The book names neither
+problem; "blinded CDH" and "two-point blinded CDH" are this library's names.
+[`DiffieHellman/Blinded.lean`](../../CslibFrontier/Crypto/Computational/DiffieHellman/Blinded.lean)
+states both in one group, like `cdhExperiment`, for a `ZMod q`-module `G` with `[NeZero q]` and
+`[DecidableEq G]`. `blindedCDHExperiment` asks for an exponent `γ` and
+the value `blindedDH α x γ b v = (x - γ * α) • (v - γ • b)`, which is the book's
+`[u / a^γ, v / b^γ]` written through the exponents of `u` and `a`. `blindedCDHPairExperiment` asks
+for two distinct exponents, any `v` and both values. With exactly uniform blinding exponents,
+Lemma 21.7 is the equality `cdhAdvantage_blindedCDHToCDH` for every such `q`, `G` and `g`, with no
+further hypothesis; Lemma 21.8 is the inequality `blindedCDHPairAdvantage_le_cdhAdvantage`, which
+also takes `[Fact q.Prime]`.
+[`DiffieHellman/BlindedFamily.lean`](../../CslibFrontier/Crypto/Computational/DiffieHellman/BlindedFamily.lean)
+gives the family games `blindedCDHGame` and `blindedCDHPairGame`, the reductions
+`blindedCDHToCDHAdversary` and `blindedCDHPairToCDHAdversary` with their certificates
+`isPPT_blindedCDHToCDHAdversary` and `isPPT_blindedCDHPairToCDHAdversary` (each reduction is PPT
+when its adversary is), their `sampleExp` losses `2 / 2 ^ n` and `1 / 2 ^ n`, and the conclusions
+`CDH.negligible_blindedCDHGame` and `CDH.negligible_blindedCDHPairGame`: from `F.CDH setup` and an
+adversary with `IsPPT`, its success probability in the game is negligible. The
+[blinded CDH client](../../CslibFrontierTests/Crypto/BlindedCDH.lean) checks the algebra in
+`ZMod 7`, a `ZMod 4` instance showing that `BlindedCDHPairAnswer.solve_eq`, the step of the
+Lemma 21.8 reduction that recovers the CDH value, needs a prime order, and both theorems on PPT
+adversaries. Check it with:
+
+```bash
+scripts/build.sh --wfail --iofail CslibFrontierTests.Crypto.BlindedCDH
+```
 
 ## Encryption and chosen-message attacks
 

@@ -257,6 +257,29 @@ jobs:
         if: github.event_name != 'pull_request'
         continue-on-error: true
         run: python3 -B scripts/check_security_premises.py --report
+      # Each explicit reduction needs an efficiency witness (AGENTS.md, "Security theorems";
+      # #5293). scripts/check_reduction_witnesses.py reads the built .olean files, finds the
+      # reductions that public theorems state advantage bounds with, and compares those without
+      # an efficiency certificate with scripts/reduction_witnesses_baseline.json. Scope and events
+      # are as for the security premise ratchet above: pull requests enforce it in the modules they
+      # change, or in every module when they change the checker or its baseline; merge groups and
+      # pushes only report. Its compiled-fixture tests need Lean, so the Python tests at the start
+      # skip them; they run here.
+      - name: "Reduction witness ratchet (changed modules)"
+        if: github.event_name == 'pull_request'
+        env:
+          RECORDED_BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          set -e
+          BASE=$(git cat-file -p HEAD | sed -n 's/^parent //p' | head -n 1)
+          BASE=${BASE:-$RECORDED_BASE}
+          git fetch --no-tags --depth=1 origin "$BASE"
+          python3 -B -m unittest scripts/test_check_reduction_witnesses.py
+          python3 -B scripts/check_reduction_witnesses.py --base "$BASE"
+      - name: "Reduction witness report"
+        if: github.event_name != 'pull_request'
+        continue-on-error: true
+        run: python3 -B scripts/check_reduction_witnesses.py --report
       # Named assumptions (AGENTS.md, "Security theorems"; #5578):
       # scripts/check_hardness_assumptions.py compares the assumptions that Crypto theorems take
       # with the inventory manual/programs-crypto-and-probability/assumptions.md and the gaps

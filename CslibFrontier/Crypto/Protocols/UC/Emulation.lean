@@ -39,9 +39,9 @@ the corrupted parties and the auxiliary input. `UC.EmulatesWithin π φ g ε` im
 every error `ε pA pZ` is negligible (`UC.EmulatesWithin.emulates`). It is reflexive and transitive,
 and its transitivity needs no monotonicity, because the negligible bound for the second step is
 chosen after the intermediate simulator. Since all participants are only call-bounded, these are
-notions of security against interaction-bounded, computationally unbounded participants; UC
-security against polynomial-time machines would additionally restrict them by machine
-realizability.
+notions of security against interaction-bounded, computationally unbounded participants, and they
+are incomparable with UC security against polynomial-time machines, which restricts the simulator
+as well as the adversary and the environment.
 
 ## Main definitions
 
@@ -79,7 +79,22 @@ variable {n : ℕ} {In Out NetQ NetR NetQ₁ NetR₁ NetQ₂ NetR₂ NetQ₃ Net
 /-- Concrete UC emulation: protocol `π` emulates protocol `φ` with simulator overhead `g` and error
 `ε`. Every adversary `A` with per-activation budget `pA` has a simulator `S` with per-activation
 budget `pS ≤ g (κ + pA κ)` such that every environment with budget `pZ`, whatever the corrupted
-parties, distinguishes `(π, A)` from `(φ, S)` with advantage at most `ε pA pZ κ`. -/
+parties, distinguishes `(π, A)` from `(φ, S)` with advantage at most `ε pA pZ κ`.
+
+*Source.* This is UC emulation with emulation slack `ε` and simulation overhead `g` of
+[Canetti2020] (Cryptology ePrint Archive 2000/067, revision of February 11, 2020), Definition 15,
+p. 51, in the statistical setting of Section 4.4, p. 50, where the adversary and the environment
+have unbounded complexity. It differs from the source as follows.
+* Adversaries, simulators and environments are bounded by the calls they make per activation, not
+  by running time, and their computation is otherwise unbounded. For the simulator this is the
+  variant that Section 4.4 says gives a weaker guarantee, a simulator of unlimited computational
+  power; here its call budget is at most `g` at `κ + pA κ`, where Definition 15 bounds its running
+  time by `g(pA)`.
+* Corruptions are static: the corrupted set `C` is fixed before the execution and quantified after
+  the simulator, as with the non-adaptive corruptions of Section 7.1.1, p. 74.
+* Environments are not identity-bounded (Canetti's `ξ = {0,1}*`), and the bound holds at every `κ`
+  and for auxiliary inputs `z` of every length, where Definition 15 asks for it at large enough `k`
+  and for inputs of length `pE(k)`. -/
 @[expose] def EmulatesWithin (π : Protocol n In Out NetQ₁ NetR₁) (φ : Protocol n In Out NetQ₂ NetR₂)
     (g : Polynomial ℕ) (ε : Polynomial ℕ → Polynomial ℕ → ℕ → ℝ≥0) : Prop :=
   ∀ (AdvQ AdvR : Type) (A : ExecAdversary n In Out NetQ₁ NetR₁ AdvQ AdvR)
@@ -138,7 +153,18 @@ end EmulatesWithin
 
 /-- UC emulation with negligible error: every adversary with a polynomial budget has a simulator
 with a polynomial budget, such that for each polynomial environment budget one negligible function
-bounds the advantage of every such environment, for all corrupted parties and auxiliary inputs. -/
+bounds the advantage of every such environment, for all corrupted parties and auxiliary inputs.
+
+*Source.* This is UC emulation, [Canetti2020] (Cryptology ePrint Archive 2000/067, revision of
+February 11, 2020), Definition 9, p. 43: for every adversary `A` there is a simulator `S` such that
+every environment's output with `(φ, S)` is indistinguishable from its output with `(π, A)`. It is
+read in the statistical setting of Section 4.4, p. 50, and differs from the source as
+`EmulatesWithin` does: participants are bounded by their calls per activation rather than by
+polynomial running time and are otherwise computationally unbounded, the simulator included;
+corruptions are static; environments are not identity-bounded; and one negligible function bounds
+every environment with budget `pZ`, at every `κ` and for every auxiliary input. It is therefore
+incomparable with Definition 9: it admits more adversaries and environments, and also more
+simulators. -/
 @[expose] def Emulates (π : Protocol n In Out NetQ₁ NetR₁) (φ : Protocol n In Out NetQ₂ NetR₂) :
     Prop :=
   ∀ (AdvQ AdvR : Type) (A : ExecAdversary n In Out NetQ₁ NetR₁ AdvQ AdvR)
@@ -149,7 +175,10 @@ bounds the advantage of every such environment, for all corrupted parties and au
           ∀ (C : Finset (Fin n)) (Z : Environment n In Out AdvQ AdvR),
             Z.PolyBounded pZ → ∀ (κ : ℕ) (z : List Bool), advantage π φ A S C Z κ z ≤ ν κ
 
-/-- UC realization with negligible error: protocol `π` emulates the ideal protocol of `F`. -/
+/-- UC realization with negligible error: protocol `π` emulates the ideal protocol of `F`. This is
+UC realization of [Canetti2020] (ePrint revision of February 11, 2020), Definition 20, p. 58, with
+`Emulates` in place of Definition 9's UC emulation (see `Emulates` for the differences), and
+without Definition 20's further requirement that `π` be subroutine-respecting. -/
 abbrev Realizes (π : Protocol n In Out NetQ NetR) (F : IdealFunctionality n In Out BackQ BackR) :
     Prop :=
   Emulates π F.toProtocol

@@ -10,8 +10,8 @@ module
 public import CslibFrontier.GameTheory.Congestion.Nonatomic
 public import Mathlib.Analysis.SpecialFunctions.Pow.Real
 public import Mathlib.Basic.ENNReal.Real
+import CslibFrontier.Foundations.Analysis.BernoulliInequality
 import Mathlib.Algebra.BigOperators.Fin
-import Mathlib.Algebra.Order.Ring.Pow
 import Mathlib.Data.Fin.VecNotation
 import Mathlib.Tactic.FieldSimp
 import Mathlib.Tactic.FinCases
@@ -240,23 +240,6 @@ theorem monotoneOn_of_mem_polynomialLatencies {d : ℕ} {c : ℝ → ℝ}
   exact Finset.sum_le_sum fun i _ =>
     mul_le_mul_of_nonneg_left (pow_le_pow_left₀ hx hxy _) (ha i)
 
-/-- The tangent-line inequality for `x ↦ x ^ (n + 1)` on `[0, ∞)`. -/
-private theorem pow_add_mul_sub_le_pow {x y : ℝ} (hx : 0 ≤ x) (hy : 0 ≤ y) (n : ℕ) :
-    y ^ (n + 1) + (n + 1) * y ^ n * (x - y) ≤ x ^ (n + 1) := by
-  rcases hy.eq_or_lt with rfl | hy
-  · rcases Nat.eq_zero_or_pos n with rfl | hn
-    · simp
-    · simp [zero_pow hn.ne', pow_nonneg hx]
-  · have hb := one_add_mul_le_pow (a := x / y - 1) (by linarith [div_nonneg hx hy.le]) (n + 1)
-    have hyn : 0 < y ^ (n + 1) := pow_pos hy _
-    rw [show 1 + (x / y - 1) = x / y by ring, div_pow, le_div_iff₀ hyn] at hb
-    push_cast at hb
-    calc y ^ (n + 1) + (n + 1) * y ^ n * (x - y)
-        = (1 + (n + 1) * (x / y - 1)) * y ^ (n + 1) := by
-          field_simp
-          ring
-      _ ≤ x ^ (n + 1) := hb
-
 /-- The parameter `t = (d + 1)^{-1/d}` maximizes `x (1 - x ^ d)` on `[0, 1]`: `t ∈ (0, 1]`,
 `t ^ d (d + 1) = 1` and `d (d + 1)^{-(d + 1)/d} = d t ^ (d + 1)`. -/
 private theorem pigouParam_spec (d : ℕ) :
@@ -291,7 +274,7 @@ private theorem mul_sub_pow_le (d : ℕ) {r x : ℝ} (hr : 0 ≤ r) (hx : 0 ≤ 
   set t := ((d : ℝ) + 1) ^ (-(1 / (d : ℝ)))
   rw [hβ]
   have hy : 0 ≤ t * r := mul_nonneg ht0.le hr
-  have htan := pow_add_mul_sub_le_pow hx hy d
+  have htan := Real.pow_add_mul_sub_le_pow hx hy d
   have hyd : (t * r) ^ d * ((d : ℝ) + 1) = r ^ d := by
     rw [mul_pow, mul_right_comm, htd, one_mul]
   have hy1 : (t * r) ^ d * (t * r) = t ^ (d + 1) * r ^ (d + 1) := by

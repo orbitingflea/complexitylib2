@@ -155,7 +155,13 @@ indexed by `ι × κ` into independent blocks, and `toOuterMeasure_pi_forall` in
 box `{u | ∀ i, u i ∈ E i}`. For `Fin k`-indexed tuples with different factors, `PMF.piFin` in
 [IID.lean](../../CslibFrontier/Probability/IID.lean) generalizes `iid`, and
 [IID/Event.lean](../../CslibFrontier/Probability/IID/Event.lean) gives its box and union bounds
-`toOuterMeasure_piFin_forall` and `toOuterMeasure_toReal_piFin_exists_le`. To move a finite
+`toOuterMeasure_piFin_forall` and `toOuterMeasure_toReal_piFin_exists_le`.
+[IID/Birthday.lean](../../CslibFrontier/Probability/IID/Birthday.lean) bounds from below the
+probability that `k` samples of `iid μ k` contain two equal values, for any law `μ` on a set of size
+`n`: at least `1 - exp (-k (k - 1) / (2 n))` (`one_sub_exp_neg_le_iid_not_injective`) and at least
+`min (k (k - 1) / (4 n)) 0.63` (`min_le_iid_not_injective`), as in
+[bs23][bs23], Theorem B.1 and Corollary B.2. The union-bound upper bounds are
+in [IID/Distinct.lean](../../CslibFrontier/Probability/IID/Distinct.lean). To move a finite
 statistic of i.i.d. samples from a measure into this setting, import
 [Product/MapMeasure.lean](../../CslibFrontier/Probability/Product/MapMeasure.lean):
 `map_measurePi_eq_toMeasure_pi` identifies the image of `Measure.pi μ` under coordinatewise
@@ -2438,6 +2444,7 @@ Keep efficiency and security as separate goals. In [Crypto/Computational/Basic.l
 
 Specify the experiment, admissible adversaries, success event and assumption; prove the reduction's efficiency using the routines above; then prove the probability or advantage inequality. Semantic rewrites and native certificates discharge different obligations. If a proposed reduction only has a query bound, return to the realization step before calling it a computational security reduction. Use the [security-game reference](../programs-crypto-and-probability/security-games-and-primitives.md) to choose the correct primitive and adversary model. The final theorem keeps only the premises that [Security theorems and efficiency witnesses](../programs-crypto-and-probability/security-games-and-primitives.md#security-theorems-and-efficiency-witnesses) allows: named hardness assumptions, the adversary's class and properties of components that the cited result takes as given, never a bound on the reduction it builds.
 
+[bs23]: ../sources.md#bs23
 [complexitylib]: ../sources.md#complexitylib
 [holenstein09]: ../sources.md#holenstein09
 

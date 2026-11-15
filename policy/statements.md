@@ -220,5 +220,7 @@ cited source. When a change replaces a misformalized theorem, it deletes the old
 to an honestly named and documented helper, and updates its ROADMAP, manual and
 [results inventory](../results/README.md) mentions ([Faithful headlines](#faithful-headlines); #5293).
 `scripts/check_security_premises.py` checks the premise rule after a build against a justified
-baseline, and `scripts/check_hardness_assumptions.py` checks that named assumptions are listed in
-the inventory and documented ([details](../CONTRIBUTING.md#library-quality-standard)).
+baseline, `scripts/check_reduction_witnesses.py` checks that each explicit reduction in an
+advantage bound has an efficiency witness or a justified baseline entry, and
+`scripts/check_hardness_assumptions.py` checks that named assumptions are listed in the inventory
+and documented ([details](../CONTRIBUTING.md#library-quality-standard)).

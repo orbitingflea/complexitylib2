@@ -348,7 +348,15 @@ theorem absorbAdversary_polyBounded (C : Finset (Fin n)) {A : Adversary n AdvQ A
 
 /-- Concrete emulation of the dummy adversary: a simulator with budget `pD` such that every
 environment with budget `pZ` distinguishes `π` with the dummy adversary from `φ` with the
-simulator with advantage at most `ε pZ κ`, whatever the corrupted parties. -/
+simulator with advantage at most `ε pZ κ`, whatever the corrupted parties.
+
+*Source.* This is UC emulation with respect to the dummy adversary of [Canetti2020] (Cryptology
+ePrint Archive 2000/067, revision of February 11, 2020), Definition 10, p. 44, whose Claim 11 on
+the same page shows it equivalent to UC emulation (here `emulates_iff_emulatesDummy`), stated with
+an explicit simulator budget `pD` and error `ε` as in Definition 15, p. 51. It differs from the
+source as `EmulatesWithin` does: call budgets in place of running time, with otherwise unbounded
+computation (the statistical setting of Section 4.4, p. 50); static corruptions; no identity bound
+on environments; and a bound at every `κ` and for every auxiliary input. -/
 @[expose] def EmulatesDummyWithin (π : Protocol n In Out NetQ₁ NetR₁)
     (φ : Protocol n In Out NetQ₂ NetR₂) (pD : Polynomial ℕ) (ε : Polynomial ℕ → ℕ → ℝ≥0) :
     Prop :=
@@ -362,7 +370,16 @@ simulator with advantage at most `ε pZ κ`, whatever the corrupted parties. -/
 
 /-- Concrete black-box emulation: one simulator `S_D` with budget `pD` such that, for every
 adversary `A` with budget `pA`, the black-box simulator `compSim S_D A` has advantage at most
-`ε pA pZ κ` against every environment with budget `pZ`. -/
+`ε pA pZ κ` against every environment with budget `pZ`.
+
+*Source.* This is UC emulation with black-box simulation of [Canetti2020] (Cryptology ePrint
+Archive 2000/067, revision of February 11, 2020), Definition 12, p. 48: one black-box simulator
+`S` such that, for every adversary `A`, the composite adversary `S^A`, whose main program `S` runs
+`A` as a subroutine, simulates `A`. Its Claim 13, p. 49, shows it equivalent to UC emulation. It is
+stated with an explicit budget `pD` and error `ε`, as in Definition 15, p. 51, and differs from the
+source as `EmulatesWithin` does: call budgets in place of running time, with otherwise unbounded
+computation (the statistical setting of Section 4.4, p. 50); static corruptions; no identity bound
+on environments; and a bound at every `κ` and for every auxiliary input. -/
 @[expose] def EmulatesBlackBoxWithin (π : Protocol n In Out NetQ₁ NetR₁)
     (φ : Protocol n In Out NetQ₂ NetR₂) (pD : Polynomial ℕ)
     (ε : Polynomial ℕ → Polynomial ℕ → ℕ → ℝ≥0) : Prop :=

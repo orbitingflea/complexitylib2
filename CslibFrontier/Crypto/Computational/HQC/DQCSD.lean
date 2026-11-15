@@ -29,8 +29,9 @@ and weight with `weight <= n`; `DQCSDTruncatedParameters` additionally enforces
 The source asks whether its samples came from the structured or comparison distribution with
 non-negligible advantage. It does not define this repository's exact generated gate family,
 initial state or measurement convention. `NativeQuantumTwoDQCSDP` and
-`NativeQuantumThreeDQCSDPT` are therefore original, explicitly narrower quantum hardness
-packaging over the exact source distributions. They are assumptions, not hardness theorems.
+`NativeQuantumThreeDQCSDPT` therefore state the source problems over the exact source
+distributions against a narrower class of adversaries, the native quantum tests, which makes them
+no stronger than the source's. They are assumptions, not hardness theorems.
 Primitive-prime admissibility, efficient sampling, public-seed expansion, QROM simulation,
 decoding failures and HQC-PKE/KEM reductions remain separate obligations.
 
@@ -241,7 +242,10 @@ theorem supportsLength_threeUniformEnsemble (params : DQCSDTruncatedParameters)
   exact (TruncatedSyndromeSample.length_toWord sample).le
 
 /-- Concrete native quantum 2-DQCSD-P security with exact sample lengths and separate circuit
-resource budgets. -/
+resource budgets: at each `κ`, every native quantum test within a budget has advantage at most `ε`
+of `κ` and that budget. This is the concrete form of `NativeQuantumTwoDQCSDP`; the problem is
+2-DQCSD-P of [HQC2026], Definition 2.3.7, pp. 12–13, which asks only for non-negligible advantage
+and has no concrete form, so `ε` and the budgets are the caller's. -/
 def NativeQuantumTwoDQCSDPWithin (params : DQCSDParameters) (publicParity : ℕ → Bool)
     (ε : ℕ → OracleCircuit.Resources → ℝ≥0) : Prop :=
   NativeQuantum.IndistinguishableWithin (twoRealEnsemble params publicParity)
@@ -258,7 +262,19 @@ theorem nativeQuantumTwoDQCSDPWithin_iff_indistinguishableWithin
   Iff.rfl
 
 /-- Native quantum 2-DQCSD-P hardness for the exact source distributions. This is an assumption
-under the repository's no-advice, no-useful-oracle native test convention. -/
+under the repository's no-advice, no-useful-oracle native test convention.
+
+*Source.* This is the 2-DQCSD-P problem of [HQC2026] (version 5.1, November 9, 2026),
+Definition 2.3.7, pp. 12–13: decide with non-negligible advantage whether `(H, y)` came from the
+2-QCSD-P distribution of Definition 2.3.6, p. 12, or from the uniform distribution on
+`F^{n×2n}_{2,b₁} × F^n_{2,b₂}`. There `H = (I_n rot(h))` with `h` of parity `b₁`, the real `y` is
+`H x⊤` for `x = (x₁, x₂)` with both halves of weight `ω`, and `b₂ = ω + b₁ ω mod 2`. Here `n`, `ω`
+and `b₁` are `params.blockLength κ`, `params.weight κ` and `publicParity κ`, and a sample is the
+word of `h` followed by `y`. This definition differs from the source as follows.
+* The adversaries are the native uniform quantum tests of `NativeQuantum`, without advice or a
+  useful oracle; the source fixes no model of computation, so this class is narrower.
+* The parameters are any schedule in `κ` with positive block length and weight; the specification
+  takes `n` to be a primitive prime (p. 13) and fixes its parameter sets. -/
 def NativeQuantumTwoDQCSDP (params : DQCSDParameters) (publicParity : ℕ → Bool) : Prop :=
   NativeQuantum.ComputationallyIndistinguishable (twoRealEnsemble params publicParity)
     (twoUniformEnsemble params publicParity)
@@ -289,7 +305,10 @@ theorem NativeQuantumTwoDQCSDP.of_within {params : DQCSDParameters}
   exact (PolynomiallyBounded.const 2).mul hn
 
 /-- Concrete native quantum 3-DQCSD-PT security with exact sample lengths and separate circuit
-resource budgets. -/
+resource budgets: at each `κ`, every native quantum test within a budget has advantage at most `ε`
+of `κ` and that budget. This is the concrete form of `NativeQuantumThreeDQCSDPT`; the problem is
+3-DQCSD-PT of [HQC2026], Definition 2.3.9, p. 13, which asks only for non-negligible advantage and
+has no concrete form, so `ε` and the budgets are the caller's. -/
 def NativeQuantumThreeDQCSDPTWithin (params : DQCSDTruncatedParameters)
     (firstParity secondParity : ℕ → Bool) (ε : ℕ → OracleCircuit.Resources → ℝ≥0) : Prop :=
   NativeQuantum.IndistinguishableWithin (threeRealEnsemble params firstParity secondParity)
@@ -307,7 +326,19 @@ theorem nativeQuantumThreeDQCSDPTWithin_iff_indistinguishableWithin
   Iff.rfl
 
 /-- Native quantum 3-DQCSD-PT hardness for the exact source distributions. This is an assumption
-under the repository's no-advice, no-useful-oracle native test convention. -/
+under the repository's no-advice, no-useful-oracle native test convention.
+
+*Source.* This is the 3-DQCSD-PT problem of [HQC2026] (version 5.1, November 9, 2026),
+Definition 2.3.9, p. 13: decide with non-negligible advantage whether `(H, (y₁, y₂))` came from
+the 3-QCSD-PT distribution of Definition 2.3.8, p. 13, or from the uniform distribution on
+`F^{2n×3n}_{2,b₁,b₂} × (F^n_{2,b₃} × F^{n-ℓ}_2)`. There `H` has the blocks `rot(h₁)` and `rot(h₂)`
+with `hᵢ` of parity `bᵢ`, the real `(y₁, y₂)` is `H x⊤` for `x = (x₁, x₂, x₃)` with all three
+blocks of weight `ω`, its second half truncated to its first `n - ℓ` coordinates, and
+`b₃ = ω + b₁ ω mod 2`. Here `b₁`, `b₂` and `ℓ` are `firstParity κ`, `secondParity κ` and
+`params.truncation κ`, and a sample is the word of `h₁`, `h₂`, `y₁` and the truncated `y₂`. This
+definition differs from the source as `NativeQuantumTwoDQCSDP` does: native quantum tests, and any
+parameter schedule (here with `0 < ℓ < n`) in place of the specification's primitive prime `n` and
+fixed parameter sets. -/
 def NativeQuantumThreeDQCSDPT (params : DQCSDTruncatedParameters)
     (firstParity secondParity : ℕ → Bool) : Prop :=
   NativeQuantum.ComputationallyIndistinguishable

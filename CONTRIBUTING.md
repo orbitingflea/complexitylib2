@@ -228,6 +228,26 @@ parameters), a bound without an advantage-named constant, a caller-supplied obje
 the theorem should prove, and a realization stated other than as an equation (an inequality, a
 predicate of the library or a bundled program).
 
+**Reduction witnesses** ([#5293](https://github.com/cslib-community/cslib-frontier/issues/5293)).
+Each explicit reduction has an efficiency witness ([AGENTS.md](AGENTS.md#security-theorems)). After
+a build, `python3 scripts/check_reduction_witnesses.py` finds the *reductions*: the Crypto
+definitions that yield a program (a `ProbComp`, `OracleComp` or `PMF`, or a structure of these)
+and that a public theorem uses on the bounding side of an advantage bound, applied to a program
+variable of the bounded side, as `B` in `Adv(scheme, A) ≤ Adv(problem, B A)`. A reduction is
+certified when a theorem concludes an efficiency certificate that mentions it (`IsPPT…`,
+`IsOraclePPT…`, `ComputableIn…` and similar; a query bound does not count), when it is an `abbrev`
+of certified reductions, or when a certified definition such as its word-level program applies
+it. `scripts/reduction_witnesses_baseline.json` records the uncertified ones, one per line: a
+`gap` names the issue that tracks the missing witness, and an `exempt` entry says why none is
+needed (an information-theoretic bound, or a definition that is not a reduction, such as a scheme
+built from a component). CI treats it as it treats the premise check: a pull request fails when a
+changed module has an unrecorded uncertified reduction or a baseline entry that no longer
+matches, so the baseline only shrinks; merge groups only report. `--list` shows every reduction
+with its certificate, and `--update-baseline` adds entries whose `why` you then fill in. The
+check does not see a reduction written inline in a bound, a bound without an advantage-named
+constant, a simulator or extractor on the bounded side, or an attack, and it does not judge
+whether a witness assumes only the adversary's certificate; review covers these.
+
 **Named assumptions** ([#5578](https://github.com/cslib-community/cslib-frontier/issues/5578)). Each
 named assumption that a Crypto theorem takes belongs in the
 [assumptions inventory](manual/programs-crypto-and-probability/assumptions.md) as *standard* (its

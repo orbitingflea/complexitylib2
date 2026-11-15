@@ -95,6 +95,9 @@ STEPS = (
     Step("Security premise ratchet (changed modules)",
          ("python3 -B -m unittest scripts/test_check_security_premises.py",
           'python3 -B scripts/check_security_premises.py --base "$BASE"')),
+    Step("Reduction witness ratchet (changed modules)",
+         ("python3 -B -m unittest scripts/test_check_reduction_witnesses.py",
+          'python3 -B scripts/check_reduction_witnesses.py --base "$BASE"')),
     Step("Named assumptions (whole library)",
          ("python3 -B -m unittest scripts/test_check_hardness_assumptions.py",
           "python3 -B scripts/check_hardness_assumptions.py")),
@@ -129,6 +132,8 @@ CI_ONLY = {
     "Projection chain report":
         "merge groups and main pushes only; reports and always succeeds",
     "Security premise report":
+        "merge groups and main pushes only; reports and always succeeds",
+    "Reduction witness report":
         "merge groups and main pushes only; reports and always succeeds",
     "Named assumptions report": "main pushes only; reports and always succeeds",
     "Repeated-proof-block notice (advisory)":
