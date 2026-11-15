@@ -1726,6 +1726,7 @@ public import CslibFrontier.Computability.Circuit.Quantum.PathNetwork
 public import CslibFrontier.Computability.Circuit.Quantum.PathNetworkPolyTime
 public import CslibFrontier.Computability.Circuit.Quantum.PathSum
 public import CslibFrontier.Computability.Circuit.Quantum.PhaseCode
+public import CslibFrontier.Computability.Circuit.Quantum.PhaseCode.Relabel
 public import CslibFrontier.Computability.Circuit.Quantum.PhaseOracle
 public import CslibFrontier.Computability.Circuit.Quantum.RealEncoding
 public import CslibFrontier.Computability.Circuit.Quantum.Reversible
