@@ -414,9 +414,9 @@ theorem isQueryBounded_reduction (C : Circuit σ n m) (I : Interpretation σ Boo
   simp only [Nat.zero_add, Nat.add_zero] at h
   exact h
 
-/-- Against the keyed oracle the reduction samples hybrid view `j` with the oracle in place of
-the mask terms. -/
-private theorem eval_run_reduction (C : Circuit σ n m) (I : Interpretation σ Bool)
+/-- Against a table `f`, the reduction samples hybrid view `j` with the table at the slots' tweaks
+in place of the target mask terms. -/
+theorem eval_run_reduction (C : Circuit σ n m) (I : Interpretation σ Bool)
     (F : K → T → K × Bool) (tw : Slot C.topology → T) (x : Fin n → Bool)
     (D : View C.topology K → ProbComp Bool) (j : ℕ) (f : T → K × Bool) :
     ProbComp.eval ((reduction C I F tw x D j).run fun t => pure (f t)) =

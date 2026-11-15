@@ -9,8 +9,6 @@ module
 
 public import CslibFrontier.Crypto.Computational.GenericGroup.Basic
 public import CslibFrontier.Languages.Probabilistic.Oracle.Substitution.QueryCount
-public import Cslib.Probability.PMF
-public import Mathlib.Logic.Equiv.Fintype
 
 /-!
 # Running and relabelling generic group programs
@@ -24,7 +22,8 @@ injection `j : ZMod q ↪ S`: it answers each query of `A` with at most one quer
 translates labels by `j`. Against a permutation `σ` of `ZMod q`, the relabelled program behaves as
 `A` against the labeling `j ∘ σ` (`runLabeled_relabel`), and it makes no more queries than `A`
 (`isQueryBounded_relabel`). Since a uniform injection `ZMod q ↪ S` is a uniform injection after a
-uniform permutation (`uniform_embedding_bind_eq`), a statement about generic groups with labels in
+uniform permutation (`Cslib.Probability.PMF.uniformOfFintype_embedding_bind_perm_trans`), a
+statement about generic groups with labels in
 `S` reduces to one with labels in `ZMod q` and a uniform permutation as labeling, in which no group
 operation is ever rejected. This replaces the set `S′` and the resampling of the book's Game 1 in
 the proof of Theorem 16.3. The names in this file are this library's.
@@ -39,8 +38,6 @@ the proof of Theorem 16.3. The names in this file are this library's.
 * `Cslib.Crypto.GenericGroup.runLabeled_relabel`: relabelling against `σ` is running against
   `j ∘ σ`.
 * `Cslib.Crypto.GenericGroup.isQueryBounded_relabel`: relabelling preserves a query bound.
-* `Cslib.Crypto.GenericGroup.uniform_embedding_bind_eq`: a uniform injective labeling is a
-  uniform injective labeling after a uniform permutation of `ZMod q`.
 
 ## References
 
@@ -135,28 +132,5 @@ theorem isQueryBounded_relabel {α : Type} (j : ZMod q ↪ S)
     split
     · exact (OracleComp.isCostBounded_map_iff _ _ _).mpr (ProbOracleComp.isCostBounded_query _ _)
     · exact .pure _ _
-
-/-- A uniform injective labeling is a uniform injective labeling after a uniform permutation of
-`ZMod q`. -/
-theorem uniform_embedding_bind_eq [NeZero q] [Fintype S] [Nonempty (ZMod q ↪ S)] {β : Type}
-    (f : (ZMod q ↪ S) → PMF β) :
-    (PMF.uniformOfFintype (ZMod q ↪ S)).bind f =
-      (PMF.uniformOfFintype (ZMod q ↪ S)).bind fun j =>
-        (PMF.uniformOfFintype (Equiv.Perm (ZMod q))).bind fun σ => f (σ.toEmbedding.trans j) := by
-  have key : ∀ σ : Equiv.Perm (ZMod q),
-      (PMF.uniformOfFintype (ZMod q ↪ S)).bind (fun j => f (σ.toEmbedding.trans j)) =
-        (PMF.uniformOfFintype (ZMod q ↪ S)).bind f := by
-    intro σ
-    let e : (ZMod q ↪ S) ≃ (ZMod q ↪ S) :=
-      { toFun := fun j => σ.toEmbedding.trans j
-        invFun := fun j => σ.symm.toEmbedding.trans j
-        left_inv := fun j => by ext x; simp
-        right_inv := fun j => by ext x; simp }
-    conv_rhs => rw [← PMF.uniformOfFintype_map_equiv e]
-    rw [PMF.bind_map]
-    rfl
-  rw [PMF.bind_comm]
-  simp_rw [key]
-  rw [PMF.bind_const]
 
 end Cslib.Crypto.GenericGroup

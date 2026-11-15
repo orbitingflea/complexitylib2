@@ -42,6 +42,17 @@ complete example.
 
 ## Randomized and oblivious interfaces
 
+For seed-coupled native sequence certificates, import
+[StateTransition/ExpectedAmortized.lean](../../CslibFrontier/DataStructure/StateTransition/ExpectedAmortized.lean).
+`expectedAmortizedSequence` performs the list induction with an invariant indexed by the
+remaining operations and an explicit native execution relation. Each step must preserve the
+tail invariant, bound cost plus expected potential, and extend a native tail execution.
+The fixed-space and resizable WordRAM `steps_expected_amortized` proofs use this rule.
+Their step adapters still supply native instruction-cost evidence; the resizable invariant
+additionally retains conditional state-dependent seed laws and trajectory-relative peak fits.
+This composition rule does not turn a memory marginal into a joint returned-observation law;
+the CellProbe transcript lift remains a separate model obligation.
+
 [RandomizedSpec](https://github.com/cslib-community/cslib-frontier/blob/13e6a31951bf1c89a1a6258c44f9444aecbbefd8/Complexity/DataStructure/StateTransition/Randomized.lean#L98) supplies a PMF stateful handler. Support induces the relational specification, while `withCoins` allows clients their own samples. `RandomizedRefinement` requires the exact output/state law, not just a relation between possible outcomes. `run_link` transports this law through adaptive clients. `ExpectedAmortized.client` and `.comp` telescope expected lower-level costs plus potential and compose refinement layers. Until-bad rules transport explicit error bounds when exact equality is unavailable.
 
 [CslibFrontier/DataStructure/ObliviousSequence.lean](https://github.com/cslib-community/cslib-frontier/blob/13e6a31951bf1c89a1a6258c44f9444aecbbefd8/Complexity/DataStructure/ObliviousSequence.lean) instead accepts a fixed finite operation list and constrains its joint typed transcript law. It is deliberately state-free at the interface and nonadaptive. A theorem over all lists chosen before the random seed does not allow a client to choose the next query after observing random outputs. The hash-family and hash-table headline theorems use this boundary explicitly.

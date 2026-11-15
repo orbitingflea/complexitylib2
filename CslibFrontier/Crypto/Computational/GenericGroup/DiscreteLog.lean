@@ -16,6 +16,7 @@ import CslibFrontier.Languages.Probabilistic.RandomPermutation
 import CslibFrontier.Languages.Probabilistic.Simulation
 import CslibFrontier.Languages.Probabilistic.UntilBad.Flag
 import CslibFrontier.Probability.PMF.Bind
+import CslibFrontier.Probability.PMF.EmbeddingPerm
 import CslibFrontier.Probability.PMF.UniformPoint
 import CslibFrontier.Probability.PMF.UniformSubset
 import CslibFrontier.Probability.Product
@@ -111,7 +112,7 @@ private theorem dlogGame_eq_bind_permDlogGame [NeZero q] [Fintype S] [Nonempty (
       permDlogGame fun g u => relabel j (A (j g) (j u)) := by
   unfold dlogGame permDlogGame
   simp only [PMF.monad_bind_eq_bind]
-  rw [uniform_embedding_bind_eq]
+  rw [PMF.uniformOfFintype_embedding_bind_perm_trans]
   refine congrArg _ (funext fun j => congrArg _ (funext fun σ => congrArg _ (funext fun α => ?_)))
   rw [runLabeled_relabel]
   rfl

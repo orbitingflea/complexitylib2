@@ -81,8 +81,9 @@ The book's proof applies Theorem 10.6 with `f = b' - b`, which may be negative. 
 orders the pair instead: it takes `f = b' - b` and `w = a * a'⁻¹` when `b < b'`, and
 `f = b - b'` and `w = a' * a⁻¹` otherwise, so `Cslib.Crypto.commonRoot` keeps natural exponents.
 
-Exercise 10.26 (p. 431), the use of `H_rsa` as a compression function in the Merkle–Damgård
-construction (p. 416) and the accumulator of §10.9 are not formalized.
+Exercise 10.26 (p. 431) and the use of `H_rsa` as a compression function in the Merkle–Damgård
+construction (p. 416) are not formalized. The accumulator of §10.9 is in `GUOAccumulator.lean`,
+without its security theorem.
 
 ## References
 

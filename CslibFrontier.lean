@@ -4490,6 +4490,7 @@ public import CslibFrontier.Crypto.Computational.GMW.Sequential
 public import CslibFrontier.Crypto.Computational.GMW.Sequential.Simulator
 public import CslibFrontier.Crypto.Computational.GMW.Simulator
 public import CslibFrontier.Crypto.Computational.GMW.Soundness
+public import CslibFrontier.Crypto.Computational.GUOAccumulator
 public import CslibFrontier.Crypto.Computational.GeneratorPadding
 public import CslibFrontier.Crypto.Computational.GeneratorReindex
 public import CslibFrontier.Crypto.Computational.GeneratorXor
@@ -4846,6 +4847,7 @@ public import CslibFrontier.Crypto.Primitives.Garbling.MixedModulus
 public import CslibFrontier.Crypto.Primitives.Garbling.OneHot
 public import CslibFrontier.Crypto.Primitives.Garbling.PointPermute
 public import CslibFrontier.Crypto.Primitives.Garbling.PointPermute.Efficient
+public import CslibFrontier.Crypto.Primitives.Garbling.PointPermute.Reduction
 public import CslibFrontier.Crypto.Primitives.Garbling.PointPermute.Simulator
 public import CslibFrontier.Crypto.Primitives.Garbling.Privacy
 public import CslibFrontier.Crypto.Primitives.Garbling.Rerandomizable
@@ -5357,6 +5359,7 @@ public import CslibFrontier.DataStructure.StateTransition.Amortized
 public import CslibFrontier.DataStructure.StateTransition.ClientSimps.Init
 public import CslibFrontier.DataStructure.StateTransition.Composition
 public import CslibFrontier.DataStructure.StateTransition.CostHoare
+public import CslibFrontier.DataStructure.StateTransition.ExpectedAmortized
 public import CslibFrontier.DataStructure.StateTransition.Hoare
 public import CslibFrontier.DataStructure.StateTransition.Impl
 public import CslibFrontier.DataStructure.StateTransition.LinkCongr
@@ -7383,6 +7386,7 @@ public import CslibFrontier.Probability.PMF.Coin
 public import CslibFrontier.Probability.PMF.Coin.Complement
 public import CslibFrontier.Probability.PMF.Coupling
 public import CslibFrontier.Probability.PMF.DensityBounds
+public import CslibFrontier.Probability.PMF.EmbeddingPerm
 public import CslibFrontier.Probability.PMF.Event
 public import CslibFrontier.Probability.PMF.EventBind
 public import CslibFrontier.Probability.PMF.Expect

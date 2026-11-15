@@ -41,7 +41,8 @@ topology `(n, m, q, A, B)` revealed by `phiTopo` in the same layout without the 
   conventional circuits as data.
 * `Cslib.Crypto.Garbling.Topo.gateList`, `Cslib.Crypto.Garbling.encTopo`,
   `Cslib.Crypto.Garbling.encValidTopo`: topologies, the side information of `phiTopo`, as data.
-* `Cslib.Crypto.Garbling.encPrvView`: the encoding of a privacy view `(F, X, d)`.
+* `Cslib.Crypto.Garbling.encPrvView`, `Cslib.Crypto.Garbling.encQuery`: the encodings of a
+  privacy view `(F, X, d)` and of a query `(f, x)`.
 
 ## References
 
@@ -198,5 +199,9 @@ theorem topoData_polyTime :
 /-- The encoding of a privacy view `(F, X, d)`: `F` and `X` framed, then `d`. -/
 enc_structure encPrvView : PrvView where
   fn : encBits, input : encBits, decInfo : encBits
+
+/-- The encoding of a query `(f, x)`: `f` by `encFn`, framed, then `x`. -/
+enc_structure encQuery (Fn : Type) (encFn : Fn ↪ List Bool) : Query Fn where
+  fn : encFn, input : encBits
 
 end Cslib.Crypto.Garbling

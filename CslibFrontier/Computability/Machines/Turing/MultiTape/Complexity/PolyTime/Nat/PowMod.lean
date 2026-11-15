@@ -26,7 +26,9 @@ value is below `m`, so the work is polynomial in the lengths of `a`, `e` and `m`
 Without a modulus, `a ^ e` has about `e` times as many digits as `a`, exponentially many in the
 length of `e`; the statement therefore requires a positive modulus. The total function `powMod`
 returns `1` at the modulus `0` instead, so it is polynomial-time on every input. This is where it
-differs from core's `Nat.powMod`, which returns the unreduced power at the modulus `0`.
+differs from core's `Nat.powMod`, which returns the unreduced power at the modulus `0`. Powers
+compose (`Turing.MultiTapeTM.powMod_powMod`), and powers of a unit are units
+(`Turing.MultiTapeTM.coprime_powMod`).
 
 ## Main definitions
 
@@ -130,6 +132,20 @@ instead of the unreduced power, so that it is computable in polynomial time on e
 
 theorem powMod_of_ne_zero {M : ℕ} (hM : M ≠ 0) (x e : ℕ) : powMod M x e = x ^ e % M := by
   simp [powMod, hM]
+
+/-- Raising `powMod N g a` to the power `b` modulo `N` is `powMod N g (a * b)`. -/
+theorem powMod_powMod (N g a b : ℕ) : powMod N (powMod N g a) b = powMod N g (a * b) := by
+  by_cases hN : N = 0
+  · simp [powMod, hN]
+  · simp [powMod_of_ne_zero hN, Nat.pow_mod, pow_mul]
+
+/-- A power of a unit modulo `N` is a unit modulo `N`. -/
+theorem coprime_powMod {N g : ℕ} (hg : Nat.Coprime g N) (e : ℕ) :
+    Nat.Coprime (powMod N g e) N := by
+  rcases Nat.eq_zero_or_pos N with rfl | hN
+  · simp [powMod]
+  · rw [powMod_of_ne_zero hN.ne', Nat.Coprime, (Nat.mod_modEq (g ^ e) N).gcd_eq]
+    exact hg.pow_left e
 
 /-- `powMod` is computable in polynomial time. -/
 theorem computableInPolyTime_powMod {α : Type} {input : α ↪ List Bool} {M x e : α → ℕ}

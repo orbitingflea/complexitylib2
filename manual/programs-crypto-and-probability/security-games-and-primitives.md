@@ -1162,8 +1162,9 @@ word followed by `false`. The domain `ℤₙ* × I_e` is the set of words that `
 accepts. Digests are natural numbers below `N`, not units modulo `N`. The book fixes a prime `e`,
 whereas keys here come from any law on `RSADesc`, with no condition on `ℓ`, and the results assume
 that `e` is prime on its support; `e` coprime to `(p - 1) * (q - 1)` is not enough. Exercise 10.26
-(p. 431), the use of `H_rsa` as a compression function in the Merkle–Damgård construction (p. 416)
-and the accumulator of §10.9 are not formalized. The
+(p. 431) and the use of `H_rsa` as a compression function in the Merkle–Damgård construction
+(p. 416) are not formalized. The accumulator of §10.9 is in `GUOAccumulator.lean` (below), without
+its security theorem. The
 [checked examples](../../CslibFrontierTests/Crypto/RSAHash.lean) cover a collision at `N = 15`,
 `e = 3` and `y = 2` with its root `8`, a word that decodes to a valid pair but is not valid, and, at
 `e = 9`, which is coprime to `(3 - 1) * (5 - 1) = 8`, a collision that gives no ninth root of `2`.
@@ -1196,8 +1197,9 @@ exponents suffice there. The book states only `x ^ e ≡ y`; the second
 congruence is the one §10.9 uses to recover each proof from an aggregate ([bs23][bs23], §10.9,
 p. 422). The book takes units `w` and `y` modulo `n`, whereas here `w` and `y` are natural numbers,
 not necessarily below `n`, and the two congruences assume only `Nat.Coprime w n`: for `f ≠ 0` it
-makes `y` coprime to `n`, and for `f = 0` they do not need it. The accumulator of §10.9 is not
-formalized. In `RSAAttacks.lean`, `commonRoot_rsaEval` applies the
+makes `y` coprime to `n`, and for `f = 0` they do not need it. The accumulator of §10.9 is in
+`GUOAccumulator.lean` (below), without its security theorem. In `RSAAttacks.lean`,
+`commonRoot_rsaEval` applies the
 algorithm to the common-modulus attack on plain RSA: for `Nat.Coprime e₁ e₂` and
 `Nat.Coprime m N`, `commonRoot N e₂ e₁ (rsaEval N e₁ m) (rsaEval N e₂ m) = m % N`, so
 `computableInPolyTime_commonRoot` is also the attack's certificate. The checked examples for the
@@ -1205,6 +1207,47 @@ algorithm to the common-modulus attack on plain RSA: for `Nat.Coprime e₁ e₂`
 [algorithm](../../CslibFrontierTests/Crypto/RSACommonRoot.lean) include the book's warm-up
 `e = 3`, `f = 2`, the case `f = 1`, and instances showing that coprime exponents, a unit `w` and
 commutativity are needed.
+
+For the accumulator in a group of unknown order ([bs23][bs23], §10.9, pp. 421–423), import
+[`GUOAccumulator.lean`](../../CslibFrontier/Crypto/Computational/GUOAccumulator.lean). The group
+is `(ℤ/Nℤ)ˣ` with a base `g`, its elements are natural numbers, and the hash is any `H : X → ℕ`.
+`guoCommit N g H S` is `g ^ guoExponent H S mod N`, with the product of the hashes of the finite
+set `S` in the exponent, and `guoCommit_insert` raises it to the power `H x` when `x ∉ S` is added.
+`guoSubsetWitness N g H S T` is `g` to the product of the hashes over `S \ T`: the membership proof
+for `T = {x}`, the book's `π_xy` for `T = {x, y}` and `π_T` in general. Bob's check `b ^ e = c` is
+`guoVerifySubset N c e b`. Against `c = guoCommit N g H S`, the witness for `T` passes it with
+`e = guoExponent H T` when `T ⊆ S` (`guoVerifySubset_subsetWitness`), the witness for `{x}` with
+`e = H x` when `x ∈ S` (`guoVerifySubset_singleton`), and the witness for `{x, y}` with
+`e = H x * H y` when `x` and `y` are distinct elements of `S` (`guoVerifySubset_pair`). If `b`
+passes with `e * f`, then `b ^ f mod N` passes with `e` (`guoVerifySubset_split`); if `b₁` and `b₂`
+pass against a unit `c` with coprime exponents `e` and `f`, Shamir's trick gives a proof that
+passes with `e * f` (`guoVerifySubset_commonRoot`). A non-membership proof is a pair `(b, γ)` with
+`γ : ℤ`, and `guoVerifyNonMem N g c h b γ` checks that `c` is a unit and that `b ^ h * c ^ γ = g`,
+comparing `b ^ h` with `g * c ^ |γ|` when `γ < 0`, so no inverse is computed. Alice's proof
+`(guoNonMemWitness N g h E, -guoNonMemCoeff h E)` passes against `c = powMod N g E` whenever `g`
+is a unit, `0 < h` and `Nat.Coprime h E` (`guoVerifyNonMem_witness`), so it passes against
+`guoCommit` for a prime `H x` distinct from the prime hashes of `S` (`coprime_guoExponent`,
+`guoVerifyNonMem_guoCommit`). The book's remark that correctness relies on the collision
+resistance of `H` is stated as an explicit collision: if `x ∉ S`, `H x` and the hashes of `S` are
+prime and `H x` is not coprime to `guoExponent H S`, then some `y ∈ S` other than `x` has
+`H y = H x` (`exists_collision_of_not_coprime_guoExponent`); no game against a hash family is
+stated. If `a` passes `guoVerifySubset N c h a` and `(b, γ)` passes `guoVerifyNonMem N g c h b γ`
+for the same `c` and `h`, then `guoForgeryRoot N a b γ`, which computes `b * a ^ γ mod N`, is an
+`h`-th root of `g` modulo `N` (`powMod_guoForgeryRoot`), with no hypothesis on `N`, `g` or `h`:
+this is the algebra of the book's security argument (p. 422). Both checks, Alice's non-membership
+proof and the root are computable in polynomial time, with `γ` on `encIntBin` and the natural
+numbers on `encNat` (`computableInPolyTime_guoVerifySubset`,
+`computableInPolyTime_guoVerifyNonMem`, `computableInPolyTime_neg_guoNonMemCoeff`,
+`computableInPolyTime_guoNonMemWitness`, `computableInPolyTime_guoForgeryRoot`);
+`computableInPolyTime_guoNonMemCoeff` certifies the natural number `-γ` on `encNat`. The
+statements differ from the book's in two further places: the book's
+`π_T = g ^ (E / ∏ x ∈ T, H x)` equals `guoSubsetWitness` when `T ⊆ S` and no hash is `0`, and for
+`0 < H x` Alice's `γ` satisfies `|γ| < H x` where the book has `|γ| ≤ H(x)` (`guoNonMemCoeff_lt`).
+Security under strong RSA, a certificate for computing `E` from a list of elements, aggregated
+non-membership proofs and class groups are not formalized in this module. The
+[checked examples](../../CslibFrontierTests/Crypto/GUOAccumulator.lean) work modulo `35` with
+`g = 2` and the hashes `3`, `5` and `7`, and include instances showing that the unit commitment,
+the unit base, `0 < h`, prime hashes and the unit check on `c` are needed.
 
 For weak RSA moduli ([bs23][bs23], §16.4.2, pp. 698–699), import
 [`Factoring/WeakModuli.lean`](../../CslibFrontier/Crypto/Computational/Factoring/WeakModuli.lean).

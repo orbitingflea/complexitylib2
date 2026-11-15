@@ -231,7 +231,7 @@ words of its input labels in order, and its decoding bits. -/
 /-! ### The simulated view is the typed simulator's -/
 
 /-- Row `i < 4` of a binary gate has number `i`. -/
-private theorem rowIndex_testBit_of_eq_two {r i : ℕ} (hr : r = 2) (hi : i < 4) :
+theorem rowIndex_testBit_of_eq_two {r i : ℕ} (hr : r = 2) (hi : i < 4) :
     rowIndex (fun a : Fin r => i.testBit (r - 1 - a)) = i := by
   subst hr
   exact rowIndex_testBit hi
@@ -328,10 +328,8 @@ theorem eval_simWord (k : ℕ) (f : ValidCircuit) (y : List Bool) :
   change ProbComp.eval (do
       let coins ← BitString.sampleList (simCoinLen k f.1.n f.1.q)
       return simViewWord family k y f.1.topo coins) = _
-  have hmap : ∀ {α β : Type} (p : PMF α) (g : α → β), p.bind (fun a => PMF.pure (g a)) = p.map g :=
-    fun p g => PMF.bind_pure_comp g p
-  simp only [simulate, ProbComp.eval_bind, ProbComp.eval_pure, ProbComp.eval_uniform,
-    BitString.eval_sampleList, hcoins, hmap]
+  simp only [simulate, bind_pure_comp, ProbComp.eval_map, ProbComp.eval_bind,
+    ProbComp.eval_uniform, BitString.eval_sampleList, hcoins]
   rw [hview, ← PMF.map_comp, hsim, ← Cslib.Probability.PMF.uniformOfFintype_prod]
   simp only [PMF.map_bind, PMF.map_comp, Function.comp_def]
 
@@ -416,7 +414,7 @@ variable (hf : ComputableInPolyTime (fun p : List Bool × List Bool => family p.
 attribute [local fun_prop] labelWord_polyTime tweak_polyTime wireWidth_polyTime permOf_polyTime
 
 /-- Labels of the simulator's coins are read in polynomial time. -/
-private theorem simLabel_polyTime {γ : Type} {encIn : γ ↪ List Bool} {k v : γ → ℕ}
+theorem simLabel_polyTime {γ : Type} {encIn : γ ↪ List Bool} {k v : γ → ℕ}
     {coins : γ → List Bool} (hk : ComputableInPolyTime k encIn encUnary)
     (hcoins : ComputableInPolyTime coins encIn encBits)
     (hv : ComputableInPolyTime v encIn encUnary) :

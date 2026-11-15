@@ -183,6 +183,20 @@ private theorem evalCode_take_gateCode (f : ConventionalCircuit) {x : List Bool}
     rw [htake, evalCode_append_singleton, ih hsq.le]
     simp [wires, hsq, fullInterpretation, wireVal, List.getD_eq_getElem?_getD]
 
+/-- The value of wire `w` of `toCircuit f` on an `n`-bit input is wire `w` of the conventional
+evaluation, numbered from `0`. -/
+theorem trace_toCircuit (f : ValidCircuit) (x : Fin f.1.n → Bool)
+    (w : Wire f.1.n (toCircuit f).size) :
+    (toCircuit f).program.trace fullInterpretation x w =
+      (f.1.wires (List.ofFn x) f.1.q).getD w.toNat false := by
+  have hwires := evalCode_take_gateCode f.1 (x := List.ofFn x) (by simp) le_rfl
+  rw [show (gateCode f.1).take f.1.q = gateCode f.1 by simp [gateCode]] at hwires
+  have h := (toCircuit f).program.evalCode_code fullInterpretation false x
+  have hcode : (toCircuit f).program.code = gateCode f.1 := congrArg Prod.fst (code_toCircuit f)
+  rw [hcode, hwires] at h
+  rw [h, Wire.getD_append_toNat]
+  rfl
+
 /-- **The translation computes the conventional semantics.** On every `n`-bit input, the outputs
 of `toCircuit f` are `evalCirc f`. -/
 theorem eval_toCircuit (f : ValidCircuit) (x : Fin f.1.n → Bool) :
