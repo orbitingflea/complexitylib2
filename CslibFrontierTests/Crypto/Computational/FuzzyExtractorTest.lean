@@ -26,8 +26,9 @@ probability `1 / 5`, the additive extractor on a uniform source, the LWE securit
 Construction 4.1 at concrete dimensions against `LWE.advantage`, a concrete Hamming distance) and a
 separating negative fixture
 (`revealingFuzzyExtractor`) that is perfectly reproducible for every distance threshold `t` yet
-has distinguishing advantage `1 / 2` on a uniform 1-bit source. The asymptotic theorem
-`computationallySecure_lweFuzzyExtractor` is applied to the uniform source, for which its LWE
+has distinguishing advantage `1 / 2` on a uniform 1-bit source. The asymptotic security step
+`computationallySecure_lweFuzzyExtractor_of_decisionLWEWithErrors` is applied to the uniform
+source, for which its LWE
 premise holds unconditionally, and to independent-coordinate sources under `DecisionLWE`.
 The reusable-extractor tests use non-degenerate parameters (secret dimension at least `1`, modulus
 greater than `1`). They check the reduction bounds of the common-matrix scheme and of the Section 5
@@ -181,15 +182,15 @@ theorem decisionLWEWithErrors_uniform (n m w : ℕ → ℕ) :
   exact negligible_zero
 
 open Turing.MultiTapeTM in
-/-- The asymptotic theorem applies to the family with `κ` samples, key length `κ`, `κ` further
+/-- The asymptotic step applies to the family with `κ` samples, key length `κ`, `κ` further
 secret coordinates and modulus `2`, on the uniform source. -/
 example (decode : (κ : ℕ) → Matrix (Fin κ) (Fin (κ + κ)) (ZMod (2 ^ 1)) →
       (Fin κ → ZMod (2 ^ 1)) → ProbComp (Option (Fin (κ + κ) → ZMod (2 ^ 1)))) :
     ComputationallySecure (fun κ => lweFuzzyExtractor κ κ κ (2 ^ 1) (decode κ))
       {fun κ => PMF.uniformOfFintype (Fin κ → ZMod (2 ^ 1))}
       (LWEFamily.Distinguisher.IsPPT (m := id) (k := id) (l := id) (w := fun _ => 1)) :=
-  computationallySecure_lweFuzzyExtractor (m := id) (k := id) (l := id) (w := fun _ => 1)
-    ComputableInPolyTime.id' ComputableInPolyTime.id' ComputableInPolyTime.id'
+  computationallySecure_lweFuzzyExtractor_of_decisionLWEWithErrors (m := id) (k := id) (l := id)
+    (w := fun _ => 1) ComputableInPolyTime.id' ComputableInPolyTime.id' ComputableInPolyTime.id'
     (ComputableInPolyTime.const 1) decode (by
       rintro _ rfl
       exact decisionLWEWithErrors_uniform id id fun _ => 1)
@@ -205,7 +206,7 @@ example {m k l w : ℕ → ℕ} (hm : ComputableInPolyTime m encUnary encUnary)
     (noise : (κ : ℕ) → PMF (ZMod (2 ^ w κ))) (hLWE : DecisionLWE l m w noise) :
     ComputationallySecure (fun κ => lweFuzzyExtractor (m κ) (k κ) (l κ) (2 ^ w κ) (decode κ))
       {fun κ => PMF.pi fun _ : Fin (m κ) => noise κ} LWEFamily.Distinguisher.IsPPT :=
-  computationallySecure_lweFuzzyExtractor hm hk hl hw decode (by
+  computationallySecure_lweFuzzyExtractor_of_decisionLWEWithErrors hm hk hl hw decode (by
     rintro _ rfl
     exact (decisionLWE_iff_decisionLWEWithErrors l m w noise).mp hLWE)
 

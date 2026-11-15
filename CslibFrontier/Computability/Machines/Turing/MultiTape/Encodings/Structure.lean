@@ -11,6 +11,7 @@ public import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.B
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.Degree.Bounds
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.InSpace.FunProp
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Internal.PolyTimePrimitives
+public meta import CslibFrontier.Computability.Machines.Turing.MultiTape.Internal.DegreeLifts
 public meta import Lean.Elab.Command
 
 /-!
@@ -453,9 +454,10 @@ private def checkFlattenedParents (env : Environment) (s : Name)
     elabCommand (← `($vis:visibility theorem $deg:ident $params* :
       ComputableInDegree $fn $encRef $e 1 1 := $degBody))
     registerRule deg
+    let (linear, space, poly) ← liftMacroM <| Internal.linearDegreeViews degTerm
     let inO := app name s!"_{projection}_inO"
     elabCommand (← `($vis:visibility theorem $inO:ident $params* :
-      ComputableInO $fn $encRef $e $linE $linE := ComputableInDegree.inO_one $degTerm))
+      ComputableInO $fn $encRef $e $linE $linE := $linear))
     registerRule inO
     let budgetRule := app name s!"_{projection}_budget"
     elabCommand (← `($vis:visibility theorem $budgetRule:ident $params*
@@ -463,7 +465,7 @@ private def checkFlattenedParents (env : Environment) (s : Name)
       (h : ComputableInSpace $g encIn $encRef S) :
       ComputableInSpace $compFn encIn $e S :=
         ComputableInSpace.budget_comp_linear (f := $g) (g := $fn)
-          (ComputableInSpace.of_inO (ComputableInDegree.inO_one $degTerm)) h))
+          $space h))
     registerRule budgetRule
     let polyRule := app name s!"_{projection}_polyTime"
     elabCommand (← `($vis:visibility theorem $polyRule:ident $params*
@@ -471,7 +473,7 @@ private def checkFlattenedParents (env : Environment) (s : Name)
       (h : ComputableInPolyTime $g encIn $encRef) :
       ComputableInPolyTime $compFn encIn $e :=
         ComputableInPolyTime.comp (f := $fn) (g := $g)
-          (ComputableInDegree.computableInPolyTime $degTerm) h))
+          $poly h))
     registerRule polyRule
   for f in fs, e in slots, i in Array.range n do
     -- The field read, as a function of the structure and applied to `g c`.

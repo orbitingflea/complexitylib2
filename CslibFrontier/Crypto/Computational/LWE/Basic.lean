@@ -54,7 +54,9 @@ reduction.
 * `Cslib.Crypto.LWE.Distinguisher`, `Cslib.Crypto.LWE.Distinguisher.IsPPT`: typed distinguishers
   and their efficiency.
 * `Cslib.Crypto.DecisionLWE`: the decision-LWE assumption.
-* `Cslib.Crypto.DecisionLWEWithErrors`: the same assumption with a joint law on the error vector.
+* `Cslib.Crypto.DecisionLWEWithErrors`: the same assumption with a joint law on the error vector,
+  novel to this library. It has the form of [FullerMengReyzin2020], Definition 4.5, but at modulus
+  `2 ^ w κ`, outside that definition's range of prime `q = poly(n)`.
 * `Cslib.Crypto.LWE.publicMatrix`, `Cslib.Crypto.LWE.publicMatrixLaw`: the matrix `[B * t + e | B]`
   and its law, as produced by key generation.
 * `Cslib.Crypto.LWE.realEnsemble`, `Cslib.Crypto.LWE.uniformEnsemble`: the encoded matrices.
@@ -77,6 +79,7 @@ reduction.
   cryptography*][Regev2009]
 * [C. Gentry, A. Sahai and B. Waters, *Homomorphic Encryption from Learning with Errors:
   Conceptually-Simpler, Asymptotically-Faster, Attribute-Based*, Section 2][GentrySahaiWaters2013]
+* [B. Fuller, X. Meng and L. Reyzin, *Computational Fuzzy Extractors*][FullerMengReyzin2020]
 -/
 
 @[expose] public section
@@ -351,7 +354,55 @@ and `LWE.randomGame`. The coordinates of the error vector need not be independen
 distributed, which is the form needed when a noisy source supplies the errors, as in the LWE fuzzy
 extractor. `DecisionLWE` is the case of independent coordinates. This is a hypothesis against
 uniform classical strict PPT distinguishers, not a theorem of hardness or a claim about quantum
-adversaries; whether it holds depends on the error laws. -/
+adversaries; whether it holds depends on the error laws.
+
+*Status.* This assumption is novel to this library. It has the form of `dist-LWE_{n,m,q,χ}` of
+[FullerMengReyzin2020], Definition 4.5 (p. 13 of the ePrint revision of June 23, 2020), with
+`χ := errors κ` an arbitrary distribution on the whole error vector, but at modulus `2 ^ w κ`,
+outside that definition's range of prime `q = poly(n)`: the two ranges meet only at `q = 2`.
+Fuller, Meng and Reyzin use the source reading `W` as that error law (Section 4, p. 11):
+Lemma 4.7 (p. 14) assumes Definition 4.5 in dimension `n - k` for any `χ`, and Theorem 4.11
+(p. 17) assumes it for the uniform source over `𝒵^m`, where `𝒵 = [−2^{b−1}, 2^{b−1}]`.
+
+*Relation to standard assumptions.* `DecisionLWE` is the case of independent coordinates
+(`decisionLWE_iff_decisionLWEWithErrors`). For other laws, neither this assumption nor FMR's
+prime-modulus form is proved or cited to imply the other, and hardness can differ between the two
+moduli for the same law. Take an error law supported on even residues. At each `κ` with
+`w κ > 0` and `m κ > n κ`, reducing `A` and `b` modulo 2 and testing whether `A s ≡ b (mod 2)`
+has a solution separates the games: in the real game it always has one, and in the random game
+with probability at most `2 ^ (n κ - m κ) ≤ 1/2`. At `w κ = 0` the modulus is 1 and the two games
+coincide. The test needs `n κ`, `m κ` and `w κ` to locate the entries in its input, so it is PPT
+when `n`, `m` and `w` are computable in polynomial time in unary, and the assumption then fails if
+`w κ > 0` and `m κ > n κ` for infinitely many `κ`. At an odd prime `q`, multiplying by `2⁻¹`
+turns errors `2 e'` into `e'`.
+
+*Deviations from Definition 4.5.*
+* The modulus `2 ^ w κ` replaces the prime `q = poly(n)`, which FMR need for decoding
+  (footnote 2, p. 13), and `w` may make it superpolynomial. FMR's evidence for the assumption
+  does not cover this modulus: Theorems 4.6 and 4.8 (pp. 13–14), which derive it for
+  uniform-interval errors from LWE with Gaussian errors, and Theorem 5.2 (p. 18), which derives it
+  for symbol-fixing sources from uniform errors, are all for prime `q`.
+* Distinguishers are uniform strict PPT programs and the advantage must be negligible, where
+  Definition 4.5 is concrete: advantage at most `ε` against distinguishers of size `s_sec`.
+* The theorem that assumes it chooses the dimension.
+  `FuzzyExtractor.computationallySecure_lweFuzzyExtractor_of_decisionLWEWithErrors` assumes it in
+  dimension `l = n - k`, following Lemma 4.7, where Theorem 4.11 writes `dist-LWE(n,m,q,𝒵^m)` in
+  dimension `n`; hardness in dimension `n - k` implies hardness in dimension `n`.
+* `n`, `m` and `w` are arbitrary functions of a separate security parameter `κ`, where
+  Definition 4.5 takes `n` as the security parameter and `m, q = poly(n)`. A distinguisher's
+  clock is polynomial in the length of its encoded input (`LWE.Distinguisher.IsPPT`), which is
+  framed unary `κ` followed by the `m κ * (n κ + 1) * w κ` bits of `[b | A]` (`LWE.encInput`).
+  For arbitrary `n`, `m` and `w` that length need not be polynomial in `κ`. When they are
+  computable in polynomial time in unary, as the theorem that assumes it requires, the length is
+  at least `κ` and polynomial in `κ`, so the clock is polynomial in `κ`. A family whose dimension
+  grows slowly in `κ`, such as `n κ = ⌊log κ⌋`, then asks for hardness against adversaries
+  superpolynomial in the dimension, which is more than standard LWE asks.
+
+*Plausibility.* It is the problem that FMR study, moved to the modulus of the library's
+`DecisionLWE`, its case of independent coordinates. At prime modulus, FMR derive it from LWE with
+Gaussian errors, directly for uniform-interval sources (Theorems 4.6 and 4.8) and through them for
+symbol-fixing sources (Theorem 5.2). No such derivation at modulus `2 ^ w κ` is proved here or
+cited, and whether the assumption holds depends on the error law. -/
 def DecisionLWEWithErrors (n m w : ℕ → ℕ)
     (errors : (κ : ℕ) → PMF (Fin (m κ) → ZMod (2 ^ w κ))) : Prop :=
   Game.Indistinguishable

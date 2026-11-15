@@ -35,6 +35,14 @@ gates whose state grows by one label per gate, and the semantics `ev` a fold ove
 state grows by one bit per gate. The certificates for the keyed function on words, tweaks, keys,
 permutation bits and labels are stated compositionally for reuse.
 
+The body of a garbled function is written from gate data by `bodyWith`, which takes the rows as a
+parameter and is certified once (`bodyWith_polyTime`); the garbler and the simulator supply only
+their rows.
+
+## Main definitions
+
+* `Cslib.Crypto.Garbling.PointPermute.bodyWith`: the body of a garbled function from gate data.
+
 ## Main results
 
 * `Cslib.Crypto.Garbling.PointPermute.scheme_isEfficient`: point-and-permute garbling is
@@ -184,6 +192,78 @@ private theorem evalWord_polyTime :
         (ComputableTidilyInPolyTime.snd _ _))).computableInPolyTime
   exact hfin.comp (hfold.prod hc)
 
+/-! ### The body of a garbled function -/
+
+/-- The body of a garbled function with `n` inputs and `q` gates, written from gate data: for each
+gate `g < q`, the numbers `A g` and `B g` of its argument wires as `wireWidth n q`-bit numbers, then
+its four rows `row g a b i`, where `a` and `b` are its argument wires numbered from `0` and capped
+at `cap - 1`. The garbler and the simulator write their bodies this way, each with its own rows.
+The cap keeps the unary wire numbers given to the rows polynomial in the data, which writes them in
+binary; a caller caps where the rows cannot tell a larger wire number from the cap. -/
+def bodyWith (n q cap : ℕ) (A B : ℕ → ℕ) (row : ℕ → ℕ → ℕ → ℕ → List Bool) : List Bool :=
+  ((List.range q).map fun g =>
+    BitString.lowBits (wireWidth n q) (A g) ++ BitString.lowBits (wireWidth n q) (B g) ++
+      ((List.range 4).map (row g (min cap (A g) - 1) (min cap (B g) - 1))).flatten).flatten
+
+/-- **`bodyWith` is the body written gate by gate.** When the gate data agree on the gates
+`g < q` with the argument wires `A' g` and `B' g`, and the rows on the capped argument wires with
+`row' g`, `bodyWith` is the word of `A'`, `B'` and `row'` over the gates. -/
+theorem bodyWith_eq_ofFn {n q cap : ℕ} {A B : ℕ → ℕ} {row : ℕ → ℕ → ℕ → ℕ → List Bool}
+    (A' B' : Fin q → ℕ) (row' : Fin q → ℕ → List Bool) (hA : ∀ g : Fin q, A g = A' g)
+    (hB : ∀ g : Fin q, B g = B' g)
+    (hrow : ∀ (g : Fin q) (i : Fin 4),
+      row g (min cap (A' g) - 1) (min cap (B' g) - 1) i = row' g i) :
+    bodyWith n q cap A B row = (List.ofFn fun g : Fin q =>
+      BitString.lowBits (wireWidth n q) (A' g) ++ BitString.lowBits (wireWidth n q) (B' g) ++
+        (List.ofFn fun i : Fin 4 => row' g i).flatten).flatten := by
+  simp only [bodyWith, List.map_range_eq_ofFn, hA, hB, hrow]
+
+/-- Gate `g` of `bodyWith` on computed gate data. -/
+private def gateWith {γ : Type} (n q cap : γ → ℕ) (A B : γ → ℕ → ℕ)
+    (row : γ → ℕ → ℕ → ℕ → ℕ → List Bool) (x : γ) (g : ℕ) : List Bool :=
+  BitString.lowBits (wireWidth (n x) (q x)) (A x g) ++
+    BitString.lowBits (wireWidth (n x) (q x)) (B x g) ++
+    (List.range 4).flatMap (row x g (min (cap x) (A x g) - 1) (min (cap x) (B x g) - 1))
+
+/-- **The body of a garbled function is computed in polynomial time** from gate data: `n`, `q` and
+the cap in unary, the argument wire numbers in binary, and rows computed in polynomial time on the
+gate, its capped argument wires and the row number in unary. -/
+theorem bodyWith_polyTime {γ : Type} {encIn : γ ↪ List Bool} {n q cap : γ → ℕ}
+    {A B : γ → ℕ → ℕ} {row : γ → ℕ → ℕ → ℕ → ℕ → List Bool}
+    (hn : ComputableInPolyTime n encIn encUnary) (hq : ComputableInPolyTime q encIn encUnary)
+    (hcap : ComputableInPolyTime cap encIn encUnary)
+    (hA : ComputableInPolyTime (fun p : γ × ℕ => A p.1 p.2) (encPair encIn encUnary) encNat)
+    (hB : ComputableInPolyTime (fun p : γ × ℕ => B p.1 p.2) (encPair encIn encUnary) encNat)
+    (hrow : ComputableInPolyTime (fun (x, g, a, b, i) => row x g a b i)
+      (encPair encIn (encPair encUnary (encPair encUnary (encPair encUnary encUnary)))) encBits) :
+    ComputableInPolyTime (fun x => bodyWith (n x) (q x) (cap x) (A x) (B x) (row x)) encIn
+      encBits := by
+  have hfst := ComputableInPolyTime.fst encIn encUnary
+  have hg := ComputableInPolyTime.snd encIn encUnary
+  have hcap' := hcap.comp hfst
+  have ha : ComputableInPolyTime (fun p : γ × ℕ => min (cap p.1) (A p.1 p.2) - 1)
+      (encPair encIn encUnary) encUnary := by
+    polytime
+  have hb : ComputableInPolyTime (fun p : γ × ℕ => min (cap p.1) (B p.1 p.2) - 1)
+      (encPair encIn encUnary) encUnary := by
+    polytime
+  have hrows : ComputableInPolyTime (fun p : (γ × ℕ) × ℕ =>
+      row p.1.1 p.1.2 (min (cap p.1.1) (A p.1.1 p.1.2) - 1) (min (cap p.1.1) (B p.1.1 p.1.2) - 1)
+        p.2) (encPair (encPair encIn encUnary) encUnary) encBits :=
+    hrow.comp (((hfst.comp (ComputableInPolyTime.fst _ _)).prod
+      ((hg.comp (ComputableInPolyTime.fst _ _)).prod ((ha.comp (ComputableInPolyTime.fst _ _)).prod
+        ((hb.comp (ComputableInPolyTime.fst _ _)).prod (ComputableInPolyTime.snd _ _))))))
+  have hn' := hn.comp hfst
+  have hq' := hq.comp hfst
+  have hgate : ComputableInPolyTime (fun p : γ × ℕ => gateWith n q cap A B row p.1 p.2)
+      (encPair encIn encUnary) encBits := by
+    unfold gateWith
+    refine .bitsAppend (.bitsAppend (by polytime) (by polytime))
+      (ComputableInPolyTime.flatMapToBitsWithInput (enc := encUnary)
+        (ComputableInPolyTime.range.comp (ComputableInPolyTime.const 4)) hrows)
+  exact ComputableInPolyTime.flatMapToBitsWithInput (enc := encUnary)
+    (ComputableInPolyTime.range.comp hq) hgate
+
 /-! ### Garbling -/
 
 /-- The truth table of a gate read from its four bits. -/
@@ -191,45 +271,6 @@ private theorem getD_table (G : Bool → Bool → Bool) (x y : Bool) :
     [G false false, G false true, G true false, G true true].getD
       ((if x then 2 else 0) + (if y then 1 else 0)) false = G x y := by
   cases x <;> cases y <;> rfl
-
-/-- Row `i` of gate `g` from the gate's data: argument wires `A`, `B` and truth table `t`. -/
-private def rowData (k n q : ℕ) (coins : List Bool) (A B : ℕ) (t : List Bool) (g i : ℕ) :
-    List Bool :=
-  let bit := t.getD ((if i.testBit 1 ^^ permOf coins (A - 1) then 2 else 0) +
-    (if i.testBit 0 ^^ permOf coins (B - 1) then 1 else 0)) false
-  List.zipWith xor (labelOf k (n + q) coins (n + g) (bit ^^ permOf coins (n + g)))
-    (List.zipWith xor (labelWord family k (keyOf k (n + q) coins (A - 1) (i.testBit 1))
-        (tweak k g i 0))
-      (labelWord family k (keyOf k (n + q) coins (B - 1) (i.testBit 0)) (tweak k g i 1)))
-
-/-- The body of the garbled function from the gate list. -/
-private def bodyData (k n q : ℕ) (gates : List (ℕ × ℕ × List Bool)) (coins : List Bool) :
-    List Bool :=
-  ((List.range q).map fun g =>
-    BitString.lowBits (wireWidth n q) (gates.getD g (0, 0, [])).1 ++
-      BitString.lowBits (wireWidth n q) (gates.getD g (0, 0, [])).2.1 ++
-      ((List.range 4).map fun i => rowData (family := family) k n q coins
-        (gates.getD g (0, 0, [])).1 (gates.getD g (0, 0, [])).2.1
-        (gates.getD g (0, 0, [])).2.2 g i).flatten).flatten
-
-private theorem fnWord_eq (k : ℕ) (f : ConventionalCircuit) (coins : List Bool) :
-    fnWord family k f coins =
-      encFn ((k, f.n, f.m, f.gateList.length),
-        bodyData (family := family) k f.n f.gateList.length f.gateList coins) := by
-  simp only [fnWord, bodyData, ConventionalCircuit.length_gateList]
-  congr 3
-  apply List.ext_getElem (by simp)
-  intro g h₁ h₂
-  have hg : g < f.q := by simpa using h₁
-  have hgate : f.gateList.getD g (0, 0, []) = (f.A ⟨g, hg⟩, f.B ⟨g, hg⟩,
-      [f.G ⟨g, hg⟩ false false, f.G ⟨g, hg⟩ false true, f.G ⟨g, hg⟩ true false,
-        f.G ⟨g, hg⟩ true true]) := by
-    simp [ConventionalCircuit.gateList, List.getD_eq_getElem?_getD, hg]
-  simp only [List.getElem_ofFn, List.getElem_map, List.getElem_range, hgate]
-  congr 2
-  apply List.ext_getElem (by simp)
-  intro i hi₁ hi₂
-  simp only [List.getElem_ofFn, List.getElem_map, List.getElem_range, rowWord, rowData, getD_table]
 
 /-- A wire number beyond the coins reads the same permutation bit as the length of the coins. -/
 private theorem permOf_min (coins : List Bool) (v : ℕ) :
@@ -261,17 +302,22 @@ private def rowCapped (k n q : ℕ) (coins : List Bool) (a b : ℕ) (t : List Bo
         (tweak k g i 0))
       (labelWord family k (keyOf k (n + q) coins b (i.testBit 0)) (tweak k g i 1)))
 
-private theorem rowData_eq (k n q : ℕ) (coins : List Bool) (A B : ℕ) (t : List Bool) (g i : ℕ) :
-    rowData (family := family) k n q coins A B t g i =
-      rowCapped (family := family) k n q coins (min (coins.length + 1) A - 1)
-        (min (coins.length + 1) B - 1) t g i := by
+/-- The garbled function of `f` from its data: the header, and the body `bodyWith` of the gate list
+with the rows `rowCapped` on argument wires capped at the length of the coins. -/
+private theorem fnWord_eq (k : ℕ) (f : ConventionalCircuit) (coins : List Bool) :
+    fnWord family k f coins =
+      encFn ((k, f.n, f.m, f.gateList.length), bodyWith f.n f.gateList.length (coins.length + 1)
+        (fun g => (f.gateList.getD g (0, 0, [])).1) (fun g => (f.gateList.getD g (0, 0, [])).2.1)
+        (fun g a b i => rowCapped (family := family) k f.n f.gateList.length coins a b
+          (f.gateList.getD g (0, 0, [])).2.2 g i)) := by
+  have hgate (g : Fin f.q) : f.gateList.getD g (0, 0, []) = (f.A g, f.B g,
+      [f.G g false false, f.G g false true, f.G g true false, f.G g true true]) := by
+    simp [ConventionalCircuit.gateList, List.getD_eq_getElem?_getD]
   have hcap (V : ℕ) : min (coins.length + 1) V - 1 = min coins.length (V - 1) := by omega
-  simp only [rowData, rowCapped, hcap, permOf_min, keyOf_min]
-
-/-- The input `(k, n, q, gates, coins)` of the garbler's body. -/
-private abbrev encBodyInput : (ℕ × ℕ × ℕ × List (ℕ × ℕ × List Bool) × List Bool) ↪ List Bool :=
-  encPair encUnary (encPair encUnary (encPair encUnary
-    (encPair (encList (encPair encNat (encPair encNat encBits))) encBits)))
+  rw [ConventionalCircuit.length_gateList, bodyWith_eq_ofFn f.A f.B (rowWord family k f coins)
+    (fun g => by rw [hgate]) (fun g => by rw [hgate])
+    (fun g i => by simp only [hgate, rowCapped, rowWord, hcap, permOf_min, keyOf_min, getD_table])]
+  rfl
 
 include hf in
 private theorem rowCapped_polyTime {γ : Type} {encIn : γ ↪ List Bool} {k n q a b g i : γ → ℕ}
@@ -292,89 +338,6 @@ private theorem rowCapped_polyTime {γ : Type} {encIn : γ ↪ List Bool} {k n q
     polytime [rowCapped, labelOf]
   exact h.comp ((hk.prod (hn.prod (hq.prod hcoins))).prod ((ha.prod (hb.prod ht)).prod
     (hg.prod hi)))
-
-attribute [local fun_prop] rowCapped_polyTime
-
-/-- The four rows of gate `g`, reading the 0-indexed argument wires `a` and `b`. -/
-private def rowsBlock (k n q : ℕ) (coins : List Bool) (a b : ℕ) (t : List Bool) (g : ℕ) :
-    List Bool :=
-  ((List.range 4).map fun i => rowCapped (family := family) k n q coins a b t g i).flatten
-
-include hf in
-private theorem rowsBlock_polyTime {γ : Type} {encIn : γ ↪ List Bool} {k n q a b g : γ → ℕ}
-    {coins t : γ → List Bool} (hk : ComputableInPolyTime k encIn encUnary)
-    (hn : ComputableInPolyTime n encIn encUnary) (hq : ComputableInPolyTime q encIn encUnary)
-    (hcoins : ComputableInPolyTime coins encIn encBits)
-    (ha : ComputableInPolyTime a encIn encUnary) (hb : ComputableInPolyTime b encIn encUnary)
-    (ht : ComputableInPolyTime t encIn encBits) (hg : ComputableInPolyTime g encIn encUnary) :
-    ComputableInPolyTime (fun x => rowsBlock (family := family) (k x) (n x) (q x) (coins x) (a x)
-      (b x) (t x) (g x)) encIn encBits := by
-  have h : ComputableInPolyTime (fun p : (ℕ × ℕ × ℕ × List Bool) × (ℕ × ℕ × List Bool) × ℕ =>
-        rowsBlock (family := family) p.1.1 p.1.2.1 p.1.2.2.1 p.1.2.2.2 p.2.1.1 p.2.1.2.1
-          p.2.1.2.2 p.2.2)
-      (encPair (encPair encUnary (encPair encUnary (encPair encUnary encBits)))
-        (encPair (encPair encUnary (encPair encUnary encBits)) encUnary)) encBits := by
-    polytime [rowsBlock]
-  exact h.comp ((hk.prod (hn.prod (hq.prod hcoins))).prod ((ha.prod (hb.prod ht)).prod hg))
-
-attribute [local fun_prop] rowsBlock_polyTime
-
-/-- Gate `g` of the garbler's body, with capped wire numbers. -/
-private def gateBlock (x : ℕ × ℕ × ℕ × List (ℕ × ℕ × List Bool) × List Bool) (g : ℕ) :
-    List Bool :=
-  BitString.lowBits (wireWidth x.2.1 x.2.2.1) (x.2.2.2.1.getD g (0, 0, [])).1 ++
-    BitString.lowBits (wireWidth x.2.1 x.2.2.1) (x.2.2.2.1.getD g (0, 0, [])).2.1 ++
-    rowsBlock (family := family) x.1 x.2.1 x.2.2.1 x.2.2.2.2
-      (min (x.2.2.2.2.length + 1) (x.2.2.2.1.getD g (0, 0, [])).1 - 1)
-      (min (x.2.2.2.2.length + 1) (x.2.2.2.1.getD g (0, 0, [])).2.1 - 1)
-      (x.2.2.2.1.getD g (0, 0, [])).2.2 g
-
-include hf in
-private theorem gateBlock_polyTime :
-    ComputableInPolyTime (fun p => gateBlock (family := family) p.1 p.2)
-      (encPair encBodyInput encUnary) encBits := by
-  have hgate : ComputableInPolyTime
-      (fun p : (ℕ × ℕ × ℕ × List (ℕ × ℕ × List Bool) × List Bool) × ℕ =>
-        p.1.2.2.2.1.getD p.2 (0, 0, [])) (encPair encBodyInput encUnary)
-      (encPair encNat (encPair encNat encBits)) := by
-    polytime
-  have hA := hgate.fst'
-  have hB := hgate.snd'.fst'
-  have ht := hgate.snd'.snd'
-  have hw : ComputableInPolyTime
-      (fun p : (ℕ × ℕ × ℕ × List (ℕ × ℕ × List Bool) × List Bool) × ℕ =>
-        wireWidth p.1.2.1 p.1.2.2.1) (encPair encBodyInput encUnary) encUnary := by
-    polytime
-  have hcap (V : (ℕ × ℕ × ℕ × List (ℕ × ℕ × List Bool) × List Bool) × ℕ → ℕ)
-      (hV : ComputableInPolyTime V (encPair encBodyInput encUnary) encNat) :
-      ComputableInPolyTime (fun p => min (p.1.2.2.2.2.length + 1) (V p) - 1)
-        (encPair encBodyInput encUnary) encUnary := by
-    polytime
-  unfold gateBlock
-  refine ComputableInPolyTime.bitsAppend (ComputableInPolyTime.bitsAppend ?_ ?_)
-    (rowsBlock_polyTime hf (by polytime) (by polytime) (by polytime) (by polytime)
-      (hcap _ hA) (hcap _ hB) ht (by polytime))
-  · polytime
-  · polytime
-
-include hf in
-private theorem bodyData_polyTime :
-    ComputableInPolyTime (fun (k, n, q, gates, coins) => bodyData
-      (family := family) k n q gates coins)
-      encBodyInput encBits := by
-  have hblock := gateBlock_polyTime hf
-  have heq : (fun (x : ℕ × ℕ × ℕ × List (ℕ × ℕ × List Bool) × List Bool) =>
-      bodyData (family := family) x.1 x.2.1 x.2.2.1 x.2.2.2.1 x.2.2.2.2) =
-      fun x => ((List.range x.2.2.1).map (gateBlock (family := family) x)).flatten := by
-    funext x
-    simp only [bodyData, rowData_eq]
-    rfl
-  refine (show ComputableInPolyTime (fun (x : ℕ × ℕ × ℕ × List (ℕ × ℕ × List Bool) × List Bool) =>
-      bodyData (family := family) x.1 x.2.1 x.2.2.1 x.2.2.2.1 x.2.2.2.2) encBodyInput encBits
-    from ?_)
-  rw [heq]
-  polytime
-
 
 /-- The input `(1^k, f, r)` of the garbler. -/
 private abbrev encGbInput : (ℕ × ValidCircuit × List Bool) ↪ List Bool :=
@@ -412,8 +375,25 @@ private theorem fnWord_polyTime :
   have hn := hd.fst'
   have hm := hd.snd'.fst'
   have hg := hd.snd'.snd'
-  have hbody := (bodyData_polyTime hf).comp ((ComputableInPolyTime.fst _ _).prod
-    (hn.prod (q_polyTime.prod (hg.prod (ComputableInPolyTime.snd _ _).snd'))))
+  have hx := ComputableInPolyTime.fst encGbInput
+    (encPair encUnary (encPair encUnary (encPair encUnary encUnary)))
+  have hrest := ComputableInPolyTime.snd encGbInput
+    (encPair encUnary (encPair encUnary (encPair encUnary encUnary)))
+  have hgates := hg.comp hx
+  have hgi := hrest.fst'
+  have ht := (ComputableInPolyTime.listGetDWithInput hgates hgi (0, 0, [])).snd'.snd'
+  have hrow := rowCapped_polyTime hf hx.fst' (hn.comp hx) (q_polyTime.comp hx) hx.snd'.snd'
+    hrest.snd'.fst' hrest.snd'.snd'.fst' ht hgi hrest.snd'.snd'.snd'
+  have hgate := ComputableInPolyTime.listGetDWithInput
+    (hg.comp (ComputableInPolyTime.fst encGbInput encUnary)) (ComputableInPolyTime.snd _ _)
+    (0, 0, [])
+  have hbody := bodyWith_polyTime (n := fun x : ℕ × ValidCircuit × List Bool => x.2.1.1.n)
+    (cap := fun x => x.2.2.length + 1)
+    (A := fun x g => (x.2.1.1.gateList.getD g (0, 0, [])).1)
+    (B := fun x g => (x.2.1.1.gateList.getD g (0, 0, [])).2.1)
+    (row := fun x g a b i => rowCapped (family := family) x.1 x.2.1.1.n x.2.1.1.gateList.length
+      x.2.2 a b (x.2.1.1.gateList.getD g (0, 0, [])).2.2 g i)
+    hn q_polyTime (by polytime) hgate.fst' hgate.snd'.fst' hrow
   have hhead : ComputableInPolyTime (fun x : ℕ × ValidCircuit × List Bool =>
       (x.1, x.2.1.1.n, x.2.1.1.m, x.2.1.1.gateList.length)) encGbInput encHeader :=
     (ComputableInPolyTime.fst _ _).prod (hn.prod (hm.prod q_polyTime))

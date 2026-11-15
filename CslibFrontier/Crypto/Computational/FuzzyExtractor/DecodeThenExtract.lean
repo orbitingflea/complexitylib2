@@ -71,15 +71,17 @@ recover `s`, and derives the key from `s`.
 
 ## What is not proved
 
-* Hardness of LWE with error distribution `W` (Theorems 4.6 and 4.8 of the paper, which rest on
-  Döttling and Müller-Quade and on Regev); the security theorem is a reduction to that
-  assumption, stated as an inequality between advantages.
+* Hardness of LWE with error distribution `W`. Theorems 4.6 and 4.8 of the paper, due to
+  Döttling and Müller-Quade [DottlingMullerQuade2013] and to Bai et al.
+  [BaiLepointRouxLangloisSakzadStehleSteinfeld2018], derive it for uniform-interval `W` and prime
+  `q` from LWE with Gaussian errors. The security theorem is a reduction to that assumption,
+  stated as an inequality between advantages.
 * Running time of the reductions and asymptotic security, here. The parameters `m, k, l, q` are
   fixed, so `securityAdvantage_lweFuzzyExtractor_le` is a concrete reduction inequality, not a
   security theorem on its own. The module
   `CslibFrontier.Crypto.Computational.FuzzyExtractor.DecodeThenExtract.Security` certifies the
-  reductions as strict PPT and proves the asymptotic theorem
-  `computationallySecure_lweFuzzyExtractor`.
+  reductions as strict PPT and proves the asymptotic step at modulus `2 ^ w κ`,
+  `computationallySecure_lweFuzzyExtractor_of_decisionLWEWithErrors`.
 * Correctness of the decoder of Construction 4.9 (Lemma 4.10); it is a hypothesis.
 * The symbol-fixing and block-source results of Section 5.
 * No security claim is made for `decodeThenExtract` with a general `ext`: with a public seed and
@@ -90,6 +92,10 @@ recover `s`, and derives the key from `s`.
 
 * [B. Fuller, X. Meng, and L. Reyzin, *Computational Fuzzy Extractors*][FullerMengReyzin2020],
   Section 4 (Construction 4.1, Definition 4.5, Lemma 4.7, Theorem 4.11).
+* [N. Döttling and J. Müller-Quade, *Lossy Codes and a New Variant of the
+  Learning-With-Errors Problem*][DottlingMullerQuade2013]
+* [S. Bai, T. Lepoint, A. Roux-Langlois, A. Sakzad, D. Stehlé and R. Steinfeld, *Improved Security
+  Proofs in Lattice-Based Cryptography*][BaiLepointRouxLangloisSakzadStehleSteinfeld2018]
 -/
 
 @[expose] public section
@@ -469,8 +475,9 @@ uniform secret in dimension `l` and error distribution `W`, of the two explicit 
 
 This is an exact statement with no hypotheses; it does not bound the running time of the
 reductions, and it does not prove that LWE with error distribution `W` is hard (the paper obtains
-this from Theorem 4.6 for uniform-interval errors). The asymptotic theorem built on it is
-`computationallySecure_lweFuzzyExtractor`, whose reductions are certified strict PPT. -/
+this from Theorem 4.6 for uniform-interval errors). The asymptotic step built on it, at modulus
+`2 ^ w κ`, is `computationallySecure_lweFuzzyExtractor_of_decisionLWEWithErrors`, whose
+reductions are certified strict PPT. -/
 theorem securityAdvantage_lweFuzzyExtractor_le
     (decode : Matrix (Fin m) (Fin (k + l)) (ZMod q) → (Fin m → ZMod q) →
       ProbComp (Option (Fin (k + l) → ZMod q)))

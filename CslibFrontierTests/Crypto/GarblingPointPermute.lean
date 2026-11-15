@@ -8,6 +8,7 @@ module
 
 import CslibFrontier.Crypto.Primitives.Garbling.PointPermute
 import CslibFrontier.Crypto.Primitives.Garbling.PointPermute.Efficient
+import CslibFrontier.Crypto.Primitives.Garbling.PointPermute.Simulator
 
 /-!
 # Tests for point-and-permute garbling
@@ -25,7 +26,9 @@ shows that the gate's translation to a circuit computes AND.
 `Scheme.encGarbled`, declared with `enc_structure`, writes the same words as the former tuple
 encoding `encPair encBits (encPair encBits encBits)` of `(F, e, d)`. `Scheme.IsEfficient` has an
 instance: point-and-permute garbling keyed by the family that returns its input word, which is
-computed in polynomial time.
+computed in polynomial time. For the same family, the simulator `PointPermute.simWord` of
+`CslibFrontier.Crypto.Primitives.Garbling.PointPermute.Simulator` is PPT, and its views decode to
+the output.
 -/
 
 -- This regression module checks ordinary imports and exports no test fixtures.
@@ -106,6 +109,18 @@ example (g : Scheme.Garbled) :
 /-- Point-and-permute garbling keyed by a polynomial-time family is efficient. -/
 example : (PointPermute.scheme fun _ x => x).IsEfficient encValidCircuit :=
   PointPermute.scheme_isEfficient (ComputableInPolyTime.snd _ _)
+
+/-- The simulator of point-and-permute garbling keyed by a polynomial-time family is PPT. -/
+example : Cslib.Probability.IsPPTOn (encPair encUnary (encPair encBits encValidTopo)) encPrvView
+    (fun (k, y, t) => PointPermute.simWord (fun _ x => x) k y t) :=
+  PointPermute.isPPTOn_simWord (ComputableInPolyTime.snd _ _)
+
+/-- Every simulated view decodes to the output. -/
+example (k : ℕ) (t : ValidTopo) (y coins : List Bool) (hy : y.length = t.1.m) :
+    let V := PointPermute.simViewWord (fun _ x => x) k y t.1 coins
+    PointPermute.decodeWord V.decInfo (PointPermute.evalWord (fun _ x => x) V.fn V.input) =
+      some y :=
+  PointPermute.decodeWord_evalWord_simViewWord _ k t hy coins
 
 end Efficiency
 

@@ -14,6 +14,7 @@ public import CslibFrontier.Computability.Machines.Turing.MultiTape.Encodings.Li
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Encodings.Option
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Encodings.Nat
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Encodings.Structure
+public import CslibFrontier.Crypto.Primitives.Garbling.Games
 
 /-!
 # Efficient garbling schemes
@@ -27,7 +28,9 @@ parameter in unary and the encoded arguments.
 
 For circuit garbling, `encConventionalCircuit` encodes a conventional circuit by `n` and `m` in
 unary followed by its gates, each the binary numbers of its two argument wires and its truth table
-as four bits; `encValidCircuit` restricts it to valid circuits.
+as four bits; `encValidCircuit` restricts it to valid circuits. `encValidTopo` encodes the
+topology `(n, m, q, A, B)` revealed by `phiTopo` in the same layout without the truth tables, and
+`encPrvView` encodes the view `(F, X, d)` of a privacy adversary.
 
 ## Main definitions
 
@@ -36,6 +39,9 @@ as four bits; `encValidCircuit` restricts it to valid circuits.
 * `Cslib.Crypto.Garbling.ConventionalCircuit.gateList`,
   `Cslib.Crypto.Garbling.encConventionalCircuit`, `Cslib.Crypto.Garbling.encValidCircuit`:
   conventional circuits as data.
+* `Cslib.Crypto.Garbling.Topo.gateList`, `Cslib.Crypto.Garbling.encTopo`,
+  `Cslib.Crypto.Garbling.encValidTopo`: topologies, the side information of `phiTopo`, as data.
+* `Cslib.Crypto.Garbling.encPrvView`: the encoding of a privacy view `(F, X, d)`.
 
 ## References
 
@@ -141,5 +147,56 @@ theorem circuitData_polyTime :
     ComputableInPolyTime (fun f : ValidCircuit => (f.1.n, f.1.m, f.1.gateList)) encValidCircuit
       encCircuitData :=
   .of_eq fun _ => rfl
+
+namespace Topo
+
+/-- The gates of a topology as data: for each gate its argument wires `A g` and `B g`. -/
+@[expose] def gateList (t : Topo) : List (ℕ × ℕ) := List.ofFn fun g => (t.A g, t.B g)
+
+@[simp] theorem length_gateList (t : Topo) : t.gateList.length = t.q := by
+  simp [gateList]
+
+/-- A topology is determined by `n`, `m` and its gates. -/
+theorem gateList_injective {t t' : Topo} (hn : t.n = t'.n) (hm : t.m = t'.m)
+    (h : t.gateList = t'.gateList) : t = t' := by
+  obtain ⟨n, m, q, A, B⟩ := t
+  obtain ⟨n', m', q', A', B'⟩ := t'
+  simp only at hn hm
+  subst hn hm
+  obtain ⟨rfl, hfun⟩ := Sigma.mk.inj_iff.mp (List.ofFn_inj'.mp h)
+  have hfun := eq_of_heq hfun
+  have hA : A = A' := funext fun g => congrArg Prod.fst (congrFun hfun g)
+  have hB : B = B' := funext fun g => congrArg Prod.snd (congrFun hfun g)
+  subst hA hB
+  rfl
+
+end Topo
+
+/-- The data of a topology: `n` and `m` in unary, then each gate's argument wires in binary. -/
+abbrev encTopoData : (ℕ × ℕ × List (ℕ × ℕ)) ↪ List Bool :=
+  encPair encUnary (encPair encUnary (encList (encPair encNat encNat)))
+
+/-- **Topologies as words**: `n` and `m` in unary, then the gates in order, each the binary numbers
+of its argument wires `A g` and `B g` (`encTopoData` of `(n, m, gateList t)`). This is the layout
+of `encConventionalCircuit` without the truth tables. -/
+def encTopo : Topo ↪ List Bool :=
+  ⟨fun t => encTopoData (t.n, t.m, t.gateList), fun t t' h => by
+    obtain ⟨hn, hrest⟩ := Prod.ext_iff.mp (encTopoData.injective h)
+    obtain ⟨hm, hg⟩ := Prod.ext_iff.mp hrest
+    exact Topo.gateList_injective hn hm hg⟩
+
+/-- Valid topologies, the side information of `phiTopo`, as words by `encTopo`. -/
+def encValidTopo : ValidTopo ↪ List Bool :=
+  (Function.Embedding.subtype _).trans encTopo
+
+/-- The data of a valid topology is read from its word in polynomial time. -/
+theorem topoData_polyTime :
+    ComputableInPolyTime (fun t : ValidTopo => (t.1.n, t.1.m, t.1.gateList)) encValidTopo
+      encTopoData :=
+  .of_eq fun _ => rfl
+
+/-- The encoding of a privacy view `(F, X, d)`: `F` and `X` framed, then `d`. -/
+enc_structure encPrvView : PrvView where
+  fn : encBits, input : encBits, decInfo : encBits
 
 end Cslib.Crypto.Garbling

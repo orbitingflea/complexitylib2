@@ -50,8 +50,9 @@ identities `Commute.zpow_mul_zpow_zpow_eq_right` and `Commute.zpow_mul_zpow_zpow
 The statement differs from the book's in three ways.
 
 * The exponents `e` and `f` are natural numbers. The book allows negative exponents, and its proof
-  of Theorem 10.7 (p. 417) applies the theorem with `f = b' - b`. Signed inputs are left to that
-  first caller; the identities in `ZPowCoprime.lean` already take integer exponents.
+  of Theorem 10.7 (p. 417) applies the theorem with `f = b' - b`. `rsaHashRoot` in `RSAHash.lean`
+  orders the pair so that the exponent is `b' - b` or `b - b'`, whichever is positive, so natural
+  exponents suffice there; the identities in `ZPowCoprime.lean` already take integer exponents.
 * One output `x` is both an `e`-th root of `y` and an `f`-th root of `w`. The book's theorem states
   only the first. Section 10.9 (pp. 422–423) applies the theorem to aggregate two membership
   proofs, and recovering each proof from the aggregate (p. 422) is the second.
@@ -62,8 +63,8 @@ The statement differs from the book's in three ways.
   this only when `f = 0`.
 
 The certificate covers the computation on encoded numbers. Nothing here concerns an adversary or
-a security game. Theorem 10.5 is in `RSAUnitInversion.lean`; Theorem 10.7 and the accumulator of
-§10.9 are not formalized.
+a security game. Theorem 10.5 is in `RSAUnitInversion.lean` and Theorem 10.7 in `RSAHash.lean`;
+the accumulator of §10.9 is not formalized.
 
 The common-modulus attack on plain RSA is this program on two ciphertexts:
 `Cslib.Crypto.commonRoot_rsaEval` in `RSAAttacks.lean` proves that for coprime `e₁`, `e₂` and `m`

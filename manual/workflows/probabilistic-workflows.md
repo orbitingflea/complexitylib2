@@ -190,7 +190,12 @@ through an injection. For a dependent function, `uniformOfFintype_map_comp_dep` 
 [Product/Split.lean](../../CslibFrontier/Probability/Product/Split.lean) needs only nonempty
 fibres. On any finite type, `uniformOfFintype_bind_bijective` in
 [PMF/Uniform.lean](../../CslibFrontier/Probability/PMF/Uniform.lean) changes variables in a uniform
-draw along a bijection. For a biased bit, use `coin p` from
+draw along a bijection. For finite types `ι`, `ι'` and `κ`, with decidable equality on `ι` and `ι'`
+and `κ` nonempty, and any map `e : ι' → ι`, `uniformOfFintype_bind_bind_extend` in
+[PMF/UniformExtend.lean](../../CslibFrontier/Probability/PMF/UniformExtend.lean) replaces the values
+of a uniform `f : ι → κ` on the range of `e` by an independent uniform table `t : ι' → κ`
+(`Function.extend e t f`) and shows that the result is again uniform; it replaces part of a random
+function or random oracle by fresh values. For a biased bit, use `coin p` from
 [PMF/Coin.lean](../../CslibFrontier/Probability/PMF/Coin.lean), with `p : unitInterval`; Mathlib's
 `PMF.bernoulli` is deprecated. `toMeasure_coin` identifies `(coin p).toMeasure` with Mathlib's
 `ProbabilityTheory.bernoulliMeasure true false p`, and `entropy_coin` in

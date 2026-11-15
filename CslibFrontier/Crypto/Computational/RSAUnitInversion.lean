@@ -199,7 +199,7 @@ theorem computableInPolyTime_rsaNonUnitRoot {α : Type} {enc : α ↪ List Bool}
 
 /-- The wrapper `B` of Theorem 10.5 ([BonehShoup2023], p. 416): on a challenge `y` coprime to
 `N`, run `A`; on any other challenge, return `rsaNonUnitRoot N e y`. -/
-@[expose] def unitRSAToRSA (A : RSAInverter) : RSAInverter := fun n pk y =>
+def unitRSAToRSA (A : RSAInverter) : RSAInverter := fun n pk y =>
   if Nat.Coprime y pk.N then A n pk y
   else pure ⟨rsaNonUnitRoot pk.N pk.e y, rsaNonUnitRoot_lt y.pos _ _⟩
 

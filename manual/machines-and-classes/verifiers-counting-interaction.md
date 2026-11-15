@@ -241,6 +241,16 @@ hold; its name alone implies no integer-sign correctness. The
 [ordinary-module client](../../CslibFrontierTests/DyadicFirstEvent.lean) checks these defaults,
 masking, precision zero, empty ranges, ordering and priority.
 
+`CountingHierarchy.PrimeCofactor` supplies the weighted coefficients. Its shared
+`primeWindowTest` is in F_1. `primeCofactor Y L p` takes the product of the other primes
+`L < q ≤ Y` modulo `p` in F_5; on every prime modulus that residue is nonzero. The
+coefficient operation combines its modular inverse, a binary modular power and an F_a supplied
+residue in F_max(a,5). Both operations return zero for nonprime moduli, including zero and one.
+`primeWindowCoefficient_modEq_subtype` consumes `IntegerResidueAccess.residue_modEq` directly
+and proves the congruence required by CRT correctness. Its full cofactor and represented integer
+occur only in the specification. The [checked client](../../CslibFrontierTests/PrimeCofactor.lean)
+covers negative residues, p=2, omitted/empty/reversed windows, defaults and uniform composition.
+
 ## Mathematical sign recovery from residues
 
 Import [`Foundations.NumberTheory.CRTSign`](../../CslibFrontier/Foundations/NumberTheory/CRTSign.lean)

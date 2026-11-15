@@ -25,6 +25,16 @@ example {n : ℕ} :
   exact encPublicTable_mk_polyTime
     (encPublicTable_tag_polyTime hid) (encPublicTable_entries_polyTime hid)
 
+-- The shared degree lift retains the caller's workspace rather than replacing it by length.
+example {n : ℕ} {α : Type} {enc : α ↪ List Bool} {budget : α → ℕ}
+    {f : α → TaggedTable n} (hf : ComputableInSpace f enc encPublicTable budget) :
+    ComputableInSpace (fun a => (f a).tag) enc encBool budget := by
+  fun_prop
+
+example {n : ℕ} : ComputableInO (TaggedTable.tag (n := n)) encPublicTable encBool
+    (fun t => (encPublicTable t).length) (fun t => (encPublicTable t).length) := by
+  fun_prop
+
 -- Flipping the tag is a real update, so automation must construct and read the record.
 example {n : ℕ} :
     ComputableInPolyTime (fun t : TaggedTable n => TaggedTable.mk (!t.tag) t.entries)

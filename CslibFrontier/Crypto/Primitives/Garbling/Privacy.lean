@@ -38,7 +38,10 @@ key as the inactive key of wire `j`: with the keyed oracle it produces hybrid `j
 (`PRF.realExperiment` side), and with a random function hybrid `j + 1` exactly
 (`PRF.idealExperiment` side).
 Each reduction reads the oracle up front at the tweaks of all argument slots, with at most one
-query per slot (`isQueryBounded_reduction`), and runs `D` once.
+query per slot (`isQueryBounded_reduction`), and runs `D` once. Both laws hold for every `j`
+(`eval_realExperiment_reduction`, `eval_idealExperiment_reduction`): from wire `n + C.size` on no
+slot is a target and every hybrid is the simulated experiment (`hybridGame_of_le`), so a reduction
+may draw its step from a range larger than the number of wires.
 
 Tweak injectivity is needed. Take a row that reads one wire twice with the same colour. If its
 two argument slots had equal tweaks, their mask terms would be equal and cancel in the `Bool`
@@ -63,12 +66,17 @@ simulator or the reductions.
 * `Cslib.Crypto.Garbling.View`: what the evaluator sees.
 * `Cslib.Crypto.Garbling.simulateWith`, `Cslib.Crypto.Garbling.simulate`: the simulator.
 * `Cslib.Crypto.Garbling.realGame`, `Cslib.Crypto.Garbling.simGame`: the privacy experiments.
+* `Cslib.Crypto.Garbling.hybridView`, `Cslib.Crypto.Garbling.hybridGame`: the hybrid views and
+  experiments.
 * `Cslib.Crypto.Garbling.reduction`: the PRF adversary for one hybrid step.
 
 ## Main results
 
 * `Cslib.Crypto.Garbling.View.run_simulateWith`: simulated views decode to the output.
 * `Cslib.Crypto.Garbling.isQueryBounded_reduction`: at most one query per slot.
+* `Cslib.Crypto.Garbling.eval_realExperiment_reduction`,
+  `Cslib.Crypto.Garbling.eval_idealExperiment_reduction`: reduction `j` plays hybrid `j` against
+  the keyed function and hybrid `j + 1` against a random function.
 * `Cslib.Crypto.Garbling.advantage_realGame_simGame_le`: privacy, as a sum of PRF advantages.
 
 ## References
@@ -119,7 +127,7 @@ theorem Garbled.run_view {τ : Circuit.Topology n m s} (G : Garbled τ K) (F : K
 /-- The simulated view for wire labels `A` and filler rows `R`: input wires carry their labels;
 the row of each gate named by its arguments' colours holds the gate's label masked under their
 keys; every other row is filler; the decoding bits make the output labels decode to `y`. -/
-def simulateWith (τ : Circuit.Topology n m s) (F : K → T → K × Bool) (tw : Slot τ → T)
+@[expose] def simulateWith (τ : Circuit.Topology n m s) (F : K → T → K × Bool) (tw : Slot τ → T)
     (y : Fin m → Bool) (A : Wire n s → K × Bool) (R : Row τ → K × Bool) : View τ K where
   table r := if r.2 = fun k => (A (τ.wires r.1 k)).2 then
       A (.gate r.1) + ∑ k, F (A (τ.wires r.1 k)).1 (tw ⟨r, k⟩)
@@ -127,59 +135,87 @@ def simulateWith (τ : Circuit.Topology n m s) (F : K → T → K × Bool) (tw :
   input i := A (.input i)
   decoding o := (A (τ.outputs o)).2 + y o
 
+/-- The simulated labels are a fixed point of one evaluation round of the simulated view: the row
+of a gate named by its arguments' colours unmasks to the gate's label. -/
+theorem evalStep_simulateWith (τ : Circuit.Topology n m s) (F : K → T → K × Bool)
+    (tw : Slot τ → T) (y : Fin m → Bool) (A : Wire n s → K × Bool) (R : Row τ → K × Bool)
+    (w : Wire n s) :
+    evalStep τ F tw (simulateWith τ F tw y A R).table (simulateWith τ F tw y A R).input A w =
+      A w := by
+  cases w with
+  | input i => rfl
+  | gate g =>
+    simp only [evalStep, simulateWith, ite_true]
+    exact add_sub_cancel_right _ _
+
 /-- **Simulator correctness**: on an ordered topology every simulated view decodes to `y`. -/
 theorem View.run_simulateWith {τ : Circuit.Topology n m s} (hτ : τ.IsOrdered)
     (F : K → T → K × Bool) (tw : Slot τ → T) (y : Fin m → Bool) (A : Wire n s → K × Bool)
     (R : Row τ → K × Bool) : (simulateWith τ F tw y A R).run F tw = y := by
-  have hA : ∀ w, evalStep τ F tw (simulateWith τ F tw y A R).table
-      (simulateWith τ F tw y A R).input A w = A w := by
-    intro w
-    cases w with
-    | input i => rfl
-    | gate g =>
-      simp only [evalStep, simulateWith, ite_true]
-      exact add_sub_cancel_right _ _
   funext o
-  rw [View.run, evaluate_eq_of_evalStep hτ F tw _ _ A hA]
+  rw [View.run, evaluate_eq_of_evalStep hτ F tw _ _ A (evalStep_simulateWith τ F tw y A R)]
   simp only [decode, Function.comp_apply, simulateWith]
   rw [← add_assoc, BooleanRing.add_self, zero_add]
 
 /-! ### Hybrid views -/
 
-/-- The active colour of each wire on input `x`. -/
-private def act (C : Circuit σ n m) (I : Interpretation σ Bool) (x : Fin n → Bool)
+/-- The active colour of each wire on input `x`: its plaintext value plus its permutation bit. -/
+@[expose] def activeColour (C : Circuit σ n m) (I : Interpretation σ Bool) (x : Fin n → Bool)
     (perm : Wire n C.size → Bool) (w : Wire n C.size) : Bool :=
   C.program.trace I x w + perm w
 
-/-- A row reads an inactive colour on some wire numbered below `j`. -/
-private def Hidden {τ : Circuit.Topology n m s} (a : Wire n s → Bool) (j : ℕ) (r : Row τ) : Prop :=
+/-- A row is hidden below `j` when it reads an inactive colour, for the active colours `a`, on
+some wire numbered below `j`. -/
+@[expose] def IsHidden {τ : Circuit.Topology n m s} (a : Wire n s → Bool) (j : ℕ) (r : Row τ) :
+    Prop :=
   ∃ k, r.2 k ≠ a (τ.wires r.1 k) ∧ (τ.wires r.1 k).toNat < j
 
-private instance {τ : Circuit.Topology n m s} (a : Wire n s → Bool) (j : ℕ) (r : Row τ) :
-    Decidable (Hidden a j r) := by
-  unfold Hidden; infer_instance
+instance {τ : Circuit.Topology n m s} (a : Wire n s → Bool) (j : ℕ) (r : Row τ) :
+    Decidable (IsHidden a j r) := by
+  unfold IsHidden; infer_instance
 
-/-- A slot reads the inactive colour of wire `j`. -/
-private def IsTarget {τ : Circuit.Topology n m s} (a : Wire n s → Bool) (j : ℕ) (p : Slot τ) :
-    Prop :=
-  p.1.2 p.2 ≠ a (τ.wires p.1.1 p.2) ∧ (τ.wires p.1.1 p.2).toNat = j
+/-- Argument slot `k` of row `r` is a target of step `j` when it reads the inactive colour, for
+the active colours `a`, of wire `j`. -/
+@[expose] def IsTarget {τ : Circuit.Topology n m s} (a : Wire n s → Bool) (j : ℕ) (r : Row τ)
+    (k : Fin (τ.arity r.1)) : Prop :=
+  r.2 k ≠ a (τ.wires r.1 k) ∧ (τ.wires r.1 k).toNat = j
 
-private instance {τ : Circuit.Topology n m s} (a : Wire n s → Bool) (j : ℕ) (p : Slot τ) :
-    Decidable (IsTarget a j p) := by
+instance {τ : Circuit.Topology n m s} (a : Wire n s → Bool) (j : ℕ) (r : Row τ)
+    (k : Fin (τ.arity r.1)) : Decidable (IsTarget a j r k) := by
   unfold IsTarget; infer_instance
 
-/-- Hybrid view `j` with oracle `O`: rows reading an inactive colour below wire `j` are taken
-from `R`; in the other rows, the mask term of each slot reading the inactive colour of wire `j`
-is the oracle's answer. -/
-private def hybridView (C : Circuit σ n m) (I : Interpretation σ Bool) (F : K → T → K × Bool)
+/-- Hybrid view `j` with oracle `O`: rows hidden below wire `j` are taken from `R`; in the other
+rows, the mask term of each target slot of step `j` is the oracle's answer. -/
+@[expose] def hybridView (C : Circuit σ n m) (I : Interpretation σ Bool) (F : K → T → K × Bool)
     (tw : Slot C.topology → T) (x : Fin n → Bool) (j : ℕ) (key : Wire n C.size × Bool → K)
     (perm : Wire n C.size → Bool) (R : Row C.topology → K × Bool)
     (O : Slot C.topology → K × Bool) : View C.topology K where
-  table r := if Hidden (act C I x perm) j r then R r else
-    plainRow C I key perm r + ∑ k, if IsTarget (act C I x perm) j ⟨r, k⟩ then O ⟨r, k⟩ else
-      F (key (C.topology.wires r.1 k, r.2 k)) (tw ⟨r, k⟩)
+  table r := if IsHidden (activeColour C I x perm) j r then R r else
+    plainRow C I key perm r + ∑ k, if IsTarget (activeColour C I x perm) j r k then O ⟨r, k⟩
+      else F (key (C.topology.wires r.1 k, r.2 k)) (tw ⟨r, k⟩)
   input := encode (inputEncoding key perm) x
   decoding := outputDecoding C perm
+
+/-- From wire `n + C.size` on, no slot is a target, so the oracle is not read. -/
+private theorem hybridView_eq_of_le (C : Circuit σ n m) (I : Interpretation σ Bool)
+    (F : K → T → K × Bool) (tw : Slot C.topology → T) (x : Fin n → Bool) {j : ℕ}
+    (hj : n + C.size ≤ j) (key : Wire n C.size × Bool → K) (perm : Wire n C.size → Bool)
+    (R : Row C.topology → K × Bool) (O O' : Slot C.topology → K × Bool) :
+    hybridView C I F tw x j key perm R O = hybridView C I F tw x j key perm R O' := by
+  have hno : ∀ r k, ¬ IsTarget (activeColour C I x perm) j r k := fun r k h => by
+    have := Wire.toNat_lt (C.topology.wires r.1 k)
+    have := h.2
+    omega
+  ext1
+  · funext r
+    simp only [hybridView, hno, ite_false]
+  · rfl
+  · rfl
+
+/-- From wire `n + C.size` on, every row reading an inactive colour is hidden. -/
+private theorem isHidden_iff_of_le {τ : Circuit.Topology n m s} (a : Wire n s → Bool) {j : ℕ}
+    (hj : n + s ≤ j) (r : Row τ) : IsHidden a j r ↔ ∃ k, r.2 k ≠ a (τ.wires r.1 k) :=
+  ⟨fun ⟨k, hk, _⟩ => ⟨k, hk⟩, fun ⟨k, hk⟩ => ⟨k, hk, (Wire.toNat_lt _).trans_le hj⟩⟩
 
 /-- The keyed function at the slot's own key and tweak. -/
 private def realOracle (C : Circuit σ n m) (F : K → T → K × Bool) (tw : Slot C.topology → T)
@@ -191,7 +227,7 @@ private theorem hybridView_realOracle_table (C : Circuit σ n m) (I : Interpreta
     (key : Wire n C.size × Bool → K) (perm : Wire n C.size → Bool)
     (R : Row C.topology → K × Bool) (r : Row C.topology) :
     (hybridView C I F tw x j key perm R (realOracle C F tw key)).table r =
-      if Hidden (act C I x perm) j r then R r else garbleTable C I F tw key perm r := by
+      if IsHidden (activeColour C I x perm) j r then R r else garbleTable C I F tw key perm r := by
   simp only [hybridView, realOracle, ite_self, garbleTable, rowMask]
 
 /-- With the keyed oracle at key `k`, the reduction's view is hybrid view `j` with `k` as the
@@ -201,8 +237,8 @@ private theorem hybridView_update (C : Circuit σ n m) (I : Interpretation σ Bo
     (w : Wire n C.size) (hw : w.toNat = j) (k : K) (key : Wire n C.size × Bool → K)
     (perm : Wire n C.size → Bool) (R : Row C.topology → K × Bool) :
     hybridView C I F tw x j key perm R (fun p => F k (tw p)) =
-      hybridView C I F tw x j (Function.update key (w, !act C I x perm w) k) perm R
-        (realOracle C F tw (Function.update key (w, !act C I x perm w) k)) := by
+      hybridView C I F tw x j (Function.update key (w, !activeColour C I x perm w) k) perm R
+        (realOracle C F tw (Function.update key (w, !activeColour C I x perm w) k)) := by
   ext1
   · funext r
     simp only [hybridView]
@@ -215,13 +251,13 @@ private theorem hybridView_update (C : Circuit σ n m) (I : Interpretation σ Bo
         have hg : Wire.gate r.1 = w := congrArg Prod.fst heq
         have hc := congrArg Prod.snd heq
         dsimp only at hc
-        apply Bool.ne_not.mpr (rfl : act C I x perm w = act C I x perm w)
+        apply Bool.ne_not.mpr (rfl : activeColour C I x perm w = activeColour C I x perm w)
         rw [← hc, ← hg]
-        have hρ : ∀ k, r.2 k = act C I x perm (C.topology.wires r.1 k) := by
+        have hρ : ∀ k, r.2 k = activeColour C I x perm (C.topology.wires r.1 k) := by
           intro k
           by_contra hk
           exact h ⟨k, hk, hw ▸ hg ▸ C.isOrdered_topology r.1 k⟩
-        simp only [act]
+        simp only [activeColour]
         congr 1
         rw [C.program.trace_gate]
         congr 1 with k : 1
@@ -240,7 +276,7 @@ private theorem hybridView_update (C : Circuit σ n m) (I : Interpretation σ Bo
           intro heq
           apply ht
           have hwi : C.topology.wires r.1 i = w := congrArg Prod.fst heq
-          have hc : r.2 i = !act C I x perm w := congrArg Prod.snd heq
+          have hc : r.2 i = !activeColour C I x perm w := congrArg Prod.snd heq
           refine ⟨?_, hwi ▸ hw⟩
           rw [hc, hwi]
           exact (Bool.ne_not.mpr rfl).symm
@@ -251,7 +287,7 @@ private theorem hybridView_update (C : Circuit σ n m) (I : Interpretation σ Bo
     have hg : Wire.input i = w := congrArg Prod.fst heq
     have hc := congrArg Prod.snd heq
     dsimp only at hc
-    apply Bool.ne_not.mpr (rfl : act C I x perm w = act C I x perm w)
+    apply Bool.ne_not.mpr (rfl : activeColour C I x perm w = activeColour C I x perm w)
     rw [← hc, ← hg]
     rfl
   · rfl
@@ -308,8 +344,8 @@ variable [Fintype K] [Nonempty K]
 
 /-- The simulator: uniform wire labels and uniform filler rows. It sees only the topology, the
 public keyed function and tweaks, and the output. -/
-noncomputable def simulate (τ : Circuit.Topology n m s) (F : K → T → K × Bool) (tw : Slot τ → T)
-    (y : Fin m → Bool) : ProbComp (View τ K) := do
+@[expose] noncomputable def simulate (τ : Circuit.Topology n m s) (F : K → T → K × Bool)
+    (tw : Slot τ → T) (y : Fin m → Bool) : ProbComp (View τ K) := do
   let A ← ProbComp.uniform (Wire n s → K × Bool)
   let R ← ProbComp.uniform (Row τ → K × Bool)
   return simulateWith τ F tw y A R
@@ -334,8 +370,11 @@ its output on `x`. -/
 
 /-! ### The hybrid argument -/
 
-/-- Hybrid experiment `j`. -/
-private noncomputable def hybridGame (C : Circuit σ n m) (I : Interpretation σ Bool)
+/-- Hybrid experiment `j`: uniform keys, permutation bits and filler rows, and `D` run on hybrid
+view `j` with the keyed function in every slot. Hybrid `0` is the real experiment
+(`hybridGame_zero`) and every hybrid from `n + C.size` on is the simulated one
+(`hybridGame_of_le`). -/
+noncomputable def hybridGame (C : Circuit σ n m) (I : Interpretation σ Bool)
     (F : K → T → K × Bool) (tw : Slot C.topology → T) (x : Fin n → Bool)
     (D : View C.topology K → ProbComp Bool) (j : ℕ) : Game :=
   ProbComp.eval do
@@ -391,7 +430,7 @@ private theorem eval_run_reduction (C : Circuit σ n m) (I : Interpretation σ B
     ite_true]
 
 /-- Hybrid `0` is the real experiment. -/
-private theorem hybridGame_zero (C : Circuit σ n m) (I : Interpretation σ Bool)
+theorem hybridGame_zero (C : Circuit σ n m) (I : Interpretation σ Bool)
     (F : K → T → K × Bool) (tw : Slot C.topology → T) (x : Fin n → Bool)
     (D : View C.topology K → ProbComp Bool) :
     hybridGame C I F tw x D 0 = realGame C I F tw x D := by
@@ -409,21 +448,33 @@ private theorem hybridGame_zero (C : Circuit σ n m) (I : Interpretation σ Bool
   simp only [hybridGame, realGame, garble, hv, bind_assoc, pure_bind, ProbComp.eval_bind,
     ProbComp.eval_uniform, PMF.bind_const]
 
-/-- The last hybrid is the simulated experiment. -/
-private theorem hybridGame_last (C : Circuit σ n m) (I : Interpretation σ Bool)
+/-- Every hybrid from `n + C.size` on is the simulated experiment. -/
+theorem hybridGame_of_le (C : Circuit σ n m) (I : Interpretation σ Bool)
     (F : K → T → K × Bool) (tw : Slot C.topology → T) (x : Fin n → Bool)
-    (D : View C.topology K → ProbComp Bool) :
-    hybridGame C I F tw x D (n + C.size) = simGame C I F tw x D := by
+    (D : View C.topology K → ProbComp Bool) {j : ℕ} (hj : n + C.size ≤ j) :
+    hybridGame C I F tw x D j = simGame C I F tw x D := by
+  have hj' : hybridGame C I F tw x D j = hybridGame C I F tw x D (n + C.size) := by
+    have hview : ∀ key perm R, hybridView C I F tw x j key perm R (realOracle C F tw key) =
+        hybridView C I F tw x (n + C.size) key perm R (realOracle C F tw key) := by
+      intro key perm R
+      ext1
+      · funext r
+        simp only [hybridView, isHidden_iff_of_le _ hj, isHidden_iff_of_le _ le_rfl, realOracle,
+          ite_self]
+      · rfl
+      · rfl
+    simp only [hybridGame, hview]
+  rw [hj']
   have hv : ∀ key perm R, hybridView C I F tw x (n + C.size) key perm R (realOracle C F tw key) =
       simulateWith C.topology F tw (C.eval I x)
-        (fun w => (key (w, act C I x perm w), act C I x perm w)) R := by
+        (fun w => (key (w, activeColour C I x perm w), activeColour C I x perm w)) R := by
     intro key perm R
     ext1
     · funext r
       rw [hybridView_realOracle_table]
       obtain ⟨g, ρ⟩ := r
       simp only [simulateWith]
-      by_cases h : ρ = fun k => act C I x perm (C.topology.wires g k)
+      by_cases h : ρ = fun k => activeColour C I x perm (C.topology.wires g k)
       · subst h
         rw [ite_eq_right, ite_eq_left rfl]
         · simp only [garbleTable, rowMask]
@@ -446,11 +497,21 @@ private theorem hybridGame_last (C : Circuit σ n m) (I : Interpretation σ Bool
         ProbComp.eval (D (simulateWith C.topology F tw (C.eval I x) A R)))
 
 /-- Against the keyed oracle, reduction `j` plays hybrid `j`. -/
-private theorem realGame_reduction (C : Circuit σ n m) (I : Interpretation σ Bool)
+theorem eval_realExperiment_reduction (C : Circuit σ n m) (I : Interpretation σ Bool)
     (F : K → T → K × Bool) (tw : Slot C.topology → T) (x : Fin n → Bool)
-    (D : View C.topology K → ProbComp Bool) (j : ℕ) (hj : j < n + C.size) :
+    (D : View C.topology K → ProbComp Bool) (j : ℕ) :
     ProbComp.eval (PRF.realExperiment F (reduction C I F tw x D j)) =
       hybridGame C I F tw x D j := by
+  by_cases hj : j < n + C.size
+  swap
+  · have hle : n + C.size ≤ j := Nat.le_of_not_lt hj
+    simp only [PRF.realExperiment, hybridGame, ProbComp.eval_bind, ProbComp.eval_uniform,
+      eval_run_reduction]
+    have hO : ∀ (a : K) key perm R, hybridView C I F tw x j key perm R (fun p => F a (tw p)) =
+        hybridView C I F tw x j key perm R (realOracle C F tw key) := fun a key perm R =>
+      hybridView_eq_of_le C I F tw x hle key perm R _ _
+    simp only [hO]
+    exact PMF.bind_const _ _
   let w : Wire n C.size := Wire.ofNat j hj
   have hw : w.toNat = j := Wire.toNat_ofNat j hj
   simp only [PRF.realExperiment, hybridGame, ProbComp.eval_bind, ProbComp.eval_uniform,
@@ -459,7 +520,8 @@ private theorem realGame_reduction (C : Circuit σ n m) (I : Interpretation σ B
       (PMF.uniformOfFintype (Wire n C.size → Bool)),
     PMF.bind_comm (PMF.uniformOfFintype K) (PMF.uniformOfFintype (Wire n C.size → Bool))]
   congr 1 with perm : 1
-  conv_rhs => rw [← Cslib.Probability.PMF.uniformOfFintype_update (w, !act C I x perm w) (γ := K)]
+  conv_rhs =>
+    rw [← Cslib.Probability.PMF.uniformOfFintype_update (w, !activeColour C I x perm w) (γ := K)]
   simp only [PMF.bind_bind, PMF.bind_map]
   rfl
 
@@ -467,7 +529,7 @@ variable [Fintype T] [DecidableEq T]
 
 /-- Against a random function, reduction `j` plays hybrid `j + 1`, when distinct slots have
 distinct tweaks. -/
-private theorem idealGame_reduction (C : Circuit σ n m) (I : Interpretation σ Bool)
+theorem eval_idealExperiment_reduction (C : Circuit σ n m) (I : Interpretation σ Bool)
     (F : K → T → K × Bool) (tw : Slot C.topology → T) (htw : Function.Injective tw)
     (x : Fin n → Bool) (D : View C.topology K → ProbComp Bool) (j : ℕ) :
     ProbComp.eval (PRF.idealExperiment (reduction C I F tw x D j)) =
@@ -488,7 +550,7 @@ private theorem idealGame_reduction (C : Circuit σ n m) (I : Interpretation σ 
     (hybridView C I F tw x j key perm ω.2 fun p => ω.1 (tw p)).table
   let Tr : Ω → Row C.topology → K × Bool := fun ω =>
     (hybridView C I F tw x (j + 1) key perm ω.2 (realOracle C F tw key)).table
-  let a := act C I x perm
+  let a := activeColour C I x perm
   have hL : ((PMF.uniformOfFintype (T → K × Bool)).bind fun f =>
       (PMF.uniformOfFintype (Row C.topology → K × Bool)).bind fun R =>
         ProbComp.eval (D (hybridView C I F tw x j key perm R fun p => f (tw p)))) =
@@ -504,41 +566,41 @@ private theorem idealGame_reduction (C : Circuit σ n m) (I : Interpretation σ 
     exact (PMF.bind_const _ _).symm
   rw [hL, hR]
   congr 1
-  have hmono : ∀ r : Row C.topology, Hidden a j r → Hidden a (j + 1) r := by
+  have hmono : ∀ r : Row C.topology, IsHidden a j r → IsHidden a (j + 1) r := by
     rintro r ⟨k, hk, hlt⟩
     exact ⟨k, hk, Nat.lt_succ_of_lt hlt⟩
-  have htarget : ∀ r : Row C.topology, ∀ k, IsTarget a j ⟨r, k⟩ → Hidden a (j + 1) r := by
+  have htarget : ∀ r : Row C.topology, ∀ k, IsTarget a j r k → IsHidden a (j + 1) r := by
     rintro r k ⟨hk, heq⟩
     exact ⟨k, hk, heq ▸ Nat.lt_succ_self _⟩
   let z : Row C.topology → K × Bool := garbleTable C I F tw key perm
-  have houtL : ∀ ω r, ¬ Hidden a (j + 1) r → Tl ω r = z r := by
+  have houtL : ∀ ω r, ¬ IsHidden a (j + 1) r → Tl ω r = z r := by
     intro ω r hr
     simp only [Tl, hybridView, z, garbleTable, rowMask]
     rw [ite_eq_right (fun h => hr (hmono r h))]
     congr 1
     refine Finset.sum_congr rfl fun k _ => ?_
     rw [ite_eq_right (fun h => hr (htarget r k h))]
-  have houtR : ∀ ω r, ¬ Hidden a (j + 1) r → Tr ω r = z r := by
+  have houtR : ∀ ω r, ¬ IsHidden a (j + 1) r → Tr ω r = z r := by
     intro ω r hr
     simp only [Tr, hybridView, z, garbleTable, rowMask, realOracle, ite_self]
     rw [ite_eq_right hr]
   have hshiftR : ∀ c : Row C.topology → K × Bool, ∃ e : Equiv.Perm Ω,
-      ∀ ω r, Hidden a (j + 1) r → Tr (e ω) r = Tr ω r + c r := by
+      ∀ ω r, IsHidden a (j + 1) r → Tr (e ω) r = Tr ω r + c r := by
     intro c
     refine ⟨Equiv.addRight (0, c), fun ω r hr => ?_⟩
     simp only [Tr, hybridView, Equiv.coe_addRight]
     rw [ite_eq_left hr, ite_eq_left hr]
     rfl
   have hshiftL : ∀ c : Row C.topology → K × Bool, ∃ e : Equiv.Perm Ω,
-      ∀ ω r, Hidden a (j + 1) r → Tl (e ω) r = Tl ω r + c r := by
+      ∀ ω r, IsHidden a (j + 1) r → Tl (e ω) r = Tl ω r + c r := by
     intro c
     -- Shift the oracle at the tweak of the first target slot of each row by that row's shift.
     let First : Slot C.topology → Prop := fun p =>
-      IsTarget a j p ∧ ∀ k, IsTarget a j ⟨p.1, k⟩ → p.2 ≤ k
+      IsTarget a j p.1 p.2 ∧ ∀ k, IsTarget a j p.1 k → p.2 ≤ k
     let δ : T → K × Bool := fun t =>
       ∑ p : Slot C.topology, if tw p = t ∧ First p then c p.1 else 0
     refine ⟨Equiv.addRight (δ, c), fun ω r hr => ?_⟩
-    by_cases h : Hidden a j r
+    by_cases h : IsHidden a j r
     · simp only [Tl, hybridView, Equiv.coe_addRight]
       rw [ite_eq_left h, ite_eq_left h]
       rfl
@@ -559,12 +621,11 @@ private theorem idealGame_reduction (C : Circuit σ n m) (I : Interpretation σ 
         · intro hmem
           exact absurd (Finset.mem_univ _) hmem
       obtain ⟨k₁, hk₁, hlt₁⟩ := hr
-      have htk₁ : IsTarget a j ⟨r, k₁⟩ := by
+      have htk₁ : IsTarget a j r k₁ := by
         refine ⟨hk₁, ?_⟩
-        change (C.topology.wires r.1 k₁).toNat = j
         by_contra hne
         exact h ⟨k₁, hk₁, by omega⟩
-      let S := Finset.univ.filter fun k => IsTarget a j ⟨r, k⟩
+      let S := Finset.univ.filter fun k => IsTarget a j r k
       have hS : S.Nonempty := ⟨k₁, by simp [S, htk₁]⟩
       let k₀ := S.min' hS
       have hk₀ : First ⟨r, k₀⟩ := by
@@ -572,15 +633,15 @@ private theorem idealGame_reduction (C : Circuit σ n m) (I : Interpretation σ 
         exact S.min'_le k (by simp [S, hk])
       have hk₀u : ∀ k, First ⟨r, k⟩ → k = k₀ :=
         fun k hk => le_antisymm (hk.2 k₀ hk₀.1) (hk₀.2 k hk.1)
-      have hsplit : (∑ k, if IsTarget a j ⟨r, k⟩ then ω.1 (tw ⟨r, k⟩) + δ (tw ⟨r, k⟩) else
+      have hsplit : (∑ k, if IsTarget a j r k then ω.1 (tw ⟨r, k⟩) + δ (tw ⟨r, k⟩) else
             F (key (C.topology.wires r.1 k, r.2 k)) (tw ⟨r, k⟩)) =
-          (∑ k, if IsTarget a j ⟨r, k⟩ then ω.1 (tw ⟨r, k⟩) else
+          (∑ k, if IsTarget a j r k then ω.1 (tw ⟨r, k⟩) else
             F (key (C.topology.wires r.1 k, r.2 k)) (tw ⟨r, k⟩)) +
-          ∑ k, if IsTarget a j ⟨r, k⟩ then δ (tw ⟨r, k⟩) else 0 := by
+          ∑ k, if IsTarget a j r k then δ (tw ⟨r, k⟩) else 0 := by
         rw [← Finset.sum_add_distrib]
         refine Finset.sum_congr rfl fun k _ => ?_
         split_ifs <;> simp
-      have hδsum : (∑ k, if IsTarget a j ⟨r, k⟩ then δ (tw ⟨r, k⟩) else 0) = c r := by
+      have hδsum : (∑ k, if IsTarget a j r k then δ (tw ⟨r, k⟩) else 0) = c r := by
         rw [Finset.sum_eq_single k₀]
         · rw [ite_eq_left hk₀.1, hδ, ite_eq_left hk₀]
         · intro k _ hk
@@ -590,8 +651,8 @@ private theorem idealGame_reduction (C : Circuit σ n m) (I : Interpretation σ 
         · intro hmem
           exact absurd (Finset.mem_univ _) hmem
       rw [hsplit, hδsum, add_assoc]
-  rw [uniformOfFintype_map_eq_of_shift (Hidden a (j + 1)) z Tl houtL hshiftL,
-    uniformOfFintype_map_eq_of_shift (Hidden a (j + 1)) z Tr houtR hshiftR]
+  rw [uniformOfFintype_map_eq_of_shift (IsHidden a (j + 1)) z Tl houtL hshiftL,
+    uniformOfFintype_map_eq_of_shift (IsHidden a (j + 1)) z Tr houtR hshiftR]
 
 /-- **Simulation privacy of garbled circuits.** For every circuit `C`, input `x` and
 distinguisher `D`, if distinct argument slots have distinct tweaks, the advantage of `D` between
@@ -605,9 +666,8 @@ theorem advantage_realGame_simGame_le (C : Circuit σ n m) (I : Interpretation �
     (x : Fin n → Bool) (D : View C.topology K → ProbComp Bool) :
     Game.advantage (realGame C I F tw x D) (simGame C I F tw x D) ≤
       ∑ j ∈ Finset.range (n + C.size), PRF.advantage F (reduction C I F tw x D j) := by
-  rw [← hybridGame_zero, ← hybridGame_last]
-  refine (Game.advantage_hybrid_le_sum _ _).trans (Finset.sum_le_sum fun j hj => ?_)
-  rw [PRF.advantage, realGame_reduction C I F tw x D j (Finset.mem_range.mp hj),
-    idealGame_reduction C I F tw htw x D j]
+  rw [← hybridGame_zero, ← hybridGame_of_le C I F tw x D le_rfl]
+  refine (Game.advantage_hybrid_le_sum _ _).trans (Finset.sum_le_sum fun j _ => ?_)
+  rw [PRF.advantage, eval_realExperiment_reduction, eval_idealExperiment_reduction C I F tw htw]
 
 end Cslib.Crypto.Garbling

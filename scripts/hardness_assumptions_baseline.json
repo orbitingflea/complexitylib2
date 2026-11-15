@@ -1,6 +1,5 @@
 {
  "docstrings": {
-  "Cslib.Crypto.DecisionLWEWithErrors": "#5578: the declaration cites no source definition; at most its module docstring names a reference.",
   "Cslib.Crypto.PRG.Generator.Secure": "Defined in CSLib (Cslib/Crypto/Primitives/PRG/Defs.lean), whose module docstring cites [BonehShoup2023], Section 3.1 and Attack Game 3.1; the declaration's own docstring is upstream and gains its citation there.",
   "Cslib.Crypto.QuadraticResiduosityHard": "#5578: the declaration cites no source definition; at most its module docstring names a reference.",
   "Cslib.Crypto.RSAOneWay": "#5578: the declaration cites no source definition; at most its module docstring names a reference.",
@@ -10,7 +9,6 @@
   "Cslib.Crypto.BooleanPRF": "#5578: FanLiYang2022 is not checked at the source.",
   "Cslib.Crypto.CondEPPRG": "#5578: LiuPass2020 is not checked at the source.",
   "Cslib.Crypto.DCR": "#5578: Katz–Lindell locators are not checked at the source (manual/sources.md says the same).",
-  "Cslib.Crypto.DecisionLWEWithErrors": "#5578: FullerMengReyzin2020 is not checked at the source.",
   "Cslib.Crypto.FactoringHard": "#5578: Katz–Lindell locators are not checked at the source (manual/sources.md says the same).",
   "Cslib.Crypto.FuzzyExtractor.ComputationallySecureFor": "#5578: FullerMengReyzin2020 is not checked at the source.",
   "Cslib.Crypto.MACScheme.BlockwiseEUFCMA": "#5578: Katz–Lindell locators are not checked at the source (manual/sources.md says the same).",

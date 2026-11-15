@@ -21,13 +21,15 @@ import CslibFrontier.Languages.Probabilistic.UniformNat.Residue
 import Mathlib.Algebra.BigOperators.Fin
 
 /-!
-# Asymptotic security of the LWE fuzzy extractor
+# Asymptotic security of the LWE fuzzy extractor at power-of-two modulus
 
 Fuller, Meng and Reyzin's LWE fuzzy extractor `lweFuzzyExtractor` ([FullerMengReyzin2020]) uses
 the noisy reading `w` as the error of an LWE sample. Its secret has `k + l` coordinates, of which
 the first `k` are the key. This module makes it a family in the security parameter `κ`, with `m κ`
 samples, key length `k κ`, `l κ` further secret coordinates and modulus `2 ^ w κ`, and proves it
-secure from decision LWE in dimension `l κ` whose error law is the source itself.
+secure from `DecisionLWEWithErrors`, decision LWE in dimension `l κ` whose error law is the source
+itself, an assumption novel to this library. This is a step toward the security part of
+[FullerMengReyzin2020] Theorem 4.11, not that theorem: see "Deviations and limitations".
 
 A distinguisher family reads the security parameter in unary, the key, and the helper matrix
 `[c | A]`, each residue as `w κ` binary digits (`LWEFamily.encInput`). It is admissible when one
@@ -59,16 +61,22 @@ program has the same output law as the typed reduction.
 * `Cslib.Crypto.FuzzyExtractor.LWEFamily.isPPT_keyReduction`,
   `Cslib.Crypto.FuzzyExtractor.LWEFamily.isPPT_uniformReduction`: strict PPT certificates for the
   reductions, from the distinguisher's certificate.
-* `Cslib.Crypto.FuzzyExtractor.computationallySecure_lweFuzzyExtractor`: under
-  `DecisionLWEWithErrors l m w source` for every source ensemble in `sources`, the family is
-  `ComputationallySecure` for `sources` against PPT distinguishers.
+* `Cslib.Crypto.FuzzyExtractor.computationallySecure_lweFuzzyExtractor_of_decisionLWEWithErrors`:
+  under `DecisionLWEWithErrors l m w source` for every source ensemble in `sources`, the family is
+  `ComputationallySecure` for `sources` against PPT distinguishers. It is a step toward the
+  security part of Theorem 4.11 at power-of-two modulus, not that theorem.
 
 ## Deviations and limitations
 
-* The modulus is `2 ^ w κ`, the modulus of the library's typed decision LWE (`DecisionLWE`). The
+* The modulus is `2 ^ w κ`, the modulus of the library's typed decision LWE (`DecisionLWE`).
+  Construction 4.1 needs a prime `q` (p. 11 of the ePrint revision of June 23, 2020), and
+  `2 ^ w κ` is prime only when `w κ = 1`, so apart from modulus `2` this module covers no instance
+  of [FullerMengReyzin2020] Theorem 4.11. That theorem at a prime modulus stays open (#5293). The
   fixed-parameter results in `DecodeThenExtract` allow any modulus `q`.
-* The assumption is LWE with the source as its error law. Its hardness for particular sources is
-  not proved here.
+* The assumption is `DecisionLWEWithErrors`, LWE with the source as its error law at modulus
+  `2 ^ w κ`, in dimension `l` (FMR's `n - k`, as in Lemma 4.7). It is novel to this library: it
+  has the form of FMR's Definition 4.5, but outside that definition's range of prime moduli. Its
+  hardness for particular sources is not proved here.
 * The efficiency of the honest `Gen` and `Rep` is not certified; `Rep` runs an arbitrary decoder,
   whose correctness is a hypothesis in `DecodeThenExtract` (`DecoderCorrectWithError`).
 * Distinguishers are uniform strict PPT programs. Non-uniform, circuit-size formulations are not
@@ -491,20 +499,28 @@ end LWEFamily
 
 /-! ### Asymptotic security -/
 
-/-- **Asymptotic security of the LWE fuzzy extractor** ([FullerMengReyzin2020]). Let
-`m, k, l, w` be computable in polynomial time in unary, and let `sources` be a set of source
-ensembles such that, for every `source ∈ sources`, decision LWE in dimension `l κ` with `m κ`
-samples, modulus `2 ^ w κ` and error law `source κ` holds against uniform strict PPT
-distinguishers (`DecisionLWEWithErrors l m w source`). Then the family
+/-- A step toward the security part of [FullerMengReyzin2020] Theorem 4.11 at power-of-two
+modulus, not that theorem: after Fuller, Meng and Reyzin, the LWE fuzzy extractor at modulus
+`2 ^ w κ` is asymptotically secure from `DecisionLWEWithErrors`. Let `m, k, l, w` be computable in
+polynomial time in unary, and let `sources` be a set of source ensembles such that, for every
+`source ∈ sources`, decision LWE in dimension `l κ` with `m κ` samples, modulus `2 ^ w κ` and
+error law `source κ` holds against uniform strict PPT distinguishers
+(`DecisionLWEWithErrors l m w source`, an assumption novel to this library). Then the family
 `κ ↦ lweFuzzyExtractor (m κ) (k κ) (l κ) (2 ^ w κ) (decode κ)` is `ComputationallySecure` for
 `sources` against uniform strict PPT distinguisher families: on each source ensemble, the key is
 indistinguishable from uniform given the helper.
+
+Theorem 4.11 is about Construction 4.1, which needs a prime `q` (p. 11 of the ePrint revision of
+June 23, 2020), and assumes Definition 4.5 at a prime `q = poly(n, m)` that it sets. Since
+`2 ^ w κ` is prime only when `w κ = 1`, apart from modulus `2` this covers no instance of
+Theorem 4.11, and FMR's prime-modulus assumption is not proved or cited to imply
+`DecisionLWEWithErrors`. Theorem 4.11 at a prime modulus stays open (#5293).
 
 The proof bounds the advantage at each `κ` by the LWE advantages of `LWEFamily.keyReduction D`
 and `LWEFamily.uniformReduction D` (`securityAdvantage_lweFuzzyExtractor_le`), which are PPT by
 `LWEFamily.isPPT_keyReduction` and `LWEFamily.isPPT_uniformReduction`. The decoder affects only
 correctness. -/
-theorem computationallySecure_lweFuzzyExtractor {m k l w : ℕ → ℕ}
+theorem computationallySecure_lweFuzzyExtractor_of_decisionLWEWithErrors {m k l w : ℕ → ℕ}
     (hm : ComputableInPolyTime m encUnary encUnary)
     (hk : ComputableInPolyTime k encUnary encUnary)
     (hl : ComputableInPolyTime l encUnary encUnary)
