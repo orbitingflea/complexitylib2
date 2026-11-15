@@ -68,6 +68,7 @@ def testN : ℕ := thresholdN 1 1
 def testU : ℕ := testN ^ 2
 
 /-- 64-bit value universe `V = 2 ^ 64`. -/
+@[expose]
 def testV : ℕ := 2 ^ 64
 
 /-- Redundancy parameter `R = n / 4 < n`. -/

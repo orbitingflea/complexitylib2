@@ -31,11 +31,14 @@ not, the recombined output `σ` satisfies `gcd(σ ^ e − h, n) = q`, where `h` 
 * `Cslib.Crypto.RSADesc.crtKeyWith`: the key derived from an `RSADesc`, with
   `d_p = d mod (p - 1)`, `d_q = d mod (q - 1)` and a given `q_inv`.
 * `Cslib.Crypto.RSADesc.crtQInv`, `Cslib.Crypto.RSADesc.crtKey`: the inverse of `q` modulo `p`
-  taken from `ZMod p`, and the key that uses it.
+  computed by the extended Euclidean algorithm `Turing.MultiTapeTM.BinaryGcd.modInv`, and the key
+  that uses it.
 
 ## Main results
 
-* `Cslib.Crypto.RSADesc.crtQInv_mul_modEq_one`: `crtQInv` is an inverse of `q` modulo `p`.
+* `Cslib.Crypto.RSADesc.crtQInv_eq_zmod_inv_val`, `Cslib.Crypto.RSADesc.crtQInv_mul_modEq_one`:
+  `crtQInv` is the representative `((q : ZMod p)⁻¹).val` of `q⁻¹` in `ZMod p`, and an inverse
+  of `q` modulo `p`.
 * `Cslib.Crypto.RSACRTKey.combine_mod_mod`, `Cslib.Crypto.RSACRTKey.combine_modEq_p`,
   `Cslib.Crypto.RSACRTKey.combine_modEq_q`: recombination returns `x < p * q` from its residues,
   and its output is congruent to `x_p` modulo `p` and to `x_q` modulo `q`.
@@ -53,6 +56,9 @@ not, the recombined output `σ` satisfies `gcd(σ ^ e − h, n) = q`, where `h` 
   `p` and `q` are positive.
 * `Cslib.Crypto.computableInPolyTime_crtKeyWith_invert`: the same for the key
   `RSADesc.crtKeyWith desc qInv`, from polynomial-time `p`, `q`, `d`, `q_inv` and input.
+* `Cslib.Crypto.computableInPolyTime_crtQInv`, `Cslib.Crypto.computableInPolyTime_crtKey_invert`:
+  `crtQInv` is computable in polynomial time from polynomial-time `p` and `q`, and RSA-CRT
+  inversion with the key `RSADesc.crtKey` from polynomial-time `p`, `q`, `d` and input.
 * `Cslib.Crypto.computableInPolyTime_gcd_val_pow_sub`: the gcd step of the fault attack,
   `gcd(σ ^ e − h, n)` with `σ ^ e − h` read in `[0, n)`, is computable in polynomial time when
   `n` is positive.
@@ -62,8 +68,11 @@ not, the recombined output `σ` satisfies `gcd(σ ^ e − h, n) = q`, where `h` 
 Residues are natural numbers. The book's `σ̂ ^ e − H(m) ∈ ℤ_n`, read as an integer in `[0, n)`, is
 `((σ : ZMod n) ^ e - h).val`, and an arbitrary natural number `h` takes the place of the hash
 value `H(m)`. The theorems hold for every `q_inv` with `q_inv * q ≡ 1 [MOD p]`;
-`RSADesc.crtKey` uses the inverse in `ZMod p`. The book also assumes `p > q`; no result here needs
-it.
+`RSADesc.crtKey` uses `RSADesc.crtQInv = BinaryGcd.modInv q p` from
+`CslibFrontier/Computability/Machines/Turing/MultiTape/Complexity/PolyTime/Nat/Gcd.lean`, which
+`RSADesc.crtQInv_eq_zmod_inv_val` identifies with the inverse in `ZMod p`. The definition is not
+exposed and that import is proof-only: clients compute `crtQInv` through that theorem. The book
+also assumes `p > q`; no result here needs it.
 
 Recombination is `crtCombine q p x_q x_p q_inv` from
 `CslibFrontier/Foundations/Data/Nat/ChineseRemainder.lean`; its congruences and correctness come
@@ -77,13 +86,15 @@ is congruent to the correct value `h ^ d` modulo `q`.
 
 The polynomial-time certificates take their arguments as component functions `α → ℕ` on a
 common input encoding, each computable in polynomial time to `encNat`, in the style of
-`computableInPolyTime_rsaInvert`. The key component `q_inv` is such an argument: in the book it is
-part of the precomputed key.
+`computableInPolyTime_rsaInvert`. In `computableInPolyTime_crtInvert` and
+`computableInPolyTime_crtKeyWith_invert` the key component `q_inv` is such an argument, as in the
+book, where it is part of the precomputed key. `computableInPolyTime_crtQInv` computes `crtQInv`
+from `p` and `q` with the certificate `ComputableInPolyTime.binary_modInv'` of `Gcd.lean`, and
+`computableInPolyTime_crtKey_invert` composes it with `computableInPolyTime_crtKeyWith_invert`.
 
-Not formalized: the book's estimate that RSA-CRT is about four times faster, FDH-RSA signing, and
-a polynomial-time computation of `q_inv` from `p` and `q`, which needs a polynomial-time modular
-inverse. The certificates cover the computations; nothing is proved about an attacker as an
-adversary in a security game.
+Not formalized: the book's estimate that RSA-CRT is about four times faster, and FDH-RSA signing.
+The certificates cover the computations; nothing is proved about an attacker as an adversary in a
+security game.
 
 ## References
 
@@ -168,17 +179,22 @@ namespace RSADesc
   dq := desc.d % (desc.q - 1)
   qInv := qInv
 
-/-- The inverse of `q` modulo `p`, as the value of `q⁻¹` in `ZMod p`. -/
-@[expose] def crtQInv (desc : RSADesc) : ℕ :=
-  ((desc.q : ZMod desc.p)⁻¹).val
+/-- The inverse of `q` modulo `p`, computed by the extended Euclidean algorithm
+`Turing.MultiTapeTM.BinaryGcd.modInv q p`. Its value is given by `crtQInv_eq_zmod_inv_val`. -/
+def crtQInv (desc : RSADesc) : ℕ :=
+  Turing.MultiTapeTM.BinaryGcd.modInv desc.q desc.p
+
+/-- `crtQInv` is the representative `((q : ZMod p)⁻¹).val` of the inverse of `q` in `ZMod p`. -/
+theorem crtQInv_eq_zmod_inv_val (desc : RSADesc) :
+    desc.crtQInv = ((desc.q : ZMod desc.p)⁻¹).val :=
+  Turing.MultiTapeTM.BinaryGcd.modInv_eq_zmod_inv_val desc.hp.pos
+    ((Nat.coprime_primes desc.hq desc.hp).2 desc.hpq.symm)
 
 /-- `crtQInv` is an inverse of `q` modulo `p`. -/
 theorem crtQInv_mul_modEq_one (desc : RSADesc) : desc.crtQInv * desc.q ≡ 1 [MOD desc.p] := by
-  have : NeZero desc.p := ⟨desc.hp.ne_zero⟩
-  rw [← ZMod.natCast_eq_natCast_iff]
-  push_cast
-  rw [crtQInv, ZMod.natCast_zmod_val, mul_comm]
-  exact ZMod.coe_mul_inv_eq_one _ ((Nat.coprime_primes desc.hq desc.hp).2 desc.hpq.symm)
+  rw [mul_comm]
+  exact Turing.MultiTapeTM.BinaryGcd.mul_modInv_modEq_one desc.hp.pos
+    ((Nat.coprime_primes desc.hq desc.hp).2 desc.hpq.symm)
 
 /-- The RSA-CRT key of `desc` ([BonehShoup2023], §16.4.3, p. 701), with `q_inv = crtQInv`. -/
 def crtKey (desc : RSADesc) : RSACRTKey :=
@@ -327,8 +343,8 @@ theorem computableInPolyTime_crtInvert {α : Type} {enc : α ↪ List Bool}
 /-- RSA-CRT inversion with the key `RSADesc.crtKeyWith desc qInv` is computable in polynomial
 time whenever `p`, `q`, `d`, `q_inv` and the input are computable in polynomial time as natural
 numbers on `encNat`; `p` and `q` are positive because they are prime. Here `q_inv` is an input,
-as in the book, where it is part of the precomputed key. Computing it from `p` and `q` needs a
-polynomial-time modular inverse, which this file does not provide. -/
+as in the book, where it is part of the precomputed key; `computableInPolyTime_crtKey_invert`
+computes it as `RSADesc.crtQInv`. -/
 theorem computableInPolyTime_crtKeyWith_invert {α : Type} {enc : α ↪ List Bool}
     {desc : α → RSADesc} {qInv y : α → ℕ}
     (hp : ComputableInPolyTime (fun a => (desc a).p) enc encNat)
@@ -343,6 +359,28 @@ theorem computableInPolyTime_crtKeyWith_invert {α : Type} {enc : α ↪ List Bo
       (ComputableInPolyTime.binary_sub' hq (ComputableInPolyTime.const 1)))
     hqInv hy (fun a => (desc a).hp.pos) (fun a => (desc a).hq.pos)
   simpa only [RSADesc.crtKeyWith] using this
+
+/-- The inverse `RSADesc.crtQInv` of `q` modulo `p` is computable in polynomial time whenever
+`p` and `q` are computable in polynomial time as natural numbers on `encNat`. It is
+`BinaryGcd.modInv q p`, certified by `ComputableInPolyTime.binary_modInv'`. -/
+theorem computableInPolyTime_crtQInv {α : Type} {enc : α ↪ List Bool} {desc : α → RSADesc}
+    (hp : ComputableInPolyTime (fun a => (desc a).p) enc encNat)
+    (hq : ComputableInPolyTime (fun a => (desc a).q) enc encNat) :
+    ComputableInPolyTime (fun a => (desc a).crtQInv) enc encNat :=
+  ComputableInPolyTime.binary_modInv' hq hp
+
+/-- RSA-CRT inversion with the key `RSADesc.crtKey` ([BonehShoup2023], §16.4.3, p. 701) is
+computable in polynomial time whenever `p`, `q`, `d` and the input are computable in polynomial
+time as natural numbers on `encNat`: the key component `q_inv = RSADesc.crtQInv` is computed
+from `p` and `q` by `computableInPolyTime_crtQInv`. -/
+theorem computableInPolyTime_crtKey_invert {α : Type} {enc : α ↪ List Bool}
+    {desc : α → RSADesc} {y : α → ℕ}
+    (hp : ComputableInPolyTime (fun a => (desc a).p) enc encNat)
+    (hq : ComputableInPolyTime (fun a => (desc a).q) enc encNat)
+    (hd : ComputableInPolyTime (fun a => (desc a).d) enc encNat)
+    (hy : ComputableInPolyTime y enc encNat) :
+    ComputableInPolyTime (fun a => (desc a).crtKey.invert (y a)) enc encNat :=
+  computableInPolyTime_crtKeyWith_invert hp hq hd (computableInPolyTime_crtQInv hp hq) hy
 
 /-- `σ ^ e − h ∈ ℤ_n`, read in `[0, n)`, in natural-number operations. -/
 private theorem val_natCast_pow_sub_natCast {n : ℕ} [NeZero n] (σ e h : ℕ) :
