@@ -9,8 +9,8 @@ module
 
 public import CslibFrontier.Init
 public import CslibFrontier.Probability.UniversalHash
-public import CslibFrontier.Probability.StatisticalDistance.Product
 public import CslibFrontier.Foundations.Data.BitString.Basic
+import CslibFrontier.Probability.UniversalHash.MultiSample
 import CslibFrontier.Probability.Uniform
 import CslibFrontier.Probability.PMF.Map
 
@@ -125,27 +125,11 @@ theorem dist_hashRows_le {κ : Type*} [Fintype κ] [DecidableEq κ] :
       ((PMF.uniformOfFintype (ι → G)).bind
         (fun weights => (PMF.uniformOfFintype (κ → G)).map (weights, ·))) ≤
       Fintype.card κ * Real.sqrt (Fintype.card G / (2 : ℝ) ^ Fintype.card ι) / 2 := by
-  have hrow := (isTwoUniversal (ι := ι) (G := G)).leftover_hash
-    (PMF.uniformOfFintype (ι → Bool))
-  have hrows := dist_bind_pair_pi_le_sum (PMF.uniformOfFintype (ι → G))
-    (fun weights (_ : κ) => (PMF.uniformOfFintype (ι → Bool)).map (hash weights))
-    (fun _ (_ : κ) => PMF.uniformOfFintype G)
-  have real_law (weights : ι → G) :
-      pi (fun _ : κ => (PMF.uniformOfFintype (ι → Bool)).map (hash weights)) =
-        (PMF.uniformOfFintype (κ → ι → Bool)).map (hashRows weights) := by
-    rw [pi_map, pi_uniformOfFintype]
-    rfl
-  simp only [real_law, pi_uniformOfFintype] at hrows
-  calc
-    _ ≤ ∑ _i : κ, dist (seededHash (PMF.uniformOfFintype (ι → G))
-          (PMF.uniformOfFintype (ι → Bool)) hash)
-        ((PMF.uniformOfFintype (ι → G)).bind
-          (fun weights => (PMF.uniformOfFintype G).map (weights, ·))) := by
-      simpa only [seededHash, PMF.map_comp, Function.comp_def] using hrows
-    _ ≤ ∑ _i : κ, Real.sqrt (Fintype.card G / (2 : ℝ) ^ Fintype.card ι) / 2 := by
-      apply Finset.sum_le_sum
-      intro _ _
-      simpa [collisionProbability_uniform, div_eq_mul_inv] using hrow
-    _ = _ := by simp [mul_div_assoc]
+  rw [← pi_uniformOfFintype (ι := κ) (α := fun _ => ι → Bool)]
+  refine ((isTwoUniversal (ι := ι) (G := G)).leftover_hash_pi
+    (fun _ : κ => PMF.uniformOfFintype (ι → Bool))).trans_eq ?_
+  simp only [Finset.sum_const, Finset.card_univ, nsmul_eq_mul, collisionProbability_uniform,
+    Fintype.card_fun, Fintype.card_bool, Nat.cast_pow, Nat.cast_ofNat, div_eq_mul_inv]
+  ring
 
 end Cslib.BitString.SubsetSum

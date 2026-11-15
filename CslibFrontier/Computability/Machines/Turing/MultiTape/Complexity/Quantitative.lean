@@ -13,13 +13,10 @@ public import CslibFrontier.Computability.Machines.Turing.MultiTape.Internal.Deg
 public import Mathlib.Tactic.FunProp
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Internal.DegreePrimitives
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Combinators.Transducer.Copy
-import CslibFrontier.Computability.Machines.Turing.MultiTape.Internal.OLoops
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Internal.BinaryAddition
 import CslibFrontier.Foundations.Data.Nat.Doubling
-import Mathlib.Tactic.FinCases
-import Mathlib.Tactic.Linarith
-import Mathlib.Tactic.Ring
 import CslibFrontier.Tactic.EncLen
+import Mathlib.Tactic.TypeStar
 
 /-!
 # Quantitative computability rules
@@ -55,7 +52,7 @@ Framed-list and option rules infer the payload encoding from the representation 
   `Turing.MultiTapeTM.ComputableInDegree.optionBoolToList`,
   `Turing.MultiTapeTM.ComputableInDegree.bitsAppend`,
   `Turing.MultiTapeTM.ComputableInDegree.unaryAdd`: plain degree rules for raw bit-list reversal,
-  prefix, last-bit extraction, concatenation, and unary addition (alongside tidy counterparts).
+  prefix, last-bit extraction, concatenation, and unary addition.
 
 ## References
 
@@ -338,14 +335,14 @@ theorem listIsEmpty {α : Type*} (enc : α ↪ List Bool) :
 theorem bitsReverse :
     ComputableInDegree List.reverse encBits encBits 1 1 :=
   of_bounds ⟨2, fun _ => by simp; omega⟩ ⟨0, fun _ => by simp⟩
-    ComputableTidilyInTimeAndSpace.reverse_bits.computableInTimeAndSpace
+    ComputableInTimeAndSpace.reverse_bits
 
 /-- Drop the last bit of a raw bit list in linear time and linear output size. -/
 @[fun_prop]
 theorem bitsDropLast :
     ComputableInDegree List.dropLast encBits encBits 1 1 :=
   of_bounds ⟨8, fun _ => by simp; omega⟩ ⟨0, fun _ => by simp⟩
-    ComputableTidilyInTimeAndSpace.dropLast_bits.computableInTimeAndSpace
+    ComputableInTimeAndSpace.dropLast_bits
 
 /-- Extract the last bit of a raw bit list as a 0-or-1-element list in linear time and constant
 output size. -/
@@ -353,7 +350,7 @@ output size. -/
 theorem bitsGetLast?ToList :
     ComputableInDegree (fun l : List Bool => l.getLast?.toList) encBits encBits 1 0 :=
   ⟨⟨_, _, ⟨8, fun _ => by simp; omega⟩, ⟨0, fun _ => by simp⟩,
-    ComputableTidilyInTimeAndSpace.getLast?_toList_bits.computableInTimeAndSpace⟩,
+    ComputableInTimeAndSpace.getLast?_toList_bits⟩,
     ⟨1, fun l => by simp [Option.length_toList_le]⟩⟩
 
 /-- Extract the last bit of a raw bit list as an `Option Bool` in linear time and constant output
@@ -362,7 +359,7 @@ size. -/
 theorem bitsGetLast? :
     ComputableInDegree (List.getLast? (α := Bool)) encBits (encOption encBool) 1 0 :=
   ⟨⟨_, _, ⟨8, fun _ => by simp; omega⟩, ⟨0, fun _ => by simp⟩,
-    ComputableTidilyInTimeAndSpace.getLast?_bits.computableInTimeAndSpace⟩,
+    ComputableInTimeAndSpace.getLast?_bits⟩,
     ⟨2, fun l => by cases h : l.getLast? <;> simp [h]⟩⟩
 
 /-- Convert an `Option Bool` to a 0-or-1-element bit list in linear time and linear output size. -/
@@ -437,10 +434,7 @@ attribute [fun_prop] ComputableTidilyInDegree.const ComputableTidilyInDegree.fst
   ComputableTidilyInDegree.unary_succ ComputableTidilyInDegree.unary_pred
   ComputableTidilyInDegree.unary_sub ComputableTidilyInDegree.unary_min
   ComputableTidilyInDegree.int_succ ComputableTidilyInDegree.int_pred
-  ComputableTidilyInO.foldl_bits_finite ComputableTidilyInTimeAndSpace.map_bits
-  ComputableTidilyInTimeAndSpace.reverse_bits ComputableTidilyInTimeAndSpace.dropLast_bits
-  ComputableTidilyInTimeAndSpace.length_bits ComputableTidilyInTimeAndSpace.getLast?_toList_bits
-  ComputableTidilyInTimeAndSpace.getLast?_bits
+  ComputableTidilyInO.foldl_bits_finite
 
 namespace ComputableTidilyInDegree
 
@@ -473,38 +467,6 @@ theorem optionGetD {α : Type*} (enc : α ↪ List Bool) (fallback : α) :
 theorem id' {α : Type*} {enc : α ↪ List Bool} :
     ComputableTidilyInDegree (fun x : α => x) enc enc 1 1 :=
   of_eq fun _ => rfl
-
-/-- Reverse a raw bit list in linear time and linear output size. -/
-@[fun_prop]
-theorem bitsReverse :
-    ComputableTidilyInDegree List.reverse encBits encBits 1 1 :=
-  of_bounds ⟨2, fun _ => by simp; omega⟩ ⟨0, fun _ => by simp⟩
-    ComputableTidilyInTimeAndSpace.reverse_bits
-
-/-- Drop the last bit of a raw bit list in linear time and linear output size. -/
-@[fun_prop]
-theorem bitsDropLast :
-    ComputableTidilyInDegree List.dropLast encBits encBits 1 1 :=
-  of_bounds ⟨8, fun _ => by simp; omega⟩ ⟨0, fun _ => by simp⟩
-    ComputableTidilyInTimeAndSpace.dropLast_bits
-
-/-- Extract the last bit of a raw bit list as a 0-or-1-element list in linear time and constant
-output size. -/
-@[fun_prop]
-theorem bitsGetLast?ToList :
-    ComputableTidilyInDegree (fun l : List Bool => l.getLast?.toList) encBits encBits 1 0 :=
-  ⟨⟨_, _, ⟨8, fun _ => by simp; omega⟩, ⟨0, fun _ => by simp⟩,
-    ComputableTidilyInTimeAndSpace.getLast?_toList_bits⟩,
-    ⟨1, fun l => by simp [Option.length_toList_le]⟩⟩
-
-/-- Extract the last bit of a raw bit list as an `Option Bool` in linear time and constant output
-size. -/
-@[fun_prop]
-theorem bitsGetLast? :
-    ComputableTidilyInDegree (List.getLast? (α := Bool)) encBits (encOption encBool) 1 0 :=
-  ⟨⟨_, _, ⟨8, fun _ => by simp; omega⟩, ⟨0, fun _ => by simp⟩,
-    ComputableTidilyInTimeAndSpace.getLast?_bits⟩,
-    ⟨2, fun l => by cases h : l.getLast? <;> simp [h]⟩⟩
 
 /-- Convert an `Option Bool` to a 0-or-1-element bit list in linear time and linear output size. -/
 @[fun_prop]
@@ -578,10 +540,10 @@ theorem comp_enc {f : List Bool → β} {T S : List Bool → ℕ}
   h.of_encIn_eq enc fun _ => rfl
 
 /-- The length of a bit word in unary, within linear time and space, by the streaming machine of
-`Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.length_bits`. -/
+`Turing.MultiTapeTM.ComputableInTimeAndSpace.length_bits`. -/
 theorem lengthUnary : ComputableInO (fun l : List Bool => l.length) encBits encUnary
     (fun l => l.length) fun l => l.length :=
-  .of_bounds ComputableTidilyInTimeAndSpace.length_bits.computableInTimeAndSpace 8
+  .of_bounds ComputableInTimeAndSpace.length_bits 8
     (fun l => by omega) (fun _ => Nat.zero_le _)
     fun l => by simp only [encUnary_apply, List.length_replicate]; omega
 

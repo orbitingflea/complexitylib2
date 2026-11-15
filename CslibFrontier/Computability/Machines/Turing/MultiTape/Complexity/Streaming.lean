@@ -11,7 +11,9 @@ public import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.B
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Combinators.Reverse
 import CslibFrontier.Foundations.Data.List.Fold
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Encodings.StreamFold
-import Mathlib.Tactic.Linarith
+public import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.WordTransducers
+import CslibFrontier.Computability.Machines.Turing.MultiTape.Internal.WordMachines
+import Mathlib.Tactic.TypeStar
 
 /-!
 # Quantitative streaming folds
@@ -60,7 +62,7 @@ Uses Christian Reitwiessner's `ComputableTidilyInTimeAndSpace.streamFold` from t
 `CslibFrontier/Computability/Machines/Turing/MultiTape/Encodings/StreamFold.lean`.
 -/
 
-@[expose] public section
+public section
 
 namespace Turing.MultiTapeTM
 
@@ -248,14 +250,9 @@ theorem ComputableTidilyInO.foldl_bits_finite {σ : Type} [Finite σ]
 this numerical certificate does not include the emitted output in its space bound. -/
 theorem ComputableTidilyInTimeAndSpace.map_bits (f : Bool → Bool) :
     ComputableTidilyInTimeAndSpace (List.map f) encBits encBits
-      (fun l => 4 * l.length + 8) (fun _ => 0) := by
-  let transducer : Transducer Bool Unit :=
-    ⟨(), fun _ b => ((), [f b]), fun _ => [], by simp, by simp⟩
-  refine transducer.computableTidilyInTimeAndSpace ?_
-  intro l
-  induction l with
-  | nil => rfl
-  | cons b l ih => simpa [transducer, Transducer.run] using congrArg (List.cons (f b)) ih
+      (fun l => 4 * l.length + 8) (fun _ => 0) :=
+  (Internal.WordMachines.mapT f).computableTidilyInTimeAndSpace fun l =>
+    (Internal.WordMachines.mapT_run f l).symm
 
 /-- Stream a paired initial accumulator and bit list `(s₀, l)` on `encPair enc encBits` with
 cumulative round costs. The framed initial accumulator `frame (enc s₀)` is copied once to the
@@ -466,64 +463,26 @@ work-tape space, using a three-state (`Option Bool`) finite-state transducer tha
 lookahead symbol. -/
 theorem ComputableTidilyInTimeAndSpace.dropLast_bits :
     ComputableTidilyInTimeAndSpace List.dropLast encBits encBits
-      (fun l => 4 * l.length + 8) (fun _ => 0) := by
-  let τ : Transducer Bool (Option Bool) :=
-    { q₀ := none
-      step
-        | none, b => (some b, [])
-        | some prev, b => (some b, [prev])
-      final _ := []
-      length_step_le q b := by cases q <;> simp
-      length_final_le _ := by simp }
-  have hrun (prev : Bool) (l : List Bool) :
-      τ.run (some prev) l = (prev :: l).dropLast := by
-    induction l generalizing prev with
-    | nil => rfl
-    | cons b l ih =>
-      simpa only [τ, Transducer.run_cons, List.singleton_append,
-        List.dropLast_cons_cons] using congrArg (List.cons prev) (ih b)
-  refine τ.computableTidilyInTimeAndSpace ?_
-  intro l
-  cases l with
-  | nil => rfl
-  | cons b l =>
-    simpa only [τ, Transducer.run_cons, List.nil_append, encBits_apply] using (hrun b l).symm
-
-/-- The finite-state transducer that remembers the last bit read and ends with `final` of it. -/
-private def lastBitT (final : Option Bool → List Bool) (hfinal : ∀ q, (final q).length ≤ 2) :
-    Transducer Bool (Option Bool) where
-  q₀ := none
-  step _ b := (some b, [])
-  final := final
-  length_step_le _ _ := by simp
-  length_final_le := hfinal
-
-private lemma run_lastBitT (final : Option Bool → List Bool) (hfinal : ∀ q, (final q).length ≤ 2)
-    (l : List Bool) :
-    (lastBitT final hfinal).run (lastBitT final hfinal).q₀ l = final l.getLast? := by
-  suffices ∀ q, (lastBitT final hfinal).run q l = final (l.getLast?.or q) from
-    (this none).trans (by rw [Option.or_none])
-  induction l with
-  | nil => intro q; rfl
-  | cons b l ih =>
-    intro q
-    rw [Transducer.run_cons, ih, List.getLast?_cons]
-    cases l.getLast? <;> rfl
+      (fun l => 4 * l.length + 8) (fun _ => 0) :=
+  Internal.WordMachines.dropLastT.computableTidilyInTimeAndSpace fun l =>
+    (Internal.WordMachines.dropLastT_run l).symm
 
 /-- Extract the last bit of a bit list as a 0-or-1-element list (`l.getLast?.toList`) tidily in
 `4 * l.length + 8` steps and zero work-tape space. -/
 theorem ComputableTidilyInTimeAndSpace.getLast?_toList_bits :
     ComputableTidilyInTimeAndSpace (fun l : List Bool => l.getLast?.toList) encBits encBits
       (fun l => 4 * l.length + 8) (fun _ => 0) :=
-  (lastBitT Option.toList fun q => by cases q <;> simp).computableTidilyInTimeAndSpace fun l =>
-    (run_lastBitT Option.toList _ l).symm
+  (Internal.WordMachines.lastBitT Option.toList fun q => by cases q <;> simp)
+    |>.computableTidilyInTimeAndSpace fun l =>
+    (Internal.WordMachines.run_lastBitT Option.toList _ l).symm
 
 /-- Extract the last bit of a bit list as an `Option Bool` (`l.getLast?`) tidily in
 `4 * l.length + 8` steps and zero work-tape space. -/
 theorem ComputableTidilyInTimeAndSpace.getLast?_bits :
     ComputableTidilyInTimeAndSpace (List.getLast? (α := Bool)) encBits (encOption encBool)
       (fun l => 4 * l.length + 8) (fun _ => 0) :=
-  (lastBitT (encOption encBool) fun q => by cases q <;> simp).computableTidilyInTimeAndSpace
-    fun l => (run_lastBitT (encOption encBool) _ l).symm
+  (Internal.WordMachines.lastBitT (encOption encBool) fun q => by cases q <;> simp)
+    |>.computableTidilyInTimeAndSpace
+    fun l => (Internal.WordMachines.run_lastBitT (encOption encBool) _ l).symm
 
 end Turing.MultiTapeTM

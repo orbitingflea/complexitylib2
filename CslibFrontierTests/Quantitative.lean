@@ -124,19 +124,19 @@ example {σ : Type} [Finite σ] (enc : σ ↪ List Bool) (step : σ → Bool →
     ComputableTidilyInO (List.foldl (fun state bit => state ^^ bit) false)
       encBits (encFramed encBool) (fun l => l.length) (fun _ => 0) ∧
     ComputableTidilyInO (fun l => l.foldl step init) encBits enc List.length (fun _ => 0) ∧
-    ComputableTidilyInTimeAndSpace (fun l : List Bool => l.map f) encBits encBits
+    ComputableInTimeAndSpace (fun l : List Bool => l.map f) encBits encBits
       (fun l => 4 * l.length + 8) (fun _ => 0) ∧
-    ComputableTidilyInTimeAndSpace (fun l : List Bool =>
+    ComputableInTimeAndSpace (fun l : List Bool =>
       l.foldl (fun acc b => acc ++ [f b]) []) encBits encBits
       (fun l => 4 * l.length + 8) (fun _ => 0) := by
   refine ⟨by fun_prop, by fun_prop, by fun_prop, by fun_prop, ?_⟩
   simpa only [List.foldl_append_eq_append, List.nil_append, ← List.flatMap_def,
-    ← List.map_eq_flatMap] using ComputableTidilyInTimeAndSpace.map_bits f
+    ← List.map_eq_flatMap] using ComputableInTimeAndSpace.map_bits f
 
 -- The numerical loop contract also handles a genuinely growing stored accumulator.
 -- Its invariant is one stored bit per consumed input bit. The cost at index i uses i, not the
 -- final input length; summing it accounts for the cumulative copying of growing prefixes.
-example : (∃ c, ComputableTidilyInTimeAndSpace (fun l : List Bool =>
+example : (∃ c, ComputableInTimeAndSpace (fun l : List Bool =>
       l.foldl (fun acc b => acc ++ [b]) []) encBits encBits
       (fun l => c * (l.length + 1) ^ 2) (fun l => c * (l.length + 1))) ∧
       ∀ l : List Bool, (l.foldl (fun acc b => acc ++ [b]) []).length = l.length := by
@@ -161,7 +161,7 @@ example : (∃ c, ComputableTidilyInTimeAndSpace (fun l : List Bool =>
         List.length_append, hs]
       exact ⟨by lia, Nat.mul_le_mul_left k (by lia)⟩)
     (by intro l i hi state hs; simpa [hs] using hi)
-  refine ⟨⟨c * (3 * k + 3), h.mono (fun l => ?_) (fun l => ?_)⟩, hpost⟩
+  refine ⟨⟨c * (3 * k + 3), h.computableInTimeAndSpace.mono (fun l => ?_) (fun l => ?_)⟩, hpost⟩
   · have hsum (n : ℕ) : (∑ i ∈ Finset.range n, (k * (2 * i + 3) + 2 * i + 2)) =
         (k + 1) * n ^ 2 + (2 * k + 1) * n := by
       induction n with
@@ -247,11 +247,11 @@ example :
       (encBits ((l.take i).foldl (fun state _ => state) [true])).length ≤ 0) ∧
     ¬ (∀ l : List Bool, ∀ i ≤ l.length,
       (encBits ((l.take i).foldl (fun state bit => state ++ [bit]) [])).length ≤ 0) ∧
-    ComputableTidilyInTimeAndSpace (List.reverse (α := Bool)) encBits encBits
+    ComputableInTimeAndSpace (List.reverse (α := Bool)) encBits encBits
       (fun l => 2 * l.length + 2) (fun _ => 0) ∧
-    ComputableTidilyInTimeAndSpace (List.dropLast (α := Bool)) encBits encBits
+    ComputableInTimeAndSpace (List.dropLast (α := Bool)) encBits encBits
       (fun l => 4 * l.length + 8) (fun _ => 0) ∧
-    ComputableTidilyInTimeAndSpace (fun l : List Bool => l.getLast?.toList) encBits encBits
+    ComputableInTimeAndSpace (fun l : List Bool => l.getLast?.toList) encBits encBits
       (fun l => 4 * l.length + 8) (fun _ => 0) := by
   refine ⟨fun h => ?_, fun h => ?_, by fun_prop, by fun_prop, by fun_prop⟩
   · have := h [] 0 (by simp)
@@ -259,19 +259,24 @@ example :
   · have := h [true] 1 (by simp)
     simp at this
 
-example (f : List Bool → List Bool) (hf : ComputableTidilyInDegree f encBits encBits 2 1) :
-    ComputableTidilyInDegree (fun x => (f x).dropLast.reverse) encBits encBits 2 1 := by
+example (f : List Bool → List Bool) (hf : ComputableInDegree f encBits encBits 2 1) :
+    ComputableInDegree (fun x => (f x).dropLast.reverse) encBits encBits 2 1 := by
   fail_if_success
-    have : ComputableTidilyInDegree (fun x => (f x).dropLast.reverse) encBits encBits 2 0 := by
+    have : ComputableInDegree (fun x => (f x).dropLast.reverse) encBits encBits 2 0 := by
       fun_prop (disch := lia)
   fun_prop (disch := lia)
 
 -- Because `getLast?.toList` has output degree 0, a high-degree consumer still runs in constant
 -- time on its 0-or-1-bit output.
 example (f g : List Bool → List Bool)
-    (hf : ComputableTidilyInDegree f encBits encBits 2 1)
-    (hg : ComputableTidilyInDegree g encBits encBits 5 1) :
-    ComputableTidilyInDegree (fun x => g (f x).getLast?.toList) encBits encBits 2 0 := by
+    (hf : ComputableInDegree f encBits encBits 2 1)
+    (hg : ComputableInDegree g encBits encBits 5 1) :
+    ComputableInDegree (fun x => g (f x).getLast?.toList) encBits encBits 2 0 := by
+  fun_prop (disch := lia)
+
+-- The Option encoding retains output degree zero independently of cost degree.
+example : ComputableInDegree (List.getLast? (α := Bool)) encBits
+    (encOption encBool) 1 0 := by
   fun_prop (disch := lia)
 
 -- Second quantitative client of `streamFold_pair_sum` (via `foldl_bits_pair_stream_sum_spec`):

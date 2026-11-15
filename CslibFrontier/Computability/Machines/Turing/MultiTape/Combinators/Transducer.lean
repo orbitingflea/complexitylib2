@@ -12,7 +12,7 @@ public import CslibFrontier.Computability.Machines.Turing.MultiTape.Internal.Ker
 public import Mathlib.Basic.Finite.Prod
 public import Mathlib.Data.Fintype.Option
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Combinators.TidyZeroSpace
-import Mathlib.Basic.Finite.Sum
+import Mathlib.Tactic.TypeStar
 
 /-!
 # Finite-state transducers
@@ -41,6 +41,16 @@ transducer is tidily computable in linear time and zero space.
 namespace Turing.MultiTapeTM
 
 namespace Transducer
+
+/-- A finite-state transducer computes in linear time with zero workspace.
+The machine is the existing transducer followed by input rewind. -/
+public theorem computableInTimeAndSpace {Q : Type} [Finite Q] (τ : Transducer Bool Q)
+    {α β : Type*} {encIn : α ↪ List Bool} {encOut : β ↪ List Bool} {f : α → β}
+    (hf : ∀ a, encOut (f a) = τ.run τ.q₀ (encIn a)) :
+    ComputableInTimeAndSpace f encIn encOut (fun a => 4 * (encIn a).length + 8)
+      (fun _ => 0) :=
+  ⟨0, _, inferInstance, τ.toTM.seq (rewindInput Bool), fun a =>
+    hf a ▸ τ.computesInTimeAndSpace_rewound (encIn a)⟩
 
 /-- A function computed by a transducer with finitely many states is tidily computable in linear
 time and zero space. -/

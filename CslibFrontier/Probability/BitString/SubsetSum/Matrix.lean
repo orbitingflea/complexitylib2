@@ -11,6 +11,7 @@ public import CslibFrontier.Init
 public import CslibFrontier.Probability.BitString.SubsetSum
 public import Mathlib.Data.Matrix.Mul
 public import Mathlib.Data.ZMod.Basic
+import CslibFrontier.Probability.PMF.Map
 
 /-!
 # Binary subset sums of modular matrix rows

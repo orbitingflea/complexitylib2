@@ -39,6 +39,30 @@ The [checked clients](../../CslibFrontierTests/LeftoverHashDraft.lean) use an 8-
 uniform source and Boolean matrix hash, and check zero digest, large error and order.
 Run `scripts/build.sh CslibFrontierTests.LeftoverHashDraft` in a configured checkout.
 
+## Hash several independent samples
+
+To hash several independent samples `source : ι → PMF Input` under one shared public seed
+`seed : PMF Seed` into `ι → Output` via
+`seededHash seed (PMF.pi source) (fun s x i => hash s (x i))`, import
+[UniversalHash/MultiSample.lean](../../CslibFrontier/Probability/UniversalHash/MultiSample.lean)
+(`CslibFrontier.Probability.UniversalHash.MultiSample`). Assume `Seed`, `Output`, and `ι` are
+`Fintype`, `Input` is `Finite`, `ι` has `DecidableEq`, and `Output` is `Nonempty`. Apply
+`IsUniversalHash.leftover_hash_pi` (requiring `IsUniversalHash seed hash ε` and `ε ≠ ⊤`) or
+`IsTwoUniversal.leftover_hash_pi` (requiring `IsTwoUniversal seed hash`) to bound the statistical
+distance from `seed.bind (fun s => (PMF.uniformOfFintype (ι → Output)).map (s, ·))` by the sum
+of the single-sample collision-probability bounds. Under a pointwise guessing-probability bound
+`∀ i x, (source i x).toReal ≤ γ` and `0 ≤ 1 + α` for a `(1 + α) / |Output|`-universal family
+([bs23][bs23], §8.10.4, Theorem 8.11, p. 334), apply `IsUniversalHash.leftover_hash_pi_of_mass_le`,
+its uniform-seed specialization `IsUniversalHash.dist_seededHash_pi_uniformOfFintype_le` (which
+also requires `Nonempty Seed` and compares against `PMF.uniformOfFintype (Seed × (ι → Output))`),
+or `IsTwoUniversal.leftover_hash_pi_of_mass_le` (`α = 0`) to obtain the bound
+`|ι| * Real.sqrt (|Output| * γ + α) / 2`. The hypothesis `0 ≤ 1 + α` prevents
+`ENNReal.ofReal ((1 + α) / Fintype.card Output)` from clamping negative collision bounds to zero;
+the [checked instances and counterexamples](../../CslibFrontierTests/UniversalHashMultiSample.lean)
+exercise concrete bounds and show that `0 ≤ 1 + α`, sample independence, seed-sample
+independence, universality, and the guessing-probability bound are each needed
+(`scripts/build.sh CslibFrontierTests.UniversalHashMultiSample`).
+
 ## Transport a distribution bound through a map
 
 Import [TotalVariation/Map.lean](../../CslibFrontier/Foundations/MeasureTheory/Measure/TotalVariation/Map.lean).

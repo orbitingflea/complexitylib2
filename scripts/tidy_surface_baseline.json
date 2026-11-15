@@ -31,7 +31,7 @@
  "CslibFrontier/Computability/Machines/Turing/MultiTape/Complexity/PolyTime/Pi.lean": 3,
  "CslibFrontier/Computability/Machines/Turing/MultiTape/Complexity/PolyTime/Plain.lean": 7,
  "CslibFrontier/Computability/Machines/Turing/MultiTape/Complexity/Primitives.lean": 9,
- "CslibFrontier/Computability/Machines/Turing/MultiTape/Complexity/Quantitative.lean": 15,
+ "CslibFrontier/Computability/Machines/Turing/MultiTape/Complexity/Quantitative.lean": 11,
  "CslibFrontier/Computability/Machines/Turing/MultiTape/Complexity/Streaming.lean": 14,
  "CslibFrontier/Computability/Machines/Turing/MultiTape/Complexity/Translate.lean": 2,
  "CslibFrontier/Computability/Machines/Turing/MultiTape/Encodings/Basic.lean": 7,

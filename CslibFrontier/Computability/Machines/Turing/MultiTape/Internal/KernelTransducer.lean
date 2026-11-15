@@ -11,6 +11,10 @@ public import Mathlib.Basic.Finite.Prod
 public import Mathlib.Data.Fintype.Option
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Internal.KernelZeroSpace
 
+import CslibFrontier.Computability.Machines.Turing.MultiTape.Internal.KernelFacts
+import Mathlib.Tactic.TypeStar
+import Mathlib.Tactic.Lemma
+
 /-! # Finite-state transducers and their machine semantics
 
 Machine declarations are moved from their original module without changing programs or resource
@@ -172,6 +176,12 @@ public theorem computesTidily (input : List Symbol) :
       (4 * input.length + 8) 0 :=
   TransformsTapes.mono (τ.computesInTimeAndSpace_toTM input).computesTidily_seq_rewindInput
     (by omega) le_rfl
+
+/-- The rewound witness, with its original clock and zero workspace. -/
+public theorem computesInTimeAndSpace_rewound (input : List Symbol) :
+    (τ.toTM.seq (rewindInput Symbol)).ComputesInTimeAndSpace input (τ.run τ.q₀ input)
+      (4 * input.length + 8) 0 :=
+  (τ.computesTidily input).computesInTimeAndSpace
 
 end Transducer
 

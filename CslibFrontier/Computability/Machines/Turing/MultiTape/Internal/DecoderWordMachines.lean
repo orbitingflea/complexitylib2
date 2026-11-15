@@ -6,7 +6,7 @@ Authors: Christian Reitwiessner, Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import CslibFrontier.Computability.Machines.Turing.MultiTape.Combinators.Transducer
+public import CslibFrontier.Computability.Machines.Turing.MultiTape.Internal.WordMachines
 
 /-! # Streaming machines for total decoder leaves
 
@@ -18,22 +18,13 @@ the standard transducer clock includes every input symbol.
 namespace Turing.MultiTapeTM.Internal.DecoderWords
 
 /-- Replace each input symbol by one unary symbol. -/
-def unaryLengthT : Transducer Bool Unit where
-  q₀ := ()
-  step _ _ := ((), [true])
-  final _ := []
-  length_step_le _ _ := by simp
-  length_final_le _ := by simp
+def unaryLengthT : Transducer Bool Unit := Internal.WordMachines.mapT (fun _ => true)
 
 /-- The emitted unary word records the length of every input word. -/
 theorem unaryLengthT_run (w : List Bool) :
     unaryLengthT.run () w = List.replicate w.length true := by
-  induction w with
-  | nil => rfl
-  | cons b w ih =>
-    change [true] ++ unaryLengthT.run () w = List.replicate (w.length + 1) true
-    rw [ih, List.replicate_succ]
-    rfl
+  simpa only [unaryLengthT, List.map_const'] using
+    Internal.WordMachines.mapT_run (fun _ => true) w
 
 /-- Read the first symbol, returning the fixed default on empty input. -/
 def headDefaultT (default : Bool) : Transducer Bool Bool where

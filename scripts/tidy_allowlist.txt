@@ -23,6 +23,7 @@ CslibFrontier/Computability/Machines/Turing/MultiTape/Internal/KernelComp.lean
 CslibFrontier/Computability/Machines/Turing/MultiTape/Internal/KernelFacts.lean
 CslibFrontier/Computability/Machines/Turing/MultiTape/Internal/KernelIte.lean
 CslibFrontier/Computability/Machines/Turing/MultiTape/Internal/KernelNormalForm.lean
+CslibFrontier/Computability/Machines/Turing/MultiTape/Internal/KernelReverse.lean
 CslibFrontier/Computability/Machines/Turing/MultiTape/Internal/KernelTransducer.lean
 CslibFrontier/Computability/Machines/Turing/MultiTape/Internal/KernelZeroSpace.lean
 # Named finite-control construction data with exact composition bounds; internal kernel milestone

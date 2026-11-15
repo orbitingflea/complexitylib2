@@ -19,9 +19,11 @@ Checks for `CslibFrontier/Crypto/Computational/RSAHash.lean`:
   and `8 ^ 3 ≡ 2 [MOD 15]`, as `rsaEval_rsaHashRoot` says.
 * The canonical-encoding check matters: with a trailing `false`, the word of `(1, 0)` still
   decodes to `(1, 0)` but is not valid.
-* Primality of `e` is needed: `e = 9` is coprime to `(3 - 1) * (5 - 1) = 8`, so it belongs to an
-  `RSADesc`, and `(1, 0)` and `(2, 3)` collide at `y = 2`. Then `b' - b = 3` is not coprime to `9`,
-  and `rsaHashRoot` returns `1`, which is not a ninth root of `2`.
+* `rsaEval_rsaHashRoot` needs `e` coprime to the distance of the exponents, not prime.
+  `e = 9` is coprime to `(3 - 1) * (5 - 1) = 8`, so it belongs to an `RSADesc`, and `(1, 0)` and
+  `(2, 3)` collide at `y = 2`. Their distance `3` is not coprime to `9`, and `rsaHashRoot` returns
+  `1`, which is not a ninth root of `2`. At the same `e = 9`, `(4, 0)` and `(1, 2)` collide at
+  `y = 2`, `9` is coprime to their distance `2`, and `rsaEval_rsaHashRoot` gives the ninth root.
 * The certificates apply: `computableInPolyTime_rsaHash`, `computableInPolyTime_validRSAHashInput`,
   `computableInPolyTime_rsaHashRoot` on seven inputs read as nested pairs on `encNat`, and
   `isPPT_rsaHashToRSA` on the collision finder that always returns the same pair.
@@ -73,8 +75,7 @@ example : rsaHashRoot 15 3 2 1 0 2 1 = 8 := by
 example : rsaEval 15 3 8 = 2 := by decide
 
 example : rsaEval 15 3 (rsaHashRoot 15 3 2 1 0 2 1) = 2 :=
-  rsaEval_rsaHashRoot (by norm_num) (by norm_num) (by norm_num) (by decide) (by decide)
-    (by decide) (by norm_num) (by norm_num) (by decide) (by decide)
+  rsaEval_rsaHashRoot (by norm_num) (by decide) (by decide) (by decide) (by decide) (by decide)
 
 /-! ### The canonical-encoding check -/
 
@@ -84,10 +85,14 @@ example : rsaHashDecoder.decode (word₁ ++ [false]) = (1, 0) := by
 example : validRSAHashInput 0 key15 (word₁ ++ [false]) = false := by
   decide +kernel
 
-/-! ### Primality of `e` is needed -/
+/-! ### `e` must be coprime to the distance, not prime -/
 
 /-- `1 ^ 9 * 2 ^ 0 = 1` and `2 ^ 9 * 2 ^ 3 = 4096 ≡ 1 [MOD 15]`. -/
 example : (1 ^ 9 * 2 ^ 0 : ℕ) ≡ 2 ^ 9 * 2 ^ 3 [MOD desc15e9.modulus] := by decide
+
+/-- `9` is not coprime to the distance `3` of the exponents, so `rsaEval_rsaHashRoot` does not
+apply. -/
+example : ¬ Nat.Coprime 9 (Nat.dist 0 3) := by decide
 
 example : rsaHashRoot 15 9 2 1 0 2 3 = 1 := by
   unfold rsaHashRoot commonRoot BinaryGcd.modInv
@@ -96,6 +101,11 @@ example : rsaHashRoot 15 9 2 1 0 2 3 = 1 := by
 example : rsaEval 15 9 (rsaHashRoot 15 9 2 1 0 2 3) ≠ 2 := by
   unfold rsaHashRoot commonRoot BinaryGcd.modInv
   decide
+
+/-- At the composite `e = 9`, `(4, 0)` and `(1, 2)` collide at `y = 2`:
+`4 ^ 9 * 2 ^ 0 ≡ 4 ≡ 1 ^ 9 * 2 ^ 2 [MOD 15]`, and `9` is coprime to the distance `2`. -/
+example : rsaEval 15 9 (rsaHashRoot 15 9 2 4 0 1 2) = 2 :=
+  rsaEval_rsaHashRoot (by norm_num) (by decide) (by decide) (by decide) (by decide) (by decide)
 
 /-! ### Certificates -/
 

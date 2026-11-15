@@ -128,15 +128,16 @@ honest `Gen`/`Rep`, the Construction 4.9 decoder (Lemma 4.10), and Section 5; th
 For reusable computational fuzzy extractors, [`FuzzyExtractor/Reusable.lean`](../../CslibFrontier/Crypto/Computational/FuzzyExtractor/Reusable.lean)
 formalizes the experiments of Definitions 2 and 3 of Apon, Cho, Eldefrawy and Katz [acek17][acek17]
 in the public-parameters model (`setup : ProbComp PP`,
-`fe : PP → FuzzyExtractor (Fin m → ZMod q) Key Helper`). An adaptive `Q`-query adversary
+`fe : PP → FuzzyExtractor (Fin m → ZMod q) Key Helper`). An adaptive adversary
 (`FuzzyExtractor.ReuseAdversary`, specialized to `WeakReuseAdversary` with helper-only leakage and
-`StrongReuseAdversary` with `(helper, key)` leakage) submits shifts `δ_i : Fin m → ZMod q` clamped
-to Hamming weight at most `t` by `FuzzyExtractor.clampShift` (`reuseQueryLoop`). It receives the
-real or uniform challenge key only after the queries. `weakReuseAdvantage` and
+`StrongReuseAdversary` with `(helper, key)` leakage) runs an oracle program whose queries are
+shifts `δ_i : Fin m → ZMod q`, clamped to Hamming weight at most `t` by
+`FuzzyExtractor.clampShift` in the shift oracles `weakReuseOracle` and `strongReuseOracle`. It
+receives the real or uniform challenge key only after the queries. `weakReuseAdvantage` and
 `strongReuseAdvantage` are `Game.advantage` between the real and ideal experiments averaged with
-`Game.withSetup W`. `weakReuseAdvantage_eq_strongReuseAdvantage_toStrong` relates the two
-experiments, and `weakReuseAdvantage_zero_eq_securityAdvantage` relates the `0`-query experiment
-to `FuzzyExtractor.securityAdvantage`. There is no reusability security predicate: such a
+`Game.withSetup W`. `weakReuseAdvantage_ofDistinguisher_eq_securityAdvantage` runs a
+single-enrollment distinguisher as an adversary that makes no query, which is the remark that weak
+reusability implies basic security. There is no reusability security predicate: such a
 predicate needs a class of efficient adversaries, which is future work. Correctness is averaged
 over the public parameters (`FuzzyExtractor.SetupCorrectHammingWithError`) and follows from the
 average-case decoder hypothesis `DecoderCorrectWithError` over a uniform matrix. Placing the
@@ -156,13 +157,15 @@ encryption errors satisfy `8 * (e i).valMinAbs.natAbs + 4 ≤ q`, so the scheme 
 error at most `δ` under `DecoderCorrectWithError decode t δ`
 (`DecoderCorrectWithError.setupCorrect_lweEncryptFuzzyExtractor`).
 `FuzzyExtractor.strongReuseAdvantage_lweEncryptFuzzyExtractor_le` is the reduction step of the
-Section 5 argument: it bounds the `Q`-query strong-reusability advantage of each adversary by two
-`(m + (Q + 1) * l)`-row decisional LWE advantages with combined error law
+Section 5 argument: it bounds the strong-reusability advantage of each adversary making at most
+`Q` shift queries by two `(m + (Q + 1) * l)`-row decisional LWE advantages with combined error law
 `FuzzyExtractor.encryptLWEErrorLaw W (ProbComp.eval E) Q`, via `encryptRealReduction` and
-`encryptIdealReduction`. Not part of these modules: the reusability security theorems themselves
-(an adversary class in the reuse experiments, efficiency certificates for the simulator and the
-reductions, and the conclusion from `DecisionLWEWithErrors`), and the random-oracle transform of
-Section 4 (Theorem 2).
+`encryptIdealReduction`, which answer the `k`-th query from the `k`-th `l`-row block of the LWE
+instance; the presampling theorem `ProbOracleComp.IsQueryBounded.eval_presample` equates this with
+fresh blocks. Not part of these modules: the reusability security theorems themselves (an
+adversary class in the reuse experiments, efficiency certificates for the simulator and the
+reductions, and the conclusion from `DecisionLWE`; tracked in #5293), and the random-oracle
+transform of Section 4 (Theorem 2).
 
 The pseudoentropy gap of
 [`Pseudoentropy/Basic.lean`](../../CslibFrontier/Crypto/Computational/Pseudoentropy/Basic.lean)
@@ -1139,10 +1142,12 @@ the word `m` as a pair `(a, b)` of binary numbers (`rsaHashDecoder`) and returns
 is. `rsaHashRoot N e y a b a' b'` is Shamir's trick on the pair
 ordered by exponent: `commonRoot N e (b' - b) w y` with `w = a * BinaryGcd.modInv a' N % N` when
 `b < b'`, and `commonRoot N e (b - b') w y` with `w = a' * BinaryGcd.modInv a N % N` otherwise, so
-`commonRoot` keeps natural exponents where the book's proof takes `f = b' - b`. For `0 < N`, a prime
-`e`, `y < N`, `Nat.Coprime y N`, `Nat.Coprime a N`, `Nat.Coprime a' N`, `b < e`, `b' < e`,
-`b ≠ b'` and `a ^ e * y ^ b ≡ a' ^ e * y ^ b' [MOD N]`, `rsaEval_rsaHashRoot` says that
-`rsaEval N e (rsaHashRoot N e y a b a' b') = y`. `rsaHashToRSA A`, the book's adversary `B'`, runs
+`commonRoot` keeps natural exponents where the book's proof takes `f = b' - b`. For `y < N`,
+`Nat.Coprime y N`, `Nat.Coprime a N`, `Nat.Coprime a' N`, `Nat.Coprime e (b.dist b')` and
+`a ^ e * y ^ b ≡ a' ^ e * y ^ b' [MOD N]`, `rsaEval_rsaHashRoot` says that
+`rsaEval N e (rsaHashRoot N e y a b a' b') = y`. Here `b.dist b'` is `b' - b` or `b - b'`; a
+prime `e` greater than both `b` and `b'`, with `b ≠ b'`, is coprime to it, and `b = b'` forces
+`e = 1`. `rsaHashToRSA A`, the book's adversary `B'`, runs
 the collision finder `A` on the key `(N, e, y)` and returns `rsaHashRoot` of the two decoded pairs
 without checking that they collide. `isPPT_rsaHashToRSA` shows that `rsaHashToRSA A` is PPT
 whenever `A` is PPT on `(1ⁿ, k)`; `computableInPolyTime_rsaHash` and

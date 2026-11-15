@@ -77,7 +77,7 @@ logarithmic space and polynomial time) to the words whose reversal has an odd nu
 private theorem logSpaceReducible_oddOnes_reverse :
     LogSpaceReducible encBits encBits OddOnes {w | oddOnes w.reverse = true} := by
   refine ⟨List.reverse, ⟨_, 0,
-    ComputableTidilyInTimeAndSpace.reverse_bits.computableInTimeAndSpace.mono (fun _ => le_rfl)
+    ComputableInTimeAndSpace.reverse_bits.mono (fun _ => le_rfl)
       fun _ => Nat.zero_le _⟩, fun w => ?_⟩
   simp [OddOnes]
 

@@ -103,6 +103,25 @@ The definitions and the documented reason for the output charge are in [Resource
 
 `FTIME` is the corresponding function-time class with explicit input and output encodings and affine time `c₁ t(n) + c₂`; its workspace has an arbitrary length-dependent bound. It adds no output charge beyond the time required to write the output. [FTIME](https://github.com/cslib-community/cslib-frontier/blob/13e6a31951bf1c89a1a6258c44f9444aecbbefd8/Complexity/Computability/Complexity/Classes/FunctionTime.lean#L46) `DTIME`, `NTIME`, `BPTIME`, `DSPACE` and `NSPACE` attach affine bounds to the relevant machine predicates; `P`, `NP`, `BPP`, `L`, `NL`, `PSPACE`, `NPSPACE`, `E`, `NE`, `EXP` and `NEXP` derive familiar bound families.
 
+The [quantitative rules](../../CslibFrontier/Computability/Machines/Turing/MultiTape/Complexity/Quantitative.lean)
+provide plain `ComputableInDegree.bitsReverse` and `bitsDropLast` at cost/output degrees
+`1/1`, and `bitsGetLast?ToList` and `bitsGetLast?` at `1/0`. These replace the four tidy
+degree rules and their automation leaves; use plain callback certificates when composing them.
+`ComputableInO.lengthUnary` retains linear time and output-charged linear space.
+The [composition regression](../../CslibFrontierTests/Quantitative.lean) checks the independent
+output degrees, including a high-degree consumer of a constant-size last-bit result.
+
+The [plain word-transducer facade](../../CslibFrontier/Computability/Machines/Turing/MultiTape/Complexity/WordTransducers.lean)
+registers `ComputableInTimeAndSpace` for `fun_prop` directly, without a mixed streaming import.
+It provides `ComputableInTimeAndSpace.map_bits`, `length_bits`, `dropLast_bits`,
+`getLast?_toList_bits` and `getLast?_bits` with time `4 * l.length + 8` and zero workspace.
+`reverse_bits` keeps time `2 * l.length + 2` and zero workspace. These reuse the existing
+machines; the transducer witness includes input rewind. Workspace excludes emitted output:
+map and reverse therefore need a separate linear output bound for output-charged space,
+while last-bit extraction has constant output size. The
+[plain-import regression](../../CslibFrontierTests/WordTransducers.lean) exercises automation
+and the obstruction to charging arbitrary map output to constant space.
+
 For prefixes and suffixes of computed framed lists, import
 [`PolyTime.Captured`](../../CslibFrontier/Computability/Machines/Turing/MultiTape/Complexity/PolyTime/Captured.lean)
 and apply `ComputableInPolyTime.listTakeWithInput` or `listDropWithInput`

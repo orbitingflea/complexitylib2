@@ -329,6 +329,17 @@ example (f : List Bool → Bool) (hf : ComputableInLogSpace f encBits encBool) :
 
 This conclusion is different from `ComputableInO`, which additionally charges encoded output against its space bound. A long output is compatible with logarithmic *workspace*. For sharper independent bounds, state `ComputableInTimeAndSpace` or `ComputableInBigO` directly and retain both functions. When only polynomial time is needed downstream, use `ComputableInLogSpace.computableInPolyTime`; the same client demonstrates that transition. See the [resource table](../machines-and-classes/native-and-resources.md).
 
+The [plain word-transducer facade](../../CslibFrontier/Computability/Machines/Turing/MultiTape/Complexity/WordTransducers.lean)
+registers `ComputableInTimeAndSpace` for `fun_prop` directly, without a mixed streaming import.
+It provides `ComputableInTimeAndSpace.map_bits`, `length_bits`, `dropLast_bits`,
+`getLast?_toList_bits` and `getLast?_bits` with time `4 * l.length + 8` and zero workspace.
+`reverse_bits` keeps time `2 * l.length + 2` and zero workspace. These reuse the existing
+machines; the transducer witness includes input rewind. Workspace excludes emitted output:
+map and reverse therefore need a separate linear output bound for output-charged space,
+while last-bit extraction has constant output size. The
+[plain-import regression](../../CslibFrontierTests/WordTransducers.lean) exercises automation
+and the obstruction to charging arbitrary map output to constant space.
+
 ## Turn computation into P, NP and hardness
 
 <!-- worked-example -->
