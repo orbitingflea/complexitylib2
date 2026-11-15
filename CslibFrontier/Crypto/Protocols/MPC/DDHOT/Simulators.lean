@@ -12,6 +12,7 @@ import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime
 import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Binary
 import CslibFrontier.Computability.Probabilistic.PPT.Capture
 import CslibFrontier.Crypto.Computational.DiffieHellman.SampleExp
+import CslibFrontier.Foundations.Data.ZMod.NatCast
 import CslibFrontier.Tactic.Negligible
 
 /-!
@@ -451,12 +452,6 @@ private def ddhOTSenderSimWords (x : F.DDHOTSenderSimInput) (a r₀ s₀ r₁ s�
   ⟨F.encode d x.message₀, F.encode d x.message₁, a % q, r₀ % q, s₀ % q, r₁ % q, s₁ % q,
     F.encode d ((b : ZMod q) • g), F.encode d ((a : ZMod q) • g + ((q - b % q : ℕ) : ZMod q) • g)⟩
 
-/-- `-(b : ZMod q)` is the cast of `q - b % q`. -/
-private theorem natCast_sub_mod_eq_neg (d : F.Desc) (b : ℕ) :
-    ((F.order d - b % F.order d : ℕ) : ZMod (F.order d)) = -(b : ZMod (F.order d)) := by
-  rw [Nat.cast_sub (Nat.le_of_lt (Nat.mod_lt _ (F.prime_order _).pos)), ZMod.natCast_self,
-    ZMod.natCast_mod, zero_sub]
-
 /-- `ddhOTSenderSimSampleExp` is PPT. -/
 theorem isPPTSender_ddhOTSenderSimSampleExp : (F.ddhOTSenderSimSampleExp).IsPPTSender := by
   refine (F.isPPTOn_sampleExp_six (F.encDDHOTSenderSimInput_secParam_polyTime .id')
@@ -482,8 +477,8 @@ theorem isPPTSender_ddhOTSenderSimSampleExp : (F.ddhOTSenderSimSampleExp).IsPPTS
     change _ = F.ddhOTSenderViewWords x.groupParameters (ddhOTSenderView (x.message₀, x.message₁)
       ((a : ZMod q), (r₀ : ZMod q), (s₀ : ZMod q), (r₁ : ZMod q), (s₁ : ZMod q))
       ((b : ZMod q) • g, (a : ZMod q) • g - (b : ZMod q) • g))
-    simp only [ddhOTSenderSimWords, ddhOTSenderViewWords, ddhOTSenderView, natCast_sub_mod_eq_neg,
-      neg_smul, ← sub_eq_add_neg, ZMod.val_natCast]
+    simp only [ddhOTSenderSimWords, ddhOTSenderViewWords, ddhOTSenderView,
+      ZMod.natCast_sub_mod_eq_neg, neg_smul, ← sub_eq_add_neg, ZMod.val_natCast]
     rfl
 
 /-- The view words that `ddhOTReceiverSimSampleExp` writes on input `x` and exponents

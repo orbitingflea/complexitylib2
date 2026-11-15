@@ -20,8 +20,11 @@ with ordinary imports.
   ciphertext, and rejects the identity cipher with one key.
 * The criterion `N_c = 1` proves the one-time pad `otp` perfectly secure, as the book proves
   Theorem 2.2.
-* Theorem 2.3 in both directions: every event has the same probability under any two messages of
-  the one-time pad, and the event `{true}` separates the two messages of the identity cipher.
+* Theorem 2.3, forward half (`.mp`): every event has the same probability under any two messages
+  of the one-time pad. Used contrapositively, the event `{true}`, which separates the two messages
+  of the identity cipher, shows that cipher is not perfectly secure.
+* Theorem 2.3, converse half (`.mpr`): equal event probabilities, read off the uniform ciphertext
+  law, show the one-time pad perfectly secure.
 * Full support is needed in the converse of Theorem 2.4: the identity cipher with a point-mass
   message law has independent message and ciphertext, and is not perfectly secure. With the
   uniform message law, the theorem shows that its message and ciphertext are dependent.
@@ -56,6 +59,12 @@ example (l : ℕ) (S : Set (BitVec l)) (m₀ m₁ : BitVec l) :
   (EncScheme.ciphertextIndist_iff_forall_toOuterMeasure _).mp
     ((EncScheme.perfectlySecret_iff_ciphertextIndist _).mp (otp_perfectlySecret l)) S m₀ m₁
 
+/-- Theorem 2.3, converse: every event has the probability it has under the uniform law, whatever
+the message, so the one-time pad is perfectly secure. -/
+example (l : ℕ) : (otp l).CiphertextIndist :=
+  (EncScheme.ciphertextIndist_iff_forall_toOuterMeasure _).mpr fun S m₀ m₁ => by
+    rw [otp_ciphertextDist_eq_uniform, otp_ciphertextDist_eq_uniform]
+
 /-! ### The identity cipher -/
 
 /-- The identity cipher on one bit, with a single key. -/
@@ -79,8 +88,8 @@ example : ¬ idCipher.CiphertextIndist := by
   rw [Nat.card_eq_fintype_card, Fintype.card_subtype] at h₁ h₂
   exact absurd (h₁.trans h₂.symm) (by decide)
 
-/-- Theorem 2.3, converse: the event `{true}` has probability `1` under the message `true` and `0`
-under `false`, so the identity cipher is not perfectly secure. -/
+/-- Theorem 2.3, forward half used contrapositively: the event `{true}` has probability `1` under
+the message `true` and `0` under `false`, so the identity cipher is not perfectly secure. -/
 example : ¬ idCipher.CiphertextIndist := fun h => by
   have := (EncScheme.ciphertextIndist_iff_forall_toOuterMeasure _).mp h {true} true false
   simp [idCipher_ciphertextDist] at this

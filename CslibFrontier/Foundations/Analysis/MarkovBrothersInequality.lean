@@ -11,6 +11,7 @@ public import CslibFrontier.Init
 public import Mathlib.Algebra.Polynomial.Derivative
 public import Mathlib.Analysis.Real.Sqrt
 public import Mathlib.Order.Interval.Set.Defs
+import CslibFrontier.Foundations.Data.Polynomial.LagrangeEval
 import Mathlib.Algebra.Polynomial.HasseDeriv
 import Mathlib.Algebra.Polynomial.Taylor
 import Mathlib.Analysis.Calculus.Deriv.Polynomial
@@ -164,13 +165,8 @@ private theorem abs_eval_le_mul_of_cos_le {n : ℕ} (hn : 0 < n) {q : ℝ[X]} (h
     exact (degree_le_natDegree).trans_lt (by exact_mod_cast hq)
   have heval : q.eval x = ∑ k ∈ s, q.eval (v k) *
       ((∏ j ∈ s.erase k, (x - v j)) / ∏ j ∈ s.erase k, (v k - v j)) := by
-    conv_lhs => rw [Lagrange.eq_interpolate hinj hdeg]
-    rw [Lagrange.interpolate_apply, eval_finsetSum]
-    refine sum_congr rfl fun k _ => ?_
-    rw [eval_mul, eval_C, Lagrange.basis, eval_prod, ← prod_div_distrib]
-    congr 1
-    refine prod_congr rfl fun j _ => ?_
-    rw [Lagrange.basisDivisor, eval_mul, eval_C, eval_sub, eval_X, eval_C, div_eq_inv_mul]
+    rw [Lagrange.eval_eq_sum_eval_basis_mul_eval hinj hdeg x]
+    exact sum_congr rfl fun k _ => by rw [Lagrange.eval_basis, prod_div_distrib, mul_comm]
   -- the weight of each node
   have hweight (k : ℕ) (hk : k ∈ s) :
       n * |q.eval (v k)| ≤ c * M * |∏ j ∈ s.erase k, (v k - v j)| := by

@@ -10,6 +10,7 @@ module
 public import CslibFrontier.Foundations.Combinatorics.MajorityTree
 public import CslibFrontier.Foundations.Data.Code.LocalListDecoding
 public import Mathlib.Data.Fintype.BigOperators
+import CslibFrontier.Foundations.Data.Polynomial.LagrangeEval
 
 /-!
 # Self-correction of Reed–Muller codes by interpolation along lines
@@ -102,14 +103,10 @@ noncomputable def lagrangeWeight (ν : Fin (d + 1) ↪ F) (i : Fin (d + 1)) : F 
 omit [Fintype F] [DecidableEq F] in
 /-- A polynomial of degree at most `d` is determined at `0` by its values at `d + 1` nodes. -/
 theorem eval_zero_eq_sum_lagrangeWeight (ν : Fin (d + 1) ↪ F) {P : F[X]}
-    (hP : P.natDegree ≤ d) : P.eval 0 = ∑ i, lagrangeWeight ν i * P.eval (ν i) := by
-  have hdeg : P.degree < #(univ : Finset (Fin (d + 1))) := by
-    rw [card_univ, Fintype.card_fin]
-    exact degree_le_natDegree.trans_lt (by exact_mod_cast Nat.lt_succ_of_le hP)
-  conv_lhs => rw [Lagrange.eq_interpolate (s := univ) (v := ν) (ν.injective.injOn) hdeg]
-  rw [Lagrange.interpolate_apply, eval_finsetSum]
-  refine sum_congr rfl fun i _ => ?_
-  rw [eval_mul, eval_C, lagrangeWeight, mul_comm]
+    (hP : P.natDegree ≤ d) : P.eval 0 = ∑ i, lagrangeWeight ν i * P.eval (ν i) :=
+  Lagrange.eval_eq_sum_eval_basis_mul_eval ν.injective.injOn
+    (by rw [card_univ, Fintype.card_fin]
+        exact degree_le_natDegree.trans_lt (by exact_mod_cast Nat.lt_succ_of_le hP)) 0
 
 /-- **Interpolation along a line**: the combination of the values of `w` at the points
 `x + ν i • v` with the Lagrange weights at `0`. -/

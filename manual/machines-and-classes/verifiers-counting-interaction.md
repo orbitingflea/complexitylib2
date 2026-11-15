@@ -142,6 +142,21 @@ The [development issue](https://github.com/cslib-community/cslib-frontier/issues
 the remaining finite-field product and CRT sign-recovery objectives. This foundation alone does
 not certify those bounds or the downstream real-feasibility theorem.
 
+For binary interval endpoints, import `CountingHierarchy.Range`: `CountingFunction.sum_range`
+and `sum_range_int` sum over `0 ≤ i < r(w)` in one level. The endpoint is computed in binary;
+its value may be exponential. `CountingHierarchy.Arithmetic` supplies same-level multiplication,
+remainder, comparison and modular exponentiation. The last uses a binary exponent and the
+existing total `powMod` operation; modulus zero returns one.
+
+`CountingHierarchy.Generator` certifies a total prime-field generator test in F_1. One uniform
+universal pass checks prime divisors and smaller powers, rejecting composite moduli and
+noncanonical representatives. The standalone primality test and generator test share the
+bounded-divisor evaluator, its polynomial-time certificate and its primality characterization. `CountingHierarchy.DiscreteLog` certifies the sum of matching
+exponents below `p - 1` in F_1. Its logarithm specification requires a primitive base and a
+nonzero target; its total behavior is defined on every binary triple. The
+[checked clients](../../CslibFrontierTests/CountingNumberTheory.lean) cover these domain limits,
+binary interval sums and modular powering. These certificates do not yet certify field products.
+
 ## Finite-field product identities
 
 Import `CslibFrontier.Foundations.NumberTheory.FiniteField.GeneratorProducts` for the algebraic

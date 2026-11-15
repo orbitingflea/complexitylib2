@@ -963,7 +963,9 @@ These are building blocks, not a garbling scheme: the random-oracle pads that hi
 
 Pinned cslib supplies [PerfectlySecret](https://github.com/leanprover/cslib/blob/254e30e6d4299c51323aaeaf5f51a4763b375d4a/Cslib/Crypto/Protocols/PerfectSecrecy/Defs.lean#L76): observing any positive-probability ciphertext leaves every message prior unchanged. Its equivalent ciphertext-distribution formulation and one-time-pad instance are finite semantic security, with no PPT restriction. The upstream commitment interface separately defines perfect/statistical hiding and perfect binding [cslib][cslib].
 
-Import `CslibFrontier.Crypto.Protocols.PerfectSecrecy.Characterization` ([Characterization.lean](../../CslibFrontier/Crypto/Protocols/PerfectSecrecy/Characterization.lean)) for the other characterizations of perfect security in Boneh–Shoup §2.1.2 [bs23][bs23]. A Shannon cipher with a uniform key is `EncScheme.ofPure (uniformOfFintype K) enc dec h`, and its `CiphertextIndist` is the book's Definition 2.1. `ciphertextIndist_ofPure_uniformOfFintype_iff` is Theorem 2.1, (i) ⇔ (ii): for each ciphertext the number of keys sending a message to it is the same for every message. `ciphertextIndist_iff_forall_toOuterMeasure` (Theorem 2.3, with events in place of predicates) and `ciphertextIndist_iff_jointDist_eq_mul` (Theorem 2.4, for one message law of full support, which the converse needs) hold for every `EncScheme`. These are information-theoretic statements, with no adversary or resource bound; checked instances are in [CslibFrontierTests/Crypto/PerfectSecrecy.lean](../../CslibFrontierTests/Crypto/PerfectSecrecy.lean).
+Import `CslibFrontier.Crypto.Protocols.PerfectSecrecy.Characterization` ([Characterization.lean](../../CslibFrontier/Crypto/Protocols/PerfectSecrecy/Characterization.lean)) for the other characterizations of perfect security in Boneh–Shoup §2.1.2 [bs23][bs23]. A Shannon cipher with a uniform key (finite, nonempty `K`) is `EncScheme.ofPure (uniformOfFintype K) enc dec h`, and its `CiphertextIndist` is the book's Definition 2.1. `ciphertextIndist_ofPure_uniformOfFintype_iff` is Theorem 2.1, (i) ⇔ (ii): for each ciphertext the number of keys sending a message to it is the same for every message. `ciphertextIndist_iff_forall_toOuterMeasure` (Theorem 2.3, with events in place of predicates) and `ciphertextIndist_iff_jointDist_eq_mul` (Theorem 2.4, for one message law of full support, which the converse needs) hold for every `EncScheme`. These are information-theoretic statements, with no adversary or resource bound; checked instances are in [CslibFrontierTests/Crypto/PerfectSecrecy.lean](../../CslibFrontierTests/Crypto/PerfectSecrecy.lean).
+
+Import `CslibFrontier.Crypto.Protocols.PerfectSecrecy.ShannonCiphers` ([ShannonCiphers.lean](../../CslibFrontier/Crypto/Protocols/PerfectSecrecy/ShannonCiphers.lean)) for the other example ciphers of Boneh–Shoup §2.1 [bs23][bs23]. The additive one-time pad `additiveOTP G`, over any finite additive group rather than only `ZMod n`, is perfectly secure (Example 2.7). The variable-length one-time pad `variableLengthOTP L` is not perfectly secure when `0 < L` (Example 2.5, whose messages of lengths 1 and 2 need `L ≥ 2`). More precisely, it is perfectly secure if and only if `L = 0`, because two messages have the same ciphertext law exactly when they have the same length. The substitution cipher `substitutionCipher α L`, over a finite alphabet `α` with decidable equality, is not perfectly secure when `2 ≤ L` and `α` has at least two symbols (Example 2.6). Checked instances are in [CslibFrontierTests/Crypto/PerfectSecrecyCiphers.lean](../../CslibFrontierTests/Crypto/PerfectSecrecyCiphers.lean).
 
 [Scheme](https://github.com/leanprover/cslib/blob/254e30e6d4299c51323aaeaf5f51a4763b375d4a/Cslib/Crypto/Protocols/SecretSharing/Scheme.lean#L52) bundles deterministic reconstruction for authorized coalitions, a randomness PMF, monotone authorization and equal unauthorized-coalition view laws across all secrets. Shamir's `schemeWith` permits a tail sampler with the translation symmetry needed for privacy; `uniformTailSampler` gives the usual finite-field instance. These are reusable information-theoretic interfaces; the survey does not infer a polynomial-time protocol or a secret-sharing-to-native-MPC compiler from them.
 
@@ -979,6 +981,43 @@ Perfect secrecy, zero knowledge and semi-honest MPC privacy do not substitute fo
 - **Threshold, additive, and auxiliary-key-padded instances:** [AccessStructure/Shamir.lean](../../CslibFrontier/Crypto/Protocols/SecretSharing/AccessStructure/Shamir.lean) wraps [Shamir/Linear.lean](../../CslibFrontier/Crypto/Protocols/SecretSharing/Shamir/Linear.lean) (extended to independent vector sharings `uniformOfFintype_map_restrict_share_pi` in [Shamir/Product.lean](../../CslibFrontier/Crypto/Protocols/SecretSharing/Shamir/Product.lean)) as `shamirAccessScheme` (over translation-invariant tail samplers `shamirSources`), `shamirUniformAccessScheme` (`shamirUniform_viewDist_eq`, `shamirUniform_mutualInfo_eq_zero`), auxiliary-key-padded `shamirPaddedAccessScheme`, and `shamirToTwoTwo` ([shamir1979][shamir1979], [katzlindell20][katzlindell20]). [AccessStructure/Additive.lean](../../CslibFrontier/Crypto/Protocols/SecretSharing/AccessStructure/Additive.lean) wraps `Cslib.ProbComp.completeShares` and `Cslib.ProbComp.uniformOfFintype_map_restrict_completeShares` from [Languages/Probabilistic/Sharing.lean](../../CslibFrontier/Languages/Probabilistic/Sharing.lean) to build `(m + 1)`-out-of-`(m + 1)` additive secret sharing over an `AddCommGroup` (`additiveAccessScheme`, `additiveUniformAccessScheme`, `additiveUniform_viewDist_eq`, `additivePaddedAccessScheme`, `additiveToTwoTwo`).
 
 Model boundaries: `AccessScheme` expresses information-theoretic correctness (deterministic for all ambient keys `k : Key`) and security (exact `PMF` equality or `δ`-statistical distance on unauthorized views) rather than PPT execution or interactive MPC protocols. For finite fields `F` (resp. finite groups `G`), `shamirSources` (resp. `additiveSources`) is the singleton `{uniformOfFintype}`; for infinite `F` or `G` with `params.threshold ≥ 1` (`m ≥ 1`), no translation-invariant `PMF` exists (`sources = ∅`), so privacy of `shamirAccessScheme` and `additiveAccessScheme` over infinite types is vacuous and only correctness holds nontrivially. `shamirPaddedAccessScheme` and `additivePaddedAccessScheme` use `comapKey Prod.fst` and ignore the auxiliary key component, so they are auxiliary-key padding of the uniform/translation-invariant schemes rather than imperfect-randomness schemes in the sense of [aggarwal26][aggarwal26]; instantiation with extractor-based imperfect-randomness schemes from cslib-frontier PR #2525 awaits that PR landing on `main`. Checked instances in [CslibFrontierTests/SecretSharingAccessStructure.lean](../../CslibFrontierTests/SecretSharingAccessStructure.lean) exercise `ZMod 5` Shamir `(2, 3)` and `(3, 4)` schemes, mutual information, posterior privacy, `PerfectlyCorrect`, `shareDist`, `IsNontrivial`, `inter`, `union`, `SourceClass.map`/`flat`, `restrictSecret`/`mapShare`/`relabelParty`, auxiliary-key-padded sources, `ZMod 4` additive `3`-out-of-`3` sharing, `(2, 2)` compositions, non-existence of `(2, 3, 2, 2)`, `(3, 3, 2, 2)`, `(4, 4, 2, 2)`, and `(3, 5, 2, 2)` designs, a finite `ZMod 3` `2`-out-of-`2` source-dependent scheme whose unauthorized view distribution genuinely varies with the chosen tag source, `δ`-statistical privacy under design composition, and a leaky counterexample with `0 < mutualInfo`.
+
+### Shamir shares as fixed linear combinations
+
+Boneh–Shoup Section 22.5.2 ([bs23][bs23], pp. 977–978) lists three properties of Shamir sharing
+that its threshold schemes use, and derives two of them, linearity of the secret and linearity of
+the shares, from Lemma 22.1. Import
+[`Shamir/Interpolation.lean`](../../CslibFrontier/Crypto/Protocols/SecretSharing/Shamir/Interpolation.lean)
+for them. Each statement takes Shamir parameters `params : Params F Party` over a field `F` with
+`[Fintype Party]`, randomness `r` and a secret `a`; the forms acting on a module `M` take
+`[AddCommMonoid M] [Module F M]` and an element `h : M`.
+
+- **Linearity of the shares.** `share_eq_eval_basis_mul_add_sum` also takes `[DecidableEq Party]`,
+  a set `L` with `hL : params.threshold ≤ #L` (the book's `t - 1` parties) and any party `i`. It
+  writes the share of `i` as a combination of `a` and the shares of `L`, with weights that depend
+  only on `params`, `L` and `i`: the values at `params.point i` of the Lagrange basis polynomials of
+  the nodes `L ∪ {0}` (`Params.pointOrZero`). `share_smul_eq_eval_basis_smul_add_sum`, with the
+  same hypotheses, applies this identity to `h`; it is the additive form of the book's
+  interpolation in the exponent with these nodes.
+- **Linearity of the secret, acting on a module.** `sum_lagrangeWeightAtZero_smul_share_smul`
+  takes `hs : authorized params s` and combines the elements `share params r a i • h` of the parties
+  in `s` with the weights at `0`, giving `a • h`. This is how a threshold scheme combines signature
+  or decryption shares. Over the field it is `reconstruct_share_eq_secret`.
+
+`Polynomial.lagrangeWeightAtZero_eq_eval_basis` (for `[Field F] [Fintype ι] [DecidableEq ι]`,
+with no hypothesis on the points) identifies the weights at `0` of `Shamir/Linear.lean` with
+values of Lagrange basis polynomials, whose product formula is `Lagrange.eval_basis` in
+[`Polynomial/LagrangeEval.lean`](../../CslibFrontier/Foundations/Data/Polynomial/LagrangeEval.lean).
+These identities define no algorithm and carry no cost statement; the polynomial-time forms of
+Lemma 22.1 and Corollary 22.2 are described in
+[Lagrange interpolation in the exponent](security-games-and-primitives.md#lagrange-interpolation-in-the-exponent).
+The [Shamir interpolation client](../../CslibFrontierTests/Crypto/ShamirInterpolation.lean) checks
+both properties for two-out-of-three sharing over `ZMod 5`, including that the bound on `#L` is
+needed. Check it with:
+
+```bash
+scripts/build.sh --wfail --iofail CslibFrontierTests.Crypto.ShamirInterpolation
+```
 
 ## Differential privacy
 

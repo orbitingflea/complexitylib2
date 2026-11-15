@@ -60,8 +60,8 @@ namespace Cslib.Crypto.Game
 open Probability
 open scoped ENNReal NNReal
 
-private theorem coe_succProbability_ennreal (game : Game) :
-    (succProbability game : ℝ≥0∞) = game true :=
+/-- In `ℝ≥0∞`, the success probability of a game is the probability it assigns to `true`. -/
+theorem coe_succProbability_ennreal (game : Game) : (succProbability game : ℝ≥0∞) = game true :=
   ENNReal.coe_toNNReal (game.apply_ne_top true)
 
 /-- On Boolean experiments, `ε`-closeness in `ℝ≥0∞` is equivalent to `(advantage : ℝ≥0∞) ≤ ε`. -/
